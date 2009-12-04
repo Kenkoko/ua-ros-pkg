@@ -1,0 +1,16 @@
+<package>
+  <description brief="phidgets">
+
+     phidgets
+
+  </description>
+  <author>UARobots</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/phidgets</url>
+  <depend package="rospy"/>
+  <depend package="std_msgs"/>
+
+</package>
+
+
