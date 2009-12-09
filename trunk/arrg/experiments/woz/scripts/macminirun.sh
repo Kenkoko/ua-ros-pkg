@@ -37,7 +37,7 @@
 
 xterm -bg black -fg white -cr white -geometry 80x20+350+0 -e "roscore" &
 xterm -bg black -fg white -cr white -geometry 80x20+350+0 -e "rosrun woztools wozsubscriber.py" &
-xterm -bg black -fg white -cr white -geometry 80x20+835+0 -e "rosrun ax12 init_sys.py /dev/tty.usbserial-A9005MZc; rosrun ax12 serialcomm.py /dev/tty.usbserial-A9005MZc" &
+xterm -bg black -fg white -cr white -geometry 80x20+835+0 -e "rosrun ax12 init_sys.py /dev/tty.usbserial-A9005MZc; rosrun ax12 serialcomm.py" &
 xterm -bg black -fg white -cr white -geometry 80x20+350+310 -e "rosrun ax12 movevalidator.py" &
 xterm -bg black -fg white -cr white -geometry 80x20+1320+0 -e "rosrun ccs robot.py" &
 xterm -bg black -fg white -cr white -geometry 80x20+835+310 -e "rosrun phidgets rfidscan.py" &

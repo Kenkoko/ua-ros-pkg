@@ -85,6 +85,10 @@ if __name__ == '__main__':
         print e.message, e.port, ' at ', e.baudrate
         sys.exit(1)
     
+    # put port and baudrate on param server
+    rospy.set_param('robot/ax12/port', port)
+    rospy.set_param('robot/ax12/baudrate', baud)
+    
     print 'Pinging motors...'
     
     motors = []

@@ -208,13 +208,12 @@ if __name__ == '__main__':
     while not rospy.has_param('robot/ax12/motors'):
         print 'System is not initialized, will try again in 3 seconds'
         time.sleep(3)
-    if len(sys.argv) > 2:
-        robot_io = BioloidIO(sys.argv[1], sys.argv[2])
-    elif len(sys.argv) > 1:
-        robot_io = BioloidIO(sys.argv[1], 1000000)
-    else:
-        # Use our default for the Mac Mini
-        robot_io = BioloidIO('/dev/tty.usbserial-A9005MZc', 1000000)
+    
+    # get port and baudrate from param server
+    port = rospy.get_param('robot/ax12/port', '/dev/tty.usbserial-A9005MZc')
+    baud = rospy.get_param('robot/ax12/baudrate', 1000000)
+    
+    robot_io = BioloidIO(port, baud)
     robot_io.start()
     while not rospy.is_shutdown():
         pass
