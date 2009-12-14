@@ -52,42 +52,20 @@ import rospy
 # than default value of 25
 MAX_IDS_TO_PING = 25
 
-USAGE = """
-    Usage: %s [ path/to/serialport [baudrate] ]
-    Examples:  %s /dev/ttyUSB0 1000000
-               %s /dev/ttyUSB0
-    Using ROS: rosrun package_name %s /dev/ttyUSB0 1000000
-               rosrun package_name %s /dev/ttyUSB0
-""" %( (sys.argv[0], ) * 5 )
-
 if __name__ == '__main__':
     
-    if len(sys.argv) == 2 and sys.argv[1] == '--help':
-        print USAGE
-        sys.exit(0)
-    
     rospy.init_node('init_sys', anonymous=True)
-    
-    if len(sys.argv) > 2:
-        port = sys.argv[1]
-        baud = sys.argv[2]
-    elif len(sys.argv) > 1:
-        port = sys.argv[1]
-        baud = 1000000
-    else:
-        # Use our default for the Mac Mini
-        port = '/dev/tty.usbserial-A9005MZc'
-        baud = 1000000
+
+    # get port and baudrate from param server, second args are default values
+    # if params not on param server
+    port = rospy.get_param('robot/ax12/port', '/dev/ttyUSB0')
+    baud = rospy.get_param('robot/ax12/baudrate', 1000000)
 
     try:
         ax12 = rio.AX12_IO(port, baud)
     except rio.RIOSerialError, e:
         print e.message, e.port, ' at ', e.baudrate
         sys.exit(1)
-    
-    # put port and baudrate on param server
-    rospy.set_param('robot/ax12/port', port)
-    rospy.set_param('robot/ax12/baudrate', baud)
     
     print 'Pinging motors...'
     

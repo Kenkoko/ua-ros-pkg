@@ -1,0 +1,9 @@
+<launch>
+    <!--  Set values for serial port and baudrate here  -->
+    <param name="robot/ax12/port" type="str" value="/dev/tty.usbserial-A9005N0l"/>
+    <param name="robot/ax12/baudrate" type="int" value="1000000"/>
+    
+    <node name="init_sys" pkg="ax12" type="init_sys.py" />
+    <node name="serialcomm" pkg="ax12" type="serialcomm.py" respawn="true" />
+    <node name="movevalidator" pkg="ax12" type="movevalidator.py" respawn="true" />
+</launch>
