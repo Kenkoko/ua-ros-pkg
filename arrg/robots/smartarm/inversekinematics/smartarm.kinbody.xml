@@ -1,0 +1,147 @@
+<!-- just the kinematic body of the Puma,
+     real robots are defined in other files and have attached hands -->
+<KinBody name="PUMA">
+   <Body name="Base" type="dynamic">
+     <Translation>0.0  0.0  0.0</Translation>
+     <Geom type="cylinder">
+       <radius>0.0525</radius>
+       <height>0.02</height>
+       <diffuseColor>0.05 0.05 0.05</diffuseColor>
+     </Geom>
+   </Body>
+
+   <!-- the first movable link -->
+   <Body name="Arm0" type="dynamic">
+     <!-- Offset from is a fast way of specifying that the translation and rotation of this -->
+     <!-- body should be relative to another link -->
+     <offsetfrom>Base</offsetfrom>
+     <!-- Translation relative to Base -->
+     <Translation>0 0 0.000 </Translation>
+     <Geom type="box">
+       <Translation>0.0 0.0525 0 </Translation>
+       <Extents>0.032 0.053 0.0105</Extents>
+     </Geom>
+   </Body>
+   <Joint name="J0" type="hinge">
+     <Body>Base</Body>
+     <Body>Arm0</Body>
+     <offsetfrom>Arm0</offsetfrom>
+     <weight>4</weight>
+     <lostop>-90</lostop>
+     <histop>90</histop>
+     <axis>0 1 0</axis>
+     <maxvel>3</maxvel>
+     <resolution>1</resolution>
+   </Joint>
+  
+  <!-- the first fixed link -->
+   <Body name="Arm1" type="dynamic">
+     <offsetfrom>Arm0</offsetfrom>
+     <Translation>0 0.118 0.032</Translation>
+     <Geom type="box">
+       <Translation>0 0 0.0 </Translation>
+       <Extents>0.032 0.053 0.0105</Extents>
+     </Geom>
+   </Body>
+   <Joint name="J1" type="hinge">
+     <Body>Arm0</Body>
+     <Body>Arm1</Body>
+     <offsetfrom>Arm1</offsetfrom>
+     <weight>3</weight>
+     <lostop>-45</lostop>
+     <histop>-45</histop>
+     <axis>1 0 0</axis>
+     <maxvel>4</maxvel>
+     <resolution>1</resolution>
+   </Joint>
+  
+   <!-- the second movable link -->
+   <Body name="Arm2" type="dynamic">
+     <offsetfrom>Arm1</offsetfrom>
+     <Translation>0 0.048 0</Translation>
+     <Geom type="box">
+       <Translation>0 0.18 0</Translation>
+       <Extents>0.01  0.18 0.01 </Extents>
+     </Geom>
+   </Body>
+   <Joint name="J2" type="hinge">
+     <Body>Arm1</Body>
+     <Body>Arm2</Body>
+     <offsetfrom>Arm2</offsetfrom>
+     <weight>3</weight>
+     <lostop>-90</lostop>
+     <histop>90</histop>
+     <axis>1 0 0</axis>
+     <maxvel>4</maxvel>
+     <resolution>1</resolution>
+   </Joint>
+
+   <!-- the second movable link -->
+   <Body name="Arm3" type="dynamic">
+     <offsetfrom>Arm2</offsetfrom>
+     <Translation>0 0.35 0</Translation>
+     <Geom type="box">
+       <Translation>0 0.072 0</Translation>
+       <Extents>0.032 0.072 0.0105 </Extents>
+     </Geom>
+   </Body>
+   <Joint name="J3" type="hinge">
+     <Body>Arm2</Body>
+     <Body>Arm3</Body>
+     <offsetfrom>Arm3</offsetfrom>
+     <weight>3</weight>
+     <lostop>-90</lostop>
+     <histop>90</histop>
+     <axis>1 0 0</axis>
+     <maxvel>4</maxvel>
+     <resolution>1</resolution>
+   </Joint>
+
+  <Body name="Arm4" type="dynamic">
+	<offsetfrom>Arm3</offsetfrom>
+	<Translation>0 0 0</Translation>
+    <Geom type="box">
+       <Translation>0 0.072 0</Translation>
+       <Extents>0 0 0</Extents>
+     </Geom>
+  </Body>
+
+  <Joint name="J4" type="hinge">
+    <Body>Arm3</Body>
+    <Body>Arm4</Body>
+    <offsetfrom>Arm4</offsetfrom>
+    <weight>1</weight>
+    <lostop>-100</lostop>
+    <histop>100</histop>
+    <axis>0 0 1</axis>
+    <maxvel>2</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+
+  <Body name="Arm5" type="dynamic">
+	<Translation>0 0.14 0</Translation>
+	<offsetfrom>Arm3</offsetfrom>
+    <Geom type="box">
+      <Translation>0 0.041 0</Translation>
+      <Extents>0.01 0.041 0.01</Extents>
+    </Geom>
+    <mass type="sphere">
+      <total>0.24</total>
+      <radius>1</radius>
+    </mass>
+  </Body>
+
+  <Joint name="J5" type="hinge">
+    <Body>Arm4</Body>
+    <Body>Arm5</Body>
+    <offsetfrom>Arm5</offsetfrom>
+    <weight>0.5</weight>
+    <lostop>-180</lostop>
+    <histop>180</histop>
+    <axis>0 -1 0</axis>
+    <maxvel>2</maxvel>
+    <resolution>2</resolution>
+  </Joint>
+
+  
+</KinBody>
