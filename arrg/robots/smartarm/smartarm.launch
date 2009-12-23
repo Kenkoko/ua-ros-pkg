@@ -1,0 +1,19 @@
+<launch>
+    <!--  Set up joint to servo mapping on the Smart Arm  -->
+	
+	<!-- Total number of joints -->
+    <param name="smartarm/ax12/joint_count" type="int" value="5"/>
+	
+	<!-- Master and optional inverse servo mappings for each joint
+		 number up to and including joint_count - 1 -->
+    <param name="smartarm/ax12/joint0/master" type="int" value="10"/>
+	<param name="smartarm/ax12/joint1/master" type="int" value="11"/>
+	<param name="smartarm/ax12/joint1/inverse" type="int" value="12"/>
+	<param name="smartarm/ax12/joint2/master" type="int" value="13"/>
+	<param name="smartarm/ax12/joint2/inverse" type="int" value="14"/>
+	<param name="smartarm/ax12/joint3/master" type="int" value="15"/>
+	<param name="smartarm/ax12/joint4/master" type="int" value="16"/>
+
+    <node name="smartarm" pkg="arm" type="smartarm.py" output="screen" />
+    <node name="arm_moves" pkg="arm" type="armmoves.py" output="screen" />
+</launch>
