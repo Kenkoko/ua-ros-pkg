@@ -1,13 +1,13 @@
 <package>
-  <description brief="arm">
+  <description brief="smartarm">
 
-     arm
+     smartarm
 
   </description>
   <author>UARobots</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/arm</url>
+  <url>http://ros.org/wiki/smartarm</url>
   <depend package="ax12"/>
   <depend package="rospy"/>
   <depend package="std_msgs"/>

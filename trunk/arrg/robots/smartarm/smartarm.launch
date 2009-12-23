@@ -14,6 +14,6 @@
 	<param name="smartarm/ax12/joint3/master" type="int" value="15"/>
 	<param name="smartarm/ax12/joint4/master" type="int" value="16"/>
 
-    <node name="smartarm" pkg="arm" type="smartarm.py" output="screen" />
-    <node name="arm_moves" pkg="arm" type="armmoves.py" output="screen" />
+    <node name="smartarm" pkg="smartarm" type="smartarm.py" output="screen" />
+    <node name="arm_moves" pkg="smartarm" type="armmoves.py" output="screen" />
 </launch>
