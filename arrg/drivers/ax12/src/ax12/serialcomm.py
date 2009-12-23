@@ -101,7 +101,7 @@ class BioloidIO(threading.Thread):
         for id in self.__motorIds:
             self.__publishers[id] = rospy.Publisher('robot/ax12/dynamixel' + str(id), MotorData)
 
-        # Add our handle_incoming_commands method as a subscriber to "bioloid/ax12/commands"
+        # Add our handle_incoming_commands method as a subscriber to "robot/ax12/commands"
         rospy.Subscriber('robot/ax12/commands', Move, self.handle_incoming_commands)
 
     def stop(self):
@@ -210,7 +210,7 @@ if __name__ == '__main__':
         time.sleep(3)
     
     # get port and baudrate from param server
-    port = rospy.get_param('robot/ax12/port', '/dev/tty.usbserial-A9005MZc')
+    port = rospy.get_param('robot/ax12/port', '/dev/ttyUSB0')
     baud = rospy.get_param('robot/ax12/baudrate', 1000000)
     
     robot_io = BioloidIO(port, baud)
