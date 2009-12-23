@@ -37,7 +37,7 @@ import roslib
 roslib.load_manifest('smartarm')
 
 import rospy
-from arm.msg import JointMove
+from smartarm.msg import JointMove
 from std_msgs.msg import String
 
 class ArmMoves:
