@@ -1,0 +1,14 @@
+<package>
+  <description>A library for accessing a camera through the Small Vision System library</description>
+  <author>Radu Bogdan Rusu (rusu@cs.tum.edu)</author>
+  <license>BSD</license>
+  <depend package="roscpp" />
+  <depend package="sensor_msgs" />
+  <depend package="stereo_msgs" />
+  <depend package="opencv2" /> 
+  <depend package="cv_bridge" />
+  <export>
+    <cpp cflags="-I${prefix}/src" lflags="-L${prefix}/lib -lstoc"/>
+  </export>
+  <url></url>
+</package>
