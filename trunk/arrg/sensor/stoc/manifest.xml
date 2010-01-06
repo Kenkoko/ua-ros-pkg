@@ -1,0 +1,23 @@
+<package>
+  <description brief="stoc">
+
+     stoc
+
+  </description>
+  <author>Erratic User</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/stoc</url>
+
+  <depend package="roscpp" />
+  <depend package="std_msgs" />
+  <depend package="sensor_msgs" />
+  <depend package="stereo_msgs" />
+  <depend package="opencv2" /> 
+  <depend package="cv_bridge" />
+  <depend package="videre_stoc" />
+  <depend package="tf" />
+
+</package>
+
+
