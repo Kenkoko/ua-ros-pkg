@@ -51,7 +51,7 @@ class BioloidIO(threading.Thread):
     While it is running, it reads from its input queue and writes the data to the serial port.
     If there are any subscribers to a dynamixel's topic (ie: "robot/ax12/dynamixel5") the motor's
     feedback data will be read from the serial port and published on the corresponding topic.
-    Instances of a thread-safe data queue (Python's Queue) are used for all input to the run-loop.
+    An instance of a thread-safe data queue (Python's Queue) is used for all input to the run-loop.
     """
     
     def __init__(self, port, baud):
@@ -80,7 +80,7 @@ class BioloidIO(threading.Thread):
         self.__baudrate = baud
         
         # This is the number of commands per sync-write that the run loop executes
-        self.__MAX_CMDS_PER_WRITE = 4
+        self.__MAX_CMDS_PER_WRITE = 1
         
         # IVAR for our AX12_IO object
         self.__axio = None
