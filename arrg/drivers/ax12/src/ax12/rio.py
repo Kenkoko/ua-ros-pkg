@@ -494,7 +494,10 @@ class AX12_IO(object):
             load = response[9] + (response[10] << 8)
             voltage = response[11]
             temperature = response[12]
-        
+            
+            if speed > 1023:
+                speed = 1023 - speed
+            
             # return the data in a dictionary
             return {'id':servoId, 'position':position, 'speed':speed, 'load':load, 'voltage':voltage, 'temperature':temperature}
 
