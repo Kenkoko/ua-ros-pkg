@@ -1,0 +1,15 @@
+#This page tells you how to set up your account with a functional ROS installation and UA packages.
+
+= Introduction =
+
+Add your content here.
+
+= Details =
+
+Easy
+  # `wget x`
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
