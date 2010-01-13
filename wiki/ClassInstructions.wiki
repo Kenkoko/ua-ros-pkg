@@ -1,3 +1,4 @@
+#labels Phase-Deploy
 #This page tells you how to set up your account with a functional ROS installation and UA packages.
 
 = Introduction =
@@ -7,7 +8,11 @@ Add your content here.
 = Details =
 
 Easy
-  # Download the install script into your home directory 
+  # Navigate to your home directory
+{{{
+cd ~
+}}}
+  # Download the install script 
 {{{
 wget http://ua-ros-pkg.googlecode.com/files/install_ros_user
 }}}
