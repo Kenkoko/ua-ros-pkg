@@ -1,7 +1,9 @@
+#summary Instructions for students of CS 665 to set up ROS on class machines.
 #labels Phase-Deploy
+
 = Introduction =
 
-This page tells you how to set up your account with a functional ROS installation and UA packages.
+This page tells you how to set up your account with a functional ROS installation and UA packages. These will only work on the class machines located in GS 930 (the machine names all start with "h").
 
 = Installation =
 
@@ -12,7 +14,7 @@ cd ~
 }}}
   # Download the install script 
 {{{
-wget http://ua-ros-pkg.googlecode.com/files/install_ros_user
+wget http://ua-ros-pkg.googlecode.com/svn/trunk/config/install_ros_user
 }}}
   # Make it executable
 {{{
