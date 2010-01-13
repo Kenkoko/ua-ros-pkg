@@ -2,7 +2,7 @@ apt-get install build-essential python-yaml cmake subversion
 mkdir -p /opt/ros/installed
 wget --no-check-certificate http://ros.org/rosconfig -O ~/rosconfig
 chmod 755 ~/rosconfig
-/root/rosconfig bootstrap -s https://code.google.com/p/ua-ros-pkg/source/browse/trunk/config/shared.rosconfig /opt/ros/installed roscpp
+/root/rosconfig bootstrap -s http://ua-ros-pkg.googlecode.com/svn/trunk/config/shared.rosconfig /opt/ros/installed roscpp
 /root/rosconfig setup /opt/ros/installed > setup_installed.bashrc
 . setup_installed.bashrc
 rosdep install -a -r

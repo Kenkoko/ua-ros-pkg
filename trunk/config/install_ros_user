@@ -1,6 +1,6 @@
 wget http://ros.org/rosconfig -O ~/rosconfig
 chmod 755 ~/rosconfig
-~/rosconfig install https://code.google.com/p/ua-ros-pkg/source/browse/trunk/config/user.rosconfig ~/ros
+~/rosconfig install http://ua-ros-pkg.googlecode.com/svn/trunk/config/user.rosconfig ~/ros
 ~/rosconfig setup ~/ros > .ros.bashrc
 echo "source ~/.ros.bashrc" >> ~/.bashrc
 echo "export ROBOT=sim" >> ~/.bashrc
