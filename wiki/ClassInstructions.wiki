@@ -7,7 +7,18 @@ Add your content here.
 = Details =
 
 Easy
-  # `wget x`
+  # Download the install script into your home directory 
+{{{
+wget http://ua-ros-pkg.googlecode.com/files/install_ros_user
+}}}
+  # Make it executable
+{{{
+chmod +x install_ros_user
+}}}
+  # Run it!
+{{{
+./install_ros_user
+}}}
 
 Add your content here.  Format your content with:
   * Text in *bold* or _italic_
