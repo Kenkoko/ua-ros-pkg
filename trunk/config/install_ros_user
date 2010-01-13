@@ -1,0 +1,8 @@
+wget http://ros.org/rosconfig -O ~/rosconfig
+chmod 755 ~/rosconfig
+~/rosconfig install http://ua-ros-pkg.googlecode.com/files/user.rosconfig ~/ros
+~/rosconfig setup ~/ros > .ros.bashrc
+echo "source ~/.ros.bashrc" >> ~/.bashrc
+echo "export ROBOT=sim" >> ~/.bashrc
+source .bashrc
+rosmake wubble_world
