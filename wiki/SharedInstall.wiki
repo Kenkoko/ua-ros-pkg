@@ -11,11 +11,6 @@ Instructions for *system administrators* to setup up a shared installation on a 
 sudo su -
 }}}
 
-  # Navigate to the root user's home folder
-{{{
-cd ~
-}}}
-
   # Download the install script
 {{{
 wget https://code.google.com/p/ua-ros-pkg/source/browse/trunk/config/install_ros_shared
