@@ -25,3 +25,5 @@ chmod +x install_ros_shared
 {{{
 ./install_ros_shared
 }}}
+
+The script will download and build a lot of ROS packages, which will take up to an hour (it can be left unsupervised once it's done asking for permission to install ubuntu packages). There may be error messages in the output, but these are typical and not important. 
