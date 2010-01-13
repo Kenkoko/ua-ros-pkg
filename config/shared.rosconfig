@@ -1,0 +1,8 @@
+- svn:
+    uri: https://code.ros.org/svn/ros/stacks/ros/tags/latest
+    local-name: ros
+    version: r7844
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/all
+    local-name: pkgs
+    version: r29040
