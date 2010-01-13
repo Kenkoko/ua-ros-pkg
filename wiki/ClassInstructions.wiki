@@ -1,5 +1,5 @@
 #labels Phase-Deploy
-#This page tells you how to set up your account with a functional ROS installation and UA packages.
+This page tells you how to set up your account with a functional ROS installation and UA packages.
 
 = Introduction =
 
