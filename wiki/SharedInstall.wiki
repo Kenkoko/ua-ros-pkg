@@ -1,4 +1,4 @@
-#summary One-sentence summary of this page.
+#summary How to install ROS in a shared location on the class machines
 
 = Introduction =
 
@@ -18,7 +18,7 @@ cd ~
 
   # Download the install script
 {{{
-wget http://ua-ros-pkg.googlecode.com/files/install_ros_shared
+wget https://code.google.com/p/ua-ros-pkg/source/browse/trunk/config/install_ros_shared
 }}}
 
   # Make it executable
