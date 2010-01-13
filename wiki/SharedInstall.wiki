@@ -1,0 +1,32 @@
+#summary One-sentence summary of this page.
+
+= Introduction =
+
+Instructions for *system administrators* to setup up a shared installation on a class machines.
+
+= Steps =
+
+  # Switch to the root user
+{{{
+sudo su -
+}}}
+
+  # Navigate to the root user's home folder
+{{{
+cd ~
+}}}
+
+  # Download the install script
+{{{
+wget http://ua-ros-pkg.googlecode.com/files/install_ros_shared
+}}}
+
+  # Make it executable
+{{{
+chmod +x install_ros_shared
+}}}
+
+  # Run it
+{{{
+./install_ros_shared
+}}}
