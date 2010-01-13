@@ -13,7 +13,7 @@ sudo su -
 
   # Download the install script
 {{{
-wget https://code.google.com/p/ua-ros-pkg/source/browse/trunk/config/install_ros_shared
+wget http://ua-ros-pkg.googlecode.com/svn/trunk/config/install_ros_shared
 }}}
 
   # Make it executable
