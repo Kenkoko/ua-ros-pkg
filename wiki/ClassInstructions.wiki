@@ -1,13 +1,11 @@
 #labels Phase-Deploy
-This page tells you how to set up your account with a functional ROS installation and UA packages.
-
 = Introduction =
 
-Add your content here.
+This page tells you how to set up your account with a functional ROS installation and UA packages.
 
-= Details =
+= Installation =
 
-Easy
+Easy!
   # Navigate to your home directory
 {{{
 cd ~
@@ -25,7 +23,6 @@ chmod +x install_ros_user
 ./install_ros_user
 }}}
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+= Testing =
+
+Here's a simple demo to run to test that you've got everything working.
