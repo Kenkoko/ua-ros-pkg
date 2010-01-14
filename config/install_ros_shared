@@ -5,6 +5,10 @@ chmod 755 ~/rosconfig
 /root/rosconfig bootstrap -s http://ua-ros-pkg.googlecode.com/svn/trunk/config/shared.rosconfig /opt/ros/installed roscpp
 /root/rosconfig setup /opt/ros/installed > setup_installed.bashrc
 . setup_installed.bashrc
+roscd simulator_gazebo
+svn switch https://code.ros.org/svn/ros-pkg/stacks/simulator_gazebo/trunk
+svn up
+cd ~
 rosdep install -a -r
 rosrun rospack roscachesvncert
 rosmake -a -i -r
