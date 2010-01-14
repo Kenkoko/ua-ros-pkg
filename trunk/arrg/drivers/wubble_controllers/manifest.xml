@@ -1,0 +1,16 @@
+<package>
+  <description brief="wubble_controllers">
+
+     wubble_controllers
+
+  </description>
+  <author>Erratic User</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wubble_controllers</url>
+  <depend package="rospy"/>
+  <depend package="std_msgs"/>
+
+</package>
+
+
