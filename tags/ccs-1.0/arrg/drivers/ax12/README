@@ -1,0 +1,126 @@
+
+                        AX-12+ SERVO CONTROL -- Version 1.0
+                    Arizona Robotics Research Group (ARRG)
+
+##############################################################################
+################         WHAT IS AX-12+ SERVO CONTROL?        ################
+##############################################################################
+The ROS package "ax12" provides an easy to use interface to the AX-12+ servos
+manufactured by Robotis and sold in the Bioloid kits. With this package you
+will not have to worry about handling the indivdual bytes and instruction
+packets required to control the servos. Simply publish a Move type ROS message
+to the ROS topic "robot/ax12/moves" and the ax12 package does the rest. If you
+are interested in the data the servo has to offer, simply subscribe to the ROS
+topic "robot/ax12/dynamixel1" (where the 1 is the servo's id). Subscribers to
+this topic receive MotorData type ROS messages that contain the following
+information: servo id and current position, speed, load, voltage, and
+temperature.
+
+##############################################################################
+################              SYSTEM REQUIREMENTS             ################
+##############################################################################
+
+Software Dependencies
+
+-- ROS --
+    - This software was designed for use within the Robot Operating System (ROS)
+    - Information about ROS as well its installation procedures can be found at
+        http://www.ros.org/wiki/
+
+-- pyserial --
+    - The installation of the Python module Python Serial Port Extension
+        (pyserial) is required for communication with the Robotis AX-12+ servos.
+    - Information about pyserial as well its installation procedures can be
+        found at http://sourceforge.net/projects/pyserial/
+
+Hardware Dependencies
+
+-- USB2Dynamixel --
+    - This software was designed for use with the Robotis AX-12+ servos. The
+        software was created to be used with the Robotis USB2Dynamixel Adapter.
+        The adapter allows for serial port communication with the servos.
+    - Information about the USB2Dynamixel Adapter can be found at
+        http://www.trossenrobotics.com/robotis-bioloid-usb2dynamixel.aspx
+        
+    - The USB2Dynamixel uses an FTDI transceiver chip to interface between the
+        servo bus and your computer's USB port.
+    - Drivers for the FTDI chip can be downloaded at
+        http://www.ftdichip.com/Drivers/VCP.htm
+
+-- SMPS2Dynamixel --
+    - When using the Robotis AX-12+ servos, the USB2Dynamixel will not provide
+        sufficient power to run the motors.
+    - There are two options here:
+        1) Use a SMPS2Dynamixel Adapter. (Recommended for starting quickly)
+        2) Use the CM-5 that comes with the Bioloid kit (may require some
+            changing of its default behaviors so it doesn't begin running its
+            own motor control)
+    - The SMPS2Dynamixel Adapter uses the standard power brick that comes with
+        the Bioloid kit
+    - Information about the SMPS2Dynamixel Adapter can be found at
+        http://www.trossenrobotics.com/store/p/5886-SMPS2Dynamixel-Adapter.aspx
+
+Platform Specific Dependencies
+
+-- Mac OS X --
+    - This software has been tested on an Intel based Mac OS X Version 10.5.8
+    - It is highly recommended to use the Python (2.5.1) that comes with OS X
+        There were issues communicating with the servos at 1000000 bps when
+        using a MacPorts installed Python.
+    - Note that on OS X the USB2Dynamixel will show up in devices as something
+        like "/dev/tty.usbserial-A9005MZc" where the last part after the hyphen
+        is the serial number of your USB2Dynamixel Adapter.
+
+-- Ubuntu --
+    - This software has been tested on an Intel based Ubuntu 9.10
+    - The USB2Dynamixel shows up in devices as a standard USB device
+        "/dev/ttyUSB0" where the last digit will be based upon the order in
+        which USB devices are connected.
+
+-- Windows --
+    - This software has NOT been tested on any Windows machines.
+    - It may be possible to use it since Python is cross-platform.
+    - There is no support for any Windows users
+
+##############################################################################
+################             INSTALLATION AND USAGE           ################
+##############################################################################
+Coming soon...
+
+##############################################################################
+################                 CONTACT INFO                 ################
+##############################################################################
+Name: Arizona Robotics Research Group (ARRG)
+        Department of Computer Science, University of Arizona
+
+Website:
+    http://www.cs.arizona.edu/~ianfasel/homepage/ARRG.html
+
+Repository:
+    http://code.google.com/p/ua-ros-pkg/
+
+Email:
+    arizonarobots@gmail.com (bugs, problems, questions)
+
+##############################################################################
+################              Last Major Revisions            ################
+##############################################################################
+README:
+    December 2009
+    
+Code:
+    December 2009
+
+##############################################################################
+################               COPYRIGHT NOTICES              ################
+##############################################################################
+
+- "ROS", "Robot Operating System", "Robot Open Source" are
+    Copyright (c) Willow Garage. All Rights Reserved.
+
+- "Bioloid", "AX-12+" are Copyright (c) Robotis Co., Ltd. All Rights Reserved.
+
+- Provided software is Copyright (c) 2009, Arizona Robotics Research Group,
+    University of Arizona. All rights reserved.
+- Licensing information is available in the LICENSE file as well as at the
+    beginning of each source file.

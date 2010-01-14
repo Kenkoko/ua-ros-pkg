@@ -1,0 +1,17 @@
+apt-get install build-essential python-yaml cmake subversion
+mkdir -p /opt/ros/installed
+wget --no-check-certificate http://ros.org/rosconfig -O ~/rosconfig
+chmod 755 ~/rosconfig
+/root/rosconfig bootstrap -s http://ua-ros-pkg.googlecode.com/svn/trunk/config/shared.rosconfig /opt/ros/installed roscpp
+/root/rosconfig setup /opt/ros/installed > setup_installed.bashrc
+. setup_installed.bashrc
+roscd simulator_gazebo
+svn switch https://code.ros.org/svn/ros-pkg/stacks/simulator_gazebo/trunk
+svn up
+cd ~
+rosdep install -a -r
+rosrun rospack roscachesvncert
+rosmake -a -i -r
+for p in `rospack list-names`; do touch `rospack find $p`/ROS_NOBUILD; done
+sudo chmod -R o+r /opt/ros/installed
+
