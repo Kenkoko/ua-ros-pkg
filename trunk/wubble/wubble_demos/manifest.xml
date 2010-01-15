@@ -1,0 +1,16 @@
+<package>
+  <description brief="wubble_demos">
+
+     wubble_demos
+
+  </description>
+  <author>Daniel Hewlett</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wubble_demos</url>
+
+  <depend package="wubble_teleop"/>
+
+</package>
+
+

@@ -1,0 +1,6 @@
+<launch>
+
+    <!-- Start Icarus world state listener service -->
+    <node name="icarus_world_state" pkg="wubble_environments" type="icarus_world_state_server.py"/>
+
+</launch>

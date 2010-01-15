@@ -1,0 +1,12 @@
+<stack name="wubble_world" version="0.1.0">
+  <description brief="wubble_world">
+
+     wubble_world
+
+  </description>
+  <author>Maintained by Daniel Hewlett</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://www.wubbleworld.com</url>
+
+</stack>

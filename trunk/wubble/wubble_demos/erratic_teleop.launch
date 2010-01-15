@@ -1,0 +1,31 @@
+<launch>
+
+    <!-- load the world environment -->
+    <include file="$(find wubble_environments)/launch/wubble_world.launch" />
+
+    <!-- spawn our erratic robot -->
+    <include file="$(find wubble_robots)/launch/erratic.launch"/>
+
+    <!-- enable teleoperation -->
+    <include file="$(find wubble_teleop)/launch/erratic_logitech.launch" />
+
+    <!-- enable stereo vision -->
+    <include file="$(find wubble_vision)/stereo_image_proc.launch" />
+
+    <!-- Fake Localization -->
+    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
+        <param name="odom_frame_id" value="odom"/>
+    </node>
+
+    <!-- rviz testing -->
+    <node name="map_node" pkg="map_server" type="map_server" args="$(find gazebo_worlds)/Media/materials/textures/map_blank.png 0.1" respawn="false" output="screen" />
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find wubble_demos)/rviz/stereo.vcg">
+        <remap from="goal" to="move_base_simple/goal" />
+    </node>
+    
+    <node pkg="costmap_2d" type="costmap_2d_markers" name="voxel_visualizer">
+        <remap from="voxel_grid" to="local_costmap/voxel_grid_throttled"/>
+    </node>
+
+</launch>
