@@ -31,7 +31,7 @@ There are now two types of ROS packages on the machines you are using:
   # Shared packages, which are part of the ROS distribution and come from Willow Garage. These reside in /opt/ros/installed, which means you can't change them.
   # User packages, which live in the ros directory inside your home folder (specifically, ~/ros/ua-ros-pkg).
 
-The shared packages are already built. To build the user packages we'll be using to run some demos, execute:
+We'll go into more depth with ROS, packages, an so on next week, but for now, let's just get everything set up. The shared packages are already built. To build the user packages we'll be using to run some demos, execute:
 {{{
 rosmake wubble_world
 }}}
@@ -50,7 +50,9 @@ Also, try:
 {{{
 roslaunch pr2_gazebo pr2_empty_world.launch
 }}}
-This will launch a simulated PR2 (made by Willow Garage), which is sophisticated humanoid robot. You can control the robot by launching (in another terminal):
+This will launch a simulated PR2 (made by Willow Garage), which is sophisticated humanoid robot. You can control the robot with the keyboard by launching (in another terminal):
 {{{
 roslaunch pr2_teleop teleop_keyboard.launch
 }}}
+
+If all of this worked, you're ready to get started with ROS! If not, please send email
