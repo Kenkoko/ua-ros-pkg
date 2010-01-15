@@ -50,7 +50,7 @@ Also, try:
 {{{
 roslaunch pr2_gazebo pr2_empty_world.launch
 }}}
-This will launch a simulated PR2 (made by Willow Garage), which is sophisticated humanoid robot. You can control the robot with the keyboard by launching (in another terminal):
+This will launch a simulated PR2 (made by Willow Garage), a sophisticated humanoid robot. You can control the robot with the keyboard by launching (in another terminal):
 {{{
 roslaunch pr2_teleop teleop_keyboard.launch
 }}}
