@@ -5,4 +5,4 @@ chmod 755 ~/rosconfig
 echo "source ~/.ros.bashrc" >> ~/.bashrc
 echo "export ROBOT=sim" >> ~/.bashrc
 source .bashrc
-rosmake wubble_world
+rosmake wubble
