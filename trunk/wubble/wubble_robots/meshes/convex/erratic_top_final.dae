@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA version="1.4.0" xmlns="http://www.collada.org/2005/11/COLLADASchema">
+	<asset>
+		<contributor>
+			<author>NxuStream2 converter - http://www.ageia.com</author>
+			<authoring_tool>PhysX Rocket, PhysX Viewer, or CreateDynamics</authoring_tool>
+			<comments>questions to: jratcliff@ageia.com</comments>
+			<copyright></copyright>
+			<source_data>chair_gothic_tilted</source_data>
+		</contributor>
+		<unit meter="1" name="meter"/>
+		<up_axis>Y_UP</up_axis>
+	</asset>
+   <library_materials>
+      <material id="Material" name="Material">
+         <instance_effect url="#Material-fx"></instance_effect>
+      </material>
+   </library_materials>
+   <library_effects>
+      <effect id="Material-fx" name="Material">
+         <profile_COMMON>
+            <technique id="Material-fx-COMMON" sid="COMMON">
+               <phong>
+                  <ambient>
+                     <color>0.803922 0.588235 0.92549 1</color>
+                  </ambient>
+                  <diffuse>
+                     <color>0.803922 0.588235 0.92549 1</color>
+                  </diffuse>
+                  <specular>
+                     <color>0.631373 0.631373 0.631373 1</color>
+                  </specular>
+                  <shininess>
+                     <float>1</float>
+                  </shininess>
+                  <reflective>
+                     <color>0 0 0 1</color>
+                  </reflective>
+                  <transparent>
+                     <color>1 1 1 1</color>
+                  </transparent>
+                  <transparency>
+                     <float>0</float>
+                  </transparency>
+               </phong>
+           </technique>
+         </profile_COMMON>
+      </effect>
+   </library_effects>
+  <library_geometries>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_0-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_0-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_0-Position">
+          <float_array count="27" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_0-Position-array">
+            0.024991563 0.100033753 0.003  0.092560597 0.150039375 0  0.012490156 0.150039375 0.003  -0.092452176 0.150039375 0  
+            -0.092452176 0.100033753 0  0.092560597 0.100033753 0  -0.092452176 0.1215728 0.003  -0.0862597 0.100033753 0.003  
+            0 0.150039375 0.003  
+          </float_array>
+          <technique_common>
+            <accessor count="9" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_0-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_0-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_0-Position"/>
+				</vertices>
+				<triangles material="Material" count="14">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_0-Vertex"/>
+           <p>
+             0 1 2  3 2 1  3 1 4  5 0 4  
+             5 4 1  5 1 0  6 3 4  6 0 2  
+             7 4 0  7 0 6  7 6 4  8 2 3  
+             8 3 6  8 6 2  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_1-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_1-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_1-Position">
+          <float_array count="30" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_1-Position-array">
+            -0.158627287 -0.149994373 0.003  -0.092400499 -0.200000003 0.003  -0.101875208 -0.149994373 0.003  -0.15834704 -0.149994373 -0.012  
+            -0.100000001 -0.200000003 -0.012  -0.092400499 -0.149994373 0  -0.092400499 -0.200000003 -0.012  -0.100000001 -0.200000003 0.003  
+            -0.092400499 -0.196999997 -0.012  -0.154827043 -0.149994373 -0.012  
+          </float_array>
+          <technique_common>
+            <accessor count="10" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_1-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_1-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_1-Position"/>
+				</vertices>
+				<triangles material="Material" count="16">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_1-Vertex"/>
+           <p>
+             0 1 2  3 4 0  3 0 2  5 3 2  
+             5 2 1  6 1 4  6 5 1  6 4 3  
+             7 0 4  7 4 1  7 1 0  8 5 6  
+             8 6 3  9 3 5  9 5 8  9 8 3  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_2-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_2-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_2-Position">
+          <float_array count="36" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_2-Position-array">
+            0.092798501 -0.149994373 0  0.158627287 -0.149994373 0.003  0.159082711 -0.149994373 -0.012  0.092798501 -0.200000003 0.002999569  
+            0.092798501 -0.200000003 -0.012  0.100000001 -0.200000003 0.003  0.100000001 -0.200000003 -0.012  0.101875208 -0.149994373 0.003  
+            0.092798501 -0.171194002 0.003  0.092798501 -0.196999997 -0.012  0.155538157 -0.149994373 -0.012  0.159082711 -0.149994373 0  
+          </float_array>
+          <technique_common>
+            <accessor count="12" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_2-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_2-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_2-Position"/>
+				</vertices>
+				<triangles material="Material" count="20">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_2-Vertex"/>
+           <p>
+             0 1 2  3 4 5  3 0 4  6 5 4  
+             6 4 2  6 2 5  7 1 0  7 5 1  
+             7 3 5  8 0 3  8 3 7  8 7 0  
+             9 2 4  9 4 0  10 0 2  10 2 9  
+             10 9 0  11 2 1  11 1 5  11 5 2  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_3-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_3-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_3-Position">
+          <float_array count="36" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_3-Position-array">
+            0.16323784 0.150039375 0.003  0.092560597 0.150039375 0  0.161335915 0.150039375 -0.012  0.092560597 0.200000003 0.003  
+            0.092560597 0.200045004 -0.012  0.115000002 0.200000003 0.003  0.115901001 0.200045004 -0.012  0.113126479 0.150039375 0.003  
+            0.163531289 0.150039375 -0.012  0.115901999 0.200045004 0  0.092560597 0.198413 -0.012  0.163531587 0.150039375 0  
+          </float_array>
+          <technique_common>
+            <accessor count="12" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_3-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_3-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_3-Position"/>
+				</vertices>
+				<triangles material="Material" count="20">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_3-Vertex"/>
+           <p>
+             0 1 2  3 4 1  3 0 5  6 2 4  
+             7 1 0  7 0 3  7 3 1  8 0 2  
+             8 2 6  9 8 6  9 5 0  9 6 4  
+             9 4 3  9 3 5  10 2 1  10 1 4  
+             10 4 2  11 0 8  11 8 9  11 9 0  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_4-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_4-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_4-Position">
+          <float_array count="30" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_4-Position-array">
+            -0.092452176 0.150039375 0  -0.092452176 0.200045004 -0.012  -0.092452176 0.200000003 0.003  -0.16323784 0.150039375 0.003  
+            -0.164562702 0.150039375 -0.012  -0.115000002 0.200000003 0.003  -0.114439003 0.200045004 -0.012  -0.100636318 0.150039375 0.003  
+            -0.164562702 0.150039375 0  -0.092452176 0.198413 -0.012  
+          </float_array>
+          <technique_common>
+            <accessor count="10" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_4-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_4-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_4-Position"/>
+				</vertices>
+				<triangles material="Material" count="16">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_4-Vertex"/>
+           <p>
+             0 1 2  3 4 0  5 3 2  5 2 1  
+             6 1 4  6 4 5  6 5 1  7 0 2  
+             7 2 3  7 3 0  8 4 3  8 3 5  
+             8 5 4  9 0 4  9 4 1  9 1 0  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_5-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_5-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_5-Position">
+          <float_array count="24" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_5-Position-array">
+            -0.0862597 0.100033753 0.003  0 -0.149994373 0.003  0 0.100033753 0.003  0.000149846 -0.149994373 0  
+            -0.092400499 -0.149994373 0  0.00004781 0.100033753 0  -0.09243685 0.100033753 0  -0.014376617 -0.149994373 0.003  
+          </float_array>
+          <technique_common>
+            <accessor count="8" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_5-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_5-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_5-Position"/>
+				</vertices>
+				<triangles material="Material" count="12">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_5-Vertex"/>
+           <p>
+             0 1 2  3 2 1  3 1 4  5 2 3  
+             5 3 4  5 0 2  6 4 0  6 0 5  
+             6 5 4  7 0 4  7 4 1  7 1 0  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_6-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_6-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_6-Position">
+          <float_array count="30" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_6-Position-array">
+            0.092560597 0.150039375 0  0.092560597 0.200045004 -0.012  0.092560597 0.200000003 0.003  -0.092452176 0.200000003 0.003  
+            -0.092452176 0.150039375 0  -0.092452176 0.198413 -0.012  0.012490156 0.150039375 0.003  -0.092452176 0.200045004 -0.012  
+            0.092560597 0.198413 -0.012  0 0.150039375 0.003  
+          </float_array>
+          <technique_common>
+            <accessor count="10" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_6-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_6-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_6-Position"/>
+				</vertices>
+				<triangles material="Material" count="16">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_6-Vertex"/>
+           <p>
+             0 1 2  3 2 1  4 5 0  4 3 5  
+             6 4 0  6 0 2  6 2 3  7 1 5  
+             7 5 3  7 3 1  8 0 5  8 5 1  
+             8 1 0  9 3 4  9 4 6  9 6 3  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_7-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_7-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_7-Position">
+          <float_array count="33" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_7-Position-array">
+            -0.092400499 -0.200000003 0.003  -0.092400499 -0.200000003 -0.012  0.092798501 -0.200000003 0.002999569  0.08749859 -0.149994373 0.003  
+            -0.092400499 -0.149994373 0  0.092798501 -0.149994373 0  0.092798501 -0.196999997 -0.012  0.092798501 -0.200000003 -0.012  
+            -0.014376617 -0.149994373 0.003  0.092798501 -0.171194002 0.003  -0.092400499 -0.196999997 -0.012  
+          </float_array>
+          <technique_common>
+            <accessor count="11" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_7-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_7-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_7-Position"/>
+				</vertices>
+				<triangles material="Material" count="18">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_7-Vertex"/>
+           <p>
+             0 1 2  0 2 3  4 1 0  5 6 4  
+             5 4 3  5 2 6  7 2 1  7 1 6  
+             7 6 2  8 0 3  8 3 4  8 4 0  
+             9 3 2  9 2 5  9 5 3  10 6 1  
+             10 1 4  10 4 6  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_8-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_8-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_8-Position">
+          <float_array count="36" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_8-Position-array">
+            -0.185000002 0.127499998 0.003  -0.101875208 -0.149994373 0.003  -0.100636318 0.150039375 0.003  -0.185000002 -0.127499998 0.003  
+            -0.184479997 -0.127721995 -0.012  -0.164562702 0.150039375 -0.012  -0.15834704 -0.149994373 -0.012  -0.184479997 0.130169004 -0.012  
+            -0.16323784 0.150039375 0.003  -0.158627287 -0.149994373 0.003  -0.092400499 -0.149994373 0  -0.092452176 0.150039375 0  
+          </float_array>
+          <technique_common>
+            <accessor count="12" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_8-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_8-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_8-Position"/>
+				</vertices>
+				<triangles material="Material" count="20">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_8-Vertex"/>
+           <p>
+             0 1 2  3 1 0  4 3 0  4 5 6  
+             7 5 4  7 4 0  8 5 7  8 7 0  
+             8 0 2  8 2 5  9 3 4  9 4 6  
+             9 6 1  9 1 3  10 2 1  10 1 6  
+             11 5 2  11 2 10  11 6 5  11 10 6  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+    <geometry id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_9-Mesh" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_9-Mesh">
+      <convex_mesh>
+        <source id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_9-Position">
+          <float_array count="36" id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_9-Position-array">
+            0.000199 -0.149994373 0  0.000095641 0.100033753 0  0.155538157 -0.149994373 -0.012  0.158627287 -0.149994373 0.003  
+            0.185397997 -0.127721995 -0.012  0.163531289 0.150039375 -0.012  0.092560597 0.150039375 0  0.16323784 0.150039375 0.003  
+            0.185000002 0.127499998 0.003  0.185000002 -0.127499998 0.003  0.184980005 0.127520993 -0.012  0.024991563 0.100033753 0.003  
+          </float_array>
+          <technique_common>
+            <accessor count="12" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_9-Position-array" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+    		   </technique_common>
+				 </source>
+   		 <vertices id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_9-Vertex">
+					<input semantic="POSITION" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_9-Position"/>
+				</vertices>
+				<triangles material="Material" count="20">
+					<input offset="0" semantic="VERTEX" source="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_9-Vertex"/>
+           <p>
+             0 1 2  0 2 3  4 3 2  5 2 1  
+             5 4 2  6 7 5  6 5 1  8 5 7  
+             8 7 3  9 3 4  9 4 8  9 8 3  
+             10 4 5  10 5 8  10 8 4  11 7 6  
+             11 6 1  11 1 0  11 0 3  11 3 7  
+           </p>
+				</triangles>
+      </convex_mesh>
+		</geometry>
+  </library_geometries>
+  <library_visual_scenes>
+	  <visual_scene id="Scene0-Visual" name="Scene0-Visual">
+      <node id="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final-Node" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final" type="NODE">
+        <translate>0 0 0</translate>
+        <rotate>1 0 0  0</rotate>
+      </node>
+  	  </visual_scene>
+  </library_visual_scenes>
+  <library_physics_materials>
+    <physics_material id="pmat0_0-PhysicsMaterial" name="pmat0_0-PhysicsMaterial">
+      <technique_common>
+        <dynamic_friction>0.5</dynamic_friction>
+        <restitution>0</restitution>
+        <static_friction>0.5</static_friction>
+      </technique_common>
+    </physics_material>
+  </library_physics_materials>
+  <library_physics_models>
+    <physics_model id="Scene0-PhysicsModel">
+      <rigid_body sid="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final-RigidBody" name="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final">
+        <technique_common>
+          <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_0-Mesh"/>
+         </shape>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_1-Mesh"/>
+         </shape>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_2-Mesh"/>
+         </shape>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_3-Mesh"/>
+         </shape>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_4-Mesh"/>
+         </shape>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_5-Mesh"/>
+         </shape>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_6-Mesh"/>
+         </shape>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_7-Mesh"/>
+         </shape>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_8-Mesh"/>
+         </shape>
+         <shape>
+            <translate>0 0 0</translate>
+            <rotate>1 0 0  0</rotate>
+            <instance_physics_material url="#pmat0_0-PhysicsMaterial"/>
+            <density>1</density>
+            <extra>
+              <technique profile="PhysX">
+               <skinWidth>0</skinWidth>
+              </technique>
+            </extra>
+            <instance_geometry url="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final_9-Mesh"/>
+         </shape>
+        <dynamic>true</dynamic>
+        <mass>1</mass>
+		   	</technique_common>
+        <extra>
+          <technique profile="PhysX">
+            <extra>
+              <technique profile="PhysX">
+                <linearDamping>0</linearDamping>
+                <angularDamping>0</angularDamping>
+                <solverIterationCount>32</solverIterationCount>
+              </technique>
+            </extra>
+            <disable_collision>false</disable_collision>
+          </technique>
+        </extra>
+  	  </rigid_body>
+    </physics_model>
+  </library_physics_models>
+  <library_physics_scenes>
+    <physics_scene id="Scene0-Physics">
+      <instance_physics_model url="#Scene0-PhysicsModel">
+        <instance_rigid_body target="#/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final-Node" body="/home/anton/Projects/ww-ros/wubble_world/wubble_robots/meshes/convex/erratic_top_final-RigidBody"/>
+      <extra>
+        <technique profile="PhysX">
+        </technique>
+      </extra>
+      </instance_physics_model>
+      <technique_common>
+        <gravity>0 -9.800000191 0</gravity>
+      </technique_common>
+    </physics_scene>
+  </library_physics_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene0-Visual"/>
+    <instance_physics_scene url="#Scene0-Physics"/>
+  </scene>
+</COLLADA>

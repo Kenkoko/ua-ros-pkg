@@ -1,0 +1,49 @@
+<package>
+    <description brief="wubble_teleop">
+        wubble_teleop
+    </description>
+    <author>Daniel Hewlett, Antons Rebguns, Anh Tran, Jeremy Wright</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_teleop</url>
+
+    <!-- Core ros packages -->
+    <depend package="roscpp"/>
+    <depend package="rospy"/>
+    <depend package="geometry_msgs"/>
+
+    <!-- Vision -->
+    <depend package="image_view"/>
+
+    <!-- Controllers, etc. -->
+    <depend package="robot_mechanism_controllers"/>
+    <depend package="gazebo_plugins"/>
+
+    <!-- PR2 stuff (some of which is needed for erratic also) -->
+    <depend package="pr2_experimental_controllers"/>
+    <depend package="pr2_mechanism_controllers"/>
+    <depend package="pr2_gazebo"/>
+    <depend package="pr2_gazebo_plugins"/>
+    <depend package="pr2_laser_filters"/>
+
+    <!-- Joystick -->
+    <depend package="joy"/>
+    <depend package="joystick_remapper" />
+
+    <!-- Movement -->
+    <depend package="move_base"/>   
+    <depend package="move_base_client"/>
+    <depend package="teleop_base"/>
+
+    <!-- SLAM stuff -->
+    <depend package="map_server"/>
+    <depend package="costmap_2d"/>
+    <depend package="fake_localization"/>
+
+    <!-- Our own packages -->
+    <depend package="wubble_environments"/>
+    <depend package="wubble_robots"/>
+
+</package>
+
+
