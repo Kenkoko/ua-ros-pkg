@@ -2,7 +2,7 @@
 
 == Who are you guys? ==
 
-We are a cognitive robotics group at the University of Arizona. Our group is headed by Professors Paul Cohen and Ian Fasel, and consists of graduate students Daniel Hewlett, Antons Regbuns, Jeremy Wright and Ahn Tran, as well as undergraduate Cody Jorgenson.
+We are a cognitive robotics group at the University of Arizona. Our group is headed by Professors Paul Cohen and Ian Fasel, and consists of graduate students Daniel Hewlett, Antons Regbuns, Jeremy Wright and Anh Tran, as well as undergraduate Cody Jorgenson.
 
 == What's in ua-ros-pkg? ==
 
