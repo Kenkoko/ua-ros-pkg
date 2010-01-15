@@ -41,12 +41,13 @@ from core.ax12_const import *
 from core.commands import *
 from msg import JointState
 from msg import JointStateList
+from msg import MotorStateList
 from threading import Thread, Event
 from std_msgs.msg import Int32
 
 class DriverControl:
-    def __init__(self, in_cb, out_cb):
-        self.laser_tilt = LaserTiltAX12(in_cb, out_cb)
+    def __init__(self, out_cb):
+        self.laser_tilt = LaserTiltAX12(out_cb)
 
     def start(self):
         self.laser_tilt.start()
@@ -55,16 +56,16 @@ class DriverControl:
         self.laser_tilt.stop()
 
 class LaserTiltAX12():
-    def __init__(self, in_cb, out_cb):
+    def __init__(self, out_cb):
         self.send_packet_callback = out_cb
-        self.get_motor_state = in_cb
                 
-        self.motor_state_pub = rospy.Publisher('laser_tilt_controller/state', JointStateList)
+        self.joint_state_pub = rospy.Publisher('laser_tilt_controller/state', JointStateList)
         self.cycles_sub = rospy.Subscriber('laser_tilt_controller/cycles', Int32, self.process_new_cycles)
+        self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
 
         self.motor_id = rospy.get_param('laser_tilt_controller/motor_id', 9)
         self.step_num = rospy.get_param('laser_tilt_controller/step_num', 5)
-        self.update_rate = rospy.get_param('laser_tilt_controller/update_rate', 5)
+        self.joint_name = rospy.get_param('laser_tilt_controller/joint_name', 'laser_tilt_joint')
         self.num_cycles = 0
         
         mcv = (self.motor_id, 0)
@@ -84,18 +85,16 @@ class LaserTiltAX12():
 	    
         self.event = Event()
         self.tilt_processor = Thread(target=self.do_tilt)
-        self.state_processor = Thread(target=self.process_motor_states)
                 
     def start(self):
         self.running = True
         self.tilt_processor.start()
-        self.state_processor.start()
-
     def stop(self):
         self.running = False
         self.event.set()
-        self.motor_state_pub.unregister()
+        self.joint_state_pub.unregister()
         self.cycles_sub.unregister()
+        self.motor_states_sub.unregister()
         
     def __angle_to_raw_position(self, angle):
         if angle < self.min_angle: angle = self.min_angle
@@ -107,15 +106,13 @@ class LaserTiltAX12():
     def __raw_position_to_angle(self, raw):
         return int(round((self.initial_position_raw - raw) * AX_DEG_RAW_RATIO))
             
-    def process_motor_states(self):
-        rate = rospy.Rate(self.update_rate)
-        while self.running:
-            state_dict_list = self.get_motor_state([self.motor_id])
-            if state_dict_list:
-                state = state_dict_list[0]
-                state['position'] = self.__raw_position_to_angle(state['position'])
-                self.motor_state_pub.publish([JointState(**state)])
-            rate.sleep()
+    def process_motor_states(self, state_list):
+        if self.running:
+            state = filter(lambda state: state.id == self.motor_id, state_list.motor_states)
+            if state:
+                state = state[0]
+                joint_state = JointState(self.joint_name, self.__raw_position_to_angle(state.position), [self.motor_id], state.moving)
+                self.joint_state_pub.publish([joint_state])
     
     def process_new_cycles(self, data):
         self.num_cycles = data.data

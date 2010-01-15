@@ -43,6 +43,8 @@ import sys
 from threading import Lock
 from threading import Thread
 from Queue import Queue
+from msg import MotorState
+from msg import MotorStateList
 
 class SerialProxy():
     def __init__(self, port_name='/dev/ttyUSB1', baud_rate='1000000', min_motor_id=1, max_motor_id=25, update_rate=5):
@@ -54,6 +56,8 @@ class SerialProxy():
 
         self.__packet_queue = Queue()
         self.__state_lock = Lock()
+        
+        self.motor_states_pub = rospy.Publisher('motor_states', MotorStateList)
 
     def connect(self):
         try:
@@ -63,7 +67,6 @@ class SerialProxy():
             rospy.logfatal(e.message)
             sys.exit(1)
 
-        self.motor_states = {}
         self.running = True
         Thread(target=self.__update_motor_states).start()
         Thread(target=self.__process_packet_queue).start()
@@ -74,13 +77,6 @@ class SerialProxy():
 
     def queue_new_packet(self, packet):
         self.__packet_queue.put_nowait(packet)
-        
-    def get_motor_states(self, motor_id_list):
-        retVal = []
-        for mid in motor_id_list:
-            if mid in self.motor_states:
-                retVal.append(self.motor_states[mid])
-        return retVal
 
     def __find_motors(self):
         rospy.loginfo('Pinging motor IDs %d through %d...' % (self.min_motor_id, self.max_motor_id))
@@ -130,9 +126,10 @@ class SerialProxy():
             self.__state_lock.acquire()
             # get current state of all motors and publish to motor_states topic
             try:
+                motor_states = []
                 for i in self.motors:
                     state = self.__serial_bus.get_servo_feedback(i)
-                    if state: self.motor_states[i] = state
+                    if state: motor_states.append(MotorState(**state))
             except rio.ErrorCodeError, ece:
                 rospy.logfatal(ece)
                 signal_shutdown(ece)
@@ -142,6 +139,10 @@ class SerialProxy():
                 rospy.loginfo(dpe.message)
             finally:
                 self.__state_lock.release()
+
+            if motor_states:
+                self.motor_states_pub.publish(motor_states)
+                
             rate.sleep()
 
 if __name__ == '__main__':

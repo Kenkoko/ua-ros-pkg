@@ -36,6 +36,7 @@
 import roslib
 roslib.load_manifest('wubble_controllers')
 
+import sys
 import rospy
 from core.serial_proxy import SerialProxy
 from srv import *
@@ -66,15 +67,18 @@ class SerialBusDriverManager:
         if driver_name in self.drivers:
             return DriverControlResponse(False, 'Driver already started. If you want to restart it, call restart.')
         try:
-            driver = __import__(driver_name)
+            if driver_name not in sys.modules:
+                driver = __import__(driver_name)
+            else:
+                driver = reload(sys.modules[driver_name])
         except ImportError, ie:
             return DriverControlResponse(False, 'Cannot find driver module. Unable to start driver %s\n%s' %(driver_name, str(ie)))
         except SyntaxError, se:
             return DriverControlResponse(False, 'Syntax error in driver module. Unable to start driver %s\n%s' %(driver_name, str(se)))
         except Exception, e:
-            return DriverControlResponse(False, 'Unknown error has occured. Unable to start driver %s\n%s' %(driver_name, str(se)))
+            return DriverControlResponse(False, 'Unknown error has occured. Unable to start driver %s\n%s' %(driver_name, str(e)))
            
-        control = driver.DriverControl(out_cb=self.serial_proxy.queue_new_packet, in_cb=self.serial_proxy.get_motor_states)
+        control = driver.DriverControl(out_cb=self.serial_proxy.queue_new_packet)
         control.start()
         self.drivers[driver_name] = control
         return DriverControlResponse(True, 'Driver %s successfully started.' %driver_name)
