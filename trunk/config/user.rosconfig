@@ -5,8 +5,5 @@
     local-name: pkgs
     target: /opt/ros/installed/pkgs
 - svn:
-    uri: https://garuda.cs.arizona.edu/svn/wubbleworld/ww-ros/trunk
-    local-name: wubble_world
-- svn:
     uri: http://ua-ros-pkg.googlecode.com/svn/trunk/
     local-name: ua-ros-pkg
