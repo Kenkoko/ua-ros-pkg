@@ -1,0 +1,4 @@
+laser_tilt_controller:
+    motor_id: 9
+    num_steps: 5
+

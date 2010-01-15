@@ -1,8 +1,9 @@
 import time
 import serial
-import ax12_const
-import commands
 from binascii import b2a_hex
+
+from ax12_const import *
+from commands import *
 
 class SerialIO(object):
     """ Provides low level IO with the AX-12+ servos through pyserial. Has the
@@ -41,12 +42,12 @@ class SerialIO(object):
         # directly from AX-12 manual:
         # Check Sum = ~ (ID + LENGTH + INSTRUCTION + PARAM_1 + ... + PARAM_N)
         # If the calculated value is > 255, the lower byte is the check sum.
-        checksum = 255 - ( (servoId + length + ax12_const.AX_READ_DATA + \
+        checksum = 255 - ( (servoId + length + AX_READ_DATA + \
                             address + size) % 256 )
         
         # packet: FF  FF  ID LENGTH INSTRUCTION PARAM_1 ... CHECKSUM
         packetStr = chr(0xFF) + chr(0xFF) + chr(servoId) + chr(length) + \
-                    chr(ax12_const.AX_READ_DATA) + chr(address) + chr(size) + \
+                    chr(AX_READ_DATA) + chr(address) + chr(size) + \
                     chr(checksum)
         self.ser.write(packetStr)
         
@@ -68,12 +69,8 @@ class SerialIO(object):
                 length -= 1
             data = map(b2a_hex, data)
             data = map( int, data, ([16] * len(data)) )
-        except TypeError, te:
-            print "Got TypeError"
-            return []
-        except ValueError, ve:
-            print "Got ValueError"
-            return []
+        except Exception, e:
+            raise DroppedPacketError('Invalid response received from motor %d.' %servoId)
         
         # verify checksum
         checksum = 255 - reduce(int.__add__, data[2:-1]) % 256
@@ -100,12 +97,12 @@ class SerialIO(object):
         # directly from AX-12 manual:
         # Check Sum = ~ (ID + LENGTH + INSTRUCTION + PARAM_1 + ... + PARAM_N)
         # If the calculated value is > 255, the lower byte is the check sum.
-        checksum = 255 - ((servoId + length + ax12_const.AX_WRITE_DATA + \
+        checksum = 255 - ((servoId + length + AX_WRITE_DATA + \
                            address + sum(data)) % 256)
         
         # packet: FF  FF  ID LENGTH INSTRUCTION PARAM_1 ... CHECKSUM
         packetStr = chr(0xFF) + chr(0xFF) + chr(servoId) + chr(length) + \
-                       chr(ax12_const.AX_WRITE_DATA) + chr(address)
+                       chr(AX_WRITE_DATA) + chr(address)
         self.ser.write(packetStr)
         for d in data:
             self.ser.write(chr(d))
@@ -122,12 +119,15 @@ class SerialIO(object):
         data.append(self.ser.read()) # read 0xFF
         data.append(self.ser.read()) # read id
         data.append(self.ser.read()) # read length
-        length = ord(data[3])
-        while length > 0:
-            data.append(self.ser.read())
-            length -= 1
-        data = map(b2a_hex, data)
-        data = map( int, data, ([16] * len(data)) )
+        try:
+            length = ord(data[3])
+            while length > 0:
+                data.append(self.ser.read())
+                length -= 1
+            data = map(b2a_hex, data)
+            data = map( int, data, ([16] * len(data)) )
+        except Exception, e:
+            raise DroppedPacketError('Invalid response received from motor %d.' %servoId)
         
         # verify checksum
         checksum = 255 - reduce(int.__add__, data[2:-1]) % 256
@@ -152,11 +152,11 @@ class SerialIO(object):
         # directly from AX-12 manual:
         # Check Sum = ~ (ID + LENGTH + INSTRUCTION + PARAM_1 + ... + PARAM_N)
         # If the calculated value is > 255, the lower byte is the check sum.
-        checksum = 255 - ((servoId + length + ax12_const.AX_PING) % 256)
+        checksum = 255 - ((servoId + length + AX_PING) % 256)
         
         # packet: FF  FF  ID LENGTH INSTRUCTION CHECKSUM
         packetStr = chr(0xFF) + chr(0xFF) + chr(servoId) + chr(length) + \
-                       chr(ax12_const.AX_PING) + chr(checksum)
+                       chr(AX_PING) + chr(checksum)
         self.ser.write(packetStr)
         
         # wait for response packet from AX-12+
@@ -207,13 +207,13 @@ class SerialIO(object):
             length += len(d)    
             valsum += sum(d)
         
-        checksum = 255 - ((ax12_const.AX_BROADCAST + length + \
-                          ax12_const.AX_SYNC_WRITE + address + len(data[0][1:]) + \
+        checksum = 255 - ((AX_BROADCAST + length + \
+                          AX_SYNC_WRITE + address + len(data[0][1:]) + \
                           valsum) % 256)
         
         # packet: FF  FF  ID LENGTH INSTRUCTION PARAM_1 ... CHECKSUM
-        packetStr = chr(0xFF) + chr(0xFF) + chr(ax12_const.AX_BROADCAST) + \
-                    chr(length) + chr(ax12_const.AX_SYNC_WRITE) + chr(address) + \
+        packetStr = chr(0xFF) + chr(0xFF) + chr(AX_BROADCAST) + \
+                    chr(length) + chr(AX_SYNC_WRITE) + chr(address) + \
                     chr(len(data[0][1:]))
         self.ser.write(packetStr)
         for servo in data:
@@ -259,15 +259,15 @@ class AX12_IO(object):
         register = 0
         values = []
         
-        if command == commands.AX_GOAL_POSITION:
+        if command == AX_GOAL_POSITION:
             parse2 = True
-            register = ax12_const.AX_GOAL_POSITION_L
-        elif command == commands.AX_GOAL_SPEED:
+            register = AX_GOAL_POSITION_L
+        elif command == AX_GOAL_SPEED:
             parse2 = True
-            register = ax12_const.AX_GOAL_SPEED_L
-        elif command == commands.AX_TORQUE_ENABLE:
+            register = AX_GOAL_SPEED_L
+        elif command == AX_TORQUE_ENABLE:
             parse2 = False
-            register = ax12_const.AX_TORQUE_ENABLE                 
+            register = AX_TORQUE_ENABLE                 
 
         for val in packet[1]:
             motor_id = val[0]
@@ -293,7 +293,7 @@ class AX12_IO(object):
             loVal = int((1023 - speed) % 256)
             hiVal = int((1023 - speed) >> 8)
         # set two register values with low and high byte for the speed
-        response = self.__sio.write_to_servo(servoId, ax12_const.AX_GOAL_SPEED_L,
+        response = self.__sio.write_to_servo(servoId, AX_GOAL_SPEED_L,
                                              (loVal, hiVal))
         if response:
             error, message, code = self.get_message_on_error(response[4])
@@ -312,7 +312,7 @@ class AX12_IO(object):
         loVal = int(position % 256)
         hiVal = int(position >> 8)
         # set two register values with low and high byte for the position
-        response = self.__sio.write_to_servo(servoId, ax12_const.AX_GOAL_POSITION_L,
+        response = self.__sio.write_to_servo(servoId, AX_GOAL_POSITION_L,
                                              (loVal, hiVal))
         if response:
             error, message, code = self.get_message_on_error(response[4])
@@ -337,7 +337,7 @@ class AX12_IO(object):
         # split position into 2 bytes
         loPositionVal = int(position % 256)
         hiPositionVal = int(position >> 8)
-        response = self.__sio.write_to_servo(servoId, ax12_const.AX_GOAL_POSITION_L,
+        response = self.__sio.write_to_servo(servoId, AX_GOAL_POSITION_L,
                                              (loPositionVal, hiPositionVal,
                                               loSpeedVal, hiSpeedVal))
         if response:
@@ -368,7 +368,7 @@ class AX12_IO(object):
                 hiVal = int((1023 - speed) >> 8)
             writeableVals.append( (sid, loVal, hiVal) )
         # use sync write to broadcast multi servo message
-        self.__sio.sync_write_to_servos(ax12_const.AX_GOAL_SPEED_L, tuple(writeableVals))
+        self.__sio.sync_write_to_servos(AX_GOAL_SPEED_L, tuple(writeableVals))
 
     def set_multi_servo_positions(self, valueTuples):
         """
@@ -386,7 +386,7 @@ class AX12_IO(object):
             hiVal = int(position >> 8)
             writeableVals.append( (sid, loVal, hiVal) )
         # use sync write to broadcast multi servo message
-        self.__sio.sync_write_to_servos(ax12_const.AX_GOAL_POSITION_L, tuple(writeableVals))
+        self.__sio.sync_write_to_servos(AX_GOAL_POSITION_L, tuple(writeableVals))
 
     def set_multi_servo_positions_and_speeds(self, valueTuples):
         """
@@ -412,7 +412,7 @@ class AX12_IO(object):
             hiPositionVal = int(position >> 8)
             writeableVals.append( (sid, loPositionVal, hiPositionVal, loSpeedVal, hiSpeedVal) )
         # use sync write to broadcast multi servo message
-        self.__sio.sync_write_to_servos(ax12_const.AX_GOAL_POSITION_L, tuple(writeableVals))
+        self.__sio.sync_write_to_servos(AX_GOAL_POSITION_L, tuple(writeableVals))
 
     def set_min_max_angle_limits(self, servoId, minAngle, maxAngle):
         """
@@ -424,7 +424,7 @@ class AX12_IO(object):
         loMaxVal = int(maxAngle % 256)
         hiMaxVal = int(maxAngle >> 8)
         # set 4 register values with low and high bytes for min and max angles
-        response = self.__sio.write_to_servo(servoId, ax12_const.AX_CW_ANGLE_LIMIT_L,
+        response = self.__sio.write_to_servo(servoId, AX_CW_ANGLE_LIMIT_L,
                                       (loMinVal, hiMinVal, loMaxVal, hiMaxVal))
         if response:
             error, message, code = self.get_message_on_error(response[4])
@@ -443,7 +443,7 @@ class AX12_IO(object):
             value = (1,)
         else:
             value = (0,)
-        response = self.__sio.write_to_servo(servoId, ax12_const.AX_TORQUE_ENABLE,
+        response = self.__sio.write_to_servo(servoId, AX_TORQUE_ENABLE,
                                              value)
         if response:
             error, message, code = self.get_message_on_error(response[4])
@@ -468,11 +468,11 @@ class AX12_IO(object):
                 val = 0
             writeableVals.append( (sid, val) )
         # use sync write to broadcast multi servo message
-        self.__sio.sync_write_to_servos(ax12_const.AX_TORQUE_ENABLE, tuple(writeableVals))
+        self.__sio.sync_write_to_servos(AX_TORQUE_ENABLE, tuple(writeableVals))
 
     def get_servo_speed(self, servoId):
         """ Reads the servo's speed value from its registers. """
-        response = self.__sio.read_from_servo(servoId, ax12_const.AX_PRESENT_SPEED_L, 2)
+        response = self.__sio.read_from_servo(servoId, AX_PRESENT_SPEED_L, 2)
         if response:
             error, message, code = self.get_message_on_error(response[4])
             if error:
@@ -485,7 +485,7 @@ class AX12_IO(object):
     
     def get_servo_position(self, servoId):
         """ Reads the servo's position value from its registers. """
-        response = self.__sio.read_from_servo(servoId, ax12_const.AX_PRESENT_POSITION_L, 2)
+        response = self.__sio.read_from_servo(servoId, AX_PRESENT_POSITION_L, 2)
         if response:
             error, message, code = self.get_message_on_error(response[4])
             if error:
@@ -499,7 +499,7 @@ class AX12_IO(object):
         Returns the min and max angle limits from the specified servo.
         """
         # read in 4 consecutive bytes starting with low value of clockwise angle limit
-        response = self.__sio.read_from_servo(servoId, ax12_const.AX_CW_ANGLE_LIMIT_L, 4)
+        response = self.__sio.read_from_servo(servoId, AX_CW_ANGLE_LIMIT_L, 4)
         if response:
             error, message, code = self.get_message_on_error(response[4])
             if error:
@@ -520,13 +520,13 @@ class AX12_IO(object):
         """
         # read in 8 consecutive bytes starting with low value for position
         response = self.__sio.read_from_servo(servoId,
-                                        ax12_const.AX_PRESENT_POSITION_L, 8)
+                                        AX_PRESENT_POSITION_L, 11)
         if response:
             error, message, code = self.get_message_on_error(response[4])
             if error:
                 message += ' when getting feedback from servo with id %d' %(servoId)
                 raise ErrorCodeError(message, code)
-        if len(response) == 14:
+        if len(response) == 17:
             # extract data values from the raw data
             position = response[5] + (response[6] << 8)
             speed = response[7] + ( response[8] << 8)
@@ -537,29 +537,30 @@ class AX12_IO(object):
                 load = -load
             voltage = response[11]
             temperature = response[12]
+            moving = response[15]
             
             if speed > 1023:
                 speed = 1023 - speed
             
             # return the data in a dictionary
-            return {'id':servoId, 'position':position, 'speed':speed, 'load':load, 'voltage':voltage, 'temperature':temperature}
+            return {'id':servoId, 'position':position, 'speed':speed, 'load':load, 'voltage':voltage, 'temperature':temperature, 'moving':bool(moving)}
 
     def get_message_on_error(self, ec):
-        if not ec & ax12_const.AX_INSTRUCTION_ERROR == 0:
-            return True, 'Instruction Error', ax12_const.AX_INSTRUCTION_ERROR
-        if not ec & ax12_const.AX_OVERLOAD_ERROR == 0:
-            return True, 'Overload Error', ax12_const.AX_OVERLOAD_ERROR
-        if not ec & ax12_const.AX_CHECKSUM_ERROR == 0:
-            return True, 'Checksum Error', ax12_const.AX_CHECKSUM_ERROR
-        if not ec & ax12_const.AX_RANGE_ERROR == 0:
-            return True, 'Range Error', ax12_const.AX_RANGE_ERROR
-        if not ec & ax12_const.AX_OVERHEATING_ERROR == 0:
-            return True, 'Overheating Error', ax12_const.AX_OVERHEATING_ERROR
-        if not ec & ax12_const.AX_ANGLE_LIMIT_ERROR == 0:
-            return True, 'Angle Limit Error', ax12_const.AX_ANGLE_LIMIT_ERROR
-        if not ec & ax12_const.AX_INPUT_VOLTAGE_ERROR == 0:
-            return True, 'Input Voltage Error', ax12_const.AX_INPUT_VOLTAGE_ERROR
-        return False, None, ax12_const.AX_NO_ERROR
+        if not ec & AX_INSTRUCTION_ERROR == 0:
+            return True, 'Instruction Error', AX_INSTRUCTION_ERROR
+        if not ec & AX_OVERLOAD_ERROR == 0:
+            return True, 'Overload Error', AX_OVERLOAD_ERROR
+        if not ec & AX_CHECKSUM_ERROR == 0:
+            return True, 'Checksum Error', AX_CHECKSUM_ERROR
+        if not ec & AX_RANGE_ERROR == 0:
+            return True, 'Range Error', AX_RANGE_ERROR
+        if not ec & AX_OVERHEATING_ERROR == 0:
+            return True, 'Overheating Error', AX_OVERHEATING_ERROR
+        if not ec & AX_ANGLE_LIMIT_ERROR == 0:
+            return True, 'Angle Limit Error', AX_ANGLE_LIMIT_ERROR
+        if not ec & AX_INPUT_VOLTAGE_ERROR == 0:
+            return True, 'Input Voltage Error', AX_INPUT_VOLTAGE_ERROR
+        return False, None, AX_NO_ERROR
 
 class SerialOpenError(Exception):
     def __init__(self, port, baud):
@@ -585,5 +586,12 @@ class ErrorCodeError(Exception):
         Exception.__init__(self)
         self.message = message
         self.error_code = ec_const
+    def __str__(self):
+        return self.message
+
+class DroppedPacketError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self)
+        self.message = message
     def __str__(self):
         return self.message

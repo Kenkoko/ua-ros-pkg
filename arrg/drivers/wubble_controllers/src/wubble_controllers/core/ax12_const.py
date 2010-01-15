@@ -79,3 +79,9 @@ AX_OVERHEATING_ERROR = 4
 AX_ANGLE_LIMIT_ERROR = 2
 AX_INPUT_VOLTAGE_ERROR = 1
 AX_NO_ERROR = 0
+
+# Static parameters
+AX_RANGE = 300
+AX_TICKS = 1024
+AX_RAW_DEG_RATIO = 3.41333333333333333333     # how many ticks in degree
+AX_DEG_RAW_RATIO = 0.29296875                 # how many degrees in a tick

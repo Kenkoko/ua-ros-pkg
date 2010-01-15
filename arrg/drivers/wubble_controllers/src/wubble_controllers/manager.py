@@ -38,6 +38,7 @@ roslib.load_manifest('wubble_controllers')
 
 import rospy
 from core.serial_proxy import SerialProxy
+from srv import *
 
 class SerialBusDriverManager:
     def __init__(self):
@@ -55,39 +56,45 @@ class SerialBusDriverManager:
         rospy.on_shutdown(self.serial_proxy.disconnect)
         
         self.drivers = {}
+        
+        rospy.Service('start_driver', DriverControl, self.start_driver)
+        rospy.Service('stop_driver', DriverControl, self.stop_driver)
+        rospy.Service('restart_driver', DriverControl, self.restart_driver)
 
-    def start_driver(self, driver_name):
+    def start_driver(self, driver_control_request):
+        driver_name = driver_control_request.driver_name
         if driver_name in self.drivers:
-            rospy.loginfo('Driver already started. If you want to restart it, call restart.')
-            return
+            return DriverControlResponse(False, 'Driver already started. If you want to restart it, call restart.')
         try:
             driver = __import__(driver_name)
         except ImportError, ie:
-            rospy.logwarn('Unable to start driver ' + driver_name)
-            rospy.logwarn(ie)
-            return
-        
+            return DriverControlResponse(False, 'Cannot find driver module. Unable to start driver %s\n%s' %(driver_name, str(ie)))
+        except SyntaxError, se:
+            return DriverControlResponse(False, 'Syntax error in driver module. Unable to start driver %s\n%s' %(driver_name, str(se)))
+        except Exception, e:
+            return DriverControlResponse(False, 'Unknown error has occured. Unable to start driver %s\n%s' %(driver_name, str(se)))
+           
         control = driver.DriverControl(out_cb=self.serial_proxy.queue_new_packet, in_cb=self.serial_proxy.get_motor_states)
         control.start()
         self.drivers[driver_name] = control
-        rospy.loginfo('Driver %s successfully started.' %driver_name)
+        return DriverControlResponse(True, 'Driver %s successfully started.' %driver_name)
 
-    def stop_driver(self, driver_name):
+    def stop_driver(self, driver_control_request):
+        driver_name = driver_control_request.driver_name
         if driver_name in self.drivers:
             self.drivers[driver_name].stop()
             del self.drivers[driver_name]
-            rospy.loginfo('Driver %s successfully stopped.' %driver_name)
+            return DriverControlResponse(True, 'Driver %s successfully stopped.' %driver_name)
         else:
-            rospy.loginfo('Driver was not running.')
+            return DriverControlResponse(False, 'Driver was not running.')
 
-    def restart_driver(self, driver_name):
-        self.stop_driver(driver_name)
-        self.start_driver(driver_name)
+    def restart_driver(self, driver_control_request):
+        response1 = self.stop_driver(driver_control_request)
+        response2 = self.start_driver(driver_control_request)
+        return DriverControlResponse(response1.success and response2.success, '%s\n%s' %(response1.reason, response2.reason))
 
 if __name__ == '__main__':
     try:
         manager = SerialBusDriverManager()
-        manager.start_driver('laser_tilt_ax12')
         rospy.spin()
-        manager.stop_driver('laser_tilt_ax12')
     except rospy.ROSInterruptException: pass

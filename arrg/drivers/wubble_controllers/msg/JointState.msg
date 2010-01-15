@@ -1,5 +1,7 @@
 int32 id
-float64 angle
+int32 position
+int32 speed
 int32 load
 int32 voltage
 int32 temperature
+bool moving

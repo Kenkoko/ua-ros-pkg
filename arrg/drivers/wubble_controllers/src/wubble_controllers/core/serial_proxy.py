@@ -46,7 +46,6 @@ from Queue import Queue
 
 class SerialProxy():
     def __init__(self, port_name='/dev/ttyUSB1', baud_rate='1000000', min_motor_id=1, max_motor_id=25, update_rate=5):
-        #rospy.init_node(port_name[port_name.rindex('/') + 1:] + '_proxy', anonymous=False)
         self.port_name = port_name
         self.baud_rate = baud_rate
         self.min_motor_id = min_motor_id
@@ -120,6 +119,8 @@ class SerialProxy():
                 signal_shutdown(ece)
             except rio.ChecksumError, cse:
                 rospy.logwarn(cse)
+            except rio.DroppedPacketError, dpe:
+                rospy.loginfo(dpe.message)
             finally:
                 self.__state_lock.release()
 
@@ -137,6 +138,8 @@ class SerialProxy():
                 signal_shutdown(ece)
             except rio.ChecksumError, cse:
                 rospy.logwarn(cse)
+            except rio.DroppedPacketError, dpe:
+                rospy.loginfo(dpe.message)
             finally:
                 self.__state_lock.release()
             rate.sleep()
