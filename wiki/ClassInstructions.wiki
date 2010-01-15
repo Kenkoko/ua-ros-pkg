@@ -33,8 +33,7 @@ There are now two types of ROS packages on the machines you are using:
 
 The shared packages are already built. To build the user packages we'll be using to run some demos, execute
 {{{
-roscd wubble_world
-rosmake
+rosmake wubble_world
 }}}
 
 = Testing =
