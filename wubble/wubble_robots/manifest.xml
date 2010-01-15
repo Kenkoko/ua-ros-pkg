@@ -1,0 +1,18 @@
+<package>
+  <description brief="wubble_robots">
+
+     wubble_robots contains urdf files that describe robots, cameras, configurations, etc. 
+
+  </description>
+  <author>Daniel Hewlett</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wubble_robots</url>
+
+  <depend package="laser_filters"/>
+  <depend package="robot_self_filter"/>
+  <depend package="rviz"/>
+
+</package>
+
+

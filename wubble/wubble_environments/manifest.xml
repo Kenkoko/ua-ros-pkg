@@ -1,0 +1,16 @@
+<package>
+  <description brief="wubble_environments">
+
+     wubble_environments
+
+  </description>
+  <author>Anh Tran</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wubble_environments</url>
+  
+  <depend package="pr2_gazebo"/>
+
+</package>
+
+
