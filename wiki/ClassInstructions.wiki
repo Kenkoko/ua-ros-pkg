@@ -31,7 +31,7 @@ There are now two types of ROS packages on the machines you are using:
   # Shared packages, which are part of the ROS distribution and come from Willow Garage. These reside in /opt/ros/installed, which means you can't change them.
   # User packages, which live in the ros directory inside your home folder (specifically, ~/ros/ua-ros-pkg).
 
-The shared packages are already built. To build the user packages we'll be using to run some demos, execute
+The shared packages are already built. To build the user packages we'll be using to run some demos, execute:
 {{{
 rosmake wubble_world
 }}}
@@ -39,4 +39,18 @@ rosmake wubble_world
 = Testing =
 
 
-Here's a simple demo to run to test that you've got everything working.
+Here's a simple demo to run to test that you've got everything working. Try running:
+{{{
+roslaunch wubble_demos erratic_nav.launch
+}}}
+
+This should launch the gazebo simulator, complete with the simulated Wubble robot in a small room, as well as the rviz visualization tool. 
+
+Also, try:
+{{{
+roslaunch pr2_gazebo pr2_empty_world.launch
+}}}
+This will launch a simulated PR2 (made by Willow Garage), which is sophisticated humanoid robot. You can control the robot by launching (in another terminal):
+{{{
+roslaunch pr2_teleop teleop_keyboard.launch
+}}}
