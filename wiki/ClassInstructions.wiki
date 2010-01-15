@@ -3,7 +3,7 @@
 
 = Introduction =
 
-This page tells you how to set up your account with a functional ROS installation and UA packages. These will only work on the class machines located in GS 930 (the machine names all start with "h").
+This page tells you how to set up your account with a functional ROS installation and UA packages. These will only work on the class machines located in GS 930 (the machine names all start with "har").
 
 = Installation =
 
@@ -25,6 +25,19 @@ chmod +x install_ros_user
 ./install_ros_user
 }}}
 
+= Building =
+
+There are now two types of ROS packages on the machines you are using: 
+  # Shared packages, which are part of the ROS distribution and come from Willow Garage. These reside in /opt/ros/installed, which means you can't change them.
+  # User packages, which live in the ros directory inside your home folder (specifically, ~/ros/ua-ros-pkg).
+
+The shared packages are already built. To build the user packages we'll be using to run some demos, execute
+{{{
+roscd wubble_world
+rosmake
+}}}
+
 = Testing =
+
 
 Here's a simple demo to run to test that you've got everything working.
