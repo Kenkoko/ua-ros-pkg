@@ -27,17 +27,16 @@ chmod +x install_ros_user
 
 = Building =
 
-There are now two types of ROS packages on the machines you are using: 
+Take a quick look at [http://www.ros.org/wiki/ROS/Tutorials/NavigatingTheFilesystem this ROS tutorial] to get an overview of packages and how the ROS file system is arranged. There are now two types of ROS packages on the machines you are using: 
   # Shared packages, which are part of the ROS distribution and come from Willow Garage. These have been previously installed (and compiled) in /opt/ros/installed, which means you can't change them.
   # User packages, which live in the ros directory inside your home folder (specifically, ~/ros/ua-ros-pkg).
 
-We'll go into more depth with ROS, packages, an so on next week, but for now, let's just get everything set up. The shared packages are already built. To build the user packages we'll be using to run some demos, execute:
+The shared packages are already built. To build the user packages we'll be using to run some demos, execute:
 {{{
-rosmake wubble_world
+rosmake wubble
 }}}
 
 = Testing =
-
 
 Here's a simple demo to run to test that you've got everything working. Try running:
 {{{
