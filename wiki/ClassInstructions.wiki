@@ -35,6 +35,7 @@ The shared packages are already built. To build the user packages we'll be using
 {{{
 rosmake wubble
 }}}
+This will build the whole wubble stack.
 
 = Testing =
 
