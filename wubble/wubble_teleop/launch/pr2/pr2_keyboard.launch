@@ -1,0 +1,7 @@
+<launch>
+    <!-- Load world, robots and controllers -->
+    <include file="$(find wubble_teleop)/launch/pr2_teleop_common.launch"/>
+
+    <!-- Start keyboard teleop node -->
+    <node pkg="wubble_teleop" type="keyboard" name="keyboard"/>
+</launch>

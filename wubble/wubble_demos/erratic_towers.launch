@@ -1,0 +1,7 @@
+<launch>
+
+    <include file="$(find wubble_demos)/erratic_nav.launch" />
+
+    <node pkg="wubble_agents" type="blocks-world-agent" name="blocks_world_agent" />
+
+</launch>
