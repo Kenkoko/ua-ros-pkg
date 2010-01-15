@@ -28,7 +28,7 @@ chmod +x install_ros_user
 = Building =
 
 There are now two types of ROS packages on the machines you are using: 
-  # Shared packages, which are part of the ROS distribution and come from Willow Garage. These reside in /opt/ros/installed, which means you can't change them.
+  # Shared packages, which are part of the ROS distribution and come from Willow Garage. These have been previously installed (and compiled) in /opt/ros/installed, which means you can't change them.
   # User packages, which live in the ros directory inside your home folder (specifically, ~/ros/ua-ros-pkg).
 
 We'll go into more depth with ROS, packages, an so on next week, but for now, let's just get everything set up. The shared packages are already built. To build the user packages we'll be using to run some demos, execute:
@@ -55,4 +55,6 @@ This will launch a simulated PR2 (made by Willow Garage), which is sophisticated
 roslaunch pr2_teleop teleop_keyboard.launch
 }}}
 
-If all of this worked, you're ready to get started with ROS! If not, please send email to Daniel Hewlett.
+If all of this worked, you're ready to get started with ROS! Take a look at the [http://www.ros.org/wiki/ROS/StartGuide ROS Quick Start Guide] if you can't wait to explore ROS further.
+
+If something didn't work, please send email to Daniel Hewlett.
