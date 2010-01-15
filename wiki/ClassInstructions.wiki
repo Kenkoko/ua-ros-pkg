@@ -55,4 +55,4 @@ This will launch a simulated PR2 (made by Willow Garage), which is sophisticated
 roslaunch pr2_teleop teleop_keyboard.launch
 }}}
 
-If all of this worked, you're ready to get started with ROS! If not, please send email
+If all of this worked, you're ready to get started with ROS! If not, please send email to Daniel Hewlett.
