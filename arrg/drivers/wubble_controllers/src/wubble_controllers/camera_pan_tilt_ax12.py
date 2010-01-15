@@ -41,12 +41,13 @@ from core.ax12_const import *
 from core.commands import *
 from msg import JointState
 from msg import JointStateList
+from msg import MotorStateList
 from msg import PanTilt
 from threading import Thread
 
 class DriverControl:
-    def __init__(self, in_cb, out_cb):
-        self.camera_pan_tilt = CameraPanTiltAX12(in_cb, out_cb)
+    def __init__(self, out_cb):
+        self.camera_pan_tilt = CameraPanTiltAX12(out_cb)
 
     def start(self):
         self.camera_pan_tilt.start()
@@ -55,16 +56,17 @@ class DriverControl:
         self.camera_pan_tilt.stop()
 
 class CameraPanTiltAX12():
-    def __init__(self, in_cb, out_cb):
+    def __init__(self, out_cb):
         self.send_packet_callback = out_cb
-        self.get_motor_states = in_cb
                 
-        self.motor_state_pub = rospy.Publisher('camera_pan_tilt_controller/state', JointStateList)
+        self.joint_state_pub = rospy.Publisher('camera_pan_tilt_controller/state', JointStateList)
         self.pan_tilt_sub = rospy.Subscriber('camera_pan_tilt_controller/pan_tilt', PanTilt, self.do_pan_tilt)
+        self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
 
         self.pan_motor_id = rospy.get_param('camera_pan_tilt_controller/pan_motor_id', 6)
         self.tilt_motor_id = rospy.get_param('camera_pan_tilt_controller/tilt_motor_id', 5)
-        self.update_rate = rospy.get_param("camera_pan_tilt_controller/update_rate", 30)
+        self.pan_joint_name = rospy.get_param('camera_pan_tilt_controller/pan_joint_name', 'camera_pan_joint')
+        self.tilt_joint_name = rospy.get_param('camera_pan_tilt_controller/tilt_joint_name', 'camera_tilt_joint')
 
         pan_mcv = (self.pan_motor_id, 100)
         tilt_mcv = (self.tilt_motor_id, 100)
@@ -87,16 +89,13 @@ class CameraPanTiltAX12():
         self.tilt_initial_position_angle = 0.0
         self.tilt_min_angle = -70.0  # looking down from robot's perspective
         self.tilt_max_angle = 35.0   # looking up from robot's perspective
-
-        self.state_processor = Thread(target=self.process_motor_states)
                 
     def start(self):
         self.running = True
-        self.state_processor.start()
 
     def stop(self):
         self.running = False
-        self.motor_state_pub.unregister()
+        self.joint_state_pub.unregister()
         self.pan_tilt_sub.unregister()
 
     def __pan_angle_to_raw_position(self, angle):
@@ -143,19 +142,23 @@ class CameraPanTiltAX12():
         else:
             return int(round((raw - self.tilt_initial_position_raw) * AX_DEG_RAW_RATIO))
 
-    def process_motor_states(self):
-        rate = rospy.Rate(self.update_rate)
-        while self.running:
-            state_dict_list = self.get_motor_states([self.pan_motor_id, self.tilt_motor_id])
-            if state_dict_list:
-                pan_state = state_dict_list[0]
-                tilt_state = state_dict_list[1]
-                pan_state['position'] = self.__raw_pan_to_angle(pan_state['position'])
-                tilt_state['position'] = self.__raw_tilt_to_angle(pan_state['position'])
-                pan_js = JointState(**pan_state)
-                tilt_js = JointState(**tilt_state)
-                self.motor_state_pub.publish([pan_js, tilt_js])
-            rate.sleep()
+    def process_motor_states(self, state_list):
+        if self.running:
+            state = filter(lambda state: state.id == self.pan_motor_id or state.id == self.tilt_motor_id, state_list.motor_states)
+            if len(state) == 2:
+                camera_state = state[0]
+                if camera_state.id == self.pan_motor_id:
+                    pan_js = JointState(self.pan_joint_name, self.__raw_pan_to_angle(camera_state.position), [self.pan_motor_id], camera_state.moving)
+                else:
+                    tilt_js = JointState(self.tilt_joint_name, self.__raw_tilt_to_angle(camera_state.position), [self.tilt_motor_id], camera_state.moving)
+
+                camera_state = state[1]
+                if camera_state.id == self.pan_motor_id:
+                    pan_js = JointState(self.pan_joint_name, self.__raw_pan_to_angle(camera_state.position), [self.pan_motor_id], camera_state.moving)
+                else:
+                    tilt_js = JointState(self.tilt_joint_name, self.__raw_tilt_to_angle(camera_state.position), [self.tilt_motor_id], camera_state.moving)
+
+                self.joint_state_pub.publish([pan_js, tilt_js])
     
     def do_pan_tilt(self, pan_tilt):
         pan_mcv = (self.pan_motor_id, self.__pan_angle_to_raw_position(pan_tilt.pan))

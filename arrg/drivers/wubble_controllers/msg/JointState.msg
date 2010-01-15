@@ -1,7 +1,4 @@
-int32 id
-int32 position
-int32 speed
-int32 load
-int32 voltage
-int32 temperature
+string name
+int32 angle
+int32[] motor_ids
 bool moving
