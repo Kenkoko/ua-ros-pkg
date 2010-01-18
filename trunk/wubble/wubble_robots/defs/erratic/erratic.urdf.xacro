@@ -9,7 +9,7 @@
     <!-- Include file with calibration parameters -->
     <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
 <!--    <include filename="$(find pr2_defs)/defs/head/head_defs.urdf.xacro" />-->
-    <include filename="$(find pr2_defs)/defs/head/head_sensor_package_defs.urdf.xacro" />
+    <include filename="$(find wubble_robots)/defs/erratic/head_sensor_package_defs.urdf.xacro" />
     <include filename="$(find pr2_defs)/defs/materials.urdf.xacro" />    
     <include filename="$(find wubble_robots)/defs/erratic/erratic_head.xacro" />
 
@@ -18,7 +18,7 @@
 
     <property name="base_size_x" value="0.395224" />
     <property name="base_size_y" value="0.367284" />
-    <property name="base_size_z" value="0.155448" />
+    <property name="base_size_z" value="0.135448" />
 
     <property name="wheel_radius" value="0.0625" />
     <property name="wheel_length" value="0.02" />
@@ -28,7 +28,7 @@
     <link name="base_link">
         <inertial>
             <mass value="10" />
-            <origin xyz="-0.1 0 ${base_size_z/2}" />
+            <origin xyz="-0.05 0 ${base_size_z/2}" />
             <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                 iyy="1.0" iyz="0.0"
                 izz="1.0" />
@@ -240,15 +240,15 @@
   </gazebo>
 
     <property name="support_radius" value="0.01" />
-    <property name="support_height" value="0.3" />
+    <property name="support_height" value="0.8128" />
 
-    <joint name="laser_support_joint" type="fixed">
-        <origin xyz="0 0 ${(support_height/2)+base_size_z}" />
+    <joint name="head_support_joint" type="fixed">
+        <origin xyz="-0.0254 0 ${(support_height/2)+base_size_z}" />
         <parent link="base_top_link" />
-        <child link="laser_support_link" />
+        <child link="head_support_link" />
     </joint>
 
-    <link name="laser_support_link"> 
+    <link name="head_support_link"> 
         <inertial>
             <mass value="0.1"/>
             <origin xyz="0 0 0.0"/>
@@ -256,75 +256,58 @@
         </inertial>
 
         <visual>
-            <origin rpy="0 0 ${support_height/2}" xyz="0 0 0.0"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
                 <cylinder radius="${support_radius}" length="${support_height}"/>
             </geometry>
         </visual>
 
         <collision>
-            <origin rpy="0 0 ${support_height/2}" xyz="0 0 0.0"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
                 <cylinder radius="${support_radius}" length="${support_height}"/>
             </geometry>
         </collision>
     </link>
 
+    <joint name="head_tilt_joint" type="fixed"><!--type="continuous">-->
+        <origin xyz="0 0 ${support_height/2}" />
+        <axis xyz="0 0 1" />
+<!--        <anchor xyz="0 0 0" />
+        <limit effort="100" velocity="100" />
+        <joint_properties damping="0.0" friction="0.0" /> -->
+        <parent link="head_support_link" />
+        <child link="head_tilt_link" />
+    </joint>
 
-<!--  <joint name="base_laser_joint" type="fixed">-->
-<!--    <origin xyz="0.0 0 ${support_height/2}" rpy="0 0 0" />-->
-<!--    <parent link="laser_support_link"/>-->
-<!--    <child link="base_laser_link"/>-->
-<!--  </joint>-->
+    <link name="head_tilt_link"> 
+        <inertial>
+            <mass value="0.01"/>
+            <origin xyz="0 0 0.0"/>
+            <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+        </inertial>
 
-<!--  <link name="base_laser_link" type="laser">-->
-<!--    <inertial>-->
-<!--      <mass value="0.1"/>-->
-<!--      <origin xyz="0 0 0.0"/>-->
-<!--      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>-->
-<!--    </inertial>-->
-<!--    -->
-<!--    <visual>-->
-<!--      <origin rpy="0 0 0" xyz="0 0 0.0"/>-->
-<!--      <geometry>-->
-<!--        <cylinder radius=".05" length=".05"/>-->
-<!--      </geometry>-->
-<!--    </visual>-->
-<!--    -->
-<!--    <collision>-->
-<!--      <origin rpy="0 0 0" xyz="0 0 0.0"/>-->
-<!--      <geometry>-->
-<!--        <cylinder radius=".05" length=".05"/>-->
-<!--      </geometry>-->
-<!--    </collision>-->
-<!--    -->
-<!--  </link>-->
+        <visual>
+            <origin xyz="0 0 0.0127" rpy="0 0 0"/>
+            <geometry>
+                <box size="${2*support_radius} ${2*support_radius} 0.0254" />
+            </geometry>
+        </visual>
 
-<!--  <gazebo reference="base_laser_link">-->
-<!--    <sensor:ray name="base_laser_link">-->
-<!--      <resRange>0.1</resRange>-->
-<!--      <rayCount>640</rayCount>-->
-<!--      <rangeCount>640</rangeCount>-->
-<!--      <laserCount>1</laserCount>-->
-<!--      <origin>0.0 0.0 0.0</origin>-->
-<!--      <displayRays>false</displayRays>-->
-<!--      -->
-<!--      <minAngle>-100</minAngle> -->
-<!--      <maxAngle>100</maxAngle>-->
-<!--      -->
-<!--      <minRange>0.07</minRange>-->
-<!--      <maxRange>10.0</maxRange>-->
-<!--      <updateRate>20.0</updateRate>-->
-<!--      <controller:gazebo_ros_laser name="gazebo_ros_base_laser_link_controller" plugin="libgazebo_ros_laser.so">-->
-<!--        <gaussianNoise>0.005</gaussianNoise>-->
-<!--        <alwaysOn>true</alwaysOn>-->
-<!--        <updateRate>20.0</updateRate>-->
-<!--        <topicName>base_scan</topicName>-->
-<!--        <frameName>base_laser_link</frameName>-->
-<!--        <interface:laser name="gazebo_ros_base_laser_link_iface"/>-->
-<!--      </controller:gazebo_ros_laser>-->
-<!--    </sensor:ray>-->
-<!--  </gazebo>-->
+        <collision>
+            <origin xyz="0 0 0.0127" rpy="0 0 0"/>
+            <geometry>
+                <box size="${2*support_radius} ${2*support_radius} 0.0254" />
+            </geometry>
+        </collision>
+    </link>
+
+<!--    <joint name="head_pitch_joint" type="fixed">
+       <origin xyz="0 0 ${support_height+base_size_z}" />
+        <parent link="head_support_link" />
+        <child link="stoc_camera_link" />
+    </joint>
+-->
 
   <gazebo>
     <controller:differential_position2d name="controller1">
@@ -374,10 +357,10 @@
 
     <!-- attempt to add the pan-tilt laser from the pr2, it should be close enough -->
     <pr2_tilting_laser name="laser_tilt" parent="base_top_link" laser_calib_ref="-0.35">
-        <origin xyz="0.1 0 0.235" rpy="0 0 0" />
+        <origin xyz="0.1 0 ${base_size_z - 0.05}" rpy="0 -1 0" />
     </pr2_tilting_laser>
 
-    <stoc_camera name="stoc" parent="base_top_link" />
+    <stoc_camera name="stoc" parent="head_tilt_link" />
 
     <!-- Gazebo materials -->
     <gazebo reference="base_link">
@@ -398,8 +381,14 @@
     <gazebo reference="base_caster_support_link">
         <material>Gazebo/Blue</material>
     </gazebo>
-    <gazebo reference="laser_support_link">
+    <gazebo reference="head_support_link">
+	<material>Gazebo/Chrome</material>
+    </gazebo>
+    <gazebo reference="head_tilt_link">
         <material>Gazebo/Black</material>
     </gazebo>
 
+  <material name="Greyish">
+    <color rgba="0.7 0.7 0.7 1.0"/>
+  </material>
 </robot>
