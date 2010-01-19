@@ -1,0 +1,43 @@
+#summary Instructions for Developers to Setup ROS with ua-ros-pkg
+
+= Guests =
+
+If you do not have an account on the Google Code site, use these instructions:
+
+  # If the machine has never had ROS installed it, do this first:
+{{{
+sudo apt-get install build-essential python-yaml cmake subversion
+}}}
+  # Download the rosinstall file
+{{{
+wget --no-check-certificate http://ros.org/rosinstall -O ~/rosinstall
+}}}
+  # Make it executable
+{{{
+chmod 755 ~/rosinstall
+}}}
+  # Install ROS!
+{{{
+~/rosinstall http://ua-ros-pkg.googlecode.com/svn/trunk/config/wubble-guest.rosconfig
+}}}
+
+= Developers =
+
+If you have an account on the Google Code site, use these instructions:
+
+  # If the machine has never had ROS installed it, do this first:
+{{{
+sudo apt-get install build-essential python-yaml cmake subversion
+}}}
+  # Download the rosinstall file
+{{{
+wget --no-check-certificate http://ros.org/rosinstall -O ~/rosinstall
+}}}
+  # Make it executable
+{{{
+chmod 755 ~/rosinstall
+}}}
+  # Install ROS!
+{{{
+~/rosinstall http://ua-ros-pkg.googlecode.com/svn/trunk/config/wubble.rosconfig
+}}}
