@@ -30,6 +30,10 @@ source ~/.bashrc
 {{{
 rosdep install wubble
 }}}
+  # Build the wubble stack
+{{{
+rosmake wubble
+}}}
 
 = Developers =
 
