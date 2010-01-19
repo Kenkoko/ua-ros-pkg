@@ -7,4 +7,4 @@
 sudo gedit /usr/share/gtksourceview-2.0/language-specs/xml.lang{code}
 }}}
 
-# Add "*.launch" to the list of blob types near the beginning of the XML. That's it!
+# Add "`*`.launch" to the list of blob types near the beginning of the XML. That's it!
