@@ -18,7 +18,7 @@ chmod 755 ~/rosinstall
 }}}
   # Install ROS!
 {{{
-~/rosinstall http://ua-ros-pkg.googlecode.com/svn/trunk/config/wubble-guest.rosconfig
+~/rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/wubble-guest.rosconfig
 }}}
 
 = Developers =
@@ -39,5 +39,5 @@ chmod 755 ~/rosinstall
 }}}
   # Install ROS!
 {{{
-~/rosinstall http://ua-ros-pkg.googlecode.com/svn/trunk/config/wubble.rosconfig
+~/rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/wubble.rosconfig
 }}}
