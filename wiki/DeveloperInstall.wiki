@@ -20,6 +20,14 @@ chmod 755 ~/rosinstall
 {{{
 ~/rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/wubble-guest.rosconfig
 }}}
+  # Reload your .bashrc
+{{{
+source ~/.bashrc
+}}}
+  # Install (Ubuntu) dependencies for wubble world 
+{{{
+rosdep install wubble
+}}}
 
 = Developers =
 
