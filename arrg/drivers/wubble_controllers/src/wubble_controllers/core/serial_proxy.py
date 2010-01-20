@@ -53,7 +53,7 @@ class SerialProxy():
         self.min_motor_id = min_motor_id
         self.max_motor_id = max_motor_id
         self.update_rate = update_rate
-
+        
         self.__packet_queue = Queue()
         self.__state_lock = Lock()
         
@@ -66,7 +66,7 @@ class SerialProxy():
         except rio.SerialOpenError, e:
             rospy.logfatal(e.message)
             sys.exit(1)
-
+            
         self.running = True
         Thread(target=self.__update_motor_states).start()
         Thread(target=self.__process_packet_queue).start()
@@ -85,7 +85,7 @@ class SerialProxy():
         for i in xrange(1, self.max_motor_id):
             result = self.__serial_bus.ping(i)
             if result: self.motors.append(i)
-
+            
         if self.motors:
             rospy.loginfo('Found motors with IDs: %s.' % str(self.motors))
         else:
@@ -94,7 +94,7 @@ class SerialProxy():
             
         rospy.set_param('ax12/connected_ids', self.motors)
         rospy.loginfo('Publishing motor angle limits to param server...')
-
+        
         for i in self.motors:
             angles = self.__serial_bus.get_min_max_angle_limits(i)
             rospy.set_param('ax12/%d/minAngle' %i, angles['min'])
@@ -132,14 +132,14 @@ class SerialProxy():
                     if state: motor_states.append(MotorState(**state))
             except rio.ErrorCodeError, ece:
                 rospy.logfatal(ece)
-                signal_shutdown(ece)
+                rospy.signal_shutdown(ece)
             except rio.ChecksumError, cse:
                 rospy.logwarn(cse)
             except rio.DroppedPacketError, dpe:
                 rospy.loginfo(dpe.message)
             finally:
                 self.__state_lock.release()
-
+                
             if motor_states:
                 self.motor_states_pub.publish(motor_states)
                 
