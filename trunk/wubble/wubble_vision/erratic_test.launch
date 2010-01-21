@@ -1,0 +1,27 @@
+<launch>
+
+    <!-- load the world environment -->
+    <include file="$(find wubble_environments)/launch/wubble_world.launch" />
+
+    <!-- spawn our erratic robot -->
+    <include file="$(find wubble_robots)/launch/erratic.launch"/>
+
+    <!-- insert overhead cam -->
+    <include file="$(find wubble_robots)/launch/overhead_cam.launch"/>
+
+    <!-- run image_proc -->
+    <group ns="stereo/left">
+      <node pkg="image_proc" type="image_proc" name="image_proc" />
+    </group>
+<!--    <group ns="stereo/right">
+      <node pkg="image_proc" type="image_proc" name="image_proc" />
+    </group> -->
+<!--
+    <node pkg="wubble_vision" type="single_color_tracking" name="single_color_tracking1" args="/stereo/left/image_color 255 0 0" />
+    <node pkg="wubble_vision" type="single_color_tracking" name="single_color_tracking2" args="/stereo/left/image_color 0 255 0" />
+    <node pkg="wubble_vision" type="single_color_tracking" name="single_color_tracking3" args="/stereo/left/image_color 0 0 255" />
+-->
+    <node pkg="wubble_vision" type="single_color_tracking" name="single_color_tracking4" args="/overhead_cam/image_raw 0 0 255" />
+
+</launch>
+
