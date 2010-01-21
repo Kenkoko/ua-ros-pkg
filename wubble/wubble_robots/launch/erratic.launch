@@ -2,7 +2,7 @@
     <!-- <include file="$(find pr2_alpha)/$(env ROBOT).machine" /> -->
 
     <!-- Create a transform sender for linking these frames. -->
-    <node name="tf_footprint_base" pkg="tf" type="transform_sender" args="0 0 0 0 0 0 base_footprint base_link 40" />	
+<!--    <node name="tf_footprint_base" pkg="tf" type="transform_sender" args="0 0 0 0 0 0 base_footprint base_link 40" />	-->
 
     <!-- send pr2.xml to param server -->
     <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_robots)/defs/erratic/erratic.urdf.xacro'" />
@@ -22,5 +22,12 @@
 <!--    <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" respawn="false" >-->
 <!--        <remap to="tilt_scan" from="scan"/>-->
 <!--    </node>-->
+
+    <rosparam file="$(find wubble_robots)/controllers/erratic_controllers.yaml" command="load" />
+    <node name="head_tilt_controller" pkg="pr2_controller_manager" type="spawner"
+          args="head_tilt_controller" 
+          output="screen">
+    </node>
+
 </launch>
 
