@@ -39,7 +39,7 @@
     <gazebo reference="camera_link">
         <sensor:camera name="overhead_cam_sensor">
             <imageSize>1024 1024</imageSize>
-            <imageFormat>B8G8R8</imageFormat>
+            <imageFormat>RGB8</imageFormat>
             <hfov>90</hfov>
             <nearClip>0.1</nearClip>
             <farClip>100</farClip>

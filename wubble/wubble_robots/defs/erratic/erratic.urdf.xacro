@@ -270,17 +270,17 @@
         </collision>
     </link>
 
-    <joint name="head_tilt_joint" type="fixed"><!--type="continuous">-->
+    <joint name="head_pan_joint" type="fixed"><!--type="continuous">-->
         <origin xyz="0 0 ${support_height/2}" />
         <axis xyz="0 0 1" />
 <!--        <anchor xyz="0 0 0" />
         <limit effort="100" velocity="100" />
         <joint_properties damping="0.0" friction="0.0" /> -->
         <parent link="head_support_link" />
-        <child link="head_tilt_link" />
+        <child link="head_pan_link" />
     </joint>
 
-    <link name="head_tilt_link"> 
+    <link name="head_pan_link"> 
         <inertial>
             <mass value="0.01"/>
             <origin xyz="0 0 0.0"/>
@@ -301,13 +301,6 @@
             </geometry>
         </collision>
     </link>
-
-<!--    <joint name="head_pitch_joint" type="fixed">
-       <origin xyz="0 0 ${support_height+base_size_z}" />
-        <parent link="head_support_link" />
-        <child link="stoc_camera_link" />
-    </joint>
--->
 
   <gazebo>
     <controller:differential_position2d name="controller1">
@@ -342,25 +335,13 @@
     </controller:gazebo_ros_controller_manager>
   </gazebo>
 
-    <!-- PR2-derived things. These will need to be adapted further to match what we have -->
-<!--    <pr2_head name="head" parent="base_top_link">-->
-<!--    <origin xyz="${cal_head_x}    ${cal_head_y}     ${0.3915+cal_head_z}"-->
-<!--            rpy="${cal_head_roll} ${cal_head_pitch} ${cal_head_yaw}" />-->
-<!--    </pr2_head>-->
-
-    <!-- Camera package: double stereo, prosilica -->
-<!--    <pr2_head_sensor_package name="sensor_mount" hd_name="high_def" -->
-<!--		       stereo_name="double_stereo" -->
-<!--		       parent="head_plate_frame">-->
-<!--    <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />-->
-<!--    </pr2_head_sensor_package>-->
-
     <!-- attempt to add the pan-tilt laser from the pr2, it should be close enough -->
     <pr2_tilting_laser name="laser_tilt" parent="base_top_link" laser_calib_ref="-0.35">
         <origin xyz="0.1 0 ${base_size_z - 0.05}" rpy="0 -1 0" />
     </pr2_tilting_laser>
 
-    <stoc_camera name="stoc" parent="head_tilt_link" />
+    <stoc_camera name="stoc" parent="head_pan_link" />
+    <arm name="arm" parent="base_top_link" />
 
     <!-- Gazebo materials -->
     <gazebo reference="base_link">
@@ -384,11 +365,8 @@
     <gazebo reference="head_support_link">
 	<material>Gazebo/Chrome</material>
     </gazebo>
-    <gazebo reference="head_tilt_link">
+    <gazebo reference="head_pan_link">
         <material>Gazebo/Black</material>
     </gazebo>
 
-  <material name="Greyish">
-    <color rgba="0.7 0.7 0.7 1.0"/>
-  </material>
 </robot>
