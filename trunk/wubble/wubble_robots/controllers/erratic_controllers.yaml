@@ -1,0 +1,8 @@
+head_tilt_controller:
+    type: JointPositionController
+    joint: head_tilt_joint
+    pid:
+      p: 5.0
+      i: 0
+      d: 0
+      i_clamp: 0 
