@@ -21,25 +21,25 @@
     </node>
 
     <!-- Filter for tilt laser scans that hit the body of the robot -->
-    <node pkg="robot_self_filter" type="self_filter" name="tilt_laser_self_filter" respawn="true" output="screen">
+<!--    <node pkg="robot_self_filter" type="self_filter" name="tilt_laser_self_filter" respawn="true" output="screen">-->
       <!-- The topic for the input cloud -->
-      <remap from="cloud_in" to="tilt_scan_shadow_filtered" />
+<!--      <remap from="cloud_in" to="tilt_scan_shadow_filtered" />-->
       <!-- The topic for the output cloud -->
-      <remap from="cloud_out" to="tilt_scan_filtered" />
+<!--      <remap from="cloud_out" to="tilt_scan_filtered" />-->
       <!-- The frame of the sensor used to obtain the data to be
         filtered; This parameter is optional. If it is not specified,
         shadow points will be considered outside -->
-      <param name="sensor_frame" type="string" value="laser_tilt_link" />
+<!--      <param name="sensor_frame" type="string" value="laser_tilt_link" />-->
       <!-- Minimum distance to sensor (for point not to be considered inside) -->
-      <param name="min_sensor_dist" type="double" value="0.01" />
+<!--      <param name="min_sensor_dist" type="double" value="0.01" />-->
       <!-- The padding to be added for the body parts the robot can see -->
-      <param name="self_see_padd" type="double" value="0.05" />
+<!--      <param name="self_see_padd" type="double" value="0.05" />-->
       <!-- The scaling to be added for the body parts the robot can see -->
-      <param name="self_see_scale" type="double" value="1.0" />
+<!--      <param name="self_see_scale" type="double" value="1.0" />-->
       <!-- The names of the links the sensor can see -->
-      <param name="self_see_links" type="string" 
-             value="base_laser_link
-                    base_link" />
-    </node>
+<!--      <param name="self_see_links" type="string" -->
+<!--             value="base_laser_link-->
+<!--                    base_link" />-->
+<!--    </node>-->
 
 </launch>
