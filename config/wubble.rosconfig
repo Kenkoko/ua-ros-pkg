@@ -5,5 +5,8 @@
     uri: https://code.ros.org/svn/wg-ros-pkg/all
     local-name: pkgs
 - svn:
-    uri: https://ua-ros-pkg.googlecode.com/svn/trunk/
+    uri: https://ua-ros-pkg.googlecode.com/svn/trunk
     local-name: ua-ros-pkg
+- svn:
+    uri: https://garuda.cs.arizona.edu/svn/wubbleworld/ww-ros/trunk
+    local-name: ua-ros-pkg/icarus
