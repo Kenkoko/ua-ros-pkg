@@ -37,7 +37,8 @@ ImageConverter(ros::NodeHandle &n, char** argv) :
 	n_(n), it_(n_)
 {
 	args = argv;
-	bool show_image = ((std::string) args[1])=="true";
+	bool show_image = (bool) (((std::string) args[1])=="true");
+	printf("%i\n", show_image);
 	std::string red = args[3];
 	std::string green = args[4];
 	std::string blue = args[5];
@@ -45,7 +46,7 @@ ImageConverter(ros::NodeHandle &n, char** argv) :
 	if( show_image )
 		image_pub_ = it_.advertise("/color_tracking/image_"+red+"_"+green+"_"+blue,1);
 
-	cvNamedWindow("Image window");
+//	cvNamedWindow("Image window");
 	image_sub_ = it_.subscribe(
 		args[2], 1, &ImageConverter::imageCallback, this);
 }
@@ -86,10 +87,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 		CvConnectedComp* cc = (CvConnectedComp*) cvGetSeqElem( comp, i );
 		CvRect rect = cc->rect;
 		cvSetImageROI(cv_image, rect);
-		CvPoint seeds[5] = { cvPoint(rect.width/10,rect.height/10), cvPoint(rect.width/10, int(rect.height*.9)), cvPoint(int(rect.width*.9),rect.height/10), cvPoint(int(rect.width*.9), int(rect.height*.9)), cvPoint(rect.width/2, rect.height/2)};
+//		CvPoint seeds[5] = { cvPoint(rect.width/10,rect.height/10), cvPoint(rect.width/10, int(rect.height*.9)), cvPoint(int(rect.width*.9),rect.height/10), cvPoint(int(rect.width*.9), int(rect.height*.9)), cvPoint(rect.width/2, rect.height/2)};
 		for( int j=0; j<5; j++) {
-			printf("<%d,%d>\n",seeds[j].x,seeds[j].y);
-			cvFloodFill(cv_image, seeds[j], CV_RGB(0,0,0), cvScalarAll(5.0), cvScalarAll(5.0), cc, 4+CV_FLOODFILL_MASK_ONLY, cvCreateImage( cvSize(cvGetSize(cv_image).width+2,cvGetSize(cv_image).height+2), IPL_DEPTH_8U,1));
+//			cvFloodFill(cv_image, seeds[j], CV_RGB(0,0,0), cvScalarAll(5.0), cvScalarAll(5.0), cc, 4+CV_FLOODFILL_MASK_ONLY, cvCreateImage( cvSize(cvGetSize(cv_image).width+2,cvGetSize(cv_image).height+2), IPL_DEPTH_8U,1));
 			if (cc->value.val[0] >= targetColour.val[0]-tolerance && // compare BGR
 				cc->value.val[0] <= targetColour.val[0]+tolerance &&
 				cc->value.val[1] >= targetColour.val[1]-tolerance &&
@@ -100,6 +100,12 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 
 				rect = cc->rect;
 				cvRectangle(cv_image, cvPoint(rect.x,rect.y), cvPoint(rect.x+rect.width,rect.y+rect.height), CV_RGB(255,0,0), 3, 0, 0);
+
+				this->boxes.set_points_size(2);
+				this->boxes.points[0].x = rect.x;
+				this->boxes.points[0].y = rect.y;
+				this->boxes.points[1].x = rect.x+rect.width;
+				this->boxes.points[1].y = rect.y+rect.height;
 
 //				this->boxes.set_boxes_size(5);
 //				this->boxes[j].boxes.set_points_size(2)
@@ -156,15 +162,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 
 	if( show_image ){
 		//cvRectangle(cv_image, cvPoint(minx,miny), cvPoint(maxx,maxy), CV_RGB(255,0,0), 3, 0, 0);
-		cvShowImage("Image window", cv_image);
+//		cvShowImage("Image window", cv_image);
 		cvWaitKey(3);
 	}
 
 	try
 	{
 		bound_pub_.publish(boxes);
-//		if( show_image == "true" )
-//			image_pub_.publish(bridge_.cvToImgMsg(cv_image, "bgr8"));
+//		if( show_image ){
+//			image_pub_.publish(bridge_.cvToImgMsg(cv_image, "bgr8")); }
 	}
 	catch (sensor_msgs::CvBridgeException error)
 	{
@@ -183,7 +189,8 @@ image_transport::Publisher image_pub_;
 ros::Publisher bound_pub_;
 char** args;
 bool show_image;
-wubble_vision::bounding_box boxes;
+geometry_msgs::Polygon boxes;
+//wubble_vision::bounding_box boxes;
 
 
 };
