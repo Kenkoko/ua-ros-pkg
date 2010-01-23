@@ -134,12 +134,6 @@ class BioloidIO(threading.Thread):
         """
         self.__axio = rio.AX12_IO(self.__portName, self.__baudrate)
 
-    def __disconnect(self):
-        """
-        Flushes the input and output buffers and closes the AX12_IO wrapper connection.
-        """
-        self.__axio.close()
-
     def handle_incoming_commands(self, move):
         """
         A simple handler for the commands that come in on the ROS topic.
@@ -199,7 +193,7 @@ class BioloidIO(threading.Thread):
         while self.isRunning():
             self.__do_one_IO_loop()
         print '\nStopping...'
-        self.__disconnect()
+        del self.__axio
         print self.getName() + ' Complete'
         return
     
