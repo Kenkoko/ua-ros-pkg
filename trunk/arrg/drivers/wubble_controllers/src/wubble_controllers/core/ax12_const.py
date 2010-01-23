@@ -83,5 +83,6 @@ AX_NO_ERROR = 0
 # Static parameters
 AX_RANGE = 300
 AX_TICKS = 1024
+AX_MAX_POSITION = 1023
 AX_RAW_DEG_RATIO = 3.41333333333333333333     # how many ticks in degree
 AX_DEG_RAW_RATIO = 0.29296875                 # how many degrees in a tick

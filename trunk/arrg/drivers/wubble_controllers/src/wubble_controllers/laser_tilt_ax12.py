@@ -61,6 +61,7 @@ class LaserTiltAX12():
                 
         self.joint_state_pub = rospy.Publisher('laser_tilt_controller/state', JointStateList)
         self.cycles_sub = rospy.Subscriber('laser_tilt_controller/cycles', Int32, self.process_new_cycles)
+        self.tilt_sub = rospy.Subscriber('laser_tilt_controller/tilt', Int32, self.do_tilt)
         self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
 
         self.motor_id = rospy.get_param('laser_tilt_controller/motor_id', 9)
@@ -68,7 +69,7 @@ class LaserTiltAX12():
         self.joint_name = rospy.get_param('laser_tilt_controller/joint_name', 'laser_tilt_joint')
         self.num_cycles = 0
         
-        mcv = (self.motor_id, 0)
+        mcv = (self.motor_id, 1023)
         self.send_packet_callback((AX_GOAL_SPEED, [mcv]))
 
         self.initial_position_raw = 817
@@ -84,16 +85,18 @@ class LaserTiltAX12():
         self.__single_step_angle = self.__full_range_deg / self.step_num
 	    
         self.event = Event()
-        self.tilt_processor = Thread(target=self.do_tilt)
+        self.tilt_processor = Thread(target=self.do_cycles_tilt)
                 
     def start(self):
         self.running = True
         self.tilt_processor.start()
+        
     def stop(self):
         self.running = False
         self.event.set()
         self.joint_state_pub.unregister()
         self.cycles_sub.unregister()
+        self.tilt_sub.unregister()
         self.motor_states_sub.unregister()
         
     def __angle_to_raw_position(self, angle):
@@ -117,20 +120,28 @@ class LaserTiltAX12():
     def process_new_cycles(self, data):
         self.num_cycles = data.data
         self.event.set()
+
+    def do_tilt(self, angle):
+        mcv = (self.motor_id, self.__angle_to_raw_position(angle.data))
+        self.send_packet_callback((AX_GOAL_POSITION, [mcv]))
     
-    def do_tilt(self):
+    def do_cycles_tilt(self):
         while self.running:
             self.event.wait()
+            rate = rospy.Rate(1)
             while not self.num_cycles == 0:
                 for i in range(self.step_num):
                     angle = (i + 1) *  self.__single_step_angle + self.initial_position_angle
                     mcv = (self.motor_id, self.__angle_to_raw_position(angle))
                     self.send_packet_callback((AX_GOAL_POSITION, [mcv]))
-                    rospy.sleep(0.75 / (self.step_num - 1))
+                    rospy.sleep(0.0051 * self.__single_step_angle)
+                    #rospy.sleep(0.75 / (self.step_num - 1))
                 mcv = (self.motor_id, self.initial_position_raw)
                 self.send_packet_callback((AX_GOAL_POSITION, [mcv]))
                 if self.num_cycles > 0:
                     self.num_cycles -= 1
-                rospy.sleep(0.25)
+                #rospy.sleep(0.25)
+                rospy.sleep(0.0051 * self.max_angle)
+                rate.sleep()
             self.event.clear()
 

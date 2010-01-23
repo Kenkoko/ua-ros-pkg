@@ -1,11 +1,12 @@
 <launch>
     <node name="ttyUSB1_manager" pkg="wubble_controllers" type="manager.py" output="screen" required="true">
-        <param name="port_name" type="str" value="/dev/ttyUSB1"/>
+        <param name="port_name" type="str" value="/dev/ttyUSB2"/>
         <param name="baud_rate" type="int" value="1000000"/>
         <param name="max_motor_id" type="int" value="25"/>
-        <param name="update_rate" type="int" value="5"/>
+        <param name="update_rate" type="int" value="1"/>
     </node>
     
     <node name="laser_tilt_spawner" pkg="wubble_controllers" type="driver_ctrl.py" args="start laser_tilt_ax12" output="screen"/>
     <node name="camera_pan_tilt_spawner" pkg="wubble_controllers" type="driver_ctrl.py" args="start camera_pan_tilt_ax12" output="screen"/>
+    <node name="arm_spawner" pkg="wubble_controllers" type="driver_ctrl.py" args="start arm_ax12" output="screen"/>
 </launch>
