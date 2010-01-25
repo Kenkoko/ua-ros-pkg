@@ -27,6 +27,7 @@ source ~/.ros.bashrc
 export ROBOT=sim
 }}}
 
+  # Make sure to close any open terminals so the old ros-related environment variables will be removed (they can interfere with the new installation).
 
 = Installation =
 
