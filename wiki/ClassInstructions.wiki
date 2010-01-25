@@ -19,8 +19,8 @@ rm .ros.bashrc
   # You will need to edit your .bashrc file, and remove (what should be) the last two lines. You can do this with:
 {{{
 gedit ~/.bashrc
-}}}
-The lines you are looking for are:
+}}} 
+  # The lines you are looking for are:
 {{{
 source ~/.ros.bashrc
 export ROBOT=sim
