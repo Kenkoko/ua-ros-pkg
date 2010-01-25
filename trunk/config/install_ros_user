@@ -1,7 +1,7 @@
 wget --no-check-certificate http://ros.org/rosinstall -O ~/rosinstall
 chmod 755 ~/rosinstall
-~/rosinstall -o ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/user.rosconfig
-echo "source ~/ros/setup.sh" >> ~/.bashrc
+~/rosinstall -o ~/overlay http://ua-ros-pkg.googlecode.com/svn/trunk/config/user.rosconfig
+echo "source ~/overlay/setup.sh" >> ~/.bashrc
 echo "export ROBOT=sim" >> ~/.bashrc
 source ~/.bashrc
 rosmake wubble
