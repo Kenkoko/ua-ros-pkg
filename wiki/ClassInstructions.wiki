@@ -36,11 +36,10 @@ Take a quick look at [http://www.ros.org/wiki/ROS/Tutorials/NavigatingTheFilesys
   # Shared packages, which are part of the ROS distribution and come from Willow Garage. These have been previously installed (and compiled) in /opt/ros/installed, which means you can't change them.
   # User packages, which live in the ros directory inside your home folder (specifically, ~/ros/ua-ros-pkg).
 
-The shared packages are already built. To build the user packages we'll be using to run some demos, execute:
+All packages are already built by the install script you executed above. After you make changes, you can rebuild the wubble stack using:
 {{{
 rosmake wubble
 }}}
-This will build the whole wubble stack. (If it doesn't work, try closing and reopening the terminal so the ROS commands will be detected by the system)
 
 = Testing =
 
