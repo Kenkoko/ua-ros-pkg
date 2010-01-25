@@ -1,9 +1,3 @@
-- symlink:
-    local-name: ros
-    target: /opt/ros/installed/ros
-- symlink:
-    local-name: pkgs
-    target: /opt/ros/installed/pkgs
 - svn:
     uri: http://ua-ros-pkg.googlecode.com/svn/trunk/
     local-name: ua-ros-pkg
