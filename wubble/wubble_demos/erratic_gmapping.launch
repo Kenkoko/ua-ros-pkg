@@ -1,0 +1,13 @@
+<launch>
+
+    <!-- load the world environment -->
+    <include file="$(find wubble_environments)/launch/wubble_world.launch" />
+
+    <!-- spawn our erratic robot -->
+    <include file="$(find wubble_robots)/launch/erratic.launch"/>
+
+    <!-- enable 2d navigation (path planning), also starts rviz -->
+    <include file="$(find wubble_robots)/launch/erratic_map_2dnav.launch" />
+
+</launch>
+
