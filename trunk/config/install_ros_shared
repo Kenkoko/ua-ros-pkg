@@ -1,4 +1,4 @@
-apt-get install build-essential python-yaml cmake subversion
+apt-get install -y build-essential python-yaml cmake subversion
 mkdir -p /opt/ros/installed
 wget --no-check-certificate http://ros.org/rosinstall -O ~/rosinstall
 chmod 755 ~/rosinstall
