@@ -24,6 +24,11 @@ chmod +x install_ros_user
 {{{
 ./install_ros_user
 }}}
+  # Close your terminal and re-open it, or else run:
+{{{
+source .bashrc
+}}}
+This is needed to load environment variables before you run any further ros commands.
 
 = Building =
 
