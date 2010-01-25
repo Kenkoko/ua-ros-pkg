@@ -3,6 +3,7 @@ wget --no-check-certificate http://ros.org/rosinstall -O ~/rosinstall
 chmod 755 ~/rosinstall
 ~/rosinstall /opt/ros/installed http://ua-ros-pkg.googlecode.com/svn/trunk/config/shared.rosconfig
 . /opt/ros/installed/setup.sh
-rosmake -air --rosdep-install --rosdep-yes
+rosmake -iar --rosdep-install --rosdep-yes
+for p in `rospack list-names`; do touch `rospack find $p`/ROS_NOBUILD; done
 sudo chmod -R o+r /opt/ros/installed
 
