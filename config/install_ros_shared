@@ -3,7 +3,6 @@ wget --no-check-certificate http://ros.org/rosinstall -O ~/rosinstall
 chmod 755 ~/rosinstall
 ~/rosinstall /opt/ros/installed http://ua-ros-pkg.googlecode.com/svn/trunk/config/shared.rosconfig
 . /opt/ros/installed/setup.sh
-rosmake -ia --rosdep-install --rosdep-yes
-rosrun rospack roscachesvncert
+rosmake -ai --build-everything --rosdep-install --rosdep-yes
 sudo chmod -R o+r /opt/ros/installed
 
