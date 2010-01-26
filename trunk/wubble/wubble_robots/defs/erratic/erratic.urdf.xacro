@@ -12,172 +12,102 @@
     <include filename="$(find wubble_robots)/defs/erratic/head_sensor_package_defs.urdf.xacro" />
     <include filename="$(find pr2_defs)/defs/materials.urdf.xacro" />    
     <include filename="$(find wubble_robots)/defs/erratic/erratic_head.xacro" />
+    <include filename="$(find wubble_robots)/defs/erratic/erratic_wheel.xacro" />
+    <include filename="$(find wubble_robots)/defs/erratic/erratic_arm.xacro" />
 
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
 
-    <property name="base_size_x" value="0.395224" />
-    <property name="base_size_y" value="0.367284" />
-    <property name="base_size_z" value="0.135448" />
+<!--    <property name="base_size_x" value="0.395224" />-->
+<!--    <property name="base_size_y" value="0.367284" />-->
+<!--    <property name="base_size_z" value="0.135448" />-->
+
+    <property name="base_size_x" value="0.22" />
+    <property name="base_size_y" value="0.29" />
+    <property name="base_size_z" value="0.135448" /> <!-- 0.14 -->
+
+    <property name="top_size_x" value="0.394" />
+    <property name="top_size_y" value="0.356" />
+    <property name="top_size_z" value="0.015" />
 
     <property name="wheel_radius" value="0.0625" />
     <property name="wheel_length" value="0.02" />
     <property name="caster_wheel_offset_y" value="0.17" />
 
+    <property name="caster_support_x" value="0.086" />
+    <property name="caster_support_z" value="0.10" />
+
+    <property name="support_radius" value="0.01" />
+    <property name="support_height" value="0.8128" />
+
     <!-- Links and Joints (i.e., the robot) -->
     <link name="base_link">
         <inertial>
-            <mass value="10" />
-            <origin xyz="-0.05 0 ${base_size_z/2}" />
+            <mass value="20" />
+            <origin xyz="0 0 0" />
             <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                iyy="1.0" iyz="0.0"
-                izz="1.0" />
+                     iyy="1.0" iyz="0.0" 
+                     izz="1.0" />
         </inertial>
 
         <visual>
-            <origin xyz="-0.075 0 0.115" rpy="0 0 0" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <box size="0.22 0.29 0.14" />
+                <box size="${base_size_x} ${base_size_y} ${base_size_z}" />
             </geometry>
         </visual>
 
         <collision>
-            <origin xyz="-0.075 0 0.115" rpy="0 0 0" />
+            <origin xyz="0 0 0" rpy="0 0 0" /> 
             <geometry>
-                <box size="0.22 0.29 0.14" />
+                <box size="${base_size_x} ${base_size_y} ${base_size_z}" />
             </geometry>
         </collision>
     </link>
 
-
-  <joint name="base_top_joint" type="fixed" >
-    <origin xyz="0 0 0.051" rpy="0 0 0" />   <!-- 0.051 -->
-    <parent link="base_link" />
-    <child link="base_top_link"/>
-  </joint>
-
-  <link name="base_top_link">
-    <inertial>
-      <mass value="1.0"/>
-      <origin xyz="0 0 ${base_size_z/2}" />
-      <inertia ixx="0.0652232699207" ixy="0.0" ixz="0.0"
-               iyy="0.0669473158652" iyz="0.0"
-               izz="0.0683196351726" />
-    </inertial>
-
-    <visual>
-        <origin xyz="-0.08 0 0.13" rpy="0 0 0" />
-        <geometry>
-            <mesh filename="package://wubble_robots/meshes/erratic_top_final.stl"/>
-<!--            <mesh filename="package://wubble_robots/meshes/erratic_top.stl"-->
-<!--                  scale="${base_size_x/2.0} ${base_size_y/2.0} 0.05">-->
-<!--            </mesh>-->
-        </geometry>
-<!--      <geometry>-->
-<!--        <box size="${base_size_x} ${base_size_y} 0.01" />-->
-<!--      </geometry>-->
-    </visual>
-    
-    <collision>
-        <origin xyz="-0.08 0 0.13" rpy="0 0 0" />
-        <geometry>
-            <mesh filename="package://wubble_robots/meshes/erratic_top_final.stl"/>
-<!--            <mesh filename="package://wubble_robots/meshes/erratic_top.stl"-->
-<!--                  scale="${base_size_x/2.0} ${base_size_y/2.0} 0.05">-->
-<!--            </mesh>-->
-        </geometry>
-<!--      <geometry>-->
-<!--        <box size="${base_size_x} ${base_size_y} 0.01" />-->
-<!--      </geometry>-->
-    </collision>
-  </link>
-  
-  <macro name="erratic_wheel" params="suffix parent reflect">
-    <joint name="${parent}_${suffix}_wheel_joint" type="continuous">
-      <origin xyz="0 ${reflect*caster_wheel_offset_y} ${wheel_radius}" rpy="0 0 0" />
-      <axis xyz="0 1 0" />
-      <anchor xyz="0 0 0" />
-      <limit effort="100" velocity="100" />
-      <joint_properties damping="0.0" friction="0.0" />
-      <parent link="${parent}" />
-      <child link="${parent}_${suffix}_wheel_link" />
+    <joint name="base_top_joint" type="fixed" >
+        <origin xyz="0 0 ${base_size_z/2 + top_size_z/2}" rpy="0 0 0" />   <!-- 0.051 -->
+        <parent link="base_link" />
+        <child link="base_top_link"/>
     </joint>
-    
-    <link name="${parent}_${suffix}_wheel_link">
-      <inertial>
-        <mass value="0.1" /> <!-- check jmh 20081205 -->
-        <origin xyz=" 0 0 0 " />
-        <inertia  ixx="0.012411765597" ixy="0.0" ixz="0.0"
-                  iyy="0.015218160428" iyz="0.0"
-                  izz="0.011763977943" />
-      </inertial>
-      <visual>
-        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
-        <geometry>
-          <cylinder radius="${wheel_radius}" length="${wheel_length}" />
-        </geometry>
-	
-      </visual>
-      <collision>
-        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
-        <geometry>
-          <cylinder radius="${wheel_radius}" length="${wheel_length}" />
-        </geometry>
-      </collision>
+
+    <link name="base_top_link">
+        <inertial>
+            <mass value="1.0"/>
+            <origin xyz="0 0 0" />
+            <inertia ixx="0.0652232699207" ixy="0.0" ixz="0.0"
+                     iyy="0.0669473158652" iyz="0.0"
+                     izz="0.0683196351726" />
+        </inertial>
+
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+<!--        <geometry>-->
+<!--            <mesh filename="package://wubble_robots/meshes/erratic_top_final.stl"/>-->
+<!--            <mesh filename="package://wubble_robots/meshes/erratic_top.stl"-->
+<!--                  scale="${base_size_x/2.0} ${base_size_y/2.0} 0.05">-->
+<!--            </mesh>-->
+<!--        </geometry>-->
+            <geometry>
+                <box size="${top_size_x} ${top_size_y} ${top_size_z}" />
+            </geometry>
+        </visual>
+
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size="${top_size_x} ${top_size_y} ${top_size_z}" />
+            </geometry>
+        </collision>
     </link>
-
-    <gazebo reference="${parent}_${suffix}_wheel_link" >
-      <elem key="mu1" value="50.0" />
-      <elem key="mu2" value="50.0" />
-      <elem key="kp"  value="100000000.0" />
-      <elem key="kd"  value="1.0" />
-      <material>Gazebo/Black</material> <!-- Had to add this here because it's a macro -->
-    </gazebo>
-  </macro>
-
-  <erratic_wheel suffix="left" parent="base_link" reflect="1"/>
-  <erratic_wheel suffix="right" parent="base_link" reflect="-1"/>
   
   <joint name="base_caster_box_joint" type="fixed">
-    <origin xyz="0 0 0.051" rpy="0 0 0" />
+    <origin xyz="-${base_size_x/2 + caster_support_x/2} 0 0.02" rpy="0 0 0" />
     <parent link="base_link" />
     <child link="base_caster_box_link"/>
   </joint>
     
   <link name="base_caster_box_link">
-    <inertial>
-      <mass value="0.1"/>
-      <origin xyz="0 0 ${base_size_z/2}" />
-      <inertia ixx="0.01" ixy="0.0" ixz="0.0"
-               iyy="0.01" iyz="0.0"
-               izz="0.01" />
-    </inertial>
-
-    <visual>
-      <origin xyz="-0.23 0 0.08" rpy="0 0 0" />
-      <geometry>
-        <box size="0.09 0.02 0.10" />
-      </geometry>
-    </visual>
-    
-    <collision>
-      <origin xyz="-0.23 0 0.08" rpy="0 0 0" />
-      <geometry>
-        <box size="0.09 0.02 0.10" />
-      </geometry>
-    </collision>
-  </link>
-  
-  <joint name="base_caster_support_joint" type="continuous">
-    <axis xyz="0 0 1" />
-    <anchor xyz="0.01 0 0" />
-    <limit effort="100" velocity="100" k_velocity="0" />
-    <joint_properties damping="0.0" friction="0.0" />
-    <parent link="base_caster_box_link" />
-    <origin xyz="-0.265 0 0.0" rpy="0 0 0" />
-    <child link="base_caster_support_link"/>
-  </joint>
-  <link name="base_caster_support_link">
     <inertial>
       <mass value="0.1"/>
       <origin xyz="0 0 0" />
@@ -187,63 +117,97 @@
     </inertial>
 
     <visual>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <box size="0.03 0.02 0.06" />
+        <box size="${caster_support_x} 0.02 ${caster_support_z}" />
       </geometry>
     </visual>
     
     <collision>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <box size="0.03 0.02 0.06" />
+        <box size="${caster_support_x} 0.02 ${caster_support_z}" />
       </geometry>
     </collision>
   </link>
-
-  <joint name="caster_wheel_joint" type="continuous">
-    <origin xyz="-0.02 0 -0.02" rpy="0 0 0" />
-    <axis xyz="0 1 0" />
-    <anchor xyz="0 0 0" />
-    <limit effort="100" velocity="100" k_velocity="0" />
-    <joint_properties damping="0.0" friction="0.0" />
-    <parent link="base_caster_support_link" />
-    <child link="caster_wheel_link" />
-  </joint>
   
-  <link name="caster_wheel_link">
-    <inertial>
-      <mass value="0.1" /> 
-      <origin xyz=" 0 0 0 " />
-      <inertia  ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
-                iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943" />
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
-      <geometry>
-        <cylinder radius="0.03" length="0.01" />
-      </geometry>
-      
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
-      <geometry>
-        <cylinder radius="0.03" length="0.01" />
-      </geometry>
-    </collision>
-  </link>
-  <gazebo reference="caster_wheel_link">
-    <elem key="mu1" value="50.0" />
-    <elem key="mu2" value="50.0" />
-    <elem key="kp"  value="100000000.0" />
-    <elem key="kd"  value="1.0" />
-  </gazebo>
+    <joint name="base_caster_support_joint" type="continuous">
+        <origin xyz="${-caster_support_x/2 + 0.015} 0 ${-caster_support_z/2 - 0.03}" rpy="0 0 0" />
+        <parent link="base_caster_box_link" />
+        <child link="base_caster_support_link"/>
 
-    <property name="support_radius" value="0.01" />
-    <property name="support_height" value="0.8128" />
+        <axis xyz="0 0 1" />
+        <anchor xyz="0.01 0 0" />
+        <limit effort="100" velocity="100" k_velocity="0" />
+        <joint_properties damping="0.0" friction="0.0" />
+    </joint>
+
+    <link name="base_caster_support_link">
+        <inertial>
+            <mass value="0.1"/>
+            <origin xyz="0 0 0" />
+            <inertia ixx="0.01" ixy="0.0" ixz="0.0"
+                     iyy="0.01" iyz="0.0"
+                     izz="0.01" />
+        </inertial>
+
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            <geometry>
+                <box size="0.03 0.02 0.06" />
+            </geometry>
+        </visual>
+
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            <geometry>
+                <box size="0.03 0.02 0.06" />
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="caster_wheel_joint" type="continuous">
+        <origin xyz="-0.02 0 -0.02" rpy="0 0 0" />
+        <parent link="base_caster_support_link" />
+        <child link="caster_wheel_link" />      
+
+        <axis xyz="0 1 0" />
+        <anchor xyz="0 0 0" />
+        <limit effort="100" velocity="100" k_velocity="0" />
+        <joint_properties damping="0.0" friction="0.0" />
+    </joint>
+  
+    <link name="caster_wheel_link">
+        <inertial>
+          <mass value="0.1" /> 
+          <origin xyz=" 0 0 0 " />
+          <inertia  ixx="0.012411765597" ixy="-0.000711733678" ixz="0.00050272983"
+                    iyy="0.015218160428" iyz="-0.000004273467" izz="0.011763977943" />
+        </inertial>
+
+        <visual>
+          <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+          <geometry>
+            <cylinder radius="0.03" length="0.01" />
+          </geometry>
+          
+        </visual>
+
+        <collision>
+          <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+          <geometry>
+            <cylinder radius="0.03" length="0.01" />
+          </geometry>
+        </collision>
+    </link>
+
+    <gazebo reference="caster_wheel_link">
+        <elem key="mu1" value="50.0" />
+        <elem key="mu2" value="50.0" />
+        <elem key="kp"  value="100000000.0" />
+        <elem key="kd"  value="1.0" />
+    </gazebo>
 
     <joint name="head_support_joint" type="fixed">
-        <origin xyz="-0.0254 0 ${(support_height/2)+base_size_z}" />
+        <origin xyz="0.0254 0 ${support_height/2 + top_size_z/2}" />
         <parent link="base_top_link" />
         <child link="head_support_link" />
     </joint>
@@ -270,15 +234,24 @@
         </collision>
     </link>
 
-    <joint name="head_pan_joint" type="fixed"><!--type="continuous">-->
+    <joint name="head_pan_joint" type="revolute">
         <origin xyz="0 0 ${support_height/2}" />
-        <axis xyz="0 0 1" />
-<!--        <anchor xyz="0 0 0" />
-        <limit effort="100" velocity="100" />
-        <joint_properties damping="0.0" friction="0.0" /> -->
         <parent link="head_support_link" />
         <child link="head_pan_link" />
+
+        <axis xyz="0 0 1" />
+<!--        <anchor xyz="0 0 0" />-->
+<!--        <limit effort="100" velocity="100" />-->
+        <limit lower="0" upper="0" effort="100" velocity="1.0" />
+        <dynamics damping="1" friction="1" />
+<!--        <safety_controller k_position="100" k_velocity="0.05" soft_lower_limit="${-0.785+0.0}" soft_upper_limit="${1.57-0.0}" />-->
     </joint>
+
+    <transmission type="SimpleTransmission" name="head_pan_trans">
+        <actuator name="head_pan_motor" />
+        <joint name="head_pan_joint" />
+        <mechanicalReduction>6.0</mechanicalReduction>
+    </transmission>
 
     <link name="head_pan_link"> 
         <inertial>
@@ -301,6 +274,23 @@
             </geometry>
         </collision>
     </link>
+
+
+    <!-- MACRO INSTANTIATION -->
+
+    <erratic_wheel suffix="left" parent="base_link" reflect="1"/>
+    <erratic_wheel suffix="right" parent="base_link" reflect="-1"/>
+
+    <pr2_tilting_laser name="laser_tilt" parent="base_top_link" laser_calib_ref="-0.35">
+        <origin xyz="0.15 0 ${-top_size_z - 0.05}" rpy="0 -1 0" />
+    </pr2_tilting_laser>
+
+    <stoc_camera name="stoc" parent="head_pan_link" />
+
+    <arm parent="base_top_link" />
+
+
+    <!-- CONTROLLERS -->
 
   <gazebo>
     <controller:differential_position2d name="controller1">
@@ -335,35 +325,29 @@
     </controller:gazebo_ros_controller_manager>
   </gazebo>
 
-    <!-- attempt to add the pan-tilt laser from the pr2, it should be close enough -->
-    <pr2_tilting_laser name="laser_tilt" parent="base_top_link" laser_calib_ref="-0.35">
-        <origin xyz="0.1 0 ${base_size_z - 0.05}" rpy="0 -1 0" />
-    </pr2_tilting_laser>
 
-    <stoc_camera name="stoc" parent="head_pan_link" />
-    <arm name="arm" parent="base_top_link" />
+    <!-- GAZEBO MATERIALS -->
 
-    <!-- Gazebo materials -->
     <gazebo reference="base_link">
-        <material>Gazebo/Blue</material>
+        <material>PR2/Blue</material>
     </gazebo>
     <gazebo reference="base_top_link">
-        <material>Gazebo/Blue</material>
+        <material>PR2/Blue</material>
     </gazebo>
     <gazebo reference="caster_wheel_link">
         <material>Gazebo/Black</material>
     </gazebo>
     <gazebo reference="base_laser_link">
-        <material>Gazebo/Red</material>
+        <material>PR2/Red</material>
     </gazebo>
     <gazebo reference="base_caster_box_link">
-        <material>Gazebo/Blue</material>
+        <material>PR2/Blue</material>
     </gazebo>
     <gazebo reference="base_caster_support_link">
-        <material>Gazebo/Blue</material>
+        <material>PR2/Blue</material>
     </gazebo>
     <gazebo reference="head_support_link">
-	<material>Gazebo/Chrome</material>
+	    <material>Gazebo/Chrome</material>
     </gazebo>
     <gazebo reference="head_pan_link">
         <material>Gazebo/Black</material>

@@ -7,7 +7,7 @@
     <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_robots)/defs/erratic/erratic.urdf.xacro'" />
 
     <!-- push robot_description to factory and spawn robot in gazebo -->
-    <node name="spawn_erratic" pkg="gazebo_tools" type="gazebo_model" args="-z 0.051 -p robot_description spawn robot_description" respawn="false" output="screen" />
+    <node name="spawn_erratic" pkg="gazebo_tools" type="gazebo_model" args="-z 0.15 -p robot_description spawn robot_description" respawn="false" output="screen" />
 
     <!-- Controller Manager -->
     <include file="$(find pr2_controller_manager)/controller_manager.launch" />
@@ -19,8 +19,8 @@
     <include file="$(find wubble_robots)/launch/erratic_lasers_and_filters.launch" />    
 
     <rosparam file="$(find wubble_robots)/controllers/erratic_controllers.yaml" command="load" />
-    <node name="head_tilt_controller" pkg="pr2_controller_manager" type="spawner"
-          args="head_tilt_controller" 
+    <node name="head_traj_controller" pkg="pr2_controller_manager" type="spawner"
+          args="head_traj_controller" 
           output="screen">
     </node>
 
