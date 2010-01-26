@@ -25,7 +25,7 @@
     </node>
 
     <!-- start rviz with gmapping configs -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find wubble_demos)/rviz/gmapping-anh.vcg"/>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find wubble_demos)/rviz/gmapping.vcg"/>
 
 </launch>
 
