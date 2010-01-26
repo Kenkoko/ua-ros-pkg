@@ -87,6 +87,7 @@ cd ~/ros/ua-ros-pkg
 svn up
 }}}
 
+You won't be able to commit to the repository yet. When we start building code in team projects, we will provide a way to contribute to the repository.
 
 = Building =
 
