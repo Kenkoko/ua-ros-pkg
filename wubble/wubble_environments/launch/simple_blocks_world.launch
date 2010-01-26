@@ -12,7 +12,10 @@
         <env name="OGRE_RESOURCE_PATH" value="$(find ogre)/ogre/lib/OGRE" />
     </node>
 
-    <!-- Include common world components -->
+    <!-- start the map server -->
+    <node name="map_node" pkg="map_server" type="map_server" args="$(find wubble_environments)/Media/materials/textures/blocks_world_map.yaml" respawn="false" output="screen" />
+
+    <!-- include common world components -->
     <include file="$(find wubble_environments)/launch/world_common.launch" />
 
 </launch>
