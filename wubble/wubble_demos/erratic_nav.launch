@@ -6,8 +6,11 @@
     <!-- spawn our erratic robot -->
     <include file="$(find wubble_robots)/launch/erratic.launch"/>
 
-    <!-- enable 2d navigation (path planning), also starts rviz -->
+    <!-- enable 2d navigation (path planning) -->
     <include file="$(find wubble_robots)/launch/erratic_2dnav.launch" />
+
+    <!-- start rviz with 2dnav configs -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find wubble_demos)/rviz/move_base.vcg"/>
 
 </launch>
 
