@@ -1,4 +1,5 @@
 <launch>
+
     <!-- Run the move base translator -->
     <node pkg="move_base_client" type="move_base_translator" name="move_base_translator">
         <param name="action_name" value="move_base" />
@@ -18,8 +19,5 @@
         <rosparam file="$(find erratic_gazebo)/navfn_params.yaml" command="load" />
         <rosparam file="$(find erratic_gazebo)/base_local_planner_params.yaml" command="load" />
     </node>
-
-    <!-- start rviz with navigation enabled -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find wubble_demos)/rviz/move_base.vcg"/>
 
 </launch>
