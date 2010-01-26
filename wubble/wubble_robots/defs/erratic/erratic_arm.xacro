@@ -5,120 +5,37 @@
     xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
 
-    <!-- Include file with calibration parameters -->
-    <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
+    <macro name="arm" params="parent">
+        <joint name="arm_base_joint" type="fixed">
+            <origin xyz="${top_size_x/2 - 0.0575} 0 ${top_size_z/2 + 0.025}"/>
+            <parent link="${parent}"/>
+            <child link="arm_base_link"/>
+        </joint>
 
-    <property name="M_PI" value="3.14159"/>
-
-    <macro name="arm" params="name parent">
-
-    <joint name="${name}_shoulder_joint" type="fixed"><!--revolute"> -->
-      <origin xyz="0 0 ${(stoc_height/2)}" rpy="0 0 0" />
-      <axis xyz="0 1 0" />
-      <limit lower="-0.785" upper="1.57" effort="0.5292" velocity="10.0" />
-      <safety_controller k_position="100" k_velocity="0.05" soft_lower_limit="${-0.785+0.0}" soft_upper_limit="${1.57-0.0}" />
-      <!-- hold both reference_position and upper/lower for tick-tock, remove reference_positiion after verifying upper/lower works with calibration controllers.  if search velocity in pr2_calibration_controllers.yaml is +, the reference_position is rising, if - then it is falling -->
-      <calibration reference_position="-.35" falling="-.35" />
-      <dynamics damping="0.008" />
-<!--      <insert_block name="origin" /> -->
-      <parent link="${parent}"/>
-      <child link="stoc_camera_link"/>
-    </joint>
-        <link name="stoc_camera_link">
+        <link name="arm_base_link">
             <inertial>
                 <mass value="0.1" />
-                <origin xyz="${stoc_depth/2} ${stoc_width/2} ${stoc_height/2}" />
+                <origin xyz="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" izz="1.0" />
-                <!-- Still don't know what that stuff means? -->
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
             </inertial>
 
             <visual>
-                <origin xyz="0 0 0.03" rpy="0 0 0" />
                 <geometry>
-                    <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
+                    <box size="${0.0575*2} ${0.0575*2} ${0.025*2}" />
                 </geometry>
             </visual>
 
             <collision>
-                <origin xyz="0 0 0.03" rpy="0 0 0" />
                 <geometry>
-                    <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
+                    <box size="${0.0575*2} ${0.0575*2} ${0.025*2}" />
                 </geometry>
             </collision>
         </link>
 
-        <joint name="stoc_back_joint" type="fixed">
-            <origin xyz="${-(stoc_depth/2)-(back_depth/2)} 0 0.03" rpy="0 0 0" />  
-            <parent link="stoc_camera_link" />
-            <child link="stoc_back_link"/>
-        </joint>
-
-        <link name="stoc_back_link">
-            <inertial>
-                <mass value="0.1" />
-                <origin xyz="${back_depth/2} ${back_width/2} ${back_height/2}" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" izz="1.0" />
-                <!-- Still don't know what that stuff means? -->
-            </inertial>
-
-            <visual>
-                <origin xyz="0 0 0" rpy="0 0 0" />
-                <geometry>
-                    <box size="${back_depth} ${back_width} ${back_height}" />
-                </geometry>
-            </visual>
-
-            <collision>
-                <origin xyz="0 0 0" rpy="0 0 0" />
-                <geometry>
-                    <box size="${back_depth} ${back_width} ${back_height}" />
-                </geometry>
-            </collision>
-        </link>
-
-        <stoc_eye name="left_eye" parent="stoc_camera_link" suffix="left" reflect="1"/>
-        <stoc_eye name="right_eye" parent="stoc_camera_link" suffix="right" reflect="-1"/>
-
-        <joint name="stoc_optical_frame_joint" type="fixed">
-            <origin xyz="${cal_stereo_x}            ${0.045+cal_stereo_y}   ${.0305+cal_stereo_z+0.03}" rpy="${-M_PI/2+cal_stereo_roll} ${0.0+cal_stereo_pitch} ${-M_PI/2+cal_stereo_yaw}" />
-            <parent link="stoc_camera_link"/>
-            <child link="stoc_optical_frame"/>
-        </joint>
-
-        <link name="stoc_optical_frame" type="camera">
-            <inertial>
-                <mass value="0.01" />
-                <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="0.001"  ixy="0.0"  ixz="0.0"
-                     iyy="0.001"  iyz="0.0"
-                     izz="0.001" />
-            </inertial>
-
-            <visual name="stoc_optical_frame_visual">
-                <origin xyz="0 0 0" rpy="0 0 0" />
-                <geometry name="stoc_optical_frame_visual_geom">
-                <box size="0.01 0.01 0.01" />
-            </geometry>
-
-            <material name="Blue" />
-            </visual>
-
-            <collision name="stoc_optical_frame_collision">
-                <origin xyz="0 0 0" rpy="0 0 0" />
-                <geometry name="stoc_optical_frame_collision_geom">
-                <box size="0.01 0.01 0.01" />
-                </geometry>
-            </collision>
-        </link>
-
-        <gazebo reference="stoc_camera_link" >
-            <material>Gazebo/Red</material>
-        </gazebo>
-        <gazebo reference="stoc_back_link" >
-            <material>Gazebo/Red</material>
+        <gazebo reference="arm_base_link">
+	        <material>PR2/Grey</material>
         </gazebo>
     </macro>
-
 </robot>
