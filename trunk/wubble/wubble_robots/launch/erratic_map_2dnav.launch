@@ -1,4 +1,10 @@
 <launch>
+    <node pkg="amcl" type="amcl" name="amcl">
+        <remap from="scan" to="base_scan" />
+        <!-- params not shown - using default values -->
+        <param name="odom_frame_id" value="odom"/>
+    </node> 
+
     <!-- Run the move base translator -->
     <node pkg="move_base_client" type="move_base_translator" name="move_base_translator">
         <param name="action_name" value="move_base" />
