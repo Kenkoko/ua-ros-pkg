@@ -5,7 +5,10 @@
 
 This page tells you how to set up your account with a functional ROS installation and UA packages. These will only work on the class machines located in GS 930.
 
-*NB: The machines in CS930 that have ROS installed all have names starting with "har".*
+*NB: The machines in CS930 that have ROS installed all have names starting with "har". To check if a machine has ROS installed, run:*
+{{{
+ls -al /opt/ros/installed 
+}}}
 
 *NOTE:* On Monday, Jan 25th, the machines in CS 930 we upgraded to ROS 1.0. If you set up your account prior to that date, you will need to follow the un-installation instructions below, and then re-do the installation.
 
