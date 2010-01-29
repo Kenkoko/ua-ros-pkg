@@ -55,3 +55,17 @@ chmod 755 ~/rosinstall
 {{{
 ~/rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/wubble.rosconfig
 }}}
+ # Update your .bashrc
+{{{
+echo "source ~/ros/setup.sh" >> ~/.bashrc
+echo "export ROBOT=sim" >> ~/.bashrc
+source ~/.bashrc
+}}}
+  # Install (Ubuntu) dependencies for wubble world 
+{{{
+rosdep install wubble
+}}}
+  # Build the wubble stack
+{{{
+rosmake wubble
+}}}
