@@ -1,0 +1,27 @@
+<launch>
+
+    <!-- load the world environment -->
+    <include file="$(find wubble_environments)/launch/wubble_world.launch" />
+
+    <!-- spawn our erratic robot -->
+    <include file="$(find wubble_robots)/launch/erratic.launch"/>
+
+    <!-- insert overhead cam -->
+    <include file="$(find wubble_robots)/launch/overhead_cam.launch"/>
+
+    <!-- run image_proc -->
+    <group ns="stereo/left">
+      <node pkg="image_proc" type="image_proc" name="image_proc" />
+    </group>
+    <!--<group ns="stereo/right">
+      <node pkg="image_proc" type="image_proc" name="image_proc" />
+    </group> -->
+
+    <!-- initiate blobtracking --><!--try args="/stereo/left/image_color" for erratic view (doesn't work)-->
+    <node pkg="wubble_vision" type="blobtracking" name="blobtracking" args="/overhead_cam/image_raw"/>
+
+
+    <!-- operate erratic via keyboard (control with WASD in terminal window) -->
+    <node pkg="wubble_teleop" type="keyboard" name="keyboard_teleop" />
+</launch>
+
