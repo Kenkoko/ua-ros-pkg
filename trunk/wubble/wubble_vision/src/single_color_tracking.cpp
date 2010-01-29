@@ -81,14 +81,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* comp = NULL;
 	IplImage *clone = cvCloneImage(cv_image);
-	cvPyrSegmentation( cv_image, clone, storage, &comp, 10, 50, 50 );
+	cvPyrSegmentation( cv_image, clone, storage, &comp, 10, 200, 50 );
 	cvReleaseImage(&clone);
 	int n_comp = comp->total;
 
 	for( int i=0; i<n_comp; i++ ) {
 		CvConnectedComp* cc = (CvConnectedComp*) cvGetSeqElem( comp, i );
 		CvRect rect = cc->rect;
-/**		cvSetImageROI(cv_image, rect);
+		cvSetImageROI(cv_image, rect);
 		CvPoint seeds[5] = { cvPoint(rect.width/10,rect.height/10), cvPoint(rect.width/10, int(rect.height*.9)), cvPoint(int(rect.width*.9),rect.height/10), cvPoint(int(rect.width*.9), int(rect.height*.9)), cvPoint(rect.width/2, rect.height/2)};
 		for( int j=0; j<5; j++) {
 			IplImage *dst = cvCreateImage( cvSize(cvGetSize(cv_image).width+2,cvGetSize(cv_image).height+2), IPL_DEPTH_8U,1);
@@ -103,7 +103,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 				cc->area >= 10) {
 
 				rect = cc->rect;
-**/				cvRectangle(cv_image, cvPoint(rect.x,rect.y), cvPoint(rect.x+rect.width,rect.y+rect.height), CV_RGB(255,0,0), 3, 0, 0);
+				cvRectangle(cv_image, cvPoint(rect.x,rect.y), cvPoint(rect.x+rect.width,rect.y+rect.height), CV_RGB(255,0,0), 3, 0, 0);
 
 				this->boxes.set_points_size(2);
 				this->boxes.points[0].x = rect.x;
@@ -117,9 +117,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 //				this->boxes[j].boxes[0].y = rect.y;
 //				this->boxes[j].boxes[1].x = rect.x+rect.width;
 //				this->boxes[j].boxes[1].y = rect.y+rect.height;
-//			}
-//		}
-//		cvResetImageROI(cv_image);
+			}
+		}
+		cvResetImageROI(cv_image);
 
 	}
 	cvReleaseMemStorage( &storage );

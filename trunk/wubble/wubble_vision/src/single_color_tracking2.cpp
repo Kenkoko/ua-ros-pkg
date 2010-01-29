@@ -29,7 +29,7 @@ with code borrowed from various sources
 #include <stdio.h>
 #include <string>
 
-#include "BlobResult.h"
+#include "cvBlobsLib/BlobResult.h"
 
 class ImageConverter {
 
