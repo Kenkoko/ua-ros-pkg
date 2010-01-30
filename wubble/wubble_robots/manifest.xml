@@ -9,6 +9,9 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/wubble_robots</url>
 
+  <depend package="convex_decomposition"/>
+  <depend package="ivcon"/>
+  <depend package="urdf" />
   <depend package="pr2_controller_manager"/>
   <depend package="map_server"/>
   <depend package="topic_tools"/>
