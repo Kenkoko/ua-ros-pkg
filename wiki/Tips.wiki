@@ -1,5 +1,9 @@
 #summary Miscellaneous Tips and Tricks
 
+=IF SOMETHING DOES NOT WORK=
+
+... on the machines in CS930, *REBOOT* the machine (and/or try a different one), before panicking.
+
 =Syntax highlighting for .launch files (in gedit)=
 
   # Open the language configuration file as root (It's really just an XML file): 
