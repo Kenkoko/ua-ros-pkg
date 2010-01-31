@@ -29,7 +29,7 @@
     <property name="caster_wheel_offset_y" value="0.17" />
     
     <property name="caster_support_x" value="0.086" />
-    <property name="caster_support_z" value="0.095" />
+    <property name="caster_support_z" value="0.088148" />
     
     <property name="support_radius" value="0.01" />
     <property name="support_height" value="0.8128" />
@@ -38,7 +38,7 @@
     <link name="base_link">
         <inertial>
             <mass value="20" />
-            <origin xyz="0 0 0" />
+            <origin xyz="${-base_size_x/2} 0 ${-base_size_z/2}" />
             <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                      iyy="1.0" iyz="0.0" 
                      izz="1.0" />
@@ -90,7 +90,7 @@
     </link>
 
     <joint name="base_caster_box_joint" type="fixed">
-        <origin xyz="-${base_size_x/2 + caster_support_x/2} 0 0.02" rpy="0 0 0" />
+        <origin xyz="-${base_size_x/2 + caster_support_x/2} 0 ${base_size_z/2 - caster_support_z/2}" rpy="0 0 0" />
         <parent link="base_link" />
         <child link="base_caster_box_link"/>
     </joint>
@@ -155,7 +155,7 @@
     </link>
 
     <joint name="caster_wheel_joint" type="continuous">
-        <origin xyz="-0.02 0 -0.02" rpy="0 0 0" />
+        <origin xyz="-0.015 0 -0.03" rpy="0 0 0" />
         <parent link="base_caster_support_link" />
         <child link="caster_wheel_link" />      
         
@@ -177,14 +177,14 @@
         <visual>
             <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
             <geometry>
-                <cylinder radius="0.03" length="0.01" />
+                <cylinder radius="0.0381" length="0.01" />
             </geometry>
         </visual>
         
         <collision>
         <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
         <geometry>
-            <cylinder radius="0.03" length="0.01" />
+            <cylinder radius="0.0381" length="0.01" />
         </geometry>
         </collision>
     </link>
@@ -317,15 +317,15 @@
     <!-- GAZEBO MATERIALS -->
 
     <gazebo reference="base_link">
-        <material>PR2/Blue</material>
+        <material>Wubble/BlueBrushedAluminum</material>
     </gazebo>
 
     <gazebo reference="base_top_link">
-        <material>PR2/Blue</material>
+        <material>Wubble/BlueBrushedAluminum</material>
     </gazebo>
 
     <gazebo reference="caster_wheel_link">
-        <material>Gazebo/Black</material>
+        <material>PR2/Black</material>
     </gazebo>
 
     <gazebo reference="base_laser_link">
@@ -333,18 +333,18 @@
     </gazebo>
 
     <gazebo reference="base_caster_box_link">
-        <material>PR2/Blue</material>
+        <material>PR2/Black</material>
     </gazebo>
 
     <gazebo reference="base_caster_support_link">
-        <material>PR2/Blue</material>
+        <material>PR2/White</material>
     </gazebo>
 
     <gazebo reference="head_support_link">
-        <material>Gazebo/Chrome</material>
+        <material>Wubble/BrassShiny</material>
     </gazebo>
 
     <gazebo reference="head_pan_link">
-        <material>Gazebo/Black</material>
+        <material>PR2/Black</material>
     </gazebo>
 </robot>
