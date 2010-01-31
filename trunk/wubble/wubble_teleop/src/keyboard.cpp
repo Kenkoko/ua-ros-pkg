@@ -47,14 +47,8 @@
 #define KEYCODE_COMMA 0x2c
 #define KEYCODE_PERIOD 0x2e
 
-#define COMMAND_TIMEOUT_SEC 0.2
-
-// at full joystick depression you'll go this fast
-double max_speed = 0.500; // m/second
+double max_speed = 2.000; // m/second
 double max_turn = 60.0*M_PI/180.0; // rad/second
-// should we continuously send commands?
-bool always_command = false;
-
 
 class TBK_Node
 {
@@ -87,16 +81,16 @@ main(int argc, char** argv)
 {
   ros::init(argc,argv,"tbk", ros::init_options::AnonymousName | ros::init_options::NoSigintHandler);
   TBK_Node tbk;
-
+  
   boost::thread t = boost::thread::thread(boost::bind(&TBK_Node::keyboardLoop, &tbk));
   
   ros::spin();
-
+  
   t.interrupt();
   t.join();
   tbk.stopRobot();
   tcsetattr(kfd, TCSANOW, &cooked);
-
+  
   return(0);
 }
 
@@ -107,10 +101,10 @@ TBK_Node::keyboardLoop()
   double max_tv = max_speed;
   double max_rv = max_turn;
   bool dirty=false;
-
+  
   int speed=0;
   int turn=0;
-
+  
   // get the console in raw mode
   tcgetattr(kfd, &cooked);
   memcpy(&raw, &cooked, sizeof(struct termios));
@@ -118,10 +112,10 @@ TBK_Node::keyboardLoop()
   raw.c_cc[VEOL] = 1;
   raw.c_cc[VEOF] = 2;
   tcsetattr(kfd, TCSANOW, &raw);
-
+  
   puts("Reading from keyboard");
   puts("THIS IS DANIEL VERSION");
-
+  
   struct pollfd ufd;
   ufd.fd = kfd;
   ufd.events = POLLIN;
@@ -145,8 +139,16 @@ TBK_Node::keyboardLoop()
       }
     }
     else
+    {
+      if (dirty == true)
+      {
+        stopRobot();
+        dirty = false;
+      }
+      
       continue;
-
+    }
+    
     switch(c)
     {
     case KEYCODE_W:
@@ -155,6 +157,7 @@ TBK_Node::keyboardLoop()
       dirty = true;
       break;
     case KEYCODE_A:
+      speed = 0;
       turn = 1;
       dirty = true;
       break;
@@ -164,20 +167,18 @@ TBK_Node::keyboardLoop()
       dirty = true;
       break;
     case KEYCODE_D:
+      speed = 0;
       turn = -1;
       dirty = true;
       break;
     default:
       speed = 0;
       turn = 0;
-      dirty = true;
+      dirty = false;
     }
-    if (dirty == true)
-    {
-      cmdvel.linear.x = speed * max_tv;
-      cmdvel.angular.z = turn * max_rv;
-
-      pub_.publish(cmdvel);
-    }
+    
+    cmdvel.linear.x = speed * max_tv;
+    cmdvel.angular.z = turn * max_rv;
+    pub_.publish(cmdvel);
   }
 }

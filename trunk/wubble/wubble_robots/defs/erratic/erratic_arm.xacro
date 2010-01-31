@@ -4,14 +4,14 @@
     xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
     xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
-
+    
     <macro name="arm" params="parent">
         <joint name="arm_base_joint" type="fixed">
             <origin xyz="${top_size_x/2 - 0.0575} 0 ${top_size_z/2 + 0.025}"/>
             <parent link="${parent}"/>
             <child link="arm_base_link"/>
         </joint>
-
+        
         <link name="arm_base_link">
             <inertial>
                 <mass value="0.1" />
@@ -20,22 +20,22 @@
                          iyy="1.0" iyz="0.0" 
                          izz="1.0" />
             </inertial>
-
+            
             <visual>
                 <geometry>
                     <box size="${0.0575*2} ${0.0575*2} ${0.025*2}" />
                 </geometry>
             </visual>
-
+            
             <collision>
                 <geometry>
                     <box size="${0.0575*2} ${0.0575*2} ${0.025*2}" />
                 </geometry>
             </collision>
         </link>
-
+        
         <gazebo reference="arm_base_link">
-	        <material>PR2/Grey</material>
+            <material>Wubble/GunMetalBrushedAluminum</material>
         </gazebo>
     </macro>
 </robot>
