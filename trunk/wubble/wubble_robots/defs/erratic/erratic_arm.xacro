@@ -15,26 +15,63 @@
         <link name="arm_base_link">
             <inertial>
                 <mass value="0.1" />
-                <origin xyz="0 0 0" />
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0" 
                          izz="1.0" />
             </inertial>
             
             <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <box size="${0.0575*2} ${0.0575*2} ${0.025*2}" />
+<!--                    <box size="${0.0575*2} ${0.0575*2} ${0.025*2}" />-->
+                    <mesh filename="package://wubble_robots/meshes/arm_base.stl"/>
                 </geometry>
             </visual>
             
             <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
                     <box size="${0.0575*2} ${0.0575*2} ${0.025*2}" />
                 </geometry>
             </collision>
         </link>
         
+        <joint name="arm_base_shoulder_joint" type="fixed" >
+            <origin xyz="-0.0075 0 0.025" rpy="0 0 0" />
+            <parent link="arm_base_link" />
+            <child link="arm_shoulder_pan_link"/>
+        </joint>
+        
+        <link name="arm_shoulder_pan_link">
+            <inertial>
+                <mass value="0.1" />
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.005" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_shoulder.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_shoulder.stl"/>
+                </geometry>
+            </collision>
+        </link>
+        
         <gazebo reference="arm_base_link">
+            <material>Wubble/GunMetalBrushedAluminum</material>
+        </gazebo>
+        
+        <gazebo reference="arm_shoulder_pan_link">
             <material>Wubble/GunMetalBrushedAluminum</material>
         </gazebo>
     </macro>
