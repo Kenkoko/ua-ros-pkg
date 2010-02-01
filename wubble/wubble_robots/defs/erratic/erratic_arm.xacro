@@ -37,10 +37,16 @@
             </collision>
         </link>
         
-        <joint name="arm_base_shoulder_joint" type="fixed" >
+        <joint name="arm_base_shoulder_joint" type="revolute" >
             <origin xyz="-0.0075 0 0.025" rpy="0 0 0" />
             <parent link="arm_base_link" />
             <child link="arm_shoulder_pan_link"/>
+
+            <axis xyz="0 0 1"/>
+            <limit  lower="-1.22"
+                    upper="1.22"
+                    effort="100"
+                    velocity="2.33" />
         </joint>
         
         <link name="arm_shoulder_pan_link">
