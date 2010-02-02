@@ -7,7 +7,7 @@
     
     <property name="M_PI" value="3.14159"/>
     
-    <property name="wheel_radius" value="0.0625" />
+    <property name="wheel_radius" value="0.0762" />
     <property name="wheel_length" value="0.02" />
     <property name="caster_wheel_offset_y" value="0.17" />
     
@@ -67,8 +67,8 @@
                 <origin xyz="0 0 0" rpy="0 0 ${M_PI/2}" />
                 <geometry>
                     <mesh filename="package://wubble_robots/meshes/erratic_wheel.stl"/>
-<!--                    <cylinder radius="${wheel_radius}" length="${wheel_length}" />-->
                 </geometry>
+                <material name="Black" />
             </visual>
             
             <collision>
@@ -91,6 +91,12 @@
         <gazebo reference="${parent}_${suffix}_motor_link" >
             <material>PR2/White</material>
         </gazebo>
+
+        <transmission type="SimpleTransmission" name="${parent}_${suffix}_wheel_trans">
+            <actuator name="${parent}_${suffix}_wheel_motor" />
+            <joint name="${parent}_${suffix}_wheel_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
     </macro>
 </robot>
 

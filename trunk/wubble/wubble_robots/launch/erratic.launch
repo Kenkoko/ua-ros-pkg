@@ -1,7 +1,7 @@
 <launch>
 
     <!-- Create a transform sender for linking these frames. -->
-    <node name="tf_footprint_base" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 base_link base_footprint 40" />
+<!--    <node name="tf_footprint_base" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 base_link base_footprint 40" />-->
 
     <!-- send pr2.xml to param server -->
     <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_robots)/defs/erratic/erratic.urdf.xacro'" />
@@ -13,7 +13,7 @@
     <include file="$(find pr2_controller_manager)/controller_manager.launch" />
 
     <!-- load controllers -->
-    <node name="diffdrive" pkg="gazebo_plugins" type="gazebo_ros_diffdrive" respawn="true" output="screen"/>
+    <node name="diffdrive" pkg="wubble_plugins" type="gazebo_ros_diffdrive" respawn="true" output="screen"/>
 
     <node pkg="pr2_robot_actions" type="set_laser_tilt" name="action_set_laser_tilt" />
     <include file="$(find wubble_robots)/launch/erratic_lasers_and_filters.launch" />    

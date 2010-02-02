@@ -34,6 +34,41 @@
     <property name="support_radius" value="0.01" />
     <property name="support_height" value="0.8128" />
 
+    <!-- base_footprint is a fictitious link(frame) that is on the ground right below base_link origin,
+         navigation stack dedpends on this frame -->
+    <link name="base_footprint">
+        <inertial>
+            <mass value="1.0" />
+            <origin xyz="0 0 0" />
+            <inertia ixx="0.01" ixy="0.0" ixz="0.0"
+                     iyy="0.01" iyz="0.0" 
+                     izz="0.01" />
+        </inertial>
+
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size="0.01 0.01 0.01" />
+            </geometry>
+            <material name="Green" />
+        </visual>
+
+        <collision>
+            <!-- represent base collision with a simple rectangular model, positioned by base_size_z s.t. top
+                 surface of the collision box matches the top surface of the PR2 base -->
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+              <box size="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="base_footprint_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 0" />        
+        <parent link="base_footprint"/>
+        <child link="base_link" />
+    </joint>
+
     <!-- Links and Joints (i.e., the robot) -->
     <link name="base_link">
         <inertial>
@@ -49,6 +84,7 @@
             <geometry>
                 <box size="${base_size_x} ${base_size_y} ${base_size_z}" />
             </geometry>
+            <material name="Blue" />
         </visual>
         
         <collision>
@@ -76,9 +112,10 @@
         
         <visual>
             <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <geometry>
-                    <mesh filename="package://wubble_robots/meshes/erratic_top_origin.stl"/>
-                </geometry>
+            <geometry>
+                <mesh filename="package://wubble_robots/meshes/erratic_top_origin.stl"/>
+            </geometry>
+            <material name="Blue" />
         </visual>
         
         <collision>
@@ -109,6 +146,7 @@
             <geometry>
                 <box size="${caster_support_x} 0.02 ${caster_support_z}" />
             </geometry>
+            <material name="Blue" />
         </visual>
         
         <collision>
@@ -129,6 +167,12 @@
         <limit effort="100" velocity="100" k_velocity="0" />
         <joint_properties damping="0.0" friction="0.0" />
     </joint>
+
+    <transmission type="SimpleTransmission" name="base_caster_support_trans">
+        <actuator name="base_caster_support_motor" />
+        <joint name="base_caster_support_joint" />
+        <mechanicalReduction>1.0</mechanicalReduction>
+    </transmission>
 
     <link name="base_caster_support_link">
         <inertial>
@@ -165,6 +209,12 @@
         <joint_properties damping="0.0" friction="0.0" />
     </joint>
 
+    <transmission type="SimpleTransmission" name="caster_wheel_trans">
+        <actuator name="caster_wheel_motor" />
+        <joint name="caster_wheel_joint" />
+        <mechanicalReduction>1.0</mechanicalReduction>
+    </transmission>
+
     <link name="caster_wheel_link">
         <inertial>
             <mass value="0.1" /> 
@@ -179,6 +229,7 @@
             <geometry>
                 <cylinder radius="0.0381" length="0.01" />
             </geometry>
+            <material name="Black"/>
         </visual>
         
         <collision>
@@ -304,8 +355,10 @@
             <interface:position name="p3d_base_position"/>
         </controller:gazebo_ros_p3d>
 
+        <canonicalBody>base_footprint</canonicalBody>
+
         <!-- this publishes empty joint_states due to no transmission, but
-         triggering robot_state_puublisher to publish tf between fixed joints in erratic,
+         triggering robot_state_publisher to publish tf between fixed joints in erratic,
          (e.g. base_laser_link for the base_scan frame) -->
         <controller:gazebo_ros_controller_manager name="gazebo_ros_controller_manager" plugin="libgazebo_ros_controller_manager.so">
             <alwaysOn>true</alwaysOn>
@@ -315,6 +368,11 @@
     </gazebo>
 
     <!-- GAZEBO MATERIALS -->
+
+    <material name="Black">
+        <color rgba="0.0 0.0 0.0 1.0"/>
+    </material>
+
 
     <gazebo reference="base_link">
         <material>Wubble/BlueBrushedAluminum</material>
@@ -347,4 +405,5 @@
     <gazebo reference="head_pan_link">
         <material>PR2/Black</material>
     </gazebo>
+
 </robot>
