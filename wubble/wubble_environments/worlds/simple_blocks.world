@@ -72,7 +72,7 @@
     <rendering:ogre>
         <ambient>1.0 1.0 1.0 1.0</ambient>
         <sky>
-            <material>Gazebo/CloudySky</material>
+            <material>WubbleWorld/CloudySky</material>
         </sky>
         <gazeboPath>media</gazeboPath>
         <grid>false</grid>
@@ -94,7 +94,7 @@
                 <normal>0 0 1</normal>
                 <uvTile>3 3</uvTile>
                 <size>7 5</size>
-                <material>Gazebo/LightWood</material>
+                <material>WubbleWorld/LightWood</material>
             </geom:plane>
         </body:plane>
     </model:physical>
@@ -130,7 +130,7 @@
                 <size>0 0 0</size>
                 <visual>
                     <size>0 0 0</size>
-                    <material>PR2/White</material>
+                    <material>Wubble/White</material>
                     <mesh>unit_box</mesh>
                 </visual>
             </geom:box>
@@ -167,7 +167,7 @@
                 <visual>
                     <size>7 .1 2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/PaintedWall</material>
+                    <material>WubbleWorld/PaintedWall</material>
                 </visual>
             </geom:box>
             
@@ -178,7 +178,7 @@
                 <visual>
                     <size>7 .1 2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/PaintedWall</material>
+                    <material>WubbleWorld/PaintedWall</material>
                 </visual>
             </geom:box>
             
@@ -189,7 +189,7 @@
                 <visual>
                     <size>.1 5 2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/PaintedWall</material>
+                    <material>WubbleWorld/PaintedWall</material>
                 </visual>
             </geom:box>
             
@@ -200,7 +200,7 @@
                 <visual>
                     <size>.1 5 2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/PaintedWall</material>
+                    <material>WubbleWorld/PaintedWall</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -218,7 +218,7 @@
                 <mass>3.0</mass>
                 <visual>
                     <size> 1.0 1.0 1.0</size>
-                    <material>Gazebo/Rocky</material>
+                    <material>WubbleWorld/Rocky</material>
                     <mesh>unit_sphere</mesh>
                 </visual>
             </geom:sphere>
@@ -237,7 +237,7 @@
                 <mass>1.0</mass>
                 <visual>
                     <size>0.4 0.4 0.4</size>
-                    <material>Gazebo/Grey</material>
+                    <material>Wubble/Grey</material>
                     <mesh>unit_sphere</mesh>
                 </visual>
             </geom:sphere>
@@ -256,7 +256,7 @@
                 <visual>
                     <size>0.7 0.7 0.7</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/BumpyMetal</material>
+                    <material>WubbleWorld/BumpyMetal</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -280,7 +280,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/Blue</material>
+                    <material>Wubble/Blue</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -302,7 +302,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/Black</material>
+                    <material>Wubble/Black</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -324,7 +324,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/Gold</material>
+                    <material>Wubble/Gold</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -346,7 +346,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/Grey</material>
+                    <material>Wubble/Grey</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -368,7 +368,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/Green</material>
+                    <material>Wubble/Green</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -390,7 +390,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/White</material>
+                    <material>Wubble/White</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -412,7 +412,7 @@
                 <mass>0.6</mass>
                 <visual>
                     <size>0.2 0.2 0.6</size>
-                    <material>Gazebo/PioneerBody</material>
+                    <material>Wubble/Red</material>
                     <mesh>unit_box</mesh>
                 </visual>
             </geom:box>
