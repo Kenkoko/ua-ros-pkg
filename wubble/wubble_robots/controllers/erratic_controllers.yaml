@@ -1,13 +1,13 @@
 head_traj_controller:
   type: JointSplineTrajectoryController
-  joints: ['head_pan_joint', 'stoc_camera_joint']
+  joints: ['head_pan_joint', 'head_tilt_joint']
   gains:
     head_pan_joint:
       p: 10.0
       i: 12.0
       d: 0.5
       i_clamp: 0.5 
-    stoc_camera_joint:
+    head_tilt_joint:
       p: 12.4
       i: 2.0
       d: 0.4

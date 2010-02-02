@@ -49,11 +49,12 @@ class MoveHeadXbox():
         self.head_tilt = 0.0
         self.joy_data = None
         self.joint_traj = JointTrajectory()
-        self.joint_traj.joint_names = ['head_pan_joint', 'stoc_camera_joint'] #'head_tilt_joint']
+        self.joint_traj.joint_names = ['head_pan_joint', 'head_tilt_joint'] #'head_tilt_joint']
         self.jtp = JointTrajectoryPoint()
         self.jtp.positions = [0.0, 0.0]
         self.jtp.velocities = [0.0, 0.0]
         self.jtp.accelerations = [0.0, 0.0]
+        self.jtp.time_from_start = 1.0
         self.joint_traj.points = [self.jtp]
         
         self.head_angles_pub = rospy.Publisher('head_traj_controller/command', JointTrajectory)
@@ -89,12 +90,13 @@ class MoveHeadXbox():
             if self.joy_data:
                 if self.joy_data.buttons[4]: 
                     self.reset_head_position()
+                    print "Attempting to reset head position"
                 else: 
                     self.set_head_position(self.joy_data.axes[2], -1.0 * self.joy_data.axes[3])
             
-                print self.joint_traj
-                #if self.joy_data.buttons[7]:
-                self.head_angles_pub.publish(self.joint_traj)
+                if self.joy_data.buttons[7]:
+                    print self.joint_traj
+                    self.head_angles_pub.publish(self.joint_traj)
             
             time.sleep(0.1)
 
