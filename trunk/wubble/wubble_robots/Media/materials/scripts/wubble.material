@@ -49,3 +49,133 @@ material Wubble/BrassShiny
   }
 }
 
+material Wubble/Gold
+{
+  receive_shadows on
+  lighting on
+  technique
+  {
+    pass
+    {
+      ambient 0.400000 0.248690 0.020759 1.000000
+      diffuse 0.800000 0.648690 0.120759 1.000000
+      specular 0.500000 0.500000 0.500000 1.000000 12.500000
+      emissive 0.000000 0.000000 0.000000 1.000000
+      shading gouraud
+    }
+  }
+}
+
+material Wubble/White
+{
+  receive_shadows on
+  lighting on
+  technique
+  {
+    pass
+    {
+      ambient 0.5 0.5 0.5 1.0
+      diffuse 1.0 1.0 1.0 1.0
+      specular 1.0 1.0 1.0 1.0
+      shading gouraud
+    }
+  }
+}
+
+material Wubble/Blue
+{
+  receive_shadows on
+  lighting on
+  technique
+  {
+    pass
+    {
+      ambient 0.000000 0.000000 0.200000 1.000000
+      diffuse 0.000000 0.000000 0.800000 1.000000
+      specular 0.000000 0.000000 0.200000 1.000000
+      emissive 0.000000 0.000000 0.000000 1.000000
+      shading gouraud
+    }
+  }
+}
+
+material Wubble/Grey
+{
+  receive_shadows on
+  lighting on
+  technique
+  {
+    pass
+    {
+      ambient 0.1 0.1 0.1 1.0
+      diffuse 0.7 0.7 0.7 1.0
+      specular 0.8 0.8 0.8 1
+    }
+  }
+}
+
+material Wubble/Black
+{
+  receive_shadows on
+  lighting on
+  technique
+  {
+    pass
+    {
+      ambient 0.1 0.1 0.1 1.0
+      diffuse 0.1 0.1 0.1 1.0
+      specular 0.0 0.0 0.0 0.0
+    }
+  }
+}
+
+material Wubble/Yellow
+{
+  receive_shadows on
+  lighting on
+  technique
+  {
+    pass
+    {
+      ambient 0.200000 0.200000 0.000000 1.000000
+      diffuse 0.800000 0.800000 0.000000 1.000000
+      specular 0.200000 0.200000 0.000000 1.000000 
+      emissive 0.000000 0.000000 0.000000 1.000000
+    }
+  }
+}
+
+material Wubble/Red
+{
+  receive_shadows on
+  lighting on
+  technique
+  {
+    pass
+    {
+      ambient 0.200000 0.000000 0.000000 1.000000
+      diffuse 0.800000 0.000000 0.000000 1.000000
+      specular 0.200000 0.000000 0.000000 1.000000 
+      emissive 0.000000 0.000000 0.000000 1.000000
+      shading phong
+    }
+  }
+}
+
+material Wubble/Green
+{
+  receive_shadows on
+  lighting on
+  technique
+  {
+    pass
+    {
+      ambient 0.000000 0.200000 0.000000 1.000000
+      diffuse 0.000000 0.800000 0.000000 1.000000
+      specular 0.000000 0.200000 0.000000 1.000000 
+      emissive 0.000000 0.000000 0.000000 0.000000
+      shading phong
+    }
+  }
+}
+

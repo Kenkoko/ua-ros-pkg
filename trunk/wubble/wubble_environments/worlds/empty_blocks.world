@@ -72,7 +72,7 @@
     <rendering:ogre>
         <ambient>1.0 1.0 1.0 1.0</ambient>
         <sky>
-            <material>Gazebo/CloudySky</material>
+            <material>WubbleWorld/CloudySky</material>
         </sky>
         <gazeboPath>media</gazeboPath>
         <grid>false</grid>
@@ -94,7 +94,7 @@
                 <normal>0 0 1</normal>
                 <uvTile>3 3</uvTile>
                 <size>7 5</size>
-                <material>Gazebo/LightWood</material>
+                <material>WubbleWorld/LightWood</material>
             </geom:plane>
         </body:plane>
     </model:physical>
@@ -130,7 +130,7 @@
                 <size>0 0 0</size>
                 <visual>
                     <size>0 0 0</size>
-                    <material>PR2/White</material>
+                    <material>Wubble/White</material>
                     <mesh>unit_box</mesh>
                 </visual>
             </geom:box>
@@ -167,7 +167,7 @@
                 <visual>
                     <size>7 .1 2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/PaintedWall</material>
+                    <material>WubbleWorld/PaintedWall</material>
                 </visual>
             </geom:box>
             
@@ -178,7 +178,7 @@
                 <visual>
                     <size>7 .1 2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/PaintedWall</material>
+                    <material>WubbleWorld/PaintedWall</material>
                 </visual>
             </geom:box>
             
@@ -189,7 +189,7 @@
                 <visual>
                     <size>.1 5 2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/PaintedWall</material>
+                    <material>WubbleWorld/PaintedWall</material>
                 </visual>
             </geom:box>
             
@@ -200,7 +200,7 @@
                 <visual>
                     <size>.1 5 2</size>
                     <mesh>unit_box</mesh>
-                    <material>Gazebo/PaintedWall</material>
+                    <material>WubbleWorld/PaintedWall</material>
                 </visual>
             </geom:box>
         </body:box>
