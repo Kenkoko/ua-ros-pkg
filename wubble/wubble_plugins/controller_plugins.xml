@@ -1,0 +1,6 @@
+<library path="libcontroller_tutorial">
+  <class
+      name="JointEffortController"
+      type="controller::JointEffortController"
+      base_class_type="controller::Controller" />
+</library>

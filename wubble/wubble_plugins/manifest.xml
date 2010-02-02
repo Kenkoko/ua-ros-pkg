@@ -1,0 +1,20 @@
+<package>
+    <description brief="wubble_plugins">
+
+     wubble_plugins
+
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_plugins</url>
+
+<!--    <depend package="pr2_controller_interface"/>-->
+<!--    <depend package="pluginlib"/>-->
+    <depend package="gazebo_plugins"/>
+
+    <export>
+        <cpp lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib" />
+<!--        <pr2_controller_interface plugin="${prefix}/controller_plugins.xml" />-->
+    </export>
+</package>
