@@ -399,7 +399,7 @@
     </gazebo>
 
     <gazebo reference="head_support_link">
-        <material>Wubble/BrassShiny</material>
+        <material>Wubble/BrassScratched</material>
     </gazebo>
 
     <gazebo reference="head_pan_link">

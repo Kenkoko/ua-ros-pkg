@@ -54,10 +54,10 @@
             <joint name="arm_base_shoulder_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
-
+        
         <link name="arm_shoulder_pan_link">
             <inertial>
-                <mass value="0.1" />
+                <mass value="0.3" />
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0" 
@@ -79,11 +79,58 @@
             </collision>
         </link>
         
+        <joint name="arm_shoulder_pan_tilt_joint" type="revolute">
+            <origin xyz="0.08995 0 0.0450" rpy="0 0 0" />
+            <parent link="arm_shoulder_pan_link"/>
+            <child link="arm_shoulder_tilt_link" />
+            
+            <axis xyz="0 1 0"/>
+            <limit  lower="-1.972222"
+                    upper="1.04719755"
+                    effort="100"
+                    velocity="2.33" />
+        </joint>
+        
+        <link name="arm_shoulder_tilt_link">
+            <inertial>
+                <mass value="0.18" />
+                <origin xyz="0.0 0.017 0.0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_shoulder_tilt.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_shoulder_tilt.stl"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <transmission type="SimpleTransmission" name="arm_base_shoulder_tilt_trans">
+            <actuator name="arm_base_shoulder_tilt_motor" />
+            <joint name="arm_shoulder_pan_tilt_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        
         <gazebo reference="arm_base_link">
             <material>Wubble/GunMetalBrushedAluminum</material>
         </gazebo>
         
         <gazebo reference="arm_shoulder_pan_link">
+            <material>Wubble/GunMetalBrushedAluminum</material>
+        </gazebo>
+        
+        <gazebo reference="arm_shoulder_tilt_link">
             <material>Wubble/GunMetalBrushedAluminum</material>
         </gazebo>
     </macro>
