@@ -42,6 +42,7 @@
     <!-- Our own packages -->
     <depend package="wubble_environments"/>
     <depend package="wubble_robots"/>
+    <depend package="sensor_msgs"/>
 
 </package>
 

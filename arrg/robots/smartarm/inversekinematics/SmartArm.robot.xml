@@ -1,81 +1,16 @@
-<!-- include pumaarm.robot.xml -->
-<Robot name="SmartArm">
-  <KinBody file="smartarm.kinbody.xml">
      <!-- ARRG University of Arizona
    		Created by Matt DePorter -->
-    <Body name="Arm5">
-      <Geom type="trimesh">
-        <Translation>0 0.1 0</Translation>
-	    <Data>models/puma/ClawBase.iv</Data>
-        <Render>models/puma/ClawBase.iv</Render>
-      </Geom>
-      <mass type="sphere">
-        <total>0.24</total>
-        <radius>1</radius>
-      </mass>
-    </Body>
 
-    <Body name="RClaw" type="dynamic">
-      <Translation>0 0.1 0</Translation>
-	  <offsetfrom>Arm5</offsetfrom>
-      <Geom type="trimesh">
-        <Data>models/puma/RClaw.iv</Data>
-        <Render>models/puma/RClaw.iv</Render>
-      </Geom>
-     <!-- <mass type="sphere">
-        <total>0.1</total>
-        <radius>1</radius>
-      </mass> -->
-    </Body>
+<Robot name="SmartArm">
+	<KinBody file="smartarm.kinbody.xml"/>
 
-    <Joint name="m1" type="hinge">
-      <Body>Arm5</Body>
-      <Body>RClaw</Body>
-      <offsetfrom>RClaw</offsetfrom>
-      <weight>0.2</weight>
-      <lostop>-56</lostop>
-      <histop>8</histop>
-      <axis>0 0 -1</axis>
-      <maxvel>1.5</maxvel>
-      <resolution>2</resolution>
-    </Joint>
-
-    <Body name="LClaw" type="dynamic">
-	  <Translation>0 0.1 0</Translation>
-	  <offsetfrom>Arm5</offsetfrom>
-      <Geom type="trimesh">
-        <Data>models/puma/LClaw.iv</Data>
-        <Render>models/puma/LClaw.iv</Render>
-      </Geom>
-      <mass type="sphere">
-        <total>0.1</total>
-        <radius>1</radius>
-      </mass>
-    </Body>
-
-    <Joint name="m2" type="hinge" enable="false" mimic="m1 1 0">
-      <Body>Arm5</Body>
-      <Body>LClaw</Body>
-      <offsetfrom>LClaw</offsetfrom>
-      <weight>0.2</weight>
-      <lostop>-56</lostop>
-      <histop>8</histop>
-      <axis>0 0 1</axis>
-      <maxvel>1.5</maxvel>
-      <resolution>2</resolution>
-    </Joint>
-  </KinBody>
-
-  <Manipulator name="arm">
-    <effector>Arm5</effector>
-	<base>Base</base>
-    <armjoints>J0 J1 J2 J3 J4 J5</armjoints>
-    <joints>m1</joints>
-    <!-- joint values of the closed and opened positions -->
-    <closingdirection>1</closingdirection>
-    <palmdirection>0 1 0</palmdirection>
-    <!-- grasp goal with respect to the effector -->
-    <Translation>0 0.175 0</Translation>
-    <IkSolver>PUMAikfast</IkSolver>
-  </Manipulator>
+    <Manipulator name="arm">
+        <base>BaseLink</base>
+        <armjoints>ShoulderPanJoint ShoulderTiltJoint ElbowTiltJoint WristRotateJoint</armjoints>
+        <effector>WristRotateLink</effector>
+        <gripperjoints>FingerLeftJoint FingerRightJoint</gripperjoints>
+        <!-- joint values of the closed and opened positions -->
+        <closed>62 62</closed>
+        <opened>0 0</opened>
+    </Manipulator>
 </Robot>
