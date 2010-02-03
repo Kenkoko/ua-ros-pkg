@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2008, Willow Garage, Inc.  All rights reserved.
+# Copyright (c) 2010, Arizona Robotics Research Group, University of Arizona
+# All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,10 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Author: Daniel Hewlett
-# Author: Antons Rebguns
-
-PKG = 'wubble_teleop'
+PKG = 'wubble_mapping'
 
 import roslib; roslib.load_manifest(PKG)
 
@@ -53,7 +51,7 @@ if __name__ == '__main__':
             msg.header.stamp = rospy.Time.now()
             pub.publish(msg)
             r.sleep()
-        
+            
         rospy.spin()
     except rospy.ROSInterruptException: pass
 
