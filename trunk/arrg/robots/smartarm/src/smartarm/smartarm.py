@@ -70,7 +70,7 @@ class SmartArm:
 	def set_joint_to_angle(self, jointNum, angleInDeg):
 		servo_positions = self.joints[jointNum].servo_positions_for_angle(angleInDeg)
 		for sid in servo_positions:
-			self.publisher.publish(sid, servo_positions[sid], 200)
+			self.publisher.publish(sid, servo_positions[sid], 75)
 
 	def handleInput(self, joint_move):
 		self.set_joint_to_angle(joint_move.id, joint_move.angle)
