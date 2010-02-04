@@ -1,8 +1,6 @@
 <package>
   <description brief="ax12">
-
-     ax12
-
+    Python code to control Bioloid Dynamixel AX12+ servos. 
   </description>
   <author>UARobots</author>
   <license>BSD</license>
@@ -11,6 +9,7 @@
   <depend package="rospy"/>
   <depend package="std_msgs"/>
 
+  <sysdepend os="ubuntu" version="9.10-karmic" package="python-serial"/>
 </package>
 
 
