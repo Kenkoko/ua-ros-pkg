@@ -1,7 +1,7 @@
 <package>
   <description brief="phidgets">
 
-     phidgets
+     A python wrapper for the Phidgets C API.
 
   </description>
   <author>UARobots</author>
@@ -10,7 +10,10 @@
   <url>http://ros.org/wiki/phidgets</url>
   <depend package="rospy"/>
   <depend package="std_msgs"/>
-
+  <depend package="phidgetspp_c_api"/>
+  <export>
+    <python path="'rospack find phidgetspp_c_api'/src"/>
+  </export>
 </package>
 
 
