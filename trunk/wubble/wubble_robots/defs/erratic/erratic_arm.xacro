@@ -254,6 +254,50 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
+        <!-- Gripper left finger joint and link -->
+        <joint name="arm_wrist_rotate_left_finger_joint" type="revolute">
+            <origin xyz="${0.0015 + 0.05 - 0.01} ${0.035/2} 0" rpy="0 0 0" />
+            <parent link="arm_wrist_rotate_link"/>
+            <child link="arm_left_finger_link" />
+            
+            <axis xyz="0 0 1"/>
+            <!-- From -20 to 20 degrees -->
+            <limit  lower="-0.3490658"
+                    upper="0.3490658"
+                    effort="100"
+                    velocity="2.33" />
+        </joint>
+        
+        <link name="arm_left_finger_link">
+            <inertial>
+                <mass value="0.01" />
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_left_finger.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_left_finger.stl"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <transmission type="SimpleTransmission" name="arm_left_finger_trans">
+            <actuator name="arm_left_finger_motor" />
+            <joint name="arm_wrist_rotate_left_finger_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
         <gazebo reference="arm_base_link">
             <material>Wubble/GunMetalBrushedAluminum</material>
         </gazebo>
@@ -275,6 +319,10 @@
         </gazebo>
         
         <gazebo reference="arm_right_finger_link">
+            <material>Wubble/GunMetalBrushedAluminum</material>
+        </gazebo>
+        
+        <gazebo reference="arm_left_finger_link">
             <material>Wubble/GunMetalBrushedAluminum</material>
         </gazebo>
     </macro>
