@@ -79,8 +79,9 @@
             </collision>
         </link>
         
+        <!-- Shoulder tilt joint and link -->
         <joint name="arm_shoulder_pan_tilt_joint" type="revolute">
-            <origin xyz="0.08995 0 0.0450" rpy="0 0 0" />
+            <origin xyz="${0.105 - 0.01 - 0.03085/2} 0 ${0.01 + 0.05 - 0.031/2}" rpy="0 0 0" />
             <parent link="arm_shoulder_pan_link"/>
             <child link="arm_shoulder_tilt_link" />
             
@@ -94,7 +95,7 @@
         <link name="arm_shoulder_tilt_link">
             <inertial>
                 <mass value="0.18" />
-                <origin xyz="0.0 0.017 0.0" rpy="0 0 0" />
+                <origin xyz="0.0 0.17 0.0" rpy="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0" 
                          izz="1.0" />
@@ -121,6 +122,93 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
+        <!-- Elbow tilt joint and link -->
+        <joint name="arm_shoulder_tilt_elbow_tilt_joint" type="revolute">
+            <origin xyz="${0.04 - 0.01 + 0.0015 + 0.105 + 0.055 - 0.01} 0 0" rpy="0 0 0" />
+            <parent link="arm_shoulder_tilt_link"/>
+            <child link="arm_elbow_tilt_link" />
+            
+            <axis xyz="0 1 0"/>
+            <!-- From -113 to 108 degrees -->
+            <limit  lower="-1.972222"
+                    upper="1.8849556"
+                    effort="100"
+                    velocity="2.33" />
+        </joint>
+        
+        <link name="arm_elbow_tilt_link">
+            <inertial>
+                <mass value="0.15" />
+                <origin xyz="0.0 0.07 0.0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_elbow_tilt.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_elbow_tilt.stl"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <transmission type="SimpleTransmission" name="arm_elbow_tilt_trans">
+            <actuator name="arm_elbow_tilt_motor" />
+            <joint name="arm_shoulder_tilt_elbow_tilt_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <!-- Wrist rotate joint and link -->
+        <joint name="arm_elbow_tilt_wrist_rotate_joint" type="revolute">
+            <origin xyz="${0.08 - 0.01} 0 ${0.05 - 0.0115 - 0.0155}" rpy="0 0 0" />
+            <parent link="arm_elbow_tilt_link"/>
+            <child link="arm_wrist_rotate_link" />
+            
+            <axis xyz="1 0 0"/>
+            <!-- From -150 to 150 degrees -->
+            <limit  lower="-2.6179939"
+                    upper="2.6179939"
+                    effort="100"
+                    velocity="2.33" />
+        </joint>
+        
+        <link name="arm_wrist_rotate_link">
+            <inertial>
+                <mass value="0.12" />
+                <origin xyz="0.0 0.05 0.0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_wrist_rotate.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_robots/meshes/arm_wrist_rotate.stl"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <transmission type="SimpleTransmission" name="arm_wrist_rotate_trans">
+            <actuator name="arm_wrist_rotate_motor" />
+            <joint name="arm_elbow_tilt_wrist_rotate_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
         
         <gazebo reference="arm_base_link">
             <material>Wubble/GunMetalBrushedAluminum</material>
@@ -131,6 +219,14 @@
         </gazebo>
         
         <gazebo reference="arm_shoulder_tilt_link">
+            <material>Wubble/GunMetalBrushedAluminum</material>
+        </gazebo>
+        
+        <gazebo reference="arm_elbow_tilt_link">
+            <material>Wubble/GunMetalBrushedAluminum</material>
+        </gazebo>
+        
+        <gazebo reference="arm_wrist_rotate_link">
             <material>Wubble/GunMetalBrushedAluminum</material>
         </gazebo>
     </macro>
