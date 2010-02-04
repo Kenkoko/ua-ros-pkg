@@ -10,3 +10,6 @@
 - svn:
     uri: https://garuda.cs.arizona.edu/svn/wubbleworld/ww-ros/trunk
     local-name: ua-ros-pkg/icarus
+- svn:
+    uri: http://foote-ros-pkg.googlecode.com/svn/trunk/phidgets/phidgetspp_c_api
+    local-name: foote-ros-pkg-read-only/phidgets/phidgetspp_c_api
