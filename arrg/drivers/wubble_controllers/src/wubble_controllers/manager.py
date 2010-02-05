@@ -45,7 +45,7 @@ class SerialBusDriverManager:
     def __init__(self):
         rospy.init_node('ttyUSB1_manager', anonymous=False)
 
-        port_name = rospy.get_param('~port_name', '/dev/ttyUSB1')
+        port_name = rospy.get_param('~port_name', '/dev/ttyUSB0')
         baud_rate = rospy.get_param('~baud_rate', 1000000)
         min_motor_id = rospy.get_param('~min_motor_id', 1)
         max_motor_id = rospy.get_param('~max_motor_id', 25)
@@ -64,12 +64,18 @@ class SerialBusDriverManager:
 
     def start_driver(self, driver_control_request):
         driver_name = driver_control_request.driver_name
+        driver_path = driver_control_request.driver_path
+        # make sure the driver_path is in PYTHONPATH
+        if not driver_path in sys.path:
+            sys.path.append(driver_path)
         if driver_name in self.drivers:
             return DriverControlResponse(False, 'Driver already started. If you want to restart it, call restart.')
         try:
             if driver_name not in sys.modules:
+                # import if module not previously imported
                 driver = __import__(driver_name)
             else:
+                # reload module if previously imported
                 driver = reload(sys.modules[driver_name])
         except ImportError, ie:
             return DriverControlResponse(False, 'Cannot find driver module. Unable to start driver %s\n%s' %(driver_name, str(ie)))
