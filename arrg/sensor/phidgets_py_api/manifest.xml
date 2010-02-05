@@ -1,0 +1,12 @@
+<package>
+  <description brief="The Phidgets Python API">
+
+    This package contains the Official Phidgets Python API.
+
+  </description>
+  <author>Phidgets, Inc.</author>
+  <license>Creative Commons Attribution 2.5 Canada License</license>
+  <url>http://www.ros.org/wiki/phidgets_py_api</url>
+  <!--<depend pkg="phidgetspp_c_api"/>-->
+</package>
+
