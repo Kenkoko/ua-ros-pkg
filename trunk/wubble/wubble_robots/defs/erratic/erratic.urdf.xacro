@@ -6,8 +6,8 @@
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
 
     <!-- Included URDF Files -->
-    <include filename="$(find wubble_robots)/calibration/default_cal.xml" />
-    <include filename="$(find wubble_robots)/defs/erratic/head_sensor_package_defs.urdf.xacro" />
+    <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
+    <include filename="$(find wubble_robots)/defs/erratic/tilting_hokuyo.xacro" />
     <include filename="$(find pr2_defs)/defs/materials.urdf.xacro" />    
     <include filename="$(find wubble_robots)/defs/erratic/erratic_head.xacro" />
     <include filename="$(find wubble_robots)/defs/erratic/erratic_wheel.xacro" />
