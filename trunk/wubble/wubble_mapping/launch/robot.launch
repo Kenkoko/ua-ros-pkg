@@ -4,8 +4,8 @@
     <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_robots)/defs/erratic/erratic.urdf.xacro'" />
     <node name="erratic_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
     
-    <!-- HACK: Publish static transform for laser for now -->
-    <node name="joint_states_publisher" pkg="wubble_mapping" type="transform_pub.py" />
+    <!-- Publish joint_states information -->
+    <node name="joint_states_publisher" pkg="wubble_mapping" type="joint_states_publisher.py" />
     
     <!-- Starts odometry and battery state pubs on the robot -->
     <node name="erratic_move_base" pkg="wubble_controllers" type="erratic_player" output="screen"/>
