@@ -44,7 +44,7 @@
         </struct>
       </value>
     </filter>
-    <joint name="laser_tilt_mount_joint">
+    <joint name="hokuyo_tilt_joint">
       <pid p="8" i=".1" d="0.2" iClamp="0.5" />
     </joint>
   </controller> 

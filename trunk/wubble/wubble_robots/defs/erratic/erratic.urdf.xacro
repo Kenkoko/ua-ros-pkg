@@ -6,7 +6,7 @@
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
 
     <!-- Included URDF Files -->
-    <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
+    <include filename="$(find wubble_robots)/calibration/default_cal.xml" />
     <include filename="$(find wubble_robots)/defs/erratic/head_sensor_package_defs.urdf.xacro" />
     <include filename="$(find pr2_defs)/defs/materials.urdf.xacro" />    
     <include filename="$(find wubble_robots)/defs/erratic/erratic_head.xacro" />
@@ -46,6 +46,7 @@
         </inertial>
 
         <visual>
+            <!-- Hiding the base_footprint at the center of the body -->
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
                 <box size="0.01 0.01 0.01" />
@@ -54,9 +55,7 @@
         </visual>
 
         <collision>
-            <!-- represent base collision with a simple rectangular model, positioned by base_size_z s.t. top
-                 surface of the collision box matches the top surface of the PR2 base -->
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0 0 ${base_size_z/2 + 0.051}" rpy="0 0 0" />
             <geometry>
               <box size="0.001 0.001 0.001" />
             </geometry>
@@ -64,7 +63,9 @@
     </link>
 
     <joint name="base_footprint_joint" type="fixed">
-        <origin xyz="0 0 0" rpy="0 0 0" />        
+        <!-- NB: While you would think this would make it go up, it is oddly reversed.
+             This moves the joint to 0,0,0 where we want it for rviz, etc. -->
+        <origin xyz="0 0 ${base_size_z/2 + 0.051}" rpy="0 0 0" />        
         <parent link="base_footprint"/>
         <child link="base_link" />
     </joint>
@@ -321,9 +322,9 @@
     <erratic_wheel suffix="left" parent="base_link" reflect="1"/>
     <erratic_wheel suffix="right" parent="base_link" reflect="-1"/>
 
-    <pr2_tilting_laser name="laser_tilt" parent="base_top_link" laser_calib_ref="-0.35">
-        <origin xyz="0.15 0 ${-top_size_z - 0.05}" rpy="0 -1 0" />
-    </pr2_tilting_laser>
+    <tilting_hokuyo parent="base_top_link">
+        <origin xyz="0.15 0 ${-top_size_z - 0.05}" rpy="${M_PI} 0 0" />
+    </tilting_hokuyo>
 
     <stoc_camera name="stoc" parent="head_pan_link" />
 
@@ -372,7 +373,6 @@
     <material name="Black">
         <color rgba="0.0 0.0 0.0 1.0"/>
     </material>
-
 
     <gazebo reference="base_link">
         <material>Wubble/BlueBrushedAluminum</material>
