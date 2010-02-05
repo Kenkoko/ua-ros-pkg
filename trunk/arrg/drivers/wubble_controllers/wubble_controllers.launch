@@ -1,6 +1,13 @@
 <launch>
-    <node name="ttyUSB1_manager" pkg="wubble_controllers" type="manager.py" output="screen" required="true">
-        <param name="port_name" type="str" value="/dev/ttyUSB2"/>
+    <node name="erratic_manager" pkg="wubble_controllers" type="erratic_player" output="screen" required="true">
+        <param name="port_name" type="str" value="/dev/erratic"/>
+        <param name="odometry_topic" type="str" value="odom"/>
+        <param name="battery_topic" type="str" value="battery_state"/>
+        <param name="odometry_frame_id" type="str" value="odom"/>
+    </node>
+    
+    <node name="ax12_manager" pkg="wubble_controllers" type="manager.py" output="screen" required="true">
+        <param name="port_name" type="str" value="/dev/ax12"/>
         <param name="baud_rate" type="int" value="1000000"/>
         <param name="max_motor_id" type="int" value="25"/>
         <param name="update_rate" type="int" value="1"/>
