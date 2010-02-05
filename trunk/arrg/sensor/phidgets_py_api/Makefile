@@ -3,7 +3,6 @@ all:build
 
 ZIP_FILE   = PhidgetsPython_2.1.6.20100129.zip
 ZIP_URL    = http://www.phidgets.com/downloads/libraries/PhidgetsPython_2.1.6.20100129.zip
-UNPACK_CMD = unzip
 SRC_DIR    = src
 PKG_NAME   = phidgets_py_api
 
@@ -12,8 +11,9 @@ PKG_NAME   = phidgets_py_api
 build: 
 	mkdir $(SRC_DIR)
 	wget $(ZIP_URL)
-	$(UNPACK_CMD) $(ZIP_FILE) -d $(SRC_DIR)
+	unzip $(ZIP_FILE) -d $(SRC_DIR)
 	mv $(SRC_DIR)/PhidgetsPython $(SRC_DIR)/$(PKG_NAME)
+	touch $(SRC_DIR)/$(PKG_NAME)/__init__.py
 	rm $(ZIP_FILE)
         
 clean:
