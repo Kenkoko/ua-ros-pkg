@@ -11,19 +11,7 @@
     <depend package="roscpp"/>
     <depend package="rospy"/>
     <depend package="geometry_msgs"/>
-
-    <!-- Vision -->
-    <depend package="image_view"/>
-
-    <!-- Controllers, etc. -->
-    <depend package="robot_mechanism_controllers"/>
-    <depend package="gazebo_plugins"/>
-
-    <!-- PR2 stuff (some of which is needed for erratic also) -->
-    <depend package="pr2_mechanism_controllers"/>
-    <depend package="pr2_gazebo"/>
-    <depend package="pr2_gazebo_plugins"/>
-    <depend package="pr2_laser_filters"/>
+    <depend package="sensor_msgs"/>
 
     <!-- Joystick -->
     <depend package="joy"/>
@@ -34,15 +22,23 @@
     <depend package="move_base_client"/>
     <depend package="teleop_base"/>
 
+    <!-- Controllers, etc. -->
+<!--    <depend package="robot_mechanism_controllers"/>-->
+<!--    <depend package="gazebo_plugins"/>-->
+
+    <!-- PR2 stuff (some of which is needed for erratic also) -->
+<!--    <depend package="pr2_mechanism_controllers"/>-->
+<!--    <depend package="pr2_gazebo"/>-->
+<!--    <depend package="pr2_gazebo_plugins"/>-->
+<!--    <depend package="pr2_laser_filters"/>-->
+
     <!-- SLAM stuff -->
-    <depend package="map_server"/>
-    <depend package="costmap_2d"/>
-    <depend package="fake_localization"/>
+<!--    <depend package="map_server"/>-->
+<!--    <depend package="fake_localization"/>-->
 
     <!-- Our own packages -->
-    <depend package="wubble_environments"/>
-    <depend package="wubble_robots"/>
-    <depend package="sensor_msgs"/>
+<!--    <depend package="wubble_environments"/>-->
+<!--    <depend package="wubble_robots"/>-->
 
 </package>
 
