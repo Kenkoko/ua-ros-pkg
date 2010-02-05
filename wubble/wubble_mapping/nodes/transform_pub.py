@@ -41,7 +41,7 @@ if __name__ == '__main__':
         rospy.sleep(1)
         
         msg = JointState()
-        msg.name = ['laser_tilt_mount_joint']
+        msg.name = ['hokuyo_tilt_joint']
         msg.position = [0.95]
         msg.velocity = [0.0]
         msg.effort = [0.0]
