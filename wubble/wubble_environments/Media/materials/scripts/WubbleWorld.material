@@ -20,6 +20,7 @@ material WubbleWorld/LightWood
   {
     pass
     {
+      ambient 0.2 0.2 0.2
       texture_unit
       {
         texture light_wood.png
