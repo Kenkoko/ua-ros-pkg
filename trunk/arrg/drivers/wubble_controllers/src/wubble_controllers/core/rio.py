@@ -50,6 +50,7 @@ class SerialIO(object):
     def __init__(self, port, baudrate):
         """ Constructor takes serial port and baudrate as arguments. """
         try:
+            self.ser = None
             self.ser = serial.Serial(port)
             self.ser.setTimeout(0.015)
             self.ser.baudrate = baudrate
@@ -260,9 +261,10 @@ class SerialIO(object):
         """
         Be nice, close the serial port.
         """
-        self.ser.flushInput()
-        self.ser.flushOutput()
-        self.ser.close()
+        if self.ser:
+            self.ser.flushInput()
+            self.ser.flushOutput()
+            self.ser.close()
 
 class AX12_IO(object):
     def __init__(self, port, baudrate):
@@ -308,8 +310,12 @@ class AX12_IO(object):
             motor_id = val[0]
             value = val[1]
             if parse2:
-                loByte = value % 256
-                hiByte = value >> 8
+                if value >= 0:
+                    loByte = int(value % 256)
+                    hiByte = int(value >> 8)
+                else:
+                    loByte = int((1023 - value) % 256)
+                    hiByte = int((1023 - value) >> 8)
                 values.append((motor_id, loByte, hiByte))
             else:
                 values.append((motor_id, value))

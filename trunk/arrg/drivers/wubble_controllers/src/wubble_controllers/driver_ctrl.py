@@ -50,7 +50,7 @@ def load_params(file_path):
         print 'No param file found at:', file_path
 
 def print_usage():
-    print 'Usage: python driver_ctrl.py [start|stop|restart] driver_name <yaml_file_with_params>'
+    print 'Usage: python driver_ctrl.py [start|stop|restart] absolute_path_to_driver <yaml_file_with_params>'
     sys.exit(1)
 
 if __name__ == '__main__':
@@ -58,14 +58,19 @@ if __name__ == '__main__':
     if len(args) < 2:
         print_usage()
     command = args[0]
-    driver = args[1]
+    abs_driver_path = args[1]
+    if not os.path.exists(abs_driver_path):
+        print 'No driver found at path: %s' %abs_driver_path
+        print_usage()
+    driver_path, driver_name = os.path.split(abs_driver_path)
+    driver_name = os.path.splitext(driver_name)[0]
     if command.lower() == 'start':
         if len(args) == 3:
             load_params(args[2])
         rospy.wait_for_service('start_driver')
         try:
             start_driver = rospy.ServiceProxy('start_driver', DriverControl)
-            response = start_driver(driver)
+            response = start_driver(driver_name, driver_path)
             if response.success:
                 rospy.loginfo(response.reason)
             else:

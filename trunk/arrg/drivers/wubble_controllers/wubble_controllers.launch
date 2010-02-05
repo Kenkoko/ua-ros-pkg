@@ -13,7 +13,7 @@
         <param name="update_rate" type="int" value="1"/>
     </node>
     
-    <node name="laser_tilt_spawner" pkg="wubble_controllers" type="driver_ctrl.py" args="start laser_tilt_ax12" output="screen"/>
-    <node name="camera_pan_tilt_spawner" pkg="wubble_controllers" type="driver_ctrl.py" args="start camera_pan_tilt_ax12" output="screen"/>
-    <node name="arm_spawner" pkg="wubble_controllers" type="driver_ctrl.py" args="start arm_ax12" output="screen"/>
+    <node name="laser_tilt_spawner" pkg="wubble_controllers" type="driver_ctrl.py" args="start $(find wubble_controllers)/src/wubble_controllers/laser_tilt_ax12.py" output="screen"/>
+    <node name="camera_pan_tilt_spawner" pkg="wubble_controllers" type="driver_ctrl.py" args="start $(find wubble_controllers)/src/wubble_controllers/camera_pan_tilt_ax12." output="screen"/>
+    <node name="arm_spawner" pkg="wubble_controllers" type="driver_ctrl.py" args="start $(find wubble_controllers)/src/wubble_controllers/arm_ax12.py" output="screen"/>
 </launch>
