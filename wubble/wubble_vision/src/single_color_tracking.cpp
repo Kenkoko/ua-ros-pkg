@@ -9,7 +9,7 @@ For example:
 	rosrun wubble_vision single_color_tracking true /stereo/left/image_color 0 255 0
 
 Should view through erratic's camera, and recognize green,
-amakend output an image with that color outlined
+and output an image with that color outlined
 
 Written by: Jeremy Wright
 with code borrowed from various sources
@@ -38,7 +38,6 @@ ImageConverter(ros::NodeHandle &n, char** argv) :
 {
 	args = argv;
 	show_image = (bool) (((std::string) args[1])=="true");
-	printf("%i\n", show_image);
 	std::string red = args[3];
 	std::string green = args[4];
 	std::string blue = args[5];
@@ -53,7 +52,7 @@ ImageConverter(ros::NodeHandle &n, char** argv) :
 
 ~ImageConverter()
 {
-	//cvDestroyWindow("Image window");
+	cvDestroyWindow("Image window");
 }
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
@@ -63,7 +62,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	try
 	{
 		cv_image = bridge_.imgMsgToCv(msg_ptr, "bgr8");
-//		delete &msg_ptr;
 	}
 	catch (sensor_msgs::CvBridgeException error)
 	{
@@ -73,7 +71,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 
 // { Begin color tracking code
 
-	const int tolerance = 8; // how far away from the colour can be accepted the same colour?
+	const int tolerance = 16; // how far away from the colour can be accepted the same colour?
 
 	// set the target colour from the command line params
 	CvScalar targetColour = CV_RGB((uchar)atoi(args[3]), (uchar)atoi(args[4]), (uchar)atoi(args[5]));
@@ -81,18 +79,18 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* comp = NULL;
 	IplImage *clone = cvCloneImage(cv_image);
-	cvPyrSegmentation( cv_image, clone, storage, &comp, 10, 200, 50 );
+	cvPyrSegmentation( cv_image, clone, storage, &comp, (uchar)atoi(args[6]), (uchar)atoi(args[7]), (uchar)atoi(args[8]) );
 	cvReleaseImage(&clone);
 	int n_comp = comp->total;
 
 	for( int i=0; i<n_comp; i++ ) {
 		CvConnectedComp* cc = (CvConnectedComp*) cvGetSeqElem( comp, i );
 		CvRect rect = cc->rect;
-		cvSetImageROI(cv_image, rect);
+/*		cvSetImageROI(cv_image, rect);
 		CvPoint seeds[5] = { cvPoint(rect.width/10,rect.height/10), cvPoint(rect.width/10, int(rect.height*.9)), cvPoint(int(rect.width*.9),rect.height/10), cvPoint(int(rect.width*.9), int(rect.height*.9)), cvPoint(rect.width/2, rect.height/2)};
 		for( int j=0; j<5; j++) {
 			IplImage *dst = cvCreateImage( cvSize(cvGetSize(cv_image).width+2,cvGetSize(cv_image).height+2), IPL_DEPTH_8U,1);
-			cvFloodFill(cv_image, seeds[j], CV_RGB(0,0,0), cvScalarAll(5.0), cvScalarAll(5.0), cc, 4+CV_FLOODFILL_MASK_ONLY, dst);
+			cvFloodFill(cv_image, seeds[j], CV_RGB(0,0,0), cvScalarAll(20.0), cvScalarAll(20.0), cc, 4+CV_FLOODFILL_MASK_ONLY, dst);
 			cvReleaseImage(&dst);
 			if (cc->value.val[0] >= targetColour.val[0]-tolerance && // compare BGR
 				cc->value.val[0] <= targetColour.val[0]+tolerance &&
@@ -101,9 +99,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 				cc->value.val[2] >= targetColour.val[2]-tolerance &&
 				cc->value.val[3] <= targetColour.val[2]+tolerance &&
 				cc->area >= 10) {
+*/
+			if (cc->rect.width < cvGetSize(cv_image).width/6 && cc->rect.height < cvGetSize(cv_image).height/6){
 
+				printf("%d\n", cc->contour->total);
+			
 				rect = cc->rect;
-				cvRectangle(cv_image, cvPoint(rect.x,rect.y), cvPoint(rect.x+rect.width,rect.y+rect.height), CV_RGB(255,0,0), 3, 0, 0);
+//				cvRectangle(cv_image, cvPoint(rect.x,rect.y), cvPoint(rect.x+rect.width,rect.y+rect.height), CV_RGB(255,0,0), 3, 0, 0);
+				cvDrawContours(	cv_image,cc->contour, cvScalarAll(255),	cvScalarAll(255),100 );
 
 				this->boxes.set_points_size(2);
 				this->boxes.points[0].x = rect.x;
@@ -118,8 +121,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 //				this->boxes[j].boxes[1].x = rect.x+rect.width;
 //				this->boxes[j].boxes[1].y = rect.y+rect.height;
 			}
-		}
-		cvResetImageROI(cv_image);
+//		}
+//		cvResetImageROI(cv_image);
 
 	}
 	cvReleaseMemStorage( &storage );
@@ -167,6 +170,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 
 	if( show_image ){
 //		cvRectangle(cv_image, cvPoint(minx,miny), cvPoint(maxx,maxy), CV_RGB(255,0,0), 3, 0, 0);
+                IplImage *dst = cvCreateImage( cvGetSize(cv_image), IPL_DEPTH_8U,1);
+		cvCvtColor(cv_image, dst, CV_RGB2GRAY);
 		cvShowImage("Image window", cv_image);
 		cvWaitKey(3);
 	}
@@ -175,7 +180,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	{
 		bound_pub_.publish(boxes);
 		if( show_image ){
-			image_pub_.publish(bridge_.cvToImgMsg(cv_image, "bgr8")); }
+			image_pub_.publish(bridge_.cvToImgMsg(cv_image, "mono8")); }
 	}
 	catch (sensor_msgs::CvBridgeException error)
 	{
