@@ -66,7 +66,7 @@ class LaserTiltAX12():
 
         self.motor_id = rospy.get_param('laser_tilt_controller/motor_id', 9)
         self.step_num = rospy.get_param('laser_tilt_controller/step_num', 5)
-        self.joint_name = rospy.get_param('laser_tilt_controller/joint_name', 'laser_tilt_joint')
+        self.joint_name = rospy.get_param('laser_tilt_controller/joint_name', 'hokuyo_tilt_joint')
         self.num_cycles = 0
         
         mcv = (self.motor_id, 1023)

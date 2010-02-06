@@ -58,6 +58,7 @@ class DriverControl:
 class CameraPanTiltAX12():
     def __init__(self, out_cb):
         self.send_packet_callback = out_cb
+        self.running = False
                 
         self.joint_state_pub = rospy.Publisher('camera_pan_tilt_controller/state', JointStateList)
         self.pan_tilt_sub = rospy.Subscriber('camera_pan_tilt_controller/pan_tilt', PanTilt, self.do_pan_tilt)
@@ -112,7 +113,7 @@ class CameraPanTiltAX12():
             neg_full_range = abs(self.pan_initial_position_raw - self.pan_min_angle_raw)
             rel_ang = angle_raw / neg_full_range
             rel_raw = neg_full_range * rel_ang
-            return int(round(self.pan_initial_position + rel_raw))
+            return int(round(self.pan_initial_position_raw + rel_raw))
 
     def __tilt_angle_to_raw_position(self, angle):
         if angle < self.tilt_min_angle: angle = self.tilt_min_angle
