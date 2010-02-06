@@ -62,12 +62,17 @@ class JointStatesPublisher():
         
         # Start publisher
         self.joint_states_pub = rospy.Publisher('joint_states', JointState)
-
+        
+        r = rospy.Rate(50)
+        while not rospy.is_shutdown():
+            self.publish_joint_states()
+            r.sleep()
 
     def controller_state_handler(self, data):
-        for joint in data:
-            self.joint_states[joint.name] = JointStateObject(joint.name, joint.angle * math.pi / 180, 0.0, 0.0)
+        for joint in data.motor_states:
+            self.joint_states[joint.name] = JointStateMessage(joint.name, joint.angle * math.pi / 180, 0.0, 0.0)
 
+    def publish_joint_states(self):
         # Construct message & publish joint states
         msg = JointState()
         msg.name = list()
@@ -80,7 +85,8 @@ class JointStatesPublisher():
             #msg.velocity.append(joint.velocity)        # Field is optional --> can be left empty
             #msg.effort.append(joint.effort)            # Field is optional --> can be left empty
         msg.header.stamp = rospy.Time.now()
-        self.joint_states_pub.publish(self.joint_states)
+        self.joint_states_pub.publish(msg)
+
 
 
 if __name__ == '__main__':
