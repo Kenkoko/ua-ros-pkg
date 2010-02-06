@@ -37,11 +37,12 @@
             </collision>
         </link>
         
-        <joint name="arm_base_shoulder_joint" type="revolute" >
+        <!-- Shoulder pan joint and link -->
+        <joint name="shoulder_pan_joint" type="revolute" >
             <origin xyz="-0.0075 0 0.025" rpy="0 0 0" />
             <parent link="arm_base_link" />
             <child link="arm_shoulder_pan_link"/>
-
+            
             <axis xyz="0 0 1"/>
             <limit  lower="-1.22"
                     upper="1.22"
@@ -51,7 +52,7 @@
         
         <transmission type="SimpleTransmission" name="arm_base_shoulder_trans">
             <actuator name="arm_base_shoulder_motor" />
-            <joint name="arm_base_shoulder_joint" />
+            <joint name="shoulder_pan_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
@@ -80,7 +81,7 @@
         </link>
         
         <!-- Shoulder tilt joint and link -->
-        <joint name="arm_shoulder_pan_tilt_joint" type="revolute">
+        <joint name="shoulder_tilt_joint" type="revolute">
             <origin xyz="${0.105 - 0.01 - 0.03085/2} 0 ${0.01 + 0.05 - 0.031/2}" rpy="0 0 0" />
             <parent link="arm_shoulder_pan_link"/>
             <child link="arm_shoulder_tilt_link" />
@@ -118,12 +119,12 @@
         
         <transmission type="SimpleTransmission" name="arm_base_shoulder_tilt_trans">
             <actuator name="arm_base_shoulder_tilt_motor" />
-            <joint name="arm_shoulder_pan_tilt_joint" />
+            <joint name="shoulder_tilt_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
         <!-- Elbow tilt joint and link -->
-        <joint name="arm_shoulder_tilt_elbow_tilt_joint" type="revolute">
+        <joint name="elbow_tilt_joint" type="revolute">
             <origin xyz="${0.04 - 0.01 + 0.0015 + 0.105 + 0.055 - 0.01} 0 0" rpy="0 0 0" />
             <parent link="arm_shoulder_tilt_link"/>
             <child link="arm_elbow_tilt_link" />
@@ -162,12 +163,12 @@
         
         <transmission type="SimpleTransmission" name="arm_elbow_tilt_trans">
             <actuator name="arm_elbow_tilt_motor" />
-            <joint name="arm_shoulder_tilt_elbow_tilt_joint" />
+            <joint name="elbow_tilt_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
         <!-- Wrist rotate joint and link -->
-        <joint name="arm_elbow_tilt_wrist_rotate_joint" type="revolute">
+        <joint name="wrist_rotate_joint" type="revolute">
             <origin xyz="${0.08 - 0.01} 0 ${0.05 - 0.0115 - 0.0155}" rpy="0 0 0" />
             <parent link="arm_elbow_tilt_link"/>
             <child link="arm_wrist_rotate_link" />
@@ -206,12 +207,12 @@
         
         <transmission type="SimpleTransmission" name="arm_wrist_rotate_trans">
             <actuator name="arm_wrist_rotate_motor" />
-            <joint name="arm_elbow_tilt_wrist_rotate_joint" />
+            <joint name="wrist_rotate_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
         <!-- Gripper right finger joint and link -->
-        <joint name="arm_wrist_rotate_right_finger_joint" type="revolute">
+        <joint name="finger_right_joint" type="revolute">
             <origin xyz="${0.0015 + 0.05 - 0.01} ${-0.035/2} 0" rpy="0 0 0" />
             <parent link="arm_wrist_rotate_link"/>
             <child link="arm_right_finger_link" />
@@ -250,12 +251,12 @@
         
         <transmission type="SimpleTransmission" name="arm_right_finger_trans">
             <actuator name="arm_right_finger_motor" />
-            <joint name="arm_wrist_rotate_right_finger_joint" />
+            <joint name="finger_right_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
         <!-- Gripper left finger joint and link -->
-        <joint name="arm_wrist_rotate_left_finger_joint" type="revolute">
+        <joint name="finger_left_joint" type="revolute">
             <origin xyz="${0.0015 + 0.05 - 0.01} ${0.035/2} 0" rpy="0 0 0" />
             <parent link="arm_wrist_rotate_link"/>
             <child link="arm_left_finger_link" />
@@ -294,7 +295,7 @@
         
         <transmission type="SimpleTransmission" name="arm_left_finger_trans">
             <actuator name="arm_left_finger_motor" />
-            <joint name="arm_wrist_rotate_left_finger_joint" />
+            <joint name="finger_left_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
