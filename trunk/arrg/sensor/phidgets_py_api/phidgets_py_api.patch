@@ -1,0 +1,11 @@
+--- src/phidgets_py_api/Phidgets/PhidgetException.py	2009-11-27 16:20:08.000000000 -0700
++++ src/phidgets_py_api/Phidgets/PhidgetException_new.py	2010-02-08 14:36:30.131450342 -0700
+@@ -28,7 +28,7 @@
+         elif sys.platform == 'darwin':
+             self.dll = cdll.LoadLibrary("/Library/Frameworks/Phidget21.framework/Versions/Current/Phidget21")
+         elif sys.platform == 'linux2':
+-            self.dll = cdll.LoadLibrary("/usr/lib/libphidget21.so")
++            self.dll = cdll.LoadLibrary("libphidget21.so")
+         else:
+             self.dll = None
+             print("Platform not supported")
