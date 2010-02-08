@@ -14,6 +14,7 @@ build:
 	unzip $(ZIP_FILE) -d $(SRC_DIR)
 	mv $(SRC_DIR)/PhidgetsPython $(SRC_DIR)/$(PKG_NAME)
 	touch $(SRC_DIR)/$(PKG_NAME)/__init__.py
+	patch -b --verbose $(SRC_DIR)/$(PKG_NAME)/Phidgets/PhidgetException.py < $(PKG_NAME).patch
 	rm $(ZIP_FILE)
         
 clean:
