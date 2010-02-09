@@ -1,0 +1,13 @@
+<stack>
+    <description brief="ua_vision">
+        Contains packages related to vision on UA robots, including saliency 
+        tracking based on the Nick's Machine Perception Toolkit (NMPT).
+    </description>
+    <author>Maintained by UA Robotics Research Group</author>
+    <license>BSD</license>  
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/ua_vision</url>
+
+    <depend stack="ros" />
+    <depend stack="vision_opencv" />
+</stack>
