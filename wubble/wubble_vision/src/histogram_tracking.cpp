@@ -47,16 +47,15 @@ ImageConverter(ros::NodeHandle &n, char** argv) :
 	bound_pub_ = n_.advertise<geometry_msgs::Polygon>("/color_tracking/boundbox_"+red+"_"+green+"_"+blue,1);
 	if( show_image )
 		image_pub_ = it_.advertise("/color_tracking/image_"+red+"_"+green+"_"+blue,1);
-
-	cvNamedWindow("Image window");
-	image_sub_ = it_.subscribe(
-		args[2], 1, &ImageConverter::imageCallback, this);
 */
+	cvNamedWindow("Image window");
+	image_sub_ = it_.subscribe(args[2], 1, &ImageConverter::imageCallback, this);
+
 }
 
 ~ImageConverter()
 {
-//	cvDestroyWindow("Image window");
+	cvDestroyWindow("Image window");
 }
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
@@ -89,8 +88,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 //	grey box: 580,165 - 620,220
 //	gold box: 788,106 - 855,177
 //	white box: 393,138 - 440,201
+	CvRect box = cvRect(580,165,620-580,220-165);
 	IplImage* mask = cvCreateImage(cvGetSize(cv_image),8,1);
-	cvRectangle(mask,cvPoint(580,165),cvPoint(620,220),cvScalarAll(255),0,8,0);
+	cvRectangle(mask,cvPoint(580,165),cvPoint(620,220),cvScalarAll(255),CV_FILLED,8,0);
 	
 	cvCalcHist(&cv_image, bg_hist, 0, mask);
 	cvNot(mask,mask);
@@ -111,7 +111,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	unsigned char* bg_data= reinterpret_cast<unsigned char *>(bg_histimg->imageData);
 	unsigned char* fg_data= reinterpret_cast<unsigned char *>(fg_histimg->imageData);
 	CvMat* likrat = cvCreateMat(cv_image->width, cv_image->height,CV_32FC1); 
- 
+
 	// lglikrat is a macro
 	cvmSet(likrat,0,0,lglikrat(0));
 
@@ -121,7 +121,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 
 	} // end of line
 
-	for (int i=2; i<nl; i++) {
+	for (int i=2; i<=nl; i++) {
 		bg_data+= step;  // next line
 		fg_data+= step;
 
@@ -129,18 +129,29 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 		for (int j=0; j<nc; j+= cv_image->nChannels) {
 			line_total+= lglikrat(j);
 			cvmSet(likrat,i-1,j,cvmGet(likrat,i-1,j)+line_total);
-
 		}
 	}
 
+	float maxlik = 0.0;
+	float value = 0.0;
+	int thepoint[2] = {0,0};	
+	for (int i=0; i<nl-box.height; i++) {
+		for (int j=0; j<likrat->width-box.width; j++) {
+			value = cvmGet(likrat,i,j)+cvmGet(likrat,i+box.height,j+box.width)-cvmGet(likrat,i+box.height,j)+cvmGet(likrat,i,j+box.width);
+			if (value > maxlik){
+				maxlik = value;
+				thepoint = {i,j};
+			}
+		}
+	}
 
-	
+	cvRectangle(mask,cvPoint(thepoint[0],thepoint[1]),cvPoint(thepoint[0]+box.height,thepoint[1]+box.width),cvScalarAll(255),1,8,0);	
 
 	if( show_image ){
 //		cvRectangle(cv_image, cvPoint(minx,miny), cvPoint(maxx,maxy), CV_RGB(255,0,0), 3, 0, 0);
 //I		IplImage *dst = cvCreateImage( cvGetSize(cv_image), IPL_DEPTH_8U,1);
 //		cvCvtColor(cv_image, dst, CV_RGB2GRAY);
-//		cvShowImage("Image window", cv_image);
+		cvShowImage("Image window", cv_image);
 		cvWaitKey(3);
 	}
 
