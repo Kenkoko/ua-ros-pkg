@@ -16,6 +16,7 @@
   <depend package="pr2_msgs" /> 
   <depend package="player" />
   <depend package="tf" />
+  <rosdep name="python-serial"/>
   <export>
     <cpp cflags="-I${prefix}/msg/cpp -I${prefix}/srv/cpp"/>
   </export>
