@@ -38,7 +38,6 @@ from wubble_controllers.msg import JointStateList
 
 import math
 
-
 class JointStateMessage():
     def __init__(self, name, position, velocity, effort):
         self.name = name
@@ -46,13 +45,9 @@ class JointStateMessage():
         self.velocity = velocity
         self.effort = effort
 
-
 class JointStatesPublisher():
     def __init__(self):
-        # Initialize node
         rospy.init_node(NAME, anonymous=True)
-
-        # Initialize joint_states dictionary
         self.joint_states = dict()
         
         # Start controller state subscribers
@@ -67,11 +62,14 @@ class JointStatesPublisher():
         while not rospy.is_shutdown():
             self.publish_joint_states()
             r.sleep()
-
+            
     def controller_state_handler(self, data):
         for joint in data.motor_states:
-            self.joint_states[joint.name] = JointStateMessage(joint.name, joint.angle * math.pi / 180, 0.0, 0.0)
-
+            self.joint_states[joint.name] = JointStateMessage(joint.name,
+                                                              math.radians(joint.angle),
+                                                              math.radians(joint.speed),
+                                                              0.0)
+                                                              
     def publish_joint_states(self):
         # Construct message & publish joint states
         msg = JointState()
@@ -82,16 +80,14 @@ class JointStatesPublisher():
         for joint in self.joint_states.values():
             msg.name.append(joint.name)
             msg.position.append(joint.position)
-            #msg.velocity.append(joint.velocity)        # Field is optional --> can be left empty
+            msg.velocity.append(joint.velocity)        # Field is optional --> can be left empty
             #msg.effort.append(joint.effort)            # Field is optional --> can be left empty
         msg.header.stamp = rospy.Time.now()
         self.joint_states_pub.publish(msg)
 
-
-
 if __name__ == '__main__':
     try:
-        s = JointStatesPublisher()            
+        s = JointStatesPublisher()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
