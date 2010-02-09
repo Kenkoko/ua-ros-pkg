@@ -86,3 +86,5 @@ AX_TICKS = 1024
 AX_MAX_POSITION = 1023
 AX_RAW_DEG_RATIO = 3.41333333333333333333     # how many ticks in degree
 AX_DEG_RAW_RATIO = 0.29296875                 # how many degrees in a tick
+AX_MAX_SPEED_DEG = 684.0                      # degrees per second
+

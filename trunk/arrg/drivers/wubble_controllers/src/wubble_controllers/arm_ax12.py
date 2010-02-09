@@ -49,10 +49,10 @@ from std_msgs.msg import Int32
 class DriverControl:
     def __init__(self, out_cb):
         self.arm = ArmAX12(out_cb)
-
+        
     def start(self):
         self.arm.start()
-
+        
     def stop(self):
         self.arm.stop()
 
@@ -71,7 +71,7 @@ class ArmJoint:
         else:
             self.min_angle = int( (min_angle_raw - zero_angle_raw) * AX_DEG_RAW_RATIO )
             self.max_angle = int( (max_angle_raw - zero_angle_raw) * AX_DEG_RAW_RATIO )
-
+            
     def angle_to_raw_positions(self, angle):
         result = []
         if angle > self.max_angle: angle = self.max_angle
@@ -85,7 +85,7 @@ class ArmJoint:
             
         if self.inverse_id: result.append( (self.inverse_id, AX_MAX_POSITION - result[0][1]) )  # <- tuple here
         return result
-
+        
     def raw_position_to_angle(self, master_raw):
         if self.flipped:
             return int(round((self.zero_angle_raw - master_raw) * AX_DEG_RAW_RATIO))
@@ -96,12 +96,12 @@ class ArmAX12():
     def __init__(self, out_cb):
         self.send_packet_callback = out_cb
         
-        shoulder_pan_id = rospy.get_param('arm_controller/%s/motor_id' %SHOULDER_PAN, 10)
-        shoulder_tilt_ids = rospy.get_param('arm_controller/%s/motor_ids' %SHOULDER_TILT, [11, 12])
-        elbow_tilt_ids = rospy.get_param('arm_controller/%s/motor_ids' %ELBOW_TILT, [13, 14])
-        wrist_id = rospy.get_param('arm_controller/%s/motor_id' %WRIST_ROTATE, 15)
-        finger_right_id = rospy.get_param('arm_controller/%s/motor_id' %FINGER_RIGHT, 16)
-        finger_left_id = rospy.get_param('arm_controller/%s/motor_id' %FINGER_LEFT, 18)
+        shoulder_pan_id = rospy.get_param('arm_controller/%s/motor_id' % SHOULDER_PAN, 10)
+        shoulder_tilt_ids = rospy.get_param('arm_controller/%s/motor_ids' % SHOULDER_TILT, [11, 12])
+        elbow_tilt_ids = rospy.get_param('arm_controller/%s/motor_ids' % ELBOW_TILT, [13, 14])
+        wrist_id = rospy.get_param('arm_controller/%s/motor_id' % WRIST_ROTATE, 15)
+        finger_right_id = rospy.get_param('arm_controller/%s/motor_id' % FINGER_RIGHT, 16)
+        finger_left_id = rospy.get_param('arm_controller/%s/motor_id' % FINGER_LEFT, 18)
         
         shoulder_pan_joint = ArmJoint(SHOULDER_PAN, 512, 751, 273, shoulder_pan_id)
         shoulder_tilt_joint = ArmJoint(SHOULDER_TILT, 512, 717, 126, shoulder_tilt_ids[0], shoulder_tilt_ids[1])
@@ -110,24 +110,22 @@ class ArmAX12():
         finger_right_joint = ArmJoint(FINGER_RIGHT, 512, 512, 724, finger_right_id)
         finger_left_joint = ArmJoint(FINGER_LEFT, 512, 512, 300, finger_left_id)
         
-        self.name_to_joint = { SHOULDER_PAN : shoulder_pan_joint,
-                               SHOULDER_TILT : shoulder_tilt_joint,
-                               ELBOW_TILT : elbow_tilt_joint,
-                               WRIST_ROTATE : wrist_rotate_joint,
-                               FINGER_RIGHT : finger_right_joint,
-                               FINGER_LEFT : finger_left_joint
-                             }
-        
-        self.ids_to_joints = { shoulder_pan_id : shoulder_pan_joint,
-                               shoulder_tilt_ids[0] : shoulder_tilt_joint,
-                               elbow_tilt_ids[0] : elbow_tilt_joint,
-                               wrist_id : wrist_rotate_joint,
-                               finger_right_id : finger_right_joint,
-                               finger_left_id : finger_left_joint
-                             }
+        self.name_to_joint = {SHOULDER_PAN: shoulder_pan_joint,
+                              SHOULDER_TILT: shoulder_tilt_joint,
+                              ELBOW_TILT: elbow_tilt_joint,
+                              WRIST_ROTATE: wrist_rotate_joint,
+                              FINGER_RIGHT: finger_right_joint,
+                              FINGER_LEFT: finger_left_joint}
+                              
+        self.ids_to_joints = {shoulder_pan_id: shoulder_pan_joint,
+                              shoulder_tilt_ids[0]: shoulder_tilt_joint,
+                              elbow_tilt_ids[0]: elbow_tilt_joint,
+                              wrist_id: wrist_rotate_joint,
+                              finger_right_id: finger_right_joint,
+                              finger_left_id: finger_left_joint}
                               
         self.motor_ids = [shoulder_pan_id,
-                          shoulder_tilt_ids[0], shoulder_tilt_ids[1], 
+                          shoulder_tilt_ids[0], shoulder_tilt_ids[1],
                           elbow_tilt_ids[0], elbow_tilt_ids[1],
                           wrist_id,
                           finger_right_id, finger_left_id]
@@ -164,14 +162,18 @@ class ArmAX12():
                 for state in states:
                     if state.id in self.ids_to_joints:
                         joint = self.ids_to_joints[state.id]
-                        joints.append(JointState(joint.name, joint.raw_position_to_angle(state.position), filter(None, [joint.master_id, joint.inverse_id]), state.moving))
+                        joints.append(JointState(joint.name,
+                                                 joint.raw_position_to_angle(state.position),
+                                                 (state.speed / AX_TICKS) * AX_MAX_SPEED_DEG,
+                                                 filter(None, [joint.master_id, joint.inverse_id]),
+                                                 state.moving))
                 self.joint_state_pub.publish(joints)
                 
     def do_joint_move(self, move):
         try:
-            aj = self.name_to_joint[move.joint_name]
+            joint = self.name_to_joint[move.joint_name]
         except KeyError, ke:
-            rospy.logwarn('%s is not a valid joint name' %move.joint_name)
+            rospy.logwarn('%s is not a valid joint name' % move.joint_name)
         else:
-            self.send_packet_callback((AX_GOAL_POSITION, aj.angle_to_raw_positions(move.angle)))
+            self.send_packet_callback((AX_GOAL_POSITION, joint.angle_to_raw_positions(move.angle)))
 
