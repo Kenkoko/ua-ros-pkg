@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2008, Willow Garage, Inc.  All rights reserved.
+# Copyright (c) 2010, Arizona Robotics Research Group, University of Arizona
+# All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
