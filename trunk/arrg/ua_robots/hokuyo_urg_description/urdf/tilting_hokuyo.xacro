@@ -9,7 +9,7 @@
     <macro name="tilting_hokuyo" params="parent *origin">
         <joint name="hokuyo_tilt_joint" type="revolute">
             <parent link="${parent}" />
-            <child link="hokuyo_link" />    
+            <child link="hokuyo_link" />
 
             <axis xyz="0 1 0" />
 <!--           Original effort: 0.5292-->
