@@ -34,8 +34,8 @@
                 <mass value="0.0001" />
                 <origin xyz="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" izz="1.0" />
-                <!-- Still don't know what that stuff means? -->
+                         iyy="1.0" iyz="0.0"
+                         izz="1.0" />
             </inertial>
 
             <visual>
@@ -119,37 +119,43 @@
 
 
 
-    <macro name="stoc_camera" params="name parent">
+    <macro name="stoc_camera" params="name parent *origin">
+        <joint name="camera_mount_joint" type="fixed">
+            <insert_block name="origin" /> 
+            <parent link="${parent}"/>
+            <child link="stoc_camera_link"/>
+        </joint>
+        
         <link name="stoc_camera_link">
             <inertial>
                 <mass value="0.1" />
-                <origin xyz="${stoc_depth/2} ${stoc_width/2} ${stoc_height/2}" />
+                <origin xyz="0 0 ${stoc_height/2}" rpy="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" izz="1.0" />
-                <!-- Still don't know what that stuff means? -->
+                         iyy="1.0" iyz="0.0"
+                         izz="1.0" />
             </inertial>
-
+            
             <visual>
-                <origin xyz="0 0 0.0215" rpy="0 0 0" />
+                <origin xyz="0 0 ${stoc_height/2}" rpy="0 0 0" />
                 <geometry>
                     <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
                 </geometry>
             </visual>
-
+            
             <collision>
-                <origin xyz="0 0 0.0215" rpy="0 0 0" />
+                <origin xyz="0 0 ${stoc_height/2}" rpy="0 0 0" />
                 <geometry>
                     <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
                 </geometry>
             </collision>
         </link>
-
+        
         <joint name="stoc_back_joint" type="fixed">
             <origin xyz="${-(stoc_depth/2)-(back_depth/2)} 0 0.0215" rpy="0 0 0" />  
             <parent link="stoc_camera_link" />
             <child link="stoc_back_link"/>
         </joint>
-
+        
         <link name="stoc_back_link">
             <inertial>
                 <mass value="0.1" />
@@ -157,7 +163,6 @@
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0" 
                          izz="1.0" />
-                <!-- Still don't know what that stuff means? -->
             </inertial>
 
             <visual>
