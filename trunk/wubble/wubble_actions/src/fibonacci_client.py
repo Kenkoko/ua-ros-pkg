@@ -27,14 +27,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'learning_actionlib'
+PKG = 'wubble_actions'
 NAME = 'fibonacci_client'
 
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
 from actionlib import SimpleActionClient
-from learning_actionlib.msg import *
+from wubble_actions.msg import *
 
 
 def fibonacci_client():

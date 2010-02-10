@@ -34,7 +34,7 @@
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include <learning_actionlib/FibonacciAction.h>
+#include <wubble_actions/FibonacciAction.h>
 
 class FibonacciAction
 {
