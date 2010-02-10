@@ -1,0 +1,16 @@
+<package>
+    <description brief="NMPT">
+
+        This package contains Nick's Machine Perception Toolbox (NMPT)
+
+    </description>
+    <author>Nicholas Butko</author>
+    <license>Copyright (c) 2008 Nicholas Butko, Machine Perception Laboratory, University of California San Diego</license>
+    <url>http://mplab.ucsd.edu/~nick/NMPT/</url>
+    <depend package="opencv2" /> 
+    <export>
+        <cpp cflags="-I${prefix}/src" lflags="-L${prefix}/lib -lnmpt"/>
+        <doxymaker external="http://mplab.ucsd.edu/~nick/NMPT/" />
+    </export>
+</package>
+
