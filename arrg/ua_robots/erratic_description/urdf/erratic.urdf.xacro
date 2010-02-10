@@ -6,7 +6,7 @@
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
 
     <!-- Included URDF Files -->
-    <include filename="$(find erratic_description)/urdf/erratic_base.xacro" />        
+    <include filename="$(find erratic_description)/urdf/erratic_base.xacro" />
 
     <erratic />
 

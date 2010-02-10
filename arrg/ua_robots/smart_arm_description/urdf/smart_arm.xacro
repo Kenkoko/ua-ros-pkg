@@ -5,9 +5,9 @@
     xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
     
-    <macro name="smart_arm" params="parent">
+    <macro name="smart_arm" params="parent *origin">
         <joint name="arm_base_joint" type="fixed">
-            <origin xyz="${top_size_x/2 - 0.0575} 0 ${top_size_z/2 + 0.025}"/>
+            <insert_block name="origin" /> 
             <parent link="${parent}"/>
             <child link="arm_base_link"/>
         </joint>
@@ -24,15 +24,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-<!--                    <box size="${0.0575*2} ${0.0575*2} ${0.025*2}" />-->
-                    <mesh filename="package://wubble_robots/meshes/arm_base.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_base.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <box size="${0.0575*2} ${0.0575*2} ${0.025*2}" />
+                    <mesh filename="package://smart_arm_description/meshes/arm_base.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -68,14 +67,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.005" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_shoulder.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_pan.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_shoulder.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_pan.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -105,20 +104,20 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_shoulder_tilt.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_tilt.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_shoulder_tilt.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_tilt.stl"/>
                 </geometry>
             </collision>
         </link>
         
-        <transmission type="SimpleTransmission" name="arm_base_shoulder_tilt_trans">
-            <actuator name="arm_base_shoulder_tilt_motor" />
+        <transmission type="SimpleTransmission" name="shoulder_tilt_trans">
+            <actuator name="shoulder_tilt_motor" />
             <joint name="shoulder_tilt_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
@@ -149,20 +148,20 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_elbow_tilt.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_elbow_tilt.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_elbow_tilt.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_elbow_tilt.stl"/>
                 </geometry>
             </collision>
         </link>
         
-        <transmission type="SimpleTransmission" name="arm_elbow_tilt_trans">
-            <actuator name="arm_elbow_tilt_motor" />
+        <transmission type="SimpleTransmission" name="elbow_tilt_trans">
+            <actuator name="elbow_tilt_motor" />
             <joint name="elbow_tilt_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
@@ -193,20 +192,20 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_wrist_rotate.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_wrist_rotate.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_wrist_rotate.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_wrist_rotate.stl"/>
                 </geometry>
             </collision>
         </link>
         
-        <transmission type="SimpleTransmission" name="arm_wrist_rotate_trans">
-            <actuator name="arm_wrist_rotate_motor" />
+        <transmission type="SimpleTransmission" name="wrist_rotate_trans">
+            <actuator name="wrist_rotate_motor" />
             <joint name="wrist_rotate_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
@@ -237,20 +236,20 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_right_finger.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_right_finger.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_right_finger.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_right_finger.stl"/>
                 </geometry>
             </collision>
         </link>
         
-        <transmission type="SimpleTransmission" name="arm_right_finger_trans">
-            <actuator name="arm_right_finger_motor" />
+        <transmission type="SimpleTransmission" name="finger_right_trans">
+            <actuator name="finger_right_motor" />
             <joint name="finger_right_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
@@ -281,20 +280,20 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_left_finger.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_left_finger.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/arm_left_finger.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_left_finger.stl"/>
                 </geometry>
             </collision>
         </link>
         
-        <transmission type="SimpleTransmission" name="arm_left_finger_trans">
-            <actuator name="arm_left_finger_motor" />
+        <transmission type="SimpleTransmission" name="finger_left_trans">
+            <actuator name="finger_left_motor" />
             <joint name="finger_left_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>

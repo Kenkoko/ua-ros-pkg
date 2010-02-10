@@ -8,10 +8,6 @@
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
     
-    <property name="wheel_radius" value="0.0762" />
-    <property name="wheel_length" value="0.02" />
-    <property name="caster_wheel_offset_y" value="0.17" />
-    
     <property name="wheel_offset_z" value="${-base_size_z/2 + 0.0236}" />    
     
     <macro name="erratic_wheel" params="suffix parent reflect">
@@ -67,7 +63,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 ${M_PI/2}" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/erratic_wheel.stl"/>
+                    <mesh filename="package://erratic_description/meshes/erratic_wheel.stl"/>
                 </geometry>
                 <material name="Black" />
             </visual>
@@ -75,8 +71,7 @@
             <collision>
                 <origin xyz="0 0 0" rpy="$0 0 ${M_PI/2}" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/erratic_wheel.stl"/>
-<!--                    <cylinder radius="${wheel_radius}" length="${wheel_length}" />-->
+                    <mesh filename="package://erratic_description/meshes/erratic_wheel.stl"/>
                 </geometry>
             </collision>
         </link>

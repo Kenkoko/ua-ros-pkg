@@ -6,8 +6,8 @@
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
 
     <!-- Included URDF Files -->
-    <include filename="$(find erratic_description)/urdf/erratic_wheel.xacro" />    
-    <include filename="$(find pr2_defs)/defs/materials.urdf.xacro" />        
+    <include filename="$(find erratic_description)/urdf/erratic_wheel.xacro" />
+    <include filename="$(find pr2_defs)/defs/materials.urdf.xacro" />
 
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
@@ -108,7 +108,7 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/erratic_top_origin.stl"/>
+                    <mesh filename="package://erratic_description/meshes/erratic_top.stl"/>
                 </geometry>
                 <material name="Blue" />
             </visual>
@@ -116,7 +116,7 @@
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_robots/meshes/erratic_top_origin.stl"/>
+                    <mesh filename="package://erratic_description/meshes/erratic_top.stl"/>
                 </geometry>
             </collision>
         </link>
