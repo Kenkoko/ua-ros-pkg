@@ -1,0 +1,18 @@
+<package>
+    <description brief="erratic_description">
+
+    URDF description files for the ERA-MOBI (Erratic) mobile robot base from Videre.
+
+    </description>
+    <author>UA Robotics Research Group</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/erratic_description</url>
+
+    <depend package="convex_decomposition"/>
+    <depend package="ivcon"/>
+    <depend package="urdf" />
+
+</package>
+
+

@@ -1,0 +1,9 @@
+<stack>
+  <description brief="ua_robots">Contains URDF descriptions of UA robots.</description>
+  <author>Maintained by UA Robotics Research Group</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ua_robots</url>
+  <depend stack="ros" />
+
+</stack>

@@ -1,0 +1,16 @@
+<package>
+    <description brief="wubble_description">
+
+     wubble_description
+
+    </description>
+    <author>UA Robotics Research Group</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_description</url>
+
+    <depend package="erratic_description" />
+    <depend package="smart_arm_description" />
+    <depend package="hokuyo_urg_description" />
+
+</package>
