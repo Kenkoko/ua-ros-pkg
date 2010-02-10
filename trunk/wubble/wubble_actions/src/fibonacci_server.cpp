@@ -41,11 +41,11 @@ class FibonacciAction
 protected:
 
   ros::NodeHandle nh_;
-  actionlib::SimpleActionServer<learning_actionlib::FibonacciAction> as_;
+  actionlib::SimpleActionServer<wubble_actions::FibonacciAction> as_;
   std::string action_name_;
   // create messages that are used to published feedback/result
-  learning_actionlib::FibonacciFeedback feedback_;
-  learning_actionlib::FibonacciResult result_;
+  wubble_actions::FibonacciFeedback feedback_;
+  wubble_actions::FibonacciResult result_;
 
 public:
 
@@ -59,7 +59,7 @@ public:
   {
   }
 
-  void executeCB(const learning_actionlib::FibonacciGoalConstPtr &goal)
+  void executeCB(const wubble_actions::FibonacciGoalConstPtr &goal)
   {
     // helper variables
     ros::Rate r(1);
