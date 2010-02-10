@@ -4,40 +4,39 @@
     xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
     xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
-
+    
     <!-- Included URDF Files -->
     <include filename="$(find erratic_description)/urdf/erratic_base.xacro" />
     <include filename="$(find smart_arm_description)/urdf/smart_arm.xacro" />
     <include filename="$(find hokuyo_urg_description)/urdf/tilting_hokuyo.xacro" />
     <include filename="$(find videre_stoc_description)/urdf/videre_stoc.xacro" />
-
+    
     <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
-<!--    <include filename="$(find pr2_defs)/defs/materials.urdf.xacro" />    -->
-
+    
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
         
     <property name="support_radius" value="0.0065" />
     <property name="support_height" value="0.7556" />
-
+    
     <!-- MACRO INSTANTIATION -->
-
+    
     <erratic /> 
-
+    
     <smart_arm parent="base_top_link" >
         <origin xyz="${top_size_x/2 - 0.0575} 0 ${top_size_z/2 + 0.025}"/>
     </smart_arm>
-
+    
     <tilting_hokuyo parent="base_top_link">
         <origin xyz="0.15 0 ${-top_size_z - 0.05}" rpy="${M_PI} 0 0" />
     </tilting_hokuyo>
-
+    
     <joint name="head_support_joint" type="fixed">
         <origin xyz="${top_size_x/2 - 0.16} 0 ${top_size_z/2}" />
         <parent link="base_top_link" />
         <child link="head_support_link" />
     </joint>
-
+    
     <link name="head_support_link"> 
         <inertial>
             <mass value="0.1"/>
@@ -61,13 +60,13 @@
             </geometry>
         </collision>
     </link>
-
+    
     <joint name="head_pan_support_joint" type="fixed">
         <origin xyz="0 0 ${support_height}" />
         <parent link="head_support_link" />
         <child link="head_pan_link" />
     </joint>
-
+    
     <link name="head_pan_link"> 
         <inertial>
             <mass value="0.01"/>
@@ -91,7 +90,7 @@
             </geometry>
         </collision>
     </link>
-
+    
     <joint name="head_pan_joint" type="revolute">
         <origin xyz="0.0135 0 0.058" />
         <parent link="head_pan_link" />
@@ -101,13 +100,13 @@
         <limit lower="0" upper="0" effort="100" velocity="1.0" />
         <dynamics damping="1" friction="1" />
     </joint>
-
+    
     <transmission type="SimpleTransmission" name="head_pan_trans">
         <actuator name="head_pan_motor" />
         <joint name="head_pan_joint" />
         <mechanicalReduction>6.0</mechanicalReduction>
     </transmission>
-
+    
     <link name="head_tilt_link"> 
         <inertial>
             <mass value="0.01"/>
@@ -131,12 +130,12 @@
             </geometry>
         </collision>
     </link>
-
+    
     <joint name="head_tilt_joint" type="revolute">
         <origin xyz="-0.019 0 0.043" />
         <parent link="head_tilt_link" />
         <child link="head_mount_link" />
-
+    
         <axis xyz="0 1 0" />
         <limit lower="-0.5" upper="1.00" effort="100" velocity="2.00" />
         <safety_controller k_position="100" k_velocity="0.05" soft_lower_limit="${-0.785+0.0}" soft_upper_limit="${1.57-0.0}" />
@@ -144,7 +143,7 @@
         <calibration reference_position="-.35" falling="-.35" />
         <dynamics damping="0.008" />
     </joint>
-
+    
     <transmission type="SimpleTransmission" name="head_tilt_trans">
         <actuator name="head_tilt_motor" />
         <joint name="head_tilt_joint" />
@@ -174,14 +173,10 @@
             </geometry>
         </collision>
     </link>
-
-    <joint name="head_mount_joint" type="fixed">
+    
+    <stoc_camera name="stoc" parent="head_mount_link" >
         <origin xyz="0 0 0.023" rpy="0 0 0" />
-        <parent link="head_mount_link"/>
-        <child link="stoc_camera_link"/>
-    </joint>
-      
-    <stoc_camera name="stoc" parent="head_mount_link" />
+    </stoc_camera>
 
 
     <!-- GAZEBO MATERIALS -->
@@ -189,7 +184,7 @@
     <gazebo reference="head_support_link">
         <material>Wubble/BrassScratched</material>
     </gazebo>
-
+    
     <gazebo reference="head_pan_link">
         <material>PR2/Black</material>
     </gazebo>
