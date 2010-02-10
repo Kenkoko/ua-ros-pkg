@@ -49,8 +49,8 @@
                     velocity="2.33" />
         </joint>
         
-        <transmission type="SimpleTransmission" name="arm_base_shoulder_trans">
-            <actuator name="arm_base_shoulder_motor" />
+        <transmission type="SimpleTransmission" name="shoulder_pan_trans">
+            <actuator name="shoulder_pan_motor" />
             <joint name="shoulder_pan_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>

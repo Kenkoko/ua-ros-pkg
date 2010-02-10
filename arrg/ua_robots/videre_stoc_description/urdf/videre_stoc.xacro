@@ -130,14 +130,14 @@
             </inertial>
 
             <visual>
-                <origin xyz="0 0 0.03" rpy="0 0 0" />
+                <origin xyz="0 0 0.0215" rpy="0 0 0" />
                 <geometry>
                     <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
                 </geometry>
             </visual>
 
             <collision>
-                <origin xyz="0 0 0.03" rpy="0 0 0" />
+                <origin xyz="0 0 0.0215" rpy="0 0 0" />
                 <geometry>
                     <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
                 </geometry>
@@ -145,7 +145,7 @@
         </link>
 
         <joint name="stoc_back_joint" type="fixed">
-            <origin xyz="${-(stoc_depth/2)-(back_depth/2)} 0 0.03" rpy="0 0 0" />  
+            <origin xyz="${-(stoc_depth/2)-(back_depth/2)} 0 0.0215" rpy="0 0 0" />  
             <parent link="stoc_camera_link" />
             <child link="stoc_back_link"/>
         </joint>
