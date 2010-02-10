@@ -10,49 +10,49 @@
 
     <property name="M_PI" value="3.14159"/>
 
-    <property name="stoc_depth" value="0.018" />
-    <property name="stoc_width" value="0.132" />
-    <property name="stoc_height" value="0.043" />
+    <property name="stoc_depth" value="0.018542" />
+    <property name="stoc_width" value="0.13208" />
+    <property name="stoc_height" value="0.04318" />
 
-    <property name="back_depth" value="0.022" />
-    <property name="back_width" value="0.069" />
-    <property name="back_height" value="0.043" />
+    <property name="back_depth" value="0.022225" />
+    <property name="back_width" value="0.0691134" />
+    <property name="back_height" value="0.04318" />
 
-    <property name="eye_offset" value="0.048" />
-    <property name="eye_radius" value="0.006" />
+    <property name="eye_radius" value="0.0072" />
     <property name="eye_length" value="0.010" />
+    <property name="eye_offset" value="0.045" />    <!-- 9cm baseline -->
 
     <macro name="stoc_eye" params="name parent suffix reflect">
         <joint name="${suffix}_stoc_eye_joint" type="fixed">
-            <origin xyz="${(stoc_depth/2)+(eye_length/2)} ${reflect*eye_offset} 0.03" rpy="0 ${M_PI/2} 0" />  
+            <origin xyz="${stoc_depth/2} ${reflect*eye_offset} ${stoc_height/2}" rpy="0 ${M_PI/2} 0" />  
             <parent link="${parent}" />
             <child link="${suffix}_stoc_eye_link"/>
         </joint>
-
+        
         <link name="${suffix}_stoc_eye_link">
             <inertial>
-                <mass value="0.0001" />
-                <origin xyz="0 0 0" />
+                <mass value="0.01" />
+                <origin xyz="0 0 ${eye_length/2}" rpy="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0"
                          izz="1.0" />
             </inertial>
-
+            
             <visual>
-                <origin xyz="0 0 0" rpy="0 0 0" />
+                <origin xyz="0 0 ${eye_length/2}" rpy="0 0 0" />
                 <geometry>
                     <cylinder radius="${eye_radius}" length="${eye_length}" />
                 </geometry>
             </visual>
-
+            
             <collision>
-                <origin xyz="0 0 0" rpy="0 0 0" />
+                <origin xyz="0 0 ${eye_length/2}" rpy="0 0 0" />
                 <geometry>
                     <cylinder radius="${eye_radius}" length="${eye_length}" />
                 </geometry>
             </collision>
         </link>
-
+        
         <joint name="${suffix}_stoc_eye_frame_joint" type="fixed">
             <origin xyz="0 0 0" rpy="0 ${-M_PI/2} 0" />  
             <parent link="${suffix}_stoc_eye_link" />
@@ -151,7 +151,7 @@
         </link>
         
         <joint name="stoc_back_joint" type="fixed">
-            <origin xyz="${-(stoc_depth/2)-(back_depth/2)} 0 0.0215" rpy="0 0 0" />  
+            <origin xyz="-${stoc_depth/2} 0 ${stoc_height/2}" rpy="0 0 0" />  
             <parent link="stoc_camera_link" />
             <child link="stoc_back_link"/>
         </joint>
@@ -159,30 +159,31 @@
         <link name="stoc_back_link">
             <inertial>
                 <mass value="0.1" />
-                <origin xyz="${back_depth/2} ${back_width/2} ${back_height/2}" />
+                <origin xyz="-${back_depth/2} 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0" 
                          izz="1.0" />
             </inertial>
-
+            
             <visual>
-                <origin xyz="0 0 0" rpy="0 0 0" />
+                <origin xyz="-${back_depth/2} 0 0" />
                 <geometry>
                     <box size="${back_depth} ${back_width} ${back_height}" />
                 </geometry>
             </visual>
-
+            
             <collision>
-                <origin xyz="0 0 0" rpy="0 0 0" />
+                <origin xyz="-${back_depth/2} 0 0" />
                 <geometry>
                     <box size="${back_depth} ${back_width} ${back_height}" />
                 </geometry>
             </collision>
         </link>
-
+        
+        <!-- MACRO INSTANTIATION -->
         <stoc_eye name="left_eye" parent="stoc_camera_link" suffix="left" reflect="1"/>
         <stoc_eye name="right_eye" parent="stoc_camera_link" suffix="right" reflect="-1"/>
-
+        
         <joint name="stoc_optical_frame_joint" type="fixed">
             <origin xyz="${cal_stereo_x}  ${0.045+cal_stereo_y}  ${.0305+cal_stereo_z+0.03}" 
                     rpy="${-M_PI/2+cal_stereo_roll} ${0.0+cal_stereo_pitch} ${-M_PI/2+cal_stereo_yaw}" />
