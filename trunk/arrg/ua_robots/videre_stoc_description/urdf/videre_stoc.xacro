@@ -1,0 +1,225 @@
+<?xml version="1.0"?>
+
+<robot
+    xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+    xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+    xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
+
+    <!-- Include file with calibration parameters -->
+    <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
+
+    <property name="M_PI" value="3.14159"/>
+
+    <property name="stoc_depth" value="0.018" />
+    <property name="stoc_width" value="0.132" />
+    <property name="stoc_height" value="0.043" />
+
+    <property name="back_depth" value="0.022" />
+    <property name="back_width" value="0.069" />
+    <property name="back_height" value="0.043" />
+
+    <property name="eye_offset" value="0.048" />
+    <property name="eye_radius" value="0.006" />
+    <property name="eye_length" value="0.010" />
+
+    <macro name="stoc_eye" params="name parent suffix reflect">
+        <joint name="${suffix}_stoc_eye_joint" type="fixed">
+            <origin xyz="${(stoc_depth/2)+(eye_length/2)} ${reflect*eye_offset} 0.03" rpy="0 ${M_PI/2} 0" />  
+            <parent link="${parent}" />
+            <child link="${suffix}_stoc_eye_link"/>
+        </joint>
+
+        <link name="${suffix}_stoc_eye_link">
+            <inertial>
+                <mass value="0.0001" />
+                <origin xyz="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" izz="1.0" />
+                <!-- Still don't know what that stuff means? -->
+            </inertial>
+
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="${eye_radius}" length="${eye_length}" />
+                </geometry>
+            </visual>
+
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="${eye_radius}" length="${eye_length}" />
+                </geometry>
+            </collision>
+        </link>
+
+        <joint name="${suffix}_stoc_eye_frame_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 ${-M_PI/2} 0" />  
+            <parent link="${suffix}_stoc_eye_link" />
+            <child link="${suffix}_stoc_eye_frame"/>
+        </joint>
+
+        <link name="${suffix}_stoc_eye_frame">
+            <inertial>
+                <mass value="0.0001" />
+                <origin xyz="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" izz="1.0" />
+                <!-- Still don't know what that stuff means? -->
+            </inertial>
+
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <sphere radius="$0.001" />
+                </geometry>
+            </visual>
+
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <sphere radius="$0.001" />
+                </geometry>
+            </collision>
+        </link>
+
+        <gazebo reference="${suffix}_stoc_eye_link">
+            <material>Gazebo/Black</material>
+        </gazebo>
+    
+        <gazebo reference="${suffix}_stoc_eye_frame">
+            <sensor:camera name="${suffix}_eye_sensor">
+                <imageSize>640 480</imageSize>
+                <imageFormat>BAYER_BGGR8</imageFormat>
+                <hfov>90</hfov>
+                <nearClip>0.1</nearClip>
+                <farClip>100</farClip>
+                <updateRate>30.0</updateRate>
+                <controller:gazebo_ros_camera name="${suffix}_eye_controller" plugin="libgazebo_ros_camera.so">
+                    <alwaysOn>true</alwaysOn>
+                    <updateRate>30.0</updateRate>
+                    <imageTopicName>stereo/${suffix}/image_raw</imageTopicName>
+                    <cameraInfoTopicName>stereo/${suffix}/camera_info</cameraInfoTopicName>
+                    <frameName>${suffix}_stoc_eye_frame</frameName>
+                    <CxPrime>320.5</CxPrime>
+                    <Cx>320.5</Cx>
+                    <Cy>240.5</Cy>
+                    <focal_length>320</focal_length> 
+                    <distortion_k1>0</distortion_k1>
+                    <distortion_k2>0</distortion_k2>
+                    <distortion_k3>0</distortion_k3>
+                    <distortion_t1>0</distortion_t1>
+                    <distortion_t2>0</distortion_t2>
+                    <interface:camera name="${suffix}_eye_iface" />
+                </controller:gazebo_ros_camera>
+            </sensor:camera>
+        </gazebo>
+    </macro>
+
+
+
+
+    <macro name="stoc_camera" params="name parent">
+        <link name="stoc_camera_link">
+            <inertial>
+                <mass value="0.1" />
+                <origin xyz="${stoc_depth/2} ${stoc_width/2} ${stoc_height/2}" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" izz="1.0" />
+                <!-- Still don't know what that stuff means? -->
+            </inertial>
+
+            <visual>
+                <origin xyz="0 0 0.03" rpy="0 0 0" />
+                <geometry>
+                    <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
+                </geometry>
+            </visual>
+
+            <collision>
+                <origin xyz="0 0 0.03" rpy="0 0 0" />
+                <geometry>
+                    <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
+                </geometry>
+            </collision>
+        </link>
+
+        <joint name="stoc_back_joint" type="fixed">
+            <origin xyz="${-(stoc_depth/2)-(back_depth/2)} 0 0.03" rpy="0 0 0" />  
+            <parent link="stoc_camera_link" />
+            <child link="stoc_back_link"/>
+        </joint>
+
+        <link name="stoc_back_link">
+            <inertial>
+                <mass value="0.1" />
+                <origin xyz="${back_depth/2} ${back_width/2} ${back_height/2}" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+                <!-- Still don't know what that stuff means? -->
+            </inertial>
+
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${back_depth} ${back_width} ${back_height}" />
+                </geometry>
+            </visual>
+
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${back_depth} ${back_width} ${back_height}" />
+                </geometry>
+            </collision>
+        </link>
+
+        <stoc_eye name="left_eye" parent="stoc_camera_link" suffix="left" reflect="1"/>
+        <stoc_eye name="right_eye" parent="stoc_camera_link" suffix="right" reflect="-1"/>
+
+        <joint name="stoc_optical_frame_joint" type="fixed">
+            <origin xyz="${cal_stereo_x}  ${0.045+cal_stereo_y}  ${.0305+cal_stereo_z+0.03}" 
+                    rpy="${-M_PI/2+cal_stereo_roll} ${0.0+cal_stereo_pitch} ${-M_PI/2+cal_stereo_yaw}" />
+            <parent link="stoc_camera_link"/>
+            <child link="stoc_optical_frame"/>
+        </joint>
+
+        <link name="stoc_optical_frame" type="camera">
+            <inertial>
+                <mass value="0.01" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="0.001"  ixy="0.0"  ixz="0.0"
+                         iyy="0.001"  iyz="0.0"
+                         izz="0.001" />
+            </inertial>
+
+            <visual name="stoc_optical_frame_visual">
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry name="stoc_optical_frame_visual_geom">
+                    <box size="0.01 0.01 0.01" />
+                </geometry>
+            </visual>
+
+            <collision name="stoc_optical_frame_collision">
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry name="stoc_optical_frame_collision_geom">
+                    <box size="0.01 0.01 0.01" />
+                </geometry>
+            </collision>
+        </link>
+
+        <gazebo reference="stoc_optical_frame" >
+            <material name="clearish">
+                <color rgba="0 0 1 0.5"/>
+            </material>
+        </gazebo>
+        <gazebo reference="stoc_camera_link" >
+            <material>PR2/Red</material>
+        </gazebo>
+        <gazebo reference="stoc_back_link" >
+            <material>PR2/Red</material>
+        </gazebo>
+    </macro>
+
+</robot>

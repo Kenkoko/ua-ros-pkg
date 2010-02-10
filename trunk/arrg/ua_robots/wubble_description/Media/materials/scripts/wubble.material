@@ -1,0 +1,33 @@
+material Wubble/BrassShiny
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.75 0.75 0.75
+      cull_hardware none
+      cull_software none
+      texture_unit
+      {
+        texture brass_shiny.jpg
+      }
+    }
+  }
+}
+
+material Wubble/BrassScratched
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.75 0.75 0.75
+      cull_hardware none
+      cull_software none
+      texture_unit
+      {
+        texture brass_scratched.jpg
+      }
+    }
+  }
+}

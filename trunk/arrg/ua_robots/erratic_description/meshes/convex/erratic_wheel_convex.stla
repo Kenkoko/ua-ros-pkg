@@ -1,0 +1,142 @@
+solid MYSOLID created by IVCON, original data in /home/dhewlett/ros/ua-ros-pkg/arrg/ua_robots/erratic_description/meshes/convex/erratic_wheel_convex.obj
+  facet normal -0.283832 0.388190 -0.876783
+    outer loop
+      vertex 0.007348 0.045712 -0.054478
+      vertex -0.000000 -0.004244 -0.074217
+      vertex -0.010000 0.037154 -0.052651
+    endloop
+  endfacet
+  facet normal 0.642266 0.712211 -0.283284
+    outer loop
+      vertex -0.004971 0.067965 -0.026461
+      vertex 0.009692 0.066815 0.003892
+      vertex 0.007348 0.045712 -0.054478
+    endloop
+  endfacet
+  facet normal -0.383371 0.633704 -0.671898
+    outer loop
+      vertex -0.004971 0.067965 -0.026461
+      vertex 0.007348 0.045712 -0.054478
+      vertex -0.010000 0.037154 -0.052651
+    endloop
+  endfacet
+  facet normal -0.980954 0.190844 -0.036154
+    outer loop
+      vertex -0.004971 0.067965 -0.026461
+      vertex -0.010000 0.037154 -0.052651
+      vertex -0.008789 0.059905 0.034586
+    endloop
+  endfacet
+  facet normal -0.168827 0.978481 0.118629
+    outer loop
+      vertex -0.004971 0.067965 -0.026461
+      vertex -0.008789 0.059905 0.034586
+      vertex 0.009692 0.066815 0.003892
+    endloop
+  endfacet
+  facet normal 0.302248 0.874689 0.378900
+    outer loop
+      vertex 0.007348 0.045712 0.054478
+      vertex 0.009692 0.066815 0.003892
+      vertex -0.008789 0.059905 0.034586
+    endloop
+  endfacet
+  facet normal -0.546046 0.406118 0.732736
+    outer loop
+      vertex 0.007348 0.045712 0.054478
+      vertex -0.008789 0.059905 0.034586
+      vertex -0.000000 0.000000 0.074338
+    endloop
+  endfacet
+  facet normal 0.987807 -0.111646 0.108502
+    outer loop
+      vertex 0.007348 0.045712 0.054478
+      vertex -0.000000 0.000000 0.074338
+      vertex -0.000000 -0.074308 -0.002123
+    endloop
+  endfacet
+  facet normal -0.928918 -0.032222 -0.368882
+    outer loop
+      vertex -0.009692 -0.048682 -0.045929
+      vertex -0.010000 0.037154 -0.052651
+      vertex -0.000000 -0.004244 -0.074217
+    endloop
+  endfacet
+  facet normal -0.230322 -0.861301 -0.452893
+    outer loop
+      vertex 0.007348 -0.051728 -0.048802
+      vertex -0.000000 -0.074308 -0.002123
+      vertex -0.009692 -0.048682 -0.045929
+    endloop
+  endfacet
+  facet normal -0.229127 -0.486662 -0.843007
+    outer loop
+      vertex 0.007348 -0.051728 -0.048802
+      vertex -0.009692 -0.048682 -0.045929
+      vertex -0.000000 -0.004244 -0.074217
+    endloop
+  endfacet
+  facet normal 0.998906 -0.034018 0.032095
+    outer loop
+      vertex 0.007348 -0.051728 -0.048802
+      vertex 0.009692 0.066815 0.003892
+      vertex 0.007348 0.045712 0.054478
+    endloop
+  endfacet
+  facet normal 0.988697 -0.109051 0.102885
+    outer loop
+      vertex 0.007348 -0.051728 -0.048802
+      vertex 0.007348 0.045712 0.054478
+      vertex -0.000000 -0.074308 -0.002123
+    endloop
+  endfacet
+  facet normal 0.999225 -0.002289 -0.039299
+    outer loop
+      vertex 0.007348 -0.051728 -0.048802
+      vertex 0.007348 0.045712 -0.054478
+      vertex 0.009692 0.066815 0.003892
+    endloop
+  endfacet
+  facet normal 0.951040 -0.017973 -0.308545
+    outer loop
+      vertex 0.007348 -0.051728 -0.048802
+      vertex -0.000000 -0.004244 -0.074217
+      vertex 0.007348 0.045712 -0.054478
+    endloop
+  endfacet
+  facet normal -0.963021 0.035902 0.267023
+    outer loop
+      vertex -0.009692 -0.048682 0.045929
+      vertex -0.000000 0.000000 0.074338
+      vertex -0.008789 0.059905 0.034586
+    endloop
+  endfacet
+  facet normal 0.841758 -0.387147 0.376245
+    outer loop
+      vertex -0.009692 -0.048682 0.045929
+      vertex -0.000000 -0.074308 -0.002123
+      vertex -0.000000 0.000000 0.074338
+    endloop
+  endfacet
+  facet normal -0.935338 -0.353754 0.000000
+    outer loop
+      vertex -0.009692 -0.048682 0.045929
+      vertex -0.009692 -0.048682 -0.045929
+      vertex -0.000000 -0.074308 -0.002123
+    endloop
+  endfacet
+  facet normal -0.999890 0.009506 0.011401
+    outer loop
+      vertex -0.009692 -0.048682 0.045929
+      vertex -0.008789 0.059905 0.034586
+      vertex -0.010000 0.037154 -0.052651
+    endloop
+  endfacet
+  facet normal -0.999994 -0.003588 0.000000
+    outer loop
+      vertex -0.009692 -0.048682 0.045929
+      vertex -0.010000 0.037154 -0.052651
+      vertex -0.009692 -0.048682 -0.045929
+    endloop
+  endfacet
+endsolid MYSOLID
