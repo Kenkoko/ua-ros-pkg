@@ -1,0 +1,9 @@
+<stack>
+  <description brief="wubble_world">wubble_world</description>
+  <author>Maintained by Daniel Hewlett</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wubble_world</url>
+  <depend stack="ros" />
+
+</stack>
