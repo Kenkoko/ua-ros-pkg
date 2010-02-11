@@ -1,0 +1,18 @@
+<package>
+  <description brief="ax12_driver_core">
+
+     Python code base to control Robotis Dynamixel AX-12+ servos.
+
+  </description>
+  <author>UA Robotics Research Group</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ax12_driver_core</url>
+
+  <depend package="rospy"/>
+
+  <rosdep name="pyserial"/>
+
+</package>
+
+

@@ -1,0 +1,9 @@
+<stack>
+  <description brief="ua_drivers">ua_drivers</description>
+  <author>Maintained by UA Robotics Research Group</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ua_drivers</url>
+  <depend stack="ros" />
+
+</stack>
