@@ -5,19 +5,19 @@
     xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
     
-    <include filename="$(find pr2_description)/urdf/sensors/stereo_camera.urdf.xacro" />
+    <include filename="$(find videre_stoc_description)/urdf/stereo_camera.urdf.xacro" />
     
     <property name="M_PI" value="3.14159"/>
     
-    <property name="stoc_depth" value="0.018542" />
-    <property name="stoc_width" value="0.13208" />
-    <property name="stoc_height" value="0.04318" />
+    <property name="stoc_depth"  value="0.019" />
+    <property name="stoc_width"  value="0.132" />
+    <property name="stoc_height" value="0.043" />
     
-    <property name="back_depth" value="0.022225" />
-    <property name="back_width" value="0.0691134" />
-    <property name="back_height" value="0.04318" />
+    <property name="back_depth"  value="0.022" />
+    <property name="back_width"  value="0.069" />
+    <property name="back_height" value="0.043" />
     
-    <property name="eye_radius" value="0.0072" />
+    <property name="eye_radius" value="0.006" />
     <property name="eye_length" value="0.010" />
     <property name="eye_offset" value="0.045" />    <!-- 9cm baseline -->
     
@@ -30,7 +30,7 @@
         
         <link name="${name}_stoc_eye_link">
             <inertial>
-                <mass value="0.01" />
+                <mass value="0.004" />
                 <origin xyz="0 0 ${eye_length/2}" rpy="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0"
@@ -151,9 +151,11 @@
         <stoc_eye name="left" parent="stoc_camera_link" reflect="1"/>
         <stoc_eye name="right" parent="stoc_camera_link" reflect="-1"/>
         
-        <stereo_camera_v0 parent="left_stoc_eye_link" name="stereo" focal_length="772.55" hfov="45" image_format="BAYER_BGGR8" image_width="640" image_height="480" >
-            <origin xyz="0 0 0" rpy="0 -${M_PI/2} 0" />
-        </stereo_camera_v0>
+        <stereo_camera_9cm_baseline parent="left_stoc_eye_link" name="stereo"
+                                    focal_length="698.94" hfov="49.2" image_format="BAYER_BGGR8"
+                                    image_width="640" image_height="480" >
+            <origin xyz="0 0 -0.0042" rpy="0 -${M_PI/2} 0" />
+        </stereo_camera_9cm_baseline>
         
         <gazebo reference="stoc_camera_link" >
             <material>PR2/Red</material>
