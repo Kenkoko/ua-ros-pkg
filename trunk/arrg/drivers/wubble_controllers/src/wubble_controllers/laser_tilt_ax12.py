@@ -39,9 +39,9 @@ roslib.load_manifest('wubble_controllers')
 import rospy
 from core.ax12_const import *
 from core.commands import *
-from msg import JointState
-from msg import JointStateList
-from msg import MotorStateList
+from wubble_controllers.msg import JointState
+from wubble_controllers.msg import JointStateList
+from wubble_controllers.msg import MotorStateList
 from threading import Thread, Event
 from std_msgs.msg import Int32
 
