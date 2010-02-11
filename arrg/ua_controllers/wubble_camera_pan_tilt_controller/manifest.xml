@@ -1,0 +1,18 @@
+<package>
+  <description brief="wubble_camera_pan_tilt_controller">
+
+     wubble_camera_pan_tilt_controller
+
+  </description>
+  <author>UA Robotics Research Group</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wubble_camera_pan_tilt_controller</url>
+  <depend package="rospy"/>
+  <depend package="ax12_driver_core"/>
+  <depend package="ua_controller_msgs"/>
+  <depend package="std_msgs"/>
+
+</package>
+
+
