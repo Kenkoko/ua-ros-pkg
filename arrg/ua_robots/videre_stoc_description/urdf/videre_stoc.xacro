@@ -154,7 +154,7 @@
         <stereo_camera_9cm_baseline parent="left_stoc_eye_link" name="stereo"
                                     focal_length="698.94" hfov="49.2" image_format="BAYER_BGGR8"
                                     image_width="640" image_height="480" >
-            <origin xyz="0 0 -0.0042" rpy="0 -${M_PI/2} 0" />
+            <origin xyz="0 0 -0.0058" rpy="0 -${M_PI/2} 0" />
         </stereo_camera_9cm_baseline>
         
         <gazebo reference="stoc_camera_link" >
