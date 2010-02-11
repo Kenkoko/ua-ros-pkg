@@ -2,7 +2,7 @@ all:build
 
 
 ZIP_FILE   = PhidgetsPython_2.1.6.20100129.zip
-ZIP_URL    = http://www.phidgets.com/downloads/libraries/PhidgetsPython_2.1.6.20100129.zip
+ZIP_URL    = http://www.phidgets.com/downloads/libraries/$(ZIP_FILE)
 SRC_DIR    = src
 PKG_NAME   = phidgets_py_api
 SRC_PATH   = $(SRC_DIR)/$(PKG_NAME)
@@ -27,4 +27,4 @@ clean:
 	rm -rf $(SRC_DIR)
 
 wipe: clean
-	rm -rf build
+
