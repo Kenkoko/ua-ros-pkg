@@ -27,6 +27,7 @@ head_tilt_controller:
   type: JointPositionController
   joint: head_tilt_joint
   pid:
-    p: 50.0
-    d: 30.0
+    p: 80.0
+    i: 10.0
+    d: 50.0
 
