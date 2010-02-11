@@ -1,6 +1,6 @@
 <stack>
   <description brief="ua_controllers">ua_controllers</description>
-  <author>Maintained by Daniel Hewlett</author>
+  <author>Maintained by UA Robotics Research Group</author>
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/ua_controllers</url>

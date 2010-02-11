@@ -2,14 +2,10 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b arm is ... 
+\b ua_controller_msgs is ... 
 
 <!-- 
-In addition to providing an overview of your package,
-this is the section where the specification and design/architecture 
-should be detailed. While the original specification may be done on the
-wiki, it should be transferred here once your package starts to take shape.
-You can then link to this documentation page from the Wiki. 
+Provide an overview of your package.
 -->
 
 

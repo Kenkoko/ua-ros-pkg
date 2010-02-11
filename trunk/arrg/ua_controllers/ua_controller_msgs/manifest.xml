@@ -1,0 +1,14 @@
+<package>
+  <description brief="ua_controller_msgs">
+
+     ua_controller_msgs
+
+  </description>
+  <author>UA Robotics Research Group</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ua_controller_msgs</url>
+
+</package>
+
+
