@@ -1,13 +1,15 @@
 <package>
-  <description brief="videre_stoc_description">
+    <description brief="videre_stoc_description">
 
      videre_stoc_description
 
-  </description>
-  <author>Daniel Hewlett</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/videre_stoc_description</url>
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/videre_stoc_description</url>
+
+    <depend package="pr2_description"/>
 
 </package>
 
