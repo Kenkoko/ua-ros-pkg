@@ -1,5 +1,0 @@
-<launch>
-     <!-- Overhead Cam -->
-    <param name="cam_description" command="$(find xacro)/xacro.py '$(find wubble_robots)/defs/overhead_cam/overhead_cam.urdf.xacro'" />
-    <node name="spawn_overhead_cam" pkg="gazebo_tools" type="gazebo_model" args="-z 0.051 -p cam_description spawn cam_description" respawn="false" output="screen" />
-</launch>

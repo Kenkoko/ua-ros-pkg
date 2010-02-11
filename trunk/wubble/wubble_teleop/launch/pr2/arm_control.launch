@@ -1,7 +1,0 @@
-<launch>
-   <!-- <include file="$(find wubble_teleop)/launch/enable_arm_control.launch"/> -->
-    <node pkg="wubble_teleop" type="arm_control_server" name="arm_control_server" output="screen" args="right" ns="student">
-        <!-- <remap from="robot_description" to="/student/robot_description" /> -->
-        <remap from="arm_ik" to="pr2_ik_right_arm/ik_service" />
-    </node>
-</launch>
