@@ -1,0 +1,9 @@
+<stack>
+  <description brief="ua_controllers">ua_controllers</description>
+  <author>Maintained by Daniel Hewlett</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ua_controllers</url>
+  <depend stack="ros" />
+
+</stack>
