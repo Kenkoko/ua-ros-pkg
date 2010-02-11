@@ -97,14 +97,15 @@
         <child link="head_tilt_link" />
         
         <axis xyz="0 0 1" />
-        <limit lower="0" upper="0" effort="100" velocity="1.0" />
-        <dynamics damping="1" friction="1" />
+        <limit lower="-3" upper="3" effort="100.0" velocity="3.0" />
+        <safety_controller k_position="100" k_velocity="1.5" soft_lower_limit="${-3+0.2}" soft_upper_limit="${3-0.2}" />
+        <dynamics damping="100" friction="100"/>
     </joint>
     
     <transmission type="SimpleTransmission" name="head_pan_trans">
         <actuator name="head_pan_motor" />
         <joint name="head_pan_joint" />
-        <mechanicalReduction>6.0</mechanicalReduction>
+        <mechanicalReduction>1.0</mechanicalReduction>
     </transmission>
     
     <link name="head_tilt_link"> 
@@ -137,17 +138,17 @@
         <child link="head_mount_link" />
     
         <axis xyz="0 1 0" />
-        <limit lower="-0.5" upper="1.00" effort="100" velocity="2.00" />
-        <safety_controller k_position="100" k_velocity="0.05" soft_lower_limit="${-0.785+0.0}" soft_upper_limit="${1.57-0.0}" />
+        <limit lower="-0.5" upper="1.00" effort="100.0" velocity="2.0" />
+        <safety_controller k_position="100" k_velocity="1.5" soft_lower_limit="${-0.5+0.1}" soft_upper_limit="${1.0-0.1}" />
         <!-- hold both reference_position and upper/lower for tick-tock, remove reference_positiion after verifying upper/lower works with calibration controllers.  if search velocity in pr2_calibration_controllers.yaml is +, the reference_position is rising, if - then it is falling -->
         <calibration reference_position="-.35" falling="-.35" />
-        <dynamics damping="0.008" />
+        <dynamics damping="100" friction="100"/>
     </joint>
     
     <transmission type="SimpleTransmission" name="head_tilt_trans">
         <actuator name="head_tilt_motor" />
         <joint name="head_tilt_joint" />
-        <mechanicalReduction>3.0</mechanicalReduction>
+        <mechanicalReduction>1.0</mechanicalReduction>
     </transmission>
     
     <link name="head_mount_link"> 
@@ -158,6 +159,13 @@
                      iyy="0.01" iyz="0"
                      izz="0.01"/>
         </inertial>
+<!--         <inertial>-->
+<!--        <mass value="1.749727" />-->
+<!--        <origin xyz="0.041935 0.003569 0.028143" rpy="0 0 0" />-->
+<!--        <inertia ixx="0.010602303435"  ixy="-0.000408814235"  ixz="0.00198303894"-->
+<!--                 iyy="0.011874383747"  iyz="0.000197908779"-->
+<!--                 izz="0.005516790626" />-->
+<!--      </inertial>-->
         
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
