@@ -81,7 +81,7 @@ if __name__ == '__main__':
         rospy.wait_for_service('stop_driver')
         try:
             stop_driver = rospy.ServiceProxy('stop_driver', DriverControl)
-            response = stop_driver(driver)
+            response = stop_driver(driver_name, driver_path)
             if response.success:
                 rospy.loginfo(response.reason)
             else:
@@ -94,7 +94,7 @@ if __name__ == '__main__':
         rospy.wait_for_service('restart_driver')
         try:
             restart_driver = rospy.ServiceProxy('restart_driver', DriverControl)
-            response = restart_driver(driver)
+            response = restart_driver(driver_name, driver_path)
             if response.success:
                 rospy.loginfo(response.reason)
             else:

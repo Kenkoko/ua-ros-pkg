@@ -40,10 +40,10 @@ import rospy
 from core.ax12_const import *
 from core.commands import *
 from arm_ax12_const import *
-from msg import JointState
-from msg import ArmJointMove
-from msg import JointStateList
-from msg import MotorStateList
+from wubble_controllers.msg import JointState
+from wubble_controllers.msg import ArmJointMove
+from wubble_controllers.msg import JointStateList
+from wubble_controllers.msg import MotorStateList
 from std_msgs.msg import Int32
 
 class DriverControl:
