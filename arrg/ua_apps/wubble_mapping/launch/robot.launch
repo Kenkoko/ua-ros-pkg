@@ -1,0 +1,29 @@
+<launch>
+    
+    <!-- send erratic description to param server -->
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_robots)/defs/erratic/erratic.urdf.xacro'" />
+    
+    <!-- start all hardware systems -->
+    <include file="$(find wubble_controllers)/wubble_controllers.launch" />
+
+    <!-- Publish joint_states information -->
+    <node name="joint_states_publisher" pkg="wubble_mapping" type="joint_states_publisher.py" />
+    <node name="erratic_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+    
+    <!-- Starts the hokuyo laser -->
+    <node name="base_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">
+        <remap from="laser" to="base_laser"/>
+        <remap from="scan" to="base_scan"/>
+        <param name="frame_id" value="laser_link"/>
+    </node>
+    
+    <!-- Starts SLAM mapping -->
+    <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" respawn="false" output="screen" >
+        <remap from="scan" to="base_scan" />
+    </node>
+    
+<!--    <include file="$(find wubble_teleop)/launch/erratic_logitech.launch" />-->
+    
+<!--    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find wubble_mapping)/rviz/mapping.vcg" output="screen" />-->
+</launch>
+
