@@ -38,9 +38,8 @@ from threading import Thread
 
 import rospy
 from joy.msg import Joy
-#from sensor_msgs.msg import JointState
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from pr2_controllers_msgs.msg import JointTrajectoryControllerState
+from std_msgs.msg import Float64
+from pr2_controllers_msgs.msg import JointControllerState
 
 class MoveHeadXbox():
     def __init__(self):
@@ -48,19 +47,13 @@ class MoveHeadXbox():
         self.head_pan = 0.0
         self.head_tilt = 0.0
         self.joy_data = None
-        self.joint_traj = JointTrajectory()
-        self.joint_traj.joint_names = ['head_pan_joint', 'head_tilt_joint'] #'head_tilt_joint']
-        self.jtp = JointTrajectoryPoint()
-        self.jtp.positions = [0.0, 0.0]
-        self.jtp.velocities = [0.0, 0.0]
-        self.jtp.accelerations = [0.0, 0.0]
-        #self.jtp.time_from_start = 1.0
-        self.joint_traj.points = [self.jtp]
-        
-        self.head_angles_pub = rospy.Publisher('head_traj_controller/command', JointTrajectory)
+       
+        self.head_pan_pub = rospy.Publisher('head_pan_controller/command', Float64)
+        self.head_tilt_pub = rospy.Publisher('head_tilt_controller/command', Float64)
         rospy.init_node('move_head_joy', anonymous=True)
         rospy.Subscriber('/joy', Joy, self.read_joystick_data)
-        rospy.Subscriber('head_traj_controller/state', JointTrajectoryControllerState, self.read_current)
+        rospy.Subscriber('head_pan_controller/state', JointControllerState, self.read_current_pan)
+        rospy.Subscriber('head_tilt_controller/state', JointControllerState, self.read_current_tilt)
 
     def read_joystick_data(self, data):
         self.joy_data = data
@@ -71,16 +64,21 @@ class MoveHeadXbox():
         else: return number 
 
     def set_head_position(self, delta_pan, delta_tilt):
-        self.head_pan += self.bound(delta_pan * 0.08)
-        self.head_tilt += self.bound(delta_tilt * 0.1)
-        self.jtp.positions = [self.head_pan, self.head_tilt]
+        self.head_pan = self.bound(delta_pan * 0.08 + self.head_pan)
+        self.head_tilt = self.bound(delta_tilt * 0.1 + self.head_tilt)
 
     def reset_head_position(self):
-        self.jtp.positions = [0.0, 0.0]
+        self.head_pan_pub.publish(0.0)
+        self.head_tilt_pub.publish(0.0)
         self.head_pan = 0.0
         self.head_tilt = 0.0
 
-    def read_current(self, data):
+    def read_current_pan(self, data):
+        pass
+        #self.head_pan = data.actual.positions[0]
+        #self.head_tilt = data.actual.positions[1]
+
+    def read_current_tilt(self, data):
         pass
         #self.head_pan = data.actual.positions[0]
         #self.head_tilt = data.actual.positions[1]
@@ -94,9 +92,10 @@ class MoveHeadXbox():
                 else: 
                     self.set_head_position(self.joy_data.axes[2], -1.0 * self.joy_data.axes[3])
             
-                if self.joy_data.buttons[7]:
-                    print self.joint_traj
-                    self.head_angles_pub.publish(self.joint_traj)
+                #if self.joy_data.buttons[7]:
+                print "PUB"
+                self.head_pan_pub.publish(self.head_pan)
+                self.head_tilt_pub.publish(self.head_tilt)
             
             time.sleep(0.1)
 
