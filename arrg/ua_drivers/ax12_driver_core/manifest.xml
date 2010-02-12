@@ -1,5 +1,5 @@
 <package>
-  <description brief="ax12_driver_core">
+  <description brief="Pyserial wrapper for Robotis AX-12+ servos">
 
      Python code base to control Robotis Dynamixel AX-12+ servos.
 
