@@ -5,6 +5,7 @@ ZIP_FILE   = NMPT.zip
 ZIP_URL    = http://mplab.ucsd.edu/~nick/$(ZIP_FILE)
 SRC_DIR    = src
 LIB_DIR    = lib
+BIN_DIR    = bin
 PATCH_FILE = nmptgcc4_4_1.patch
 
 include $(shell rospack find mk)/cmake.mk
@@ -24,3 +25,7 @@ build:
 		rm -rf NMPT; \
 	fi
 
+clean:
+	rm -rf $(SRC_DIR) $(LIB_DIR) $(BIN_DIR)
+
+wipe: clean
