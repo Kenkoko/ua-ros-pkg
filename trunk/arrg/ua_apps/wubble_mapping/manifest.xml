@@ -1,17 +1,22 @@
 <package>
-  <description brief="wubble_mapping">
+    <description brief="Wubble robot gmapping application">
 
      wubble_mapping
 
-  </description>
-  <author>UA Robot Lab</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/wubble_mapping</url>
-  <depend package="wubble_teleop"/>
-  <depend package="wubble_robots"/>
-  <depend package="wubble_controllers"/>
-  <depend package="hokuyo_node"/>
+    </description>
+    <author>UA Robot Lab</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_mapping</url>
+    
+    <depend package="wubble_teleop"/>
+    <depend package="wubble_description"/>
+    <depend package="wubble_controllers"/>
+    <depend package="hokuyo_node"/>
+
+    <depend package="gmapping"/>
+    <depend package="rviz"/>
+
 </package>
 
 

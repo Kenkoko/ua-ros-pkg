@@ -13,10 +13,10 @@
 
             <axis xyz="0 1 0" />
 <!--           Original effort: 0.5292-->
-            <limit lower="0.00" upper="${M_PI/3}" effort="2.0" velocity="4.0" />
-<!--            <safety_controller k_position="100" k_velocity="0.05" soft_lower_limit="${-0.785+0.0}" soft_upper_limit="${1.57-0.0}" />-->
+            <limit lower="-0.1" upper="${M_PI/2}" effort="100" velocity="4" />
+            <safety_controller k_position="100" k_velocity="4" soft_lower_limit="${-0.1+0.1}" soft_upper_limit="${M_PI/3}" />-->
 <!--            <calibration reference_position="${laser_calib_ref}" falling="${laser_calib_ref}" />-->
-            <dynamics damping="0.008" />
+            <dynamics damping="50" friction="1" />
             <insert_block name="origin" /> 
         </joint>
 
@@ -26,7 +26,7 @@
         <transmission type="SimpleTransmission" name="hokuyo_tilt_trans">
             <actuator name="hokuyo_tilt_motor" />
             <joint name="hokuyo_tilt_joint" />
-            <mechanicalReduction>6.0</mechanicalReduction>
+            <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
     </macro>
 

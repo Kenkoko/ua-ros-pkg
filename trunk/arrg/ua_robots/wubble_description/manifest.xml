@@ -12,5 +12,24 @@
     <depend package="erratic_description" />
     <depend package="smart_arm_description" />
     <depend package="hokuyo_urg_description" />
+    <depend package="videre_stoc_description" />
+
+    <depend package="wubble_plugins"/>
+    <depend package="robot_state_publisher"/>
+    <depend package="pr2_controller_manager"/>
+    <depend package="gazebo_worlds"/>
+    <depend package="2dnav_pr2"/>
+
+    <depend package="robot_mechanism_controllers"/>
+    <depend package="pr2_mechanism_controllers"/>
+
+    <!-- Need these for gazebo -->
+    <depend package="pr2_gazebo_plugins"/>
+    <depend package="pr2_ogre" />
+
+    <depend package="stereo_image_proc"/>
+
+    <depend package="pr2_description"/>
+    <depend package="pr2_controller_configuration_gazebo"/>
 
 </package>
