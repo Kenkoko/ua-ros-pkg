@@ -1,18 +1,8 @@
 laser_tilt_controller:
-  type: LaserScannerTrajController
+  type: JointPositionController
   joint: hokuyo_tilt_joint
-  gains:
-    p: 80
-    i: 10
-    d: 50
-  velocity_filter:
-    - name: low_pass
-      type: TransferFunctionFilterDouble
-      params:
-        a: [1.0, -0.1]
-        b: [0.9]
-  max_velocity:    100
-  max_acceleration: 30
+  pid:
+    p: 120
 
 head_pan_controller:
   type: JointPositionController
