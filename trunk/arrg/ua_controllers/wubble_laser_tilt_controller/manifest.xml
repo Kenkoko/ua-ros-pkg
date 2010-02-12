@@ -1,7 +1,7 @@
 <package>
-  <description brief="wubble_laser_tilt_controller">
+  <description brief="Tilt controller for UA robot">
 
-     wubble_laser_tilt_controller
+     Tilt controller for hokuyo laser on wubble robot.
 
   </description>
   <author>UA Robotics Research Group</author>

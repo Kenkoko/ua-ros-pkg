@@ -1,7 +1,7 @@
 <package>
-  <description brief="ua_controller_msgs">
+  <description brief="Common messages for ua_controllers">
 
-     ua_controller_msgs
+     Common messages used throughout ua_controllers stack.
 
   </description>
   <author>UA Robotics Research Group</author>
