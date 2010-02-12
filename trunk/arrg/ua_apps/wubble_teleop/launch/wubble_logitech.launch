@@ -6,8 +6,7 @@
         <!-- <remap from="joy" to="logitech" /> -->
     </node>
 
-    <!-- Load world, robots and controllers -->
-    <!-- <include file="$(find wubble_teleop)/launch/pr2_teleop_common.launch"/> -->
+    <!-- Load teleop nodes -->
     <node pkg="wubble_teleop" type="move_base_joy.py" name="move_base_joy" />
     <node pkg="wubble_teleop" type="move_head_joy.py" name="move_head_joy" />
 </launch>

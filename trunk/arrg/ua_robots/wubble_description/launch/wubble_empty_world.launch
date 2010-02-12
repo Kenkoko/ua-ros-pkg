@@ -1,6 +1,6 @@
 <launch>
 
-     <!-- start gazebo with an empty plane -->
+    <!-- start gazebo with an empty plane -->
     <param name="/use_sim_time" value="true" />
     <node name="gazebo" pkg="gazebo" type="gazebo" args="$(find gazebo_worlds)/worlds/empty.world" respawn="false" >
         <env name="LD_LIBRARY_PATH" value="$(find gazebo_plugins)/lib:$(find pr2_gazebo_plugins)/lib:$(find gazebo)/gazebo/lib:$(optenv LD_LIBRARY_PATH)" />
@@ -8,47 +8,8 @@
         <env name="OGRE_RESOURCE_PATH" value="$(find ogre)/ogre/lib/OGRE" />
     </node>
 
-    <!-- send the wubble robot XML to param server -->
-    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble.urdf.xacro'" />
-
-    <!-- push robot_description to factory and spawn robot in gazebo -->
-    <node name="spawn_erratic" pkg="gazebo_tools" type="gazebo_model" args="-z 0.01 -p robot_description spawn robot_description" respawn="false" output="screen" />
-
-    <!-- Differential Drive and Odometry -->
-    <node name="diffdrive" pkg="wubble_plugins" type="gazebo_ros_diffdrive" respawn="true" output="screen"/>
-    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
-        <param name="odom_frame_id" value="odom"/>
-    </node>
-
-    <!-- Controllers -->
-    <include file="$(find pr2_controller_manager)/controller_manager.launch" />
-    <rosparam file="$(find wubble_description)/controllers/erratic_controllers.yaml" command="load" />
-    <node   name="controller_spawner" pkg="pr2_controller_manager" type="spawner" 
-            args="head_pan_controller head_tilt_controller laser_tilt_controller" output="screen" />
-
-    <!-- Lasers and Filters -->
-
-<!--    <node pkg="pr2_robot_actions" type="set_laser_tilt" name="action_set_laser_tilt" />-->
-
-<!--    <node pkg="topic_tools" type="throttle" name="tilt_scan_throttle" args="messages tilt_scan 3.0 tilt_scan_throttled" />-->
-<!--    <node pkg="topic_tools" type="throttle" name="tilt_scan_filtered_throttle" args="messages tilt_scan_filtered 3.0 tilt_scan_filtered_throttled" />-->
-    
-    <!-- The old tilting laser code was deleted/deprecated, this is the new way -->
-<!--    <rosparam command="load" file="$(find wubble_robots)/pr2_laser_tilt_controller.yaml" />-->
-<!--    <node pkg="pr2_mechanism_controllers" type="send_periodic_cmd_srv.py" name="laser_commander" args="laser_tilt_controller linear 10 .75 .25" />-->
-<!--    <node pkg="pr2_controller_manager" type="spawner" name="laser_tilt_c_spawner" args="" />    -->
-
-<!--    <node pkg="2dnav_pr2" type="navstack_tilt_profile.py" args="laser_tilt_controller" name="send_navstack_tilt_profile" />-->
-
-    <!-- Filter for tilt laser shadowing/veiling -->
-<!--    <node pkg="laser_filters" type="scan_to_cloud_filter_chain" respawn="true" name="tilt_shadow_filter">-->
-<!--        <remap from="scan" to="tilt_scan" />-->
-<!--        <remap from="cloud_filtered" to="tilt_scan_shadow_filtered" />-->
-<!--        <param name="target_frame" value="base_link" />-->
-<!--        <param name="high_fidelity" value="true" />-->
-<!--        <rosparam command="load" file="$(find 2dnav_pr2)/config/shadow_filter.yaml" />-->
-<!--        <rosparam command="load" file="$(find 2dnav_pr2)/config/point_cloud_footprint_filter.yaml" />-->
-<!--    </node>-->
+    <!-- Load the robot with controllers -->
+    <include file="$(find wubble_description)/launch/wubble_robot.launch" />
 
 </launch>
 
