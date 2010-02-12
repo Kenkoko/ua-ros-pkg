@@ -8,7 +8,7 @@
     <!-- Included URDF Files -->
     <include filename="$(find erratic_description)/urdf/erratic_base.xacro" />
     <include filename="$(find smart_arm_description)/urdf/smart_arm.xacro" />
-    <include filename="$(find hokuyo_urg_description)/urdf/tilting_hokuyo.xacro" />
+    <include filename="$(find hokuyo_urg_description)/urdf/hokuyo_urg.xacro" />
     <include filename="$(find videre_stoc_description)/urdf/videre_stoc.xacro" />
     
     <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
