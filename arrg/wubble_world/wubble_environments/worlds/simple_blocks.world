@@ -130,7 +130,7 @@
                 <size>0 0 0</size>
                 <visual>
                     <size>0 0 0</size>
-                    <material>Wubble/White</material>
+                    <material>WubbleWorld/White</material>
                     <mesh>unit_box</mesh>
                 </visual>
             </geom:box>
@@ -237,7 +237,7 @@
                 <mass>1.0</mass>
                 <visual>
                     <size>0.4 0.4 0.4</size>
-                    <material>Wubble/Grey</material>
+                    <material>WubbleWorld/Grey</material>
                     <mesh>unit_sphere</mesh>
                 </visual>
             </geom:sphere>
@@ -280,7 +280,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Wubble/Blue</material>
+                    <material>WubbleWorld/Blue</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -302,7 +302,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Wubble/Black</material>
+                    <material>WubbleWorld/Black</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -324,7 +324,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Wubble/Gold</material>
+                    <material>WubbleWorld/Yellow</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -346,7 +346,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Wubble/Grey</material>
+                    <material>WubbleWorld/Grey</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -368,7 +368,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Wubble/Green</material>
+                    <material>WubbleWorld/Green</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -390,7 +390,7 @@
                 <visual>
                     <size>0.2 0.2 0.2</size>
                     <mesh>unit_box</mesh>
-                    <material>Wubble/White</material>
+                    <material>WubbleWorld/White</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -412,7 +412,7 @@
                 <mass>0.6</mass>
                 <visual>
                     <size>0.2 0.2 0.6</size>
-                    <material>Wubble/Red</material>
+                    <material>WubbleWorld/Red</material>
                     <mesh>unit_box</mesh>
                 </visual>
             </geom:box>
