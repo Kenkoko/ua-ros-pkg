@@ -1,7 +1,7 @@
 <package>
-  <description brief="smart_arm_controller">
+  <description brief="Crust Crawler AX-12+ Smart Arm controller">
 
-     smart_arm_controller
+     Crust Crawler AX-12+ Smart Arm controller that uses ax12_driver_core for motor control.
 
   </description>
   <author>UA Robotics Research Group</author>

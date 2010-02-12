@@ -1,7 +1,7 @@
 <package>
-  <description brief="wubble_camera_pan_tilt_controller">
+  <description brief="Pan/Tilt controller for UA robot">
 
-     wubble_camera_pan_tilt_controller
+     Pan/Tilt controller for stereo camera on wubble robot.
 
   </description>
   <author>UA Robotics Research Group</author>
