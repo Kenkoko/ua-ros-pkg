@@ -1,9 +1,16 @@
 <stack>
-  <description brief="ua_apps">ua_apps</description>
-  <author>Maintained by Daniel Hewlett</author>
-  <license>BSD</license>  
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/ua_apps</url>
-  <depend stack="ros" />
+    <description brief="Applications and demos for UA Robots">Applications and demos for UA Robots.</description>
+    <author>Maintained by UA Robotics Research Group</author>
+    <license>BSD</license>  
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/ua_apps</url>
+
+    <depend stack="ros" />
+
+    <depend stack="ua_drivers" />
+    <depend stack="ua_controllers" />
+    <depend stack="ua_robots" />
+    <depend stack="ua_vision" />
+    <depend stack="wubble_world" />
 
 </stack>
