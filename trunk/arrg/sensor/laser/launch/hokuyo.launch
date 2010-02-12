@@ -1,8 +1,0 @@
-<launch>
-    <group ns="hokuyo">
-        <param name="calibrate_time" type="bool" value="false"/>
-    </group>
-
-    <node name="hokuyo" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen"/>
-    <!--<node name="rviz" pkg="rviz" type="rviz" respawn="false" output="screen" args="-d $(find laser)/params/hokuyo_test.vcg"/>-->
-</launch>
