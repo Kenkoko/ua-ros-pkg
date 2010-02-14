@@ -1,0 +1,10 @@
+#goal - target point & its frame reference
+geometry_msgs/Point point
+string frame_id
+---
+#result - success result & final head position
+bool success
+float64[] head_position
+---
+#feedback - current head position [pan position, tilt position]
+float64[] head_position

@@ -8,12 +8,16 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/wubble_actions</url>
-  <depend package="actionlib"/>
   <depend package="roscpp"/>
   <depend package="rospy"/>
   <depend package="roslib"/>
   <depend package="std_msgs"/>
+  <depend package="geometry_msgs"/>
   <depend package="actionlib_msgs"/>
+  <depend package="pr2_controllers_msgs"/>
+  <depend package="ua_controller_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="tf"/>
 
 </package>
 
