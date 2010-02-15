@@ -1,0 +1,4 @@
+On OS X, depending on phidgets_py_api will not work. You will need to install
+the Phidgets drivers and python bindings manually. Once the python bindings are
+on your PYTHONPATH, comment out the dependency in phidgets_ros/manifest.xml.
+Execute rosmake and the Phidgets code should work now.
