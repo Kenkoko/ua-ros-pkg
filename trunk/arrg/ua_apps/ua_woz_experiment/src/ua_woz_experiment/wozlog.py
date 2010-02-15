@@ -34,19 +34,37 @@
 #
 
 import roslib
-roslib.load_manifest('woztools')
+roslib.load_manifest('ua_woz_experiment')
 
-import os
 import rospy
 from std_msgs.msg import String
 
-def callback(data):
-    rospy.loginfo('%s', data.data)
- 
-def listener(): 
-    rospy.init_node('teachersubscriber', anonymous=True)
-    rospy.Subscriber('teacher/chatter', String, callback)
-    print 'Ready for teacher communication...'
+WOZ = '[WOZ]'
+
+def teacherchatter(data):
+    rospy.loginfo(WOZ + "Teacher Message: %s",data.data)
+
+def robotcontrol(data):
+    rospy.loginfo(WOZ + "Control Message: %s",data.data)
+
+def wozchatter(data):
+    rospy.loginfo(WOZ + "WOZ Feedback Message: %s",data.data)
+
+def listener():
+
+    # in ROS, nodes are unique named. If two nodes with the same
+    # node are launched, the previous one is kicked off. The 
+    # anonymous=True flag means that rospy will choose a unique
+    # name for our 'talker' node so that multiple talkers can
+    # run simultaenously.
+    rospy.init_node('wozlogger', anonymous=True)
+    print 'Wozlogger is logging...'
+
+    rospy.Subscriber("teacher/chatter", String, teacherchatter)
+    rospy.Subscriber("woz/robotcontrol", String, robotcontrol)
+    rospy.Subscriber("woz/chatter", String, wozchatter)
+
+    # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
 
 if __name__ == '__main__':

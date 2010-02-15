@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python
 #
 # Software License Agreement (BSD License)
 #
@@ -33,13 +33,71 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Run on the Mac Mini to start all ROS nodes for a WOZ Experiment
+import roslib
+roslib.load_manifest('ua_woz_experiment')
 
-xterm -bg black -fg white -cr white -geometry 80x20+350+0 -e "roscore" &
-xterm -bg black -fg white -cr white -geometry 80x20+350+0 -e "rosrun woztools wozsubscriber.py" &
-xterm -bg black -fg white -cr white -geometry 80x20+835+0 -e "rosrun ax12 init_sys.py /dev/tty.usbserial-A9005MZc; rosrun ax12 serialcomm.py" &
-xterm -bg black -fg white -cr white -geometry 80x20+350+310 -e "rosrun ax12 movevalidator.py" &
-xterm -bg black -fg white -cr white -geometry 80x20+1320+0 -e "rosrun ccs robot.py" &
-xterm -bg black -fg white -cr white -geometry 80x20+835+310 -e "rosrun phidgets rfidscan.py" &
-xterm -bg black -fg white -cr white -geometry 80x20+1320+310 -e "rosrun phidgets rfidlistener.py" &
-xterm -bg black -fg white -cr white -geometry 100x30+750+598 -e "rosrun woztools wozlog.py" &
+import rospy
+from phidgets_ros.msg import RFIDEvent
+
+# 15007ED062 - 1
+# 15007EC394 - 2
+# 15007EC398 - 1
+# 15007EB2F7 - 2
+# 15007EC21A - 1
+
+block_id = {'15007ED062' : 1,
+            '15007EC394' : 2,
+            '15007EC398' : 1,
+            '15007EB2F7' : 2,
+            '15007EC21A' : 1
+            }
+
+def printBig1():
+    print """
+           1
+          11
+         111
+        1 11
+          11
+          11
+          11
+          11
+          11
+       1111111
+"""
+
+def printBig2():
+    print """
+        222222
+      22      22
+             22
+            22
+           22
+          22
+         22
+        22
+       22
+      222222222
+"""
+
+def callback(data):
+    if data.gained:
+        try:
+            val = block_id[data.tag]
+            if val == 1:
+                printBig1()
+            else:
+                printBig2()
+        except KeyError, e:
+            print 'Unidentified Object'
+    else:
+        print "\n"*100
+ 
+def listener():
+    rospy.init_node('rfid_listener', anonymous=True)
+    rospy.Subscriber("rfid", RFIDEvent, callback)
+    print 'Ready for RFID scanning.'
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()
