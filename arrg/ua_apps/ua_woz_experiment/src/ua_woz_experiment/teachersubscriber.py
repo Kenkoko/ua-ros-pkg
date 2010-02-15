@@ -34,24 +34,20 @@
 #
 
 import roslib
-roslib.load_manifest('woztools')
+roslib.load_manifest('ua_woz_experiment')
 
-import sys
+import os
 import rospy
 from std_msgs.msg import String
 
-if __name__ == "__main__":
-    try:
-        chatter = rospy.Publisher('teacher/chatter', String)
-        rospy.init_node('teachertalker', anonymous=True)
+def callback(data):
+    rospy.loginfo('%s', data.data)
+ 
+def listener(): 
+    rospy.init_node('teachersubscriber', anonymous=True)
+    rospy.Subscriber('teacher/chatter', String, callback)
+    print 'Ready for teacher communication...'
+    rospy.spin()
 
-        print 'To begin, start typing words separated by spaces. '
-        print 'At the end of each sentence press return.'
-
-        while not rospy.is_shutdown():
-            try:
-                cmd = sys.stdin.readline().strip()
-                chatter.publish(String(cmd))
-            except:
-                continue
-    except rospy.ROSInterruptException: pass
+if __name__ == '__main__':
+    listener()

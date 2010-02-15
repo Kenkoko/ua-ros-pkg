@@ -1,0 +1,18 @@
+<package>
+  <description brief="ua_woz_experiment">
+
+     ua_woz_experiment
+
+  </description>
+  <author>robotlab</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ua_woz_experiment</url>
+  <depend package="rospy"/>
+  <depend package="ccs"/>
+  <depend package="phidgets_ros"/>
+  <depend package="std_msgs"/>
+
+</package>
+
+

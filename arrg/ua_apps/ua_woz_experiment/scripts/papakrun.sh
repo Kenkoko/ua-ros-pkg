@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env bash
 #
 # Software License Agreement (BSD License)
 #
@@ -33,25 +33,19 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import roslib
-roslib.load_manifest('woztools')
+# Run on Papak to start all ROS nodes and EvoCam for a WOZ Experiment
 
-import os
-import rospy
-from std_msgs.msg import String
+firefox -new-window "http://firdosi:8080/1/webcam.html" &
+sleep 3
+firefox -new-window "http://firdosi:8080/2/webcam.html" &
+sleep 3
 
-def callback(data):
-    try:
-        os.system("/usr/bin/say " + "\"" + data.data + "\"")
-    except:
-        pass      
-    rospy.loginfo("%s",data.data)
- 
-def listener(): 
-    rospy.init_node('wozsubscriber', anonymous=True)
-    rospy.Subscriber('woz/chatter', String, callback)
-    print 'Ready for WOZ feedback messages...'
-    rospy.spin()
+wmctrl -r "EvoCam 1" -e 1,0,25,350,375
+wmctrl -r "EvoCam 2" -e 1,0,430,350,375
 
-if __name__ == '__main__':
-    listener()
+xterm -bg black -fg white -cr white -geometry 80x30+350+0 -e "rosrun ua_woz_experiment woztalker.py" &
+xterm -bg black -fg white -cr white -geometry 80x30+835+0 -e "rosrun ua_woz_experiment rfidlistener.py" &
+xterm -bg black -fg white -cr white -geometry 80x30+350+450 -e "rosrun ccs robotcontrol.py" &
+xterm -bg black -fg white -cr white -geometry 80x30+835+450 -e "rosrun ua_woz_experiment teachersubscriber.py" &
+
+

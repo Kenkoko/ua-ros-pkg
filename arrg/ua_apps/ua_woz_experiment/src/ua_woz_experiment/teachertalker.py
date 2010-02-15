@@ -34,47 +34,24 @@
 #
 
 import roslib
-roslib.load_manifest('woztools')
+roslib.load_manifest('ua_woz_experiment')
 
 import sys
 import rospy
 from std_msgs.msg import String
 
 if __name__ == "__main__":
-    
     try:
-        chatter = rospy.Publisher('woz/chatter', String)
-        rospy.init_node('woztalker', anonymous=True)
+        chatter = rospy.Publisher('teacher/chatter', String)
+        rospy.init_node('teachertalker', anonymous=True)
 
-        commands = {"0":"Hello!",
-                    "1":"One",
-                    "2":"Two",
-                    "3":"Many",
-                    "4":"OK",
-                    "5":"Yes",
-                    "6":"No",
-                    "7":"I didn't understand",
-                    "8":"Please wait, I am crunching numbers.",
-                    "9":"I am done",
-                    "p":"Purple",
-                    "b":"Blue/Cyan",
-                    "t":"Triangle",
-                    "s":"Square",
-                    "y":"Thank you"}
-
-        print 'To respond, please choose one of the following: '
-        for c in sorted(commands):
-            print c + " -- " + commands[c]
-        print 'At the end of each phrase press return.'
+        print 'To begin, start typing words separated by spaces. '
+        print 'At the end of each sentence press return.'
 
         while not rospy.is_shutdown():
             try:
-                cmd = sys.stdin.readline().strip().lower()
-                if cmd in commands:
-                  chatter.publish(String(commands[cmd]))
-                  print commands[cmd]
-                else :
-                   print 'Invalid phrase.'
+                cmd = sys.stdin.readline().strip()
+                chatter.publish(String(cmd))
             except:
                 continue
     except rospy.ROSInterruptException: pass

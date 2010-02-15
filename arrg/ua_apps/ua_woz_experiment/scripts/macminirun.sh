@@ -33,19 +33,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Run on Papak to start all ROS nodes and EvoCam for a WOZ Experiment
+# Run on the Mac Mini to start all ROS nodes for a WOZ Experiment
 
-firefox -new-window "http://mini:8080/1/webcam.html" &
-sleep 3
-firefox -new-window "http://mini:8080/2/webcam.html" &
-sleep 3
-
-wmctrl -r "EvoCam 1" -e 1,0,25,350,375
-wmctrl -r "EvoCam 2" -e 1,0,430,350,375
-
-xterm -bg black -fg white -cr white -geometry 80x30+350+0 -e "rosrun woztools woztalker.py" &
-xterm -bg black -fg white -cr white -geometry 80x30+835+0 -e "rosrun phidgets rfidlistener.py" &
-xterm -bg black -fg white -cr white -geometry 80x30+350+450 -e "rosrun ccs robotcontrol.py" &
-xterm -bg black -fg white -cr white -geometry 80x30+835+450 -e "rosrun woztools teachersubscriber.py" &
-
-
+xterm -bg black -fg white -cr white -geometry 80x20+350+0 -e "roscore" &
+xterm -bg black -fg white -cr white -geometry 80x20+350+0 -e "rosrun ua_woz_experiment wozsubscriber.py" &
+xterm -bg black -fg white -cr white -geometry 80x20+835+0 -e "rosrun ax12 init_sys.py /dev/tty.usbserial-A9005MZc; rosrun ax12 serialcomm.py" &
+xterm -bg black -fg white -cr white -geometry 80x20+350+310 -e "rosrun ax12 movevalidator.py" &
+xterm -bg black -fg white -cr white -geometry 80x20+1320+0 -e "rosrun ccs robot.py" &
+xterm -bg black -fg white -cr white -geometry 80x20+835+310 -e "rosrun phidgets_ros rfidscan.py" &
+xterm -bg black -fg white -cr white -geometry 80x20+1320+310 -e "rosrun ua_woz_experiment rfidlistener.py" &
+xterm -bg black -fg white -cr white -geometry 100x30+750+598 -e "rosrun ua_woz_experiment wozlog.py" &
