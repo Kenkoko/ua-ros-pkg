@@ -1,0 +1,2 @@
+bool gained
+string tag
