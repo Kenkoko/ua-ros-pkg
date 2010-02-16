@@ -1,0 +1,36 @@
+<launch>
+
+    <!-- load the world environment -->
+    <include file="$(find wubble_environments)/launch/wubble_world.launch" />
+
+    <!-- spawn our erratic robot -->
+    <include file="$(find wubble_description)/launch/wubble_robot.launch"/>
+
+    <!-- insert overhead cam -->
+    <include file="$(find overhead_cam_description)/launch/overhead_cam.launch"/>
+
+    <!-- enable teleoperation
+    <include file="$(find wubble_teleop)/launch/erratic_logitech.launch" />
+    -->
+    <!-- run image_proc -->
+    <group ns="stereo/left">
+      <node pkg="image_proc" type="image_proc" name="image_proc" />
+    </group>
+<!--    <group ns="stereo/right">
+      <node pkg="image_proc" type="image_proc" name="image_proc" />
+    </group>
+-->
+
+<!--
+    <node pkg="color_based_tracking" type="single_color_tracking" name="single_color_tracking1" args="true /stereo/left/image_color 255 0 0" />
+    <node pkg="color_based_tracking" type="single_color_tracking" name="single_color_tracking2" args="false /stereo/left/image_color 0 255 0" />
+
+    <node pkg="color_based_tracking" type="single_color_tracking" name="single_color_tracking3" args="true /stereo/left/image_color 0 0 255" />
+
+    <node pkg="color_based_tracking" type="single_color_tracking" name="single_color_tracking4" args="true /overhead_cam/image_raw 0 0 255" />
+-->
+    <!-- operate erratic via keyboard (control with WASD in terminal window)
+    <node pkg="wubble_teleop" type="keyboard" name="keyboard_teleop" />
+    -->
+</launch>
+
