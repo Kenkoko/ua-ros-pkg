@@ -1,7 +1,0 @@
-<launch>
-
-    <!-- start gmapping demo in simulation -->
-    <include file="$(find wubble_mapping)/launch/simulation.launch" />
-
-</launch>
-
