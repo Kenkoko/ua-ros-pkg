@@ -121,7 +121,7 @@ public:
         qt.setEulerZYX(this->posIface->data->pose.yaw, this->posIface->data->pose.pitch, this->posIface->data->pose.roll);
         btVector3 vt(this->posIface->data->pose.pos.x, this->posIface->data->pose.pos.y, this->posIface->data->pose.pos.z);
         tf::Transform base_link_to_odom(qt, vt);
-        transform_broadcaster_.sendTransform(tf::StampedTransform(base_link_to_odom,ros::Time::now(),"odom","base_footprint"));
+        transform_broadcaster_.sendTransform(tf::StampedTransform(base_link_to_odom,ros::Time::now(), "odom", "/base_footprint"));
 
 
         // publish odom topic

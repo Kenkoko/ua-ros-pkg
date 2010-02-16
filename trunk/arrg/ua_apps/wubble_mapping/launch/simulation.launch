@@ -9,9 +9,6 @@
     <!-- enable teleoperation -->
     <include file="$(find wubble_teleop)/launch/wubble_logitech.launch" />
 
-    <!-- enable 2d navigation (path planning) -->
-    <include file="$(find wubble_description)/launch/wubble_2dnav.launch" />
-
     <!-- start amcl (does this give better scan?) -->
     <node pkg="amcl" type="amcl" name="amcl">
         <remap from="scan" to="base_scan" />
