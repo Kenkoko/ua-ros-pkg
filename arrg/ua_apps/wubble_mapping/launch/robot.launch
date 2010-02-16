@@ -1,10 +1,10 @@
 <launch>
     
     <!-- send erratic description to param server -->
-    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_robots)/defs/erratic/erratic.urdf.xacro'" />
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/defs/wubble.urdf.xacro'" />
     
     <!-- start all hardware systems -->
-    <include file="$(find wubble_controllers)/wubble_controllers.launch" />
+<!--    <include file="$(find wubble_controllers)/wubble_controllers.launch" />-->
 
     <!-- Publish joint_states information -->
     <node name="joint_states_publisher" pkg="wubble_mapping" type="joint_states_publisher.py" />
