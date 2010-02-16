@@ -1,0 +1,5 @@
+This is just a first stab, there are some issues because gbbopen uses a highly-customized asd file
+
+Need to append the append.asd to the gbbopen.asd file (via patch mechanism?)
+Also, there are currently issues with the gbbopen.asd file (seems to be in the middle of some changes)
+Need to test whether ros packages depending on "gbbopen/gbbopen" can actually use the functions (seems to work in the REPL, but that's a bit different)

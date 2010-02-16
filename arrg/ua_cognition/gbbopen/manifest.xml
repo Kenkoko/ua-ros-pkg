@@ -1,0 +1,16 @@
+<package>
+    <description brief="The GBBopen Blackboard System">
+
+     gbbopen
+
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/gbbopen</url>
+
+    <depend package="roslisp"/>
+
+</package>
+
+
