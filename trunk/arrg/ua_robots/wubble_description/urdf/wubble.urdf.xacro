@@ -24,7 +24,7 @@
     
     <!-- CRUST CRAWLER SMART ARM ATTACHMENT -->
     <smart_arm parent="base_top_link" >
-        <origin xyz="${top_size_x/2 - 0.0575} 0 ${top_size_z/2 + 0.025}"/>
+        <origin xyz="${top_size_x/2 - 0.0575} 0 ${top_size_z/2 + 0.025}" rpy="0 0 0"/>
     </smart_arm>
     
     <!-- HOKUYO LASER ATTACHMENT -->
@@ -64,8 +64,8 @@
         <child link="hokuyo_mount_link" />
         
         <axis xyz="0 1 0" />
-        <limit lower="-0.1" upper="${M_PI/2}" effort="100" velocity="12.0" />
-        <safety_controller k_position="100" k_velocity="12.0" soft_lower_limit="${-0.1+0.1}" soft_upper_limit="${M_PI/3}" />-->
+        <limit lower="-0.1" upper="0.785398164" effort="100" velocity="12.0" />
+        <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.1+0.1}" soft_upper_limit="${0.785398164-0.1}" />
         <dynamics damping="50" friction="1"/>
     </joint>
     
@@ -170,8 +170,8 @@
         <child link="head_tilt_link" />
         
         <axis xyz="0 0 1" />
-        <limit lower="-3" upper="3" effort="100.0" velocity="4.0" />
-        <safety_controller k_position="100" k_velocity="4.0" soft_lower_limit="${-3+0.2}" soft_upper_limit="${3-0.2}" />
+        <limit lower="-1.570796327" upper="1.570796327" effort="100.0" velocity="1.17" />
+        <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.570796327+0.1}" soft_upper_limit="${1.570796327-0.1}" />
         <dynamics damping="50" friction="1"/>
     </joint>
     
@@ -210,9 +210,9 @@
         <parent link="head_tilt_link" />
         <child link="head_mount_link" />
     
-        <axis xyz="0 1 0" />
-        <limit lower="-1.0" upper="1.0" effort="100.0" velocity="4.0" />
-        <safety_controller k_position="100" k_velocity="4.0" soft_lower_limit="${-1.0+0.1}" soft_upper_limit="${1.0-0.1}" />
+        <axis xyz="0 -1 0" />
+        <limit lower="-1.221730476" upper="0.610865238" effort="100.0" velocity="1.17" />
+        <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.221730476+0.1}" soft_upper_limit="${0.610865238-0.1}" />
         <dynamics damping="50" friction="1"/>
     </joint>
     

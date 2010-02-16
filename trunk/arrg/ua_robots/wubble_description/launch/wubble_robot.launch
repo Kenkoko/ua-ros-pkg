@@ -12,11 +12,17 @@
         <param name="odom_frame_id" value="odom"/>
     </node>
 
-    <!-- Controllers -->
     <include file="$(find pr2_controller_manager)/controller_manager.launch" />
+
+    <!-- Laser and Camera Controllers -->
     <rosparam file="$(find wubble_description)/controllers/erratic_controllers.yaml" command="load" />
-    <node   name="controller_spawner" pkg="pr2_controller_manager" type="spawner" 
-            args="head_pan_controller head_tilt_controller laser_tilt_controller" output="screen" />
+    <node name="laser_camera_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
+          args="head_pan_controller head_tilt_controller laser_tilt_controller" output="screen" />
+
+    <!-- SmartArm Controllers -->
+    <rosparam file="$(find smart_arm_description)/controllers/smart_arm_controllers.yaml" command="load" />
+    <node name="smart_arm_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
+          args="shoulder_pan_controller shoulder_tilt_controller elbow_tilt_controller wrist_rotate_controller finger_left_controller finger_right_controller" output="screen" />
 
     <!-- enable navigation -->
     <include file="$(find wubble_description)/launch/wubble_move_base.launch" />
@@ -27,6 +33,9 @@
             <param name="num_disp" type="int" value="128"/>
         </node>
     </group>
+
+    <!-- put arm in initial position -->
+    <node name="make_cobra_pose" pkg="smart_arm_description" type="make_cobra_pose.py"  output="screen" />
 
     <!-- Laser Filters -->
 

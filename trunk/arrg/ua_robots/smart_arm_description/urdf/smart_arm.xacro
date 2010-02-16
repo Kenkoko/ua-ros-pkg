@@ -12,6 +12,7 @@
             <child link="arm_base_link"/>
         </joint>
         
+        <!-- Arm's base link -->
         <link name="arm_base_link">
             <inertial>
                 <mass value="0.1" />
@@ -43,10 +44,9 @@
             <child link="arm_shoulder_pan_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-1.22"
-                    upper="1.22"
-                    effort="100"
-                    velocity="2.33" />
+            <limit  lower="-1.22" upper="1.22" effort="100" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
         </joint>
         
         <transmission type="SimpleTransmission" name="shoulder_pan_trans">
@@ -85,11 +85,10 @@
             <parent link="arm_shoulder_pan_link"/>
             <child link="arm_shoulder_tilt_link" />
             
-            <axis xyz="0 1 0"/>
-            <limit  lower="-1.972222"
-                    upper="1.04719755"
-                    effort="100"
-                    velocity="2.33" />
+            <axis xyz="0 -1 0"/>    <!-- not sure why I need negative number here to get proper z-direction -->
+            <limit  lower="-1.04719755" upper="1.972222" effort="100" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.04719755+0.1}" soft_upper_limit="${1.972222-0.1}" />
+            <dynamics damping="50" friction="1"/>
         </joint>
         
         <link name="arm_shoulder_tilt_link">
@@ -128,12 +127,11 @@
             <parent link="arm_shoulder_tilt_link"/>
             <child link="arm_elbow_tilt_link" />
             
-            <axis xyz="0 1 0"/>
+            <axis xyz="0 -1 0"/>
             <!-- From -113 to 108 degrees -->
-            <limit  lower="-1.972222"
-                    upper="1.8849556"
-                    effort="100"
-                    velocity="2.33" />
+            <limit  lower="-1.972222" upper="1.8849556" effort="100" velocity="1.17" />
+            <dynamics damping="50" friction="1"/>
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.972222+0.1}" soft_upper_limit="${1.8849556-0.1}" />
         </joint>
         
         <link name="arm_elbow_tilt_link">
@@ -172,12 +170,11 @@
             <parent link="arm_elbow_tilt_link"/>
             <child link="arm_wrist_rotate_link" />
             
-            <axis xyz="1 0 0"/>
+            <axis xyz="-1 0 0"/>
             <!-- From -150 to 150 degrees -->
-            <limit  lower="-2.6179939"
-                    upper="2.6179939"
-                    effort="100"
-                    velocity="2.33" />
+            <limit  lower="-2.6179939" upper="2.6179939" effort="100" velocity="1.17" />
+            <dynamics damping="50" friction="1"/>
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.6179939+0.1}" soft_upper_limit="${2.6179939-0.1}" />
         </joint>
         
         <link name="arm_wrist_rotate_link">
@@ -218,10 +215,9 @@
             
             <axis xyz="0 0 1"/>
             <!-- From -20 to 20 degrees -->
-            <limit  lower="-0.3490658"
-                    upper="0.3490658"
-                    effort="100"
-                    velocity="2.33" />
+            <limit  lower="-0.3490658" upper="0.3490658" effort="100" velocity="1.17" />
+            <dynamics damping="50" friction="1"/>
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.3490658+0.1}" soft_upper_limit="${0.3490658-0.1}" />
         </joint>
         
         <link name="arm_right_finger_link">
@@ -262,10 +258,9 @@
             
             <axis xyz="0 0 1"/>
             <!-- From -20 to 20 degrees -->
-            <limit  lower="-0.3490658"
-                    upper="0.3490658"
-                    effort="100"
-                    velocity="2.33" />
+            <limit  lower="-0.3490658" upper="0.3490658" effort="100" velocity="1.17" />
+            <dynamics damping="50" friction="1"/>
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.3490658+0.1}" soft_upper_limit="${0.3490658-0.1}" />
         </joint>
         
         <link name="arm_left_finger_link">
