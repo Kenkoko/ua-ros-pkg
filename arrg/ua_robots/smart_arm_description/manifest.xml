@@ -9,6 +9,8 @@
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/smart_arm_description</url>
 
+    <depend package="rospy"/>
+    <depend package="std_msgs"/>
     <depend package="convex_decomposition"/>
     <depend package="ivcon"/>
     <depend package="urdf" />
