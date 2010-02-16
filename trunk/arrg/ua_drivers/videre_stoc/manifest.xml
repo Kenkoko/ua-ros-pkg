@@ -1,6 +1,6 @@
 <package>
   <description>A library for accessing a camera through the Small Vision System library</description>
-  <author>Radu Bogdan Rusu (rusu@cs.tum.edu)</author>
+  <author>UA Robotics Research Group (adapted from Radu Bogdan Rusu)</author>
   <license>BSD</license>
   <depend package="roscpp" />
   <depend package="sensor_msgs" />
