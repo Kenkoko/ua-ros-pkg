@@ -69,8 +69,9 @@ class SerialProxy():
             sys.exit(1)
             
         self.running = True
-        Thread(target=self.__update_motor_states).start()
         Thread(target=self.__process_packet_queue).start()
+        if self.update_rate > 0:
+            Thread(target=self.__update_motor_states).start()
 
     def disconnect(self):
         self.running = False
