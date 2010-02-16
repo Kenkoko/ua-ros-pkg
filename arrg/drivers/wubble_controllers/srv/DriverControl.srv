@@ -1,5 +1,0 @@
-string driver_name
-string driver_path
----
-bool success
-string reason
