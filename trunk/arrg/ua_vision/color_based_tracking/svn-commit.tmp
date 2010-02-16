@@ -1,0 +1,11 @@
+Checking in color_based_tracking stuff.
+--This line, and those below, will be ignored--
+
+D    stereo_image_proc.launch
+A    src/camshift.cpp
+M    src/histogram_tracking.cpp
+A    src/camshift2.cpp
+A    src/camshift3.cpp
+D    launch/erratic_test.launch
+A    launch/wubble_test.launch
+M    CMakeLists.txt
