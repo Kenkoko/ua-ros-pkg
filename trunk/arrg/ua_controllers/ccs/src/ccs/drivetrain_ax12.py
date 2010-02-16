@@ -52,49 +52,52 @@ class DriverControl:
         self.drivetrain.stop()
 
 class DrivetrainAX12():
-	def __init__(self, out_cb):
-		self.send_packet_callback = out_cb
+    def __init__(self, out_cb):
+        self.send_packet_callback = out_cb
 
-		self.drivetrain_sub = rospy.Subscriber('charlie_controller/drivetrain', DrivetrainMove, self.do_drive)
+        self.drivetrain_sub = rospy.Subscriber('charlie_controller/drivetrain', DrivetrainMove, self.do_drive)
 
-		self.front_right_motor_id = rospy.get_param('charlie_controller/front_right_motor_id', 1)
-		self.front_left_motor_id = rospy.get_param('charlie_controller/front_left_motor_id', 2)
-		self.back_right_motor_id = rospy.get_param('charlie_controller/back_right_motor_id', 3)
-		self.back_left_motor_id = rospy.get_param('charlie_controller/back_left_motor_id', 4)
-	
-	def start(self):
-		self.running = True
+        self.front_right_motor_id = rospy.get_param('charlie_controller/front_right_motor_id', 1)
+        self.front_left_motor_id = rospy.get_param('charlie_controller/front_left_motor_id', 2)
+        self.back_right_motor_id = rospy.get_param('charlie_controller/back_right_motor_id', 3)
+        self.back_left_motor_id = rospy.get_param('charlie_controller/back_left_motor_id', 4)
 
-	def stop(self):
-		self.running = False
-		self.drivetrain_sub.unregister()
+    def start(self):
+        self.running = True
 
-	def do_drive(self, move):
-		if self.running:
-			if move.direction == FORWARD_DIRECTION:
-				front_right_mcv = (self.front_right_motor_id, -move.speed)
-				front_left_mcv = (self.front_left_motor_id, move.speed)
-				back_right_mcv = (self.back_right_motor_id, -move.speed)
-				back_left_mcv = (self.back_left_motor_id, move.speed)
-			elif move.direction == BACKWARD_DIRECTION:
-				front_right_mcv = (self.front_right_motor_id, move.speed)
-				front_left_mcv = (self.front_left_motor_id, -move.speed)
-				back_right_mcv = (self.back_right_motor_id, move.speed)
-				back_left_mcv = (self.back_left_motor_id, -move.speed)
-			elif move.direction == LEFT_DIRECTION:
-				front_right_mcv = (self.front_right_motor_id, -move.speed)
-				front_left_mcv = (self.front_left_motor_id, -move.speed)
-				back_right_mcv = (self.back_right_motor_id, -move.speed)
-				back_left_mcv = (self.back_left_motor_id, -move.speed)
-			elif move.direction == RIGHT_DIRECTION:
-				front_right_mcv = (self.front_right_motor_id, move.speed)
-				front_left_mcv = (self.front_left_motor_id, move.speed)
-				back_right_mcv = (self.back_right_motor_id, move.speed)
-				back_left_mcv = (self.back_left_motor_id, move.speed)
-			elif move.direction == STOP:
-				front_right_mcv = (self.front_right_motor_id, 0)
-				front_left_mcv = (self.front_left_motor_id, 0)
-				back_right_mcv = (self.back_right_motor_id, 0)
-				back_left_mcv = (self.back_left_motor_id, 0)				
-			self.send_packet_callback((AX_GOAL_SPEED, [front_right_mcv, front_left_mcv, back_right_mcv, back_left_mcv]))
+    def stop(self):
+        self.running = False
+        self.drivetrain_sub.unregister()
 
+    def do_drive(self, move):
+        if self.running:
+            if move.speed > 1023:
+                move.speed = 1023
+            elif move.speed < 0:
+                move.speed = 0
+            if move.direction == FORWARD_DIRECTION:
+                front_right_mcv = (self.front_right_motor_id, -move.speed)
+                front_left_mcv = (self.front_left_motor_id, move.speed)
+                back_right_mcv = (self.back_right_motor_id, -move.speed)
+                back_left_mcv = (self.back_left_motor_id, move.speed)
+            elif move.direction == BACKWARD_DIRECTION:
+                front_right_mcv = (self.front_right_motor_id, move.speed)
+                front_left_mcv = (self.front_left_motor_id, -move.speed)
+                back_right_mcv = (self.back_right_motor_id, move.speed)
+                back_left_mcv = (self.back_left_motor_id, -move.speed)
+            elif move.direction == LEFT_DIRECTION:
+                front_right_mcv = (self.front_right_motor_id, -move.speed)
+                front_left_mcv = (self.front_left_motor_id, -move.speed)
+                back_right_mcv = (self.back_right_motor_id, -move.speed)
+                back_left_mcv = (self.back_left_motor_id, -move.speed)
+            elif move.direction == RIGHT_DIRECTION:
+                front_right_mcv = (self.front_right_motor_id, move.speed)
+                front_left_mcv = (self.front_left_motor_id, move.speed)
+                back_right_mcv = (self.back_right_motor_id, move.speed)
+                back_left_mcv = (self.back_left_motor_id, move.speed)
+            elif move.direction == STOP:
+                front_right_mcv = (self.front_right_motor_id, 0)
+                front_left_mcv = (self.front_left_motor_id, 0)
+                back_right_mcv = (self.back_right_motor_id, 0)
+                back_left_mcv = (self.back_left_motor_id, 0)
+            self.send_packet_callback((AX_GOAL_SPEED, [front_right_mcv, front_left_mcv, back_right_mcv, back_left_mcv]))
