@@ -11,7 +11,6 @@
     
     <depend package="wubble_teleop"/>
     <depend package="wubble_description"/>
-    <depend package="wubble_controllers"/>
     <depend package="hokuyo_node"/>
 
     <depend package="gmapping"/>
