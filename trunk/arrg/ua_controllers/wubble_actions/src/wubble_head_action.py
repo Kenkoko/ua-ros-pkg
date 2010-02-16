@@ -51,13 +51,13 @@ class WubblePointHeadControl():
         rospy.init_node(NAME, anonymous=True)
 
         # Initialize publisher & subscriber for pan
-        self.head_pan_frame = 'head_pan_link' #'/stereo_optical_frame'
+        self.head_pan_frame = 'stereo_link' #'head_pan_link'
         self.head_pan = JointControllerState(process_value=0.0, error=1.0)
         self.head_pan_pub = rospy.Publisher('head_pan_controller/command', Float64)
         rospy.Subscriber('head_pan_controller/state', JointControllerState, self.read_current_pan)
 
         # Initialize publisher & subscriber for tilt
-        self.head_tilt_frame = 'head_tilt_link' # '/stereo_optical_frame'
+        self.head_tilt_frame = 'stereo_link' #'head_tilt_link' #
         self.head_tilt = JointControllerState(process_value=0.0, error=1.0)
         self.head_tilt_pub = rospy.Publisher('head_tilt_controller/command', Float64)
         rospy.Subscriber('head_tilt_controller/state', JointControllerState, self.read_current_tilt)
