@@ -67,7 +67,7 @@ if __name__ == '__main__':
         client.wait_for_server()
 
         print "Look forward and slightly up"
-        result = look_at("/base_footprint", -5.0, 0.0, 3.0);
+        result = look_at("/base_footprint", 5.0, 0.0, 3.0);
         if result.success == False:
             print "Action failed"
         else:
