@@ -47,7 +47,7 @@
 #define KEYCODE_COMMA 0x2c
 #define KEYCODE_PERIOD 0x2e
 
-double max_speed = 2.000; // m/second
+double max_speed = 1.000; // m/second
 double max_turn = 60.0*M_PI/180.0; // rad/second
 
 class TBK_Node
@@ -114,7 +114,7 @@ TBK_Node::keyboardLoop()
   tcsetattr(kfd, TCSANOW, &raw);
   
   puts("Reading from keyboard");
-  puts("THIS IS DANIEL VERSION");
+  puts("Use WASD keys to control the robot");
   
   struct pollfd ufd;
   ufd.fd = kfd;
