@@ -15,6 +15,7 @@
     <depend package="videre_stoc_description" />
 
     <depend package="wubble_plugins"/>
+    <depend package="wubble_actions"/>
     <depend package="robot_state_publisher"/>
     <depend package="pr2_controller_manager"/>
     <depend package="gazebo_worlds"/>
