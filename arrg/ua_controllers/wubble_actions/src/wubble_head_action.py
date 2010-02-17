@@ -27,6 +27,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# Author: Anh Tran
+
 PKG = 'wubble_actions'
 NAME = 'wubble_head_action'
 
@@ -45,20 +47,21 @@ import math
 
 
 class WubblePointHeadControl():
+
     def __init__(self):
 
         # Initialize new node
         rospy.init_node(NAME, anonymous=True)
 
         # Initialize publisher & subscriber for pan
-        self.head_pan_frame = 'stereo_link' #'head_pan_link'
-        self.head_pan = JointControllerState(process_value=0.0, error=1.0)
+        self.head_pan_frame = 'head_pan_link'
+        self.head_pan = JointControllerState(set_point=0.0, process_value=0.0, error=1.0)
         self.head_pan_pub = rospy.Publisher('head_pan_controller/command', Float64)
         rospy.Subscriber('head_pan_controller/state', JointControllerState, self.read_current_pan)
 
         # Initialize publisher & subscriber for tilt
-        self.head_tilt_frame = 'stereo_link' #'head_tilt_link' #
-        self.head_tilt = JointControllerState(process_value=0.0, error=1.0)
+        self.head_tilt_frame = 'head_tilt_link'
+        self.head_tilt = JointControllerState(set_point=0.0, process_value=0.0, error=1.0)
         self.head_tilt_pub = rospy.Publisher('head_tilt_controller/command', Float64)
         rospy.Subscriber('head_tilt_controller/state', JointControllerState, self.read_current_tilt)
 
@@ -72,38 +75,44 @@ class WubblePointHeadControl():
         self.server = SimpleActionServer("wubble_point_head_action", WubblePointHeadAction, self.execute_callback)
 
         # Initialize error & time thresholds
-        self.ERROR_THRESHOLD = 0.02                     # Report success if error reaches below threshold
-        self.TIMEOUT_THRESHOLD = rospy.Duration(5.0)    # Report failure if action does not succeed within timeout threshold
+        self.ERROR_THRESHOLD = 0.005                        # Report success if error reaches below threshold
+        self.TIMEOUT_THRESHOLD = rospy.Duration(15.0)       # Report failure if action does not succeed within timeout threshold
+
+        # Reset head position
+        r = rospy.Rate(1)
+        r.sleep()
+        self.reset_head_position()
+        r.sleep()
+        rospy.loginfo("%s: Ready to accept goals", NAME)
 
 
-    def read_current_pan(self, data):
-        self.head_pan = data
+
+    def read_current_pan(self, pan_data):
+        self.head_pan = pan_data
+        self.has_latest_pan = True
 
 
-    def read_current_tilt(self, data):
-        self.head_tilt = data
 
+    def read_current_tilt(self, tilt_data):
+        self.head_tilt = tilt_data
+        self.has_latest_tilt = True
+
+    
 
     def reset_head_position(self):
-        self.head_pan.error = 1.0
-        self.head_tilt.error = 1.0
+        self.head_pan_pub.publish(0.0)
+        self.head_tilt_pub.publish(0.0)
 
 
-    def calc_angle(self, x, y):
-        if (x == 0 and y == 0):
-            angle = 0.0        
-        if (x > 0 and y == 0):
-            angle = 0.0
-        elif (x == 0 and y > 0):
-            angle = math.pi / 2
-        elif (x < 0 and y == 0):
-            angle = math.pi
-        elif (x == 0 and y < 0):
-            angle = -(math.pi / 2)
-        else:
-            angle = math.atan2(y, x)
-    
-        return angle
+
+    def wait_for_latest_controller_states(self, timeout):
+        self.has_latest_pan = False
+        self.has_latest_tilt = False
+        r = rospy.Rate(100)
+        start = rospy.Time.now()
+        while (self.has_latest_pan == False or self.has_latest_tilt == False) and (rospy.Time.now() - start < timeout):
+            r.sleep()
+
 
 
     def transform_target_point(self, goal_point, goal_frame):
@@ -117,71 +126,78 @@ class WubblePointHeadControl():
         self.tf.waitForTransform(pan_target_frame, ps.header.frame_id, rospy.Time(), rospy.Duration(5.0))
         self.tf.waitForTransform(tilt_target_frame, ps.header.frame_id, rospy.Time(), rospy.Duration(5.0))
 
-        # Transform target point to pan reference & retrieve the pan angle
+        # Transform target point to pan reference & retrieve the relative pan angle
         pan_target = self.tf.transformPoint(pan_target_frame, ps)
-        pan_angle = self.calc_angle(pan_target.point.x, pan_target.point.y)
-        rospy.loginfo("%s: Sucessfully transformed pan. Look at <%s, %s, %s> with angle %s", \
-                NAME, pan_target.point.x, pan_target.point.y, pan_target.point.z, pan_angle)
+        pan_angle = math.atan2(pan_target.point.y, pan_target.point.x)
+        #rospy.loginfo("%s: Pan transformed to <%s, %s, %s> => angle %s", \
+        #        NAME, pan_target.point.x, pan_target.point.y, pan_target.point.z, pan_angle)
 
 
-        # Transform target point to tilt reference & retrieve the tilt angle
+        # Transform target point to tilt reference & retrieve the relative tilt angle
         tilt_target = self.tf.transformPoint(tilt_target_frame, ps)
-        tilt_angle = self.calc_angle(tilt_target.point.x, tilt_target.point.z)
-        rospy.loginfo("%s: Sucessfully transformed tilt. Look at <%s, %s, %s> with angle %s", \
-                NAME, tilt_target.point.x, tilt_target.point.y, tilt_target.point.z, tilt_angle)
+        tilt_angle = math.atan2(pan_target.point.z,
+                math.sqrt(math.pow(tilt_target.point.x, 2) + math.pow(tilt_target.point.y, 2)))
+        #rospy.loginfo("%s: Tilt transformed to <%s, %s, %s> => angle %s", \
+        #        NAME, tilt_target.point.x, tilt_target.point.y, tilt_target.point.z, tilt_angle)
 
         return (pan_angle, tilt_angle)
 
 
+
     def execute_callback(self, goal):
-        r = rospy.Rate(.1)
+        r = rospy.Rate(100)
         self.result.success = True
-        rospy.loginfo("%s: Executing, turning head towards the point <%s, %s, %s>", \
-                        NAME, goal.point.x, goal.point.y, goal.point.z)
+        self.result.head_position = [self.head_pan.process_value, self.head_tilt.process_value]
+        rospy.loginfo("%s: Executing look at (%s, %s, %s) of %s", \
+                        NAME, goal.point.x, goal.point.y, goal.point.z, goal.frame_id)
 
         try:
-            # Try to convert target point to angles for pan & tilt
+            # Try to convert target point to relative angles for pan & tilt
             (target_pan, target_tilt) = self.transform_target_point(goal.point, goal.frame_id)
         except (tf.Exception, tf.ConnectivityException, tf.LookupException):
-            rospy.loginfo("%s: Goal Failed, Unable to transform target point", NAME)
-            self.result.success = False  
-            self.result.head_position = self.feedback.head_position
-            self.server.set_succeeded(self.result)
+            rospy.loginfo("%s: Aborted: Transform Failure", NAME)
+            self.result.success = False
+            self.server.set_aborted()
             return
 
 	    # Publish goal command to controllers
-        self.reset_head_position()
         self.head_pan_pub.publish(target_pan)
-        self.head_tilt_pub.publish(target_pan)
+        self.head_tilt_pub.publish(target_tilt)
 
-        # Get time before starting action
+        # Initialize loop variables
         start_time = rospy.Time.now()
 
-        while (self.head_pan.error > self.ERROR_THRESHOLD or self.head_tilt.error > self.ERROR_THRESHOLD):
+        while (math.fabs(target_pan - self.head_pan.process_value) > self.ERROR_THRESHOLD or \
+                math.fabs(target_tilt - self.head_tilt.process_value) > self.ERROR_THRESHOLD):
 		
 	        # Cancel exe if another goal was received (i.e. preempt requested)
             if self.server.is_preempt_requested():
-                rospy.loginfo("%s: Preempted", NAME)
-                self.server.set_preempted()
+                rospy.loginfo("%s: Aborted: Action Preempted", NAME)
                 self.result.success = False
+                self.server.set_preempted()
                 break
 
             # Publish current head position as feedback
             self.feedback.head_position = [self.head_pan.process_value, self.head_tilt.process_value]
             self.server.publish_feedback(self.feedback)
             
-            # Check timeout
-            if (rospy.Time.now() - start_time > self.TIMEOUT_THRESHOLD):
-                rospy.loginfo("%s: Action Timeout", NAME)
+            # Abort if timeout
+            current_time = rospy.Time.now()
+            if (current_time - start_time > self.TIMEOUT_THRESHOLD):
+                rospy.loginfo("%s: Aborted: Action Timeout", NAME)
                 self.result.success = False
+                self.server.set_aborted()
                 break
 
             r.sleep()
-
+        
         if (self.result.success):
             rospy.loginfo("%s: Goal Completed", NAME)
-        self.result.head_position = self.feedback.head_position
-        self.server.set_succeeded(self.result)
+            self.wait_for_latest_controller_states(rospy.Duration(2.0))
+            self.result.head_position = [self.head_pan.process_value, self.head_tilt.process_value]
+            self.server.set_succeeded(self.result)
+
+
 
 
 if __name__ == '__main__':

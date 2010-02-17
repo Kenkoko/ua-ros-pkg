@@ -27,6 +27,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# Author: Anh Tran
+
 PKG = 'wubble_actions'
 NAME = 'move_head_client'
 
@@ -64,13 +66,33 @@ if __name__ == '__main__':
         client = SimpleActionClient("wubble_point_head_action", WubblePointHeadAction)
         client.wait_for_server()
 
-        # Looks at a point forward (x=5m), slightly left, and up
-        result = look_at("/base_footprint", 5.0, 6.0, 3.5);
-        print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
+        print "Look forward and slightly up"
+        result = look_at("/base_footprint", -5.0, 0.0, 3.0);
+        if result.success == False:
+            print "Action failed"
+        else:
+            print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
 
-        # Looks at a point forward (x=5m), slightly right, and down
-        result = look_at("/base_footprint", 5.0, -6.0, 0.5);
-        print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
+        print "Look to the right and slightly down"
+        result = look_at("/base_footprint", 1.0, -5.0, 0.0);
+        if result.success == False:
+            print "Action failed"
+        else:
+            print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
+
+        print "Look to the left and slightly up"
+        result = look_at("/base_footprint", 1.0, 5.0, 2.0);
+        if result.success == False:
+            print "Action failed"
+        else:
+            print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
+
+        print "Look at the gripper"
+        result = look_at("/arm_left_finger_link", 0.0, 0.0, 0.0);
+        if result.success == False:
+            print "Action failed"
+        else:
+            print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
 
     except rospy.ROSInterruptException:
         pass
