@@ -24,6 +24,9 @@
     <node name="smart_arm_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
           args="shoulder_pan_controller shoulder_tilt_controller elbow_tilt_controller wrist_rotate_controller finger_left_controller finger_right_controller" output="screen" />
 
+    <!-- Head Action -->
+    <node name="wubble_head_action" pkg="wubble_actions" type="wubble_head_action.py" output="screen" />
+
     <!-- enable navigation -->
     <include file="$(find wubble_description)/launch/wubble_move_base.launch" />
 
