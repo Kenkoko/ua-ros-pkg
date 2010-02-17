@@ -46,7 +46,7 @@ from pr2_controllers_msgs.msg import JointControllerState
 import math
 
 
-class WubblePointHeadControl():
+class WubbleHeadControl():
 
     def __init__(self):
 
@@ -68,11 +68,11 @@ class WubblePointHeadControl():
         # Initialize tf listener
         self.tf = tf.TransformListener()
 
-        # Initialize action server
-        self.result = WubblePointHeadResult()
-        self.feedback = WubblePointHeadFeedback()
+        # Initialize point action server
+        self.result = WubbleHeadPointResult()
+        self.feedback = WubbleHeadPointFeedback()
         self.feedback.head_position = [self.head_pan.process_value, self.head_tilt.process_value]
-        self.server = SimpleActionServer("wubble_point_head_action", WubblePointHeadAction, self.execute_callback)
+        self.server = SimpleActionServer("wubble_head_point_action", WubbleHeadPointAction, self.execute_callback)
 
         # Initialize error & time thresholds
         self.ERROR_THRESHOLD = 0.005                        # Report success if error reaches below threshold
@@ -202,7 +202,7 @@ class WubblePointHeadControl():
 
 if __name__ == '__main__':
     try:
-        s = WubblePointHeadControl()
+        s = WubbleHeadControl()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass

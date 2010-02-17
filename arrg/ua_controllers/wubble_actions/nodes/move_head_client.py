@@ -44,7 +44,7 @@ from wubble_actions.msg import *
 def look_at(frame_id, x, y, z):
 
     # Creates a goal to send to the action server.
-    goal = WubblePointHeadGoal()
+    goal = WubbleHeadPointGoal()
     goal.point.x = x
     goal.point.y = y
     goal.point.z = z
@@ -63,7 +63,7 @@ def look_at(frame_id, x, y, z):
 if __name__ == '__main__':
     try:
         rospy.init_node(NAME, anonymous=True)
-        client = SimpleActionClient("wubble_point_head_action", WubblePointHeadAction)
+        client = SimpleActionClient("wubble_head_point_action", WubbleHeadPointAction)
         client.wait_for_server()
 
         print "Look forward and slightly up"
