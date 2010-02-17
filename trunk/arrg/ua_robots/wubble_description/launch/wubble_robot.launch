@@ -37,6 +37,32 @@
     <!-- put arm in initial position -->
     <node name="make_cobra_pose" pkg="smart_arm_description" type="make_cobra_pose.py"  output="screen" />
 
+    <!-- filter the robot's arm out of the stereo cloud -->
+    <node pkg="robot_self_filter" type="self_filter" name="stereo_self_filter" respawn="true" output="screen">
+        <!-- The topic for the input cloud -->
+        <remap from="cloud_in" to="/stereo/points" />
+        <!-- The topic for the output cloud -->
+        <remap from="cloud_out" to="/stereo/self_filtered" />
+        <!-- The frame of the sensor used to obtain the data to be
+        filtered; This parameter is optional. If it is not specified,
+        shadow points will be considered outside -->
+<!--        <param name="sensor_frame" type="string" value="laser_tilt_link" />-->
+        <!-- Minimum distance to sensor (for point not to be considered inside) -->
+        <param name="min_sensor_dist" type="double" value="0.01" />
+        <!-- The padding to be added for the body parts the robot can see -->
+        <param name="self_see_padd" type="double" value="0.02" />
+        <!-- The scaling to be added for the body parts the robot can see -->
+        <param name="self_see_scale" type="double" value="1.0" />
+        <!-- The names of the links the sensor can see -->
+        <param  name="self_see_links" type="string" 
+                value= "arm_base_link
+                        arm_elbow_tilt_link
+                        arm_left_finger_link
+                        arm_right_finger_link
+                        arm_shoulder_pan_link
+                        arm_wrist_rotate_link" />
+    </node>
+
     <!-- Laser Filters -->
 
 <!--    <node pkg="pr2_robot_actions" type="set_laser_tilt" name="action_set_laser_tilt" />-->
