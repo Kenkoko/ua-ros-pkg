@@ -46,7 +46,7 @@ from pr2_controllers_msgs.msg import JointControllerState
 import math
 
 
-class WubbleHeadControl():
+class WubbleHeadAction():
 
     def __init__(self):
 
@@ -202,7 +202,7 @@ class WubbleHeadControl():
 
 if __name__ == '__main__':
     try:
-        s = WubbleHeadControl()
+        w = WubbleHeadAction()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
