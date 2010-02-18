@@ -56,6 +56,7 @@ class HokuyoLaserAction():
         self.laser_tilt = JointControllerState(set_point=0.0, process_value=0.0, error=1.0)
         self.laser_tilt_pub = rospy.Publisher('laser_tilt_controller/command', Float64)
         rospy.Subscriber('laser_tilt_controller/state', JointControllerState, self.read_current_tilt)
+        rospy.wait_for_message('laser_tilt_controller/state', JointControllerState)
 
         # Initialize tilt action server
         self.result = HokuyoLaserTiltResult()
@@ -68,8 +69,8 @@ class HokuyoLaserAction():
         self.TIMEOUT_THRESHOLD = rospy.Duration(7.0)        # Report failure if action does not succeed within timeout threshold
 
         # Reset laser position
-        r = rospy.Rate(1)
-        r.sleep()
+        #rospy.wait_for_service('pr2_controller_manager/switch_controller')
+        rospy.sleep(1)
         self.reset_tilt_position()
         rospy.loginfo("%s: Ready to accept goals", NAME)
 
@@ -81,8 +82,7 @@ class HokuyoLaserAction():
 
     def reset_tilt_position(self):
         self.laser_tilt_pub.publish(0.0)
-        r = rospy.Rate(1)
-        r.sleep()
+        rospy.sleep(5)
 
 
     def wait_for_latest_controller_states(self, timeout):

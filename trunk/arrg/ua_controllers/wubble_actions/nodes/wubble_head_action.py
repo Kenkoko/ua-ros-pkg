@@ -58,12 +58,14 @@ class WubbleHeadAction():
         self.head_pan = JointControllerState(set_point=0.0, process_value=0.0, error=1.0)
         self.head_pan_pub = rospy.Publisher('head_pan_controller/command', Float64)
         rospy.Subscriber('head_pan_controller/state', JointControllerState, self.read_current_pan)
+        rospy.wait_for_message('head_pan_controller/state', JointControllerState)
 
         # Initialize publisher & subscriber for tilt
         self.head_tilt_frame = 'head_tilt_link'
         self.head_tilt = JointControllerState(set_point=0.0, process_value=0.0, error=1.0)
         self.head_tilt_pub = rospy.Publisher('head_tilt_controller/command', Float64)
         rospy.Subscriber('head_tilt_controller/state', JointControllerState, self.read_current_tilt)
+        rospy.wait_for_message('head_tilt_controller/state', JointControllerState)
 
         # Initialize tf listener
         self.tf = tf.TransformListener()
@@ -79,12 +81,10 @@ class WubbleHeadAction():
         self.TIMEOUT_THRESHOLD = rospy.Duration(15.0)       # Report failure if action does not succeed within timeout threshold
 
         # Reset head position
-        r = rospy.Rate(1)
-        r.sleep()
+        #rospy.wait_for_service('pr2_controller_manager/switch_controller')
+        rospy.sleep(1)
         self.reset_head_position()
-        r.sleep()
         rospy.loginfo("%s: Ready to accept goals", NAME)
-
 
 
     def read_current_pan(self, pan_data):
@@ -92,17 +92,15 @@ class WubbleHeadAction():
         self.has_latest_pan = True
 
 
-
     def read_current_tilt(self, tilt_data):
         self.head_tilt = tilt_data
         self.has_latest_tilt = True
-
     
 
     def reset_head_position(self):
         self.head_pan_pub.publish(0.0)
         self.head_tilt_pub.publish(0.0)
-
+        rospy.sleep(5)
 
 
     def wait_for_latest_controller_states(self, timeout):
@@ -112,7 +110,6 @@ class WubbleHeadAction():
         start = rospy.Time.now()
         while (self.has_latest_pan == False or self.has_latest_tilt == False) and (rospy.Time.now() - start < timeout):
             r.sleep()
-
 
 
     def transform_target_point(self, goal_point, goal_frame):
@@ -141,7 +138,6 @@ class WubbleHeadAction():
         #        NAME, tilt_target.point.x, tilt_target.point.y, tilt_target.point.z, tilt_angle)
 
         return (pan_angle, tilt_angle)
-
 
 
     def execute_callback(self, goal):
