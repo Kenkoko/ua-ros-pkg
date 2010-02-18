@@ -32,8 +32,12 @@
          
          mass matrix: a default is created by ODE but you can set your own values
               ixx, iyy, izz: diagonals of the mass matrix, all other values are zero for
-                 symmetrical objects, large values means more torque is needed to spin
-                 about that axis, zero means an infinite spinning. 
+              symmetrical objects, large values means more torque is needed to spin
+              about that axis, zero means an infinite spinning. 
+
+              02/17/2010 Bouncy block fix from John Hsu: defaults for inertia 
+              matrix were too small to stop box rotation. Fix applied only to 
+              smaller blocks for now.   
     -->
 
     <!-- here's the global contact cfm/erp -->
@@ -43,8 +47,8 @@
         <cfm>0.000000000001</cfm>
         <erp>0.2</erp>
         <quickStep>true</quickStep>
-        <quickStepIters>10</quickStepIters>
-        <quickStepW>1.3</quickStepW>
+        <quickStepIters>10</quickStepIters> 
+        <quickStepW>1.3</quickStepW> 
         <contactMaxCorrectingVel>100.0</contactMaxCorrectingVel>
         <contactSurfaceLayer>0.001</contactSurfaceLayer>
     </physics:ode>
@@ -270,6 +274,18 @@
         <static>false</static>
         <body:box name="obj_box_boxblue1_blue_body">
             <visualsize>0.2 0.2 0.2</visualsize>
+            <dampingFactor>0.0</dampingFactor>
+            <massMatrix>true</massMatrix>
+            <mass>0.2</mass>
+            <ixx>0.001</ixx>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0.0</iyz>
+            <izz>0.001</izz>
+            <cx>0.0</cx>
+            <cy>0.0</cy>
+            <cz>0.0</cz>
             <geom:box name="obj_box_boxblue1_blue_geom">
                 <mu1>10.0</mu1>
                 <mu2>10.0</mu2>
@@ -292,6 +308,18 @@
         <static>false</static>
         <body:box name="obj_box_boxblack1_black_body">
             <visualsize>0.2 0.2 0.2</visualsize>
+            <dampingFactor>0.0</dampingFactor>
+            <massMatrix>true</massMatrix>
+            <mass>0.2</mass>
+            <ixx>0.001</ixx>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0.0</iyz>
+            <izz>0.001</izz>
+            <cx>0.0</cx>
+            <cy>0.0</cy>
+            <cz>0.0</cz>
             <geom:box name="obj_box_boxblack1_black_geom">
                 <mu1>10.0</mu1>
                 <mu2>10.0</mu2>
@@ -314,6 +342,18 @@
         <static>false</static>
         <body:box name="obj_box_boxgold1_gold_body">
             <visualsize>0.2 0.2 0.2</visualsize>
+            <dampingFactor>0.0</dampingFactor>
+            <massMatrix>true</massMatrix>
+            <mass>0.2</mass>
+            <ixx>0.001</ixx>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0.0</iyz>
+            <izz>0.001</izz>
+            <cx>0.0</cx>
+            <cy>0.0</cy>
+            <cz>0.0</cz>
             <geom:box name="obj_box_boxgold1_gold_geom">
                 <mu1>10.0</mu1>
                 <mu2>10.0</mu2>
@@ -336,6 +376,18 @@
         <static>false</static>
         <body:box name="obj_box_boxgray1_gray_body">
             <visualsize>0.2 0.2 0.2</visualsize>
+            <dampingFactor>0.0</dampingFactor>
+            <massMatrix>true</massMatrix>
+            <mass>0.2</mass>
+            <ixx>0.001</ixx>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0.0</iyz>
+            <izz>0.001</izz>
+            <cx>0.0</cx>
+            <cy>0.0</cy>
+            <cz>0.0</cz>
             <geom:box name="obj_box_boxgray1_gray_geom">
                 <mu1>10.0</mu1>
                 <mu2>10.0</mu2>
@@ -358,6 +410,18 @@
         <static>false</static>
         <body:box name="obj_box_boxgreen1_green_body">
             <visualsize>0.2 0.2 0.2</visualsize>
+            <dampingFactor>0.0</dampingFactor>
+            <massMatrix>true</massMatrix>
+            <mass>0.2</mass>
+            <ixx>0.001</ixx>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0.0</iyz>
+            <izz>0.001</izz>
+            <cx>0.0</cx>
+            <cy>0.0</cy>
+            <cz>0.0</cz>
             <geom:box name="obj_box_boxgreen1_green_geom">
                 <mu1>10.0</mu1>
                 <mu2>10.0</mu2>
@@ -380,6 +444,18 @@
         <static>false</static>
         <body:box name="obj_box_boxwhite1_white_body">
             <visualsize>0.2 0.2 0.2</visualsize>
+            <dampingFactor>0.0</dampingFactor>
+            <massMatrix>true</massMatrix>
+            <mass>0.2</mass>
+            <ixx>0.001</ixx>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0.0</iyz>
+            <izz>0.001</izz>
+            <cx>0.0</cx>
+            <cy>0.0</cy>
+            <cz>0.0</cz>
             <geom:box name="obj_box_boxwhite1_white_geom">
                 <mu1>10.0</mu1>
                 <mu2>10.0</mu2>
