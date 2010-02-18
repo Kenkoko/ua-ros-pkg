@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="saliency_track" type="saliency_track" name="saliency_track" output="screen">
+    <node name="saliency_track" pkg="saliency_tracking" type="saliency_track" output="screen">
         <remap from="image" to="stereo/left/image_rect_color"/>
         <param name="input_image_width" type="int" value="640"/>
         <param name="input_image_height" type="int" value="480"/>
