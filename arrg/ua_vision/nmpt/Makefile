@@ -14,7 +14,7 @@ PATCH_FILE  = nmpt_ros.patch
 include $(shell rospack find mk)/cmake.mk
 
 build:
-	if test -d $(LIB_DIR)/libnmpt.so; \
+	if test -e $(LIB_DIR)/libnmpt.so; \
 	then \
 		echo "NMPT has already been installed."; \
 	else \
