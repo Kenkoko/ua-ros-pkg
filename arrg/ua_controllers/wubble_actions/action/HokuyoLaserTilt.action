@@ -1,0 +1,10 @@
+#goal - number of tilt cycles
+int32 tilt_cycles
+---
+#result - success result & final laser tilt position
+bool success
+float64 tilt_position
+---
+#feedback - number of cycles performed & current tilt position
+int32 progress
+float64 tilt_position
