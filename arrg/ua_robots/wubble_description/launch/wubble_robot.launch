@@ -24,9 +24,11 @@
     <node name="smart_arm_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
           args="shoulder_pan_controller shoulder_tilt_controller elbow_tilt_controller wrist_rotate_controller finger_left_controller finger_right_controller" output="screen" />
 
-    <!-- Actions for Head & Laser -->
+    <!-- Actions for Head, Laser, Arm, and Gripper -->
     <node name="wubble_head_action" pkg="wubble_actions" type="wubble_head_action.py" output="screen" />
     <node name="hokuyo_laser_action" pkg="wubble_actions" type="hokuyo_laser_action.py" output="screen" />
+    <node name="smart_arm_action" pkg="wubble_actions" type="smart_arm_action.py" output="screen" />
+    <node name="smart_arm_gripper_action" pkg="wubble_actions" type="smart_arm_gripper_action.py" output="screen" />
 
     <!-- enable navigation -->
     <include file="$(find wubble_description)/launch/wubble_move_base.launch" />
@@ -38,8 +40,8 @@
         </node>
     </group>
 
-    <!-- put arm in initial position -->
-    <node name="make_cobra_pose" pkg="smart_arm_description" type="make_cobra_pose.py"  output="screen" />
+    <!-- put arm in initial position (already being done in arm & gripper actions) -->
+    <!--node name="make_cobra_pose" pkg="smart_arm_description" type="make_cobra_pose.py"  output="screen" /-->
 
     <!-- filter the robot's arm out of the stereo cloud -->
     <node pkg="robot_self_filter" type="self_filter" name="stereo_self_filter" respawn="true" output="screen">
