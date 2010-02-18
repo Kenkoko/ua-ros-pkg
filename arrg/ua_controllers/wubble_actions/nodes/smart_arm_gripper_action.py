@@ -31,3 +31,101 @@
 
 PKG = 'wubble_actions'
 NAME = 'smart_arm_gripper_action'
+
+import roslib; roslib.load_manifest(PKG)
+import rospy
+
+from actionlib import SimpleActionServer
+
+from wubble_actions.msg import *
+from std_msgs.msg import Float64
+from pr2_controllers_msgs.msg import JointControllerState
+
+import math
+
+
+class SmartArmGripperAction():
+
+    def __init__(self):
+
+        # Initialize new node
+        rospy.init_node(NAME, anonymous=True)
+
+        # Initialize publisher & subscriber for left finger
+        self.left_finger_frame = 'arm_left_finger_link'
+        self.left_finger = JointControllerState(set_point=0.0, process_value=0.0, error=1.0)
+        self.left_finger_pub = rospy.Publisher('finger_left_controller/command', Float64)
+        rospy.Subscriber('finger_left_controller/state', JointControllerState, self.read_left_finger)
+        rospy.wait_for_message('finger_left_controller/state', JointControllerState)
+
+        # Initialize publisher & subscriber for right finger
+        self.right_finger_frame = 'arm_right_finger_link'
+        self.right_finger = JointControllerState(set_point=0.0, process_value=0.0, error=1.0)
+        self.right_finger_pub = rospy.Publisher('finger_right_controller/command', Float64)
+        rospy.Subscriber('finger_right_controller/state', JointControllerState, self.read_right_finger)
+        rospy.wait_for_message('finger_right_controller/state', JointControllerState)
+
+        # Initialize action server
+        #self.result = SmartArmGripperResult()
+        #self.feedback = SmartArmGripperFeedback()
+        #self.feedback.gripper_position = [self.left_finger.process_value, self.right_finger.process_value]
+        #self.server = SimpleActionServer("smart_arm_gripper_action", SmartArmGripperAction, self.execute_callback)
+
+        # Initialize error & time thresholds
+        self.ERROR_THRESHOLD = 0.005                        # Report success if error reaches below threshold
+        self.TIMEOUT_THRESHOLD = rospy.Duration(15.0)       # Report failure if action does not succeed within timeout threshold
+
+        # Reset gripper position
+        #rospy.wait_for_service('pr2_controller_manager/switch_controller')
+        rospy.sleep(1)
+        self.reset_gripper_position()
+        rospy.loginfo("%s: Ready to accept goals", NAME)
+
+
+    def reset_gripper_position(self):
+        self.left_finger_pub.publish(0.0)
+        self.right_finger_pub.publish(0.0)
+        rospy.sleep(5)
+
+
+    def read_left_finger(self, data):
+        self.left_finger = data
+        self.has_latest_left_finger = True
+
+
+    def read_right_finger(self, data):
+        self.right_finger = data
+        self.has_latest_right_finger = True
+
+
+    def wait_for_latest_controller_states(self, timeout):
+        self.has_latest_left_finger = False
+        self.has_latest_right_finger = False
+        r = rospy.Rate(100)
+        start = rospy.Time.now()
+        while (self.has_latest_left_finger == False or self.has_latest_right_finger == False) and \
+                (rospy.Time.now() - start < timeout):
+            r.sleep()
+
+
+    def execute_callback(self, goal):
+        r = rospy.Rate(100)
+        #self.result.success = True
+
+        # TODO
+        
+        #if (self.result.success):
+        #    rospy.loginfo("%s: Goal Completed", NAME)
+        #    self.wait_for_latest_controller_states(rospy.Duration(2.0))
+        #    self.result.gripper_position = [self.left_finger.process_value, self.right_finger.process_value]
+        #    self.server.set_succeeded(self.result)
+
+
+
+if __name__ == '__main__':
+    try:
+        g = SmartArmGripperAction()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass
+

@@ -1,0 +1,10 @@
+#goal - target point & its frame reference
+geometry_msgs/Point point
+string frame_id
+---
+#result - success result & final joints position [shoulder pan, shoulder tilt, elbow tilt, wrist rotate]
+bool success
+float64[] arm_position
+---
+#result - current joints position [shoulder pan, shoulder tilt, elbow tilt, wrist rotate]
+float64[] arm_position
