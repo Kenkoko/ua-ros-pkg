@@ -287,8 +287,8 @@
             <cy>0.0</cy>
             <cz>0.0</cz>
             <geom:box name="obj_box_boxblue1_blue_geom">
-                <mu1>10.0</mu1>
-                <mu2>10.0</mu2>
+                <mu1>1.0</mu1>
+                <mu2>1.0</mu2>
                 <kp>100000000.0</kp>
                 <kd>1.0</kd>
                 <size>0.2 0.2 0.2</size>
@@ -321,8 +321,8 @@
             <cy>0.0</cy>
             <cz>0.0</cz>
             <geom:box name="obj_box_boxblack1_black_geom">
-                <mu1>10.0</mu1>
-                <mu2>10.0</mu2>
+                <mu1>1.0</mu1>
+                <mu2>1.0</mu2>
                 <kp>100000000.0</kp>
                 <kd>1.0</kd>
                 <size>0.2 0.2 0.2</size>
@@ -355,8 +355,8 @@
             <cy>0.0</cy>
             <cz>0.0</cz>
             <geom:box name="obj_box_boxgold1_gold_geom">
-                <mu1>10.0</mu1>
-                <mu2>10.0</mu2>
+                <mu1>1.0</mu1>
+                <mu2>1.0</mu2>
                 <kp>100000000.0</kp>
                 <kd>1.0</kd>
                 <size>0.2 0.2 0.2</size>
@@ -389,8 +389,8 @@
             <cy>0.0</cy>
             <cz>0.0</cz>
             <geom:box name="obj_box_boxgray1_gray_geom">
-                <mu1>10.0</mu1>
-                <mu2>10.0</mu2>
+                <mu1>1.0</mu1>
+                <mu2>1.0</mu2>
                 <kp>100000000.0</kp>
                 <kd>1.0</kd>
                 <size>0.2 0.2 0.2</size>
@@ -423,8 +423,8 @@
             <cy>0.0</cy>
             <cz>0.0</cz>
             <geom:box name="obj_box_boxgreen1_green_geom">
-                <mu1>10.0</mu1>
-                <mu2>10.0</mu2>
+                <mu1>1.0</mu1>
+                <mu2>1.0</mu2>
                 <kp>100000000.0</kp>
                 <kd>1.0</kd>
                 <size>0.2 0.2 0.2</size>
@@ -457,8 +457,8 @@
             <cy>0.0</cy>
             <cz>0.0</cz>
             <geom:box name="obj_box_boxwhite1_white_geom">
-                <mu1>10.0</mu1>
-                <mu2>10.0</mu2>
+                <mu1>1.0</mu1>
+                <mu2>1.0</mu2>
                 <kp>100000000.0</kp>
                 <kd>1.0</kd>
                 <size>0.2 0.2 0.2</size>
@@ -479,8 +479,8 @@
         <body:box name="obj_box_boxred2_red_body">
             <visualsize>0.2 0.2 0.6</visualsize>
             <geom:box name="obj_box_boxred2_red_geom">
-                <mu1>10.0</mu1>
-                <mu2>10.0</mu2>
+                <mu1>1.0</mu1>
+                <mu2>1.0</mu2>
                 <kp>100000000.0</kp>
                 <kd>1.0</kd>
                 <mesh>default</mesh>
