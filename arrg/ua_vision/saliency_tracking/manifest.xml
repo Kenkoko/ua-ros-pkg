@@ -1,0 +1,21 @@
+<package>
+    <description brief="saliency_tracking">
+
+     saliency_tracking
+
+    </description>
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/saliency_tracking</url>
+    
+    <depend package="roscpp"/>
+    <depend package="opencv2"/>
+    <depend package="cv_bridge"/>
+    <depend package="sensor_msgs"/>
+    <depend package="geometry_msgs"/>
+    <depend package="image_transport"/>
+    <depend package="nmpt"/>
+</package>
+
+
