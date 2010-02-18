@@ -1,12 +1,15 @@
 all:build
 
 
-ZIP_FILE   = NMPT.zip
-ZIP_URL    = http://mplab.ucsd.edu/~nick/$(ZIP_FILE)
-SRC_DIR    = src
-LIB_DIR    = lib
-BIN_DIR    = bin
-PATCH_FILE = nmptgcc4_4_1.patch
+ZIP_FILE    = NMPT.zip
+ZIP_URL     = http://mplab.ucsd.edu/~nick/$(ZIP_FILE)
+SRC_DIR     = src
+INCLUDE_DIR = include
+LIB_DIR     = lib
+BIN_DIR     = bin
+DATA_DIR    = data
+DOC_DIR     = doc
+PATCH_FILE  = nmpt_ros.patch
 
 include $(shell rospack find mk)/cmake.mk
 
@@ -15,17 +18,23 @@ build:
 	then \
 		echo "NMPT has already been installed."; \
 	else \
-		mkdir -p $(SRC_DIR); \
+		mkdir -p $(SRC_DIR)/nmpt; \
+		mkdir -p $(INCLUDE_DIR)/nmpt; \
+		mkdir -p $(DOC_DIR); \
+		mkdir -p $(DATA_DIR); \
 		wget $(ZIP_URL); \
 		unzip $(ZIP_FILE); \
-		mv NMPT/src/*.h $(SRC_DIR); \
-		mv NMPT/src/*.cpp $(SRC_DIR); \
-		patch -b -p0 --verbose < $(PATCH_FILE); \
+		patch -d NMPT -p1 --verbose < $(PATCH_FILE); \
+		mv NMPT/src/*.h $(INCLUDE_DIR)/nmpt; \
+		mv NMPT/src/*.cpp $(SRC_DIR)/nmpt; \
+		mv NMPT/doc/* $(DOC_DIR); \
+		mv NMPT/data/* $(DATA_DIR); \
+		mv NMPT/ReferenceManual.pdf $(DOC_DIR); \
 		rm $(ZIP_FILE); \
 		rm -rf NMPT; \
 	fi
 
 clean:
-	rm -rf $(SRC_DIR) $(LIB_DIR) $(BIN_DIR)
+	rm -rf $(INCLUDE_DIR) $(SRC_DIR) $(LIB_DIR) $(BIN_DIR) $(DOC_DIR) $(DATA_DIR) build
 
 wipe: clean

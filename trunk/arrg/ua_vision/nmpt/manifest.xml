@@ -9,7 +9,7 @@
     <url>http://mplab.ucsd.edu/~nick/NMPT/</url>
     <depend package="opencv2" /> 
     <export>
-        <cpp cflags="-I${prefix}/src" lflags="-L${prefix}/lib -lnmpt"/>
+        <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lnmpt"/>
         <doxymaker external="http://mplab.ucsd.edu/~nick/NMPT/" />
     </export>
 </package>
