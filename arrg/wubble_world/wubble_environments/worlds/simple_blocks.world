@@ -37,7 +37,7 @@
 
               02/17/2010 Bouncy block fix from John Hsu: defaults for inertia 
               matrix were too small to stop box rotation. Fix applied only to 
-              smaller blocks for now.   
+              smaller blocks for now. ODE default is 1e-6.   
     -->
 
     <!-- here's the global contact cfm/erp -->
@@ -90,7 +90,6 @@
         <rpy>0 0 0</rpy>
         <static>true</static>
         <body:plane name="env_ground_floor_wood_body">
-            <visualsize>50 50 0</visualsize>
             <geom:plane name="env_ground_floor_wood_geom">
                 <laserRetro>2000.0</laserRetro>
                 <kp>1000000.0</kp>
@@ -162,8 +161,6 @@
         <static>true</static>
         <!-- surrounding walls -->
         <body:box name="env_wall_walls_wallpaint_body">
-            <visualsize>7 5 2</visualsize>
-
             <geom:box name="env_wall_wall1_wallpaint_geom">
                 <xyz>0 -2.45 1</xyz>
                 <mesh>default</mesh>
@@ -215,7 +212,6 @@
         <xyz>-2.6   1.7   0.5</xyz>
         <rpy> 0.0   0.0   0.0</rpy>
         <body:sphere name="obj_sphere_sphererocky1_rocky_body">
-            <visualsize>1.0 1.0 1.0</visualsize>
             <geom:sphere name="obj_sphere_sphererocky1_rocky_geom">
                 <mesh>default</mesh>
                 <size>0.5</size>
@@ -234,7 +230,6 @@
         <xyz>-2.8 -1.8  1.0</xyz>
         <rpy> 0.0  0.0  0.0</rpy>
         <body:sphere name="obj_sphere_spheregray1_gray_body">
-            <visualsize>0.4 0.4 0.4</visualsize>
             <geom:sphere name="obj_sphere_spheregray1_gray_geom">
                 <mesh>default</mesh>
                 <size>0.2</size>
@@ -253,7 +248,6 @@
         <xyz>-2.8  -1.8   0.35</xyz>
         <static>false</static>
         <body:box name="obj_box_boxmetal1_metal_body">
-            <visualsize>0.7 0.7 0.7</visualsize>
             <geom:box name="obj_box_boxmetal1_metal_geom">
                 <size>0.7 0.7 0.7</size>
                 <mass>2.0</mass>
@@ -267,13 +261,10 @@
     </model:physical>
 
     <!-- blue box -->
-    <!-- visualsize tag used by icarus_world_state_server.py -->
-
     <model:physical name="obj_box_boxblue1_blue_model">
         <xyz> 1.8 -1.5  0.1</xyz>
         <static>false</static>
         <body:box name="obj_box_boxblue1_blue_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
             <dampingFactor>0.0</dampingFactor>
             <massMatrix>true</massMatrix>
             <mass>0.2</mass>
@@ -307,7 +298,6 @@
         <xyz> 1.8 -1.5  0.3</xyz>
         <static>false</static>
         <body:box name="obj_box_boxblack1_black_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
             <dampingFactor>0.0</dampingFactor>
             <massMatrix>true</massMatrix>
             <mass>0.2</mass>
@@ -341,7 +331,6 @@
         <xyz> 1.8 -1.5  0.5</xyz>
         <static>false</static>
         <body:box name="obj_box_boxgold1_gold_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
             <dampingFactor>0.0</dampingFactor>
             <massMatrix>true</massMatrix>
             <mass>0.2</mass>
@@ -375,7 +364,6 @@
         <xyz> 1.8 -0.5  0.1</xyz>
         <static>false</static>
         <body:box name="obj_box_boxgray1_gray_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
             <dampingFactor>0.0</dampingFactor>
             <massMatrix>true</massMatrix>
             <mass>0.2</mass>
@@ -409,7 +397,6 @@
         <xyz> 1.8  0.5  0.1</xyz>
         <static>false</static>
         <body:box name="obj_box_boxgreen1_green_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
             <dampingFactor>0.0</dampingFactor>
             <massMatrix>true</massMatrix>
             <mass>0.2</mass>
@@ -443,7 +430,6 @@
         <xyz> 1.8  0.5  0.3</xyz>
         <static>false</static>
         <body:box name="obj_box_boxwhite1_white_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
             <dampingFactor>0.0</dampingFactor>
             <massMatrix>true</massMatrix>
             <mass>0.2</mass>
@@ -477,7 +463,6 @@
         <xyz> 1.8  1.5   0.3</xyz>
         <static>false</static>
         <body:box name="obj_box_boxred2_red_body">
-            <visualsize>0.2 0.2 0.6</visualsize>
             <geom:box name="obj_box_boxred2_red_geom">
                 <mu1>1.0</mu1>
                 <mu2>1.0</mu2>
