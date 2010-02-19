@@ -47,23 +47,29 @@ if __name__ == '__main__':
         elobow_tilt_pub = rospy.Publisher('elbow_tilt_controller/command', Float64)
         wrist_rotate_pub = rospy.Publisher('wrist_rotate_controller/command', Float64)
         
+        rospy.sleep(1)
+        
         try:
             ik_service = rospy.ServiceProxy('smart_arm_ik_service', SmartArmIK)
             point = PointStamped()
             point.header.stamp = rospy.Time.now()
             point.header.frame_id = 'arm_base_link'
-            point.point.x = 0.2
+            point.point.x = 0.0
             point.point.y = 0.0
-            point.point.z = 0.1
+            point.point.z = 0.3
             resp = ik_service(point)
-            rospy.loginfo('%s = %s' % (str(resp.success), str(resp.solutions)))
             
-            if resp.success:
-                sol1 = resp.solutions[0:4]
-                shoulder_pan_pub.publish(sol1[0])
-                shoulder_tilt_pub.publish(sol1[1])
-                elobow_tilt_pub.publish(sol1[2])
-                wrist_rotate_pub.publish(sol1[3])
+            if resp:
+                rospy.loginfo('%s = %s' % (str(resp.success), str(resp.solutions)))
+                
+                if resp.success:
+                    rospy.logdebug("Publishing stuff")
+                    sol1 = resp.solutions[0:4]
+                    rospy.logdebug("%s" % str(sol1))
+                    shoulder_pan_pub.publish(sol1[0])
+                    shoulder_tilt_pub.publish(sol1[1])
+                    elobow_tilt_pub.publish(sol1[2])
+                    wrist_rotate_pub.publish(sol1[3])
                 
         except rospy.ServiceException, e:
             rospy.logerr('Service call failed %s' % e)

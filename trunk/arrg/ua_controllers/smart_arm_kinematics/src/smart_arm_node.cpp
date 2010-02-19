@@ -43,86 +43,99 @@
 #define IKFAST_NO_MAIN
 #include "smart_arm_ik.cpp"
 
-bool do_ik(smart_arm_kinematics::SmartArmIK::Request  &req,
-           smart_arm_kinematics::SmartArmIK::Response &res)
+class SmartArmIKService
 {
-    ROS_DEBUG("smart_arm_ik_service:: received service request");
+private:
+    ros::NodeHandle nh;
     tf::TransformListener tf_listener;
-    std::vector<IKSolution> vsolutions;
-    tf::Stamped<tf::Point> point_stamped;
+    ros::ServiceServer ik_service;
+    IKReal rotation[9];
+    std::vector<IKReal> free_params;
+    std::string joint_names[4];
+    std::string root_link;
     
-    IKReal eerot[9];
-    IKReal eetrans[3];
-    std::vector<IKReal> vfree(1);
-    eerot[0] = 1.0; eerot[1] = 0.0; eerot[2] = 0.0;
-    eerot[3] = 0.0; eerot[4] = 1.0; eerot[5] = 0.0;
-    eerot[6] = 0.0; eerot[7] = 0.0; eerot[8] = 1.0;
-    vfree[0] = 0.0;
-    
-    tf::pointStampedMsgToTF(req.goal, point_stamped);
-    
-    // convert to reference frame of base link of the arm
-    if (!tf_listener.canTransform("arm_base_link", point_stamped.frame_id_, point_stamped.stamp_))
+public:
+    SmartArmIKService(ros::NodeHandle node) : nh(node)
     {
-        std::string err;
-        if (tf_listener.getLatestCommonTime(point_stamped.frame_id_, "arm_base_link", point_stamped.stamp_, &err) != tf::NO_ERROR)
-        {
-            ROS_ERROR("smart_arm_ik_service:: Cannot transform from '%s' to '%s'. TF said: %s", point_stamped.frame_id_.c_str(), "arm_base_link", err.c_str());
-            res.success = false;
-            return res.success;
-        }
-    }
-    
-    try
-    {
-        tf_listener.transformPoint("arm_base_link", point_stamped, point_stamped);
-    }
-    catch(...)
-    {
-        ROS_ERROR("smart_arm_ik_service:: Cannot transform from '%s' to '%s'", point_stamped.frame_id_.c_str(), "arm_base_link");
-        res.success = false;
-        return res.success;
-    }
-    
-    eetrans[0] = (float) point_stamped.x();
-    eetrans[1] = (float) point_stamped.y();
-    eetrans[2] = (float) point_stamped.z();
-    
-    res.success = ik(eetrans, eerot, &vfree[0], vsolutions);
-    
-    if( res.success )
-    {
-        std::vector<IKReal> sol(getNumJoints());
+        ros::NodeHandle nh_private("~");
+        nh_private.param("root_link", root_link, std::string("arm_base_link"));
         
-        for(size_t i = 0; i < vsolutions.size(); ++i)
+        rotation[0] = 1.0; rotation[1] = 0.0; rotation[2] = 0.0;
+        rotation[3] = 0.0; rotation[4] = 1.0; rotation[5] = 0.0;
+        rotation[6] = 0.0; rotation[7] = 0.0; rotation[8] = 1.0;
+        free_params.push_back(0.0);
+        
+        joint_names[0] = "shoulder_pan_joint";
+        joint_names[1] = "shoulder_tilt_joint";
+        joint_names[2] = "elbow_tilt_joint";
+        joint_names[3] = "wrist_rotate_joint";
+        
+        ik_service = nh.advertiseService("smart_arm_ik_service", &SmartArmIKService::do_ik, this);
+        ROS_INFO("smart_arm_ik_service:: successfully started");
+    }
+    
+    bool do_ik(smart_arm_kinematics::SmartArmIK::Request  &req,
+               smart_arm_kinematics::SmartArmIK::Response &res)
+    {
+        ROS_DEBUG("smart_arm_ik_service:: received service request");
+        tf::Stamped<tf::Point> point_stamped;
+        tf::pointStampedMsgToTF(req.goal, point_stamped);
+        
+        // convert to reference frame of root link of the arm
+        if (!tf_listener.canTransform(root_link, point_stamped.frame_id_, point_stamped.stamp_))
         {
-            std::vector<IKReal> vsolfree(vsolutions[i].GetFree().size());
-            vsolutions[i].GetSolution(&sol[0], vsolfree.size() > 0 ? &vsolfree[0] : NULL);
-            
-            for( size_t j = 0; j < sol.size(); ++j)
+            std::string err;
+            if (tf_listener.getLatestCommonTime(point_stamped.frame_id_, root_link, point_stamped.stamp_, &err) != tf::NO_ERROR)
             {
-                res.solutions.push_back(sol[j]);
+                ROS_ERROR("smart_arm_ik_service:: Cannot transform from '%s' to '%s'. TF said: %s", point_stamped.frame_id_.c_str(), root_link.c_str(), err.c_str());
+                return false;
             }
         }
+        
+        try
+        {
+            tf_listener.transformPoint(root_link, point_stamped, point_stamped);
+        }
+        catch(...)
+        {
+            ROS_ERROR("smart_arm_ik_service:: Cannot transform from '%s' to '%s'", point_stamped.frame_id_.c_str(), root_link.c_str());
+            return false;
+        }
+        
+        IKReal translation[3];
+        
+        translation[0] = (float) point_stamped.x();
+        translation[1] = (float) point_stamped.y();
+        translation[2] = (float) point_stamped.z();
+        
+        std::vector<IKSolution> ik_solutions;
+        res.success = ik(translation, rotation, &free_params[0], ik_solutions);
+        
+        if (res.success)
+        {
+            std::vector<IKReal> sol(getNumJoints());
+            
+            for (size_t i = 0; i < ik_solutions.size(); ++i)
+            {
+                std::vector<IKReal> vsolfree(ik_solutions[i].GetFree().size());
+                ik_solutions[i].GetSolution(&sol[0], vsolfree.size() > 0 ? &vsolfree[0] : NULL);
+                
+                for ( size_t j = 0; j < sol.size(); ++j)
+                {
+                    res.solutions.push_back(sol[j]);
+                }
+            }
+        }
+        
+        return true;
     }
-    
-    return res.success;
-}
+};
 
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "smart_arm_ik_service_node");
-    
-    std::string joint_names[4];
-    
-    joint_names[0] = "shoulder_pan_joint";
-    joint_names[1] = "shoulder_tilt_joint";
-    joint_names[2] = "elbow_tilt_joint";
-    joint_names[3] = "wrist_rotate_joint";
-    
-    ros::NodeHandle n;
-    ros::ServiceServer ik_service = n.advertiseService("smart_arm_ik_service", do_ik);
-    
+    ros::NodeHandle node;
+    SmartArmIKService ik_service(node);
     ros::spin();
 }
 
