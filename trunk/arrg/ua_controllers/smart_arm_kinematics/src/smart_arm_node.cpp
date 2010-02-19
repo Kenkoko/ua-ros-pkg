@@ -36,8 +36,8 @@
 */
 
 #include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <geometry_msgs/Point.h>
+#include <tf/tf.h>
+#include <tf/transform_listener.h>
 #include <smart_arm_kinematics/SmartArmIK.h>
 
 #define IKFAST_NO_MAIN
@@ -46,7 +46,10 @@
 bool do_ik(smart_arm_kinematics::SmartArmIK::Request  &req,
            smart_arm_kinematics::SmartArmIK::Response &res)
 {
+    ROS_DEBUG("smart_arm_ik_service:: received service request");
+    tf::TransformListener tf_listener;
     std::vector<IKSolution> vsolutions;
+    tf::Stamped<tf::Point> point_stamped;
     
     IKReal eerot[9];
     IKReal eetrans[3];
@@ -56,15 +59,40 @@ bool do_ik(smart_arm_kinematics::SmartArmIK::Request  &req,
     eerot[6] = 0.0; eerot[7] = 0.0; eerot[8] = 1.0;
     vfree[0] = 0.0;
     
-    eetrans[0] = req.goal.x;
-    eetrans[1] = req.goal.y;
-    eetrans[2] = req.goal.z;
+    tf::pointStampedMsgToTF(req.goal, point_stamped);
+    
+    // convert to reference frame of base link of the arm
+    if (!tf_listener.canTransform("arm_base_link", point_stamped.frame_id_, point_stamped.stamp_))
+    {
+        std::string err;
+        if (tf_listener.getLatestCommonTime(point_stamped.frame_id_, "arm_base_link", point_stamped.stamp_, &err) != tf::NO_ERROR)
+        {
+            ROS_ERROR("smart_arm_ik_service:: Cannot transform from '%s' to '%s'. TF said: %s", point_stamped.frame_id_.c_str(), "arm_base_link", err.c_str());
+            res.success = false;
+            return res.success;
+        }
+    }
+    
+    try
+    {
+        tf_listener.transformPoint("arm_base_link", point_stamped, point_stamped);
+    }
+    catch(...)
+    {
+        ROS_ERROR("smart_arm_ik_service:: Cannot transform from '%s' to '%s'", point_stamped.frame_id_.c_str(), "arm_base_link");
+        res.success = false;
+        return res.success;
+    }
+    
+    eetrans[0] = (float) point_stamped.x();
+    eetrans[1] = (float) point_stamped.y();
+    eetrans[2] = (float) point_stamped.z();
     
     res.success = ik(eetrans, eerot, &vfree[0], vsolutions);
     
     if( res.success )
     {
-        std::vector<IKReal> sol(getNumJoints());        
+        std::vector<IKReal> sol(getNumJoints());
         
         for(size_t i = 0; i < vsolutions.size(); ++i)
         {
