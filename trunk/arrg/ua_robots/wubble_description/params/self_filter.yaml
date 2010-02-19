@@ -1,0 +1,13 @@
+min_sensor_dist: .05
+self_see_default_padding: .05
+self_see_default_scale: 1.0
+self_see_links:
+  - name: arm_base_link
+  - name: arm_elbow_tilt_link
+  - name: arm_left_finger_link
+  - name: arm_right_finger_link
+  - name: arm_shoulder_pan_link
+  - name: arm_shoulder_tilt_link
+  - name: arm_wrist_rotate_link
+  - name: base_link
+  - name: base_top_link
