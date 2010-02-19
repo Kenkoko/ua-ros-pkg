@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+
+<robot name="wubble"
+    xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+    xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+    xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
+    
+    <!-- Included URDF Files -->
+    <include filename="$(find erratic_description)/urdf/erratic_base.xacro" />
+    <include filename="$(find hokuyo_urg_description)/urdf/hokuyo_urg.xacro" />
+    
+    <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
+    
+    <!-- Properties (Constants) -->
+    <property name="M_PI" value="3.14159"/>
+        
+    <property name="support_radius" value="0.0065" />
+    <property name="support_height" value="0.7556" />
+    
+    <!-- VIDERE ERRATIC MOBILE BASE -->
+    <erratic /> 
+    
+    <!-- HOKUYO LASER ATTACHMENT -->
+    <joint name="laser_support_joint" type="fixed">
+        <origin xyz="${top_size_x/2 - 0.016} 0 -${top_size_z/2}" rpy="${M_PI} 0 0" />
+        <parent link="base_top_link"/>
+        <child link="hokuyo_tilt_link"/>
+    </joint>
+    
+    <link name="hokuyo_tilt_link"> 
+        <inertial>
+            <mass value="0.1"/>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <inertia ixx="0.01" ixy="0" ixz="0"
+                     iyy="0.01" iyz="0"
+                     izz="0.01"/>
+        </inertial>
+        
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://wubble_description/meshes/camera_tilt.stl"/>
+            </geometry>
+        </visual>
+        
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://wubble_description/meshes/camera_tilt.stl"/>
+            </geometry>
+        </collision>
+    </link>
+    
+    <joint name="hokuyo_tilt_joint" type="revolute">
+        <origin xyz="-0.019 0 0.043" />
+        <parent link="hokuyo_tilt_link" />
+        <child link="hokuyo_mount_link" />
+        
+        <axis xyz="0 1 0" />
+        <limit lower="-0.1" upper="0.785398164" effort="100" velocity="12.0" />
+        <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.1+0.1}" soft_upper_limit="${0.785398164-0.1}" />
+        <dynamics damping="50" friction="1"/>
+    </joint>
+    
+    <transmission type="SimpleTransmission" name="hokuyo_tilt_trans">
+        <actuator name="hokuyo_tilt_motor" />
+        <joint name="hokuyo_tilt_joint" />
+        <mechanicalReduction>1.0</mechanicalReduction>
+    </transmission>
+    
+    <link name="hokuyo_mount_link"> 
+        <inertial>
+            <mass value="0.01"/>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <inertia ixx="0.01" ixy="0" ixz="0"
+                     iyy="0.01" iyz="0"
+                     izz="0.01"/>
+        </inertial>
+        
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://wubble_description/meshes/camera_mount.stl"/>
+            </geometry>
+        </visual>
+        
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://wubble_description/meshes/camera_mount.stl"/>
+            </geometry>
+        </collision>
+    </link>
+    
+    <hokuyo_urg parent="hokuyo_mount_link">
+        <origin xyz="0 0 0.023" rpy="0 0 0" />
+    </hokuyo_urg>
+    
+    <!-- GAZEBO MATERIALS -->  
+    <gazebo reference="hokuyo_tilt_link">
+        <material>PR2/Black</material>
+    </gazebo>
+    
+    <gazebo reference="hokuyo_mount_link">
+        <material>SmartArm/GunMetalBrushedAluminum</material>
+    </gazebo>
+</robot>
