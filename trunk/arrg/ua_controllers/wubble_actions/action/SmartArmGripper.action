@@ -1,0 +1,9 @@
+# Goal - Target joints for the gripper
+JointsCommand target_joints     # [left finger, right finger]
+---
+# Result - Success result & final gripper position
+bool success
+float64[] gripper_position      # [left finger, right finger]
+---
+# Feedback - Current gripper position
+float64[] gripper_position      # [left finger, right finger]

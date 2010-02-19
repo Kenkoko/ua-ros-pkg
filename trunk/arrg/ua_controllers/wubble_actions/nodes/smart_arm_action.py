@@ -45,12 +45,17 @@ from pr2_controllers_msgs.msg import JointControllerState
 import math
 
 
-class SmartArmAction():
+class SmartArmActionServer():
 
     def __init__(self):
 
+        # Initialize constants
+        self.JOINTS_COUNT = 4                           # Number of joints to manage
+        self.ERROR_THRESHOLD = 0.1                      # Report success if error reaches below threshold
+        self.TIMEOUT_THRESHOLD = rospy.Duration(17.0)   # Report failure if action does not succeed within timeout threshold
+
         # Initialize new node
-        rospy.init_node(NAME, anonymous=True)
+        rospy.init_node(NAME + 'server', anonymous=True)
 
         # Initialize publisher & subscriber for shoulder pan
         self.shoulder_pan_frame = 'arm_shoulder_pan_link'
@@ -84,25 +89,13 @@ class SmartArmAction():
         self.tf = tf.TransformListener()
 
         # Initialize joints action server
-        self.joints_result = SmartArmJointsResult()
-        self.joints_feedback = SmartArmJointsFeedback()
-        self.joints_feedback.arm_position = [self.shoulder_pan.process_value, self.shoulder_tilt.process_value, \
+        self.result = SmartArmResult()
+        self.feedback = SmartArmFeedback()
+        self.feedback.arm_position = [self.shoulder_pan.process_value, self.shoulder_tilt.process_value, \
                     self.elbow_tilt.process_value, self.wrist_rotate.process_value]
-        self.joints_server = SimpleActionServer("smart_arm_joints_action", SmartArmJointsAction, self.execute_joints_callback)
-
-        # Initialize point action server
-        #self.point_result = SmartArmPointResult()
-        #self.point_feedback = SmartArmPointFeedback()
-        #self.point_feedback.arm_position = [self.shoulder_pan.process_value, self.shoulder_tilt.process_value, \
-        #            self.elbow_tilt.process_value, self.wrist_rotate.process_value]
-        #self.point_server = SimpleActionServer("smart_arm_point_action", SmartArmPointAction, self.execute_point_callback)
-
-        # Initialize error & time thresholds
-        self.ERROR_THRESHOLD = 0.005                        # Report success if error reaches below threshold
-        self.TIMEOUT_THRESHOLD = rospy.Duration(15.0)       # Report failure if action does not succeed within timeout threshold
+        self.server = SimpleActionServer(NAME, SmartArmAction, self.execute_callback)
 
         # Reset arm position
-        #rospy.wait_for_service('pr2_controller_manager/switch_controller')
         rospy.sleep(1)
         self.reset_arm_position()
         rospy.loginfo("%s: Ready to accept goals", NAME)
@@ -150,13 +143,62 @@ class SmartArmAction():
             r.sleep()
 
 
-    def execute_joints_callback(self, goal):
+    def execute_callback(self, goal):
         r = rospy.Rate(100)
         self.result.success = True
-
-        # TODO
-
+        self.result.arm_position = [self.shoulder_pan.process_value, self.shoulder_tilt.process_value, \
+                self.elbow_tilt.process_value, self.wrist_rotate.process_value]
+        rospy.loginfo("%s: Executing move arm", NAME)
         
+        # Initialize target joints
+        target_joints = list()
+        for i in range(self.JOINTS_COUNT):
+            target_joints.append(0.0)
+        
+        # Retrieve target joints from goal
+        if (len(goal.target_joints.joints) > 0):
+            for i in range(min(len(goal.target_joints.joints), len(target_joints))):
+                target_joints[i] = goal.target_joints.joints[i] 
+        else:
+            # TODO: Use IK to plan a set of target joints for arm
+            target_joints = [0.0, 1.972222, -1.972222, 0.0]
+
+        # Publish goal to controllers
+        self.shoulder_pan_pub.publish(target_joints[0])
+        self.shoulder_tilt_pub.publish(target_joints[1])
+        self.elbow_tilt_pub.publish(target_joints[2])
+        self.wrist_rotate_pub.publish(target_joints[3])
+        
+        # Initialize loop variables
+        start_time = rospy.Time.now()
+
+        while (math.fabs(target_joints[0] - self.shoulder_pan.process_value) > self.ERROR_THRESHOLD or \
+                math.fabs(target_joints[1] - self.shoulder_tilt.process_value) > self.ERROR_THRESHOLD or \
+                math.fabs(target_joints[2] - self.elbow_tilt.process_value) > self.ERROR_THRESHOLD or \
+                math.fabs(target_joints[3] - self.wrist_rotate.process_value) > self.ERROR_THRESHOLD):
+		
+	        # Cancel exe if another goal was received (i.e. preempt requested)
+            if self.server.is_preempt_requested():
+                rospy.loginfo("%s: Aborted: Action Preempted", NAME)
+                self.result.success = False
+                self.server.set_preempted()
+                break
+
+            # Publish current arm position as feedback
+            self.feedback.arm_position = [self.shoulder_pan.process_value, self.shoulder_tilt.process_value, \
+                    self.elbow_tilt.process_value, self.wrist_rotate.process_value]
+            self.server.publish_feedback(self.feedback)
+            
+            # Abort if timeout
+            current_time = rospy.Time.now()
+            if (current_time - start_time > self.TIMEOUT_THRESHOLD):
+                rospy.loginfo("%s: Aborted: Action Timeout", NAME)
+                self.result.success = False
+                self.server.set_aborted()
+                break
+
+            r.sleep()
+
         if (self.result.success):
             rospy.loginfo("%s: Goal Completed", NAME)
             self.wait_for_latest_controller_states(rospy.Duration(2.0))
@@ -168,7 +210,7 @@ class SmartArmAction():
 
 if __name__ == '__main__':
     try:
-        a = SmartArmAction()
+        a = SmartArmActionServer()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass

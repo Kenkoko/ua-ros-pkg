@@ -44,9 +44,14 @@ from pr2_controllers_msgs.msg import JointControllerState
 import math
 
 
-class HokuyoLaserAction():
+class HokuyoLaserActionServer():
 
     def __init__(self):
+
+        # Initialize constants
+        self.JOINTS_COUNT = 1                           # Number of joints to manage
+        self.ERROR_THRESHOLD = 0.01                     # Report success if error reaches below threshold
+        self.TIMEOUT_THRESHOLD = rospy.Duration(7.0)    # Report failure if action does not succeed within timeout threshold
 
         # Initialize new node
         rospy.init_node(NAME, anonymous=True)
@@ -62,14 +67,9 @@ class HokuyoLaserAction():
         self.result = HokuyoLaserTiltResult()
         self.feedback = HokuyoLaserTiltFeedback()
         self.feedback.tilt_position = self.laser_tilt.process_value
-        self.server = SimpleActionServer("hokuyo_laser_tilt_action", HokuyoLaserTiltAction, self.execute_callback)
-
-        # Initialize error & time thresholds
-        self.ERROR_THRESHOLD = 0.0025                       # Report success if error reaches below threshold
-        self.TIMEOUT_THRESHOLD = rospy.Duration(7.0)        # Report failure if action does not succeed within timeout threshold
+        self.server = SimpleActionServer('hokuyo_laser_tilt_action', HokuyoLaserTiltAction, self.execute_callback)
 
         # Reset laser position
-        #rospy.wait_for_service('pr2_controller_manager/switch_controller')
         rospy.sleep(1)
         self.reset_tilt_position()
         rospy.loginfo("%s: Ready to accept goals", NAME)
@@ -147,7 +147,7 @@ class HokuyoLaserAction():
 
 if __name__ == '__main__':
     try:
-        h = HokuyoLaserAction()
+        h = HokuyoLaserActionServer()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass

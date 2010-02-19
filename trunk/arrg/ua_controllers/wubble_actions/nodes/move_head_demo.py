@@ -30,25 +30,40 @@
 # Author: Anh Tran
 
 PKG = 'wubble_actions'
-NAME = 'move_head_client'
+NAME = 'move_head_demo'
 
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
 from actionlib import SimpleActionClient
-from std_msgs.msg import Float64
-from geometry_msgs.msg import Point
 from wubble_actions.msg import *
+
+
+def move_head(head_pan, head_tilt):
+
+    # Creates a goal to send to the action server.
+    goal = WubbleHeadGoal()
+    goal.target_joints = JointsCommand()
+    goal.target_joints.joints = [head_pan, head_tilt]
+
+    # Sends the goal to the action server.
+    client.send_goal(goal)
+
+    # Waits for the server to finish performing the action.
+    client.wait_for_goal_to_finish()
+
+    # Return result
+    return client.get_result()
 
 
 def look_at(frame_id, x, y, z):
 
     # Creates a goal to send to the action server.
-    goal = WubbleHeadPointGoal()
-    goal.point.x = x
-    goal.point.y = y
-    goal.point.z = z
-    goal.frame_id = frame_id
+    goal = WubbleHeadGoal()
+    goal.target_point.x = x
+    goal.target_point.y = y
+    goal.target_point.z = z
+    goal.target_point.frame_id = frame_id
 
     # Sends the goal to the action server.
     client.send_goal(goal)
@@ -63,7 +78,7 @@ def look_at(frame_id, x, y, z):
 if __name__ == '__main__':
     try:
         rospy.init_node(NAME, anonymous=True)
-        client = SimpleActionClient("wubble_head_point_action", WubbleHeadPointAction)
+        client = SimpleActionClient("wubble_head_action", WubbleHeadAction)
         client.wait_for_server()
 
         print "Look forward and slightly up"
@@ -89,6 +104,13 @@ if __name__ == '__main__':
 
         print "Look at the gripper"
         result = look_at("/arm_left_finger_link", 0.0, 0.0, 0.0);
+        if result.success == False:
+            print "Action failed"
+        else:
+            print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
+
+        print "Reset head"
+        result = move_head(0.0, 0.0);
         if result.success == False:
             print "Action failed"
         else:
