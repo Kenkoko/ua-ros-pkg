@@ -44,9 +44,14 @@ from pr2_controllers_msgs.msg import JointControllerState
 import math
 
 
-class SmartArmGripperAction():
+class SmartArmGripperActionServer():
 
     def __init__(self):
+
+        # Initialize constants
+        self.JOINTS_COUNT = 2                           # Number of joints to manage
+        self.ERROR_THRESHOLD = 0.01                     # Report success if error reaches below threshold
+        self.TIMEOUT_THRESHOLD = rospy.Duration(10.0)   # Report failure if action does not succeed within timeout threshold
 
         # Initialize new node
         rospy.init_node(NAME, anonymous=True)
@@ -66,17 +71,12 @@ class SmartArmGripperAction():
         rospy.wait_for_message('finger_right_controller/state', JointControllerState)
 
         # Initialize action server
-        #self.result = SmartArmGripperResult()
-        #self.feedback = SmartArmGripperFeedback()
-        #self.feedback.gripper_position = [self.left_finger.process_value, self.right_finger.process_value]
-        #self.server = SimpleActionServer("smart_arm_gripper_action", SmartArmGripperAction, self.execute_callback)
-
-        # Initialize error & time thresholds
-        self.ERROR_THRESHOLD = 0.005                        # Report success if error reaches below threshold
-        self.TIMEOUT_THRESHOLD = rospy.Duration(15.0)       # Report failure if action does not succeed within timeout threshold
+        self.result = SmartArmGripperResult()
+        self.feedback = SmartArmGripperFeedback()
+        self.feedback.gripper_position = [self.left_finger.process_value, self.right_finger.process_value]
+        self.server = SimpleActionServer(NAME, SmartArmGripperAction, self.execute_callback)
 
         # Reset gripper position
-        #rospy.wait_for_service('pr2_controller_manager/switch_controller')
         rospy.sleep(1)
         self.reset_gripper_position()
         rospy.loginfo("%s: Ready to accept goals", NAME)
@@ -110,21 +110,67 @@ class SmartArmGripperAction():
 
     def execute_callback(self, goal):
         r = rospy.Rate(100)
-        #self.result.success = True
-
-        # TODO
+        self.result.success = True
+        self.result.gripper_position = [self.left_finger.process_value, self.right_finger.process_value]
+        rospy.loginfo("%s: Executing move gripper", NAME)
         
-        #if (self.result.success):
-        #    rospy.loginfo("%s: Goal Completed", NAME)
-        #    self.wait_for_latest_controller_states(rospy.Duration(2.0))
-        #    self.result.gripper_position = [self.left_finger.process_value, self.right_finger.process_value]
-        #    self.server.set_succeeded(self.result)
+        # Initialize target joints
+        target_joints = list()
+        for i in range(self.JOINTS_COUNT):
+            target_joints.append(0.0)
+
+        # Retrieve target joints from goal
+        if (len(goal.target_joints.joints) > 0):
+            for i in range(min(len(goal.target_joints.joints), len(target_joints))):
+                target_joints[i] = goal.target_joints.joints[i] 
+        else:
+            rospy.loginfo("%s: Aborted: Invalid Goal", NAME)
+            self.result.success = False
+            self.server.set_aborted()
+            return
+
+        # Publish goal to controllers
+        self.left_finger_pub.publish(target_joints[0])
+        self.right_finger_pub.publish(target_joints[1])
+
+        # Initialize loop variables
+        start_time = rospy.Time.now()
+
+        while (math.fabs(target_joints[0] - self.left_finger.process_value) > self.ERROR_THRESHOLD or \
+                math.fabs(target_joints[1] - self.right_finger.process_value) > self.ERROR_THRESHOLD):
+		
+	        # Cancel exe if another goal was received (i.e. preempt requested)
+            if self.server.is_preempt_requested():
+                rospy.loginfo("%s: Aborted: Action Preempted", NAME)
+                self.result.success = False
+                self.server.set_preempted()
+                break
+
+            # Publish current gripper position as feedback
+            self.feedback.gripper_position = [self.left_finger.process_value, self.right_finger.process_value]
+            self.server.publish_feedback(self.feedback)
+            
+            # Abort if timeout
+            current_time = rospy.Time.now()
+            if (current_time - start_time > self.TIMEOUT_THRESHOLD):
+                rospy.loginfo("%s: Aborted: Action Timeout", NAME)
+                self.result.success = False
+                self.server.set_aborted()
+                break
+
+            r.sleep()
+
+        if (self.result.success):
+            rospy.loginfo("%s: Goal Completed", NAME)
+            self.wait_for_latest_controller_states(rospy.Duration(2.0))
+            self.result.gripper_position = [self.left_finger.process_value, self.right_finger.process_value]
+            self.server.set_succeeded(self.result)
 
 
 
 if __name__ == '__main__':
     try:
-        g = SmartArmGripperAction()
+        ag = SmartArmGripperActionServer()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass

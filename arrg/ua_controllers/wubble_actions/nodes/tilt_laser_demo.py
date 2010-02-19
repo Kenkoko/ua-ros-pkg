@@ -30,13 +30,12 @@
 # Author: Anh Tran
 
 PKG = 'wubble_actions'
-NAME = 'move_laser_client'
+NAME = 'tilt_laser_demo'
 
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
 from actionlib import SimpleActionClient
-from std_msgs.msg import Float64
 from wubble_actions.msg import *
 
 
@@ -59,7 +58,7 @@ def tilt(n=1):
 if __name__ == '__main__':
     try:
         rospy.init_node(NAME, anonymous=True)
-        client = SimpleActionClient("hokuyo_laser_tilt_action", HokuyoLaserTiltAction)
+        client = SimpleActionClient('hokuyo_laser_tilt_action', HokuyoLaserTiltAction)
         client.wait_for_server()
 
         print "Tilt 10 cycles"

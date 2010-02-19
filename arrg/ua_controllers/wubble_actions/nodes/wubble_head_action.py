@@ -46,9 +46,14 @@ from pr2_controllers_msgs.msg import JointControllerState
 import math
 
 
-class WubbleHeadAction():
+class WubbleHeadActionServer():
 
     def __init__(self):
+
+        # Initialize constants
+        self.JOINTS_COUNT = 2                           # Number of joints to manage
+        self.ERROR_THRESHOLD = 0.01                     # Report success if error reaches below threshold
+        self.TIMEOUT_THRESHOLD = rospy.Duration(15.0)   # Report failure if action does not succeed within timeout threshold
 
         # Initialize new node
         rospy.init_node(NAME, anonymous=True)
@@ -71,17 +76,12 @@ class WubbleHeadAction():
         self.tf = tf.TransformListener()
 
         # Initialize point action server
-        self.result = WubbleHeadPointResult()
-        self.feedback = WubbleHeadPointFeedback()
+        self.result = WubbleHeadResult()
+        self.feedback = WubbleHeadFeedback()
         self.feedback.head_position = [self.head_pan.process_value, self.head_tilt.process_value]
-        self.server = SimpleActionServer("wubble_head_point_action", WubbleHeadPointAction, self.execute_callback)
-
-        # Initialize error & time thresholds
-        self.ERROR_THRESHOLD = 0.005                        # Report success if error reaches below threshold
-        self.TIMEOUT_THRESHOLD = rospy.Duration(15.0)       # Report failure if action does not succeed within timeout threshold
+        self.server = SimpleActionServer(NAME, WubbleHeadAction, self.execute_callback)
 
         # Reset head position
-        #rospy.wait_for_service('pr2_controller_manager/switch_controller')
         rospy.sleep(1)
         self.reset_head_position()
         rospy.loginfo("%s: Ready to accept goals", NAME)
@@ -112,12 +112,14 @@ class WubbleHeadAction():
             r.sleep()
 
 
-    def transform_target_point(self, goal_point, goal_frame):
+    def transform_target_point(self, goal_point):
         pan_target_frame = self.head_pan_frame
         tilt_target_frame = self.head_tilt_frame
         ps = PointStamped()
-        ps.header.frame_id = goal_frame
-        ps.point = goal_point
+        ps.header.frame_id = goal_point.frame_id
+        ps.point.x = goal_point.x
+        ps.point.y = goal_point.y
+        ps.point.z = goal_point.z
         
         # Initialize a tf listener to retrieve tf info (time-out in 5 seconds)
         self.tf.waitForTransform(pan_target_frame, ps.header.frame_id, rospy.Time(), rospy.Duration(5.0))
@@ -137,34 +139,43 @@ class WubbleHeadAction():
         #rospy.loginfo("%s: Tilt transformed to <%s, %s, %s> => angle %s", \
         #        NAME, tilt_target.point.x, tilt_target.point.y, tilt_target.point.z, tilt_angle)
 
-        return (pan_angle, tilt_angle)
+        return [pan_angle, tilt_angle]
 
 
     def execute_callback(self, goal):
         r = rospy.Rate(100)
         self.result.success = True
         self.result.head_position = [self.head_pan.process_value, self.head_tilt.process_value]
-        rospy.loginfo("%s: Executing look at (%s, %s, %s) of %s", \
-                        NAME, goal.point.x, goal.point.y, goal.point.z, goal.frame_id)
-
-        try:
-            # Try to convert target point to relative angles for pan & tilt
-            (target_pan, target_tilt) = self.transform_target_point(goal.point, goal.frame_id)
-        except (tf.Exception, tf.ConnectivityException, tf.LookupException):
-            rospy.loginfo("%s: Aborted: Transform Failure", NAME)
-            self.result.success = False
-            self.server.set_aborted()
-            return
+        rospy.loginfo("%s: Executing move head", NAME)
+        
+        # Initialize target joints
+        target_joints = list()
+        for i in range(self.JOINTS_COUNT):
+            target_joints.append(0.0)
+        
+        # Retrieve target joints from goal
+        if (len(goal.target_joints.joints) > 0):
+            for i in range(min(len(goal.target_joints.joints), len(target_joints))):
+                target_joints[i] = goal.target_joints.joints[i] 
+        else:
+            try:
+                # Try to convert target point to relative angles for pan & tilt
+                target_joints = self.transform_target_point(goal.target_point)
+            except (tf.Exception, tf.ConnectivityException, tf.LookupException):
+                rospy.loginfo("%s: Aborted: Transform Failure", NAME)
+                self.result.success = False
+                self.server.set_aborted()
+                return
 
 	    # Publish goal command to controllers
-        self.head_pan_pub.publish(target_pan)
-        self.head_tilt_pub.publish(target_tilt)
+        self.head_pan_pub.publish(target_joints[0])
+        self.head_tilt_pub.publish(target_joints[1])
 
         # Initialize loop variables
         start_time = rospy.Time.now()
 
-        while (math.fabs(target_pan - self.head_pan.process_value) > self.ERROR_THRESHOLD or \
-                math.fabs(target_tilt - self.head_tilt.process_value) > self.ERROR_THRESHOLD):
+        while (math.fabs(target_joints[0] - self.head_pan.process_value) > self.ERROR_THRESHOLD or \
+                math.fabs(target_joints[1] - self.head_tilt.process_value) > self.ERROR_THRESHOLD):
 		
 	        # Cancel exe if another goal was received (i.e. preempt requested)
             if self.server.is_preempt_requested():
@@ -198,7 +209,7 @@ class WubbleHeadAction():
 
 if __name__ == '__main__':
     try:
-        w = WubbleHeadAction()
+        w = WubbleHeadActionServer()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
