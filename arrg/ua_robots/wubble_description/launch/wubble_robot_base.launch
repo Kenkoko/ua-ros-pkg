@@ -1,0 +1,26 @@
+<launch>
+
+    <!-- send the wubble robot XML to param server -->
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble_base.urdf.xacro'" />
+
+    <!-- push robot_description to factory and spawn robot in gazebo -->
+    <node name="spawn_erratic" pkg="gazebo_tools" type="gazebo_model" args="-z 0.01 -p robot_description spawn robot_description" respawn="false" output="screen" />
+
+    <!-- Differential Drive and Odometry -->
+    <node name="diffdrive" pkg="wubble_plugins" type="gazebo_ros_diffdrive" respawn="true" output="screen"/>
+    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
+        <param name="odom_frame_id" value="odom"/>
+    </node>
+
+    <include file="$(find pr2_controller_manager)/controller_manager.launch" />
+
+    <!-- Laser and Camera Controllers -->
+    <rosparam file="$(find wubble_description)/controllers/erratic_controllers.yaml" command="load" />
+    <node name="laser_camera_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
+          args="laser_tilt_controller" output="screen" />
+
+    <!-- enable navigation -->
+    <include file="$(find wubble_description)/launch/wubble_move_base.launch" />
+
+</launch>
+
