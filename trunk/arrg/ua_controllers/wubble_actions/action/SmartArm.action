@@ -1,7 +1,7 @@
 # Goal - Either a set of target joints OR a target point.
 #        (If both are given, the joints will take precedent and the point will be ignored.)
-JointsCommand target_joints     # [shoulder pan, shoulder tilt, elbow tilt, wrist rotate]
-PointCommand target_point
+float64[] target_joints         # [shoulder pan, shoulder tilt, elbow tilt, wrist rotate]
+geometry_msgs/PointStamped target_point
 ---
 # Result - Success result & final arm position
 bool success

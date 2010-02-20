@@ -1,5 +1,5 @@
 # Goal - Target joints for the gripper
-JointsCommand target_joints     # [left finger, right finger]
+float64[] target_joints         # [left finger, right finger]
 ---
 # Result - Success result & final gripper position
 bool success

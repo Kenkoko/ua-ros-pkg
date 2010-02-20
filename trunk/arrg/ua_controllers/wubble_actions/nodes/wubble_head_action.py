@@ -40,7 +40,7 @@ from actionlib import SimpleActionServer
 
 from wubble_actions.msg import *
 from std_msgs.msg import Float64
-from geometry_msgs.msg import Point, PointStamped
+from geometry_msgs.msg import PointStamped
 from pr2_controllers_msgs.msg import JointControllerState
 
 import math
@@ -112,29 +112,23 @@ class WubbleHeadActionServer():
             r.sleep()
 
 
-    def transform_target_point(self, goal_point):
+    def transform_target_point(self, point):
         pan_target_frame = self.head_pan_frame
         tilt_target_frame = self.head_tilt_frame
-        ps = PointStamped()
-        ps.header.frame_id = goal_point.frame_id
-        ps.point.x = goal_point.x
-        ps.point.y = goal_point.y
-        ps.point.z = goal_point.z
         
-        # Initialize a tf listener to retrieve tf info (time-out in 5 seconds)
-        self.tf.waitForTransform(pan_target_frame, ps.header.frame_id, rospy.Time(), rospy.Duration(5.0))
-        self.tf.waitForTransform(tilt_target_frame, ps.header.frame_id, rospy.Time(), rospy.Duration(5.0))
+        # Wait for tf info (time-out in 5 seconds)
+        self.tf.waitForTransform(pan_target_frame, point.header.frame_id, rospy.Time(), rospy.Duration(5.0))
+        self.tf.waitForTransform(tilt_target_frame, point.header.frame_id, rospy.Time(), rospy.Duration(5.0))
 
-        # Transform target point to pan reference & retrieve the relative pan angle
-        pan_target = self.tf.transformPoint(pan_target_frame, ps)
+        # Transform target point to pan reference frame & retrieve the pan angle
+        pan_target = self.tf.transformPoint(pan_target_frame, point)
         pan_angle = math.atan2(pan_target.point.y, pan_target.point.x)
         #rospy.loginfo("%s: Pan transformed to <%s, %s, %s> => angle %s", \
         #        NAME, pan_target.point.x, pan_target.point.y, pan_target.point.z, pan_angle)
 
-
-        # Transform target point to tilt reference & retrieve the relative tilt angle
-        tilt_target = self.tf.transformPoint(tilt_target_frame, ps)
-        tilt_angle = math.atan2(pan_target.point.z,
+        # Transform target point to tilt reference frame & retrieve the tilt angle
+        tilt_target = self.tf.transformPoint(tilt_target_frame, point)
+        tilt_angle = math.atan2(tilt_target.point.z,
                 math.sqrt(math.pow(tilt_target.point.x, 2) + math.pow(tilt_target.point.y, 2)))
         #rospy.loginfo("%s: Tilt transformed to <%s, %s, %s> => angle %s", \
         #        NAME, tilt_target.point.x, tilt_target.point.y, tilt_target.point.z, tilt_angle)
@@ -154,12 +148,12 @@ class WubbleHeadActionServer():
             target_joints.append(0.0)
         
         # Retrieve target joints from goal
-        if (len(goal.target_joints.joints) > 0):
-            for i in range(min(len(goal.target_joints.joints), len(target_joints))):
-                target_joints[i] = goal.target_joints.joints[i] 
+        if (len(goal.target_joints) > 0):
+            for i in range(min(len(goal.target_joints), len(target_joints))):
+                target_joints[i] = goal.target_joints[i] 
         else:
             try:
-                # Try to convert target point to relative angles for pan & tilt
+                # Try to convert target point to pan & tilt angles
                 target_joints = self.transform_target_point(goal.target_point)
             except (tf.Exception, tf.ConnectivityException, tf.LookupException):
                 rospy.loginfo("%s: Aborted: Transform Failure", NAME)
@@ -203,7 +197,6 @@ class WubbleHeadActionServer():
             self.wait_for_latest_controller_states(rospy.Duration(2.0))
             self.result.head_position = [self.head_pan.process_value, self.head_tilt.process_value]
             self.server.set_succeeded(self.result)
-
 
 
 

@@ -40,6 +40,7 @@ from actionlib import SimpleActionServer
 
 from wubble_actions.msg import *
 from std_msgs.msg import Float64
+from geometry_msgs.msg import PointStamped
 from pr2_controllers_msgs.msg import JointControllerState
 
 import math
@@ -156,9 +157,9 @@ class SmartArmActionServer():
             target_joints.append(0.0)
         
         # Retrieve target joints from goal
-        if (len(goal.target_joints.joints) > 0):
-            for i in range(min(len(goal.target_joints.joints), len(target_joints))):
-                target_joints[i] = goal.target_joints.joints[i] 
+        if (len(goal.target_joints) > 0):
+            for i in range(min(len(goal.target_joints), len(target_joints))):
+                target_joints[i] = goal.target_joints[i] 
         else:
             # TODO: Use IK to plan a set of target joints for arm
             target_joints = [0.0, 1.972222, -1.972222, 0.0]
