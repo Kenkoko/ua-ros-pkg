@@ -120,9 +120,9 @@ class SmartArmGripperActionServer():
             target_joints.append(0.0)
 
         # Retrieve target joints from goal
-        if (len(goal.target_joints.joints) > 0):
-            for i in range(min(len(goal.target_joints.joints), len(target_joints))):
-                target_joints[i] = goal.target_joints.joints[i] 
+        if (len(goal.target_joints) > 0):
+            for i in range(min(len(goal.target_joints), len(target_joints))):
+                target_joints[i] = goal.target_joints[i] 
         else:
             rospy.loginfo("%s: Aborted: Invalid Goal", NAME)
             self.result.success = False

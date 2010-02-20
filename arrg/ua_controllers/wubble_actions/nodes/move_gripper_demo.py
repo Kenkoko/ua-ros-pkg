@@ -43,8 +43,7 @@ def move_gripper(left_finger, right_finger):
 
     # Creates a goal to send to the action server.
     goal = SmartArmGripperGoal()
-    goal.target_joints = JointsCommand()
-    goal.target_joints.joints = [left_finger, right_finger]
+    goal.target_joints = [left_finger, right_finger]
 
     # Sends the goal to the action server.
     client.send_goal(goal)

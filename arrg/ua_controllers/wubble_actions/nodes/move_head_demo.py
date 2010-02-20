@@ -36,6 +36,7 @@ import roslib; roslib.load_manifest(PKG)
 import rospy
 
 from actionlib import SimpleActionClient
+from geometry_msgs.msg import PointStamped
 from wubble_actions.msg import *
 
 
@@ -43,8 +44,7 @@ def move_head(head_pan, head_tilt):
 
     # Creates a goal to send to the action server.
     goal = WubbleHeadGoal()
-    goal.target_joints = JointsCommand()
-    goal.target_joints.joints = [head_pan, head_tilt]
+    goal.target_joints = [head_pan, head_tilt]
 
     # Sends the goal to the action server.
     client.send_goal(goal)
@@ -60,10 +60,12 @@ def look_at(frame_id, x, y, z):
 
     # Creates a goal to send to the action server.
     goal = WubbleHeadGoal()
-    goal.target_point.x = x
-    goal.target_point.y = y
-    goal.target_point.z = z
-    goal.target_point.frame_id = frame_id
+    goal.target_point = PointStamped()
+    goal.target_point.header.stamp = rospy.Time.now()
+    goal.target_point.header.frame_id = frame_id
+    goal.target_point.point.x = x
+    goal.target_point.point.y = y
+    goal.target_point.point.z = z
 
     # Sends the goal to the action server.
     client.send_goal(goal)

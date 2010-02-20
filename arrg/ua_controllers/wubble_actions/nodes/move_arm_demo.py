@@ -36,6 +36,7 @@ import roslib; roslib.load_manifest(PKG)
 import rospy
 
 from actionlib import SimpleActionClient
+from geometry_msgs.msg import PointStamped
 from wubble_actions.msg import *
 
 
@@ -43,8 +44,7 @@ def move_arm(shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate):
 
     # Creates a goal to send to the action server.
     goal = SmartArmGoal()
-    goal.target_joints = JointsCommand()
-    goal.target_joints.joints = [shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate]
+    goal.target_joints = [shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate]
 
     # Sends the goal to the action server.
     client.send_goal(goal)
@@ -56,14 +56,16 @@ def move_arm(shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate):
     return client.get_result()
 
 
-def reach(frame_id, x, y, z):
+def reach_at(frame_id, x, y, z):
 
     # Creates a goal to send to the action server.
     goal = SmartArmGoal()
-    goal.target_point.x = x
-    goal.target_point.y = y
-    goal.target_point.z = z
-    goal.target_point.frame_id = frame_id
+    goal.target_point = PointStamped()
+    goal.target_point.header.stamp = rospy.Time.now()
+    goal.target_point.header.frame_id = frame_id
+    goal.target_point.point.x = x
+    goal.target_point.point.y = y
+    goal.target_point.point.z = z
 
     # Sends the goal to the action server.
     client.send_goal(goal)
