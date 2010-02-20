@@ -20,7 +20,6 @@ with code borrowed from various sources
 #include "sensor_msgs/Image.h"
 #include "image_transport/image_transport.h"
 #include "geometry_msgs/Polygon.h"
-#include "wubble_vision/bounding_box.h"
 #include "cv_bridge/CvBridge.h"
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -50,7 +49,6 @@ int rmin, gmin, bmin, rmax, gmax, bmax;
 
 IplImage* frame,*r,*g,*b;
 int i, bin_w, c;
-/**/
 
 void on_mouse( int event, int x, int y, int flags, void* param )
 {
@@ -124,7 +122,7 @@ Tracker(ros::NodeHandle &n, char** argv) :
 	rmax = 256;
 	gmax = 256;
 	bmax = 256;
-/**/	cvNamedWindow( "Histogram", 1 );
+*/	cvNamedWindow( "Histogram", 1 );
 	cvNamedWindow( "CamShiftDemo", 1 );
 	cvSetMouseCallback( "CamShiftDemo", on_mouse, 0 );
 /*	cvCreateTrackbar( "Rmin", "CamShiftDemo", &rmin, 256, 0 );
@@ -133,7 +131,7 @@ Tracker(ros::NodeHandle &n, char** argv) :
 	cvCreateTrackbar( "Rmax", "CamShiftDemo", &rmax, 256, 0 );
 	cvCreateTrackbar( "Gmax", "CamShiftDemo", &gmax, 256, 0 );
 	cvCreateTrackbar( "Bmax", "CamShiftDemo", &bmax, 256, 0 );
-/**/
+*/
 	args = argv;
 	show_image = (bool) (((std::string) args[1])=="true");
 /*	std::string red = args[3];
@@ -142,7 +140,7 @@ Tracker(ros::NodeHandle &n, char** argv) :
 	bound_pub_ = n_.advertise<geometry_msgs::Polygon>("/color_tracking/boundbox_"+red+"_"+green+"_"+blue,1);
 	if( show_image )
 		image_pub_ = it_.advertise("/color_tracking/image_"+red+"_"+green+"_"+blue,1);
-/**/
+*/
 //	cvNamedWindow("Image window");
 	image_sub_ = it_.subscribe(args[2], 1, &Tracker::imageCallback, this);
 
@@ -204,17 +202,17 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	/*		cvSetImageROI( mask, selection );
 			for( int i = 0; i < 3; i++) {
 				cvSetImageROI( planes[i], selection );}
-	/**/		cvCalcHist( planes, fg_hist, 0, mask );
+	*/		cvCalcHist( planes, fg_hist, 0, mask );
 			cvGetMinMaxHistValue( fg_hist, 0, &max_val, 0, 0 );
 			cvConvertScale( fg_hist->bins, fg_hist->bins, max_val ? 255. / max_val : 0., 0 );
 			cvNot(mask,mask);
-	/**/		cvCalcHist( planes, bg_hist, 0, mask );
+			cvCalcHist( planes, bg_hist, 0, mask );
 			cvGetMinMaxHistValue( bg_hist, 0, &max_val, 0, 0 );
 			cvConvertScale( bg_hist->bins, bg_hist->bins, max_val ? 255. / max_val : 0., 0 );
 	/*		for( int i = 0; i < 3; i++) {
 				cvResetImageROI( planes[i] );}
 			cvResetImageROI( mask );
-	/**/		track_window = selection;
+	*/		track_window = selection;
 			track_object = 1;
 		}
 
@@ -248,7 +246,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 				}
 			}
 		}
-/**/
+*/
 		cvCamShift( backproject, track_window,
 			    cvTermCriteria( CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 10, 1 ),
 			    &track_comp, &track_box );
@@ -259,7 +257,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 		if( !image->origin )
 			track_box.angle = -track_box.angle;
 		cvEllipseBox( image, track_box, CV_RGB(255,0,0), 3, CV_AA, 0 );
-/**/
+
 	}
 
 	if( select_object && selection.width > 0 && selection.height > 0 )
@@ -268,7 +266,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 		cvXorS( image, cvScalarAll(255), image, 0 );
 		cvResetImageROI( image );
 	}
-/**/
+
 
 	if( show_image ){
 		cvShowImage( "CamShiftDemo", image );
@@ -286,7 +284,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	{
 		ROS_ERROR("error");
 	}
-/**/
+*/
 //	cvReleaseImage(&frame);
 	cvReleaseImage(&image);
 	cvReleaseImage(&mask);
@@ -295,7 +293,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	cvReleaseImage(&r);
 	cvReleaseImage(&g);
 	cvReleaseImage(&b);
-/**/
 
 }
 
