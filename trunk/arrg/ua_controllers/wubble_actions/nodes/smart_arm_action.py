@@ -39,6 +39,7 @@ import tf
 from actionlib import SimpleActionServer
 
 from wubble_actions.msg import *
+from smart_arm_kinematics.srv import SmartArmIK
 from std_msgs.msg import Float64
 from geometry_msgs.msg import PointStamped
 from pr2_controllers_msgs.msg import JointControllerState
@@ -144,6 +145,17 @@ class SmartArmActionServer():
             r.sleep()
 
 
+    def transform_target_point(self, point):
+        rospy.loginfo("%s: Retrieving IK solutions", NAME)
+        rospy.wait_for_service('smart_arm_ik_service')
+        ik_service = rospy.ServiceProxy('smart_arm_ik_service', SmartArmIK)
+        resp = ik_service(point)
+        if (resp and resp.success):
+            return resp.solutions[0:4]
+        else:
+            raise Exception, "Unable to obtain IK solutions."
+
+
     def execute_callback(self, goal):
         r = rospy.Rate(100)
         self.result.success = True
@@ -161,8 +173,14 @@ class SmartArmActionServer():
             for i in range(min(len(goal.target_joints), len(target_joints))):
                 target_joints[i] = goal.target_joints[i] 
         else:
-            # TODO: Use IK to plan a set of target joints for arm
-            target_joints = [0.0, 1.972222, -1.972222, 0.0]
+            try:
+                # Convert target point to target joints (find an IK solution)
+                target_joints = self.transform_target_point(goal.target_point)
+            except (Exception, tf.Exception, tf.ConnectivityException, tf.LookupException):
+                rospy.loginfo("%s: Aborted: IK Transform Failure", NAME)
+                self.result.success = False
+                self.server.set_aborted()
+                return
 
         # Publish goal to controllers
         self.shoulder_pan_pub.publish(target_joints[0])
