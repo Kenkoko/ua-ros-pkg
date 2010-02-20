@@ -9,8 +9,6 @@
     <include filename="$(find erratic_description)/urdf/erratic_base.xacro" />
     <include filename="$(find hokuyo_urg_description)/urdf/hokuyo_urg.xacro" />
     
-    <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
-    
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
         
