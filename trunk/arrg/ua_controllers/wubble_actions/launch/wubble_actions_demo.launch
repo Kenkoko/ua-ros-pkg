@@ -1,0 +1,16 @@
+<launch>
+
+    <!-- load the world environment -->
+    <include file="$(find wubble_environments)/launch/actions_demo_blocks_world.launch" />
+
+    <!-- spawn our erratic robot -->
+    <include file="$(find wubble_description)/launch/wubble_robot.launch"/>
+
+    <!-- start rviz with gmapping configs -->
+    <node pkg="rviz" type="rviz" name="rviz" />
+
+    <!-- start actions demo script -->
+    <node name="actions_demo" pkg="wubble_actions" type="actions_demo.py" output="screen" />
+
+</launch>
+
