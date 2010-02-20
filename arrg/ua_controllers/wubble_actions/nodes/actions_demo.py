@@ -41,8 +41,7 @@ from wubble_actions.msg import *
 
 def move_head(head_pan, head_tilt):
     goal = WubbleHeadGoal()
-    goal.target_joints = JointsCommand()
-    goal.target_joints.joints = [head_pan, head_tilt]
+    goal.target_joints = [head_pan, head_tilt]
 
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
@@ -52,10 +51,12 @@ def move_head(head_pan, head_tilt):
 
 def look_at(frame_id, x, y, z):
     goal = WubbleHeadGoal()
-    goal.target_point.x = x
-    goal.target_point.y = y
-    goal.target_point.z = z
-    goal.target_point.frame_id = frame_id
+    goal.target_point = PointStamped()
+    goal.target_point.header.stamp = rospy.Time.now()
+    goal.target_point.header.frame_id = frame_id
+    goal.target_point.point.x = x
+    goal.target_point.point.y = y
+    goal.target_point.point.z = z
 
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
@@ -65,8 +66,7 @@ def look_at(frame_id, x, y, z):
 
 def move_arm(shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate):
     goal = SmartArmGoal()
-    goal.target_joints = JointsCommand()
-    goal.target_joints.joints = [shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate]
+    goal.target_joints = [shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate]
 
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
@@ -76,10 +76,12 @@ def move_arm(shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate):
 
 def reach_at(frame_id, x, y, z):
     goal = SmartArmGoal()
-    goal.target_point.x = x
-    goal.target_point.y = y
-    goal.target_point.z = z
-    goal.target_point.frame_id = frame_id
+    goal.target_point = PointStamped()
+    goal.target_point.header.stamp = rospy.Time.now()
+    goal.target_point.header.frame_id = frame_id
+    goal.target_point.point.x = x
+    goal.target_point.point.y = y
+    goal.target_point.point.z = z
 
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
@@ -89,8 +91,7 @@ def reach_at(frame_id, x, y, z):
 
 def move_gripper(left_finger, right_finger):
     goal = SmartArmGripperGoal()
-    goal.target_joints = JointsCommand()
-    goal.target_joints.joints = [left_finger, right_finger]
+    goal.target_joints = [left_finger, right_finger]
 
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
@@ -129,8 +130,8 @@ if __name__ == '__main__':
         else:
             print "Result: " + str(result.tilt_position)
 
-        print "Reset arm to cobra"
-        result = move_arm(0.0, 1.972222, -1.972222, 0.0);
+        print "Reach point [0.3, 0.0, 0.3]"
+        result = reach_at("/arm_base_link", 0.3, 0.0, 0.3)
         if result.success == False:
             print "Action failed"
         else:
@@ -138,7 +139,7 @@ if __name__ == '__main__':
                 str(result.arm_position[2]) + ", " + str(result.arm_position[3]) + "]"
 
         print "Close gripper"
-        result = move_gripper(-1.0, 1.0);
+        result = move_gripper(-2.5, 2.5);
         if result.success == False:
             print "Action failed"
         else:
