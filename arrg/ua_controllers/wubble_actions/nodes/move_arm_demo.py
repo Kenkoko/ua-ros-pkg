@@ -84,7 +84,15 @@ if __name__ == '__main__':
         client.wait_for_server()
 
         print "Straighten arm"
-        result = move_arm(0.0, 0, 0, 0.0);
+        result = move_arm(0.0, 0.0, 0.0, 0.0);
+        if result.success == False:
+            print "Action failed"
+        else:
+            print "Result: [" + str(result.arm_position[0]) + ", " + str(result.arm_position[1]) + \
+                str(result.arm_position[2]) + ", " + str(result.arm_position[3]) + "]"
+
+        print "Reach point [0.3, 0.0, 0.3]"
+        result = reach_at("/arm_base_link", 0.3, 0.0, 0.3)
         if result.success == False:
             print "Action failed"
         else:
