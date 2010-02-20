@@ -34,6 +34,7 @@ PKG = 'wubble_teleop'
 import roslib; roslib.load_manifest(PKG)
 
 import time
+import math
 from threading import Thread
 
 import rospy
@@ -44,8 +45,15 @@ from pr2_controllers_msgs.msg import JointControllerState
 class MoveHeadXbox():
     def __init__(self):
         self.is_running = True
+        self.pan_range = [-math.pi/2, math.pi/2]        
+        self.tilt_range = [-1.221730476, 0.610865238]
+
         self.head_pan = 0.0
         self.head_tilt = 0.0
+
+        self.actual_pan = 0.0
+        self.actual_tilt = 0.0
+
         self.joy_data = None
        
         self.head_pan_pub = rospy.Publisher('head_pan_controller/command', Float64)
@@ -58,14 +66,20 @@ class MoveHeadXbox():
     def read_joystick_data(self, data):
         self.joy_data = data
 
-    def bound(self, number):
-        if (number < -1): return -1
-        elif (number > 1): return 1
+    def bound(self, number, limits):
+        if (number < limits[0]): return limits[0]
+        elif (number > limits[1]): return limits[1]
         else: return number 
 
+    def bound_pan(self, number):
+        return self.bound(number, self.pan_range)
+
+    def bound_tilt(self, number):
+        return self.bound(number, self.tilt_range)
+
     def set_head_position(self, delta_pan, delta_tilt):
-        self.head_pan = self.bound(delta_pan * 0.08 + self.head_pan)
-        self.head_tilt = self.bound(delta_tilt * 0.1 + self.head_tilt)
+        self.head_pan = self.bound_pan(delta_pan * 0.4 + self.actual_pan)
+        self.head_tilt = self.bound_tilt(delta_tilt * 0.4 + self.actual_tilt)
 
     def reset_head_position(self):
         self.head_pan_pub.publish(0.0)
@@ -74,14 +88,10 @@ class MoveHeadXbox():
         self.head_tilt = 0.0
 
     def read_current_pan(self, data):
-        pass
-        #self.head_pan = data.actual.positions[0]
-        #self.head_tilt = data.actual.positions[1]
+        self.actual_pan = data.process_value
 
     def read_current_tilt(self, data):
-        pass
-        #self.head_pan = data.actual.positions[0]
-        #self.head_tilt = data.actual.positions[1]
+        self.actual_tilt = data.process_value
 
     def update_head_position(self):
         while self.is_running:
@@ -90,15 +100,14 @@ class MoveHeadXbox():
                     self.reset_head_position()
                     print "Attempting to reset head position"
                 else: 
-                    self.set_head_position(self.joy_data.axes[2], -1.0 * self.joy_data.axes[3])
+                    self.set_head_position(self.joy_data.axes[2], self.joy_data.axes[3])
             
                 #if self.joy_data.buttons[7]:
-                print "PUB"
+                print self.head_pan, self.head_tilt
                 self.head_pan_pub.publish(self.head_pan)
                 self.head_tilt_pub.publish(self.head_tilt)
             
             time.sleep(0.1)
-
 
 if __name__ == '__main__':
     try:
