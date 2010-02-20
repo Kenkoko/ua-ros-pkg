@@ -11,8 +11,6 @@
     <include filename="$(find hokuyo_urg_description)/urdf/hokuyo_urg.xacro" />
     <include filename="$(find videre_stoc_description)/urdf/videre_stoc.xacro" />
     
-    <include filename="$(find pr2_defs)/calibration/default_cal.xml" />
-    
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
         

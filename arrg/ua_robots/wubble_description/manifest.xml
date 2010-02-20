@@ -9,29 +9,33 @@
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/wubble_description</url>
 
+    <depend package="xacro" />
+
     <depend package="erratic_description" />
     <depend package="smart_arm_description" />
     <depend package="hokuyo_urg_description" />
     <depend package="videre_stoc_description" />
 
-    <depend package="wubble_plugins"/>
-    <depend package="wubble_actions"/>
-    <depend package="robot_state_publisher"/>
-    <depend package="pr2_controller_manager"/>
+    <depend package="gazebo"/>
+    <depend package="gazebo_tools" />
     <depend package="gazebo_worlds"/>
-    <depend package="2dnav_pr2"/>
+    <depend package="gazebo_plugins"/>
+    <depend package="wubble_plugins"/>
+    <depend package="wubble_environments"/>
+
     <depend package="fake_localization"/>
-
-    <depend package="robot_mechanism_controllers"/>
-    <depend package="pr2_mechanism_controllers"/>
-
-    <!-- Need these for gazebo -->
-    <depend package="pr2_gazebo_plugins"/>
-    <depend package="pr2_ogre" />
+    <depend package="move_base"/>
+    <depend package="move_base_client"/>
+    <depend package="map_server"/>
 
     <depend package="stereo_image_proc"/>
+    <depend package="robot_self_filter"/>
+    <depend package="laser_filters"/>
+    <depend package="wubble_actions"/>
 
-    <depend package="pr2_description"/>
-    <depend package="pr2_controller_configuration_gazebo"/>
-
+    <depend package="pr2_defs" />
+    <depend package="pr2_description" />
+    <depend package="pr2_controller_manager"/>
+    <depend package="pr2_gazebo_plugins"/>
+    <depend package="pr2_ogre" />
 </package>

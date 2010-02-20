@@ -14,9 +14,9 @@
 
     <include file="$(find pr2_controller_manager)/controller_manager.launch" />
 
-    <!-- Laser and Camera Controllers -->
+    <!-- Laser Controller -->
     <rosparam file="$(find wubble_description)/controllers/erratic_controllers.yaml" command="load" />
-    <node name="laser_camera_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
+    <node name="laser_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
           args="laser_tilt_controller" output="screen" />
 
     <!-- enable navigation -->
