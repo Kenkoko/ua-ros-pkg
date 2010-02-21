@@ -18,6 +18,7 @@
   <depend package="ua_controller_msgs"/>
   <depend package="actionlib"/>
   <depend package="tf"/>
+  <depend package="smart_arm_kinematics"/>
 
 </package>
 
