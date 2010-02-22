@@ -5,4 +5,4 @@ source /opt/ros/installed/setup.sh
 echo "source ~/ros/setup.sh" >> ~/.bashrc
 echo "export ROBOT=sim" >> ~/.bashrc
 source ~/.bashrc
-rosmake wubble
+~/ros/ua-ros-pkg/arrg/make-all.sh
