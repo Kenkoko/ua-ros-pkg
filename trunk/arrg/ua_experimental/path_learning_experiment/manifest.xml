@@ -1,0 +1,21 @@
+<package>
+    <description brief="An experiment in learning path schemas">
+
+     path_learning_experiment
+
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/path_learning_experiment</url>
+
+    <depend package="rospy"/>
+    <depend package="actionlib"/>    
+
+    <depend package="std_msgs"/>
+    <depend package="sensor_msgs"/>
+    <depend package="geometry_msgs"/>
+    <depend package="move_base_msgs"/>
+</package>
+
+

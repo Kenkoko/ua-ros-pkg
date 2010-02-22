@@ -1,0 +1,12 @@
+<stack>
+    <description brief="Experimental packages - unreliable and/or idiosyncratic">
+    Experimental packages - unreliable and/or idiosyncratic
+    </description>
+    <author>Maintained by Daniel Hewlett</author>
+    <license>BSD</license>  
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/ua_experimental</url>
+
+    <depend stack="ros" />
+    <depend stack="ua_apps" />
+</stack>

@@ -1,0 +1,31 @@
+<launch>
+
+    <param name="/use_sim_time" value="true" />
+
+    <!-- put world XML description on param server -->
+    <param name="/gazebo_world_description" textfile="$(find wubble_environments)/worlds/empty_blocks.world" />
+
+    <!-- start gazebo with wubbleworld -->
+    <node name="gazebo" pkg="gazebo" type="gazebo" args="$(find wubble_environments)/worlds/empty_blocks.world" respawn="false" >
+        <env name="LD_LIBRARY_PATH" value="$(find gazebo_plugins)/lib:$(find pr2_gazebo_plugins)/lib:$(find gazebo)/gazebo/lib:$(optenv LD_LIBRARY_PATH)" />
+        <env name="GAZEBO_RESOURCE_PATH" value="$(find pr2_ogre):$(find pr2_defs):$(find pr2_description):$(find gazebo_worlds):$(find gazebo)/gazebo/share/gazebo:$(find erratic_description):$(find smart_arm_description):$(find wubble_description):$(find wubble_environments)" />
+        <env name="OGRE_RESOURCE_PATH" value="$(find ogre)/ogre/lib/OGRE" />
+    </node>
+
+    <!-- start the map server -->
+    <node name="map_node" pkg="map_server" type="map_server" args="$(find wubble_environments)/maps/empty_map.yaml" respawn="false" output="screen" />
+
+    <!-- spawn the robot -->
+    <include file="$(find wubble_description)/launch/wubble_robot_base.launch" />
+
+    <!-- the average_distance laser filter -->
+    <node pkg="path_learning_experiment" type="simple_laser_filter.py" name="simple_laser_filter"/>
+
+    <!-- node that generates random goals for the robot -->
+<!--    <node pkg="path_learning_experiment" type="random_goal_generator.py" name="random_goal_generator"/>-->
+
+    <!-- rviz with custom settings -->
+    <node pkg="rviz" type="rviz" name="rviz" 
+          args="-d $(find path_learning_experiment)/rviz/experiment.vcg"/>
+
+</launch>
