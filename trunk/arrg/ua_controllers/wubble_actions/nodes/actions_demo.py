@@ -46,13 +46,16 @@ def move_head(head_pan, head_tilt):
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
 
-    return client.get_result()
+    result = client.get_result()
+    if result.success == False:
+        print "Action failed"
+    else:
+        print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
 
 
 def look_at(frame_id, x, y, z):
     goal = WubbleHeadGoal()
     goal.target_point = PointStamped()
-    goal.target_point.header.stamp = rospy.Time.now()
     goal.target_point.header.frame_id = frame_id
     goal.target_point.point.x = x
     goal.target_point.point.y = y
@@ -61,7 +64,11 @@ def look_at(frame_id, x, y, z):
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
 
-    return client.get_result()
+    result = client.get_result()
+    if result.success == False:
+        print "Action failed"
+    else:
+        print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
 
 
 def move_arm(shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate):
@@ -71,13 +78,17 @@ def move_arm(shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate):
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
 
-    return client.get_result()
+    result = client.get_result()
+    if result.success == False:
+        print "Action failed"
+    else:
+        print "Result: [" + str(result.arm_position[0]) + ", " + str(result.arm_position[1]) + \
+            str(result.arm_position[2]) + ", " + str(result.arm_position[3]) + "]"
 
 
 def reach_at(frame_id, x, y, z):
     goal = SmartArmGoal()
     goal.target_point = PointStamped()
-    goal.target_point.header.stamp = rospy.Time.now()
     goal.target_point.header.frame_id = frame_id
     goal.target_point.point.x = x
     goal.target_point.point.y = y
@@ -86,7 +97,12 @@ def reach_at(frame_id, x, y, z):
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
 
-    return client.get_result()
+    result = client.get_result()
+    if result.success == False:
+        print "Action failed"
+    else:
+        print "Result: [" + str(result.arm_position[0]) + ", " + str(result.arm_position[1]) + \
+            str(result.arm_position[2]) + ", " + str(result.arm_position[3]) + "]"
 
 
 def move_gripper(left_finger, right_finger):
@@ -96,7 +112,11 @@ def move_gripper(left_finger, right_finger):
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
 
-    return client.get_result()
+    result = client.get_result()
+    if result.success == False:
+        print "Action failed"
+    else:
+        print "Result: [" + str(result.gripper_position[0]) + ", " + str(result.gripper_position[1]) + "]"
 
 
 def tilt_laser(n=1):
@@ -106,7 +126,11 @@ def tilt_laser(n=1):
     client.send_goal(goal)
     client.wait_for_goal_to_finish()
 
-    return client.get_result()
+    result = client.get_result()
+    if result.success == False:
+        print "Action failed"
+    else:
+        print "Result: " + str(result.tilt_position)
 
 
 
@@ -116,35 +140,23 @@ if __name__ == '__main__':
         client = SimpleActionClient("wubble_head_action", WubbleHeadAction)
         client.wait_for_server()
 
-        print "Look forward and slightly up"
-        result = look_at("/base_footprint", 5.0, 0.0, 3.0);
-        if result.success == False:
-            print "Action failed"
-        else:
-            print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
+        print "Laser Tilt [2 cycles]"
+        tilt(2)
 
-        print "Tilt 3 cycles"
-        result = tilt(3);
-        if result.success == False:
-            print "Action failed"
-        else:
-            print "Result: " + str(result.tilt_position)
+        print "Look down"
+        look_at("/arm_base_link", 0.5, 0.0, -0.3);
 
-        print "Reach point [0.3, 0.0, 0.3]"
-        result = reach_at("/arm_base_link", 0.3, 0.0, 0.3)
-        if result.success == False:
-            print "Action failed"
-        else:
-            print "Result: [" + str(result.arm_position[0]) + ", " + str(result.arm_position[1]) + \
-                str(result.arm_position[2]) + ", " + str(result.arm_position[3]) + "]"
+        print "Open gripper"
+        move_gripper(2.0, -2.0);
+
+        print "Reach point"
+        reach_at("/arm_base_link", 0.2, -0.2, -0.02)
 
         print "Close gripper"
-        result = move_gripper(-2.5, 2.5);
-        if result.success == False:
-            print "Action failed"
-        else:
-            print "Result: [" + str(result.gripper_position[0]) + ", " + str(result.gripper_position[1]) + "]"
+        move_gripper(-1.5, 1.5)  # -2.5, 2.5
 
+        print "Reach point"
+        reach_at("/arm_base_link", 0.5, 0.1, -0.3)
 
     except rospy.ROSInterruptException:
         pass

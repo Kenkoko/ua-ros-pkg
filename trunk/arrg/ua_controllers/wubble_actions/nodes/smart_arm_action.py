@@ -54,7 +54,7 @@ class SmartArmActionServer():
         # Initialize constants
         self.JOINTS_COUNT = 4                           # Number of joints to manage
         self.ERROR_THRESHOLD = 0.1                      # Report success if error reaches below threshold
-        self.TIMEOUT_THRESHOLD = rospy.Duration(17.0)   # Report failure if action does not succeed within timeout threshold
+        self.TIMEOUT_THRESHOLD = rospy.Duration(15.0)   # Report failure if action does not succeed within timeout threshold
 
         # Initialize new node
         rospy.init_node(NAME + 'server', anonymous=True)
@@ -147,7 +147,7 @@ class SmartArmActionServer():
 
     def transform_target_point(self, point):
         rospy.loginfo("%s: Retrieving IK solutions", NAME)
-        rospy.wait_for_service('smart_arm_ik_service')
+        rospy.wait_for_service('smart_arm_ik_service', 10)
         ik_service = rospy.ServiceProxy('smart_arm_ik_service', SmartArmIK)
         resp = ik_service(point)
         if (resp and resp.success):

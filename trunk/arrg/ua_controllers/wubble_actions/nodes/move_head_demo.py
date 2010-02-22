@@ -61,7 +61,7 @@ def look_at(frame_id, x, y, z):
     # Creates a goal to send to the action server.
     goal = WubbleHeadGoal()
     goal.target_point = PointStamped()
-    goal.target_point.header.stamp = rospy.Time.now()
+    #goal.target_point.header.stamp = rospy.Time.now()
     goal.target_point.header.frame_id = frame_id
     goal.target_point.point.x = x
     goal.target_point.point.y = y
