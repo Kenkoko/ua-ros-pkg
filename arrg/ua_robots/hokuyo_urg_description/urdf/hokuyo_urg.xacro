@@ -30,7 +30,7 @@
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="${M_PI/2} 0 ${M_PI/2}" />
                 <geometry>
-                    <mesh filename="package://hokuyo_urg_description/meshes/hokuyo_urg.stl"/>
+                    <mesh filename="package://hokuyo_urg_description/meshes/convex/hokuyo_urg_convex.stlb"/>
                 </geometry>
             </collision>
         </link>

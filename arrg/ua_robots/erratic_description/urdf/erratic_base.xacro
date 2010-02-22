@@ -238,7 +238,7 @@
         <gazebo reference="caster_wheel_link">
             <elem key="mu1" value="50.0" />
             <elem key="mu2" value="50.0" />
-            <elem key="kp"  value="100000000.0" />
+            <elem key="kp"  value="1000000.0" />
             <elem key="kd"  value="1.0" />
         </gazebo>
 

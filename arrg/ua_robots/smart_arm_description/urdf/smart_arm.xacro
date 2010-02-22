@@ -6,17 +6,97 @@
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
     
     <macro name="smart_arm" params="parent *origin">
+        <!-- ****** JOINT DEFINITIONS ****** -->
+        
+        <!-- Arm's base joint -->
         <joint name="arm_base_joint" type="fixed">
             <insert_block name="origin" /> 
             <parent link="${parent}"/>
             <child link="arm_base_link"/>
         </joint>
         
-        <!-- Arm's base link -->
+        <!-- Shoulder pan joint -->
+        <joint name="shoulder_pan_joint" type="revolute" >
+            <origin xyz="-0.0075 0 0.025" rpy="0 0 0" />
+            <parent link="arm_base_link" />
+            <child link="arm_shoulder_pan_link"/>
+            
+            <axis xyz="0 0 1"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Shoulder tilt joint -->
+        <joint name="shoulder_tilt_joint" type="revolute">
+            <origin xyz="${0.105 - 0.01 - 0.03085/2} 0 ${0.01 + 0.05 - 0.031/2}" rpy="0 0 0" />
+            <parent link="arm_shoulder_pan_link"/>
+            <child link="arm_shoulder_tilt_link" />
+            
+            <axis xyz="0 -1 0"/>
+            <limit  lower="-1.04719755" upper="1.972222" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.04719755+0.1}" soft_upper_limit="${1.972222-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Elbow tilt joint -->
+        <joint name="elbow_tilt_joint" type="revolute">
+            <origin xyz="${0.04 - 0.01 + 0.0015 + 0.105 + 0.055 - 0.01} 0 0" rpy="0 0 0" />
+            <parent link="arm_shoulder_tilt_link"/>
+            <child link="arm_elbow_tilt_link" />
+            
+            <axis xyz="0 -1 0"/>
+            <!-- From -113 to 108 degrees -->
+            <limit  lower="-1.972222" upper="1.8849556" effort="300" velocity="1.17" />
+            <dynamics damping="50" friction="1"/>
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.972222+0.1}" soft_upper_limit="${1.8849556-0.1}" />
+        </joint>
+        
+        <!-- Wrist rotate joint -->
+        <joint name="wrist_rotate_joint" type="revolute">
+            <origin xyz="${0.08 - 0.01} 0 ${0.05 - 0.0115 - 0.0155}" rpy="0 0 0" />
+            <parent link="arm_elbow_tilt_link"/>
+            <child link="arm_wrist_rotate_link" />
+            
+            <axis xyz="-1 0 0"/>
+            <!-- From -150 to 150 degrees -->
+            <limit  lower="-2.6179939" upper="2.6179939" effort="300" velocity="1.17" />
+            <dynamics damping="50" friction="1"/>
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.6179939+0.1}" soft_upper_limit="${2.6179939-0.1}" />
+        </joint>
+        
+        <!-- Gripper right finger joint -->
+        <joint name="finger_right_joint" type="revolute">
+            <origin xyz="${0.0015 + 0.05 - 0.01} ${-0.035/2} 0" rpy="0 0 0" />
+            <parent link="arm_wrist_rotate_link"/>
+            <child link="arm_right_finger_link" />
+            
+            <axis xyz="0 0 1"/>
+            <!-- From 14 to -45 degrees -->
+            <limit  lower="-0.785398163" upper="0.244346095" effort="300" velocity="1.17" />
+            <dynamics damping="50" friction="1"/>
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.785398163+0.1}" soft_upper_limit="${0.244346095-0.1}" />
+        </joint>
+        
+        <!-- Gripper left finger joint -->
+        <joint name="finger_left_joint" type="revolute">
+            <origin xyz="${0.0015 + 0.05 - 0.01} ${0.035/2} 0" rpy="0 0 0" />
+            <parent link="arm_wrist_rotate_link"/>
+            <child link="arm_left_finger_link" />
+            
+            <axis xyz="0 0 1"/>
+            <!-- From -14 to 45 degrees -->
+            <limit  lower="-0.244346095" upper="0.785398163" effort="300" velocity="1.17" />
+            <dynamics damping="50" friction="1"/>
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.244346095+0.1}" soft_upper_limit="${0.785398163-0.1}" />
+        </joint>
+        
+        <!-- ****** LINK DEFINITIONS ****** -->
+        
         <link name="arm_base_link">
             <inertial>
-                <mass value="0.1" />
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <mass value="0.125" />
+                <origin xyz="0 0 0.00893364" rpy="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0" 
                          izz="1.0" />
@@ -32,33 +112,15 @@
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_base.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_base_convex.stlb"/>
                 </geometry>
             </collision>
         </link>
         
-        <!-- Shoulder pan joint and link -->
-        <joint name="shoulder_pan_joint" type="revolute" >
-            <origin xyz="-0.0075 0 0.025" rpy="0 0 0" />
-            <parent link="arm_base_link" />
-            <child link="arm_shoulder_pan_link"/>
-            
-            <axis xyz="0 0 1"/>
-            <limit  lower="-1.22" upper="1.22" effort="100" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
-            <dynamics damping="50" friction="1"/>
-        </joint>
-        
-        <transmission type="SimpleTransmission" name="shoulder_pan_trans">
-            <actuator name="shoulder_pan_motor" />
-            <joint name="shoulder_pan_joint" />
-            <mechanicalReduction>1.0</mechanicalReduction>
-        </transmission>
-        
         <link name="arm_shoulder_pan_link">
             <inertial>
-                <mass value="0.3" />
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <mass value="0.405" />
+                <origin xyz="0.02988871 0 0.02056699" rpy="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0" 
                          izz="1.0" />
@@ -74,27 +136,15 @@
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_pan.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_shoulder_pan_convex.stlb"/>
                 </geometry>
             </collision>
         </link>
         
-        <!-- Shoulder tilt joint and link -->
-        <joint name="shoulder_tilt_joint" type="revolute">
-            <origin xyz="${0.105 - 0.01 - 0.03085/2} 0 ${0.01 + 0.05 - 0.031/2}" rpy="0 0 0" />
-            <parent link="arm_shoulder_pan_link"/>
-            <child link="arm_shoulder_tilt_link" />
-            
-            <axis xyz="0 -1 0"/>    <!-- not sure why I need negative number here to get proper z-direction -->
-            <limit  lower="-1.04719755" upper="1.972222" effort="100" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.04719755+0.1}" soft_upper_limit="${1.972222-0.1}" />
-            <dynamics damping="50" friction="1"/>
-        </joint>
-        
         <link name="arm_shoulder_tilt_link">
             <inertial>
                 <mass value="0.18" />
-                <origin xyz="0.0 0.17 0.0" rpy="0 0 0" />
+                <origin xyz="0.13999458 0 0.00064711" rpy="0 0 0" />
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                          iyy="1.0" iyz="0.0" 
                          izz="1.0" />
@@ -110,10 +160,114 @@
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_tilt.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_shoulder_tilt_convex.stlb"/>
                 </geometry>
             </collision>
         </link>
+        
+        <link name="arm_elbow_tilt_link">
+            <inertial>
+                <mass value="0.12" />
+                <origin xyz="0.04463361 0 0.00720194" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://smart_arm_description/meshes/arm_elbow_tilt.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_elbow_tilt_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="arm_wrist_rotate_link">
+            <inertial>
+                <mass value="0.13" />
+                <origin xyz="0.02539960 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://smart_arm_description/meshes/arm_wrist_rotate.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_wrist_rotate_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="arm_right_finger_link">
+            <inertial>
+                <mass value="0.0225" />
+                <origin xyz="0.03058625 -0.01804371 -0.00941599" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://smart_arm_description/meshes/arm_right_finger.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_right_finger_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="arm_left_finger_link">
+            <inertial>
+                <mass value="0.0225" />
+                <origin xyz="0.03058625 0.01804371 -0.00941599" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://smart_arm_description/meshes/arm_left_finger.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_left_finger_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <!-- ****** TRANSMISSION DEFINITIONS ****** -->
+        
+        <transmission type="SimpleTransmission" name="shoulder_pan_trans">
+            <actuator name="shoulder_pan_motor" />
+            <joint name="shoulder_pan_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
         
         <transmission type="SimpleTransmission" name="shoulder_tilt_trans">
             <actuator name="shoulder_tilt_motor" />
@@ -121,85 +275,11 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <!-- Elbow tilt joint and link -->
-        <joint name="elbow_tilt_joint" type="revolute">
-            <origin xyz="${0.04 - 0.01 + 0.0015 + 0.105 + 0.055 - 0.01} 0 0" rpy="0 0 0" />
-            <parent link="arm_shoulder_tilt_link"/>
-            <child link="arm_elbow_tilt_link" />
-            
-            <axis xyz="0 -1 0"/>
-            <!-- From -113 to 108 degrees -->
-            <limit  lower="-1.972222" upper="1.8849556" effort="100" velocity="1.17" />
-            <dynamics damping="50" friction="1"/>
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.972222+0.1}" soft_upper_limit="${1.8849556-0.1}" />
-        </joint>
-        
-        <link name="arm_elbow_tilt_link">
-            <inertial>
-                <mass value="0.15" />
-                <origin xyz="0.0 0.07 0.0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
-                         izz="1.0" />
-            </inertial>
-            
-            <visual>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_elbow_tilt.stl"/>
-                </geometry>
-            </visual>
-            
-            <collision>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_elbow_tilt.stl"/>
-                </geometry>
-            </collision>
-        </link>
-        
         <transmission type="SimpleTransmission" name="elbow_tilt_trans">
             <actuator name="elbow_tilt_motor" />
             <joint name="elbow_tilt_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
-        
-        <!-- Wrist rotate joint and link -->
-        <joint name="wrist_rotate_joint" type="revolute">
-            <origin xyz="${0.08 - 0.01} 0 ${0.05 - 0.0115 - 0.0155}" rpy="0 0 0" />
-            <parent link="arm_elbow_tilt_link"/>
-            <child link="arm_wrist_rotate_link" />
-            
-            <axis xyz="-1 0 0"/>
-            <!-- From -150 to 150 degrees -->
-            <limit  lower="-2.6179939" upper="2.6179939" effort="100" velocity="1.17" />
-            <dynamics damping="50" friction="1"/>
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.6179939+0.1}" soft_upper_limit="${2.6179939-0.1}" />
-        </joint>
-        
-        <link name="arm_wrist_rotate_link">
-            <inertial>
-                <mass value="0.12" />
-                <origin xyz="0.0 0.05 0.0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
-                         izz="1.0" />
-            </inertial>
-            
-            <visual>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_wrist_rotate.stl"/>
-                </geometry>
-            </visual>
-            
-            <collision>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_wrist_rotate.stl"/>
-                </geometry>
-            </collision>
-        </link>
         
         <transmission type="SimpleTransmission" name="wrist_rotate_trans">
             <actuator name="wrist_rotate_motor" />
@@ -207,85 +287,11 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <!-- Gripper right finger joint and link -->
-        <joint name="finger_right_joint" type="revolute">
-            <origin xyz="${0.0015 + 0.05 - 0.01} ${-0.035/2} 0" rpy="0 0 0" />
-            <parent link="arm_wrist_rotate_link"/>
-            <child link="arm_right_finger_link" />
-            
-            <axis xyz="0 0 1"/>
-            <!-- From -20 to 20 degrees -->
-            <limit  lower="-0.3490658" upper="0.3490658" effort="100" velocity="1.17" />
-            <dynamics damping="50" friction="1"/>
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.3490658+0.1}" soft_upper_limit="${0.3490658-0.1}" />
-        </joint>
-        
-        <link name="arm_right_finger_link">
-            <inertial>
-                <mass value="0.01" />
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
-                         izz="1.0" />
-            </inertial>
-            
-            <visual>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_right_finger.stl"/>
-                </geometry>
-            </visual>
-            
-            <collision>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_right_finger.stl"/>
-                </geometry>
-            </collision>
-        </link>
-        
         <transmission type="SimpleTransmission" name="finger_right_trans">
             <actuator name="finger_right_motor" />
             <joint name="finger_right_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
-        
-        <!-- Gripper left finger joint and link -->
-        <joint name="finger_left_joint" type="revolute">
-            <origin xyz="${0.0015 + 0.05 - 0.01} ${0.035/2} 0" rpy="0 0 0" />
-            <parent link="arm_wrist_rotate_link"/>
-            <child link="arm_left_finger_link" />
-            
-            <axis xyz="0 0 1"/>
-            <!-- From -20 to 20 degrees -->
-            <limit  lower="-0.3490658" upper="0.3490658" effort="100" velocity="1.17" />
-            <dynamics damping="50" friction="1"/>
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.3490658+0.1}" soft_upper_limit="${0.3490658-0.1}" />
-        </joint>
-        
-        <link name="arm_left_finger_link">
-            <inertial>
-                <mass value="0.01" />
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
-                         izz="1.0" />
-            </inertial>
-            
-            <visual>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_left_finger.stl"/>
-                </geometry>
-            </visual>
-            
-            <collision>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-                <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_left_finger.stl"/>
-                </geometry>
-            </collision>
-        </link>
         
         <transmission type="SimpleTransmission" name="finger_left_trans">
             <actuator name="finger_left_motor" />
@@ -293,32 +299,85 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
+        <!-- ****** MATERIAL DEFINITIONS ****** -->
+        
         <gazebo reference="arm_base_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
         <gazebo reference="arm_shoulder_pan_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
         <gazebo reference="arm_shoulder_tilt_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
         <gazebo reference="arm_elbow_tilt_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
         <gazebo reference="arm_wrist_rotate_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
         <gazebo reference="arm_right_finger_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+            <mu1 value="500.0" />
+            <mu2 value="500.0" />
+            <kp value="1000000.0" />
+            <kd value="1.0" />
         </gazebo>
         
         <gazebo reference="arm_left_finger_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+            <mu1 value="500.0" />
+            <mu2 value="500.0" />
+            <kp value="1000000.0" />
+            <kd value="1.0" />
+        </gazebo>
+        
+        <gazebo reference="shoulder_pan_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="shoulder_tilt_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="elbow_tilt_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="wrist_rotate_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="finger_right_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="1.0" />
+        </gazebo>
+        
+        <gazebo reference="finger_left_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="1.0" />
         </gazebo>
     </macro>
 </robot>
