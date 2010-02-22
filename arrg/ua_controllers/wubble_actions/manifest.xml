@@ -18,7 +18,10 @@
   <depend package="ua_controller_msgs"/>
   <depend package="actionlib"/>
   <depend package="tf"/>
+  <depend package="smart_arm_controller"/>
   <depend package="smart_arm_kinematics"/>
+  <depend package="wubble_camera_pan_tilt_controller"/>
+  <depend package="wubble_laser_tilt_controller"/>
 
 </package>
 
