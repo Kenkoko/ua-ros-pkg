@@ -61,7 +61,7 @@ def reach_at(frame_id, x, y, z):
     # Creates a goal to send to the action server.
     goal = SmartArmGoal()
     goal.target_point = PointStamped()
-    goal.target_point.header.stamp = rospy.Time.now()
+    #goal.target_point.header.stamp = rospy.Time.now()
     goal.target_point.header.frame_id = frame_id
     goal.target_point.point.x = x
     goal.target_point.point.y = y
@@ -91,8 +91,8 @@ if __name__ == '__main__':
             print "Result: [" + str(result.arm_position[0]) + ", " + str(result.arm_position[1]) + \
                 str(result.arm_position[2]) + ", " + str(result.arm_position[3]) + "]"
 
-        print "Reach point [0.3, 0.0, 0.3]"
-        result = reach_at("/arm_base_link", 0.3, 0.0, 0.3)
+        print "Reach point [0.2, -0.2, -0.02] from /arm_base_link"
+        result = reach_at("/arm_base_link", 0.2, -0.2, -0.02)
         if result.success == False:
             print "Action failed"
         else:
