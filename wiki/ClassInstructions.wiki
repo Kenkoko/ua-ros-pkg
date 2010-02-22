@@ -61,7 +61,7 @@ This is needed to load environment variables before you run any further ros comm
 
 Here's a simple demo to run to test that you've got everything working. Try running:
 {{{
-roslaunch wubble_demos erratic_nav.launch
+roslaunch wubble_mapping simulation.launch
 }}}
 
 This should launch the gazebo simulator, complete with the simulated Wubble robot in a small room, as well as the rviz visualization tool. 
