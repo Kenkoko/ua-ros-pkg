@@ -1,0 +1,21 @@
+<package>
+  <description brief="ua_erratic_player">
+
+     ua_erratic_player
+
+  </description>
+  <author>RobotLab</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ua_erratic_player</url>
+  <depend package="roscpp"/>
+  <depend package="player"/>
+  <depend package="std_msgs"/>
+  <depend package="tf"/>
+  <depend package="geometry_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="pr2_msgs"/>
+
+</package>
+
+
