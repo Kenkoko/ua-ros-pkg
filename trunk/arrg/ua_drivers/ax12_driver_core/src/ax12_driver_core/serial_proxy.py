@@ -108,13 +108,15 @@ class SerialProxy():
         while self.running:
             # block until new packet is available
             packet = self.__packet_queue.get(True)
-            self.__state_lock.acquire()
             if packet == 'shutdown': return
+            self.__state_lock.acquire()
             try:
                 self.__serial_bus.write_packet(packet)
-            except ax12_io.ErrorCodeError, ece:
-                rospy.logfatal(ece)
-                signal_shutdown(ece)
+            except ax12_io.FatalErrorCodeError, fece:
+                rospy.logfatal(fece)
+                signal_shutdown(fece)
+            except ax12_io.NonfatalErrorCodeError, nfece:
+                rospy.logwarn(nfece)
             except ax12_io.ChecksumError, cse:
                 rospy.logwarn(cse)
             except ax12_io.DroppedPacketError, dpe:
@@ -132,9 +134,11 @@ class SerialProxy():
                 for i in self.motors:
                     state = self.__serial_bus.get_servo_feedback(i)
                     if state: motor_states.append(MotorState(**state))
-            except ax12_io.ErrorCodeError, ece:
-                rospy.logfatal(ece)
-                rospy.signal_shutdown(ece)
+            except ax12_io.FatalErrorCodeError, fece:
+                rospy.logfatal(fece)
+                signal_shutdown(fece)
+            except ax12_io.NonfatalErrorCodeError, nfece:
+                rospy.logwarn(nfece)
             except ax12_io.ChecksumError, cse:
                 rospy.logwarn(cse)
             except ax12_io.DroppedPacketError, dpe:
