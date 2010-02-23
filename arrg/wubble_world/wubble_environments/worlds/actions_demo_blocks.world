@@ -37,7 +37,7 @@
 
               02/17/2010 Bouncy block fix from John Hsu: defaults for inertia 
               matrix were too small to stop box rotation. Fix applied only to 
-              smaller blocks for now.   
+              smaller blocks for now. ODE default is 1e-6.   
     -->
 
     <!-- here's the global contact cfm/erp -->
@@ -65,8 +65,8 @@
         <frames>
             <row height="100%">
                 <camera width="100%">
-                    <xyz>0 0 10</xyz>
-                    <rpy>0 90 90</rpy>
+                    <xyz>2.0 0 0.95</xyz>
+                    <rpy>180 165 0</rpy>
                 </camera>
             </row>
         </frames>
@@ -90,7 +90,6 @@
         <rpy>0 0 0</rpy>
         <static>true</static>
         <body:plane name="env_ground_floor_wood_body">
-            <visualsize>50 50 0</visualsize>
             <geom:plane name="env_ground_floor_wood_geom">
                 <laserRetro>2000.0</laserRetro>
                 <kp>1000000.0</kp>
@@ -105,7 +104,7 @@
 
     <!-- White Point light -->
     <model:renderable name="env_light_pointwhite1_white_model">
-        <xyz>0 0 7.5</xyz>
+        <xyz>2.0 0 7.5</xyz>
         <enableGravity>false</enableGravity>
         <light>
             <type>point</type>
@@ -162,8 +161,6 @@
         <static>true</static>
         <!-- surrounding walls -->
         <body:box name="env_wall_walls_wallpaint_body">
-            <visualsize>7 5 2</visualsize>
-
             <geom:box name="env_wall_wall1_wallpaint_geom">
                 <xyz>0 -2.45 1</xyz>
                 <mesh>default</mesh>
@@ -215,7 +212,6 @@
         <xyz>-2.6   1.7   0.5</xyz>
         <rpy> 0.0   0.0   0.0</rpy>
         <body:sphere name="obj_sphere_sphererocky1_rocky_body">
-            <visualsize>1.0 1.0 1.0</visualsize>
             <geom:sphere name="obj_sphere_sphererocky1_rocky_geom">
                 <mesh>default</mesh>
                 <size>0.5</size>
@@ -234,7 +230,6 @@
         <xyz>-2.8 -1.8  1.0</xyz>
         <rpy> 0.0  0.0  0.0</rpy>
         <body:sphere name="obj_sphere_spheregray1_gray_body">
-            <visualsize>0.4 0.4 0.4</visualsize>
             <geom:sphere name="obj_sphere_spheregray1_gray_geom">
                 <mesh>default</mesh>
                 <size>0.2</size>
@@ -253,7 +248,6 @@
         <xyz>-2.8  -1.8   0.35</xyz>
         <static>false</static>
         <body:box name="obj_box_boxmetal1_metal_body">
-            <visualsize>0.7 0.7 0.7</visualsize>
             <geom:box name="obj_box_boxmetal1_metal_geom">
                 <size>0.7 0.7 0.7</size>
                 <mass>2.0</mass>
@@ -266,17 +260,15 @@
         </body:box>
     </model:physical>
 
-    <!-- blue box -->
-    <!-- visualsize tag used by icarus_world_state_server.py -->
-
-    <model:physical name="obj_box_boxblue1_blue_model">
-        <xyz> 1.8 -1.5  0.1</xyz>
+    <!-- red box -->
+    <model:physical name="obj_box_boxred1_red_model">
+        <xyz> 0.324256 -0.192411 0.0242112</xyz>
+        <rpy> 0.000218484 0.000175919 50.0837</rpy>
         <static>false</static>
-        <body:box name="obj_box_boxblue1_blue_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
+        <body:box name="obj_box_boxred1_red_body">
             <dampingFactor>0.0</dampingFactor>
             <massMatrix>true</massMatrix>
-            <mass>0.2</mass>
+            <mass>0.05</mass>
             <ixx>0.001</ixx>
             <ixy>0.0</ixy>
             <ixz>0.0</ixz>
@@ -286,119 +278,17 @@
             <cx>0.0</cx>
             <cy>0.0</cy>
             <cz>0.0</cz>
-            <geom:box name="obj_box_boxblue1_blue_geom">
+            <geom:box name="obj_box_boxred1_red_geom">
                 <mu1>1.0</mu1>
                 <mu2>1.0</mu2>
                 <kp>100000000.0</kp>
                 <kd>1.0</kd>
-                <size>0.2 0.2 0.2</size>
-                <mass>0.2</mass>
+                <size>0.05 0.05 0.05</size>
+                <mass>0.05</mass>
                 <visual>
-                    <size>0.2 0.2 0.2</size>
+                    <size>0.05 0.05 0.05</size>
                     <mesh>unit_box</mesh>
-                    <material>WubbleWorld/Blue</material>
-                </visual>
-            </geom:box>
-        </body:box>
-    </model:physical>
-
-    <!-- black box -->
-    <model:physical name="obj_box_boxblack1_black_model">
-        <xyz> 1.8 -1.5  0.3</xyz>
-        <static>false</static>
-        <body:box name="obj_box_boxblack1_black_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
-            <dampingFactor>0.0</dampingFactor>
-            <massMatrix>true</massMatrix>
-            <mass>0.2</mass>
-            <ixx>0.001</ixx>
-            <ixy>0.0</ixy>
-            <ixz>0.0</ixz>
-            <iyy>0.001</iyy>
-            <iyz>0.0</iyz>
-            <izz>0.001</izz>
-            <cx>0.0</cx>
-            <cy>0.0</cy>
-            <cz>0.0</cz>
-            <geom:box name="obj_box_boxblack1_black_geom">
-                <mu1>1.0</mu1>
-                <mu2>1.0</mu2>
-                <kp>100000000.0</kp>
-                <kd>1.0</kd>
-                <size>0.2 0.2 0.2</size>
-                <mass>0.2</mass>
-                <visual>
-                    <size>0.2 0.2 0.2</size>
-                    <mesh>unit_box</mesh>
-                    <material>WubbleWorld/Black</material>
-                </visual>
-            </geom:box>
-        </body:box>
-    </model:physical>
-
-    <!-- gold box -->
-    <model:physical name="obj_box_boxgold1_gold_model">
-        <xyz> 1.8 -1.5  0.5</xyz>
-        <static>false</static>
-        <body:box name="obj_box_boxgold1_gold_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
-            <dampingFactor>0.0</dampingFactor>
-            <massMatrix>true</massMatrix>
-            <mass>0.2</mass>
-            <ixx>0.001</ixx>
-            <ixy>0.0</ixy>
-            <ixz>0.0</ixz>
-            <iyy>0.001</iyy>
-            <iyz>0.0</iyz>
-            <izz>0.001</izz>
-            <cx>0.0</cx>
-            <cy>0.0</cy>
-            <cz>0.0</cz>
-            <geom:box name="obj_box_boxgold1_gold_geom">
-                <mu1>1.0</mu1>
-                <mu2>1.0</mu2>
-                <kp>100000000.0</kp>
-                <kd>1.0</kd>
-                <size>0.2 0.2 0.2</size>
-                <mass>0.2</mass>
-                <visual>
-                    <size>0.2 0.2 0.2</size>
-                    <mesh>unit_box</mesh>
-                    <material>WubbleWorld/Yellow</material>
-                </visual>
-            </geom:box>
-        </body:box>
-    </model:physical>
-
-    <!-- gray box -->
-    <model:physical name="obj_box_boxgray1_gray_model">
-        <xyz> 1.8 -0.5  0.1</xyz>
-        <static>false</static>
-        <body:box name="obj_box_boxgray1_gray_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
-            <dampingFactor>0.0</dampingFactor>
-            <massMatrix>true</massMatrix>
-            <mass>0.2</mass>
-            <ixx>0.001</ixx>
-            <ixy>0.0</ixy>
-            <ixz>0.0</ixz>
-            <iyy>0.001</iyy>
-            <iyz>0.0</iyz>
-            <izz>0.001</izz>
-            <cx>0.0</cx>
-            <cy>0.0</cy>
-            <cz>0.0</cz>
-            <geom:box name="obj_box_boxgray1_gray_geom">
-                <mu1>1.0</mu1>
-                <mu2>1.0</mu2>
-                <kp>100000000.0</kp>
-                <kd>1.0</kd>
-                <size>0.2 0.2 0.2</size>
-                <mass>0.2</mass>
-                <visual>
-                    <size>0.2 0.2 0.2</size>
-                    <mesh>unit_box</mesh>
-                    <material>WubbleWorld/Grey</material>
+                    <material>WubbleWorld/Red</material>
                 </visual>
             </geom:box>
         </body:box>
@@ -406,13 +296,13 @@
 
     <!-- green box -->
     <model:physical name="obj_box_boxgreen1_green_model">
-        <xyz> 1.8  0.5  0.1</xyz>
+        <xyz> 0.40 0.0  0.0242112</xyz>
+        <rpy> 0.6  0.0  0.0242112</rpy>
         <static>false</static>
         <body:box name="obj_box_boxgreen1_green_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
             <dampingFactor>0.0</dampingFactor>
             <massMatrix>true</massMatrix>
-            <mass>0.2</mass>
+            <mass>0.05</mass>
             <ixx>0.001</ixx>
             <ixy>0.0</ixy>
             <ixz>0.0</ixz>
@@ -427,10 +317,10 @@
                 <mu2>1.0</mu2>
                 <kp>100000000.0</kp>
                 <kd>1.0</kd>
-                <size>0.2 0.2 0.2</size>
+                <size>0.05 0.05 0.05</size>
                 <mass>0.05</mass>
                 <visual>
-                    <size>0.2 0.2 0.2</size>
+                    <size>0.05 0.05 0.05</size>
                     <mesh>unit_box</mesh>
                     <material>WubbleWorld/Green</material>
                 </visual>
@@ -438,61 +328,5 @@
         </body:box>
     </model:physical>
 
-    <!-- white box -->
-    <model:physical name="obj_box_boxwhite1_white_model">
-        <xyz> 1.8  0.5  0.3</xyz>
-        <static>false</static>
-        <body:box name="obj_box_boxwhite1_white_body">
-            <visualsize>0.2 0.2 0.2</visualsize>
-            <dampingFactor>0.0</dampingFactor>
-            <massMatrix>true</massMatrix>
-            <mass>0.2</mass>
-            <ixx>0.001</ixx>
-            <ixy>0.0</ixy>
-            <ixz>0.0</ixz>
-            <iyy>0.001</iyy>
-            <iyz>0.0</iyz>
-            <izz>0.001</izz>
-            <cx>0.0</cx>
-            <cy>0.0</cy>
-            <cz>0.0</cz>
-            <geom:box name="obj_box_boxwhite1_white_geom">
-                <mu1>1.0</mu1>
-                <mu2>1.0</mu2>
-                <kp>100000000.0</kp>
-                <kd>1.0</kd>
-                <size>0.2 0.2 0.2</size>
-                <mass>0.05</mass>
-                <visual>
-                    <size>0.2 0.2 0.2</size>
-                    <mesh>unit_box</mesh>
-                    <material>WubbleWorld/White</material>
-                </visual>
-            </geom:box>
-        </body:box>
-    </model:physical>
-
-    <!-- red rectangular box -->
-    <model:physical name="obj_box_boxred2_red_model">
-        <xyz> 1.8  1.5   0.3</xyz>
-        <static>false</static>
-        <body:box name="obj_box_boxred2_red_body">
-            <visualsize>0.2 0.2 0.6</visualsize>
-            <geom:box name="obj_box_boxred2_red_geom">
-                <mu1>1.0</mu1>
-                <mu2>1.0</mu2>
-                <kp>100000000.0</kp>
-                <kd>1.0</kd>
-                <mesh>default</mesh>
-                <size>0.2 0.2 0.6</size>
-                <mass>0.6</mass>
-                <visual>
-                    <size>0.2 0.2 0.6</size>
-                    <material>WubbleWorld/Red</material>
-                    <mesh>unit_box</mesh>
-                </visual>
-            </geom:box>
-        </body:box>
-    </model:physical>
 
 </gazebo:world>

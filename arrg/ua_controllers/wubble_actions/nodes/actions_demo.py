@@ -36,6 +36,7 @@ import roslib; roslib.load_manifest(PKG)
 import rospy
 
 from actionlib import SimpleActionClient
+from geometry_msgs.msg import PointStamped
 from wubble_actions.msg import *
 
 
@@ -43,10 +44,10 @@ def move_head(head_pan, head_tilt):
     goal = WubbleHeadGoal()
     goal.target_joints = [head_pan, head_tilt]
 
-    client.send_goal(goal)
-    client.wait_for_goal_to_finish()
+    head_client.send_goal(goal)
+    head_client.wait_for_goal_to_finish()
 
-    result = client.get_result()
+    result = head_client.get_result()
     if result.success == False:
         print "Action failed"
     else:
@@ -61,10 +62,10 @@ def look_at(frame_id, x, y, z):
     goal.target_point.point.y = y
     goal.target_point.point.z = z
 
-    client.send_goal(goal)
-    client.wait_for_goal_to_finish()
+    head_client.send_goal(goal)
+    head_client.wait_for_goal_to_finish()
 
-    result = client.get_result()
+    result = head_client.get_result()
     if result.success == False:
         print "Action failed"
     else:
@@ -75,10 +76,10 @@ def move_arm(shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate):
     goal = SmartArmGoal()
     goal.target_joints = [shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate]
 
-    client.send_goal(goal)
-    client.wait_for_goal_to_finish()
+    arm_client.send_goal(goal)
+    arm_client.wait_for_goal_to_finish()
 
-    result = client.get_result()
+    result = arm_client.get_result()
     if result.success == False:
         print "Action failed"
     else:
@@ -94,10 +95,10 @@ def reach_at(frame_id, x, y, z):
     goal.target_point.point.y = y
     goal.target_point.point.z = z
 
-    client.send_goal(goal)
-    client.wait_for_goal_to_finish()
+    arm_client.send_goal(goal)
+    arm_client.wait_for_goal_to_finish()
 
-    result = client.get_result()
+    result = arm_client.get_result()
     if result.success == False:
         print "Action failed"
     else:
@@ -109,10 +110,10 @@ def move_gripper(left_finger, right_finger):
     goal = SmartArmGripperGoal()
     goal.target_joints = [left_finger, right_finger]
 
-    client.send_goal(goal)
-    client.wait_for_goal_to_finish()
+    gripper_client.send_goal(goal)
+    gripper_client.wait_for_goal_to_finish()
 
-    result = client.get_result()
+    result = gripper_client.get_result()
     if result.success == False:
         print "Action failed"
     else:
@@ -123,10 +124,10 @@ def tilt_laser(n=1):
     goal = HokuyoLaserTiltGoal()
     goal.tilt_cycles = n
 
-    client.send_goal(goal)
-    client.wait_for_goal_to_finish()
+    laser_client.send_goal(goal)
+    laser_client.wait_for_goal_to_finish()
 
-    result = client.get_result()
+    result = laser_client.get_result()
     if result.success == False:
         print "Action failed"
     else:
@@ -137,26 +138,49 @@ def tilt_laser(n=1):
 if __name__ == '__main__':
     try:
         rospy.init_node(NAME, anonymous=True)
-        client = SimpleActionClient("wubble_head_action", WubbleHeadAction)
-        client.wait_for_server()
+        head_client = SimpleActionClient("wubble_head_action", WubbleHeadAction)
+        arm_client = SimpleActionClient("smart_arm_action", SmartArmAction)
+        gripper_client = SimpleActionClient("smart_arm_gripper_action", SmartArmGripperAction)
+        laser_client = SimpleActionClient('hokuyo_laser_tilt_action', HokuyoLaserTiltAction)
+        head_client.wait_for_server()
+        arm_client.wait_for_server()
+        gripper_client.wait_for_server()
+        laser_client.wait_for_server()
 
-        print "Laser Tilt [2 cycles]"
-        tilt(2)
-
-        print "Look down"
-        look_at("/arm_base_link", 0.5, 0.0, -0.3);
-
+        print "Laser tilt"
+        tilt_laser(2)
+        print "Look at blocks"
+        look_at("/arm_base_link", 0.2825, 0.0, -0.025)
         print "Open gripper"
-        move_gripper(2.0, -2.0);
-
-        print "Reach point"
-        reach_at("/arm_base_link", 0.2, -0.2, -0.02)
-
+        move_gripper(0.2, -0.2);
+        print "Reach left stack"
+        reach_at("/arm_base_link", 0.2, 0.2, -0.040)
+        rospy.sleep(0.5)
         print "Close gripper"
-        move_gripper(-1.5, 1.5)  # -2.5, 2.5
-
-        print "Reach point"
-        reach_at("/arm_base_link", 0.5, 0.1, -0.3)
+        move_gripper(-0.075, 0.075)
+        print "Raise arm"
+        move_arm(0.0, 0.75, -1.972222, 0.0)
+        print "Reach right stack"
+        reach_at("/arm_base_link", 0.2, -0.2, -0.030)
+        rospy.sleep(0.5)
+        print "Open gripper"
+        move_gripper(0.2, -0.2)
+        print "Raise arm"
+        move_arm(0.0, 0.75, -1.972222, 0.0)
+        print "Reach middle stack"
+        reach_at("/arm_base_link", 0.28, 0.0, -0.040)
+        rospy.sleep(0.5)
+        print "Close gripper"
+        move_gripper(-0.075, 0.075)
+        print "Raise arm"
+        move_arm(0.0, 0.75, -1.972222, 0.0)
+        print "Reach right stack"
+        reach_at("/arm_base_link", 0.2, -0.205, 0.035)
+        rospy.sleep(0.5)
+        print "Open gripper"
+        move_gripper(0.2, -0.2)
+        print "Reset arm"
+        move_arm(0.0, 1.972222, -1.972222, 0.0)
 
     except rospy.ROSInterruptException:
         pass

@@ -51,7 +51,7 @@ class SmartArmGripperActionServer():
         # Initialize constants
         self.JOINTS_COUNT = 2                           # Number of joints to manage
         self.ERROR_THRESHOLD = 0.01                     # Report success if error reaches below threshold
-        self.TIMEOUT_THRESHOLD = rospy.Duration(10.0)   # Report failure if action does not succeed within timeout threshold
+        self.TIMEOUT_THRESHOLD = rospy.Duration(5.0)    # Report failure if action does not succeed within timeout threshold
 
         # Initialize new node
         rospy.init_node(NAME, anonymous=True)
