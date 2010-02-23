@@ -289,7 +289,11 @@ public:
         q->Wait(); 
         
         // Pop off one message (we own the resulting memory)
-        assert((msg = q->Pop()));
+        if (!(msg = q->Pop()))
+        {
+            ROS_WARN("Assert would fail here, no messages to pop.");
+            return;
+        }
         
         // Is the message one we care about?
         player_msghdr_t* hdr = msg->GetHeader();
