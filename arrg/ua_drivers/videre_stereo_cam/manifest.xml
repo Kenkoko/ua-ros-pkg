@@ -1,0 +1,24 @@
+<package>
+  <description brief="videre_stereo_cam">
+
+     videre_stereo_cam
+
+  </description>
+  <author>Antons Rebguns</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/videre_stereo_cam</url>
+  <depend package="roscpp"/>
+  <depend package="opencv2"/>
+  <depend package="stereo_image_proc"/>
+  <depend package="diagnostic_updater"/>
+  <depend package="sensor_msgs"/>
+  <depend package="stereo_msgs"/>
+  <depend package="cameradc1394"/>
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lvidere_stereo_cam" />
+  </export>
+
+</package>
+
+
