@@ -284,10 +284,7 @@ class AX12_IO(object):
     def ping(self, servoId):
         response = self.__sio.ping_servo(servoId)
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when pinging servo with id %d' %(servoId)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when pinging servo with id %d' %(servoId))
         return response
 
     def write_packet(self, packet):
@@ -337,11 +334,7 @@ class AX12_IO(object):
         response = self.__sio.write_to_servo(servoId, AX_GOAL_SPEED_L,
                                              (loVal, hiVal))
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when setting servo with id %d to speed %d' \
-                            %(servoId, speed)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when setting servo with id %d to speed %d' %(servoId, speed))
         return response
 
     def set_servo_position(self, servoId, position):
@@ -356,11 +349,7 @@ class AX12_IO(object):
         response = self.__sio.write_to_servo(servoId, AX_GOAL_POSITION_L,
                                              (loVal, hiVal))
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when setting servo with id %d to position %d' \
-                           %(servoId, position)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when setting servo with id %d to position %d' %(servoId, position))
         return response
 
     def set_servo_position_and_speed(self, servoId, position, speed):
@@ -382,11 +371,7 @@ class AX12_IO(object):
                                              (loPositionVal, hiPositionVal,
                                               loSpeedVal, hiSpeedVal))
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when setting servo with id %d to position %d and speed %d' \
-                           %(servoId, position, speed)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when setting servo with id %d to position %d and speed %d' %(servoId, position, speed))
         return response
 
     def set_multi_servo_speeds(self, valueTuples):
@@ -468,11 +453,7 @@ class AX12_IO(object):
         response = self.__sio.write_to_servo(servoId, AX_CW_ANGLE_LIMIT_L,
                                       (loMinVal, hiMinVal, loMaxVal, hiMaxVal))
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when setting servo with id %d to min angle %d and max angle %d' \
-                           %(servoId, minAngle, maxAngle)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when setting servo with id %d to min angle %d and max angle %d' %(servoId, minAngle, maxAngle))
         return response
 
     def set_torque_enabled(self, servoId, enabled):
@@ -487,10 +468,7 @@ class AX12_IO(object):
         response = self.__sio.write_to_servo(servoId, AX_TORQUE_ENABLE,
                                              value)
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when setting servo with id %d to torque_enabled ' + str(enabled)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when setting servo with id %d to torque_enabled ' + str(enabled))
         return response
 
     def set_multi_servos_to_torque_enabled(self, servoIds, enabled):
@@ -515,10 +493,7 @@ class AX12_IO(object):
         """ Reads the servo's speed value from its registers. """
         response = self.__sio.read_from_servo(servoId, AX_PRESENT_SPEED_L, 2)
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when getting speed of servo with id %d' %(servoId)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when getting speed of servo with id %d' %(servoId))
         speed = response[5] + (response[6] << 8)
         if speed > 1023:
             return 1023 - speed
@@ -528,10 +503,7 @@ class AX12_IO(object):
         """ Reads the servo's position value from its registers. """
         response = self.__sio.read_from_servo(servoId, AX_PRESENT_POSITION_L, 2)
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when getting position of servo with id %d' %(servoId)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when getting position of servo with id %d' %(servoId))
         position = response[5] + (response[6] << 8)
         return position
 
@@ -542,11 +514,7 @@ class AX12_IO(object):
         # read in 4 consecutive bytes starting with low value of clockwise angle limit
         response = self.__sio.read_from_servo(servoId, AX_CW_ANGLE_LIMIT_L, 4)
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when getting min/max angle limits of servo with id %d' \
-                           %(servoId)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when getting min/max angle limits of servo with id %d' %(servoId))
         # extract data valus from the raw data
         cwLimit = response[5] + (response[6] << 8)
         ccwLimit = response[7] + (response[8] << 8)
@@ -563,10 +531,7 @@ class AX12_IO(object):
         response = self.__sio.read_from_servo(servoId,
                                         AX_PRESENT_POSITION_L, 11)
         if response:
-            error, message, code = self.get_message_on_error(response[4])
-            if error:
-                message += ' when getting feedback from servo with id %d' %(servoId)
-                raise ErrorCodeError(message, code)
+            self.exception_on_error(response[4], 'when getting feedback from servo with id %d' %(servoId))
         if len(response) == 17:
             # extract data values from the raw data
             position = response[5] + (response[6] << 8)
@@ -586,22 +551,28 @@ class AX12_IO(object):
             # return the data in a dictionary
             return {'id':servoId, 'position':position, 'speed':speed, 'load':load, 'voltage':voltage, 'temperature':temperature, 'moving':bool(moving)}
 
-    def get_message_on_error(self, ec):
-        if not ec & AX_INSTRUCTION_ERROR == 0:
-            return True, 'Instruction Error', AX_INSTRUCTION_ERROR
-        if not ec & AX_OVERLOAD_ERROR == 0:
-            return True, 'Overload Error', AX_OVERLOAD_ERROR
-        if not ec & AX_CHECKSUM_ERROR == 0:
-            return True, 'Checksum Error', AX_CHECKSUM_ERROR
-        if not ec & AX_RANGE_ERROR == 0:
-            return True, 'Range Error', AX_RANGE_ERROR
-        if not ec & AX_OVERHEATING_ERROR == 0:
-            return True, 'Overheating Error', AX_OVERHEATING_ERROR
-        if not ec & AX_ANGLE_LIMIT_ERROR == 0:
-            return True, 'Angle Limit Error', AX_ANGLE_LIMIT_ERROR
-        if not ec & AX_INPUT_VOLTAGE_ERROR == 0:
-            return True, 'Input Voltage Error', AX_INPUT_VOLTAGE_ERROR
-        return False, None, AX_NO_ERROR
+    def exception_on_error(self, error_code, ex_message):
+        if not error_code & AX_OVERHEATING_ERROR == 0:
+            msg = 'Overheating Error ' + ex_message
+            raise FatalErrorCodeError(msg, error_code)
+        if not error_code & AX_OVERLOAD_ERROR == 0:
+            msg = 'Overload Error ' + ex_message
+            raise FatalErrorCodeError(msg, error_code)
+        if not error_code & AX_INPUT_VOLTAGE_ERROR == 0:
+            msg = 'Input Voltage Error ' + ex_message
+            raise NonfatalErrorCodeError(msg, error_code)
+        if not error_code & AX_ANGLE_LIMIT_ERROR == 0:
+            msg = 'Angle Limit Error ' + ex_message
+            raise NonfatalErrorCodeError(msg, error_code)
+        if not error_code & AX_RANGE_ERROR == 0:
+            msg = 'Range Error ' + ex_message
+            raise NonfatalErrorCodeError(msg, error_code)
+        if not error_code & AX_CHECKSUM_ERROR == 0:
+            msg = 'Checksum Error ' + ex_message
+            raise NonfatalErrorCodeError(msg, error_code)
+        if not error_code & AX_INSTRUCTION_ERROR == 0:
+            msg = 'Instruction Error ' + ex_message
+            raise NonfatalErrorCodeError(msg, error_code)
 
 class SerialOpenError(Exception):
     def __init__(self, port, baud):
@@ -619,6 +590,22 @@ class ChecksumError(Exception):
                        %(response[-1], checksum)
         self.response_data = reponse
         self.expected_checksum = checksum
+    def __str__(self):
+        return self.message
+
+class FatalErrorCodeError(Exception):
+    def __init__(self, message, ec_const):
+        Exception.__init__(self)
+        self.message = message
+        self.error_code = ec_const
+    def __str__(self):
+        return self.message
+
+class NonfatalErrorCodeError(Exception):
+    def __init__(self, message, ec_const):
+        Exception.__init__(self)
+        self.message = message
+        self.error_code = ec_const
     def __str__(self):
         return self.message
 
