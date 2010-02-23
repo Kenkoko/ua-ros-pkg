@@ -34,7 +34,7 @@ import roslib; roslib.load_manifest(PKG)
 import rospy
 
 from sensor_msgs.msg import JointState
-from wubble_controllers.msg import JointStateList
+from ua_controller_msgs.msg import JointStateList
 
 import math
 

@@ -1,10 +1,17 @@
 <launch>
     
     <!-- send erratic description to param server -->
-    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/defs/wubble.urdf.xacro'" />
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble.urdf.xacro'" />
     
     <!-- start all hardware systems -->
-<!--    <include file="$(find wubble_controllers)/wubble_controllers.launch" />-->
+    <include file="$(find wubble_actions)/launch/wubble_controllers.launch" />
+
+    <node name="erratic_driver" pkg="ua_erratic_player" type="erratic_player" output="screen" >
+        <param name="port_name" type="str" value="/dev/erratic"/>
+        <param name="odometry_topic" type="str" value="odom"/>
+        <param name="battery_topic" type="str" value="battery_state"/>
+        <param name="odometry_frame_id" type="str" value="odom"/>
+    </node>
 
     <!-- Publish joint_states information -->
     <node name="joint_states_publisher" pkg="wubble_mapping" type="joint_states_publisher.py" />
