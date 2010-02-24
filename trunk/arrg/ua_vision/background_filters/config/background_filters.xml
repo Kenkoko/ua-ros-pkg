@@ -1,0 +1,7 @@
+<class_libraries>
+    <library path="lib/libbackground_filters">
+        <class  name="FloorFilter" type="FloorFilter" base_class_type="filters::FilterBase<sensor_msgs::LaserScan>">
+            <description>asdf</description>
+        </class>
+    </library>
+</class_libraries>
