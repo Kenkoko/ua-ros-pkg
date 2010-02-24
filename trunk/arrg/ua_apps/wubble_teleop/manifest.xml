@@ -14,7 +14,8 @@
     <depend package="rospy"/>
     <depend package="geometry_msgs"/>
     <depend package="sensor_msgs"/>
-
+    <depend package="pr2_controllers_msgs"/>
+    
     <!-- Joystick -->
     <depend package="joy"/>
     <depend package="joystick_remapper" />
