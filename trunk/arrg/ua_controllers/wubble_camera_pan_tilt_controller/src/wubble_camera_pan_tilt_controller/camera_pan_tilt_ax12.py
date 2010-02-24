@@ -66,8 +66,8 @@ class CameraPanTiltAX12():
         
         self.pan_motor_id = rospy.get_param('camera_pan_tilt_controller/pan_motor_id', 6)
         self.tilt_motor_id = rospy.get_param('camera_pan_tilt_controller/tilt_motor_id', 5)
-        self.pan_joint_name = rospy.get_param('camera_pan_tilt_controller/pan_joint_name', 'camera_pan_joint')
-        self.tilt_joint_name = rospy.get_param('camera_pan_tilt_controller/tilt_joint_name', 'camera_tilt_joint')
+        self.pan_joint_name = rospy.get_param('camera_pan_tilt_controller/pan_joint_name', 'head_pan_joint')
+        self.tilt_joint_name = rospy.get_param('camera_pan_tilt_controller/tilt_joint_name', 'head_tilt_joint')
         
         pan_mcv = (self.pan_motor_id, 100)  # mcv = "Move Command Value"
         tilt_mcv = (self.tilt_motor_id, 100)
