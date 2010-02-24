@@ -46,7 +46,9 @@ class JointStatesPublisher():
     def __init__(self):
         rospy.init_node('wubble_joint_states_publisher', anonymous=True)
         self.joint_states = {'base_caster_support_joint': JointStateMessage('base_caster_support_joint', 0.0, 0.0, 0.0),
-                             'caster_wheel_joint': JointStateMessage('caster_wheel_joint', 0.0, 0.0, 0.0)}
+                             'caster_wheel_joint': JointStateMessage('caster_wheel_joint', 0.0, 0.0, 0.0),
+                             'base_link_left_wheel_joint': JointStateMessage('base_link_left_wheel_joint', 0.0, 0.0, 0.0),
+                             'base_link_right_wheel_joint': JointStateMessage('base_link_right_wheel_joint', 0.0, 0.0, 0.0)}
         
         # Start controller state subscribers
         rospy.Subscriber('arm_controller/state', JointStateList, self.controller_state_handler)
