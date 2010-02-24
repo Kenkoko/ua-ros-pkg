@@ -1,0 +1,27 @@
+<package>
+    <description brief="Filters for removing the background from sensor data">
+
+     Currently only includes a simple filter for filtering floor points out of PointCloud data. 
+
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/background_filters</url>
+
+    <depend package="roscpp" />
+    <depend package="rosconsole" />
+    
+    <depend package="sensor_msgs" />
+
+    <depend package="tf"/>
+    <depend package="pluginlib" />
+    <depend package="filters" />
+
+    <export>
+        <cpp cflags="-I${prefix}/include `rosboost-cfg --cflags`" lflags=""/>
+        <filters plugin="${prefix}/config/background_filters.xml" />
+    </export>
+</package>
+
+

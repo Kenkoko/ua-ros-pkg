@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="background_filters" type="floor_filter_node" name="floor_filter_node" output="screen">
+        <remap from="cloud_in" to="/stereo/self_filtered"/>
+        <remap from="cloud_out" to="/stereo/floor_filtered"/>
+    </node>
+</launch>
