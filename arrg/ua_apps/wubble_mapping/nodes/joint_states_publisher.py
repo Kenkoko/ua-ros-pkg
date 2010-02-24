@@ -27,10 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'wubble_mapping'
-NAME = 'joint_states_publisher'
-
-import roslib; roslib.load_manifest(PKG)
+import roslib; roslib.load_manifest('wubble_mapping')
 import rospy
 
 from sensor_msgs.msg import JointState
@@ -47,8 +44,9 @@ class JointStateMessage():
 
 class JointStatesPublisher():
     def __init__(self):
-        rospy.init_node(NAME, anonymous=True)
-        self.joint_states = dict()
+        rospy.init_node('wubble_joint_states_publisher', anonymous=True)
+        self.joint_states = {'base_caster_support_joint': JointStateMessage('base_caster_support_joint', 0.0, 0.0, 0.0),
+                             'caster_wheel_joint': JointStateMessage('caster_wheel_joint', 0.0, 0.0, 0.0)}
         
         # Start controller state subscribers
         rospy.Subscriber('arm_controller/state', JointStateList, self.controller_state_handler)
@@ -58,7 +56,9 @@ class JointStatesPublisher():
         # Start publisher
         self.joint_states_pub = rospy.Publisher('joint_states', JointState)
         
-        r = rospy.Rate(50)
+        publish_rate = rospy.get_param('~rate', 50)
+        r = rospy.Rate(publish_rate)
+        
         while not rospy.is_shutdown():
             self.publish_joint_states()
             r.sleep()
