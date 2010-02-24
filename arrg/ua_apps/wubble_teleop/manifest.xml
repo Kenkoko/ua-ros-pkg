@@ -9,7 +9,7 @@
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/wubble_teleop</url>
 
-        <!-- Core ros packages -->
+    <!-- Core ros packages -->
     <depend package="roscpp"/>
     <depend package="rospy"/>
     <depend package="geometry_msgs"/>
@@ -22,6 +22,5 @@
     <!-- Movement -->
     <depend package="move_base"/>   
     <depend package="move_base_client"/>
-    <depend package="teleop_base"/>
 
 </package>
