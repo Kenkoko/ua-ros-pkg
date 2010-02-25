@@ -1,0 +1,9 @@
+arm_controller:
+  elbow_tilt_joint:
+    motor_ids: [5, 4]
+  finger_left_joint: {motor_id: 8}
+  finger_right_joint: {motor_id: 7}
+  shoulder_pan_joint: {motor_id: 1}
+  shoulder_tilt_joint:
+    motor_ids: [2, 3]
+  wrist_rotate_joint: {motor_id: 6}
