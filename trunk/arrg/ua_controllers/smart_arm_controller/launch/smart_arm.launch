@@ -1,4 +1,5 @@
 <launch>
+    <!-- Start the low-level driver manager with parameters -->
     <node name="ax12_driver_manager" pkg="ax12_driver_core" type="manager.py" output="screen" required="true">
         <param name="port_name" type="str" value="/dev/tty.usbserial-A9005N0l"/>
         <param name="baud_rate" type="int" value="1000000"/>
@@ -7,8 +8,10 @@
     </node>
 
     <!-- Load smart arm parameters from YAML file -->
+    <!-- Configure the motor ids for the arm in launch/arm.yaml -->
     <rosparam file="$(find smart_arm_controller)/launch/arm.yaml" command="load"/>
 
+    <!-- Start the smart_arm driver -->
     <node name="arm_spawner" pkg="ax12_driver_core" type="driver_ctrl.py"
     args="start $(find smart_arm_controller)/src/smart_arm_controller/smart_arm.py"
     output="screen"/>
