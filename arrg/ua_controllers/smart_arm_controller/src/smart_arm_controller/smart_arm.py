@@ -45,7 +45,6 @@ from smart_arm_const import *
 from smart_arm_controller.msg import JointMove
 from ua_controller_msgs.msg import JointState
 from ua_controller_msgs.msg import JointStateList
-from std_msgs.msg import Int32
 
 class DriverControl:
     def __init__(self, out_cb):
