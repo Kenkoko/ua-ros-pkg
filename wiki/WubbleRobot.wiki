@@ -1,0 +1,30 @@
+#summary A description of UA's Wubble Robot
+
+<img title="Wubble Robot Photo" width="300" height="400" align="right" src="http://dl.dropbox.com/u/2587300/wubble_robot.jpg" />
+
+=Overview=
+
+This repository provides a number of packages that support the Wubble Robot created by the Arizona Robotics Research Group. Because a number of the components of the Wubble Robot are also used by other research groups, we provide a description of the robot and of relevant software packages. The ua_robots stack contains URDF description files for the Wubble Robot and its components.
+
+= Components =
+
+==Videre ERRATIC (Mobile Base)==
+
+http://www.videredesign.com/assets/images/robot_images/robot/era-mobi_sm.png
+
+[http://www.videredesign.com/index.php?id=45 Description]
+
+Packages:
+  * erratic_description
+  * ua_erratic_player
+
+==Videre STOC (Stereo Camera)==
+
+[http://www.videredesign.com/index.php?id=74 Description]
+
+Packages:
+  * videre_stoc_description
+  * videre_stereo_cam
+  * videre_stoc
+  * stoc_publisher
+
