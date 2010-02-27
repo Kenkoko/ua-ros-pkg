@@ -16,7 +16,7 @@ Packages:
 
 ==Videre ERRATIC (Mobile Base)==
 
-http://www.videredesign.com/assets/images/robot_images/robot/era-mobi_sm.png
+<img src="http://www.videredesign.com/assets/images/robot_images/robot/era-mobi_sm.png" height="100"/> 
 
 [http://www.videredesign.com/index.php?id=45 Description]
 
@@ -27,6 +27,8 @@ Packages:
 
 ==Videre STOC (Stereo Camera)==
 
+<img src="http://www.videredesign.com/assets/images/vision_images/products/stoc-sthdcsg-9cm_med.png" height="100"/> 
+
 [http://www.videredesign.com/index.php?id=74 Description]
 
 Packages:
@@ -34,3 +36,15 @@ Packages:
   * videre_stereo_cam
   * videre_stoc
   * stoc_publisher
+
+==CrustCrawler SmartArm==
+
+<img src="http://www.crustcrawler.com/products/smartarm/images/bigGrip2FingerLarge.jpg" height="100"/> 
+
+[http://www.crustcrawler.com/products/smartarm/index.php?prod=12#thumb Description]
+
+Packages:
+  * smart_arm_description
+  * smart_arm_controller
+  * smart_arm_kinematics
+  * ax12_driver_core
