@@ -37,7 +37,7 @@ Packages:
   * videre_stoc
   * stoc_publisher
 
-==CrustCrawler SmartArm==
+==Crust Crawler Smart Arm==
 
 <img src="http://www.crustcrawler.com/products/smartarm/images/bigGrip2FingerLarge.jpg" height="100"/> 
 
