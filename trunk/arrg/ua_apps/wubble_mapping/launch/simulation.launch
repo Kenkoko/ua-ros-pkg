@@ -19,6 +19,8 @@
     <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" respawn="false" >
         <remap to="tilt_scan" from="scan"/>
         <param name="odom_frame" value="odom_combined" />
+        <param name="base_frame" value="base_footprint" />
+        <param name="inverted_laser" value="true" />
     </node>
 
     <!-- start rviz with gmapping configs -->
