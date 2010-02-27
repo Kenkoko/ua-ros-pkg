@@ -1,4 +1,17 @@
-On OS X, depending on phidgets_py_api will not work. You will need to install
-the Phidgets drivers and python bindings manually. Once the python bindings are
-on your PYTHONPATH, comment out the dependency in phidgets_ros/manifest.xml.
+On OS X, depending on phidgets_py_api which loads phidgetspp_c library won't 
+work! For the C API, we pull a linux tarball and compile on Ubuntu. 
+
+You must do the following:
+
+1. Download and install the Mac version of this library:
+
+Mac OS X, Phidget 21 Installer 
+http://www.phidgets.com/drivers.php
+
+2. Download and install the python bindings
+http://www.phidgets.com/downloads/libraries/PhidgetsPython_2.1.6.20100129.zip
+
+3. Make sure the python bindings are on your PYTHONPATH.
+
+4. Comment out the dependency on phidgets_py_api in phidgets_ros/manifest.xml.
 Execute rosmake and the Phidgets code should work now.
