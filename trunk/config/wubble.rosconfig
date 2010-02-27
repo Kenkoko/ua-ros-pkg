@@ -14,5 +14,5 @@
     uri: https://cmu-ros-pkg.svn.sourceforge.net/svnroot/cmu-ros-pkg/trunk/cameradc1394
     local-name: cmu-ros-pkg-read-only/cameradc1394
 - svn:
-    uri: http://ua-cs665-ros-pkg.googlecode.com/svn/trunk/
+    uri: https://ua-cs665-ros-pkg.googlecode.com/svn/trunk/
     local-name: ua-cs665-ros-pkg
