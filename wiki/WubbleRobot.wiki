@@ -53,7 +53,7 @@ Packages:
 
 <img src="http://www.acroname.com/robotics/parts/R325-URG-04LX-UG01.jpg" height="100"/>
 
-[http://www.acroname.com/robotics/parts/R325-URG-04LX-UG01.html]
+[http://www.acroname.com/robotics/parts/R325-URG-04LX-UG01.html Description]
 
 Packages:
   * houkyo_urg_description
