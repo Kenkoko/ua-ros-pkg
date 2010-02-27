@@ -28,8 +28,7 @@ source ~/.bashrc
 }}}
   # Run the script that makes all the UA packages
 {{{
-cd ~/ros/ua-ros-pkg/arrg
-./make-all.sh
+~/ros/ua-ros-pkg/arrg/make-all.sh
 }}}
 
 = Developers =
@@ -60,6 +59,5 @@ source ~/.bashrc
 }}}
   # Run the script that makes all the UA packages
 {{{
-cd ~/ros/ua-ros-pkg/arrg
-./make-all.sh
+~/ros/ua-ros-pkg/arrg/make-all.sh
 }}}
