@@ -48,3 +48,12 @@ Packages:
   * smart_arm_controller
   * smart_arm_kinematics
   * ax12_driver_core
+
+==Hokuyo URG (Laser Range Finder)==
+
+<img src="http://www.acroname.com/robotics/parts/R325-URG-04LX-UG01.jpg" height="100"/>
+
+[http://www.acroname.com/robotics/parts/R325-URG-04LX-UG01.html]
+
+Packages:
+  * houkyo_urg_description
