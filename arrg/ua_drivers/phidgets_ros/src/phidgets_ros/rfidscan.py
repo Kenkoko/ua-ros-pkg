@@ -68,14 +68,14 @@ class PhidgetsRFID (RFID):
 
     def __tagGainedHandler(self, tagEvent):
         """
-        Simple handler for tag gained event. Turns on the onbaord LED.
+        Simple handler for tag gained event. Turns on the onboard LED.
         """
         self.setLEDOn(True)
         self.__publisher.publish(True, str(tagEvent.tag))
 
     def __tagLostHandler(self, tagEvent):
         """
-        Simple handler for tag lost event. Turns off the onbaord LED.
+        Simple handler for tag lost event. Turns off the onboard LED.
         """
         self.setLEDOn(False)
         self.__publisher.publish(False, str(tagEvent.tag))
@@ -160,7 +160,7 @@ Number of outputs: %i -- Antenna Status: %s -- Onboard LED Status: %s
 """ %self.getDeviceInfo()
 
 
-# main -- allows to use with command rosrun rcs PhidgetsRFID.py
+# main -- allows use of command 'rosrun phidgets_ros rfidscan.py'
 if __name__ == '__main__':
     PhidgetsRFID()
     print 'Use ctrl + c to stop...'

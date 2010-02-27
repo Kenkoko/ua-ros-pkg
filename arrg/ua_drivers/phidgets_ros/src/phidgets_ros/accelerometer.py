@@ -55,7 +55,7 @@ except ImportError, ie:
 class PhidgetsAccelerometer (Accelerometer):
     """
     Subclass of Accelerometer class provided by Phidgets Inc. It simplifies the calls to connnect
-    and disconnect a phidget. It publishes acelerometer value changed events to the ROS topic "acceleromter".
+    and disconnect a phidget. It publishes acelerometer value changed events to the ROS topic "accelerometer".
     """
 
     def __init__(self, sensitivity=0.500):
@@ -142,7 +142,7 @@ class PhidgetsAccelerometer (Accelerometer):
 Number of Axes: %i
 """ %self.getDeviceInfo()
 
-# main -- allows to use with command rosrun rcs PhidgetsRFID.py
+# main -- allows use of command 'rosrun phidgets_ros accelerometer.py'
 if __name__ == '__main__':
     PhidgetsAccelerometer()
     rospy.spin()
