@@ -26,13 +26,10 @@ echo "source ~/ros/setup.sh" >> ~/.bashrc
 echo "export ROBOT=sim" >> ~/.bashrc
 source ~/.bashrc
 }}}
-  # Install (Ubuntu) dependencies for wubble world 
+  # Run the script that makes all the UA packages
 {{{
-rosdep install wubble
-}}}
-  # Build the wubble stack
-{{{
-rosmake wubble
+cd ~/ros/ua-ros-pkg/arrg
+./make-all.sh
 }}}
 
 = Developers =
@@ -61,11 +58,8 @@ echo "source ~/ros/setup.sh" >> ~/.bashrc
 echo "export ROBOT=sim" >> ~/.bashrc
 source ~/.bashrc
 }}}
-  # Install (Ubuntu) dependencies for wubble world 
+  # Run the script that makes all the UA packages
 {{{
-rosdep install wubble
-}}}
-  # Build the wubble stack
-{{{
-rosmake wubble
+cd ~/ros/ua-ros-pkg/arrg
+./make-all.sh
 }}}
