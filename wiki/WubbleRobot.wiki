@@ -11,6 +11,8 @@ This repository provides a number of packages that support the Wubble Robot crea
 Packages:
   * wubble_description
   * wubble_actions
+  * wubble_mapping
+  * wubble_teleop
 
 =Components=
 
