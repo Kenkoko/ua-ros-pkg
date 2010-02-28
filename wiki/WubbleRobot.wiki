@@ -11,10 +11,10 @@ This repository provides a number of packages that support the Wubble Robot crea
 </div>
 
 Packages:
-  * wubble_description
-  * wubble_actions
-  * wubble_mapping
-  * wubble_teleop
+  * [http://www.ros.org/wiki/wubble_description wubble_description]
+  * [http://www.ros.org/wiki/wubble_actions wubble_actions]
+  * [http://www.ros.org/wiki/wubble_mapping wubble_mapping]
+  * [http://www.ros.org/wiki/wubble_teleop wubble_teleop]
 
 =Components=
 
@@ -25,9 +25,9 @@ Packages:
 [http://www.videredesign.com/index.php?id=45 Description]
 
 Packages:
-  * erratic_description
-  * ua_erratic_player
-  * wubble_plugins
+  * [http://www.ros.org/wiki/erratic_description erratic_description]
+  * [http://www.ros.org/wiki/ua_erratic_player ua_erratic_player]
+  * [http://www.ros.org/wiki/wubble_plugins wubble_plugins]
 
 ==Videre STOC (Stereo Camera)==
 
@@ -36,10 +36,10 @@ Packages:
 [http://www.videredesign.com/index.php?id=74 Description]
 
 Packages:
-  * videre_stoc_description
-  * videre_stereo_cam
-  * videre_stoc
-  * stoc_publisher
+  * [http://www.ros.org/wiki/videre_stoc_description videre_stoc_description]
+  * [http://www.ros.org/wiki/videre_stereo_cam videre_stereo_cam]
+  * [http://www.ros.org/wiki/videre_stoc videre_stoc]
+  * [http://www.ros.org/wiki/stoc_publisher stoc_publisher]
 
 ==Crust Crawler Smart Arm==
 
@@ -48,10 +48,10 @@ Packages:
 [http://www.crustcrawler.com/products/smartarm/index.php?prod=12#thumb Description]
 
 Packages:
-  * smart_arm_description
-  * smart_arm_controller
-  * smart_arm_kinematics
-  * ax12_driver_core
+  * [http://www.ros.org/wiki/smart_arm_description smart_arm_description]
+  * [http://www.ros.org/wiki/smart_arm_controller smart_arm_controller]
+  * [http://www.ros.org/wiki/smart_arm_kinematics smart_arm_kinematics]
+  * [http://www.ros.org/wiki/ax12_driver_core ax12_driver_core]
 
 ==Hokuyo URG (Laser Range Finder)==
 
@@ -60,4 +60,4 @@ Packages:
 [http://www.acroname.com/robotics/parts/R325-URG-04LX-UG01.html Description]
 
 Packages:
-  * houkyo_urg_description
+  * [http://www.ros.org/wiki/houkyo_urg_description houkyo_urg_description]
