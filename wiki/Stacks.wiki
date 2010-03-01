@@ -1,3 +1,23 @@
 #summary A description of the stacks in ua-ros-pkg
 
+===ua_drivers===
+
+Contains:
+  * Drivers for the Dynamixel AX-12 servos ([http://www.ros.org/wiki/ax12_driver_core ax12_driver_core]) 
+  * A Python interface to various Phidgets sensors ([http://www.ros.org/wiki/phidgets_py_api phidgets_py_api], [http://www.ros.org/wiki/phidgets_ros phidgets_ros])
+  * 
+
+===ua_controllers===
+
+===ua_robots===
+
+===ua_vision===
+
+===ua_cognition===
+
 ===ua_apps===
+
+Contains packages that provide
+
+
+===wubble_world===
