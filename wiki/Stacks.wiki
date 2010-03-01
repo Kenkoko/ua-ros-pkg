@@ -3,9 +3,9 @@
 ===ua_drivers===
 
 This stack contains ROS drivers for various components of the Wubble Robot, specifically:
-  * Drivers for the Dynamixel AX-12 servos ([http://www.ros.org/wiki/ax12_driver_core ax12_driver_core]). These servos are used by the !SmartArm, laser tilt, and head pan/tilt.
-  * A Python interface to various Phidgets sensors ([http://www.ros.org/wiki/phidgets_py_api phidgets_py_api], [http://www.ros.org/wiki/phidgets_ros phidgets_ros])
-  * 
+  * Drivers for the Dynamixel AX-12 servos ([http://www.ros.org/wiki/ax12_driver_core ax12_driver_core]). These servos are used by the robot's !SmartArm, tilt laser, and head pan/tilt.
+  * A Python interface to Phidgets pressure sensors and RFID sensors  ([http://www.ros.org/wiki/phidgets_py_api phidgets_py_api], [http://www.ros.org/wiki/phidgets_ros phidgets_ros]). 
+  * Two interfaces to the Videre STOC camera: The first ([http://www.ros.org/wiki/videre_stereo_cam videre_stereo_cam]) uses standard FireWire libraries to get the left and right images from the camera. The second ([http://www.ros.org/wiki/videre_stoc videre_stoc]) relies on Videre's proprietary SVS software packages to pull the left image and disparity image from the STOC.
 
 ===ua_controllers===
 
