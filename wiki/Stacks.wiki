@@ -18,8 +18,7 @@ This package contains controllers for the Wubble Robot, which generally depend o
 
 ===ua_robots===
 
-This stack contains URDF description files, 3D models, and configuration parameters for the Wubble Robot. The Wubble Robot is modeled quite accurately in simulation
-  * Description files for the 
+This stack contains URDF description files, 3D models, and configuration parameters for the Wubble Robot. For a component-by-component description of the robot, see WubbleRobot.
 
 ===ua_vision===
 
