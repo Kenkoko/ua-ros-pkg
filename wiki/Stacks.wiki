@@ -2,8 +2,8 @@
 
 ===ua_drivers===
 
-Contains:
-  * Drivers for the Dynamixel AX-12 servos ([http://www.ros.org/wiki/ax12_driver_core ax12_driver_core]) 
+This stack contains ROS drivers for various components of the Wubble Robot, specifically:
+  * Drivers for the Dynamixel AX-12 servos ([http://www.ros.org/wiki/ax12_driver_core ax12_driver_core]). These servos are used by the !SmartArm, laser tilt, and head pan/tilt.
   * A Python interface to various Phidgets sensors ([http://www.ros.org/wiki/phidgets_py_api phidgets_py_api], [http://www.ros.org/wiki/phidgets_ros phidgets_ros])
   * 
 
