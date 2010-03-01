@@ -26,7 +26,6 @@ This stack contains URDF description files, 3D models, and configuration paramet
 ===ua_cognition===
 
 ===ua_apps===
-
 Contains packages that provide
 
 
