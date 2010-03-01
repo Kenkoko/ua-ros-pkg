@@ -23,6 +23,11 @@ This stack contains URDF description files, 3D models, and configuration paramet
 
 ===ua_vision===
 
+Contains packages related to vision on UA robots, including saliency tracking based on the 
+
+  * A ROS wrapper for Nick's Machine Perception Toolkit ([http://www.ros.org/wiki/nmpt]), a vision library providing algorithms for computing salient parts of an image. This information is used for saliency-based tracking ([http://www.ros.org/wiki/saliency_tracking saliency_tracking]). 
+
+
 ===ua_cognition===
 
 This stack will contain the cognitive architecture for the Wubble Robot. Currently, it contains a ROS wrapper for the GBBopen blackboard system ([http://www.ros.org/wiki/gbbopen gbbopen]).
