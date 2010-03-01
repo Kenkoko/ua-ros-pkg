@@ -33,4 +33,4 @@ Contains packages that provide
 
 ===wubble_world===
 
-This stack contains world files for the Gazebo simulator (in [http://www.ros.org/wiki/wubble_environments wubble_environments]), which will ultimately act as a continuation of the [http://www.wubbleworld.com Wubble World] project.
+This stack contains world files for the Gazebo simulator (in [http://www.ros.org/wiki/wubble_environments wubble_environments]), intended as an environment for continuing the [http://www.wubbleworld.com Wubble World] project.
