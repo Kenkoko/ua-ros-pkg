@@ -10,7 +10,7 @@ This stack contains ROS drivers for various components of the Wubble Robot, spec
 ===ua_controllers===
 
 This package contains controllers for the Wubble Robot, which generally depend on ua_drivers for interfacing with the hardware. Thus, packages in this stack provide a higher level of abstraction for robot subsystems than ua_drivers. 
-  * Controller 
+  * Controllers for the !SmartArm ([http://www.ros.org/wiki/smart_arm_controller smart_arm_controller]), tilting laser ([http://www.ros.org/wiki/wubble_laser_tilt_controller wubble_laser_tilt_controller]), and head pan/tilt ([http://www.ros.org/wiki/wubble_camera_pan_tilt_controller wubble_camera_pan_tilt_controller]). 
   * Actions interfaces for all of the above controllers ([http://www.ros.org/wiki/wubble_actions wubble_actions]).
   * Message types common to all controllers ([http://www.ros.org/wiki/ua_controller_msgs ua_controller_msgs]).
   * A control system for a simple Bioloid robot used in some Wizard-of-Oz experiments at UA ([http://www.ros.org/wiki/ccs ccs]).
