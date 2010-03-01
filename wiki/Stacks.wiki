@@ -25,7 +25,7 @@ This stack contains URDF description files, 3D models, and configuration paramet
 
 Contains packages related to vision on UA robots, including saliency tracking based on the 
 
-  * A ROS wrapper for Nick's Machine Perception Toolkit ([http://www.ros.org/wiki/nmpt]), a vision library providing algorithms for computing salient parts of an image. This information is used for saliency-based tracking ([http://www.ros.org/wiki/saliency_tracking saliency_tracking]). 
+  * A ROS wrapper for Nick's Machine Perception Toolkit ([http://www.ros.org/wiki/nmpt nmpt]), a vision library providing algorithms for computing salient parts of an image. This information is used for saliency-based tracking ([http://www.ros.org/wiki/saliency_tracking saliency_tracking]). 
 
 
 ===ua_cognition===
