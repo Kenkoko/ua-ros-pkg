@@ -14,6 +14,7 @@ This package contains controllers for the Wubble Robot, which generally depend o
   * Actions interfaces for all of the above controllers ([http://www.ros.org/wiki/wubble_actions wubble_actions]).
   * Message types common to all controllers ([http://www.ros.org/wiki/ua_controller_msgs ua_controller_msgs]).
   * A control system for a simple Bioloid robot used in some Wizard-of-Oz experiments at UA ([http://www.ros.org/wiki/ccs ccs]).
+  * An inverse kinematics (IK) solver for the !SmartArm, created with OpenRAVE ([http://www.ros.org/wiki/smart_arm_kinematics smart_arm_kinematics]).
 
 ===ua_robots===
 
