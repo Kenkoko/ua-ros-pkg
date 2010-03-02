@@ -1,0 +1,14 @@
+50c50
+< (mini-module-user :propagate)
+---
+> (module-manager-user :propagate)
+52c52
+< (in-package :mini-module)
+---
+> (in-package :module-manager)
+151a152,156
+> (in-package :asdf)
+> 
+> (defsystem :gbbopen/gbbopen
+>     :depends-on (:gbbopen))
+> 

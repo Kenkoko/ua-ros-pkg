@@ -10,7 +10,8 @@ build:
 	sh compile.sh
 	rm -rf asdf
 	mkdir asdf
-	ln -s `(rospack find gbbopen)`/gbbopen/gbbopen.asd asdf/gbbopen.asd 
+	patch gbbopen/gbbopen.asd -i gbbopen.patch -o gbbopen/gbbopen-patched.asd
+	ln -s `(rospack find gbbopen)`/gbbopen/gbbopen-patched.asd asdf/gbbopen.asd 
 
 clean:
 	rm -rf patched rospack_nosubdirs gbbopen asdf
