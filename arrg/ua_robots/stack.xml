@@ -1,5 +1,8 @@
 <stack>
-  <description brief="ua_robots">Contains URDF descriptions of UA robots.</description>
+  <description brief="Contains URDF descriptions of UA robots.">
+  This stack contains URDF description files, 3D models, meshes, textures
+  and configuration parameters needed for Wubble Robot simulation.
+  </description>
   <author>Maintained by UA Robotics Research Group</author>
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
