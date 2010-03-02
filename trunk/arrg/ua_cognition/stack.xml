@@ -1,5 +1,8 @@
 <stack>
-    <description brief="Cognitive Architecture for UA Robots">ua_cognition</description>
+    <description brief="Cognitive Architecture for UA Robots">
+    This stack will contain the cognitive architecture for the Wubble Robot. 
+    Currently, it contains a ROS wrapper for the GBBopen blackboard system.
+    </description>
     <author>Maintained by Daniel Hewlett</author>
     <license>BSD</license>  
     <review status="unreviewed" notes=""/>

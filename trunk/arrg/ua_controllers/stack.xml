@@ -1,5 +1,10 @@
 <stack>
-  <description brief="ua_controllers">ua_controllers</description>
+  <description brief="Controllers for the Wubble Robot">
+  This stack contains higher level controllers for the Wubble Robot, which 
+  generally depend on packages in the ua_drivers stack for interfacing with 
+  the hardware. Thus, packages in this stack provide a higher level of 
+  abstraction for Wubble Robot subsystems than ua_drivers.
+  </description>
   <author>Maintained by UA Robotics Research Group</author>
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
