@@ -1,5 +1,9 @@
 <stack>
-  <description brief="ua_drivers">ua_drivers</description>
+  <description brief="Servo, Phidget and STOC camera drivers.">
+    This stack contains ROS drivers for Phidgets pressure, RFID and 
+    accelerometer sensors, Dynamixel AX-12 servos, and two interfaces for the 
+    Videre STOC camera.
+  </description>
   <author>Maintained by UA Robotics Research Group</author>
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
