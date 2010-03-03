@@ -1,0 +1,25 @@
+<package>
+    <description brief="Blocks World demo of the Wubble robot">
+
+     wubble_blocks
+
+    </description>
+    <author>Anh Tran</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_blocks</url>
+
+    <!-- Core ros packages -->
+    <depend package="roscpp"/>
+    <depend package="rospy"/>
+    <depend package="roslib"/>
+    <depend package="std_msgs"/>
+    <depend package="geometry_msgs"/>
+
+    <!-- Controllers & actions -->
+    <depend package="wubble_actions"/>
+
+    <!-- Visualization -->
+    <depend package="rviz"/>
+
+</package>
