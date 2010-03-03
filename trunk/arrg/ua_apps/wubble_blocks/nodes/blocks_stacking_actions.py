@@ -29,7 +29,7 @@
 
 # Author: Anh Tran
 
-PKG = 'wubble_actions'
+PKG = 'wubble_blocks'
 NAME = 'actions_demo'
 
 import roslib; roslib.load_manifest(PKG)
@@ -147,6 +147,8 @@ if __name__ == '__main__':
         gripper_client.wait_for_server()
         laser_client.wait_for_server()
 
+        print "Starting blocks-stacking actions."
+
         print "Laser tilt"
         tilt_laser(2)
         print "Look at blocks"
@@ -181,6 +183,8 @@ if __name__ == '__main__':
         move_gripper(0.2, -0.2)
         print "Reset arm"
         move_arm(0.0, 1.972222, -1.972222, 0.0)
+
+        print "Blocks-stacking actions completed."
 
     except rospy.ROSInterruptException:
         pass
