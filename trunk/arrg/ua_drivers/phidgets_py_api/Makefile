@@ -5,7 +5,7 @@ ZIP_FILE   = PhidgetsPython_2.1.6.20100129.zip
 ZIP_URL    = http://www.phidgets.com/downloads/libraries/$(ZIP_FILE)
 SRC_DIR    = src
 TMP_DIR    = tmp
-PKG_NAME   = phidgets_py_api
+PATCH_FILE = phidgets_py_api.patch
 
 #include $(shell rospack find mk)/download_unpack_build.mk
 
@@ -19,9 +19,9 @@ build:
 		wget $(ZIP_URL); \
 		unzip $(ZIP_FILE) -d $(TMP_DIR); \
 		mv $(TMP_DIR)/PhidgetsPython/Phidgets $(SRC_DIR); \
-		patch -b --verbose $(SRC_DIR)/Phidgets/PhidgetException.py < $(PKG_NAME).patch; \
+		patch -p1 --verbose < $(PATCH_FILE); \
 		rm $(ZIP_FILE); \
-		rm -rf $(TMP_FILE); \
+		rm -rf $(TMP_DIR); \
 	fi
         
 clean:
