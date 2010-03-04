@@ -9,5 +9,12 @@
     <!-- insert overhead cam -->
     <include file="$(find overhead_cam_description)/launch/overhead_cam.launch"/>
 
+    <!-- enable teleoperation
+    <include file="$(find wubble_teleop)/launch/erratic_logitech.launch" />
+    -->
+
+    <!-- operate erratic via keyboard (control with WASD in terminal window) -->
+    <node pkg="wubble_teleop" type="keyboard" name="keyboard_teleop" />
+    
 </launch>
 
