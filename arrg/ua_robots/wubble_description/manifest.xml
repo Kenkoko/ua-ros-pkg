@@ -25,7 +25,6 @@
 
     <depend package="fake_localization"/>
     <depend package="move_base"/>
-    <depend package="move_base_client"/>
     <depend package="map_server"/>
 
     <depend package="stereo_image_proc"/>
