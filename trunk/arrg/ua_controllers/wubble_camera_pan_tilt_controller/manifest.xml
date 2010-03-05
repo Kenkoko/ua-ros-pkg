@@ -1,8 +1,8 @@
 <package>
   <description brief="Camera Pan/Tilt controller for the Wubble Robot">
-  A ROS node to control the camera (aka, head) of the Wubble Robot. Two 
-  Dynamixel AX-12+ servos (pan and tilt joints) can be controlled with a 
-  pan and tilt angle in integer degrees. 
+  A driver plugin to the ax12_driver_core manager.py node. Controls the camera 
+  (aka, head) of the Wubble Robot. Two Dynamixel AX-12+ servos (pan and tilt 
+  joints) can be controlled with a pan and tilt angle in integer degrees. 
   </description>
   <author>UA Robotics Research Group</author>
   <license>BSD</license>
