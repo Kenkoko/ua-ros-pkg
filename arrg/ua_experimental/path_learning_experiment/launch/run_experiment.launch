@@ -13,7 +13,7 @@
     </node>
 
     <!-- start the map server -->
-    <node name="map_node" pkg="map_server" type="map_server" args="$(find wubble_environments)/maps/empty_map.yaml" respawn="false" output="screen" />
+    <node name="map_node" pkg="map_server" type="map_server" args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml" respawn="false" output="screen" />
 
     <!-- spawn the robot -->
     <include file="$(find wubble_description)/launch/wubble_robot_base.launch" />
