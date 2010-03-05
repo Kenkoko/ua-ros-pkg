@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2009, Arizona Robotics Research Group,
+# Copyright (c) 2010, Arizona Robotics Research Group,
 # University of Arizona. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@ Simplified Version of RFID class
 import roslib
 roslib.load_manifest('phidgets_ros')
 
+import sys
 import rospy
 from phidgets_ros.msg import RFIDEvent
 
