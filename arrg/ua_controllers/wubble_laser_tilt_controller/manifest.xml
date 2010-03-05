@@ -1,9 +1,9 @@
 <package>
   <description brief="Laser Tilt controller for the Wubble Robot">
-  A ROS node to control the tilt joint of the Hokuyo laser. This controller 
-  is specific to the Wubble Robot. One Dynamixel AX-12+ servo creates this 
-  joint and it can be controlled with a tilt angle in integer degrees, 
-  and the number of cycles.
+  A driver plugin to the ax12_driver_core manager.py node. Controls the tilt 
+  joint of the Hokuyo laser. This controller is specific to the Wubble Robot. 
+  One Dynamixel AX-12+ servo creates this joint and it can be controlled with 
+  a tilt angle in integer degrees, and the number of cycles.
   </description>
   <author>UA Robotics Research Group</author>
   <license>BSD</license>
