@@ -19,10 +19,10 @@
           args="laser_tilt_controller" output="screen" />
 
     <!-- Laser Filters -->
-    <node pkg="laser_filters" type="scan_to_scan_filter_chain" respawn="true" name="laser_shadow_filter">
+    <node pkg="laser_filters" type="scan_to_cloud_filter_chain" respawn="true" name="laser_shadow_filter">
         <remap from="scan" to="tilt_scan" />
-        <remap from="scan_filtered" to="tilt_scan_shadow_filtered" />
-        <param name="target_frame" value="map" /> <!-- or should this be base_link? -->
+        <remap from="cloud_filtered" to="tilt_scan_shadow_filtered" />
+        <param name="target_frame" value="base_footprint" />
         <param name="high_fidelity" value="true" />
         <rosparam command="load" file="$(find wubble_description)/params/shadow_filter.yaml" />
     </node>
