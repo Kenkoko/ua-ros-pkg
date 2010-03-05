@@ -22,6 +22,5 @@
 
     <!-- Movement -->
     <depend package="move_base"/>   
-    <depend package="move_base_client"/>
 
 </package>
