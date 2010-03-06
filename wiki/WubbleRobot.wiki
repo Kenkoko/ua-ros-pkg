@@ -15,6 +15,7 @@ Packages:
   * [http://www.ros.org/wiki/wubble_actions wubble_actions]
   * [http://www.ros.org/wiki/wubble_mapping wubble_mapping]
   * [http://www.ros.org/wiki/wubble_teleop wubble_teleop]
+  * [http://www.ros.org/wiki/wubble_blocks wubble_blocks]
 
 =Components=
 
