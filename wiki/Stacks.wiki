@@ -34,6 +34,7 @@ This stack will contain the cognitive architecture for the Wubble Robot. Current
 
   * Wubble Robot Gmapping application ([http://www.ros.org/wiki/wubble_mapping wubble_mapping]).
   * Wubble Robot teleoperation ([http://www.ros.org/wiki/wubble_teleop wubble_teleop]).
+  * Wubble Robot blocks stacking ([http://www.ros.org/wiki/wubble_blocks wubble_blocks]).
 
 ===wubble_world===
 
