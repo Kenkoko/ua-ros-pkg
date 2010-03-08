@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2009, Arizona Robotics Research Group,
+# Copyright (c) 2010, Arizona Robotics Research Group,
 # University of Arizona. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,9 @@ class DriverControl:
     def __init__(self, out_cb):
         self.camera_pan_tilt = CameraPanTiltAX12(out_cb)
         
+    def initialize(self):
+        return self.camera_pan_tilt.initialize()
+        
     def start(self):
         self.camera_pan_tilt.start()
         
@@ -69,10 +72,6 @@ class CameraPanTiltAX12():
         self.pan_joint_name = rospy.get_param('camera_pan_tilt_controller/pan_joint_name', 'head_pan_joint')
         self.tilt_joint_name = rospy.get_param('camera_pan_tilt_controller/tilt_joint_name', 'head_tilt_joint')
         
-        pan_mcv = (self.pan_motor_id, 100)  # mcv = "Move Command Value"
-        tilt_mcv = (self.tilt_motor_id, 100)
-        self.send_packet_callback((AX_GOAL_SPEED, [pan_mcv, tilt_mcv]))
-        
         # Pan limits
         self.pan_initial_position_raw = 666 # scary
         self.pan_min_angle_raw = 973
@@ -90,7 +89,21 @@ class CameraPanTiltAX12():
         self.tilt_initial_position_angle = 0.0
         self.tilt_min_angle = -70.0  # looking down from robot's perspective
         self.tilt_max_angle = 35.0   # looking up from robot's perspective
-                
+
+    def initialize(self):
+        # verify that the expected motors are connected and responding
+        available_ids = rospy.get_param('ax12/connected_ids', [])
+        if not self.pan_motor_id in available_ids or not self.tilt_motor_id in available_ids:
+            rospy.logwarn("One or more of the specified motor ids are not connected and responding.")
+            rospy.logwarn("Available ids: %s" %str(available_ids))
+            rospy.logwarn("Camera Pan/Tilt ids: %d, %d" %(self.pan_motor_id, self.tilt_motor_id))
+            return False
+        
+        pan_mcv = (self.pan_motor_id, 100)  # mcv = "Move Command Value"
+        tilt_mcv = (self.tilt_motor_id, 100)
+        self.send_packet_callback((AX_GOAL_SPEED, [pan_mcv, tilt_mcv]))
+        return True
+
     def start(self):
         self.running = True
         

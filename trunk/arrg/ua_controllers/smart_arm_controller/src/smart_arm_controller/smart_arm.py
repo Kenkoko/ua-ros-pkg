@@ -49,10 +49,13 @@ from ua_controller_msgs.msg import JointStateList
 class DriverControl:
     def __init__(self, out_cb):
         self.arm = ArmAX12(out_cb)
-        
+
+    def initialize(self):
+        return self.arm.initialize()
+
     def start(self):
         self.arm.start()
-        
+
     def stop(self):
         self.arm.stop()
 
@@ -110,6 +113,11 @@ class ArmAX12():
         finger_right_joint = ArmJoint(FINGER_RIGHT, 512, 512, 724, finger_right_id)
         finger_left_joint = ArmJoint(FINGER_LEFT, 512, 512, 300, finger_left_id)
         
+        self.motor_ids = [shoulder_pan_id,
+                          shoulder_tilt_ids[0], shoulder_tilt_ids[1],
+                          elbow_tilt_ids[0], elbow_tilt_ids[1],
+                          wrist_id, finger_right_id, finger_left_id]
+        
         self.name_to_joint = {SHOULDER_PAN: shoulder_pan_joint,
                               SHOULDER_TILT: shoulder_tilt_joint,
                               ELBOW_TILT: elbow_tilt_joint,
@@ -123,25 +131,30 @@ class ArmAX12():
                               wrist_id: wrist_rotate_joint,
                               finger_right_id: finger_right_joint,
                               finger_left_id: finger_left_joint}
-                              
-        self.motor_ids = [shoulder_pan_id,
-                          shoulder_tilt_ids[0], shoulder_tilt_ids[1],
-                          elbow_tilt_ids[0], elbow_tilt_ids[1],
-                          wrist_id,
-                          finger_right_id, finger_left_id]
                           
-        initial_positions = [shoulder_pan_joint.zero_angle_raw,
+        self.initial_positions = [shoulder_pan_joint.zero_angle_raw,
                              shoulder_tilt_joint.max_angle_raw, AX_MAX_POSITION - shoulder_tilt_joint.max_angle_raw,
                              elbow_tilt_joint.min_angle_raw, AX_MAX_POSITION - elbow_tilt_joint.min_angle_raw,
                              wrist_rotate_joint.zero_angle_raw,
                              finger_right_joint.max_angle_raw, finger_left_joint.max_angle_raw]
-                            
+
+    def initialize(self):
+        # verify that the expected motors are connected and responding
+        available_ids = rospy.get_param('ax12/connected_ids', [])
+        verified = reduce(bool.__and__, [mid in available_ids for mid in self.motor_ids])
+        if not verified:
+            rospy.logwarn("One or more of the specified motor ids are not connected and responding.")
+            rospy.logwarn("Available ids: %s" %str(available_ids))
+            rospy.logwarn("Smart Arm ids: %s" %str(self.motor_ids))
+            return False
+            
         mcvs = [(mid, 100) for mid in self.motor_ids]
         self.send_packet_callback((AX_GOAL_SPEED, mcvs))    # set speeds of all motors to 200
         
-        mcvs = zip(self.motor_ids, initial_positions)
+        mcvs = zip(self.motor_ids, self.initial_positions)
         self.send_packet_callback((AX_GOAL_POSITION, mcvs)) # set initial pose
-         
+        return True
+
     def start(self):
         self.running = True
         self.joint_state_pub = rospy.Publisher('arm_controller/state', JointStateList)

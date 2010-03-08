@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2009, Arizona Robotics Research Group,
+# Copyright (c) 2010, Arizona Robotics Research Group,
 # University of Arizona. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,10 +48,13 @@ from std_msgs.msg import Int32
 class DriverControl:
     def __init__(self, out_cb):
         self.laser_tilt = LaserTiltAX12(out_cb)
-        
+
+    def initialize(self):
+        return self.laser_tilt.initialize()
+
     def start(self):
         self.laser_tilt.start()
-        
+
     def stop(self):
         self.laser_tilt.stop()
 
@@ -59,18 +62,10 @@ class LaserTiltAX12():
     def __init__(self, out_cb):
         self.send_packet_callback = out_cb
         
-        self.joint_state_pub = rospy.Publisher('laser_tilt_controller/state', JointStateList)
-        self.cycles_sub = rospy.Subscriber('laser_tilt_controller/cycles', Int32, self.process_new_cycles)
-        self.tilt_sub = rospy.Subscriber('laser_tilt_controller/tilt', Int32, self.do_tilt)
-        self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
-        
         self.motor_id = rospy.get_param('laser_tilt_controller/motor_id', 9)
         self.step_num = rospy.get_param('laser_tilt_controller/step_num', 5)
         self.joint_name = rospy.get_param('laser_tilt_controller/joint_name', 'hokuyo_tilt_joint')
         self.num_cycles = 0
-        
-        mcv = (self.motor_id, 1023)
-        self.send_packet_callback((AX_GOAL_SPEED, [mcv]))
         
         self.initial_position_raw = 817
         self.min_angle_raw = 817
@@ -86,8 +81,25 @@ class LaserTiltAX12():
         
         self.event = Event()
         self.tilt_processor = Thread(target=self.do_cycles_tilt)
+     
+    def initialize(self):
+        # verify that the expected motor is connected and responding
+        available_ids = rospy.get_param('ax12/connected_ids', [])
+        if not self.motor_id in available_ids:
+            rospy.logwarn("The specified motor id is not connected and responding.")
+            rospy.logwarn("Available ids: %s" %str(available_ids))
+            rospy.logwarn("Laser Tilt id: %d" %self.motor_id)
+            return False
+        
+        mcv = (self.motor_id, 1023)
+        self.send_packet_callback((AX_GOAL_SPEED, [mcv]))
+        return True
         
     def start(self):
+        self.joint_state_pub = rospy.Publisher('laser_tilt_controller/state', JointStateList)
+        self.cycles_sub = rospy.Subscriber('laser_tilt_controller/cycles', Int32, self.process_new_cycles)
+        self.tilt_sub = rospy.Subscriber('laser_tilt_controller/tilt', Int32, self.do_tilt)
+        self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
         self.running = True
         self.tilt_processor.start()
         
