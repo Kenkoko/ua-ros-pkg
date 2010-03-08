@@ -84,7 +84,7 @@ class SerialProxy():
         rospy.loginfo('Pinging motor IDs %d through %d...' % (self.min_motor_id, self.max_motor_id))
         
         self.motors = []
-        for i in xrange(1, self.max_motor_id):
+        for i in xrange(self.min_motor_id, self.max_motor_id):
             result = self.__serial_bus.ping(i)
             if result: self.motors.append(i)
             
