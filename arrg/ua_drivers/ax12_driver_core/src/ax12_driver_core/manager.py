@@ -85,9 +85,12 @@ class AX12DriverManager:
             return DriverControlResponse(False, 'Unknown error has occured. Unable to start driver %s\n%s' %(driver_name, str(e)))
            
         control = driver.DriverControl(out_cb=self.serial_proxy.queue_new_packet)
-        control.start()
-        self.drivers[driver_name] = control
-        return DriverControlResponse(True, 'Driver %s successfully started.' %driver_name)
+        if control.initialize():
+            control.start()
+            self.drivers[driver_name] = control
+            return DriverControlResponse(True, 'Driver %s successfully started.' %driver_name)
+        else:
+            return DriverControlResponse(False, 'Initialization failed. Unable to start driver %s' %driver_name)
 
     def stop_driver(self, driver_control_request):
         driver_name = driver_control_request.driver_name
