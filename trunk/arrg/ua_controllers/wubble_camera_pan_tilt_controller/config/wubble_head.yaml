@@ -1,0 +1,18 @@
+head_controller:
+    pan:
+        topic: head_pan_controller
+        joint: head_pan_joint
+        motor:
+            id: 6
+            init: 666
+            min: 359
+            max: 973
+    tilt:
+        topic: head_tilt_controller
+        joint: head_tilt_joint
+        motor:
+            id: 5
+            init: 514
+            min: 275
+            max: 634
+
