@@ -35,6 +35,7 @@
 
 import time
 import serial
+import math
 from binascii import b2a_hex
 
 from ax12_const import *
@@ -623,3 +624,12 @@ class DroppedPacketError(Exception):
         self.message = message
     def __str__(self):
         return self.message
+
+def rad_to_raw(init_raw, min_raw, max_raw, angle):
+    angle_raw = angle * AX_RAW_RAD_RATIO
+    print 'angle = %f, val = %d' % (math.degrees(angle), int(round(init_raw + angle_raw)))
+    return int(round(init_raw + angle_raw))
+
+def raw_to_rad(init_raw, raw):
+    return (raw - init_raw) * AX_RAD_RAW_RATIO
+

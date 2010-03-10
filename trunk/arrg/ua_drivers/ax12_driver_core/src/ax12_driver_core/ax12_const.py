@@ -81,10 +81,16 @@ AX_INPUT_VOLTAGE_ERROR = 1
 AX_NO_ERROR = 0
 
 # Static parameters
-AX_RANGE = 300
 AX_TICKS = 1024
 AX_MAX_POSITION = 1023
+
+AX_RANGE_DEG = 300
 AX_RAW_DEG_RATIO = 3.41333333333333333333     # how many ticks in degree
 AX_DEG_RAW_RATIO = 0.29296875                 # how many degrees in a tick
 AX_MAX_SPEED_DEG = 684.0                      # degrees per second
+
+AX_RANGE_RAD = 5.235987756
+AX_RAW_RAD_RATIO = 195.569594071              # how many ticks in radian
+AX_RAD_RAW_RATIO = 0.005113269                # how many radians in a tick
+AX_MAX_SPEED_RAD = 11.938052084               # radians per second
 
