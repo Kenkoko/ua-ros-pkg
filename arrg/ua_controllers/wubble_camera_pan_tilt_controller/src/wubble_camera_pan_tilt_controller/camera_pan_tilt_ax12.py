@@ -39,10 +39,11 @@ roslib.load_manifest('wubble_camera_pan_tilt_controller')
 import rospy
 from ax12_driver_core.ax12_const import *
 from ax12_driver_core.ax12_user_commands import *
+from ax12_driver_core.ax12_io import rad_to_raw, raw_to_rad
 from ax12_driver_core.msg import MotorStateList
 from ua_controller_msgs.msg import JointState
 from ua_controller_msgs.msg import JointStateList
-from wubble_camera_pan_tilt_controller.msg import PanTilt
+from std_msgs.msg import Float64
 from threading import Thread
 
 class DriverControl:
@@ -62,33 +63,39 @@ class CameraPanTiltAX12():
     def __init__(self, out_cb):
         self.send_packet_callback = out_cb
         self.running = False
-        
-        self.joint_state_pub = rospy.Publisher('camera_pan_tilt_controller/state', JointStateList)
-        self.pan_tilt_sub = rospy.Subscriber('camera_pan_tilt_controller/pan_tilt', PanTilt, self.do_pan_tilt)
-        self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
-        
-        self.pan_motor_id = rospy.get_param('camera_pan_tilt_controller/pan_motor_id', 6)
-        self.tilt_motor_id = rospy.get_param('camera_pan_tilt_controller/tilt_motor_id', 5)
-        self.pan_joint_name = rospy.get_param('camera_pan_tilt_controller/pan_joint_name', 'head_pan_joint')
-        self.tilt_joint_name = rospy.get_param('camera_pan_tilt_controller/tilt_joint_name', 'head_tilt_joint')
+
+        pan_topic = rospy.get_param('head_controller/pan/topic', 'head_pan_controller')
+        tilt_topic = rospy.get_param('head_controller/tilt/topic', 'head_tilt_controller')
+
+        self.pan_motor_id = rospy.get_param('head_controller/pan/motor/id', 6)
+        self.tilt_motor_id = rospy.get_param('head_controller/tilt/motor/id', 5)
+        self.pan_joint_name = rospy.get_param('head_controller/pan/joint_name', 'head_pan_joint')
+        self.tilt_joint_name = rospy.get_param('head_controller/tilt/joint_name', 'head_tilt_joint')
         
         # Pan limits
-        self.pan_initial_position_raw = 666 # scary
-        self.pan_min_angle_raw = 973
-        self.pan_max_angle_raw = 359
+        self.pan_initial_position_raw = rospy.get_param('head_controller/pan/motor/init', 666) # scary
+        self.pan_min_angle_raw = rospy.get_param('head_controller/pan/motor/min', 359)
+        self.pan_max_angle_raw = rospy.get_param('head_controller/pan/motor/max', 973)
         
-        self.pan_initial_position_angle = 0.0
-        self.pan_min_angle = -90.0  # looking to the left from robot's perspective
-        self.pan_max_angle = 90.0   # looking to the right from robot's perspective
+        self.pan_min_angle = (self.pan_min_angle_raw - self.pan_initial_position_raw) * AX_RAD_RAW_RATIO  # looking to the right from robot's perspective
+        self.pan_max_angle = (self.pan_max_angle_raw - self.pan_initial_position_raw) * AX_RAD_RAW_RATIO  # looking to the left from robot's perspective
         
         # Tilt limits
-        self.tilt_initial_position_raw = 514
-        self.tilt_min_angle_raw = 239
-        self.tilt_max_angle_raw = 634
+        self.tilt_initial_position_raw = rospy.get_param('head_controller/tilt/motor/init', 514)
+        self.tilt_min_angle_raw = rospy.get_param('head_controller/tilt/motor/min', 275)
+        self.tilt_max_angle_raw = rospy.get_param('head_controller/tilt/motor/max', 634)
         
-        self.tilt_initial_position_angle = 0.0
-        self.tilt_min_angle = -70.0  # looking down from robot's perspective
-        self.tilt_max_angle = 35.0   # looking up from robot's perspective
+        self.tilt_min_angle = (self.tilt_min_angle_raw - self.tilt_initial_position_raw) * AX_RAD_RAW_RATIO  # looking down from robot's perspective
+        self.tilt_max_angle = (self.tilt_max_angle_raw - self.tilt_initial_position_raw) * AX_RAD_RAW_RATIO  # looking up from robot's perspective
+
+        # Get raw state from actual hardware motors
+        self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
+        
+        self.pan_state_pub = rospy.Publisher(pan_topic + '/state', JointStateList)
+        self.pan_command_sub = rospy.Subscriber(pan_topic + '/command', Float64, self.do_pan)
+
+        self.tilt_state_pub = rospy.Publisher(tilt_topic + '/state', JointStateList)
+        self.tilt_command_sub = rospy.Subscriber(tilt_topic + '/command', Float64, self.do_tilt)
 
     def initialize(self):
         # verify that the expected motors are connected and responding
@@ -109,52 +116,20 @@ class CameraPanTiltAX12():
         
     def stop(self):
         self.running = False
-        self.joint_state_pub.unregister()
-        self.pan_tilt_sub.unregister()
+        self.pan_state_pub.unregister()
+        self.tilt_state_pub.unregister()
+        self.pan_command_sub.unregister()
+        self.tilt_command_sub.unregister()
         
     def __pan_angle_to_raw_position(self, angle):
         if angle < self.pan_min_angle: angle = self.pan_min_angle
         elif angle > self.pan_max_angle: angle = self.pan_max_angle
-        angle_raw = abs(angle * AX_RAW_DEG_RATIO)
-        
-        if angle >= 0:
-            pos_full_range = abs(self.pan_initial_position_raw - self.pan_max_angle_raw)
-            rel_ang = angle_raw / pos_full_range
-            rel_raw = pos_full_range * rel_ang
-            return int(round(self.pan_initial_position_raw - rel_raw))
-        else:
-            neg_full_range = abs(self.pan_initial_position_raw - self.pan_min_angle_raw)
-            rel_ang = angle_raw / neg_full_range
-            rel_raw = neg_full_range * rel_ang
-            return int(round(self.pan_initial_position_raw + rel_raw))
+        return rad_to_raw(self.pan_initial_position_raw, self.pan_min_angle_raw, self.pan_max_angle_raw, angle)
             
     def __tilt_angle_to_raw_position(self, angle):
         if angle < self.tilt_min_angle: angle = self.tilt_min_angle
         elif angle > self.tilt_max_angle: angle = self.tilt_max_angle
-        angle_raw = abs(angle * AX_RAW_DEG_RATIO)
-        
-        if angle >= 0:
-            pos_full_range = abs(self.tilt_initial_position_raw - self.tilt_max_angle_raw)
-            rel_ang = angle_raw / pos_full_range
-            rel_raw = pos_full_range * rel_ang
-            return int(round(self.tilt_initial_position_raw + rel_raw))
-        else:
-            neg_full_range =abs(self.tilt_initial_position_raw - self.tilt_min_angle_raw)
-            rel_ang = angle_raw / neg_full_range
-            rel_raw = neg_full_range * rel_ang
-            return int(round(self.tilt_initial_position_raw - rel_raw))
-            
-    def __raw_pan_to_angle(self, raw):
-        if raw > self.pan_initial_position_raw:
-            return -int(round((raw - self.pan_initial_position_raw) * AX_DEG_RAW_RATIO))
-        else:
-            return int(round((self.pan_initial_position_raw - raw) * AX_DEG_RAW_RATIO))
-            
-    def __raw_tilt_to_angle(self, raw):
-        if raw < self.tilt_initial_position_raw:
-            return -int(round((self.tilt_initial_position_raw - raw) * AX_DEG_RAW_RATIO))
-        else:
-            return int(round((raw - self.tilt_initial_position_raw) * AX_DEG_RAW_RATIO))
+        return rad_to_raw(self.tilt_initial_position_raw, self.tilt_min_angle_raw, self.tilt_max_angle_raw, angle)
             
     def process_motor_states(self, state_list):
         if self.running:
@@ -163,35 +138,39 @@ class CameraPanTiltAX12():
                 camera_state = state[0]
                 if camera_state.id == self.pan_motor_id:
                     pan_js = JointState(self.pan_joint_name,
-                                        self.__raw_pan_to_angle(camera_state.position),
-                                        (camera_state.speed / AX_TICKS) * AX_MAX_SPEED_DEG,
+                                        raw_to_rad(self.pan_initial_position_raw, camera_state.position),
+                                        (camera_state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
                                         [self.pan_motor_id],
                                         camera_state.moving)
                 else:
                     tilt_js = JointState(self.tilt_joint_name,
-                                         self.__raw_tilt_to_angle(camera_state.position),
-                                         (camera_state.speed / AX_TICKS) * AX_MAX_SPEED_DEG,
+                                         raw_to_rad(self.tilt_initial_position_raw, camera_state.position),
+                                         (camera_state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
                                          [self.tilt_motor_id],
                                          camera_state.moving)
                                          
                 camera_state = state[1]
                 if camera_state.id == self.pan_motor_id:
                     pan_js = JointState(self.pan_joint_name,
-                                        self.__raw_pan_to_angle(camera_state.position),
-                                        (camera_state.speed / AX_TICKS) * AX_MAX_SPEED_DEG,
+                                        raw_to_rad(self.pan_initial_position_raw, camera_state.position),
+                                         (camera_state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
                                         [self.pan_motor_id],
                                         camera_state.moving)
                 else:
                     tilt_js = JointState(self.tilt_joint_name,
-                                         self.__raw_tilt_to_angle(camera_state.position),
-                                         (camera_state.speed / AX_TICKS) * AX_MAX_SPEED_DEG,
+                                         raw_to_rad(self.tilt_initial_position_raw, camera_state.position),
+                                         (camera_state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
                                          [self.tilt_motor_id],
                                          camera_state.moving)
                                          
-                self.joint_state_pub.publish([pan_js, tilt_js])
+                self.pan_state_pub.publish([pan_js])
+                self.tilt_state_pub.publish([tilt_js])
                 
-    def do_pan_tilt(self, pan_tilt):
-        pan_mcv = (self.pan_motor_id, self.__pan_angle_to_raw_position(pan_tilt.pan))
-        tilt_mcv = (self.tilt_motor_id, self.__tilt_angle_to_raw_position(pan_tilt.tilt))
-        self.send_packet_callback((AX_GOAL_POSITION, [pan_mcv, tilt_mcv]))
+    def do_pan(self, pan):
+        pan_mcv = (self.pan_motor_id, self.__pan_angle_to_raw_position(pan.data))
+        self.send_packet_callback((AX_GOAL_POSITION, [pan_mcv]))
+
+    def do_tilt(self, tilt):
+        tilt_mcv = (self.tilt_motor_id, self.__tilt_angle_to_raw_position(tilt.data))
+        self.send_packet_callback((AX_GOAL_POSITION, [tilt_mcv]))
 
