@@ -37,13 +37,16 @@ import roslib
 roslib.load_manifest('wubble_laser_tilt_controller')
 
 import rospy
+import math
 from ax12_driver_core.ax12_const import *
 from ax12_driver_core.ax12_user_commands import *
+from ax12_driver_core.ax12_io import rad_to_raw, raw_to_rad
 from ax12_driver_core.msg import MotorStateList
 from ua_controller_msgs.msg import JointState
 from ua_controller_msgs.msg import JointStateList
 from threading import Thread, Event
 from std_msgs.msg import Int32
+from std_msgs.msg import Float64
 
 class DriverControl:
     def __init__(self, out_cb):
@@ -61,23 +64,27 @@ class DriverControl:
 class LaserTiltAX12():
     def __init__(self, out_cb):
         self.send_packet_callback = out_cb
+        self.running = False
+
+        self.tilt_topic = rospy.get_param('laser_controller/tilt/topic', 'laser_tilt_controller')
+
+        self.motor_id = rospy.get_param('laser_controller/tilt/motor/id', 9)
+        self.step_num = rospy.get_param('laser_controller/tilt/step_num', 5)
+        self.joint_name = rospy.get_param('laser_controller/joint_name', 'hokuyo_tilt_joint')
         
-        self.motor_id = rospy.get_param('laser_tilt_controller/motor_id', 9)
-        self.step_num = rospy.get_param('laser_tilt_controller/step_num', 5)
-        self.joint_name = rospy.get_param('laser_tilt_controller/joint_name', 'hokuyo_tilt_joint')
         self.num_cycles = 0
         
-        self.initial_position_raw = 817
-        self.min_angle_raw = 817
-        self.max_angle_raw = 663
-        
-        self.initial_position_angle = 0
-        self.min_angle = 0.0    # laser parallel to the base
-        self.max_angle = 45.0   # laser looking up at that angle
-        
+        self.initial_position_raw = rospy.get_param('laser_controller/tilt/motor/init', 817)
+        # CLS TO_TEST: should be a negative rotation now 
+        self.min_angle_raw = rospy.get_param('laser_controller/tilt/motor/min', 663) # laser looking up at that angle, 45 degrees
+        self.max_angle_raw = rospy.get_param('laser_controller/tilt/motor/max', 817) # laser parallel to the base, 0 degrees
+
+        self.min_angle = (self.min_angle_raw - self.initial_position_raw) * AX_RAD_RAW_RATIO  
+        self.max_angle = (self.max_angle_raw - self.initial_position_raw) * AX_RAD_RAW_RATIO
+
         self.__full_range_raw = abs(self.max_angle_raw - self.min_angle_raw)
-        self.__full_range_deg = abs(self.max_angle - self.min_angle)
-        self.__single_step_angle = self.__full_range_deg / self.step_num
+        self.__full_range_rad = self.__full_range_raw * AX_RAD_RAW_RATIO
+        self.__single_step_angle = self.__full_range_rad / self.step_num
         
         self.event = Event()
         self.tilt_processor = Thread(target=self.do_cycles_tilt)
@@ -96,10 +103,11 @@ class LaserTiltAX12():
         return True
         
     def start(self):
-        self.joint_state_pub = rospy.Publisher('laser_tilt_controller/state', JointStateList)
-        self.cycles_sub = rospy.Subscriber('laser_tilt_controller/cycles', Int32, self.process_new_cycles)
-        self.tilt_sub = rospy.Subscriber('laser_tilt_controller/tilt', Int32, self.do_tilt)
+        # Get raw state from tilt motor
         self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
+        self.joint_state_pub = rospy.Publisher(self.tilt_topic + '/state', JointStateList)
+        self.cycles_sub = rospy.Subscriber(self.tilt_topic + '/cycles', Int32, self.process_new_cycles)
+        self.tilt_sub = rospy.Subscriber(self.tilt_topic + '/tilt', Float64, self.do_tilt)
         self.running = True
         self.tilt_processor.start()
         
@@ -114,21 +122,16 @@ class LaserTiltAX12():
     def __angle_to_raw_position(self, angle):
         if angle < self.min_angle: angle = self.min_angle
         elif angle > self.max_angle: angle = self.max_angle
-        rel_ang = angle / self.__full_range_deg
-        rel_raw = self.__full_range_raw * rel_ang
-        return int(round(self.initial_position_raw - rel_raw))
-        
-    def __raw_position_to_angle(self, raw):
-        return int(round((self.initial_position_raw - raw) * AX_DEG_RAW_RATIO))
-        
+        return rad_to_raw(self.initial_position_raw, self.min_angle_raw, self.max_angle_raw, angle)
+       
     def process_motor_states(self, state_list):
         if self.running:
             state = filter(lambda state: state.id == self.motor_id, state_list.motor_states)
             if state:
                 state = state[0]
                 joint_state = JointState(self.joint_name,
-                                         self.__raw_position_to_angle(state.position),
-                                         (state.speed / AX_TICKS) * AX_MAX_SPEED_DEG,
+                                         self.raw_to_rad(self.initial_position_raw, state.position),
+                                         (state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
                                          [self.motor_id],
                                          state.moving)
                 self.joint_state_pub.publish([joint_state])
@@ -150,14 +153,18 @@ class LaserTiltAX12():
                     angle = (i + 1) *  self.__single_step_angle + self.initial_position_angle
                     mcv = (self.motor_id, self.__angle_to_raw_position(angle))
                     self.send_packet_callback((AX_GOAL_POSITION, [mcv]))
-                    rospy.sleep(0.0051 * self.__single_step_angle)
+                    # this worked well with angle degrees (so trying that again
+                    # by converting rad to degrees)
+                    rospy.sleep(0.0051 * math.degrees(self.__single_step_angle))
                     #rospy.sleep(0.75 / (self.step_num - 1))
                 mcv = (self.motor_id, self.initial_position_raw)
                 self.send_packet_callback((AX_GOAL_POSITION, [mcv]))
                 if self.num_cycles > 0:
                     self.num_cycles -= 1
                 #rospy.sleep(0.25)
-                rospy.sleep(0.0051 * self.max_angle)
+                # this worked well with angle degrees (so trying that again
+                # by converting to degrees)
+                rospy.sleep(0.0051 * math.degrees(self.max_angle))
                 rate.sleep()
             self.event.clear()
 
