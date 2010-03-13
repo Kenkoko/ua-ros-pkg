@@ -1,19 +1,19 @@
 <launch>
-<!-- Start the low-level driver manager with parameters -->
-<node name="ax12_driver_manager" pkg="ax12_driver_core" type="manager.py" output="screen" required="true">
-<param name="port_name" type="str" value="/dev/ttyUSB0"/>
-<param name="baud_rate" type="int" value="1000000"/>
-<param name="max_motor_id" type="int" value="25"/>
-<param name="update_rate" type="int" value="1"/>
-</node>
+    <!-- Start the low-level driver manager with parameters -->
+    <node name="ax12_driver_manager" pkg="ax12_driver_core" type="manager.py" output="screen" required="true">
+    <param name="port_name" type="str" value="/dev/ttyUSB0"/>
+    <param name="baud_rate" type="int" value="1000000"/>
+    <param name="max_motor_id" type="int" value="25"/>
+    <param name="update_rate" type="int" value="1"/>
+    </node>
 
-<!-- Load laser parameters from YAML file -->
-<rosparam file="$(find wubble_laser_tilt_controller)/config/laser_controller.yaml" command="load"/>
+    <!-- Load laser parameters from YAML file -->
+    <rosparam file="$(find wubble_laser_tilt_controller)/config/laser_controller.yaml" command="load"/>
 
-<!-- Start the driver -->
-<node name="laser_spawner" pkg="ax12_driver_core" type="driver_ctrl.py"
-args="start $(find wubble_laser_tilt_controller)/src/wubble_laser_tilt_controller/laser_tilt_ax12.py"
-output="screen"/>
+    <!-- Start the driver -->
+    <node name="laser_spawner" pkg="ax12_driver_core" type="driver_ctrl.py"
+          args="start $(find wubble_laser_tilt_controller)/src/wubble_laser_tilt_controller/laser_tilt_ax12.py laser_tilt_controller"
+          output="screen"/>
 </launch>
 
 

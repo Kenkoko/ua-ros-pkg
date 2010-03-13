@@ -8,10 +8,10 @@
     </node>
 
     <!-- Load head parameters from YAML file -->
-    <rosparam file="$(find wubble_camera_pan_tilt_controller)/config/wubble_head.yaml" command="load"/>
+    <rosparam file="$(find smart_arm_controller)/config/smart_arm.yaml" command="load"/>
 
     <!-- Start the smart_arm driver -->
     <node name="head_spawner" pkg="ax12_driver_core" type="driver_ctrl.py"
-          args="start $(find wubble_camera_pan_tilt_controller)/src/wubble_camera_pan_tilt_controller/camera_pan_tilt_ax12.py head_pan_controller head_tilt_controller"
+          args="start $(find smart_arm_controller)/src/smart_arm_controller/smart_arm.py shoulder_pan_controller shoulder_tilt_controller elbow_tilt_controller wrist_rotate_controller finger_right_controller finger_left_controller"
           output="screen"/>
 </launch>

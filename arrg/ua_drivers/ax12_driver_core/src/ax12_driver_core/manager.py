@@ -65,6 +65,7 @@ class AX12DriverManager:
     def start_driver(self, driver_control_request):
         driver_name = driver_control_request.driver_name
         driver_path = driver_control_request.driver_path
+        joint_controllers = driver_control_request.joint_controllers
         # make sure the driver_path is in PYTHONPATH
         if not driver_path in sys.path:
             sys.path.append(driver_path)
@@ -84,7 +85,7 @@ class AX12DriverManager:
         except Exception, e:
             return DriverControlResponse(False, 'Unknown error has occured. Unable to start driver %s\n%s' %(driver_name, str(e)))
            
-        control = driver.DriverControl(out_cb=self.serial_proxy.queue_new_packet)
+        control = driver.DriverControl(self.serial_proxy.queue_new_packet, joint_controllers)
         if control.initialize():
             control.start()
             self.drivers[driver_name] = control

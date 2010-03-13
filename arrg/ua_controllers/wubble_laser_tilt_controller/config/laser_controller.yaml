@@ -1,10 +1,7 @@
-laser_controller:
-    tilt:
-        topic: laser_tilt_controller
-        joint_name: laser_tilt_joint
-        motor:
-            id: 9
-            step_num: 5
-            init: 817
-            min: 663
-            max: 817
+laser_tilt_controller:
+    joint_name: hokuyo_tilt_joint
+    motor:
+        id: 7                       #9
+        init: 817
+        min: 817
+        max: 663

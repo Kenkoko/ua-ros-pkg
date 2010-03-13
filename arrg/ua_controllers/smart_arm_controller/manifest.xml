@@ -11,7 +11,7 @@
   <depend package="rospy"/>
   <depend package="ax12_driver_core"/>
   <depend package="ua_controller_msgs"/>
-
+  <depend package="std_msgs"/>
 </package>
 
 
