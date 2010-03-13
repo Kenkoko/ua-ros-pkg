@@ -36,21 +36,11 @@
 import roslib
 roslib.load_manifest('wubble_laser_tilt_controller')
 
-import rospy
-import math
-from ax12_driver_core.ax12_const import *
-from ax12_driver_core.ax12_user_commands import *
-from ax12_driver_core.ax12_io import rad_to_raw, raw_to_rad
-from ax12_driver_core.msg import MotorStateList
-from ua_controller_msgs.msg import JointState
-from ua_controller_msgs.msg import JointStateList
-from threading import Thread, Event
-from std_msgs.msg import Int32
-from std_msgs.msg import Float64
+from ax12_driver_core.joint_position_controller import JointPositionControllerAX12
 
 class DriverControl:
-    def __init__(self, out_cb):
-        self.laser_tilt = LaserTiltAX12(out_cb)
+    def __init__(self, out_cb, joint_controllers):
+        self.laser_tilt = LaserTiltAX12(out_cb, joint_controllers)
 
     def initialize(self):
         return self.laser_tilt.initialize()
@@ -62,109 +52,15 @@ class DriverControl:
         self.laser_tilt.stop()
 
 class LaserTiltAX12():
-    def __init__(self, out_cb):
-        self.send_packet_callback = out_cb
-        self.running = False
-
-        self.tilt_topic = rospy.get_param('laser_controller/tilt/topic', 'laser_tilt_controller')
-
-        self.motor_id = rospy.get_param('laser_controller/tilt/motor/id', 9)
-        self.step_num = rospy.get_param('laser_controller/tilt/step_num', 5)
-        self.joint_name = rospy.get_param('laser_controller/joint_name', 'hokuyo_tilt_joint')
-        
-        self.num_cycles = 0
-        
-        self.initial_position_raw = rospy.get_param('laser_controller/tilt/motor/init', 817)
-        # CLS TO_TEST: should be a negative rotation now 
-        self.min_angle_raw = rospy.get_param('laser_controller/tilt/motor/min', 663) # laser looking up at that angle, 45 degrees
-        self.max_angle_raw = rospy.get_param('laser_controller/tilt/motor/max', 817) # laser parallel to the base, 0 degrees
-
-        self.min_angle = (self.min_angle_raw - self.initial_position_raw) * AX_RAD_RAW_RATIO  
-        self.max_angle = (self.max_angle_raw - self.initial_position_raw) * AX_RAD_RAW_RATIO
-
-        self.__full_range_raw = abs(self.max_angle_raw - self.min_angle_raw)
-        self.__full_range_rad = self.__full_range_raw * AX_RAD_RAW_RATIO
-        self.__single_step_angle = self.__full_range_rad / self.step_num
-        
-        self.event = Event()
-        self.tilt_processor = Thread(target=self.do_cycles_tilt)
+    def __init__(self, out_cb, joint_controllers):
+        self.tilt_controller = JointPositionControllerAX12(out_cb, joint_controllers[0])
      
     def initialize(self):
-        # verify that the expected motor is connected and responding
-        available_ids = rospy.get_param('ax12/connected_ids', [])
-        if not self.motor_id in available_ids:
-            rospy.logwarn("The specified motor id is not connected and responding.")
-            rospy.logwarn("Available ids: %s" %str(available_ids))
-            rospy.logwarn("Laser Tilt id: %d" %self.motor_id)
-            return False
-        
-        mcv = (self.motor_id, 1023)
-        self.send_packet_callback((AX_GOAL_SPEED, [mcv]))
-        return True
+        return self.tilt_controller.initialize()
         
     def start(self):
-        # Get raw state from tilt motor
-        self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
-        self.joint_state_pub = rospy.Publisher(self.tilt_topic + '/state', JointStateList)
-        self.cycles_sub = rospy.Subscriber(self.tilt_topic + '/cycles', Int32, self.process_new_cycles)
-        self.tilt_sub = rospy.Subscriber(self.tilt_topic + '/tilt', Float64, self.do_tilt)
-        self.running = True
-        self.tilt_processor.start()
+        self.tilt_controller.start()
         
     def stop(self):
-        self.running = False
-        self.event.set()
-        self.joint_state_pub.unregister()
-        self.cycles_sub.unregister()
-        self.tilt_sub.unregister()
-        self.motor_states_sub.unregister()
-        
-    def __angle_to_raw_position(self, angle):
-        if angle < self.min_angle: angle = self.min_angle
-        elif angle > self.max_angle: angle = self.max_angle
-        return rad_to_raw(self.initial_position_raw, self.min_angle_raw, self.max_angle_raw, angle)
-       
-    def process_motor_states(self, state_list):
-        if self.running:
-            state = filter(lambda state: state.id == self.motor_id, state_list.motor_states)
-            if state:
-                state = state[0]
-                joint_state = JointState(self.joint_name,
-                                         self.raw_to_rad(self.initial_position_raw, state.position),
-                                         (state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
-                                         [self.motor_id],
-                                         state.moving)
-                self.joint_state_pub.publish([joint_state])
-                
-    def process_new_cycles(self, data):
-        self.num_cycles = data.data
-        self.event.set()
-        
-    def do_tilt(self, angle):
-        mcv = (self.motor_id, self.__angle_to_raw_position(angle.data))
-        self.send_packet_callback((AX_GOAL_POSITION, [mcv]))
-        
-    def do_cycles_tilt(self):
-        while self.running:
-            self.event.wait()
-            rate = rospy.Rate(1)
-            while not self.num_cycles == 0:
-                for i in range(self.step_num):
-                    angle = (i + 1) *  self.__single_step_angle + self.initial_position_angle
-                    mcv = (self.motor_id, self.__angle_to_raw_position(angle))
-                    self.send_packet_callback((AX_GOAL_POSITION, [mcv]))
-                    # this worked well with angle degrees (so trying that again
-                    # by converting rad to degrees)
-                    rospy.sleep(0.0051 * math.degrees(self.__single_step_angle))
-                    #rospy.sleep(0.75 / (self.step_num - 1))
-                mcv = (self.motor_id, self.initial_position_raw)
-                self.send_packet_callback((AX_GOAL_POSITION, [mcv]))
-                if self.num_cycles > 0:
-                    self.num_cycles -= 1
-                #rospy.sleep(0.25)
-                # this worked well with angle degrees (so trying that again
-                # by converting to degrees)
-                rospy.sleep(0.0051 * math.degrees(self.max_angle))
-                rate.sleep()
-            self.event.clear()
+        self.tilt_controller.stop()
 

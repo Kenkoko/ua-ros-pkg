@@ -38,24 +38,17 @@ roslib.load_manifest('ax12_driver_core')
 
 import os
 import sys
-import yaml
 import rospy
 
 from ax12_driver_core.srv import *
 
-def load_params(file_path):
-    if os.path.exists(file_path):
-        rospy.set_param('', yaml.load(open(file_path)))
-    else:
-        print 'No param file found at:', file_path
-
 def print_usage():
-    print 'Usage: python driver_ctrl.py [start|stop|restart] absolute_path_to_driver <yaml_file_with_params>'
+    print 'Usage: python driver_ctrl.py [start|stop|restart] absolute_path_to_driver joint_controller...'
     sys.exit(1)
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    if len(args) < 2:
+    if len(args) < 3:
         print_usage()
     command = args[0]
     abs_driver_path = args[1]
@@ -64,13 +57,12 @@ if __name__ == '__main__':
         print_usage()
     driver_path, driver_name = os.path.split(abs_driver_path)
     driver_name = os.path.splitext(driver_name)[0]
+    joint_controllers = args[2:]
     if command.lower() == 'start':
-        if len(args) == 3:
-            load_params(args[2])
         rospy.wait_for_service('start_driver')
         try:
             start_driver = rospy.ServiceProxy('start_driver', DriverControl)
-            response = start_driver(driver_name, driver_path)
+            response = start_driver(driver_name, driver_path, joint_controllers)
             if response.success:
                 rospy.loginfo(response.reason)
             else:
@@ -81,7 +73,7 @@ if __name__ == '__main__':
         rospy.wait_for_service('stop_driver')
         try:
             stop_driver = rospy.ServiceProxy('stop_driver', DriverControl)
-            response = stop_driver(driver_name, driver_path)
+            response = stop_driver(driver_name)
             if response.success:
                 rospy.loginfo(response.reason)
             else:
@@ -89,12 +81,10 @@ if __name__ == '__main__':
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
     elif command.lower() == 'restart':
-        if len(args) == 3:
-            load_params(args[2])
         rospy.wait_for_service('restart_driver')
         try:
             restart_driver = rospy.ServiceProxy('restart_driver', DriverControl)
-            response = restart_driver(driver_name, driver_path)
+            response = restart_driver(driver_name, driver_path, joint_controllers)
             if response.success:
                 rospy.loginfo(response.reason)
             else:
@@ -103,4 +93,5 @@ if __name__ == '__main__':
             print "Service call failed: %s"%e
     else:
         print 'Invalid command.'
-        print_usage()    
+        print_usage()
+

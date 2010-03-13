@@ -1,5 +1,6 @@
 string driver_name
 string driver_path
+string[] joint_controllers
 ---
 bool success
 string reason
