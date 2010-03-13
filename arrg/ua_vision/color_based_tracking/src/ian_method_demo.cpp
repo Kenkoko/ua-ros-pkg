@@ -36,6 +36,7 @@ int c, h, w, step, boxhstep;
 char* object;
 FILE *histogram;
 
+//Method for selecting the object to track
 void on_mouse( int event, int x, int y, int flags, void* param )
 {
     if( !image )
@@ -74,6 +75,7 @@ void on_mouse( int event, int x, int y, int flags, void* param )
     }
 }
 
+//Takes 8-bit image, 64-bit float image, and a histogram
 void myBackProjectAndIntegrate( IplImage** img, IplImage* dst, const CvHistogram* hist )
 {
 	if( !CV_IS_HIST(hist))
@@ -102,24 +104,26 @@ void myBackProjectAndIntegrate( IplImage** img, IplImage* dst, const CvHistogram
 			ranges = uranges;
 		}
 	}
-	
+
+	//Get pointers to image data	
 	for( int i=0; i<3; i++)
 		imgdata[i]= (uchar *)(img[i]->imageData);
 	dstdata= (double *)(dst->imageData);	
 
+	//Iterate through image, backproject pixel then add value
+	//   of all pixels above/to-left of it
 	int w = img[0]->width;
 	int h = img[0]->height;
-	int step = img[0]->widthStep/sizeof(uchar);
-//	int nc = img[0]->nChannels;
+	int step = img[0]->widthStep/sizeof(uchar); //for moving up a whole line
 	for (int i=0; i<h; i++) {
-		linetotal = 0.0;
+		linetotal = 0.0; //running total of current line
 		for (int j=0; j<w; j++) {
 			linetotal+=(double)cvQueryHistValue_3D(hist,int( (imgdata[0][j])/32),int( (imgdata[1][j])/32),int( (imgdata[2][j])/32));
-			if( i<1 )
+			if( i<1 ) // first line
 				(dstdata)[j]=linetotal;
 			else
+				//value of integrated pixel above you plus linetotal
 				(dstdata)[j]=(double)(dstdata)[j-step]+linetotal;
-/**///			(dstdata)[j]=(double)cvQueryHistValue_3D(hist,int( (imgdata[0][j])/32),int( (imgdata[1][j])/32),int( (imgdata[2][j])/32));
 		}
 		imgdata[0]+=step;
 		imgdata[1]+=step;
@@ -130,17 +134,12 @@ void myBackProjectAndIntegrate( IplImage** img, IplImage* dst, const CvHistogram
 
 int main( int argc, char** argv )
 {
-//	box = cvRect(580,165,620-580,220-165); //grey box
-//	box = cvRect(788,106,855-788,177-106); //gold box
-//	box = cvRect(393,138,440-393,201-138); //white box
-
-	select_object = 0;
-	track_object = 0;
-	show_hist = 1;
-	dims = {8,8,8};
-	range_arr = {0,255};
+	select_object = 0; //0 until you draw select box
+	track_object = 0; //same
+	dims = {8,8,8}; //dimensions of histogram 8x8x8
+	range_arr = {0,255}; //RGB values can range over this
 	ranges = {range_arr,range_arr,range_arr};
-	epsilon = 0.1;
+	epsilon = 0.1; //avoid divide by zero in calculating lglikrat values
 	fg_hist = cvCreateHist( 3, dims, CV_HIST_ARRAY, ranges, 1 );
 
 /**/	cvNamedWindow( "Extra", 1 );
@@ -148,10 +147,10 @@ int main( int argc, char** argv )
 	cvSetMouseCallback( "Demo", on_mouse, 0 );
 
 	object = 0;
-	if( argc > 2 ){
-		object = argv[2];
-		selection = cvRect(0,0,1023,1023);
-		track_object = -1;
+	if( argc > 2 ){ //if object histogram passed in on command line
+		object = argv[2]; //string of histogram file location
+		selection = cvRect(0,0,1023,1023); //since we don't know where to start, select whole image to search
+		track_object = -1; //flag to initialize tracking
 
 		histogram = fopen(object,"rb");
 		fread(cvGetHistValue_3D(fg_hist,0,0,0),sizeof(float),dims[0]*dims[1]*dims[2],histogram);
@@ -160,6 +159,7 @@ int main( int argc, char** argv )
 	
     CvCapture* capture = 0;
 
+    //capture from cam or clip
     if( argc == 1 || (argc == 2 && strlen(argv[1]) == 1 && isdigit(argv[1][0])))
         capture = cvCaptureFromCAM( argc == 2 ? argv[1][0] - '0' : 0 );
     else if( argc == 2 )
@@ -177,28 +177,27 @@ int main( int argc, char** argv )
 
     for(;;)
     {
-	frame = cvQueryFrame( capture );
-        if( !frame )
+	image = cvQueryFrame( capture );
+        if( !image ){
+            printf("Shit!\n");
             break;
-	if( !image )
+        }
+
+	if( !mask )
 	{
-		image = cvCreateImage( cvGetSize(frame), 8, 3 );
-		image->origin = frame->origin;
-		mask = cvCreateImage( cvGetSize(frame), IPL_DEPTH_8U, 1 );
-		backproject = cvCreateImage( cvGetSize(frame), IPL_DEPTH_8U, 1 );
-		sum = cvCreateImage( cvGetSize(frame), IPL_DEPTH_64F, 1 );
+		mask = cvCreateImage( cvGetSize(image), IPL_DEPTH_8U, 1 );
+		backproject = cvCreateImage( cvGetSize(image), IPL_DEPTH_8U, 1 );
+		sum = cvCreateImage( cvGetSize(image), IPL_DEPTH_64F, 1 );
 		bg_hist = cvCreateHist( 3, dims, CV_HIST_ARRAY, ranges, 1 );
 		lglikrat = cvCreateHist( 3, dims, CV_HIST_ARRAY, ranges, 1 );
-		r = cvCreateImage( cvGetSize(frame), 8, 1 );
-		g = cvCreateImage( cvGetSize(frame), 8, 1 );
-		b = cvCreateImage( cvGetSize(frame), 8, 1 );
+		r = cvCreateImage( cvGetSize(image), 8, 1 );
+		g = cvCreateImage( cvGetSize(image), 8, 1 );
+		b = cvCreateImage( cvGetSize(image), 8, 1 );
 	}
-
-	cvCopy( frame, image, 0 );
 
 	if( track_object )
 	{
-		cvSplit( image, r, g, b, 0 );
+		cvSplit( image, r, g, b, 0 ); //have to pass color planes separately
 		planes = {r,g,b};
 
 		if( track_object < 0 )
@@ -212,8 +211,10 @@ int main( int argc, char** argv )
 			cvNot(mask,mask);
 			cvCalcHist( planes, bg_hist, 0, mask );
 			cvNot(mask,mask);
+			//make fg_hist and bg_hist have same max value
 			cvGetMinMaxHistValue( fg_hist, 0, &max_val, 0, 0 );
 			cvNormalizeHist(bg_hist, max_val);
+			//Make new Hist basically log(fg_hist/bg_hist)
 			for( int m=0; m<8; m++){
 			for( int n=0; n<8; n++){
 			for( int o=0; o<8; o++){
@@ -236,19 +237,19 @@ int main( int argc, char** argv )
 		if( !image->origin )
 			track_box.angle = -track_box.angle;
 		cvEllipseBox( image, track_box, CV_RGB(255,0,0), 3, CV_AA, 0 );
-
 /**/
+
 		myBackProjectAndIntegrate( planes, sum, lglikrat );
 		
 		box = selection;
-		maxlik = -INFINITY;
-		thepoint = {0,0};
+		maxlik = -INFINITY; //max probability of any box so far
+		thepoint = {0,0}; //top left corner of max box
 		h = sum->height;
 		w = sum->width;
 		step = sum->widthStep/sizeof(double);
 		boxhstep = box.height*step;
-//		int nc = sum->nChannels;
 		sumdata= (double *)(sum->imageData);
+		// Run box over whole image, lookup corner values, keep max box
 		for (int i=0; i<(h-box.height); i++) {
 			for (int j=0; j<(w-box.width); j++) {
 				value =  sumdata[j]+sumdata[j+box.width+boxhstep]-sumdata[j+boxhstep]-sumdata[j+box.width];
@@ -265,6 +266,7 @@ int main( int argc, char** argv )
 		cvRectangle(image,cvPoint(thepoint[0],thepoint[1]),cvPoint(thepoint[0]+box.width,thepoint[1]+box.height),cvScalarAll(255),1,8,0);	
 }
 
+	//Highlight during selection
 	if( select_object && selection.width > 0 && selection.height > 0 )
 	{
 		cvSetImageROI( image, selection );
@@ -288,6 +290,6 @@ int main( int argc, char** argv )
     return 0;
 }
 
-#ifdef _EiC
-main(1,"camshiftdemo.c");
-#endif
+//#ifdef _EiC
+//main(1,"camshiftdemo.c");
+//#endif
