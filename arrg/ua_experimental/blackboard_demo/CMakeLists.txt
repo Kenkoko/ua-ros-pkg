@@ -13,4 +13,4 @@ rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
-rospack_add_lisp_executable(bin/test blackboard-demo blackboard-demo:test)
+rospack_add_lisp_executable(bin/test blackboard_demo blackboard_demo:test)

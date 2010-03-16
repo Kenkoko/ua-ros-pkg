@@ -12,6 +12,7 @@
   <depend package="roslisp"/>
   <depend package="gbbopen"/>
 
+  <depend package="gazebo_plugins"/>
 </package>
 
 
