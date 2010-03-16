@@ -1,0 +1,7 @@
+This directory contains scripts that are useful when working with AX-12+ servos.
+
+Current Contents:
+
+	- set_torque.py -- use to turn motor torque on/off
+	- change_id.py -- use to change the id of a single motor
+
