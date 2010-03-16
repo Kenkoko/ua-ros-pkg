@@ -585,11 +585,11 @@ class SerialOpenError(Exception):
         return self.message
 
 class ChecksumError(Exception):
-    def __init__(self, reponse, checksum):
+    def __init__(self, response, checksum):
         Exception.__init__(self)
         self.message = 'Checksum of %d does not match the checksum from servo of %d' \
                        %(response[-1], checksum)
-        self.response_data = reponse
+        self.response_data = response
         self.expected_checksum = checksum
     def __str__(self):
         return self.message
