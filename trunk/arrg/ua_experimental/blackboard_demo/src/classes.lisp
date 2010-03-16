@@ -1,6 +1,8 @@
-(in-package :blackboard-demo)
+(in-package :blackboard_demo)
 
 (defparameter *object-space* (make-space-instance '(object-space)))
+
+(translate-unit-class gazebo_plugins-msg:<WorldState>)
 
 (define-unit-class position-3d ()
   (x y z 
