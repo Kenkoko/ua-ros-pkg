@@ -28,4 +28,7 @@
     <node pkg="rviz" type="rviz" name="rviz" 
           args="-d $(find path_learning_experiment)/rviz/experiment.vcg"/>
 
+<!--    <node pkg="path_learning_experiment" type="data_collector.py" name="data_collector"-->
+<!--          output="screen"/>-->
+
 </launch>
