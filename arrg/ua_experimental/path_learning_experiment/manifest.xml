@@ -16,6 +16,7 @@
     <depend package="sensor_msgs"/>
     <depend package="geometry_msgs"/>
     <depend package="move_base_msgs"/>
+    <depend package="nav_msgs"/>
 </package>
 
 

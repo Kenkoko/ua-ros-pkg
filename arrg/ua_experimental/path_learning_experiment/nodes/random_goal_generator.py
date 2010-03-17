@@ -74,7 +74,7 @@ class RandomGoalGenerator():
         if self.previous_success:
             self.current_goal = [random.uniform(self.x_range[0], self.x_range[1]), random.uniform(self.y_range[0], self.y_range[1])]
             goal.target_pose.pose.position.x = self.current_goal[0]
-            goal.target_pose.pose.position.y = self.current_goal[0]
+            goal.target_pose.pose.position.y = self.current_goal[1]
         else:
             goal.target_pose.pose.position.x = 0
             goal.target_pose.pose.position.y = 0
