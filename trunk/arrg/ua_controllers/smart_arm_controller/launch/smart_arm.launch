@@ -3,7 +3,7 @@
     <rosparam file="$(find smart_arm_controller)/config/smart_arm.yaml" command="load"/>
     
     <!-- Start the smart_arm controller -->
-    <node name="smart_arm_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
+    <node name="smart_arm_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
           args="start shoulder_pan_controller
                       shoulder_tilt_controller
                       elbow_tilt_controller
