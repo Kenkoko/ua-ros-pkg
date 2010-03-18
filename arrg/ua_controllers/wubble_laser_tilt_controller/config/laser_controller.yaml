@@ -4,6 +4,7 @@ laser_tilt_controller:
         module: joint_position_controller
         type: JointPositionControllerAX12
     joint_name: hokuyo_tilt_joint
+    joint_speed: 1.17
     motor:
         id: 7                       #9
         init: 817
