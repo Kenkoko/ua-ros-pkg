@@ -1,0 +1,13 @@
+<package>
+    <description brief="Controllers for Wubble Robot">
+        Controllers for Wubble Robot (head pan/tilt, laser tilt, etc.)
+    </description>
+    <author>Arizona Robotics Research Group</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_controllers</url>
+    
+    <depend package="ax12_controller_core"/>
+</package>
+
+

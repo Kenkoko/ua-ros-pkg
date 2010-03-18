@@ -1,0 +1,11 @@
+<launch>
+    <!-- Load laser tilt controller parameters from YAML file -->
+    <rosparam file="$(find wubble_controllers)/config/laser_tilt.yaml" command="load"/>
+
+    <!-- Start the laser tilt controller -->
+    <node name="wubble_laser_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
+          args="start laser_tilt_controller"
+          output="screen"/>
+</launch>
+
+

@@ -1,0 +1,9 @@
+<launch>
+    <!-- Start the low-level serial driver and controller manager -->
+    <include file="$(find ax12_controller_core)/launch/controller_manager.launch" />
+    
+    <!-- Start the wubble laser tilt controller -->
+    <include file="$(find wubble_controllers)/launch/wubble_laser.launch" />
+</launch>
+
+

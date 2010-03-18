@@ -1,13 +1,12 @@
 <package>
     <description brief="Crust Crawler AX-12+ Smart Arm controller">
-        Crust Crawler AX-12+ Smart Arm controller that uses ax12_driver_core for motor control.
+        Crust Crawler AX-12+ Smart Arm controller that uses ax12_driver_core and ax12_controller_core for motor control.
     </description>
     <author>UA Robotics Research Group</author>
     <license>BSD</license>
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/smart_arm_controller</url>
     
-    <depend package="rospy"/>
     <depend package="ax12_controller_core"/>
 </package>
 
