@@ -1,4 +1,8 @@
 head_pan_controller:
+    controller:
+        package: ax12_driver_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
     joint_name: head_pan_joint
     motor:
         id: 6
@@ -7,6 +11,10 @@ head_pan_controller:
         max: 973
 
 head_tilt_controller:
+    controller:
+        package: ax12_driver_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
     joint_name: head_tilt_joint
     motor:
         id: 5

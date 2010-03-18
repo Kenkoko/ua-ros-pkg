@@ -13,6 +13,8 @@
   <url>http://ros.org/wiki/ax12_driver_core</url>
 
   <depend package="rospy"/>
+  <depend package="ua_controller_msgs"/>
+  <depend package="std_msgs"/>
   <rosdep name="pyserial"/>
 
 </package>

@@ -1,6 +1,6 @@
 <launch>
     <!-- Start the low-level driver manager with parameters -->
-    <node name="ax12_driver_manager" pkg="ax12_driver_core" type="manager.py" output="screen" required="true">
+    <node name="ax12_controller_manager" pkg="ax12_driver_core" type="controller_manager.py" output="screen" required="true">
         <param name="port_name" type="str" value="/dev/ttyUSB0"/>
         <param name="baud_rate" type="int" value="1000000"/>
         <param name="max_motor_id" type="int" value="25"/>
@@ -11,7 +11,8 @@
     <rosparam file="$(find wubble_camera_pan_tilt_controller)/config/wubble_head.yaml" command="load"/>
 
     <!-- Start the smart_arm driver -->
-    <node name="head_spawner" pkg="ax12_driver_core" type="driver_ctrl.py"
-          args="start $(find wubble_camera_pan_tilt_controller)/src/wubble_camera_pan_tilt_controller/camera_pan_tilt_ax12.py head_pan_controller head_tilt_controller"
+    <node name="arm_spawner" pkg="ax12_driver_core" type="controller_spawner.py"
+          args="start head_pan_controller
+                      head_tilt_controller"
           output="screen"/>
 </launch>
