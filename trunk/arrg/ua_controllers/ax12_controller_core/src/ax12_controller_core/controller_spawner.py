@@ -35,15 +35,16 @@
 # Author: Antons Rebguns
 # Author: Cody Jorgensen
 # Author: Cara Slutter
+#
 
 import roslib
-roslib.load_manifest('ax12_driver_core')
+roslib.load_manifest('ax12_controller_core')
+
+import rospy
+from ax12_controller_core.srv import *
 
 import os
 import sys
-import rospy
-
-from ax12_driver_core.srv import *
 
 def print_usage():
     print 'Usage: python controller_spawner.py (start|stop|restart) controller_name...'
@@ -85,7 +86,7 @@ if __name__ == '__main__':
     args = rospy.myargv()[1:]
     if len(args) < 2:
         print_usage()
-
+        
     command = args[0]
     joint_controllers = args[1:]
     
@@ -95,7 +96,7 @@ if __name__ == '__main__':
         except KeyError, ke:
             rospy.logerr('Controller\'s [%s] configuration was not properly loaded on the parameter server' % controller_name)
             sys.exit(1)
-
+            
         rospack = os.popen('rospack find ' + controller['package'])
         package_path = rospack.readline().strip()
         module_name = controller['module']
@@ -105,6 +106,6 @@ if __name__ == '__main__':
         if not package_path:
             rospy.logerr('Controller\'s [%s] configuration specified package that does not exist' % controller_name)
             sys.exit(1)
-
+            
         manage_controller(command, package_path, module_name, class_name, controller_name)
 

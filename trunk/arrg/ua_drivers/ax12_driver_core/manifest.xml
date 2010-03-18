@@ -1,22 +1,19 @@
 <package>
-  <description brief="Python AX-12 Driver Manager and control script">
-  This package contains a configurable driver manager node (manager.py) 
-  which can dynamically load one or more robot controllers 
-  (aka, driver plugins). Plugin Controllers are written to a specific 
-  driver manager interface, and they control Robotis Dynamixel AX-12+ servos. 
-  A driver control script provides calls to start, stop and restart a 
-  controller. This design is very similar to the experimental C++ nodelet.  
-  </description>
-  <author>UA Robotics Research Group</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/ax12_driver_core</url>
-
-  <depend package="rospy"/>
-  <depend package="ua_controller_msgs"/>
-  <depend package="std_msgs"/>
-  <rosdep name="pyserial"/>
-
+    <description brief="Python AX-12 Driver Manager and control script">
+        This package contains a configurable driver manager node (manager.py) 
+        which can dynamically load one or more robot controllers 
+        (aka, driver plugins). Plugin Controllers are written to a specific 
+        driver manager interface, and they control Robotis Dynamixel AX-12+ servos. 
+        A driver control script provides calls to start, stop and restart a 
+        controller. This design is very similar to the experimental C++ nodelet.  
+    </description>
+    <author>UA Robotics Research Group</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/ax12_driver_core</url>
+    
+    <depend package="rospy"/>
+    <rosdep name="pyserial"/>
 </package>
 
 
