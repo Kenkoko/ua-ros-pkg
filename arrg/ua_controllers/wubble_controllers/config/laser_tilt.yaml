@@ -1,6 +1,6 @@
 laser_tilt_controller:
     controller:
-        package: ax12_driver_core
+        package: ax12_controller_core
         module: joint_position_controller
         type: JointPositionControllerAX12
     joint_name: hokuyo_tilt_joint
