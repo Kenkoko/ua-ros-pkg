@@ -35,14 +35,16 @@
 # Author: Antons Rebguns
 # Author: Cody Jorgensen
 # Author: Cara Slutter
+#
 
 import roslib
-roslib.load_manifest('ax12_driver_core')
+roslib.load_manifest('ax12_controller_core')
+
+import rospy
+from ax12_driver_core.serial_proxy import SerialProxy
+from ax12_controller_core.srv import *
 
 import sys
-import rospy
-from serial_proxy import SerialProxy
-from ax12_driver_core.srv import *
 
 class AX12ControllerManager:
     def __init__(self):
@@ -72,7 +74,7 @@ class AX12ControllerManager:
         controller_name = req.controller_name
 
         if controller_name in self.controllers:
-            return StartControllerResponse(False, 'Controller already started. If you want to restart it, call restart.')
+            return StartControllerResponse(False, 'Controller [%s] already started. If you want to restart it, call restart.' % controller_name)
 
         # make sure the package_path is in PYTHONPATH
         if not package_path in sys.path:
@@ -86,11 +88,11 @@ class AX12ControllerManager:
                 # reload module if previously imported
                 controller_module = reload(sys.modules[module_name])
         except ImportError, ie:
-            return StartControllerResponse(False, 'Cannot find controller module. Unable to start controller %s\n%s' %(module_name, str(ie)))
+            return StartControllerResponse(False, 'Cannot find controller module. Unable to start controller %s\n%s' % (module_name, str(ie)))
         except SyntaxError, se:
-            return StartControllerResponse(False, 'Syntax error in controller module. Unable to start controller %s\n%s' %(module_name, str(se)))
+            return StartControllerResponse(False, 'Syntax error in controller module. Unable to start controller %s\n%s' % (module_name, str(se)))
         except Exception, e:
-            return StartControllerResponse(False, 'Unknown error has occured. Unable to start controller %s\n%s' %(module_name, str(e)))
+            return StartControllerResponse(False, 'Unknown error has occured. Unable to start controller %s\n%s' % (module_name, str(e)))
         
         kls = getattr(controller_module, class_name)
         controller = kls(self.serial_proxy.queue_new_packet, controller_name)

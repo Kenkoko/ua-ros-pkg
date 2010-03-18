@@ -32,6 +32,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+# Author: Cody Jorgensen
+#
 
 import roslib
 roslib.load_manifest('ax12_driver_core')
@@ -45,109 +47,109 @@ OFF_STRINGS = ['off', 'false', '0']
 USAGE = """\
 Usage: %(executable)s command motor_id <port> <baudrate>
 Usage: %(executable)s command list_of_motor_ids <port> <baudrate>
-	- list_of_motor_ids is of the form [id1, id2, ...]
-	- valid commands to turn torque on are:
-		%(on_cmds)s
-	- valid commands to turn torque off are:
-		%(off_cmds)s
-	- commands are not case-sensitive
-	Examples:
-	- %(executable)s on [1,2,3]
-	- %(executable)s on [1,2,3] /dev/ttyUSB0
-	- %(executable)s on [1,2,3] /dev/ttyUSB0 1000000
+    - list_of_motor_ids is of the form [id1, id2, ...]
+    - valid commands to turn torque on are:
+        %(on_cmds)s
+    - valid commands to turn torque off are:
+        %(off_cmds)s
+    - commands are not case-sensitive
+    Examples:
+    - %(executable)s on [1,2,3]
+    - %(executable)s on [1,2,3] /dev/ttyUSB0
+    - %(executable)s on [1,2,3] /dev/ttyUSB0 1000000
 """ % { 'executable' : sys.argv[0], 
-		'on_cmds' : str(ON_STRINGS).strip('[]'),
-		'off_cmds' : str(OFF_STRINGS).strip('[]') }
+        'on_cmds' : str(ON_STRINGS).strip('[]'),
+        'off_cmds' : str(OFF_STRINGS).strip('[]') }
 
 def usage(msg=None):
-	""" If msg is provided, print to stderr. Then print USAGE and exit.
-	"""
-	if msg:
-		print >> sys.stderr, 'ERROR: %s' %msg
-	print USAGE
-	sys.exit(1)
+    """ If msg is provided, print to stderr. Then print USAGE and exit.
+    """
+    if msg:
+        print >> sys.stderr, 'ERROR: %s' %msg
+    print USAGE
+    sys.exit(1)
 
 def parseCommand(cmdStr):
-	""" Parse first argument. Return True|False if argument is valid.
-	Calls usage() otherwise.
-	"""
-	cmdStr = cmdStr.lower()
-	if cmdStr in ON_STRINGS:
-		return True
-	if cmdStr in OFF_STRINGS:
-		return False
-	usage('Invalid command "%s"' %cmdStr)
+    """ Parse first argument. Return True|False if argument is valid.
+    Calls usage() otherwise.
+    """
+    cmdStr = cmdStr.lower()
+    if cmdStr in ON_STRINGS:
+        return True
+    if cmdStr in OFF_STRINGS:
+        return False
+    usage('Invalid command "%s"' %cmdStr)
 
 def parseIntegerList(listStr):
-	""" Takes a string representation of a list of integers and converts it
-	into a list of ints. Returns an empty list if parsing fails.
-	"""
-	listStr = listStr.strip()
-	if listStr[0] != '[' or listStr[-1] != ']':
-		return []
-	strIntList = listStr[1:-1].strip(',').split(',')
-	try:
-		return map(int, strIntList)
-	except:
-		return []
+    """ Takes a string representation of a list of integers and converts it
+    into a list of ints. Returns an empty list if parsing fails.
+    """
+    listStr = listStr.strip()
+    if listStr[0] != '[' or listStr[-1] != ']':
+        return []
+    strIntList = listStr[1:-1].strip(',').split(',')
+    try:
+        return map(int, strIntList)
+    except:
+        return []
 
 def parseArguments():
-	""" Called to parse arguments. Returns a 4-tuple containing command, values, port, baudrate.
-	Calls usage() whenever an error is encountered.
-	"""
-	if len(sys.argv) < 3:
-		usage('Not enough arguments.')
-		
-	command = sys.argv[1]
-	torque_on = parseCommand(command)
-	
-	try:
-		motor_id = int(sys.argv[2])
-	except ValueError:
-		motor_id = None
-	motor_ids = None
-	if not motor_id:
-		motor_ids = parseIntegerList(sys.argv[2])
-	
-	if not motor_id and not motor_ids:
-		usage('Invalid argument for motor_id(s) %s' %sys.argv[2])
-	
-	# default values
-	baud = 1000000
-	port = '/dev/ttyUSB0'
-	
-	if len(sys.argv) > 3:
-		arg3 = sys.argv[3]
-		try:
-			baud = int(arg3)
-		except ValueError:
-			port = arg3	
-		if len(sys.argv) == 5:
-			arg4 = sys.argv[4]
-			try:
-				baud = int(arg4)
-			except:
-				usage('Invalid baudrate "%s"' %sys.argv[4])
-	
-	return (torque_on, [motor_id], port, baud) if motor_id else (torque_on, motor_ids, port, baud)
+    """ Called to parse arguments. Returns a 4-tuple containing command, values, port, baudrate.
+    Calls usage() whenever an error is encountered.
+    """
+    if len(sys.argv) < 3:
+        usage('Not enough arguments.')
+        
+    command = sys.argv[1]
+    torque_on = parseCommand(command)
+    
+    try:
+        motor_id = int(sys.argv[2])
+    except ValueError:
+        motor_id = None
+    motor_ids = None
+    if not motor_id:
+        motor_ids = parseIntegerList(sys.argv[2])
+    
+    if not motor_id and not motor_ids:
+        usage('Invalid argument for motor_id(s) %s' %sys.argv[2])
+    
+    # default values
+    baud = 1000000
+    port = '/dev/ttyUSB0'
+    
+    if len(sys.argv) > 3:
+        arg3 = sys.argv[3]
+        try:
+            baud = int(arg3)
+        except ValueError:
+            port = arg3    
+        if len(sys.argv) == 5:
+            arg4 = sys.argv[4]
+            try:
+                baud = int(arg4)
+            except:
+                usage('Invalid baudrate "%s"' %sys.argv[4])
+    
+    return (torque_on, [motor_id], port, baud) if motor_id else (torque_on, motor_ids, port, baud)
 
 if __name__ == '__main__':
-	torque_on, values, port, baudrate = parseArguments()
-	try:
-		aio = ax12_io.AX12_IO(port, baudrate)
-	except ax12_io.SerialOpenError, soe:
-		print 'ERROR:', soe
-	else:
-		responses = 0
-		print 'Turning torque %s for motors:' %(('off', 'on')[torque_on])
-		for motor_id in values:
-			print '%d ...' %motor_id ,
-			if aio.ping(motor_id):
-				responses += 1
-				aio.set_torque_enabled(motor_id, torque_on)
-				print 'done'
-			else:
-				print 'error'
-		if responses == 0:
-			print 'ERROR: None of the specified motors responded. Make sure to specify the correct baudrate.'
-	
+    torque_on, values, port, baudrate = parseArguments()
+    try:
+        aio = ax12_io.AX12_IO(port, baudrate)
+    except ax12_io.SerialOpenError, soe:
+        print 'ERROR:', soe
+    else:
+        responses = 0
+        print 'Turning torque %s for motors:' %(('off', 'on')[torque_on])
+        for motor_id in values:
+            print '%d ...' %motor_id ,
+            if aio.ping(motor_id):
+                responses += 1
+                aio.set_torque_enabled(motor_id, torque_on)
+                print 'done'
+            else:
+                print 'error'
+        if responses == 0:
+            print 'ERROR: None of the specified motors responded. Make sure to specify the correct baudrate.'
+

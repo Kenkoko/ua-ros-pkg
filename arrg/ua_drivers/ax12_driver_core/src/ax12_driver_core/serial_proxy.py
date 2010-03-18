@@ -32,6 +32,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+# Author: Antons Rebguns
+# Author: Cody Jorgensen
+# Author: Cara Slutter
+#
 
 import roslib
 roslib.load_manifest('ax12_driver_core')
