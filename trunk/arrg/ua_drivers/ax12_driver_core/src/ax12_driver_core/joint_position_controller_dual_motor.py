@@ -53,6 +53,7 @@ class JointPositionControllerDualAX12:
         self.send_packet_callback = out_cb
         self.topic_name = param_path
         self.joint_name = rospy.get_param(self.topic_name + '/joint_name')
+        self.joint_speed = rospy.get_param(self.topic_name + '/joint_speed')
 
         self.master_id = rospy.get_param(self.topic_name + '/motor_master/id')
         self.master_initial_position_raw = rospy.get_param(self.topic_name + '/motor_master/init')
@@ -83,7 +84,7 @@ class JointPositionControllerDualAX12:
             rospy.logwarn("Specified ids: %d %d" % (self.master_id, self.slave_id))
             return False
 
-        self.set_speed(AX_MAX_SPEED_RAD)
+        self.set_speed(self.joint_speed)
         return True
 
     def start(self):
