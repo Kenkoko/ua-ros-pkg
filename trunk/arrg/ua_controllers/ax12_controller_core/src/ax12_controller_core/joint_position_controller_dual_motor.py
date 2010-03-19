@@ -42,22 +42,12 @@ roslib.load_manifest('ax12_controller_core')
 import rospy
 from ax12_driver_core.ax12_const import *
 from ax12_driver_core.ax12_user_commands import *
-from ax12_driver_core.msg import MotorStateList
-from ax12_controller_core.srv import SetSpeed
-from ax12_controller_core.srv import TorqueEnable
+from ax12_controller_core.joint_controller import JointControllerAX12
 from ua_controller_msgs.msg import JointState
-from ua_controller_msgs.msg import JointStateList
-from std_msgs.msg import Float64
 
-import math
-
-class JointPositionControllerDualAX12:
+class JointPositionControllerDualAX12(JointControllerAX12):
     def __init__(self, out_cb, param_path):
-        self.running = False
-        self.send_packet_callback = out_cb
-        self.topic_name = param_path
-        self.joint_name = rospy.get_param(self.topic_name + '/joint_name')
-        self.joint_speed = rospy.get_param(self.topic_name + '/joint_speed')
+        JointControllerAX12.__init__(self, out_cb, param_path)
         
         self.master_id = rospy.get_param(self.topic_name + '/motor_master/id')
         self.master_initial_position_raw = rospy.get_param(self.topic_name + '/motor_master/init')
@@ -75,9 +65,6 @@ class JointPositionControllerDualAX12:
             self.master_min_angle = (self.master_min_angle_raw - self.master_initial_position_raw) * AX_RAD_RAW_RATIO
             self.master_max_angle = (self.master_max_angle_raw - self.master_initial_position_raw) * AX_RAD_RAW_RATIO
             
-        self.speed_service = rospy.Service(self.topic_name + '/set_speed', SetSpeed, self.process_set_speed)
-        self.torque_service = rospy.Service(self.topic_name + '/torque_enable', TorqueEnable, self.process_torque_enable)
-        
     def initialize(self):
         # verify that the expected motor is connected and responding
         available_ids = rospy.get_param('ax12/connected_ids', [])
@@ -90,20 +77,6 @@ class JointPositionControllerDualAX12:
             
         self.set_speed(self.joint_speed)
         return True
-        
-    def start(self):
-        self.running = True
-        self.joint_state_pub = rospy.Publisher(self.topic_name + '/state', JointStateList)
-        self.command_sub = rospy.Subscriber(self.topic_name + '/command', Float64, self.process_command)
-        self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
-        
-    def stop(self):
-        self.running = False
-        self.joint_state_pub.unregister()
-        self.motor_states_sub.unregister()
-        self.command_sub.unregister()
-        self.speed_service.shutdown('normal shutdown')
-        self.torque_service.shutdown('normal shutdown')
         
     def set_speed(self, speed):
         if speed < 0: speed = 0
@@ -129,7 +102,7 @@ class JointPositionControllerDualAX12:
             if state:
                 state = state[0]
                 joint_state = JointState(self.joint_name,
-                                         self.raw_to_rad(state.position),
+                                         self.raw_to_rad(state.position, self.master_initial_position_raw, self.flipped),
                                          (state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
                                          [self.master_id],
                                          state.moving)
@@ -139,17 +112,7 @@ class JointPositionControllerDualAX12:
         angle = msg.data
         if angle < self.master_min_angle: angle = self.master_min_angle
         elif angle > self.master_max_angle: angle = self.master_max_angle
-        mcv_master = (self.master_id, self.rad_to_raw(angle))
+        mcv_master = (self.master_id, self.rad_to_raw(angle, self.master_initial_position_raw, self.flipped))
         mcv_slave = (self.slave_id, AX_MAX_POSITION - mcv_master[1])
         self.send_packet_callback((AX_GOAL_POSITION, [mcv_master, mcv_slave]))
-        
-    def rad_to_raw(self, angle):
-        """ angle is in radians """
-        print "flipped = %s, angle_in = %f, init_raw = %d" % (str(self.flipped), angle, self.master_initial_position_raw)
-        angle_raw = angle * AX_RAW_RAD_RATIO
-        print 'angle = %f, val = %d' % (math.degrees(angle), int(round(self.master_initial_position_raw - angle_raw if self.flipped else self.master_initial_position_raw + angle_raw)))
-        return int(round(self.master_initial_position_raw - angle_raw if self.flipped else self.master_initial_position_raw + angle_raw))
-        
-    def raw_to_rad(self, raw):
-        return (self.master_initial_position_raw - raw if self.flipped else raw - self.master_initial_position_raw) * AX_RAD_RAW_RATIO
 
