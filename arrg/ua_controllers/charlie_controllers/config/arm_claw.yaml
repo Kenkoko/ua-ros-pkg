@@ -1,4 +1,4 @@
-shoulder_pan_controller:
+claw_shoulder_pan_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
@@ -11,7 +11,7 @@ shoulder_pan_controller:
         min: 512
         max: 1023
 
-elbow_tilt_controller:
+claw_elbow_tilt_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
@@ -24,7 +24,7 @@ elbow_tilt_controller:
         min: 212
         max: 852
 
-wrist_rotate_controller:
+claw_wrist_rotate_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
@@ -37,7 +37,7 @@ wrist_rotate_controller:
         min: 0
         max: 1023
 
-finger_right_controller:
+claw_finger_right_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
@@ -50,7 +50,7 @@ finger_right_controller:
         min: 348
         max: 820
 
-finger_left_controller:
+claw_finger_left_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller

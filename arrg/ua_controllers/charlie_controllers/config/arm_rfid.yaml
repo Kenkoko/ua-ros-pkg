@@ -1,4 +1,4 @@
-shoulder_pan_controller:
+rfid_shoulder_pan_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
@@ -11,7 +11,7 @@ shoulder_pan_controller:
         min: 212
         max: 812
 
-elbow_tilt_controller:
+rfid_elbow_tilt_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
@@ -24,7 +24,7 @@ elbow_tilt_controller:
         min: 212
         max: 812
 
-wrist_tilt_controller:
+rfid_wrist_tilt_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller

@@ -1,0 +1,15 @@
+<launch>
+    <!-- Start the low-level serial driver and controller manager -->
+    <include file="$(find ax12_controller_core)/launch/controller_manager.launch" />
+    
+    <!-- Start the charlie wheels controller -->
+    <include file="$(find charlie_controllers)/launch/charlie_wheels.launch" />
+    
+    <!-- Start the charlie arm (claw) controller -->
+    <include file="$(find charlie_controllers)/launch/charlie_arm_claw.launch" />
+    
+    <!-- Start the charlie arm (rfid) controller -->
+    <include file="$(find charlie_controllers)/launch/charlie_arm_rfid.launch" />
+
+	<node name="charlie_robot" pkg="charlie_controllers" type="charlie.py" output="screen"/>
+</launch>

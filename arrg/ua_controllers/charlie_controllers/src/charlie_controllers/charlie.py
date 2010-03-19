@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2009, Arizona Robotics Research Group,
+# Copyright (c) 2009, 2010, Arizona Robotics Research Group,
 # University of Arizona. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #
 
 import roslib
-roslib.load_manifest('charlie_controller')
+roslib.load_manifest('charlie_controllers')
 
 import rospy
 from std_msgs.msg import String
@@ -64,22 +64,20 @@ class CharlieRobot:
                        'tl':self.turnToLeft
                      }
 
-        rospy.Subscriber('woz/robotcontrol', String, self.handleInput)
-
         self.drivetrain_pubs = {'right_front_wheel_controller': None,
                                 'left_front_wheel_controller': None,
                                 'right_rear_wheel_controller': None,
                                 'left_rear_wheel_controller': None}
 
-        self.rfidarm_pubs = {'shoulder_pan_controller': None,
-                             'elbow_tilt_controller': None,
-                             'wrist_tilt_controller': None}
+        self.rfidarm_pubs = {'rfid_shoulder_pan_controller': None,
+                             'rfid_elbow_tilt_controller': None,
+                             'rfid_wrist_tilt_controller': None}
 
-        self.clawarm_pubs = {'shoulder_pan_controller': None,
-                             'elbow_tilt_controller': None,
-                             'wrist_rotate_controller': None,
-                             'finger_left_controller': None,
-                             'finger_right_controller': None}
+        self.clawarm_pubs = {'claw_shoulder_pan_controller': None,
+                             'claw_elbow_tilt_controller': None,
+                             'claw_wrist_rotate_controller': None,
+                             'claw_finger_left_controller': None,
+                             'claw_finger_right_controller': None}
 
         for pub in (self.drivetrain_pubs, self.rfidarm_pubs, self.clawarm_pubs):
             for k in pub:
@@ -89,47 +87,47 @@ class CharlieRobot:
         """
         Sets the Charlie Robot into backwards motion at approximately 4 rads/sec.
         """
-        self.drivertrain_pubs['right_front_wheel_controller'].publish(4)
-        self.drivertrain_pubs['left_front_wheel_controller'].publish(-4)
-        self.drivertrain_pubs['right_rear_wheel_controller'].publish(4)
-        self.drivertrain_pubs['left_rear_wheel_controller'].publish(-4)
+        self.drivetrain_pubs['right_front_wheel_controller'].publish(4)
+        self.drivetrain_pubs['left_front_wheel_controller'].publish(-4)
+        self.drivetrain_pubs['right_rear_wheel_controller'].publish(4)
+        self.drivetrain_pubs['left_rear_wheel_controller'].publish(-4)
 
     def moveForward(self):
         """
         Sets the Charlie Robot into forward motion at approximately 4 rads/sec.
         """
-        self.drivertrain_pubs['right_front_wheel_controller'].publish(-4)
-        self.drivertrain_pubs['left_front_wheel_controller'].publish(4)
-        self.drivertrain_pubs['right_rear_wheel_controller'].publish(-4)
-        self.drivertrain_pubs['left_rear_wheel_controller'].publish(4)
+        self.drivetrain_pubs['right_front_wheel_controller'].publish(-4)
+        self.drivetrain_pubs['left_front_wheel_controller'].publish(4)
+        self.drivetrain_pubs['right_rear_wheel_controller'].publish(-4)
+        self.drivetrain_pubs['left_rear_wheel_controller'].publish(4)
 
     def stop(self):
         """
         Stops the Charlie robot's wheels.
         """
-        self.drivertrain_pubs['right_front_wheel_controller'].publish(0)
-        self.drivertrain_pubs['left_front_wheel_controller'].publish(0)
-        self.drivertrain_pubs['right_rear_wheel_controller'].publish(0)
-        self.drivertrain_pubs['left_rear_wheel_controller'].publish(0)
+        self.drivetrain_pubs['right_front_wheel_controller'].publish(0)
+        self.drivetrain_pubs['left_front_wheel_controller'].publish(0)
+        self.drivetrain_pubs['right_rear_wheel_controller'].publish(0)
+        self.drivetrain_pubs['left_rear_wheel_controller'].publish(0)
 
     def parkRFIDArm(self):
         """
         Returns the RFID arm to its original parked position.
         """
-        self.rfidarm_pubs['wrist_tilt_controller'].publish(-0.2147572980)
-        self.rfidarm_pubs['elbow_tilt_controller'].publish(1.44194185800)
-        self.rfidarm_pubs['shoulder_pan_controller'].publish(-1.65158588)
+        self.rfidarm_pubs['rfid_wrist_tilt_controller'].publish(-0.2147572980)
+        self.rfidarm_pubs['rfid_elbow_tilt_controller'].publish(1.44194185800)
+        self.rfidarm_pubs['rfid_shoulder_pan_controller'].publish(-1.65158588)
         self.__canUseRFID = False
 
     def parkClawArm(self):
         """
         Returns the claw arm to its original parked position.
         """
-        self.clawarm_pubs['shoulder_pan_controller'].publish(1.825437033)
-        self.clawarm_pubs['elbow_tilt_controller'].publish(1.71805838400)
-        self.clawarm_pubs['finger_left_controller'].publish(-0.705631122)
-        self.clawarm_pubs['finger_right_controller'].publish( -0.6749515)
-        self.clawarm_pubs['wrist_rotate_controller'].publish(0.000000000)
+        self.clawarm_pubs['claw_shoulder_pan_controller'].publish(1.825437033)
+        self.clawarm_pubs['claw_elbow_tilt_controller'].publish(1.71805838400)
+        self.clawarm_pubs['claw_finger_left_controller'].publish(-0.705631122)
+        self.clawarm_pubs['claw_finger_right_controller'].publish( -0.6749515)
+        self.clawarm_pubs['claw_wrist_rotate_controller'].publish(0.000000000)
 
         self.__rotated = False;
         self.__canUseClaw = False
@@ -145,7 +143,7 @@ class CharlieRobot:
         self.lowerClaw()
         self.openClaw()
         # Initialize claw rotation
-        self.clawarm_pubs['wrist_rotate_controller'].publish(0.0)
+        self.clawarm_pubs['claw_wrist_rotate_controller'].publish(0.0)
 
 
     def positionRFIDArmForUse(self):
@@ -154,9 +152,9 @@ class CharlieRobot:
         it can be used to interact with objects.
         """
         self.parkClawArm()
-        self.rfidarm_pubs['shoulder_pan_controller'].publish(0.00000000)
-        self.rfidarm_pubs['elbow_tilt_controller'].publish(0.5522330520)
-        self.rfidarm_pubs['wrist_tilt_controller'].publish(-1.764077805)
+        self.rfidarm_pubs['rfid_shoulder_pan_controller'].publish(0.00000000)
+        self.rfidarm_pubs['rfid_elbow_tilt_controller'].publish(0.5522330520)
+        self.rfidarm_pubs['rfid_wrist_tilt_controller'].publish(-1.764077805)
         self.__canUseRFID = True
 
     def scanAroundWithRFID(self):
@@ -165,11 +163,11 @@ class CharlieRobot:
         positioned for use and the claw arm is parked.
         """
         if self.__canUseRFID:
-            self.rfidarm_pubs['shoulder_pan_controller'].publish(-0.787443426)
+            self.rfidarm_pubs['rfid_shoulder_pan_controller'].publish(-0.787443426)
             rospy.sleep(1)
-            self.rfidarm_pubs['shoulder_pan_controller'].publish(0.7465372740)
+            self.rfidarm_pubs['rfid_shoulder_pan_controller'].publish(0.7465372740)
             rospy.sleep(1)
-            self.rfidarm_pubs['shoulder_pan_controller'].publish(0.0000000000)
+            self.rfidarm_pubs['rfid_shoulder_pan_controller'].publish(0.0000000000)
 
     def moveClawToSide(self):
         """
@@ -178,7 +176,7 @@ class CharlieRobot:
         """
         if self.__canUseClaw:
             self.raiseClaw()
-            self.clawarm_pubs['shoulder_pan_controller'].publish(1.503301086)
+            self.clawarm_pubs['claw_shoulder_pan_controller'].publish(1.503301086)
 
     def openClaw(self):
         """
@@ -186,8 +184,8 @@ class CharlieRobot:
         positioned for use and the RFID arm is parked.
         """
         if self.__canUseClaw:
-            self.clawarm_pubs['finger_left_controller'].publish(0.0)
-            self.clawarm_pubs['finger_right_controller'].publish(0.0)
+            self.clawarm_pubs['claw_finger_left_controller'].publish(0.0)
+            self.clawarm_pubs['claw_finger_right_controller'].publish(0.0)
 
     def closeClaw(self):
         """
@@ -195,8 +193,8 @@ class CharlieRobot:
         only work if the claw arm is positioned for use and the RFID arm is parked.
         """
         if self.__canUseClaw:
-            self.clawarm_pubs['finger_left_controller'].publish(-0.4550809410)
-            self.clawarm_pubs['finger_right_controller'].publish(-0.383495175)
+            self.clawarm_pubs['claw_finger_left_controller'].publish(-0.4550809410)
+            self.clawarm_pubs['claw_finger_right_controller'].publish(-0.383495175)
 
     def raiseClaw(self):
         """
@@ -204,10 +202,10 @@ class CharlieRobot:
         mass. This will only work if the claw arm is positioned for use and the RFID arm is parked.
         """
         if self.__canUseClaw:
-            self.clawarm_pubs['elbow_tilt_controller'].publish(0.1380582630)
+            self.clawarm_pubs['claw_elbow_tilt_controller'].publish(0.1380582630)
 
     def putClawInFront(self):
-        self.clawarm_pubs['shoulder_pan_controller'].publish(0.0)
+        self.clawarm_pubs['claw_shoulder_pan_controller'].publish(0.0)
 
     def lowerClaw(self):
         """
@@ -215,7 +213,7 @@ class CharlieRobot:
         positioned for use and the RFID arm is parked.
         """
         if self.__canUseClaw:
-            self.clawarm_pubs['elbow_tilt_controller'].publish(-0.26077671899)
+            self.clawarm_pubs['claw_elbow_tilt_controller'].publish(-0.26077671899)
             self.putClawInFront()
 
     def rotateClaw(self):
@@ -227,30 +225,30 @@ class CharlieRobot:
             #print "rotated: " + str(self.__rotated)
             if self.__rotated:
                 self.raiseClaw()
-                self.clawarm_pubs['wrist_rotate_controller'].publish(0.0)
+                self.clawarm_pubs['claw_wrist_rotate_controller'].publish(0.0)
                 self.__rotated = not self.__rotated
             else:
                 self.raiseClaw()
-                self.clawarm_pubs['wrist_rotate_controller'].publish(3.1190940899)
+                self.clawarm_pubs['claw_wrist_rotate_controller'].publish(3.14159)
                 self.__rotated = not self.__rotated
 
     def turnToRight(self):
         """
         Starts the robot wheels such that the robot spins clockwise.
         """
-        self.drivertrain_pubs['right_front_wheel_controller'].publish(4)
-        self.drivertrain_pubs['left_front_wheel_controller'].publish(4)
-        self.drivertrain_pubs['right_rear_wheel_controller'].publish(4)
-        self.drivertrain_pubs['left_rear_wheel_controller'].publish(4)
+        self.drivetrain_pubs['right_front_wheel_controller'].publish(4)
+        self.drivetrain_pubs['left_front_wheel_controller'].publish(4)
+        self.drivetrain_pubs['right_rear_wheel_controller'].publish(4)
+        self.drivetrain_pubs['left_rear_wheel_controller'].publish(4)
 
     def turnToLeft(self):
         """
         Starts the robot wheels such that the robot spins counter clockwise.
         """
-        self.drivertrain_pubs['right_front_wheel_controller'].publish(-4)
-        self.drivertrain_pubs['left_front_wheel_controller'].publish(-4)
-        self.drivertrain_pubs['right_rear_wheel_controller'].publish(-4)
-        self.drivertrain_pubs['left_rear_wheel_controller'].publish(-4)
+        self.drivetrain_pubs['right_front_wheel_controller'].publish(-4)
+        self.drivetrain_pubs['left_front_wheel_controller'].publish(-4)
+        self.drivetrain_pubs['right_rear_wheel_controller'].publish(-4)
+        self.drivetrain_pubs['left_rear_wheel_controller'].publish(-4)
 
     def getCommandHelp(self):
         """
@@ -294,7 +292,7 @@ Interactive Mode
                 print 'Invalid command entered'
 
 if __name__ == '__main__':
-    rospy.init_node('robot', anonymous=False)
+    rospy.init_node('charlie_robot', anonymous=False)
     r = CharlieRobot()
     r.parkClawArm()
     r.parkRFIDArm()
