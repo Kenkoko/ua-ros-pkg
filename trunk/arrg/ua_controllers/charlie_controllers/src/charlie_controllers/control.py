@@ -34,7 +34,7 @@
 #
 
 import roslib
-roslib.load_manifest('charlie_controller')
+roslib.load_manifest('charlie_controllers')
 
 import sys
 import rospy
@@ -60,7 +60,7 @@ def robotalker():
 
 if __name__ == '__main__':
     rospy.init_node('robotcontrol',anonymous=True)
-    while not rosnode.rosnode_ping('robot', max_count=1, verbose=True):
+    while not rosnode.rosnode_ping('charlie_robot', max_count=1, verbose=True):
         rospy.sleep(1)
     try:
         robotalker()

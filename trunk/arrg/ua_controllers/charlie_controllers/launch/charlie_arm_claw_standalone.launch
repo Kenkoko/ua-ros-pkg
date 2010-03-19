@@ -3,5 +3,5 @@
     <include file="$(find ax12_controller_core)/launch/controller_manager.launch" />
     
     <!-- Start the wubble laser tilt controller -->
-    <include file="$(find charlie_controllers)/launch/charlie_wheels.launch" />
+    <include file="$(find charlie_controllers)/launch/charlie_arm_claw.launch" />
 </launch>
