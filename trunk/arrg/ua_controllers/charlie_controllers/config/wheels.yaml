@@ -1,0 +1,40 @@
+right_front_wheel_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_freespin_controller
+        type: JointFreespinControllerAX12
+    joint_name: left_front_wheel_controller_joint
+    joint_speed: 4
+    motor:
+        id: 1
+
+left_front_wheel_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_freespin_controller
+        type: JointFreespinControllerAX12
+    joint_name: left_front_wheel_controller_joint
+    joint_speed: 4
+    motor:
+        id: 2
+
+right_rear_wheel_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_freespin_controller
+        type: JointFreespinControllerAX12
+    joint_name: left_front_wheel_controller_joint
+    joint_speed: 4
+    motor:
+        id: 3
+
+left_rear_wheel_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_freespin_controller
+        type: JointFreespinControllerAX12
+    joint_name: left_front_wheel_controller_joint
+    joint_speed: 4
+    motor:
+        id: 4
+

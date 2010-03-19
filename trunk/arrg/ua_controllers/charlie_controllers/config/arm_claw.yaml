@@ -1,0 +1,65 @@
+shoulder_pan_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: shoulder_pan_joint
+    joint_speed: 2
+    motor:
+        id: 12
+        init: 666
+        min: 512
+        max: 1023
+
+elbow_tilt_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: shoulder_pan_joint
+    joint_speed: 2
+    motor:
+        id: 8
+        init: 514
+        min: 212
+        max: 852
+
+wrist_rotate_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: wrist_rotate_joint
+    joint_speed: 2
+    motor:
+        id: 17
+        init: 175
+        min: 0
+        max: 1023
+
+finger_right_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: finger_right_joint
+    joint_speed: 2
+    motor:
+        id: 7
+        init: 512
+        min: 348
+        max: 820
+
+finger_left_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: finger_left_joint
+    joint_speed: 2
+    motor:
+        id: 6
+        init: 512
+        min: 673
+        max: 204
+
