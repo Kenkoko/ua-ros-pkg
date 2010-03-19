@@ -2,7 +2,7 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2009, Arizona Robotics Research Group,
+# Copyright (c) 2009, 2010, Arizona Robotics Research Group,
 # University of Arizona. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #
 
 import roslib
-roslib.load_manifest('ccs')
+roslib.load_manifest('charlie_controller')
 
 import sys
 import rospy

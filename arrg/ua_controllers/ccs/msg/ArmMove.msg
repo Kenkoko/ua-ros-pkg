@@ -1,3 +1,0 @@
-string joint_name
-int32 motor_position
-int32 motor_speed

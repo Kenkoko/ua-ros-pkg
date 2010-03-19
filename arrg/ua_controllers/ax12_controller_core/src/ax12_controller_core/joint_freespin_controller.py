@@ -33,7 +33,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Antons Rebguns
-# Author: Cara Slutter
+# Author: Cody Jorgensen
 #
 
 import roslib
@@ -44,25 +44,13 @@ from ax12_driver_core.ax12_const import *
 from ax12_driver_core.ax12_user_commands import *
 from ax12_controller_core.joint_controller import JointControllerAX12
 from ua_controller_msgs.msg import JointState
+from std_msgs.msg import Float64
 
-class JointPositionControllerAX12(JointControllerAX12):
+class JointFreespinControllerAX12(JointControllerAX12):
     def __init__(self, out_cb, param_path):
         JointControllerAX12.__init__(self, out_cb, param_path)
-        
         self.motor_id = rospy.get_param(self.topic_name + '/motor/id')
-        self.initial_position_raw = rospy.get_param(self.topic_name + '/motor/init')
-        self.min_angle_raw = rospy.get_param(self.topic_name + '/motor/min')
-        self.max_angle_raw = rospy.get_param(self.topic_name + '/motor/max')
         
-        self.flipped = self.min_angle_raw > self.max_angle_raw
-        
-        if self.flipped:
-            self.min_angle = (self.initial_position_raw - self.min_angle_raw) * AX_RAD_RAW_RATIO
-            self.max_angle = (self.initial_position_raw - self.max_angle_raw) * AX_RAD_RAW_RATIO
-        else:
-            self.min_angle = (self.min_angle_raw - self.initial_position_raw) * AX_RAD_RAW_RATIO
-            self.max_angle = (self.max_angle_raw - self.initial_position_raw) * AX_RAD_RAW_RATIO
-            
     def initialize(self):
         # verify that the expected motor is connected and responding
         available_ids = rospy.get_param('ax12/connected_ids', [])
@@ -72,15 +60,13 @@ class JointPositionControllerAX12(JointControllerAX12):
             rospy.logwarn("Specified id: %d" % self.motor_id)
             return False
             
-        self.set_speed(self.joint_speed)
+        self.process_command(Float64(0.0))
         return True
         
     def set_speed(self, speed):
-        if speed < 0: speed = 0
+        if speed < -AX_MAX_SPEED_RAD: speed = -AX_MAX_SPEED_RAD
         elif speed > AX_MAX_SPEED_RAD: speed = AX_MAX_SPEED_RAD
-        speed_raw = int(round((speed / AX_MAX_SPEED_RAD) * AX_MAX_POSITION))
-        mcv = (self.motor_id, speed_raw if speed_raw > 0 else 1)
-        self.send_packet_callback((AX_GOAL_SPEED, [mcv]))
+        self.joint_speed = speed
         
     def process_set_speed(self, req):
         self.set_speed(req.speed)
@@ -97,16 +83,17 @@ class JointPositionControllerAX12(JointControllerAX12):
             if state:
                 state = state[0]
                 joint_state = JointState(self.joint_name,
-                                         self.raw_to_rad(state.position, self.initial_position_raw, self.flipped),
+                                         0,
                                          (state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
                                          [self.motor_id],
                                          state.moving)
                 self.joint_state_pub.publish([joint_state])
                 
     def process_command(self, msg):
-        angle = msg.data
-        if angle < self.min_angle: angle = self.min_angle
-        elif angle > self.max_angle: angle = self.max_angle
-        mcv = (self.motor_id, self.rad_to_raw(angle, self.initial_position_raw, self.flipped))
-        self.send_packet_callback((AX_GOAL_POSITION, [mcv]))
+        speed = msg.data
+        if speed < -self.joint_speed: speed = -self.joint_speed
+        elif speed > self.joint_speed: speed = self.joint_speed
+        speed_raw = int(round((speed / AX_MAX_SPEED_RAD) * AX_MAX_POSITION))
+        mcv = (self.motor_id, speed_raw)
+        self.send_packet_callback((AX_GOAL_SPEED, [mcv]))
 
