@@ -6,7 +6,7 @@ shoulder_pan_controller:
     joint_name: shoulder_pan_joint
     joint_speed: 1.17
     motor:
-        id: 1
+        id: 10
         init: 512
         min: 751
         max: 273
@@ -19,12 +19,12 @@ shoulder_tilt_controller:
     joint_name: shoulder_tilt_joint
     joint_speed: 1.17
     motor_master:
-        id: 2
+        id: 11
         init: 512
         min: 717
         max: 126
     motor_slave:
-        id: 3
+        id: 12
 
 elbow_tilt_controller:
     controller:
@@ -34,12 +34,12 @@ elbow_tilt_controller:
     joint_name: elbow_tilt_joint
     joint_speed: 1.17
     motor_master:
-        id: 4
+        id: 13
         init: 512
         min: 126
         max: 881
     motor_slave:
-        id: 5
+        id: 14
 
 wrist_rotate_controller:
     controller:
@@ -49,7 +49,7 @@ wrist_rotate_controller:
     joint_name: wrist_rotate_joint
     joint_speed: 1.17
     motor:
-        id: 6
+        id: 15
         init: 512
         min: 0
         max: 1023
@@ -62,7 +62,7 @@ finger_right_controller:
     joint_name: finger_right_joint
     joint_speed: 1.17
     motor:
-        id: 7
+        id: 16
         init: 512
         min: 512
         max: 724
@@ -75,7 +75,7 @@ finger_left_controller:
     joint_name: finger_left_joint
     joint_speed: 1.17
     motor:
-        id: 8
+        id: 18
         init: 512
         min: 512
         max: 300

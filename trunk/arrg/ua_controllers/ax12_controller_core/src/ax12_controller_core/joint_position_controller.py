@@ -111,10 +111,12 @@ class JointPositionControllerAX12:
         
     def process_set_speed(self, req):
         self.set_speed(req.speed)
+        return []
         
     def process_torque_enable(self, req):
         mcv = (self.motor_id, req.torque_enable)
         self.send_packet_callback((AX_TORQUE_ENABLE, [mcv]))
+        return []
         
     def process_motor_states(self, state_list):
         if self.running:
