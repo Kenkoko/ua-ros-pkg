@@ -37,7 +37,7 @@ AX-12+ Constants
 """
 # Control Table Constants
 AX_MODEL_NUMBER_L = 0
-AX_MODOEL_NUMBER_H = 1
+AX_MODEL_NUMBER_H = 1
 AX_VERSION = 2
 AX_ID = 3
 AX_BAUD_RATE = 4
