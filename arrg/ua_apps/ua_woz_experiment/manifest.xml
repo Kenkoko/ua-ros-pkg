@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/ua_woz_experiment</url>
   <depend package="rospy"/>
-  <depend package="ccs"/>
+  <depend package="charlie_controllers"/>
   <depend package="phidgets_ros"/>
   <depend package="std_msgs"/>
 
