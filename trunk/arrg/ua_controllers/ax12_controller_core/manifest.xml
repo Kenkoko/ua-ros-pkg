@@ -1,5 +1,5 @@
 <package>
-    <description brief="ax12_controller_core">
+    <description brief="Python AX-12 Controller Manager">
     This package contains a configurable node, services and a spawner script 
     to start, stop and restart one or more controller plugins. Reusable 
     controller types are defined for common AX-12+ motor joints. Both speed and
