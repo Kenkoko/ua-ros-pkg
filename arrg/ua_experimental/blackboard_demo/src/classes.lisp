@@ -1,22 +1,43 @@
 (in-package :blackboard_demo)
 
-(defparameter *object-space* (make-space-instance '(object-space)))
+(defparameter *msg->ut* (make-hash-table :test 'eq))
 
-(translate-unit-class gazebo_plugins-msg:<WorldState>)
+;; TODO: Also, make it so that this translates the slot values 
+;; that are messages into gbbopen objects - if possible
+(defun translate-msg (msg)
+  (setf *msg* msg)
+  (apply #'make-instance 
+         (message-class-to-unit-class (class-of msg))
+         ;(find-symbol (symbol-name (class-name (class-of msg))) 
+         ;             (find-package 'blackboard_demo))
+         (loop for slot-def in (gbbopen-tools:class-direct-slots (class-of msg))
+            for slot-name = (gbbopen-tools:slot-definition-name slot-def)
+            append (list (intern (symbol-name slot-name) 'keyword)
+                         (slot-value msg slot-name)))))
 
-(define-unit-class position-3d ()
-  (x y z 
-   (objects-at
-    :link (object location)))
-  (:dimensional-values 
-   (x :point x)
-   (y :point y)
-   (z :point z)))
+(defun message-class-to-unit-class (msg-class)
+  (let* ((unit-class (gethash msg-class *msg->ut*)))
+    (cond (unit-class unit-class)
+          (t (setf (gethash msg-class *msg->ut*) 
+                   (translate-unit-class msg-class))
+             (gethash msg-class *msg->ut*)))))
 
-(define-unit-class object ()
-  (name 
-   color shape
-   (location 
-    :link (position-3d objects-at)
-    :singular t)))
-  
+(defun message-type-to-unit-class (pkg msg)
+  (let* ((asdf-str (concatenate 'string pkg "-msg")))
+    ;(print asdf-str)
+    (asdf:operate 'asdf:load-op asdf-str)
+    (let* ((pkg-str (string-upcase asdf-str))
+           (pkg-msg (find-package (intern pkg-str :keyword)))
+           (msg-sym (find-symbol (string-upcase (concatenate 'string "<" msg ">")) pkg-msg))
+           (msg-class (find-class msg-sym)))
+      (message-class-to-unit-class msg-class))))
+
+(defun translate-unit-class (msg-class)
+  (let* ((uc-name (intern (symbol-name (class-name msg-class)))))
+    (eval `(define-unit-class ,uc-name ()
+             ,(collect-slots msg-class)))))
+
+(defun collect-slots (some-class)
+  (loop for slot-def in (gbbopen-tools:class-direct-slots some-class)
+     ;do (print (gbbopen-tools:slot-definition-name slot-def))
+     collect (read-from-string (symbol-name (gbbopen-tools:slot-definition-name slot-def)))))
