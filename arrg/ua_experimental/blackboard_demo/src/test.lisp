@@ -87,4 +87,3 @@
     (list (cdr (assoc :x xyz-list))
           (cdr (assoc :y xyz-list))
           (cdr (assoc :z xyz-list)))))
-          
