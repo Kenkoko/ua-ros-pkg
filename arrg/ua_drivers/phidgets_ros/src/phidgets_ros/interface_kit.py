@@ -33,6 +33,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Cody Jorgensen
+# Author: Antons Rebguns
 #
 
 import roslib
@@ -51,12 +52,13 @@ from Phidgets.Devices.InterfaceKit import *
 class PhidgetsInterfaceKit:
     def __init__(self):
         rospy.init_node('interface_kit', anonymous=True)
+        self.name = rospy.get_param('~name', '')
         self.serial = rospy.get_param('~serial_number', -1)
+        
         if self.serial == -1:
             rospy.logwarn("No serial number specified. This node will connect to the first interface kit attached.")
-        self.phidget_name = rospy.get_param('~name', '')
         self.interface_kit = InterfaceKit()
-
+        
     def initialize(self):
         try:
             self.interface_kit.setOnAttachHandler(self.interfaceKitAttached)
@@ -67,33 +69,36 @@ class PhidgetsInterfaceKit:
         except PhidgetException, e:
             rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
             exit(1)
-
+            
+    def close(self):
+        self.interface_kit.closePhidget()
+        
     def interfaceKitAttached(self, event):
         sensors = range(self.interface_kit.getSensorCount())
         map(lambda x: self.interface_kit.setSensorChangeTrigger(x, 0), sensors)
-        if self.phidget_name:
-            topic = 'interface_kit/%s' %self.phidget_name
+        if self.name:
+            topic = 'interface_kit/%s' %self.name
         else:
             topic = 'interface_kit/%d' %event.device.getSerialNum()
         self.publishers = [rospy.Publisher('%s/sensor/%d' %(topic, x), Float64) for x in sensors]
         rospy.loginfo("InterfaceKit %i Attached!" % (event.device.getSerialNum()))
-
+        
     def interfaceKitDetached(self, event):
         map(lambda pub: pub.unregister(), self.publishers)
         del self.publishers
         rospy.loginfo("InterfaceKit %i Detached!" % (event.device.getSerialNum()))
-
+        
     def interfaceKitError(self, error):
         rospy.logerr("Phidget Error %i: %s" % (error.eCode, error.description))
-
+        
     def interfaceKitSensorChanged(self, event):
-        pub = self.publishers[event.index]
-        if pub.get_num_connections() > 0:
-            pub.publish(event.value)
+        self.publishers[event.index].publish(event.value)
 
 if __name__ == '__main__':
     try:
         pik = PhidgetsInterfaceKit()
         pik.initialize()
         rospy.spin()
+        pik.close()
     except rospy.ROSInterruptException: pass
+
