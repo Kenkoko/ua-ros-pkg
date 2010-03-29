@@ -1,0 +1,6 @@
+<launch>
+	<node name="rfid" pkg="phidgets_ros" type="rfid.py" output="screen">
+	    <!-- <param name="name" type="str" value="my_rfid"/> -->
+		<param name="serial_number" type="int" value="151655"/>
+	</node>
+</launch>
