@@ -43,7 +43,7 @@ from ax12_driver_core.ax12_const import *
 from ax12_driver_core.msg import MotorStateList
 from ax12_controller_core.srv import SetSpeed
 from ax12_controller_core.srv import TorqueEnable
-from ua_controller_msgs.msg import JointStateList
+from ua_controller_msgs.msg import JointState
 from std_msgs.msg import Float64
 
 import math
@@ -64,7 +64,7 @@ class JointControllerAX12:
         
     def start(self):
         self.running = True
-        self.joint_state_pub = rospy.Publisher(self.topic_name + '/state', JointStateList)
+        self.joint_state_pub = rospy.Publisher(self.topic_name + '/state', JointState)
         self.command_sub = rospy.Subscriber(self.topic_name + '/command', Float64, self.process_command)
         self.motor_states_sub = rospy.Subscriber('motor_states', MotorStateList, self.process_motor_states)
         
@@ -93,7 +93,7 @@ class JointControllerAX12:
         
     def rad_to_raw(self, angle, initial_position_raw, flipped):
         """ angle is in radians """
-        print "flipped = %s, angle_in = %f, init_raw = %d" % (str(flipped), angle, initial_position_raw)
+        print 'flipped = %s, angle_in = %f, init_raw = %d' % (str(flipped), angle, initial_position_raw)
         angle_raw = angle * AX_RAW_RAD_RATIO
         print 'angle = %f, val = %d' % (math.degrees(angle), int(round(initial_position_raw - angle_raw if flipped else initial_position_raw + angle_raw)))
         return int(round(initial_position_raw - angle_raw if flipped else initial_position_raw + angle_raw))

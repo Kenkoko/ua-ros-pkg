@@ -67,9 +67,9 @@ class JointPositionControllerAX12(JointControllerAX12):
         # verify that the expected motor is connected and responding
         available_ids = rospy.get_param('ax12/connected_ids', [])
         if not self.motor_id in available_ids:
-            rospy.logwarn("The specified motor id is not connected and responding.")
-            rospy.logwarn("Available ids: %s" % str(available_ids))
-            rospy.logwarn("Specified id: %d" % self.motor_id)
+            rospy.logwarn('The specified motor id is not connected and responding.')
+            rospy.logwarn('Available ids: %s' % str(available_ids))
+            rospy.logwarn('Specified id: %d' % self.motor_id)
             return False
             
         self.set_speed(self.joint_speed)
@@ -96,12 +96,14 @@ class JointPositionControllerAX12(JointControllerAX12):
             state = filter(lambda state: state.id == self.motor_id, state_list.motor_states)
             if state:
                 state = state[0]
-                joint_state = JointState(self.joint_name,
-                                         self.raw_to_rad(state.position, self.initial_position_raw, self.flipped),
-                                         (state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
-                                         [self.motor_id],
-                                         state.moving)
-                self.joint_state_pub.publish([joint_state])
+                joint_state = JointState('name'=self.joint_name,
+                                         'motor_ids'=[self.motor_id],
+                                         'goal'=self.raw_to_rad(state.goal, self.initial_position_raw, self.flipped),
+                                         'angle'=self.raw_to_rad(state.position, self.initial_position_raw, self.flipped),
+                                         'error'=state.error * AX_RAD_RAW_RATIO,
+                                         'speed'=(state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
+                                         'moving'=state.moving)
+                self.joint_state_pub.publish(joint_state)
                 
     def process_command(self, msg):
         angle = msg.data
