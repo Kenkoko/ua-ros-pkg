@@ -32,10 +32,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+# Author: Cody Jorgensen
+# Author: Antons Rebguns
+#
 
-"""
-Simplified Version of Accelerometer class
-"""
 import roslib
 roslib.load_manifest('phidgets_ros')
 
@@ -49,100 +49,64 @@ try:
     from Phidgets.Events.Events import *
     from Phidgets.Devices.Accelerometer import *
 except ImportError, ie:
-    print 'You must install the phidgets drivers and ensure the python bindings are in your PYTHONPATH'
+    rospy.logfatal("You must install the phidgets drivers and ensure the python bindings are in your PYTHONPATH")
     sys.exit(1)
 
-class PhidgetsAccelerometer (Accelerometer):
-    """
-    Subclass of Accelerometer class provided by Phidgets Inc. It simplifies the calls to connnect
-    and disconnect a phidget. It publishes acelerometer value changed events to the ROS topic "accelerometer".
-    """
+class PhidgetsAccelerometer:
+    def __init__(self):
+        rospy.init_node('accelerometer', anonymous=True)
+        self.name = rospy.get_param('~name', '')
+        self.serial = rospy.get_param('~serial_number', -1)
+        self.sensitivity = rospy.get_param('~sensitivity', 0.5)
+        
+        if self.serial == -1:
+            rospy.logwarn("No serial number specified. This node will connect to the first accelerometer attached.")
+        self.accelerometer = Accelerometer()
 
-    def __init__(self, sensitivity=0.500):
-        """
-        Calls the initialize method and the attach method. Allows the client to specify the
-        sensitivity for the accelerometer value changed events.
-        """
-        rospy.init_node('accelerometer_publisher', anonymous=True)
-        Accelerometer.__init__(self)
-        self.attachDevice()
-        self.setOnAccelerationChangeHandler(self.__accelChanged)
+    def initialize(self):
         try:
-            numAxis = self.getAxisCount()
-            self.setAccelChangeTrigger(0, sensitivity)
-            self.setAccelChangeTrigger(1, sensitivity)
-            if numAxis > 2:
-                self.setAccelChangeTrigger(2, sensitivity)
+            self.accelerometer.setOnAttachHandler(self.accelerometerAttached)
+            self.accelerometer.setOnDetachHandler(self.accelerometerDetached)
+            self.accelerometer.setOnErrorhandler(self.accelerometerError)
+            self.accelerometer.setOnAccelerationChangeHandler(self.accelerationChanged)
+            self.accelerometer.openPhidget(self.serial)
         except PhidgetException, e:
-            print("Phidget Exception %i: %s" % (e.code, e.details))
-            print "Exiting..."
-            exit(1)
-        self.__publisher = rospy.Publisher('accelerometer', AccelerometerEvent)
+            rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
+            sys.exit(1)
 
-    def __accelChanged(self, accelEvent):
+    def close(self):
+        try:
+            self.accelerometer.closePhidget()
+        except PhidgetException, e:
+            rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
+            sys.exit(1)
+
+    def accelerometerAttached(self, event):
+        map(lambda x: self.accelerometer.setAccelChangeTrigger(x, self.sensitivity), range(self.accelerometer.getAxisCount()))
+        if self.name:
+            topic = 'accelerometer/%s' %self.name
+        else:
+            topic = 'accelerometer/%d' %event.device.getSerialNum()
+        self.publisher = rospy.Publisher(topic, AccelerometerEvent)
+        rospy.loginfo("Accelerometer %i Attached!" % (event.device.getSerialNum()))
+
+    def  accelerometerDetached(self, event):
+        self.publisher.unregister()
+        rospy.loginfo("Accelerometer %i Detached!" % (event.device.getSerialNum()))
+
+    def accelerometerError(self, error):
+        rospy.logerr("Phidget Error %i: %s" % (error.eCode, error.description))
+
+    def accelerationChanged(self, accelEvent):
         """
         Simpler handler for an accelerometer value changed event.
         """
-        self.__publisher.publish(accelEvent.index, accelEvent.acceleration)
+        self.publisher.publish(accelEvent.index, accelEvent.acceleration)
 
-    def attachDevice(self):
-        """
-        Handles calling openPhidget() with all the correct exception catching. Upon getting an exception
-        the program will terminate.
-        """
-        try:
-            self.openPhidget()
-        except PhidgetException, e:
-            print "Phidget Exception %i: %s" % (e.code, e.message)
-            print "Exiting..."
-            exit(1)
-        try:
-            print 'Please attach Accelerometer now. (waiting 15 seconds)'
-            self.waitForAttach(15000)
-            print 'Attached.'
-        except PhidgetException, e:
-            print "Phidget Exception %i: %s" % (e.code, e.message)
-            try:
-                self.closePhidget()
-            except PhidgetException, e:
-                print "Phidget Exception %i: %s" % (e.code, e.message)
-                print "Exiting..."
-                exit(1)
-            print "Exiting..."
-            exit(1)
-
-    def closeDevice(self):
-        """
-        Handles calling closePhidget() with all the correct exception catching. Upon getting an exception
-        the program will terminate.
-        """
-        try:
-            self.closePhidget()
-        except PhidgetException, e:
-            print "Phidget Exception %i: %s" % (e.code, e.message)
-            print "Exiting..."
-            exit(1)
-
-    def getDeviceInfo(self):
-        """
-        Helper method that returns all the device info in a tuple.
-        """
-        return (self.isAttached(), self.getDeviceType(), self.getSerialNum(), \
-        self.getDeviceVersion(), self.getAxisCount())
-
-    def printDeviceInfo(self):
-        """
-        Method to print the info returned from the getDeviceInfo method in a readable table form.
-        """
-        print """
-|------------|----------------------------------|--------------|------------|
-|- Attached -|-              Type              -|- Serial No. -|-  Version -|
-|- %8s -|- %30s -|- %10d -|- %8d -|
-|------------|----------------------------------|--------------|------------|
-Number of Axes: %i
-""" %self.getDeviceInfo()
-
-# main -- allows use of command 'rosrun phidgets_ros accelerometer.py'
 if __name__ == '__main__':
-    PhidgetsAccelerometer()
-    rospy.spin()
+    try:
+        pa = PhidgetsAccelerometer()
+        pa.initialize()
+        rospy.spin()
+        pa.close()
+    except rospy.ROSInterruptException: pass
