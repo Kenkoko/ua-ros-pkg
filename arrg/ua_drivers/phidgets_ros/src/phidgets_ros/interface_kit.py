@@ -45,9 +45,13 @@ import rospy
 from std_msgs.msg import Float64
 
 #Phidget specific imports
-from Phidgets.PhidgetException import *
-from Phidgets.Events.Events import *
-from Phidgets.Devices.InterfaceKit import *
+try:
+    from Phidgets.PhidgetException import *
+    from Phidgets.Events.Events import *
+    from Phidgets.Devices.Accelerometer import *
+except ImportError, ie:
+    rospy.logfatal("You must install the phidgets drivers and ensure the python bindings are in your PYTHONPATH")
+    sys.exit(1)
 
 class PhidgetsInterfaceKit:
     def __init__(self):
@@ -68,10 +72,14 @@ class PhidgetsInterfaceKit:
             self.interface_kit.openPhidget(self.serial)
         except PhidgetException, e:
             rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
-            exit(1)
+            sys.exit(1)
             
     def close(self):
-        self.interface_kit.closePhidget()
+        try:
+            self.interface_kit.closePhidget()
+        except PhidgetException, e:
+            rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
+            sys.exit(1)
         
     def interfaceKitAttached(self, event):
         sensors = range(self.interface_kit.getSensorCount())
@@ -85,7 +93,7 @@ class PhidgetsInterfaceKit:
         
     def interfaceKitDetached(self, event):
         map(lambda pub: pub.unregister(), self.publishers)
-        del self.publishers
+        del self.publishers[:]
         rospy.loginfo("InterfaceKit %i Detached!" % (event.device.getSerialNum()))
         
     def interfaceKitError(self, error):
