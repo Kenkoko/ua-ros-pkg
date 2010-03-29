@@ -42,72 +42,80 @@ roslib.load_manifest('phidgets_ros')
 import sys
 import rospy
 
-from phidgets_ros.msg import AccelerometerEvent
+from phidgets_ros.msg import RFIDEvent
 
-#Phidget specific imports
 try:
+    #Phidget specific imports
     from Phidgets.PhidgetException import *
     from Phidgets.Events.Events import *
-    from Phidgets.Devices.Accelerometer import *
+    from Phidgets.Devices.RFID import *
 except ImportError, ie:
     rospy.logfatal("You must install the phidgets drivers and ensure the python bindings are in your PYTHONPATH")
     sys.exit(1)
 
-class PhidgetsAccelerometer:
+class PhidgetsRFID:
     def __init__(self):
-        rospy.init_node('accelerometer', anonymous=True)
+        rospy.init_node('rfid', anonymous=True)
         self.name = rospy.get_param('~name', '')
         self.serial = rospy.get_param('~serial_number', -1)
-        self.sensitivity = rospy.get_param('~sensitivity', 0.0)
         
         if self.serial == -1:
-            rospy.logwarn("No serial number specified. This node will connect to the first accelerometer attached.")
-        self.accelerometer = Accelerometer()
+            rospy.logwarn("No serial number specified. This node will connect to the first rfid attached.")
+        self.rfid = RFID()
 
     def initialize(self):
         try:
-            self.accelerometer.setOnAttachHandler(self.accelerometerAttached)
-            self.accelerometer.setOnDetachHandler(self.accelerometerDetached)
-            self.accelerometer.setOnErrorhandler(self.accelerometerError)
-            self.accelerometer.setOnAccelerationChangeHandler(self.accelerationChanged)
-            self.accelerometer.openPhidget(self.serial)
+            self.rfid.setOnAttachHandler(self.rfidAttached)
+            self.rfid.setOnDetachHandler(self.rfidDetached)
+            self.rfid.setOnErrorhandler(self.rfidError)
+            self.rfid.setOnTagHandler(self.rfidTagGained)
+            self.rfid.setOnTagLostHandler(self.rfidTagLost)
+            self.rfid.openPhidget(self.serial)
         except PhidgetException, e:
             rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
             sys.exit(1)
 
     def close(self):
         try:
-            self.accelerometer.closePhidget()
+            self.rfid.closePhidget()
         except PhidgetException, e:
             rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
             sys.exit(1)
 
-    def accelerometerAttached(self, event):
-        map(lambda x: self.accelerometer.setAccelChangeTrigger(x, self.sensitivity), range(self.accelerometer.getAxisCount()))
+    def rfidAttached(self, event):
+        self.rfid.setAntennaOn(True)
         if self.name:
-            topic = 'accelerometer/%s' %self.name
+            topic = 'rfid/%s' %self.name
         else:
-            topic = 'accelerometer/%d' %event.device.getSerialNum()
-        self.publisher = rospy.Publisher(topic, AccelerometerEvent)
-        rospy.loginfo("Accelerometer %i Attached!" % (event.device.getSerialNum()))
+            topic = 'rfid/%d' %event.device.getSerialNum()
+        self.publisher = rospy.Publisher(topic, RFIDEvent)
+        rospy.loginfo("RFID %i Attached!" % (event.device.getSerialNum()))
 
-    def  accelerometerDetached(self, event):
+    def rfidDetached(self, event):
         self.publisher.unregister()
-        rospy.loginfo("Accelerometer %i Detached!" % (event.device.getSerialNum()))
+        rospy.loginfo("RFID %i Detached!" % (event.device.getSerialNum()))
 
-    def accelerometerError(self, error):
+    def rfidError(self, error):
         rospy.logerr("Phidget Error %i: %s" % (error.eCode, error.description))
 
-    def accelerationChanged(self, accelEvent):
+    def rfidTagGained(self, tagEvent):
         """
-        Simpler handler for an accelerometer value changed event.
+        Publishes a tag message and turns on the onboard LED.
         """
-        self.publisher.publish(accelEvent.index, accelEvent.acceleration)
+        self.rfid.setLEDOn(True)
+        self.publisher.publish(True, str(tagEvent.tag))
+
+    def rfidTagLost(self, tagEvent):
+        """
+        Publishes a tag message and turns off the onboard LED.
+        """
+        self.rfid.setLEDOn(False)
+        self.publisher.publish(False, str(tagEvent.tag))
 
 if __name__ == '__main__':
     try:
-        pa = PhidgetsAccelerometer()
-        pa.initialize()
+        pr = PhidgetsRFID()
+        pr.initialize()
         rospy.spin()
-        pa.close()
+        pr.close()
     except rospy.ROSInterruptException: pass

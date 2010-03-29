@@ -2,5 +2,6 @@
 	<node name="accelerometer" pkg="phidgets_ros" type="accelerometer.py" output="screen">
 	    <!-- <param name="name" type="str" value="my_accelerometer"/> -->
 		<param name="serial_number" type="int" value="93353"/>
+		<param name="sensitivity" value="0.0"/>
 	</node>
 </launch>
