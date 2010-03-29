@@ -1,0 +1,6 @@
+<launch>
+	<node name="interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
+	    <!-- <param name="port_name" type="str" value="/dev/tty.usbserial-A9005MZc"/> -->
+		<param name="serial_number" type="int" value="97608"/>
+	</node>
+</launch>
