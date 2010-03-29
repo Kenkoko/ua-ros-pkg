@@ -39,56 +39,65 @@ import roslib
 roslib.load_manifest('wubble_controllers')
 
 import rospy
-from pr2_controllers_msgs import JointControllerState
+from pr2_controllers_msgs.msg import JointControllerState
 from ua_controller_msgs.msg import JointState
 
 class AX12ToPR2StateMsgs:
-    def __init__(self, out_cb, param_path):
-        arm_controllers = {'shoulder_pan_controller': 'shoulder_pan_controller',
-                           'shoulder_tilt_controller': 'shoulder_tilt_controller',
-                           'elbow_tilt_controller': 'elbow_tilt_controller',
-                           'wrist_rotate_controller': 'wrist_rotate_controller',
-                           'finger_right_controller': 'finger_right_controller',
-                           'finger_left_controller': 'finger_left_controller'}
+    def __init__(self):
+        self.arm_controllers = {'shoulder_pan_controller': None,
+                                'shoulder_tilt_controller': None,
+                                'elbow_tilt_controller': None,
+                                'wrist_rotate_controller': None,
+                                'finger_right_controller': None,
+                                'finger_left_controller': None}
                            
-        head_controllers = {'head_pan_controller': 'head_pan_controller',
-                            'head_tilt_controller': 'head_tilt_controller'}
-        laser_controllers = {'laser_tilt_controller': 'laser_tilt_controller'}
-        
-        self.arm_state_pub = [rospy.Publisher(c + '/state_pr2_msgs', JointControllerState) for c in arm_controllers]
-        self.head_state_pub = [rospy.Publisher(c + '/state_pr2_msgs', JointControllerState) for c in head_controllers]
-        self.laser_state_pub = [rospy.Publisher(c + '/state_pr2_msgs', JointControllerState) for c in laser_controllers]
+        self.head_controllers = {'head_pan_controller': None,
+                                 'head_tilt_controller': None}
+        self.laser_controllers = {'laser_tilt_controller': None}
+                             
+        for pub in self.arm_controllers:
+            self.arm_controllers[pub] = rospy.Publisher(pub + '/state_pr2_msgs', JointControllerState)
+            
+        for pub in self.head_controllers:
+            self.head_controllers[pub] = rospy.Publisher(pub + '/state_pr2_msgs', JointControllerState)
+            
+        for pub in self.laser_controllers:
+            self.laser_controllers[pub] = rospy.Publisher(pub + '/state_pr2_msgs', JointControllerState)
         
         rospy.init_node('ax12_to_pr2_state_msgs', anonymous=True)
         
-        self.arm_state_sub = [rospy.Subscriber(c + '/state', JointState, self.handle_arm_state) for c in arm_controllers]
-        self.head_state_sub = [rospy.Subscriber(c + '/state', JointState, self.handle_head_state) for c in head_controllers]
-        self.laser_state_sub = [rospy.Subscriber(c + '/state', JointState, self.handle_laser_state) for c in laser_controllers]
+        [rospy.Subscriber(c + '/state', JointState, self.handle_arm_state) for c in self.arm_controllers]
+        [rospy.Subscriber(c + '/state', JointState, self.handle_head_state) for c in self.head_controllers]
+        [rospy.Subscriber(c + '/state', JointState, self.handle_laser_state) for c in self.laser_controllers]
         
     def handle_arm_state(self, msg):
         jcs = JointControllerState(set_point=msg.goal,
                                    process_value=msg.angle,
                                    process_value_dot=msg.speed,
                                    error=msg.error)
-        self.arm_state_pub[msg.name].publish(jcs)
+        name = msg.name.replace('_joint', '_controller', 1)
+        self.arm_controllers[name].publish(jcs)
         
     def handle_head_state(self, msg):
         jcs = JointControllerState(set_point=msg.goal,
                                    process_value=msg.angle,
                                    process_value_dot=msg.speed,
                                    error=msg.error)
-        self.head_state_pub[msg.name].publish(jcs)
+        name = msg.name.replace('_joint', '_controller', 1)
+        self.head_controllers[name].publish(jcs)
         
     def handle_laser_state(self, msg):
         jcs = JointControllerState(set_point=msg.goal,
                                    process_value=msg.angle,
                                    process_value_dot=msg.speed,
                                    error=msg.error)
-        self.laser_state_pub[msg.name].publish(jcs)
+        name = msg.name.replace('_joint', '_controller', 1)
+        self.laser_controllers[name].publish(jcs)
 
 if __name__ == '__main__':
     try:
         translator = AX12ToPR2StateMsgs()
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
 
