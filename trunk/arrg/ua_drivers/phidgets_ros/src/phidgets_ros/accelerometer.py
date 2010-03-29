@@ -58,6 +58,9 @@ class PhidgetsAccelerometer:
         rospy.init_node('accelerometer', anonymous=True)
         self.name = rospy.get_param('~name', '')
         self.serial = rospy.get_param('~serial_number', -1)
+        self.x_axis_id = rospy.get_param('~x_axis_id', 0)
+        self.y_axis_id = rospy.get_param('~y_axis_id', 1)
+        self.z_axis_id = rospy.get_param('~z_axis_id', 2)
         self.sensitivity = rospy.get_param('~sensitivity', 0.0)
         
         if self.serial == -1:
@@ -99,10 +102,12 @@ class PhidgetsAccelerometer:
         rospy.logerr("Phidget Error %i: %s" % (error.eCode, error.description))
 
     def accelerationChanged(self, accelEvent):
-        """
-        Simpler handler for an accelerometer value changed event.
-        """
-        self.publisher.publish(accelEvent.index, accelEvent.acceleration)
+        x_accel = self.accelerometer.getAcceleration(self.x_axis_id)
+        y_accel = self.accelerometer.getAcceleration(self.y_axis_id)
+        z_accel = 0
+        if self.accelerometer.getAxisCount() > 2:
+            z_accel = self.accelerometer.getAcceleration(self.z_axis_id)
+        self.publisher.publish(x_accel, y_accel, z_accel)
 
 if __name__ == '__main__':
     try:
