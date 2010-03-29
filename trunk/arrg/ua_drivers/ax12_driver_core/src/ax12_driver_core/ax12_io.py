@@ -535,7 +535,7 @@ class AX12_IO(object):
         
         if response:
             self.exception_on_error(response[4], 'when getting feedback from servo with id %d' %(servoId))
-        if len(response) == 17:
+        if len(response) == 23:
             # extract data values from the raw data
             goal = response[5] + (response[6] << 8)
             position = response[11] + (response[12] << 8)
