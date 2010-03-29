@@ -527,32 +527,34 @@ class AX12_IO(object):
 
     def get_servo_feedback(self, servoId):
         """
-        Returns the position, speed, load, voltage, and temperature values
-        from the specified servo.
+        Returns the id, goal, position, error, speed, load, voltage, temperature
+        and moving values from the specified servo.
         """
-        # read in 8 consecutive bytes starting with low value for position
-        response = self.__sio.read_from_servo(servoId,
-                                        AX_PRESENT_POSITION_L, 11)
+        # read in 17 consecutive bytes starting with low value for goal position
+        response = self.__sio.read_from_servo(servoId, AX_GOAL_POSITION_L, 17)
+        
         if response:
             self.exception_on_error(response[4], 'when getting feedback from servo with id %d' %(servoId))
         if len(response) == 17:
             # extract data values from the raw data
-            position = response[5] + (response[6] << 8)
-            speed = response[7] + ( response[8] << 8)
-            load_raw = response[9] + (response[10] << 8)
+            goal = response[5] + (response[6] << 8)
+            position = response[11] + (response[12] << 8)
+            error = position - goal
+            speed = response[13] + ( response[14] << 8)
+            load_raw = response[15] + (response[16] << 8)
             load_direction = 1 if self.test_bit(load_raw, 10) else 0
             load = load_raw & int('1111111111', 2)
             if load_direction == 1:
                 load = -load
-            voltage = response[11]
-            temperature = response[12]
-            moving = response[15]
+            voltage = response[17]
+            temperature = response[18]
+            moving = response[21]
             
             if speed > 1023:
                 speed = 1023 - speed
             
             # return the data in a dictionary
-            return {'id':servoId, 'position':position, 'speed':speed, 'load':load, 'voltage':voltage, 'temperature':temperature, 'moving':bool(moving)}
+            return {'id':servoId, 'goal':goal, 'position':position, 'error':error, 'speed':speed, 'load':load, 'voltage':voltage, 'temperature':temperature, 'moving':bool(moving)}
 
     def exception_on_error(self, error_code, ex_message):
         if not error_code & AX_OVERHEATING_ERROR == 0:
