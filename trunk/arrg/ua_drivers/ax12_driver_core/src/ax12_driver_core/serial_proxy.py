@@ -151,7 +151,10 @@ class SerialProxy():
                 self.__state_lock.release()
                 
             if motor_states:
-                self.motor_states_pub.publish(motor_states)
+                msl = MotorStateList()
+                msl.header.stamp = rospy.Time.now()
+                msl.motor_states = motor_states
+                self.motor_states_pub.publish(msl)
                 
             rate.sleep()
 

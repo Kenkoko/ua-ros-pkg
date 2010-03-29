@@ -36,6 +36,8 @@
 # Author: Cara Slutter
 #
 
+from __future__ import division
+
 import roslib
 roslib.load_manifest('ax12_controller_core')
 
@@ -98,11 +100,13 @@ class JointPositionControllerAX12(JointControllerAX12):
                 state = state[0]
                 joint_state = JointState(name=self.joint_name,
                                          motor_ids=[self.motor_id],
-                                         goal=self.raw_to_rad(state.goal, self.initial_position_raw, self.flipped),
-                                         angle=self.raw_to_rad(state.position, self.initial_position_raw, self.flipped),
+                                         goal_pos=self.raw_to_rad(state.goal, self.initial_position_raw, self.flipped),
+                                         current_pos=self.raw_to_rad(state.position, self.initial_position_raw, self.flipped),
                                          error=state.error * AX_RAD_RAW_RATIO,
-                                         speed=(state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
-                                         moving=state.moving)
+                                         velocity=(state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
+                                         load=state.load,
+                                         is_moving=state.moving)
+                joint_state.header.stamp = state_list.header.stamp
                 self.joint_state_pub.publish(joint_state)
                 
     def process_command(self, msg):
