@@ -36,6 +36,8 @@
 # Author: Cody Jorgensen
 #
 
+from __future__ import division
+
 import roslib
 roslib.load_manifest('ax12_controller_core')
 
@@ -84,11 +86,13 @@ class JointFreespinControllerAX12(JointControllerAX12):
                 state = state[0]
                 joint_state = JointState(name=self.joint_name,
                                          motor_ids=[self.motor_id],
-                                         goal=0.0,
-                                         angle=0.0,
+                                         goal_pos=0.0,
+                                         current_pos=0.0,
                                          error=0.0,
-                                         speed=(state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
-                                         moving=state.moving)
+                                         velocity=(state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
+                                         load=state.load,
+                                         is_moving=state.moving)
+                joint_state.header.stamp = state_list.header.stamp
                 self.joint_state_pub.publish(joint_state)
                 
     def process_command(self, msg):

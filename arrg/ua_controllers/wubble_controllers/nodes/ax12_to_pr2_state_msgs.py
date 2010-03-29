@@ -71,10 +71,12 @@ class AX12ToPR2StateMsgs:
         [rospy.Subscriber(c + '/state', JointState, self.handle_laser_state) for c in self.laser_controllers]
         
     def handle_arm_state(self, msg):
-        jcs = JointControllerState(set_point=msg.goal,
-                                   process_value=msg.angle,
-                                   process_value_dot=msg.speed,
-                                   error=msg.error)
+        jcs = JointControllerState(set_point=msg.goal_pos,
+                                   process_value=msg.current_pos,
+                                   process_value_dot=msg.velocity,
+                                   error=msg.error,
+                                   command=msg.load)
+        jcs.header.stamp = msg.header.stamp
         name = msg.name.replace('_joint', '_controller', 1)
         self.arm_controllers[name].publish(jcs)
         
@@ -82,7 +84,9 @@ class AX12ToPR2StateMsgs:
         jcs = JointControllerState(set_point=msg.goal,
                                    process_value=msg.angle,
                                    process_value_dot=msg.speed,
-                                   error=msg.error)
+                                   error=msg.error,
+                                   command=msg.load)
+        jcs.header.stamp = msg.header.stamp
         name = msg.name.replace('_joint', '_controller', 1)
         self.head_controllers[name].publish(jcs)
         
@@ -90,7 +94,9 @@ class AX12ToPR2StateMsgs:
         jcs = JointControllerState(set_point=msg.goal,
                                    process_value=msg.angle,
                                    process_value_dot=msg.speed,
-                                   error=msg.error)
+                                   error=msg.error,
+                                   command=msg.load)
+        jcs.header.stamp = msg.header.stamp
         name = msg.name.replace('_joint', '_controller', 1)
         self.laser_controllers[name].publish(jcs)
 

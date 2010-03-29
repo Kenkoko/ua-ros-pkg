@@ -304,7 +304,7 @@ class AX12_IO(object):
             register = AX_GOAL_SPEED_L
         elif command == AX_TORQUE_EN:
             parse2 = False
-            register = AX_TORQUE_ENABLE                 
+            register = AX_TORQUE_ENABLE
 
         for val in packet[1]:
             motor_id = val[0]
@@ -546,7 +546,7 @@ class AX12_IO(object):
             load = load_raw & int('1111111111', 2)
             if load_direction == 1:
                 load = -load
-            voltage = response[17]
+            voltage = response[17] / 10.0
             temperature = response[18]
             moving = response[21]
             

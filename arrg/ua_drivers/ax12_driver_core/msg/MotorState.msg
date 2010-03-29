@@ -1,9 +1,9 @@
-int32 id
-int32 goal
-int32 position
-int32 error
-int32 speed
-int32 load
-int32 voltage
-int32 temperature
-bool moving
+int32 id            # motor id
+int32 goal          # commanded position (in ax12 encoder units [0-1023])
+int32 position      # current position (in ax12 encoder units [0-1023])
+int32 error         # difference between current and goal positions
+int32 speed         # current speed
+int32 load          # current load
+float64 voltage     # current voltage
+int32 temperature   # current temperature
+bool moving         # whether the motor is currently in motion
