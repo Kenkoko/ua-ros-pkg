@@ -82,13 +82,13 @@ class JointFreespinControllerAX12(JointControllerAX12):
             state = filter(lambda state: state.id == self.motor_id, state_list.motor_states)
             if state:
                 state = state[0]
-                joint_state = JointState('name'=self.joint_name,
-                                         'motor_ids'=[self.motor_id],
-                                         'goal'=0.0,
-                                         'angle'=0.0,
-                                         'error'=0.0,
-                                         'speed'=(state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
-                                         'moving'=state.moving)
+                joint_state = JointState(name=self.joint_name,
+                                         motor_ids=[self.motor_id],
+                                         goal=0.0,
+                                         angle=0.0,
+                                         error=0.0,
+                                         speed=(state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
+                                         moving=state.moving)
                 self.joint_state_pub.publish(joint_state)
                 
     def process_command(self, msg):
