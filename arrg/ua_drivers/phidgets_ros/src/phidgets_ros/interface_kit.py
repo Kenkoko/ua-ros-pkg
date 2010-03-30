@@ -42,13 +42,13 @@ roslib.load_manifest('phidgets_ros')
 import sys
 import rospy
 
-from std_msgs.msg import Float64
+from phidgets_ros.msg import Float64Stamped
 
 #Phidget specific imports
 try:
     from Phidgets.PhidgetException import *
     from Phidgets.Events.Events import *
-    from Phidgets.Devices.Accelerometer import *
+    from Phidgets.Devices.InterfaceKit import *
 except ImportError, ie:
     rospy.logfatal("You must install the phidgets drivers and ensure the python bindings are in your PYTHONPATH")
     sys.exit(1)
@@ -88,7 +88,7 @@ class PhidgetsInterfaceKit:
             topic = 'interface_kit/%s' %self.name
         else:
             topic = 'interface_kit/%d' %event.device.getSerialNum()
-        self.publishers = [rospy.Publisher('%s/sensor/%d' %(topic, x), Float64) for x in sensors]
+        self.publishers = [rospy.Publisher('%s/sensor/%d' %(topic, x), Float64Stamped) for x in sensors]
         rospy.loginfo("InterfaceKit %i Attached!" % (event.device.getSerialNum()))
         
     def interfaceKitDetached(self, event):
@@ -100,7 +100,10 @@ class PhidgetsInterfaceKit:
         rospy.logerr("Phidget Error %i: %s" % (error.eCode, error.description))
         
     def interfaceKitSensorChanged(self, event):
-        self.publishers[event.index].publish(event.value)
+        fs_msg = Float64Stamped()
+        fs_msg.header.stamp = rospy.Time.now()
+        fs_msg.data = event.value
+        self.publishers[event.index].publish(fs_msg)
 
 if __name__ == '__main__':
     try:

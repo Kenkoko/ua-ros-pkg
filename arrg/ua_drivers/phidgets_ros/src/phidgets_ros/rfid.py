@@ -103,14 +103,22 @@ class PhidgetsRFID:
         Publishes a tag message and turns on the onboard LED.
         """
         self.rfid.setLEDOn(True)
-        self.publisher.publish(True, str(tagEvent.tag))
+        re_msg = RFIDEvent()
+        re_msg.header.stamp = rospy.Time.now()
+        re_msg.gained = True
+        re_msg.tag = str(tagEvent.tag)
+        self.publisher.publish(re_msg)
 
     def rfidTagLost(self, tagEvent):
         """
         Publishes a tag message and turns off the onboard LED.
         """
         self.rfid.setLEDOn(False)
-        self.publisher.publish(False, str(tagEvent.tag))
+        re_msg = RFIDEvent()
+        re_msg.header.stamp = rospy.Time.now()
+        re_msg.gained = False
+        re_msg.tag = str(tagEvent.tag)
+        self.publisher.publish(re_msg)
 
 if __name__ == '__main__':
     try:

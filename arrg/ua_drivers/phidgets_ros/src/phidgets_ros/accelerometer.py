@@ -107,7 +107,12 @@ class PhidgetsAccelerometer:
         z_accel = 0
         if self.accelerometer.getAxisCount() > 2:
             z_accel = self.accelerometer.getAcceleration(self.z_axis_id)
-        self.publisher.publish(x_accel, y_accel, z_accel)
+        ae_msg = AccelerometerEvent()
+        ae_msg.header.stamp = rospy.Time.now()
+        ae_msg.acceleration_x = x_accel
+        ae_msg.acceleration_y = y_accel
+        ae_msg.acceleration_z = z_accel
+        self.publisher.publish(ae_msg)
 
 if __name__ == '__main__':
     try:
