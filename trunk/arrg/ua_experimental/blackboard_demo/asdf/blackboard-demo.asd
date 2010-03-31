@@ -1,1 +1,0 @@
-../src/blackboard-demo.asd
