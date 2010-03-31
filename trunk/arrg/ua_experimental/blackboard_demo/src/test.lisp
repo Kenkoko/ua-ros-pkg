@@ -1,42 +1,102 @@
 (in-package :blackboard_demo)
 
-(defparameter *msg* nil)
-
-(message-type-to-unit-class "gazebo_plugins" "WorldState")
-
-(define-unit-class object () 
-  (gazebo-name 
-   name 
-   shape 
-   color
-   (location 
-    :link (position-3d objects-here)))
-  (:initial-space-instances (objects)))
-
-(define-unit-class position-3d ()
-  (x y z
-     (objects-here 
-      :link (object location)))
-  (:dimensional-values
-      (x :point x)
-      (y :point y)
-      (z :point z)))
+;;======================================================
+;; ROS Node, Publishers and Subscribers
 
 ;; Initial translation of the WorldState message class into a GBBopen class
 (defun test ()  
-  (make-space-instance '(objects))
+  ;; This makes interactive use easier
+  (delete-blackboard-repository)
+  
+  ;; Start a ROS node that stays alive (spins)
   (with-ros-node ("test" :spin t)
     ;; Subscribe to a topic and post translated messages onto the blackboard
     (subscribe "gazebo_world_state" "gazebo_plugins/WorldState" #'translate-msg)
-    ;; Start and infinitely looping control shell
+    (subscribe "speech_text" "std_msgs/String" #'handle-speech)
+
+    ;; Start an infinitely looping control shell
     (agenda-shell:start-control-shell :continue-past-quiescence t))
-  (agenda-shell:exit-control-shell ':solution-found t))
+  ;; After the ros node exits, take down the control shell
+  (agenda-shell:exit-all-control-shell-threads))
 
-(defun update-world-state (state-msg)
-  (let* ((ui (translate-msg state-msg)))
-    (describe-instance ui)))
+;; Message Callbacks
+(defun handle-speech (msg)
+  (make-instance 'utterance :sentence (std_msgs-msg:data-val msg)))
 
-;; Knowledge source test.
+
+;;====================================================
+;; Knowledge Sources
+
+(agenda-shell:define-ks utterance-ks
+    :trigger-events ((create-instance-event utterance))
+    :execution-function 'utterance-response)
+
+(defun utterance-response (ksa)
+  (let* ((trigger-utterance (agenda-shell:sole-trigger-instance-of ksa))
+         (tokens (simple-split (slot-value trigger-utterance 'sentence) #\ ))
+         (verb (parse-verb tokens))
+         (goal (parse-goal tokens)))
+    (make-instance 'command 
+                   :verb-int (make-instance 'interpretation 
+                                            :phrase (first verb)
+                                            :meaning (second verb))
+                   :object-int (make-instance 'interpretation
+                                              :phrase goal
+                                              :meaning nil)
+                   :sentence (slot-value trigger-utterance 'sentence))))
+    
+(defun parse-goal (tokens)
+  (subseq tokens (+ 1 (position "the" tokens :test 'string-equal))))
+         
+(defun parse-verb (tokens)
+  (let* ((verb (subseq tokens 0 2)))
+    (cond ((equal '("go" "to") verb) (list verb 'go-to))
+          ((equal '("look" "at") verb) (list verb 'look-at))
+          (t nil))))
+    
+;;====================================================
+
+(agenda-shell:define-ks binder-ks
+    :trigger-events ((create-instance-event interpretation))
+    :activation-predicate 'needs-binding?
+    :execution-function 'bind-interpretation)
+
+(defun needs-binding? (ks trigger-event)
+  (declare (ignore ks))
+  (not (slot-value (instance-of trigger-event) 'meaning)))
+
+(defun bind-interpretation (ksa)
+  (print "BINDING")
+  (let* ((interp (agenda-shell:sole-trigger-instance-of ksa))
+         (phrase (slot-value interp 'phrase))
+         (candidates nil))
+    (loop for word in phrase
+       for matches = (find-matching-objects word)
+       when matches do (loop for match in matches do (pushnew match candidates)))
+    (if candidates
+        (setf (slot-value interp 'meaning) candidates)
+        (setf (slot-value interp 'meaning) 'unknown))))
+
+(defun find-matching-objects (word)
+  (union 
+   (loop for ui in (find-instances-of-class 'object)
+     when (string-equal (slot-value ui 'shape) word)
+     collect ui)
+   (loop for ui in (find-instances-of-class 'object)
+      when (string-equal (slot-value ui 'color) word)
+      collect ui)))
+    
+;;====================================================
+
+(agenda-shell:define-ks command-ks
+    :trigger-events ((create-instance-event command))
+    :execution-function 'do-command)
+
+(defun do-command (ksa)
+  (describe-instance (agenda-shell:sole-trigger-instance-of ksa)))
+
+;;====================================================
+
 (agenda-shell:define-ks world-state-ks
     :trigger-events ((create-instance-event <WorldState>))
     :execution-function 'world-state-response)
@@ -51,27 +111,40 @@
        for obj-pose = (aref (pose-of trigger-state) i)
        for obj-xyz = (extract-xyz obj-pose)
        when (search "obj" obj-name)
-       do (print obj-xyz)
-        (describe-instance 
-         (make-instance 'object 
-                        :gazebo-name obj-name 
-                        :shape (second obj-desc)
-                        :name (third obj-desc) 
-                        :color (fourth obj-desc)
-                        :location (make-instance 'position-3d
-                                                 :x (first obj-xyz)
-                                                 :y (second obj-xyz)
-                                                 :z (third obj-xyz)))))
+       do (let* ((old-obj (loop for ui in (find-instances-of-class 'Object)
+                             when (equal obj-name (slot-value ui 'gazebo-name))
+                             return ui)))
+            (if old-obj
+                (link-setf (location-of old-obj)
+                           (make-instance 'position-3d
+                                          :x (first obj-xyz)
+                                          :y (second obj-xyz)
+                                          :z (third obj-xyz)))
+                (make-instance 'object 
+                               :gazebo-name obj-name 
+                               :shape (second obj-desc)
+                               :name (third obj-desc) 
+                               :color (fourth obj-desc)
+                               :location (make-instance 'position-3d
+                                                        :x (first obj-xyz)
+                                                        :y (second obj-xyz)
+                                                        :z (third obj-xyz))))))
     (delete-instance trigger-state)))
+
+;;===================================================
+;; Trivial KS Example
 
 (agenda-shell:define-ks initial
      :trigger-events ((agenda-shell:start-control-shell-event)) 
-     :execution-function #'initial-ks-function)
- 
+     :execution-function 'initial-ks-function)
+
 (defun initial-ks-function (ksa)
   (declare (ignore ksa))
   (print "STARTED CONTROL SHELL"))
 
+
+;;====================================================
+;; Utility Functions
 
 (defun simple-split (string divider)
     "Returns a list of substrings of string divided by ONE divider each.
