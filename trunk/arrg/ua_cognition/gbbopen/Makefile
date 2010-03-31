@@ -11,6 +11,7 @@ build:
 	rm -rf asdf
 	mkdir asdf
 	patch gbbopen/gbbopen.asd -i gbbopen.patch -o gbbopen/gbbopen-patched.asd
+	rm gbbopen/gbbopen.asd
 	ln -s `(rospack find gbbopen)`/gbbopen/gbbopen-patched.asd asdf/gbbopen.asd 
 
 clean:

@@ -10,5 +10,5 @@
 > (in-package :asdf)
 > 
 > (defsystem :gbbopen/gbbopen
->     :depends-on (:gbbopen :gbbopen-user))
+>     :depends-on (:gbbopen :gbbopen-user :agenda-shell-user))
 > 
