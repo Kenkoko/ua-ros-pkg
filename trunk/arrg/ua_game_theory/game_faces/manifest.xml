@@ -1,0 +1,18 @@
+<package>
+  <description brief="game_faces">
+
+     game_faces
+
+  </description>
+  <author>Arizona Robotics Research Group</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/game_faces</url>
+  <depend package="std_msgs"/>
+  <depend package="rospy"/>
+  <depend package="roscpp"/>
+  <depend package="opencv2"/>
+
+</package>
+
+
