@@ -1,0 +1,5 @@
+string topic_name
+int32 role
+---
+int32 status
+
