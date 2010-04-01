@@ -81,11 +81,11 @@
             <elem key="mu2" value="50.0" />
             <elem key="kp"  value="100000000.0" />
             <elem key="kd"  value="1.0" />
-            <material>PR2/Grey</material>
+            <material>Erratic/Grey</material>
         </gazebo>
 
         <gazebo reference="${parent}_${suffix}_motor_link" >
-            <material>PR2/White</material>
+            <material>Erratic/White</material>
         </gazebo>
 
         <transmission type="SimpleTransmission" name="${parent}_${suffix}_wheel_trans">
