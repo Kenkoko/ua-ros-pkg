@@ -6,9 +6,9 @@
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
 
     <!-- Included URDF Files -->
+    <include filename="$(find erratic_description)/urdf/materials.urdf.xacro" />
     <include filename="$(find erratic_description)/urdf/erratic_computer.xacro" />
     <include filename="$(find erratic_description)/urdf/erratic_wheel.xacro" />
-    <include filename="$(find pr2_defs)/defs/materials.urdf.xacro" />
 
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
@@ -287,10 +287,6 @@
 
         <!-- GAZEBO MATERIALS -->
 
-        <material name="Black">
-            <color rgba="0.0 0.0 0.0 1.0"/>
-        </material>
-        
         <gazebo reference="base_link">
             <material>Erratic/BlueBrushedAluminum</material>
         </gazebo>
@@ -300,15 +296,15 @@
         </gazebo>
         
         <gazebo reference="caster_wheel_link">
-            <material>PR2/Black</material>
+            <material>Erratic/Black</material>
         </gazebo>
         
         <gazebo reference="base_caster_box_link">
-            <material>PR2/Black</material>
+            <material>Erratic/Black</material>
         </gazebo>
         
         <gazebo reference="base_caster_support_link">
-            <material>PR2/White</material>
+            <material>Erratic/White</material>
         </gazebo>
     </macro>
 </robot>
