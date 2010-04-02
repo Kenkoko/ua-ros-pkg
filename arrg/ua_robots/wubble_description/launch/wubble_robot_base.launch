@@ -1,23 +1,28 @@
 <launch>
-
-    <!-- send the wubble robot XML to param server -->
-    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble_base.urdf.xacro'" />
-
+    <!-- send wubble robot XML to param server -->
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble.urdf.xacro'" />
+    
     <!-- push robot_description to factory and spawn robot in gazebo -->
     <node name="spawn_erratic" pkg="gazebo_tools" type="gazebo_model" args="-z 0.01 -p robot_description spawn robot_description" respawn="false" output="screen" />
-
-    <!-- Differential Drive and Odometry -->
-    <node name="diffdrive" pkg="wubble_plugins" type="gazebo_ros_diffdrive" respawn="true" output="screen"/>
+    
+    <!-- start robot state publisher -->
+    <node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher" output="screen" >
+        <param name="publish_frequency" type="double" value="50.0" />
+        <param name="tf_prefix" type="string" value="" />
+    </node>
+    
+    <!-- start differential drive controller -->
+    <node name="diffdrive" pkg="wubble_plugins" type="gazebo_ros_diffdrive" respawn="true" output="screen" />
+    
     <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
         <param name="odom_frame_id" value="odom"/>
     </node>
-
+    
     <!-- Laser Controller -->
-    <include file="$(find pr2_controller_manager)/controller_manager.launch" />
-    <rosparam file="$(find wubble_description)/controllers/erratic_controllers.yaml" command="load" />
+    <rosparam file="$(find wubble_description)/controllers/wubble_laser_controller.yaml" command="load" />
     <node name="laser_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
           args="laser_tilt_controller" output="screen" />
-
+    
     <!-- Laser Filters -->
     <node pkg="laser_filters" type="scan_to_cloud_filter_chain" respawn="true" name="laser_shadow_filter">
         <remap from="scan" to="tilt_scan" />
@@ -26,9 +31,8 @@
         <param name="high_fidelity" value="true" />
         <rosparam command="load" file="$(find wubble_description)/params/shadow_filter.yaml" />
     </node>
-
+    
     <!-- enable navigation -->
     <include file="$(find wubble_description)/launch/wubble_move_base.launch" />
-
 </launch>
 

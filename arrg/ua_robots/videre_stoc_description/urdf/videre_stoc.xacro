@@ -158,10 +158,10 @@
         </stereo_camera_9cm_baseline>
         
         <gazebo reference="stoc_camera_link" >
-            <material>PR2/Red</material>
+            <material>Erratic/Red</material>
         </gazebo>
         <gazebo reference="stoc_back_link" >
-            <material>PR2/Red</material>
+            <material>Erratic/Red</material>
         </gazebo>
     </macro>
 </robot>

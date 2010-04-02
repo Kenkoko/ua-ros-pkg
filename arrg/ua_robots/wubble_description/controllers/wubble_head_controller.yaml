@@ -1,9 +1,3 @@
-laser_tilt_controller:
-  type: JointPositionController
-  joint: hokuyo_tilt_joint
-  pid:
-    p: 120
-
 head_pan_controller:
   type: JointPositionController
   joint: head_pan_joint 

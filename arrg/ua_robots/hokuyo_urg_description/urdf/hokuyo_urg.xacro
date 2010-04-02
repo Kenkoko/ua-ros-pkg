@@ -67,7 +67,7 @@
         </link>
         
         <gazebo reference="hokuyo_link">
-            <material value="PR2/Black" />
+            <material value="Erratic/Black" />
         </gazebo>
         
         <gazebo reference="hokuyo_link">

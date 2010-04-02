@@ -91,8 +91,8 @@ public:
 
     this->rnh_ = new ros::NodeHandle();
     //this->sub_ = rnh_->subscribe<geometry_msgs::Twist>("/cmd_vel", 100, boost::bind(&DiffDrive::cmdVelCallBack,this,_1));
-    this->sub_ = rnh_->subscribe<geometry_msgs::Twist>("/cmd_vel", 100, &DiffDrive::cmdVelCallBack,this);
-    this->pub_ = rnh_->advertise<nav_msgs::Odometry>("/erratic_odometry/odom", 1);
+    this->sub_ = rnh_->subscribe<geometry_msgs::Twist>("cmd_vel", 100, &DiffDrive::cmdVelCallBack,this);
+    this->pub_ = rnh_->advertise<nav_msgs::Odometry>("erratic_odometry/odom", 1);
    
     // spawn 2 threads by default, ///@todo: make this a parameter
     ros::MultiThreadedSpinner s(2);
@@ -108,21 +108,16 @@ public:
     while(rnh_->ok()) { 
       if (this->posIface) {
         this->posIface->Lock(1);
-        
-        // duplicate pr2_odometry functionalities, broadcast
-        // transforms from base_footprint to odom
-        // and from base_link to base_footprint
 
         // get current time
         ros::Time current_time_ = ros::Time::now();
 
-        // getting data for base_link to odom transform
+        // getting data for base_footprint to odom transform
         btQuaternion qt;
         qt.setEulerZYX(this->posIface->data->pose.yaw, this->posIface->data->pose.pitch, this->posIface->data->pose.roll);
         btVector3 vt(this->posIface->data->pose.pos.x, this->posIface->data->pose.pos.y, this->posIface->data->pose.pos.z);
-        tf::Transform base_link_to_odom(qt, vt);
-        transform_broadcaster_.sendTransform(tf::StampedTransform(base_link_to_odom,ros::Time::now(), "odom", "/base_footprint"));
-
+        tf::Transform base_footprint_to_odom(qt, vt);
+        transform_broadcaster_.sendTransform(tf::StampedTransform(base_footprint_to_odom,ros::Time::now(), "odom", "base_footprint"));
 
         // publish odom topic
         odom.pose.pose.position.x = this->posIface->data->pose.pos.x;
@@ -139,11 +134,10 @@ public:
         odom.twist.twist.linear.x = this->posIface->data->velocity.pos.x;
         odom.twist.twist.linear.y = this->posIface->data->velocity.pos.y;
         odom.twist.twist.angular.z = this->posIface->data->velocity.yaw;
-        
+
         odom.header.frame_id = "odom"; 
-        
         odom.header.stamp = ros::Time::now();
-        
+
         this->pub_.publish(odom); 
 
         this->posIface->Unlock();
@@ -151,6 +145,7 @@ public:
       d.sleep();
     }
   }
+  
   ~DiffDrive() {
     delete this->rnh_;
   }

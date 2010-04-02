@@ -32,9 +32,6 @@
     <depend package="laser_filters"/>
     <depend package="wubble_actions"/>
 
-    <depend package="pr2_defs" />
-    <depend package="pr2_description" />
     <depend package="pr2_controller_manager"/>
     <depend package="pr2_gazebo_plugins"/>
-    <depend package="pr2_ogre" />
 </package>
