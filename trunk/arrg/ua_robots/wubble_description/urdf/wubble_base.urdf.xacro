@@ -96,7 +96,7 @@
     
     <!-- GAZEBO MATERIALS -->  
     <gazebo reference="hokuyo_tilt_link">
-        <material>PR2/Black</material>
+        <material>Erratic/Black</material>
     </gazebo>
     
     <gazebo reference="hokuyo_mount_link">

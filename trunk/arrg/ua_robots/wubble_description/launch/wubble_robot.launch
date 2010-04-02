@@ -1,46 +1,33 @@
 <launch>
-
-    <!-- send the wubble robot XML to param server -->
-    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble.urdf.xacro'" />
-
-    <!-- push robot_description to factory and spawn robot in gazebo -->
-    <node name="spawn_erratic" pkg="gazebo_tools" type="gazebo_model" args="-z 0.01 -p robot_description spawn robot_description" respawn="false" output="screen" />
-
-    <!-- Differential Drive and Odometry -->
-    <node name="diffdrive" pkg="wubble_plugins" type="gazebo_ros_diffdrive" respawn="true" output="screen"/>
-    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
-        <param name="odom_frame_id" value="odom"/>
-    </node>
-
-    <include file="$(find pr2_controller_manager)/controller_manager.launch" />
-
-    <!-- Laser and Camera Controllers -->
-    <rosparam file="$(find wubble_description)/controllers/erratic_controllers.yaml" command="load" />
-    <node name="laser_camera_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
-          args="head_pan_controller head_tilt_controller laser_tilt_controller" output="screen" />
-
+    <!-- Launch erratic base with tilting laser and navigation -->
+    <include file="$(find wubble_description)/launch/wubble_robot_base.launch" />
+    
+    <!-- Head Controllers -->
+    <rosparam file="$(find wubble_description)/controllers/wubble_head_controller.yaml" command="load" />
+    <node name="head_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
+          args="head_pan_controller head_tilt_controller" output="screen" />
+          
     <!-- SmartArm Controllers -->
     <rosparam file="$(find smart_arm_description)/controllers/smart_arm_controllers.yaml" command="load" />
     <node name="smart_arm_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
           args="shoulder_pan_controller shoulder_tilt_controller elbow_tilt_controller wrist_rotate_controller finger_left_controller finger_right_controller" output="screen" />
+          
+    <!-- SmartArm Inverse Kinematics -->
     <node name="smart_arm_ik_service" pkg="smart_arm_kinematics" type="smart_arm_ik_service" output="screen" />
-
+    
     <!-- Actions for Head, Laser, Arm, and Gripper -->
     <node name="wubble_head_action" pkg="wubble_actions" type="wubble_head_action.py" output="screen" />
-    <node name="hokuyo_laser_action" pkg="wubble_actions" type="hokuyo_laser_action.py" output="screen" />
+    <node name="laser_action" pkg="wubble_actions" type="hokuyo_laser_action.py" output="screen" />
     <node name="smart_arm_action" pkg="wubble_actions" type="smart_arm_action.py" output="screen" />
     <node name="smart_arm_gripper_action" pkg="wubble_actions" type="smart_arm_gripper_action.py" output="screen" />
-
-    <!-- enable navigation -->
-    <include file="$(find wubble_description)/launch/wubble_move_base.launch" />
-
+    
     <!-- enable stereo vision -->
-    <group ns="stereo/">
+    <group ns="stereo">
         <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc">
             <param name="num_disp" type="int" value="128"/>
         </node>
     </group>
-
+    
     <!-- filter the robot (its arm, at least) out of the stereo cloud -->
     <node pkg="robot_self_filter" type="self_filter" name="stereo_self_filter" respawn="true" output="screen">
         <!-- The topic for the input cloud -->
@@ -53,16 +40,7 @@
         <param name="sensor_frame" type="string" value="/stereo_optical_frame" />
         <rosparam file="$(find wubble_description)/params/self_filter.yaml" command="load" />
     </node>
-
-    <!-- Laser Filters -->
-    <node pkg="laser_filters" type="scan_to_cloud_filter_chain" respawn="true" name="laser_shadow_filter">
-        <remap from="scan" to="tilt_scan" />
-        <remap from="cloud_filtered" to="tilt_scan_shadow_filtered" />
-        <param name="target_frame" value="base_footprint" />
-        <param name="high_fidelity" value="true" />
-        <rosparam command="load" file="$(find wubble_description)/params/shadow_filter.yaml" />
-    </node>
-
+    
     <node pkg="robot_self_filter" type="self_filter" name="laser_self_filter" respawn="true" output="screen">
         <!-- The topic for the input cloud -->
         <remap from="cloud_in" to="/tilt_scan_shadow_filtered" />
@@ -74,6 +52,5 @@
         <param name="sensor_frame" type="string" value="/laser_link" />
         <rosparam file="$(find wubble_description)/params/self_filter.yaml" command="load" />
     </node>
-
 </launch>
 
