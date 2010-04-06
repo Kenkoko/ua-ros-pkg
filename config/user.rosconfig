@@ -1,5 +1,5 @@
 - svn:
-    uri: http://ua-ros-pkg.googlecode.com/svn/trunk/
+    uri: http://ua-ros-pkg.googlecode.com/svn/trunk/arrg
     local-name: ua-ros-pkg
 - svn:
     uri: http://foote-ros-pkg.googlecode.com/svn/trunk/phidgets/phidgetspp_c_api
