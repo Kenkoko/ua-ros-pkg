@@ -239,7 +239,11 @@ public:
             else { fps = DC1394_FRAMERATE_1_875; }
             
             // For right now we ONLY support Videre stereo cameras:
+            string str_mode;
             dc1394video_mode_t mode = VIDERE_STEREO_640x480;
+            local_node_handle_.param("mode", str_mode, string("none"));
+            if (str_mode == string("stereo320x240")) { mode = VIDERE_STEREO_320x240; }
+            else if (str_mode == string("stereo640x480")) { mode = VIDERE_STEREO_640x480; }
             
             // Get the videre processing mode if available:
             string str_videre_mode;
