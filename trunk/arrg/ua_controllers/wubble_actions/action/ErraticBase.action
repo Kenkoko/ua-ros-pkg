@@ -1,0 +1,12 @@
+# Goal - Target pose and a vicinity limit.
+#        * If a vicinity range is given (i.e. non-zero), navigation will target a point
+#           at X meters from the target position, where X is the vicinity limit value,
+#           and the pose will automatically be set to 'face toward' the target point.
+geometry_msgs/PoseStamped target_pose
+float64 vicinity_range
+---
+# Result - Final base position
+geometry_msgs/PoseStamped base_position
+---
+# Feedback - Current base position
+geometry_msgs/PoseStamped base_position
