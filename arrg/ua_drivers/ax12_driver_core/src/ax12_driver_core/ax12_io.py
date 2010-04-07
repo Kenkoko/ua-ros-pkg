@@ -43,6 +43,8 @@ from binascii import b2a_hex
 from ax12_const import *
 from ax12_user_commands import AX_GOAL_POSITION, AX_GOAL_SPEED, AX_TORQUE_ENABLE as AX_TORQUE_EN
 
+exception = None
+
 class SerialIO(object):
     """ Provides low level IO with the AX-12+ servos through pyserial. Has the
     ability to write instruction packets, request and read register value
@@ -557,27 +559,29 @@ class AX12_IO(object):
             return {'id':servoId, 'goal':goal, 'position':position, 'error':error, 'speed':speed, 'load':load, 'voltage':voltage, 'temperature':temperature, 'moving':bool(moving)}
 
     def exception_on_error(self, error_code, ex_message):
+        global exception
+        exception = None
         if not error_code & AX_OVERHEATING_ERROR == 0:
             msg = 'Overheating Error ' + ex_message
-            raise FatalErrorCodeError(msg, error_code)
+            exception = FatalErrorCodeError(msg, error_code)
         if not error_code & AX_OVERLOAD_ERROR == 0:
             msg = 'Overload Error ' + ex_message
-            raise FatalErrorCodeError(msg, error_code)
+            exception = FatalErrorCodeError(msg, error_code)
         if not error_code & AX_INPUT_VOLTAGE_ERROR == 0:
             msg = 'Input Voltage Error ' + ex_message
-            raise NonfatalErrorCodeError(msg, error_code)
+            exception = NonfatalErrorCodeError(msg, error_code)
         if not error_code & AX_ANGLE_LIMIT_ERROR == 0:
             msg = 'Angle Limit Error ' + ex_message
-            raise NonfatalErrorCodeError(msg, error_code)
+            exception = NonfatalErrorCodeError(msg, error_code)
         if not error_code & AX_RANGE_ERROR == 0:
             msg = 'Range Error ' + ex_message
-            raise NonfatalErrorCodeError(msg, error_code)
+            exception = NonfatalErrorCodeError(msg, error_code)
         if not error_code & AX_CHECKSUM_ERROR == 0:
             msg = 'Checksum Error ' + ex_message
-            raise NonfatalErrorCodeError(msg, error_code)
+            exception = NonfatalErrorCodeError(msg, error_code)
         if not error_code & AX_INSTRUCTION_ERROR == 0:
             msg = 'Instruction Error ' + ex_message
-            raise NonfatalErrorCodeError(msg, error_code)
+            exception = NonfatalErrorCodeError(msg, error_code)
 
 class SerialOpenError(Exception):
     def __init__(self, port, baud):

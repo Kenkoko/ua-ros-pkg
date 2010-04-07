@@ -133,22 +133,23 @@ class SerialProxy():
         while self.running:
             self.__state_lock.acquire()
             # get current state of all motors and publish to motor_states topic
-            try:
-                motor_states = []
-                for i in self.motors:
+            motor_states = []
+            for i in self.motors:
+                try:
                     state = self.__serial_bus.get_servo_feedback(i)
-                    if state: motor_states.append(MotorState(**state))
-            except ax12_io.FatalErrorCodeError, fece:
-                rospy.logfatal(fece)
-                signal_shutdown(fece)
-            except ax12_io.NonfatalErrorCodeError, nfece:
-                rospy.logwarn(nfece)
-            except ax12_io.ChecksumError, cse:
-                rospy.logwarn(cse)
-            except ax12_io.DroppedPacketError, dpe:
-                rospy.loginfo(dpe.message)
-            finally:
-                self.__state_lock.release()
+                    if state:
+                        motor_states.append(MotorState(**state))
+                        if ax12_io.exception: raise ax12_io.exception
+                except ax12_io.FatalErrorCodeError, fece:
+                    rospy.logfatal(fece)
+                    signal_shutdown(fece)
+                except ax12_io.NonfatalErrorCodeError, nfece:
+                    rospy.logwarn(nfece)
+                except ax12_io.ChecksumError, cse:
+                    rospy.logwarn(cse)
+                except ax12_io.DroppedPacketError, dpe:
+                    rospy.loginfo(dpe.message)
+            self.__state_lock.release()
                 
             if motor_states:
                 msl = MotorStateList()
