@@ -6,7 +6,7 @@ laser_tilt_controller:
     joint_name: hokuyo_tilt_joint
     joint_speed: 1.17
     motor:
-        id: 7                       #9
+        id: 9
         init: 817
         min: 817
         max: 663

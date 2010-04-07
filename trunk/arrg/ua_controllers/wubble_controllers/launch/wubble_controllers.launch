@@ -9,5 +9,5 @@
     <include file="$(find wubble_controllers)/launch/wubble_laser.launch" />
     
     <!-- Start the smart_arm controller -->
-    <include file="$(find smart_arm_controller)/launch/smart_arm.launch" />
+    <include file="$(find wubble_controllers)/launch/wubble_arm.launch" />
 </launch>
