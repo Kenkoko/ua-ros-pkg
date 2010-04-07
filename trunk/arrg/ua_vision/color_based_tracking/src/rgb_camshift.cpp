@@ -112,7 +112,7 @@ Tracker(ros::NodeHandle &n, int argc, char** argv) :
 {
 //	box = cvRect(580,165,620-580,220-165); //grey box
 //	box = cvRect(788,106,855-788,177-106); //gold box
-	box = cvRect(393,138,440-393,201-138); //white box
+//	box = cvRect(393,138,440-393,201-138); //white box
 
 	select_object = 0;
 	track_object = 0;
@@ -190,6 +190,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 			}
 			cvNot(mask,mask);
 			cvCalcHist( planes, bg_hist, 0, mask );
+			cvNot(mask,mask);
 			cvGetMinMaxHistValue( fg_hist, 0, &max_val, 0, 0 );
 			cvNormalizeHist(bg_hist, max_val);
 			for( int m=0; m<8; m++){
@@ -203,7 +204,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 //		cvNormalizeHist(lglikrat,255);
 		cvCalcBackProject( planes, backproject, lglikrat );
 		
-		cvAnd( backproject, mask, backproject, 0 );
+//		cvAnd( backproject, mask, backproject, 0 );
 		cvCamShift( backproject, track_window,
 			cvTermCriteria( CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 10, 1 ),
 			&track_comp, &track_box );
