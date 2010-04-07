@@ -81,9 +81,9 @@ class AX12ToPR2StateMsgs:
         self.arm_controllers[name].publish(jcs)
         
     def handle_head_state(self, msg):
-        jcs = JointControllerState(set_point=msg.goal,
-                                   process_value=msg.angle,
-                                   process_value_dot=msg.speed,
+        jcs = JointControllerState(set_point=msg.goal_pos,
+                                   process_value=msg.current_pos,
+                                   process_value_dot=msg.velocity,
                                    error=msg.error,
                                    command=msg.load)
         jcs.header.stamp = msg.header.stamp
@@ -91,13 +91,13 @@ class AX12ToPR2StateMsgs:
         self.head_controllers[name].publish(jcs)
         
     def handle_laser_state(self, msg):
-        jcs = JointControllerState(set_point=msg.goal,
-                                   process_value=msg.angle,
-                                   process_value_dot=msg.speed,
+        jcs = JointControllerState(set_point=msg.goal_pos,
+                                   process_value=msg.current_pos,
+                                   process_value_dot=msg.velocity,
                                    error=msg.error,
                                    command=msg.load)
         jcs.header.stamp = msg.header.stamp
-        name = msg.name.replace('_joint', '_controller', 1)
+        name = 'laser_tilt_controller'
         self.laser_controllers[name].publish(jcs)
 
 if __name__ == '__main__':
