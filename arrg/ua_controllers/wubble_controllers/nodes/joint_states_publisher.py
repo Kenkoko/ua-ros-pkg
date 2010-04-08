@@ -45,15 +45,24 @@ class JointStateMessage():
 class JointStatesPublisher():
     def __init__(self):
         rospy.init_node('wubble_joint_states_publisher', anonymous=True)
+        
         self.joint_states = {'base_caster_support_joint': JointStateMessage('base_caster_support_joint', 0.0, 0.0, 0.0),
                              'caster_wheel_joint': JointStateMessage('caster_wheel_joint', 0.0, 0.0, 0.0),
                              'base_link_left_wheel_joint': JointStateMessage('base_link_left_wheel_joint', 0.0, 0.0, 0.0),
                              'base_link_right_wheel_joint': JointStateMessage('base_link_right_wheel_joint', 0.0, 0.0, 0.0)}
-        
+                             
+        self.controllers = ('shoulder_pan_controller',
+                            'shoulder_tilt_controller',
+                            'elbow_tilt_controller',
+                            'wrist_rotate_controller',
+                            'finger_right_controller',
+                            'finger_left_controller',
+                            'head_pan_controller',
+                            'head_tilt_controller',
+                            'laser_tilt_controller')
+                            
         # Start controller state subscribers
-        rospy.Subscriber('arm_controller/state', JointStateList, self.controller_state_handler)
-        rospy.Subscriber('camera_pan_tilt_controller/state', JointStateList, self.controller_state_handler)
-        rospy.Subscriber('laser_tilt_controller/state', JointStateList, self.controller_state_handler)
+        [rospy.Subscriber(c + '/state', JointState, self.controller_state_handler) for c in self.controllers]
         
         # Start publisher
         self.joint_states_pub = rospy.Publisher('joint_states', JointState)
@@ -65,25 +74,24 @@ class JointStatesPublisher():
             self.publish_joint_states()
             r.sleep()
             
-    def controller_state_handler(self, data):
-        for joint in data.motor_states:
-            self.joint_states[joint.name] = JointStateMessage(joint.name,
-                                                              math.radians(joint.angle),
-                                                              math.radians(joint.speed),
-                                                              0.0)
-                                                              
+    def controller_state_handler(self, msg):
+        jcs = JointStateMessage(msg.name, msg.current_pos, msg.velocity, msg.load)
+        self.joint_states[joint.name] = jcs
+        
     def publish_joint_states(self):
         # Construct message & publish joint states
         msg = JointState()
-        msg.name = list()
-        msg.position = list()
-        msg.velocity = list()
-        msg.effort = list()
+        msg.name = []
+        msg.position = []
+        msg.velocity = []
+        msg.effort = []
+        
         for joint in self.joint_states.values():
             msg.name.append(joint.name)
             msg.position.append(joint.position)
-            msg.velocity.append(joint.velocity)        # Field is optional --> can be left empty
-            #msg.effort.append(joint.effort)            # Field is optional --> can be left empty
+            msg.velocity.append(joint.velocity)
+            msg.effort.append(joint.effort)
+            
         msg.header.stamp = rospy.Time.now()
         self.joint_states_pub.publish(msg)
 
@@ -91,6 +99,5 @@ if __name__ == '__main__':
     try:
         s = JointStatesPublisher()
         rospy.spin()
-    except rospy.ROSInterruptException:
-        pass
+    except rospy.ROSInterruptException: pass
 
