@@ -31,6 +31,7 @@
 
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 
@@ -54,11 +55,20 @@ public:
   }
 
   DiffDrive() {
+    // get tf prefix
+    ros::NodeHandle n;
+    std::string tf_prefix_ = tf::getPrefixParam(n);
+    
     gazebo::Client *client = new gazebo::Client();
     gazebo::SimulationIface *simIface = new gazebo::SimulationIface();
     this->posIface = new gazebo::PositionIface();
-  
-    int serverId = 0;
+
+    ros::NodeHandle private_nh("~");
+
+    int serverId;
+    std::string modelName;
+    private_nh.param("gazebo_server_id", serverId, 0);
+    private_nh.param("gazebo_model_name", modelName, std::string("robot_description"));
     
     /// Connect to the libgazebo server
     try {
@@ -78,7 +88,7 @@ public:
     
     /// Open the Position interface
     try {
-      this->posIface->Open(client, "robot_description::position_iface_0");
+      this->posIface->Open(client, modelName + "::position_iface_0");
     } catch (std::string e) {
       std::cout << "Gazebo error: Unable to connect to the position interface\n" << e << "\n";
       return;
@@ -90,7 +100,6 @@ public:
     this->posIface->Unlock();
 
     this->rnh_ = new ros::NodeHandle();
-    //this->sub_ = rnh_->subscribe<geometry_msgs::Twist>("/cmd_vel", 100, boost::bind(&DiffDrive::cmdVelCallBack,this,_1));
     this->sub_ = rnh_->subscribe<geometry_msgs::Twist>("cmd_vel", 100, &DiffDrive::cmdVelCallBack,this);
     this->pub_ = rnh_->advertise<nav_msgs::Odometry>("erratic_odometry/odom", 1);
    
@@ -117,6 +126,7 @@ public:
         qt.setEulerZYX(this->posIface->data->pose.yaw, this->posIface->data->pose.pitch, this->posIface->data->pose.roll);
         btVector3 vt(this->posIface->data->pose.pos.x, this->posIface->data->pose.pos.y, this->posIface->data->pose.pos.z);
         tf::Transform base_footprint_to_odom(qt, vt);
+        
         transform_broadcaster_.sendTransform(tf::StampedTransform(base_footprint_to_odom,ros::Time::now(), "odom", "base_footprint"));
 
         // publish odom topic
@@ -135,7 +145,7 @@ public:
         odom.twist.twist.linear.y = this->posIface->data->velocity.pos.y;
         odom.twist.twist.angular.z = this->posIface->data->velocity.yaw;
 
-        odom.header.frame_id = "odom"; 
+        odom.header.frame_id = tf::resolve(tf_prefix_, "odom"); 
         odom.header.stamp = ros::Time::now();
 
         this->pub_.publish(odom); 
