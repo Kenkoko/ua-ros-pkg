@@ -11,15 +11,14 @@
     <node name="erratic_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
     
     <!-- Starts the hokuyo laser -->
-    <node name="base_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">
-        <remap from="laser" to="base_laser"/>
-        <remap from="scan" to="base_scan"/>
+    <node name="tilt_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">
+        <remap from="scan" to="tilt_laser/scan"/>
         <param name="frame_id" value="laser_link"/>
     </node>
     
     <!-- Starts SLAM mapping -->
     <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" respawn="false" output="screen" >
-        <remap from="scan" to="base_scan" />
+        <remap from="scan" to="tilt_laser/scan" />
     </node>
     
 <!--    <include file="$(find wubble_teleop)/launch/erratic_logitech.launch" />-->

@@ -9,5 +9,6 @@
     
     <depend package="ax12_controller_core"/>
     <depend package="pr2_controllers_msgs"/>
+    <depend package="sensor_msgs"/>
 </package>
 
