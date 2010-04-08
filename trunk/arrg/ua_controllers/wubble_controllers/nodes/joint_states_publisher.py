@@ -27,13 +27,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import roslib; roslib.load_manifest('wubble_mapping')
+import roslib; roslib.load_manifest('wubble_controllers')
 import rospy
 
-from sensor_msgs.msg import JointState
-from ua_controller_msgs.msg import JointStateList
-
-import math
+from sensor_msgs.msg import JointState as JointStatePR2
+from ua_controller_msgs.msg import JointState as JointStateAX12
 
 class JointStateMessage():
     def __init__(self, name, position, velocity, effort):
@@ -62,10 +60,10 @@ class JointStatesPublisher():
                             'laser_tilt_controller')
                             
         # Start controller state subscribers
-        [rospy.Subscriber(c + '/state', JointState, self.controller_state_handler) for c in self.controllers]
+        [rospy.Subscriber(c + '/state', JointStateAX12, self.controller_state_handler) for c in self.controllers]
         
         # Start publisher
-        self.joint_states_pub = rospy.Publisher('joint_states', JointState)
+        self.joint_states_pub = rospy.Publisher('joint_states', JointStatePR2)
         
         publish_rate = rospy.get_param('~rate', 50)
         r = rospy.Rate(publish_rate)
@@ -80,7 +78,7 @@ class JointStatesPublisher():
         
     def publish_joint_states(self):
         # Construct message & publish joint states
-        msg = JointState()
+        msg = JointStatePR2()
         msg.name = []
         msg.position = []
         msg.velocity = []
