@@ -41,5 +41,5 @@ rosbuild_genmsg()
 #rosbuild_add_executable(ian_demo src/ian_method_demo.cpp)
 #rosbuild_add_executable(ian_method src/ian_method.cpp)
 #rosbuild_add_executable(discover src/discover_objects.cpp)
-rosbuild_add_executable(ian_method2 src/ian_method3.cpp)
+rosbuild_add_executable(ian_method3 src/ian_method3.cpp)
 
