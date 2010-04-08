@@ -46,6 +46,7 @@ from geometry_msgs.msg import *
 from std_msgs.msg import Float64
 from pr2_controllers_msgs.msg import JointControllerState
 
+from tf import transformations
 import math
 
 
@@ -87,6 +88,7 @@ class ErraticBaseActionServer():
         self.move_client.send_goal(goal, None, None, self.move_base_feedback_cb)
         
         while (not self.move_client.wait_for_result(rospy.Duration(0.01))):
+            # check for preemption
             if self.server.is_preempt_requested():
                 rospy.loginfo("%s: Aborted: Action Preempted", NAME)
                 self.move_client.cancel_goal()
@@ -133,7 +135,10 @@ class ErraticBaseActionServer():
             vicinity_pose.pose.position.y = target.point.y + 0.0
         
         # set orientation
-        vicinity_pose.pose.orientation = target_pose.pose.orientation        
+        ori = Quaternion()
+        yaw = math.atan2(target.point.y, target.point.x)
+        (ori.x, ori.y, ori.z, ori.w) = tf.transformations.quaternion_from_euler(0, 0, yaw)
+        vicinity_pose.pose.orientation = ori
 
         # prep header
         vicinity_pose.header = target_pose.header
@@ -151,11 +156,14 @@ class ErraticBaseActionServer():
         move_base_result = None
 
         if (goal.vicinity_range == 0.0):
+            # go to exactly
             move_base_result = self.move_to(goal.target_pose)
         else:
+            # go near (within vicinity_range meters)
             vicinity_target_pose = self.get_vicinity_target(goal.target_pose, goal.vicinity_range)
             move_base_result = self.move_to(vicinity_target_pose)
         
+        # check results
         if (move_base_result == GoalStatus.SUCCEEDED):
             rospy.loginfo("%s: Succeeded", NAME)
             self.result.base_position = self.feedback.base_position

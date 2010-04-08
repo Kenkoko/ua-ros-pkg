@@ -56,6 +56,8 @@ def move_to(frame_id, position, orientation, vicinity=0.0):
     if client.get_state() == GoalStatus.SUCCEEDED:
         result = client.get_result()
         print "Result: " + str(result.base_position)
+    elif client.get_state() == GoalStatus.PREEMPTED:
+        print "Action pre-empted"
     else:
         print "Action failed"
 
@@ -65,6 +67,12 @@ if __name__ == '__main__':
         rospy.init_node(NAME, anonymous=True)
         client = SimpleActionClient("erratic_base_action", ErraticBaseAction)
         client.wait_for_server()
+        
+        print "Go exactly 1 meter forward & 1 meter to the right..."
+        position = Point(x=1.0, y=-1.0)
+        orientation = Quaternion(w=1.0)
+        move_to('/base_footprint', position, orientation) # No vicinity specified
+        rospy.sleep(2.0)
 
         print "Go to rocky sphere..."
         position = Point(x=-2.6, y=1.7)
@@ -74,8 +82,8 @@ if __name__ == '__main__':
 
         print "Go to metal box..."
         position = Point(x=-2.8, y=-1.8)
-        orientation = Quaternion(w=1.0)
-        move_to('/map', position, orientation, 0.7)
+        orientation = Quaternion()
+        move_to('/map', position, orientation, 0.9)
         rospy.sleep(0.5)
 
     except rospy.ROSInterruptException:
