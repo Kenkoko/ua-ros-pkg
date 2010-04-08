@@ -66,10 +66,16 @@ if __name__ == '__main__':
         client = SimpleActionClient("erratic_base_action", ErraticBaseAction)
         client.wait_for_server()
 
-        print "Move 1 meter behind"
-        position = Point(x=1.0, y=0.0)
+        print "Go to rocky sphere..."
+        position = Point(x=-2.6, y=1.7)
         orientation = Quaternion(w=1.0)
-        move_to('/base_footprint', position, orientation)
+        move_to('/map', position, orientation, 0.9)
+        rospy.sleep(2.0)
+
+        print "Go to metal box..."
+        position = Point(x=-2.8, y=-1.8)
+        orientation = Quaternion(w=1.0)
+        move_to('/map', position, orientation, 0.7)
         rospy.sleep(0.5)
 
     except rospy.ROSInterruptException:

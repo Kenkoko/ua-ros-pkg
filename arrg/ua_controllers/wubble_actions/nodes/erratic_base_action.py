@@ -74,7 +74,6 @@ class ErraticBaseActionServer():
         rospy.loginfo("%s: Ready to accept goals", NAME)
 
 
-
     def transform_target_point(self, point):
         self.tf.waitForTransform(self.base_frame, point.header.frame_id, rospy.Time(), rospy.Duration(5.0))
         return self.tf.transformPoint(self.base_frame, point)
@@ -102,25 +101,47 @@ class ErraticBaseActionServer():
 
 
     def get_vicinity_target(self, target_pose, vicinity_range):
-        vicinity_target = PoseStamped()
-#        goal.target_pose.header.frame_id = frame_id
-#        goal.target_pose.pose.position.x = x
-#        goal.target_pose.pose.position.y = y
-#        goal.target_pose.pose.orientation.w = 1.0
+        vicinity_pose = PoseStamped()
 
-#        i = self.world_state.name.index("base_top_link")
-#        wx = self.world_state.pose[i].position.x
-#        wy = self.world_state.pose[i].position.y
-#        wz = self.world_state.pose[i].position.z
-#        vx = x - wx
-#        vy = y - wy
-#        vz = z - wz
-#        vx *= 0.80
-#        vy *= 0.80
-#        vz *= 0.80
-#        return [vx,vy,vz]
+        # transform target to base_frame reference
+        target_point = PointStamped()
+        target_point.header.frame_id = target_pose.header.frame_id
+        target_point.point = target_pose.pose.position
+        self.tf.waitForTransform(self.base_frame, target_pose.header.frame_id, rospy.Time(), rospy.Duration(5.0))
+        target = self.tf.transformPoint(self.base_frame, target_point)
+        
+        #rospy.loginfo("%s: Target at (%s, %s, %s)", NAME, target.point.x, target.point.y, target.point.z)
 
-        return vicinity_target
+        # find distance to point
+        dist = math.sqrt(math.pow(target.point.x, 2) + math.pow(target.point.y, 2))
+
+        if (dist < vicinity_range):
+            # if already within range, then no need to move
+            vicinity_pose.pose.position.x = 0.0
+            vicinity_pose.pose.position.y = 0.0
+        else:
+            # normalize vector pointing from source to target
+            target.point.x /= dist
+            target.point.y /= dist
+
+            # scale normal vector to within vicinity_range distance from target
+            target.point.x *= (dist - vicinity_range)
+            target.point.y *= (dist - vicinity_range)
+
+            # add scaled vector to source
+            vicinity_pose.pose.position.x = target.point.x + 0.0
+            vicinity_pose.pose.position.y = target.point.y + 0.0
+        
+        # set orientation
+        vicinity_pose.pose.orientation = target_pose.pose.orientation        
+
+        # prep header
+        vicinity_pose.header = target_pose.header
+        vicinity_pose.header.frame_id = self.base_frame        
+
+        #rospy.loginfo("%s: Moving to (%s, %s, %s)", NAME, vicinity_pose.pose.position.x, vicinity_pose.pose.position.y, vicinity_pose.pose.position.z)
+
+        return vicinity_pose
 
 
     def execute_callback(self, goal):
@@ -132,15 +153,18 @@ class ErraticBaseActionServer():
         if (goal.vicinity_range == 0.0):
             move_base_result = self.move_to(goal.target_pose)
         else:
-            vicinity_target_pose = get_vicinity_target(goal.target_pose, goal.vicinity_range)
+            vicinity_target_pose = self.get_vicinity_target(goal.target_pose, goal.vicinity_range)
             move_base_result = self.move_to(vicinity_target_pose)
         
         if (move_base_result == GoalStatus.SUCCEEDED):
+            rospy.loginfo("%s: Succeeded", NAME)
             self.result.base_position = self.feedback.base_position
             self.server.set_succeeded(self.result)
         elif (move_base_result == GoalStatus.PREEMPTED):
+            rospy.loginfo("%s: Preempted", NAME)
             self.server.set_preempted()
         else:
+            rospy.loginfo("%s: Aborted", NAME)
             self.server.set_aborted()
 
 
