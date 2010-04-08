@@ -1,0 +1,14 @@
+<launch>
+
+    <!-- load the world environment -->
+    <include file="$(find wubble_environments)/launch/simple_blocks_world.launch" />
+
+    <!-- spawn our erratic robot -->
+    <include file="$(find wubble_description)/launch/wubble_robot.launch"/>
+
+    <!-- start rviz with navigation configs -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find wubble_navigation)/rviz/wubble_move_base.vcg"/>
+
+
+</launch>
+
