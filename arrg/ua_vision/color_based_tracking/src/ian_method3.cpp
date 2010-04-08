@@ -30,29 +30,6 @@ with code borrowed from various sources
 
 namespace ublas = boost::numeric::ublas;
 
-IplImage *image, *frame, *mask, *backproject, *bp8U, *sum, *r, *g, *b, *planes[3];
-CvHistogram *bg_hist, *fg_hist, *lglikrat;
-CvMemStorage* storage;
-CvSeq* contour;
-
-int backproject_mode;
-int select_object;
-int track_object;
-int show_hist;
-CvPoint origin;
-CvRect selection, box;
-CvRect track_window;
-CvBox2D track_box;
-CvConnectedComp track_comp;
-int dims[3];
-float range_arr[2], *ranges[3], value, maxlik, epsilon;
-int thepoint[2];
-double *sumdata;
-int h, w, step, boxhstep;
-
-char* object;
-FILE *histogram;
-
 ublas::matrix<double> K (3, 3);
 
 class Tracker {
@@ -62,12 +39,10 @@ public:
 Tracker(ros::NodeHandle &n, int argc, char** argv) :
 	n_(n), it_(n_)
 {
-	select_object = 0;
 	track_object = 0;
-	show_hist = 1;
-	dims = {8,8,8};
-	range_arr = {0,255};
-	ranges = {range_arr,range_arr,range_arr};
+	dims[0] = 8; dims[1] = 8; dims[2] = 8;
+	range_arr[0] = 0; range_arr[1] = 255;
+	ranges[0] = range_arr; ranges[1] = range_arr; ranges[2] = range_arr;
 	epsilon = 0.1;
 	fg_hist = cvCreateHist( 3, dims, CV_HIST_ARRAY, ranges, 1 );
 	storage = cvCreateMemStorage(0);
@@ -221,7 +196,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 		{
 		
 			cvSplit( image, b, g, r, 0 );
-			planes = {b,g,r};
+			planes[0]=b; planes[1] = g; planes[2]=r;
 			
 			float max_val = 0.f, min_val = 0.f;
 			cvCalcHist( planes, bg_hist, 0, 0 );
@@ -308,23 +283,13 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	        
 /**/	}
 
-/*	if( select_object && selection.width > 0 && selection.height > 0 )
-	{
-		cvSetImageROI( image, selection );
-		cvXorS( image, cvScalarAll(255), image, 0 );
-		cvResetImageROI( image );
-	}
-/**/
-
-	bound_pub_.publish(foundpoints);
 	cvShowImage( "Demo", image );
 //	cvShowImage( "Extra", backproject);
 	cvWaitKey(3);
 
-/*	try
+	try
 	{
-		//bound_pub_.publish(boxes);
-		image_pub_.publish(bridge_.cvToImgMsg(backproject, "mono8"));
+    	bound_pub_.publish(foundpoints);
 	}
 	catch (sensor_msgs::CvBridgeException error)
 	{
@@ -348,7 +313,16 @@ char** args;
 bool show_image;
 geometry_msgs::Polygon foundpoints;
 
+IplImage *image, *frame, *mask, *backproject, *bp8U, *sum, *r, *g, *b, *planes[3];
+CvHistogram *bg_hist, *fg_hist, *lglikrat;
+CvMemStorage* storage;
+CvSeq* contour;
 
+int track_object, dims[3], thepoint[2], h, w, step, boxhstep;
+float range_arr[2], *ranges[3], value, maxlik, epsilon;
+double *sumdata;
+char* object;
+FILE *histogram;
 };
 
 int main(int argc, char** argv)
