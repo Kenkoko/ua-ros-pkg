@@ -7,7 +7,7 @@
     <include file="$(find ua_erratic_player)/launch/erratic_base.launch" />
     
     <!-- Publish joint_states information -->
-    <node name="joint_states_publisher" pkg="wubble_mapping" type="joint_states_publisher.py" />
+    <node name="joint_states_publisher" pkg="wubble_controllers" type="joint_states_publisher.py" />
     <node name="erratic_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
     
     <!-- Starts the hokuyo laser -->
