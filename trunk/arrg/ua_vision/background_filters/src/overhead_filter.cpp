@@ -14,7 +14,7 @@
 using namespace std;
 
 IplImage* bg = NULL; 
-IplImage *original, *curr_image, *mono_image;
+IplImage *original, *curr_image, *mono_image, *roi_image;
 CvMemStorage *storage;
 CvSeq* contour;
 
@@ -61,13 +61,9 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
 	    }
 		
 		cvSub(bg, original, curr_image);
-		
 		cvCvtColor(curr_image, mono_image, CV_RGB2GRAY);
-		
 		cvThreshold(mono_image, mono_image, 50, 255, CV_THRESH_BINARY);
-				
 		cvCopy(original, curr_image, mono_image);
-		
 		cvFindContours(mono_image, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 		
 		background_filters::ObjectList objectList;
@@ -80,12 +76,21 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
 			//cout << area << endl;
 			if (area > 200) 
 			{
+			    CvRect boundingBox = cvBoundingRect(contour);
+
+                // Copy part of the original image that contains the contour
+		        cvSetImageROI(original, boundingBox);
+		        roi_image = cvCreateImage(cvSize(boundingBox.width, boundingBox.height), original->depth, original->nChannels);
+		        cvCopy(original, roi_image);
+		        cvResetImageROI(original);
+		        objectList.objectImages.push_back(*bridge.cvToImgMsg(roi_image, "rgb8"));
+                cvReleaseImage(&roi_image);
+                
 			    cvDrawContours(original, contour, color, color, -1, 2, 8 );
 			    
 			    CvBox2D minBox = cvMinAreaRect2(contour, storage);
 			    draw_box(original, minBox, 1.0);
-			    
-			    CvRect boundingBox = cvBoundingRect(contour);
+
 			    CvPoint topLeft, bottomRight;
 			    topLeft.x = boundingBox.x;
 			    topLeft.y = boundingBox.y;
@@ -100,10 +105,6 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
 			    roi.height = boundingBox.height;
 			    
 			    objectList.objectRegions.push_back(roi);
-		
-		      	// TODO: I don't know exactly how to make the sub images based on the 
-            	// bounding box. I'm pretty sure it should use cvGetSubRect.        	    
-			    //cvGetSubRect(original
 		    }
         }	
 	
