@@ -46,7 +46,6 @@ from geometry_msgs.msg import *
 from std_msgs.msg import Float64
 from pr2_controllers_msgs.msg import JointControllerState
 
-from tf import transformations
 import math
 
 
@@ -99,7 +98,8 @@ class ErraticBaseActionServer():
 
     def move_base_feedback_cb(self, fb):
         self.feedback.base_position = fb.base_position
-        self.server.publish_feedback(self.feedback)
+        if self.server.is_active():
+            self.server.publish_feedback(self.feedback)
 
 
     def get_vicinity_target(self, target_pose, vicinity_range):
