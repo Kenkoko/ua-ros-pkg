@@ -1,7 +1,7 @@
 <launch>
     <node name="erratic_base_driver" pkg="ua_erratic_player" type="erratic_player" output="screen" >
         <param name="port_name" type="str" value="/dev/erratic"/>
-        <param name="odometry_topic" type="str" value="odom"/>
+        <param name="odometry_topic" type="str" value="erratic_odometry/odom"/>
         <param name="battery_topic" type="str" value="battery_state"/>
         <param name="odometry_frame_id" type="str" value="odom"/>
     </node>
