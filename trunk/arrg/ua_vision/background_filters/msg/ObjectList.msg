@@ -1,2 +1,3 @@
-sensor_msgs/Image[] objectImages
-sensor_msgs/RegionOfInterest[] objectRegions
+sensor_msgs/Image[] color_images
+sensor_msgs/Image[] bw_images
+sensor_msgs/RegionOfInterest[] object_regions
