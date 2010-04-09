@@ -9,7 +9,11 @@
 sudo synaptic
 }}}
   # Hit the "Reload" button to load the ROS repository for the first time
-  # Hit the "Origin" button 
+  # Hit the "Origin" button at the bottom left to show a list of repositories.
+  # Click on the code.ros.org/Main repository (in the list on the left pane) to show only ROS packages. 
+  # Select all the packages with "boxturtle" in the name, and then install them.
+  # Go back to http://www.ros.org/wiki/ROS/Installation/Ubuntu and perform step 1.4.
+  # Close all terminal windows before moving on to the next step.
 
 = Adding UA Repositories =
 
@@ -21,4 +25,13 @@ chmod 755 ~/rosinstall
   # Install our ROS repositories (ua-ros-pkg, ua-cs665-ros-pkg) and their dependencies:
 {{{
 ~/rosinstall -o ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/boxturtle.rosinstall
+}}}
+  # Add this to your bashrc (at the end):
+{{{
+source ~/ros/setup.sh
+}}}
+  # Close all terminal windows.
+  # Make all of ua-ros-pkg:
+{{{
+~/ros/ua-ros-pkg/make-all.sh
 }}}
