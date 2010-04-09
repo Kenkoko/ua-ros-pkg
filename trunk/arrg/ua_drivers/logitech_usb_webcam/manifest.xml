@@ -1,0 +1,15 @@
+<package>
+  <description brief="logitech_usb_webcam">
+
+     logitech_usb_webcam
+
+  </description>
+  <author>Antons Rebguns</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/logitech_usb_webcam</url>
+  <depend package="usb_cam"/>
+
+</package>
+
+
