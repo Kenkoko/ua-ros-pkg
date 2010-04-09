@@ -5,6 +5,7 @@
 
 (message-type-to-unit-class "gazebo_plugins" "WorldState")
 (message-type-to-unit-class "std_msgs" "String")
+(message-type-to-unit-class "wubble_actions" "ErraticBaseActionGoal")
 
 ;;======================================================
 ;; Classes

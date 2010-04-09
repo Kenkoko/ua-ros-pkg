@@ -3,6 +3,9 @@
 ;;======================================================
 ;; ROS Node, Publishers and Subscribers
 
+(defparameter *goal-pub* nil)
+(defparameter *look-pub* nil)
+
 ;; Initial translation of the WorldState message class into a GBBopen class
 (defun test ()  
   ;; This makes interactive use easier
@@ -13,6 +16,10 @@
     ;; Subscribe to a topic and post translated messages onto the blackboard
     (subscribe "gazebo_world_state" "gazebo_plugins/WorldState" #'translate-msg)
     (subscribe "speech_text" "std_msgs/String" #'handle-speech)
+
+    ;; Create a publisher for the position goals
+    (setf *goal-pub* (advertise "/move_base_simple/goal" "geometry_msgs/PoseStamped"))
+    (setf *look-pub* (advertise "/wubble_head_action/goal" "wubble_actions/WubbleHeadActionGoal"))
 
     ;; Start an infinitely looping control shell
     (agenda-shell:start-control-shell :continue-past-quiescence t))
@@ -69,10 +76,15 @@
   (print "BINDING")
   (let* ((interp (agenda-shell:sole-trigger-instance-of ksa))
          (phrase (slot-value interp 'phrase))
+         (candidate-lists
+          (loop for word in phrase
+             for matches = (find-matching-objects word)
+             when matches collect matches))
          (candidates nil))
-    (loop for word in phrase
-       for matches = (find-matching-objects word)
-       when matches do (loop for match in matches do (pushnew match candidates)))
+    (cond ((eq 1 (length candidate-lists)) 
+           (setf candidates (first candidate-lists)))
+          ((> (length candidate-lists) 1)
+           (setf candidates (intersection (first candidate-lists) (second candidate-lists)))))
     (if candidates
         (setf (slot-value interp 'meaning) candidates)
         (setf (slot-value interp 'meaning) 'unknown))))
@@ -93,7 +105,44 @@
     :execution-function 'do-command)
 
 (defun do-command (ksa)
-  (describe-instance (agenda-shell:sole-trigger-instance-of ksa)))
+  (let* ((your-command (agenda-shell:sole-trigger-instance-of ksa)))
+    (if (not (eq 'unknown (meaning-of (object-int-of your-command))))
+        (let* ((target-object (first (meaning-of (object-int-of your-command)))))
+          (if (verb-int-of your-command)
+              (funcall (meaning-of (verb-int-of your-command)) target-object)
+              (print "UNKNOWN VERB MEANING")))
+        (print "UNKNOWN OBJECT MEANING"))))
+    
+             ;(make-msg "wubble_actions/ErraticBaseActionGoal" 
+             ;          (goal) (make-msg "wubble_actions/ErraticBaseGoal"
+             ;                           (target_pose) 
+             ;                           (vicinity_range) 0.5)
+             ;          (goal_id) (make-msg "actionlib_msgs/GoalID"
+             ;                              (stamp) 
+             ;                              (id) "asdfasdf"
+
+
+;;====================================================
+
+(defun go-to (object)
+  (let* ((target-location (first (location-of object))))
+    (publish *goal-pub* 
+             (make-msg "geometry_msgs/PoseStamped" 
+                       (frame_id header) "/map"
+                       (x position pose) (- (x-of target-location) 0.7)
+                       (y position pose) (- (y-of target-location) 0.0)
+                       (w orientation pose) 1))))
+
+(defun look-at (object)
+  (let* ((target-location (first (location-of object))))
+    (publish *look-pub*
+             (make-msg "wubble_actions/WubbleHeadActionGoal"
+                       (frame_id header target_point goal) "/map"
+                       (x point target_point goal) (x-of target-location)
+                       (y point target_point goal) (y-of target-location)
+                       (z point target_point goal) (z-of target-location)               
+                       (id goal_id) (format nil "~a" (instance-name-of target-location))))))
+
 
 ;;====================================================
 
