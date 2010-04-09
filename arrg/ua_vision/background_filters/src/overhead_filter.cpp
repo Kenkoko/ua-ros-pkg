@@ -14,7 +14,7 @@
 using namespace std;
 
 IplImage* bg = NULL; 
-IplImage *original, *curr_image, *mono_image, *roi_image;
+IplImage *original, *curr_image, *mono_image, *roi_color_image, *roi_bw_image;
 CvMemStorage *storage;
 CvSeq* contour;
 
@@ -80,12 +80,20 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
 
                 // Copy part of the original image that contains the contour
 		        cvSetImageROI(original, boundingBox);
-		        roi_image = cvCreateImage(cvSize(boundingBox.width, boundingBox.height), original->depth, original->nChannels);
-		        cvCopy(original, roi_image);
+		        roi_color_image = cvCreateImage(cvSize(boundingBox.width, boundingBox.height), original->depth, original->nChannels);
+		        cvCopy(original, roi_color_image);
 		        cvResetImageROI(original);
-		        objectList.objectImages.push_back(*bridge.cvToImgMsg(roi_image, "rgb8"));
-                cvReleaseImage(&roi_image);
+		        objectList.color_images.push_back(*bridge.cvToImgMsg(roi_color_image, "rgb8"));
+                cvReleaseImage(&roi_color_image);
                 
+                // Copy part of the black and white image that contains the contour
+		        cvSetImageROI(mono_image, boundingBox);
+		        roi_bw_image = cvCreateImage(cvSize(boundingBox.width, boundingBox.height), mono_image->depth, mono_image->nChannels);
+		        cvCopy(mono_image, roi_bw_image);
+		        cvResetImageROI(mono_image);
+		        objectList.bw_images.push_back(*bridge.cvToImgMsg(roi_bw_image, "mono8"));
+                cvReleaseImage(&roi_bw_image);
+
 			    cvDrawContours(original, contour, color, color, -1, 2, 8 );
 			    
 			    CvBox2D minBox = cvMinAreaRect2(contour, storage);
@@ -104,7 +112,7 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
 			    roi.width = boundingBox.width;
 			    roi.height = boundingBox.height;
 			    
-			    objectList.objectRegions.push_back(roi);
+			    objectList.object_regions.push_back(roi);
 		    }
         }	
 	
