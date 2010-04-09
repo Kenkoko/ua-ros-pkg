@@ -1,18 +1,21 @@
 - svn:
+    uri: https://code.ros.org/svn/ros-pkg/trunk/stacks/
+    local-name: ros-pkg
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/trunk/
+    local-name: wg-ros-pkg
+- svn:
     uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg/
     local-name: ua-ros-pkg
 - svn:
     uri: https://ua-cs665-ros-pkg.googlecode.com/svn/trunk/
     local-name: ua-cs665-ros-pkg
 - svn:
-    uri: https://code.ros.org/svn/wg-ros-pkg/trunk/
-    local-name: wg-ros-pkg
-- svn:
-    uri: https://code.ros.org/svn/ros-pkg/trunk/stacks/
-    local-name: ros-pkg
-- svn:
     uri: http://foote-ros-pkg.googlecode.com/svn/trunk/phidgets/phidgetspp_c_api
-    local-name: foote-ros-pkg-read-only/phidgets/phidgetspp_c_api
+    local-name: foote-ros-pkg/phidgets/phidgetspp_c_api
 - svn:
     uri: https://cmu-ros-pkg.svn.sourceforge.net/svnroot/cmu-ros-pkg/trunk/
-    local-name: cmu-ros-pkg-read-only
+    local-name: cmu-ros-pkg
+- svn:
+    uri: https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/trunk/bosch_drivers/
+    local-name: bosch-ros-pkg/bosch_drivers/
