@@ -13,6 +13,7 @@
   <depend package="gbbopen"/>
 
   <depend package="gazebo_plugins"/>
+  <depend package="wubble_actions"/>
 </package>
 
 
