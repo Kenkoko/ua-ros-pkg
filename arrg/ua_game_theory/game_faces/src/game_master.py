@@ -1,20 +1,32 @@
 #!/usr/bin/env python
 import roslib; roslib.load_manifest('game_faces')
-from RegisterGamePlayer.srv import *
+from game_faces.srv import *
+from game_faces.msg import TwoPersonGame
 import rospy
 
 num_registered_players = 0
 num_players = 0
+registration_service = []
 
 def register_game_player(req):
+    global num_registered_players
+    global num_players
+    global registration_service
     num_registered_players+=1
     print "Registering player " + str(num_registered_players)
+    print "num_registered_players, num_players:" + str(num_registered_players) + " " + str(num_players)
+    if num_registered_players==num_players:
+        #if  == :
+        print "We would return"
+        registration_service.shutdown()
     return RegisterGamePlayerResponse(num_registered_players)
-    if num_registered_players == num_players:
-        raise BaseException
+            
 
 
 def game_master_start():
+    global num_registered_players
+    global num_players
+    global registration_service
     print "welcome to the game master"
 
     #rospy.init_node('game_master', anonymous=False)
@@ -26,46 +38,49 @@ def game_master_start():
     #    rospy.sleep(1.0)
 
     # Instead of above, we will become a service that hands out ids to clients
+    gameTopic = rospy.Publisher('game_master',TwoPersonGame)
     rospy.init_node('game_master')
-    s = rospy.Service('register_game_player',register_game_player)
-    print "Waiting for " + num_players + " machines to check in."
-    try:
-        rospy.spin()
-    except:
-        print "Got: " + str(num_registered_players) + "players"
+
+    registration_service = rospy.Service('register_game_player',RegisterGamePlayer,register_game_player)
+    print "Waiting for " + str(num_players) + " machines to check in."
     
-    # Now we have all game players waiting for instructions
-    # register their game topics
-    for j in range(num_players):
-        rospy.wait_for_service('game_player'+str(j))
-        game_register[j] = rospy.ServiceProxy('register_game',RegisterGamePlayerTopic)
-
-
-    # Create the topics for pairwise games to play on
-    # Is this really necessary?
-    #for i in num_players / 2:
-    #    pub = rospy.Publisher('pair' + str(i), IntegerArray)
-
-    # Run some exercise training protocol
+    # We wait until the expected number signs in
+    registration_service.spin()
+    print "Got: " + str(num_registered_players) + " players"
+    rospy.sleep(3.0)
     
     # Now pick random assignment of players
     # Need to know:
     #  Number of experimental blocks
     #  Desired number of times a pair occurs
-    for i in num_blocks:
-        pairing_sets = get_random_pairings_for_block(num_players)
+
+    num_blocks = 1
+    for i in range(0,num_blocks):
+        #pairing_sets = get_random_pairings_for_block(num_players)
+        pairing_sets = [[1,2]]
         game_topic = 0
+        print "pairing sets: " + str(pairing_sets)
         for pair in pairing_sets:
+            print "pair: " + str(pair)
             game_topic+=1
             try:
-                status = game_register[pair[0]](game_topic,1)
-                status = game_register[pair[1]](game_topic,2)
-            except rospy.ServiceException, e:
+                game_type = "TrustGame"
+                msg = TwoPersonGame('game_topic'+str(game_topic), pair[0], game_type)                
+                print 'game_topic'+str(game_topic)
+                gameTopic.publish(msg)
+            except rospy.ROSInterruptException, e:
                 print "something terrible happened"
 
+        
+import sys
 if __name__ == '__main__':
+    global num_registered_players
+    global num_players
     try:
-        num_players = arg[1]
+        numargs = len(sys.argv)
+        print numargs
+        num_players = int(sys.argv[1])
+        print num_players
         game_master_start()
     except rospy.ROSInterruptException: pass
 
