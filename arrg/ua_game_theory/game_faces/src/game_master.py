@@ -47,7 +47,7 @@ def game_master_start():
     # We wait until the expected number signs in
     registration_service.spin()
     print "Got: " + str(num_registered_players) + " players"
-    rospy.sleep(3.0)
+    #rospy.sleep(3.0)
     
     # Now pick random assignment of players
     # Need to know:
@@ -65,7 +65,7 @@ def game_master_start():
             game_topic+=1
             try:
                 game_type = "TrustGame"
-                msg = TwoPersonGame('game_topic'+str(game_topic), pair[0], game_type)                
+                msg = TwoPersonGame('game_topic'+str(game_topic), pair[0], pair[1], game_type)                
                 print 'game_topic'+str(game_topic)
                 gameTopic.publish(msg)
             except rospy.ROSInterruptException, e:

@@ -8,6 +8,7 @@ import rospy
 player_id = 0
 #play_number = -1
 is_first_player = False
+is_second_player = False
 current_amount = 0
 pub = [];
 
@@ -25,22 +26,24 @@ def connect_to_master():
 def play_game(gamedata):
     global player_id
     global is_first_player
-    global play_number
+    global is_second_player
     global pub
-    # Register the game playing topic
-    game_topic = gamedata.game_topic
-    pub = rospy.Publisher(game_topic, GamePlay)
     is_first_player = (gamedata.first_player == player_id)
+    is_second_player = (gamedata.second_player == player_id)
     print "is_first_player " + str(is_first_player)
-    print("Inform video node which topic to watch")
-    play_number = 0
-    rospy.Subscriber(game_topic, GamePlay, take_turn)
-    # Wait until there everyone is subscribed to this topic
-    while pub.get_num_connections() < 2 :
-        print "Waiting for game to start"
-        print "num connections: " + str(pub.get_num_connections())
-        #rospy.sleep(1.0)
-    take_turn(GamePlay(0,0))
+    print "is_second_player " + str(is_second_player)
+    if is_first_player or is_second_player:
+        # Register the game playing topic
+        game_topic = gamedata.game_topic
+        pub = rospy.Publisher(game_topic, GamePlay)
+        rospy.Subscriber(game_topic, GamePlay, take_turn)
+        # Wait until there everyone is subscribed to this topic
+        while pub.get_num_connections() < 2 :
+            print "Waiting for game to start"
+            print "num connections: " + str(pub.get_num_connections())
+            #rospy.sleep(1.0)
+        if is_first_player:
+            pub.publish(GamePlay(0,0))
 
 def take_turn(game_play):
     global player_id
@@ -83,6 +86,7 @@ def take_turn(game_play):
         
 
 import sys
+import subprocess
 if __name__ == '__main__':
     global player_id
     try:
@@ -93,7 +97,7 @@ if __name__ == '__main__':
         print "Training Material Here"
         print "Startup the video capture node and create topic"
         connect_to_master()
-        
+        p = subprocess.Popen('rosrun game_faces video_capture.py ' + str(player_id))
 
         rospy.spin()
     except rospy.ROSInterruptException: pass
