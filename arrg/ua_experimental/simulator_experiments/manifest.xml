@@ -1,0 +1,23 @@
+<package>
+
+    <description brief="simulator_experiments">
+
+     simulator_experiments
+
+    </description>
+
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/simulator_experiments</url>
+
+    <depend package="roscpp"/>
+    <depend package="rospy"/>
+    
+    <depend package="gazebo"/>
+    <depend package="gazebo_tools"/>
+    <depend package="gazebo_plugins"/>
+
+</package>
+
+
