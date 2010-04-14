@@ -14,6 +14,7 @@
 
 // ROS stuff
 #include <ros/ros.h>
+#include "ros/network.h"
 #include <std_msgs/String.h>
 #include "game_faces/TwoPersonGame.h"
 #include "game_faces/GamePlay.h"
@@ -70,15 +71,17 @@ int main( int argc,  char** argv )
     // Not very robust but just assume the first argument is the player_id
     int player_id = atoi(argv[1]);
     
-	// Will publish when the video is recording
-	ros::init(argc, argv, String("Video") + to_string(player_id));
-	//ros::NodeHandle n;
-	//ros::Publisher video = n.advertise<std_msgs::String>("Video_signal", 10);
-	//ros::Rate loop_rate(5);
+    // Will publish when the video is recording
+    ros::init(argc, argv, String("Video") + to_string(player_id));
+    //ros::NodeHandle n;
+    //ros::Publisher video = n.advertise<std_msgs::String>("Video_signal", 10);
+    //ros::Rate loop_rate(5);
+    
+    cout << "Host is: " << ros::network::getHost().c_str() << endl;
 
-	/* Subscribe to player topic */
-	ros::NodeHandle video_listener_node;
-	ros::Subscriber game_start_sub = video_listener_node.subscribe(String("Video") + to_string(player_id), 100, gameStartCallback);
+    /* Subscribe to player topic */
+    ros::NodeHandle video_listener_node;
+    ros::Subscriber game_start_sub = video_listener_node.subscribe(String("Video") + to_string(player_id), 100, gameStartCallback);
 
     // Initialize the video 
 
