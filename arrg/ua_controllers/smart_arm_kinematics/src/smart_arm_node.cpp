@@ -105,7 +105,7 @@ public:
         IKReal translation[3];
         
         translation[0] = (float) point_stamped.x();
-        translation[1] = (float) point_stamped.y();
+        translation[1] = (float) -point_stamped.y();
         translation[2] = (float) point_stamped.z();
         
         std::vector<IKSolution> ik_solutions;
