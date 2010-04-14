@@ -6,7 +6,7 @@
 (defparameter *goal-pub* nil)
 (defparameter *look-pub* nil)
 
-;; Initial translation of the WorldState message class into a GBBopen class
+;; Create ROS node and start control shell
 (defun test ()  
   ;; This makes interactive use easier
   (delete-blackboard-repository)
