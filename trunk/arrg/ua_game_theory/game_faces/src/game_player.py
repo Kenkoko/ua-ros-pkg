@@ -10,7 +10,8 @@ player_id = 0
 is_first_player = False
 is_second_player = False
 current_amount = 0
-pub = [];
+play_pub = []
+video_pub = []
 
 def connect_to_master():
     global player_id
@@ -27,7 +28,8 @@ def play_game(gamedata):
     global player_id
     global is_first_player
     global is_second_player
-    global pub
+    global play_pub
+    global video_pub
     is_first_player = (gamedata.first_player == player_id)
     is_second_player = (gamedata.second_player == player_id)
     print "is_first_player " + str(is_first_player)
@@ -35,27 +37,30 @@ def play_game(gamedata):
     if is_first_player or is_second_player:
         # Register the game playing topic
         game_topic = gamedata.game_topic
-        pub = rospy.Publisher(game_topic, GamePlay)
+        play_pub = rospy.Publisher(game_topic, GamePlay)
         rospy.Subscriber(game_topic, GamePlay, take_turn)
         # Wait until there everyone is subscribed to this topic
-        while pub.get_num_connections() < 2 :
+        video_pub.publish(gamedata)
+        while play_pub.get_num_connections() < 3 :
             print "Waiting for game to start"
-            print "num connections: " + str(pub.get_num_connections())
-            #rospy.sleep(1.0)
+            print "num connections: " + str(play_pub.get_num_connections())
+            rospy.sleep(1.0)
+        print "Waiting for video to finish starting up"
+        rospy.sleep(2.0)
         if is_first_player:
-            pub.publish(GamePlay(0,0))
+            play_pub.publish(GamePlay(0,0))
 
 def take_turn(game_play):
     global player_id
     global is_first_player
     global current_amount
-    global pub
+    global play_pub
     play_number = game_play.play_number
     if play_number == 0:
         if is_first_player:
             current_amount = 10
             offer = input("Input the first amount, between 0 and 10: ")
-            pub.publish(GamePlay(1,offer))
+            play_pub.publish(GamePlay(1,offer))
             print "Waiting for second player"
         else:
             currrent_amount = 0
@@ -70,13 +75,13 @@ def take_turn(game_play):
             # Check that it is legal
             current_amount = game_play.amount * 3 - offer
             print "Your payoff is now: " + str(current_amount)
-            pub.publish(GamePlay(2,offer))
+            play_pub.publish(GamePlay(2,offer))
     elif play_number == 2:
         if is_first_player:
             print "You recieved " + str(game_play.amount) + " from the other player"
             current_amount += game_play.amount
             print "Your total payoff is: " +str(current_amount)
-            pub.publish(GamePlay(3,-1))  
+            play_pub.publish(GamePlay(3,-1))  
         else:
             pass
         print "Please wait for the next game to start"
@@ -89,6 +94,13 @@ import sys
 import subprocess
 if __name__ == '__main__':
     global player_id
+    global video_pub
+
+    capture_video = 0
+    numargs = len(sys.argv)
+    if numargs > 1:
+        capture_video = int(sys.argv[1])
+
     try:
         print "Starting the Game Player"
         print "Connecting to Game Master"
@@ -97,7 +109,13 @@ if __name__ == '__main__':
         print "Training Material Here"
         print "Startup the video capture node and create topic"
         connect_to_master()
-        p = subprocess.Popen('rosrun game_faces video_capture.py ' + str(player_id))
+        video_topic = "Video" + str(player_id)
+        video_pub = rospy.Publisher(video_topic, TwoPersonGame)
+        run_video_command = 'rosrun game_faces game_video_capture ' + str(player_id)
+        print run_video_command
+        if capture_video:
+            pass            
+            # p = subprocess.Popen(run_video_command)
 
         rospy.spin()
     except rospy.ROSInterruptException: pass
