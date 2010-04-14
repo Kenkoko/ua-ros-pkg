@@ -18,3 +18,4 @@ rosbuild_add_executable(floor_filter_node src/floor_filter_node.cpp)
 target_link_libraries(floor_filter_node background_filters)
 
 rosbuild_add_executable(overhead_filter src/overhead_filter.cpp)
+rosbuild_add_executable(background_sampler src/background_sampler.cpp)
