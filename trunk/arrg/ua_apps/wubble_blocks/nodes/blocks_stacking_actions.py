@@ -155,15 +155,15 @@ if __name__ == '__main__':
         look_at("/arm_base_link", 0.2825, 0.0, -0.025)
         print "Open gripper"
         move_gripper(0.2, -0.2);
-        print "Reach left stack"
-        reach_at("/arm_base_link", 0.2, 0.2, -0.040)
+        print "Reach right stack"
+        reach_at("/arm_base_link", 0.2, -0.2, -0.040)
         rospy.sleep(0.5)
         print "Close gripper"
         move_gripper(-0.075, 0.075)
         print "Raise arm"
         move_arm(0.0, 0.75, -1.972222, 0.0)
-        print "Reach right stack"
-        reach_at("/arm_base_link", 0.2, -0.2, -0.030)
+        print "Reach left stack"
+        reach_at("/arm_base_link", 0.2, 0.2, -0.030)
         rospy.sleep(0.5)
         print "Open gripper"
         move_gripper(0.2, -0.2)
@@ -176,8 +176,8 @@ if __name__ == '__main__':
         move_gripper(-0.075, 0.075)
         print "Raise arm"
         move_arm(0.0, 0.75, -1.972222, 0.0)
-        print "Reach right stack"
-        reach_at("/arm_base_link", 0.2, -0.205, 0.035)
+        print "Reach left stack"
+        reach_at("/arm_base_link", 0.2, 0.205, 0.035)
         rospy.sleep(0.5)
         print "Open gripper"
         move_gripper(0.2, -0.2)
