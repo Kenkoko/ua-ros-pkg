@@ -1,0 +1,15 @@
+<stack name="audio" version="0.1">
+  <description brief="audio packages from ros-pkg">
+    These are audio-related packages.
+  </description>
+  <author>Blaise Gassend blaise@willowgarage.com</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://pr.willowgarage.com/wiki/audio</url>
+  
+
+  <depend stack="sound_drivers"/> <!-- sound_play --> 
+  <depend stack="ros"/>
+  <depend stack="common_msgs"/> 
+
+</stack>

@@ -1,0 +1,15 @@
+<package>
+  <description brief="plays an audio stream captured by audio_capture">
+
+A minimal node which plays an audio stream captured by the audio_capture node.
+
+  </description>
+  <author>Morgan Quigley</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <depend package="roscpp"/>
+  <depend package="audio_msgs"/>
+  <rosdep name="portaudio"/>
+</package>
+
+
