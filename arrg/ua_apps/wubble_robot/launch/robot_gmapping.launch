@@ -1,0 +1,12 @@
+<launch>
+
+    <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" respawn="false" output="screen" >
+        <remap from="scan" to="tilt_laser/scan" />
+        <param name="inverted_laser" value="true" />
+        <param name="base_frame" value="base_footprint" />
+    </node>
+
+<!--    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find wubble_mapping)/rviz/mapping.vcg" output="screen" />-->
+
+</launch>
+

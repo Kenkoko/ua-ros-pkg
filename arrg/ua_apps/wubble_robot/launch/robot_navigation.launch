@@ -1,0 +1,15 @@
+<launch>
+
+<!--    <node name="map_server" pkg="map_server" type="map_server" args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml" respawn="true" />-->
+    
+    <!-- enable navigation -->
+    <include file="$(find wubble_description)/launch/wubble_move_base.launch" />
+
+    <!-- costmap_2d markers -->
+    <node pkg="costmap_2d" type="costmap_2d_markers" name="voxel_visualizer">
+        <remap from="voxel_grid" to="move_base_node/local_costmap/voxel_grid_throttled"/>
+    </node>
+
+<!--    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find wubble_navigation)/rviz/wubble_move_base.vcg" output="screen" />-->
+
+</launch>
