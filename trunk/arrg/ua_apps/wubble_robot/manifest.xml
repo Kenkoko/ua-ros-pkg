@@ -1,0 +1,22 @@
+<package>
+    <description brief="Wubble robot hardware">
+
+        wubble_robot
+
+    </description>
+    <author>UA Robot Lab</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_robot</url>
+    
+    <depend package="wubble_description"/>
+    <depend package="hokuyo_node"/>
+    
+    <depend package="wubble_teleop"/>
+    <depend package="wubble_mapping"/>
+    <depend package="wubble_actions"/>
+    <depend package="wubble_navigation"/>
+
+</package>
+
+
