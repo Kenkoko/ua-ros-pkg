@@ -14,7 +14,7 @@
 using namespace std;
 
 IplImage* bg = NULL; 
-IplImage *original, *curr_image, *mono_image, *roi_color_image, *roi_bw_image;
+IplImage *original, *curr_image, *mono_image, *roi_color_image, *roi_bw_image, *contour_image;
 CvMemStorage *storage;
 CvSeq* contour;
 
@@ -55,27 +55,53 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
 	    if (isFirst) {
 		    curr_image = cvCreateImage(cvGetSize(original), 8, 3);
 		    mono_image = cvCreateImage(cvGetSize(original), 8, 1);
+		    contour_image = cvCreateImage(cvGetSize(original), 8, 1);
             storage  = cvCreateMemStorage(0);
             contour = 0;
 		    isFirst = false;
 	    }
 		
 		cvSub(bg, original, curr_image);
+		// TODO: See if diff will work better than sub with some tweaks
+		//cvAbsDiff(bg, original, curr_image);
+		
 		cvCvtColor(curr_image, mono_image, CV_RGB2GRAY);
+		
 		cvThreshold(mono_image, mono_image, 50, 255, CV_THRESH_BINARY);
-		cvCopy(original, curr_image, mono_image);
-		cvFindContours(mono_image, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+		
+		//cvCopy(original, curr_image, mono_image);
+		
+		cvCopy(mono_image, contour_image);
+		
+		cvFindContours(contour_image, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 		
 		background_filters::ObjectList objectList;
 		
-		//cout << "HERE" << endl << endl;
+		//cout << "===============================================" << endl;
 		for( ; contour != 0; contour = contour->h_next )
 		{
 			CvScalar color = CV_RGB( rand()&255, rand()&255, rand()&255 );
 			double area = fabs(cvContourArea(contour));
-			//cout << area << endl;
-			if (area > 200) 
+
+            // This is the black box
+		    CvBox2D minBox = cvMinAreaRect2(contour, storage);
+		    double minBoxArea = minBox.size.height * minBox.size.width;
+		    
+            double areaRatio = area / minBoxArea;
+
+            // Throw away tiny things and really elongated things
+			if (area > 250 && areaRatio > 0.6) 
 			{
+			    //std::cout << minBoxArea << " " << area << " " << areaRatio << std::endl;
+
+                objectList.ratios.push_back(areaRatio);
+			    if (areaRatio > 0.78) {
+			        objectList.shapes.push_back("square");
+			    } else {
+			        objectList.shapes.push_back("circle");
+			    }
+			
+			    // This is the colored box
 			    CvRect boundingBox = cvBoundingRect(contour);
 
                 // Copy part of the original image that contains the contour
@@ -96,7 +122,6 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
 
 			    cvDrawContours(original, contour, color, color, -1, 2, 8 );
 			    
-			    CvBox2D minBox = cvMinAreaRect2(contour, storage);
 			    draw_box(original, minBox, 1.0);
 
 			    CvPoint topLeft, bottomRight;
