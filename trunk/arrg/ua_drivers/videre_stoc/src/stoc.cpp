@@ -453,16 +453,17 @@ void stoc::STOC::readData (sensor_msgs::PointCloud &cloud, sensor_msgs::Image &l
   // Prepare the disparity channel
   if (si->haveDisparity)
   {
-    disparity.width  = si->dp.dwidth;
-    disparity.height = si->dp.dheight;
-    disparity.encoding  = "mono16";
+    disparity.image.width  = si->dp.dwidth;
+    disparity.image.height = si->dp.dheight;
+    disparity.image.encoding  = "mono16";
     disparity.f = (4.6 * 1000 / 6);
-    disparity.cx = 0;
-    disparity.cy = 0;
-    disparity.Tx = 0.09;
-    disparity.step = si->dp.dwidth * 2;
-    disparity.set_data_size (si->dp.dwidth * si->dp.dheight * 2);
-    memcpy (&(disparity.data[0]), si->disparity, disparity.get_data_size ());
+//    disparity.cx = 0;
+//    disparity.cy = 0;
+//    disparity.Tx = 0.09;
+    disparity.T = 0.09;
+    disparity.image.step = si->dp.dwidth * 2;
+    disparity.image.set_data_size (si->dp.dwidth * si->dp.dheight * 2);
+    memcpy (&(disparity.image.data[0]), si->disparity, disparity.image.get_data_size());
   }
 
   ros::Time t = ros::Time::now();

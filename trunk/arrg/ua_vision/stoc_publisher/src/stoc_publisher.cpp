@@ -48,7 +48,7 @@ int main(int argc, char** argv)
     ros::NodeHandle n;
     ros::Publisher left_pub = n.advertise<sensor_msgs::Image>("stereo/left/image_raw", 30);
     ros::Publisher right_pub = n.advertise<sensor_msgs::Image>("stereo/right/image_raw", 30);
-    ros::Publisher disparity_pub = n.advertise<stereo_msgs::DisparityImage>("stereo/image_disparity", 30);
+    ros::Publisher disparity_pub = n.advertise<stereo_msgs::DisparityImage>("stereo/disparity", 30);
     ros::Publisher cloud_pub = n.advertise<sensor_msgs::PointCloud>("stereo/cloud", 30);
 
     ros::Rate loop_rate(30);
