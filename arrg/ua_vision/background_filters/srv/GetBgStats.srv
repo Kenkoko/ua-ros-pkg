@@ -1,0 +1,4 @@
+---
+sensor_msgs/Image ave_bg
+float64[] std_dev
+
