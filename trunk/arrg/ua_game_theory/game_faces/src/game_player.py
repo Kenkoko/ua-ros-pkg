@@ -18,7 +18,7 @@ def connect_to_master():
     rospy.wait_for_service('register_game_player')
     try:
         reg = rospy.ServiceProxy('register_game_player', RegisterGamePlayer)
-        response = reg('Bogus IP')
+        response = reg(str(roslib.network.get_host_name()))
         player_id = response.player_id
         print player_id
     except rospy.ServiceException, e:
@@ -106,11 +106,16 @@ if __name__ == '__main__':
         print "Connecting to Game Master"
         rospy.init_node("game_player", anonymous=True)
         rospy.Subscriber("game_master", TwoPersonGame, play_game)
+
         print "Training Material Here"
-        print "Startup the video capture node and create topic"
+
         connect_to_master()
+
+        print "Startup the video capture node and create topic"
         video_topic = "Video" + str(player_id)
+        print video_topic
         video_pub = rospy.Publisher(video_topic, TwoPersonGame)
+
         #run_video_command = 'rosrun game_faces game_video_capture ' + str(player_id)
         #print run_video_command
         #if capture_video:
