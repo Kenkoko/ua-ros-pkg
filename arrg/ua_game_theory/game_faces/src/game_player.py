@@ -41,7 +41,7 @@ def play_game(gamedata):
         rospy.Subscriber(game_topic, GamePlay, take_turn)
         # Wait until there everyone is subscribed to this topic
         video_pub.publish(gamedata)
-        while play_pub.get_num_connections() < 3 :
+        while play_pub.get_num_connections() < 2 :
             print "Waiting for game to start"
             print "num connections: " + str(play_pub.get_num_connections())
             rospy.sleep(1.0)
@@ -111,11 +111,11 @@ if __name__ == '__main__':
         connect_to_master()
         video_topic = "Video" + str(player_id)
         video_pub = rospy.Publisher(video_topic, TwoPersonGame)
-        run_video_command = 'rosrun game_faces game_video_capture ' + str(player_id)
-        print run_video_command
-        if capture_video:
-            pass            
-            # p = subprocess.Popen(run_video_command)
+        #run_video_command = 'rosrun game_faces game_video_capture ' + str(player_id)
+        #print run_video_command
+        #if capture_video:
+        #    pass            
+        #    # p = subprocess.Popen(run_video_command)
 
         rospy.spin()
     except rospy.ROSInterruptException: pass
