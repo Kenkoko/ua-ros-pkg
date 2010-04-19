@@ -91,14 +91,9 @@
     <controller:delete_object_plugin name="delete_object_plugin" plugin="libdelete_object_plugin.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>1.0</updateRate>
-        <interface:audio name="dummy_iface2"/>
+        <interface:audio name="dummy_iface3"/>
     </controller:delete_object_plugin>
 
-    <controller:add_object_plugin name="add_object_plugin" plugin="libadd_object_plugin.so">
-        <alwaysOn>true</alwaysOn>
-        <updateRate>1.0</updateRate>
-        <interface:audio name="dummy_iface3"/>
-    </controller:add_object_plugin>
   </model:physical>
 
   <!-- ground plane -->
@@ -135,5 +130,102 @@
             <range>10</range>
         </light>
     </model:renderable>
+
+    <model:physical name="blue_box_model">
+        <xyz>0 0 0.5</xyz>
+        <rpy>0 0 0</rpy>
+        <static>false</static>
+        <body:box name="blue_box_body">
+            <turnGravityOff>false</turnGravityOff>
+            <dampingFactor>0.01</dampingFactor>
+            <selfCollide>false</selfCollide>
+            <massMatrix>true</massMatrix>
+            <mass>0.2</mass>
+            <ixx>0.001</ixx>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0.0</iyz>
+            <izz>0.001</izz>
+            <cx>0.0</cx>
+            <cy>0.0</cy>
+            <cz>0.0</cz>
+            <xyz>0 0 0</xyz>
+            <rpy>0 0 0</rpy>
+            <geom:box name="blue_box_geom">
+                <mu1>1.0</mu1>
+                <mu2>1.0</mu2>
+                <kp>100000000.0</kp>
+                <kd>1.0</kd>
+                <size>0.2 0.2 0.2</size>
+                <mass>0.2</mass>
+                <visual>
+                    <xyz>0 0 0</xyz>
+                    <rpy>0 0 0</rpy>
+                    <scale>0.2 0.2 0.2</scale>
+                    <mesh>unit_box</mesh>
+                    <material>Gazebo/Blue</material>
+                </visual>
+            </geom:box>
+        </body:box>
+
+        <controller:gazebo_ros_force name="box_force_controller" plugin="libgazebo_ros_force.so">
+            <alwaysOn>false</alwaysOn>
+            <updateRate>15.0</updateRate>
+            <topicName>box_force</topicName>
+            <bodyName>blue_box_body</bodyName>
+            <robotNamespace>/</robotNamespace>
+            <interface:position name="blue_box_force_iface"/>
+        </controller:gazebo_ros_force>
+    </model:physical>
+
+    <model:physical name="blue_box_model2">
+        <xyz>0 0 1</xyz>
+        <rpy>0 0 0</rpy>
+        <static>false</static>
+        <body:box name="blue_box_body2">
+            <turnGravityOff>false</turnGravityOff>
+            <dampingFactor>0.01</dampingFactor>
+            <selfCollide>false</selfCollide>
+            <massMatrix>true</massMatrix>
+            <mass>0.2</mass>
+            <ixx>0.001</ixx>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0.0</iyz>
+            <izz>0.001</izz>
+            <cx>0.0</cx>
+            <cy>0.0</cy>
+            <cz>0.0</cz>
+            <xyz>0 0 0</xyz>
+            <rpy>0 0 0</rpy>
+            <geom:box name="blue_box_geom2">
+                <mu1>1.0</mu1>
+                <mu2>1.0</mu2>
+                <kp>100000000.0</kp>
+                <kd>1.0</kd>
+                <size>0.2 0.2 0.2</size>
+                <mass>0.2</mass>
+                <visual>
+                    <xyz>0 0 0</xyz>
+                    <rpy>0 0 0</rpy>
+                    <scale>0.2 0.2 0.2</scale>
+                    <mesh>unit_box</mesh>
+                    <material>Gazebo/Blue</material>
+                </visual>
+            </geom:box>
+        </body:box>
+
+<!--        <controller:gazebo_ros_force name="box_force_controller" plugin="libgazebo_ros_force.so">-->
+<!--            <alwaysOn>false</alwaysOn>-->
+<!--            <updateRate>15.0</updateRate>-->
+<!--            <topicName>box_force</topicName>-->
+<!--            <bodyName>blue_box_body</bodyName>-->
+<!--            <robotNamespace>/</robotNamespace>-->
+<!--            <interface:position name="blue_box_force_iface"/>-->
+<!--        </controller:gazebo_ros_force>-->
+    </model:physical>
+
 
 </gazebo:world>

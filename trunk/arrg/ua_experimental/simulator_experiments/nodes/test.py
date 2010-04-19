@@ -7,19 +7,23 @@ import rospy
 from gazebo_plugins.srv import *
 
 def spawn_model_client(name, xml):
-    rospy.wait_for_service('spawn_model')
+    rospy.wait_for_service('add_model')
     try:
-        spawn_model = rospy.ServiceProxy('spawn_model', SpawnModel)
+        spawn_model = rospy.ServiceProxy('add_model', SpawnModel)
     
         sp = SpawnModelRequest()
-        sp.model.model_name = name
+
+#        sp.model.model_name = name
         sp.model.robot_model = xml
-        sp.model.xml_type = 1
+        
+        sp.model.xml_type = sp.model.GAZEBO_XML
+
         sp.model.robot_namespace = '/'
-        sp.model.initial_pose.position.x = 0
-        sp.model.initial_pose.position.y = 0
-        sp.model.initial_pose.position.z = 0.2
-        sp.model.initial_pose.orientation.w = 1
+        
+        #sp.model.initial_pose.position.x = 0
+        #sp.model.initial_pose.position.y = 0
+        #sp.model.initial_pose.position.z = 0.3
+        #sp.model.initial_pose.orientation.w = 1
 
         resp1 = spawn_model(sp)
         print resp1.success

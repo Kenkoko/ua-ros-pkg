@@ -1,0 +1,18 @@
+<package>
+    <description brief="simulation_semantics">
+
+     simulation_semantics
+
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/simulation_semantics</url>
+
+    <depend package="roslisp"/>
+    <depend package="simulation_experiments"/>
+    <depend package="gazebo_plugins"/>
+
+</package>
+
+
