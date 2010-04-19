@@ -9,6 +9,8 @@
 #include <cxcore.h>
 #include <highgui.h>
 
+#define TWO_PI 6.28318531
+
 using namespace std;
 
 IplImage *ave_bg;
@@ -31,7 +33,7 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     }
     
     uchar *new_img = (uchar *) bg->imageData;
-    uchar *ave_img = (uchar *) ave_img->imageData;
+    uchar *ave_img = (uchar *) ave_bg->imageData;
     
     IplImage *prob_img = cvCreateImage(cvGetSize(bg), IPL_DEPTH_64F, 1);
 
@@ -42,11 +44,12 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
         int px_new = (uchar) new_img[i];
         int px_ave = (uchar) ave_img[i];
         
-        double scale = 1.0 / sqrt(2.0 * 3.14 * std_dev[i]);
         double sd = (std_dev[i] < 0.1) ? 0.1 : std_dev[i];
+        double scale = 1.0 / sqrt(TWO_PI * sd);
         double p = scale * exp(-0.5 * pow((px_new - px_ave) / sd, 2.0));
     }
     
+    cvReleaseImage(&prob_img);
 }
 
 int main (int argc, char **argv)
@@ -66,16 +69,12 @@ int main (int argc, char **argv)
         b.fromImage(srv.response.ave_bg, "bgr8");
         ave_bg = b.toIpl();
         std_dev = srv.response.std_dev;
-        ROS_ERROR("YEAH!");
     }
     else
     {
         ROS_ERROR("Failed to call service get_bg_stats");
         return 1;
     }
-    
-    
-    
     
     ros::Rate r(1.0);
     while (ros::ok())
