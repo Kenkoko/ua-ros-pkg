@@ -13,6 +13,8 @@
 
     <depend package="roscpp"/>
     <depend package="rospy"/>
+
+    <depend package="std_srvs"/>
     
     <depend package="gazebo"/>
     <depend package="gazebo_tools"/>

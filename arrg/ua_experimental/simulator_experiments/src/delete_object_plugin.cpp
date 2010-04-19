@@ -41,7 +41,7 @@ DeleteObjectPlugin::~DeleteObjectPlugin()
 }
 
 bool DeleteObjectPlugin::deleteModel(gazebo_plugins::DeleteModel::Request &req,
-                                    gazebo_plugins::DeleteModel::Response &res) 
+                                     gazebo_plugins::DeleteModel::Response &res) 
 {
     ROS_INFO("Entering deleteModel");
 
@@ -79,7 +79,6 @@ void DeleteObjectPlugin::CallbackQueueThread()
 }
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Load the controller
 void DeleteObjectPlugin::LoadChild(XMLConfigNode *node)
@@ -106,6 +105,3 @@ void DeleteObjectPlugin::FiniChild()
     this->rosnode_->shutdown();
     this->callback_queue_thread_->join();
 }
-
-
-
