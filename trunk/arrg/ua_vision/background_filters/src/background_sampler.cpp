@@ -2,28 +2,32 @@
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/CvBridge.h>
 #include <boost/thread/thread.hpp>
+#include <math.h>
+#include <background_filters/GetBgStats.h>
 
+#include <sys/types.h>
 #include <cv.h>
 #include <cxcore.h>
 #include <highgui.h>
 
 using namespace std;
 
-#define NUM_BGS 20
+#define NUM_BGS 100
 
 IplImage *bgs[NUM_BGS];
 IplImage *ave_bg;
+vector<double> std_dev;
 int bg_counter = 0;
 bool have_ave_bg = false;
 
-sensor_msgs::Image::Ptr ave_msg;
+ros::ServiceServer service;
 ros::Subscriber image_sub;
 ros::Publisher ave_bg_pub;
 
 void publish_average_background()
 {
     sensor_msgs::CvBridge b;
-    ros::Rate r(50.0);
+    ros::Rate r(1.0);
 
     while (ros::ok())
     {
@@ -46,8 +50,6 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 	    {
 	        bg = bridge.imgMsgToCv(msg_ptr, "bgr8");
 	        bgs[bg_counter++] = cvCloneImage(bg);
-	        //cout << "bgs[" << bg_counter << "] = " << bgs[bg_counter] << endl;
-	        //ros::Duration(1.0).sleep();
         }
 	    catch (sensor_msgs::CvBridgeException error)
 	    {
@@ -59,8 +61,6 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 	
 	if (!have_ave_bg)
 	{
-        sensor_msgs::CvBridge bridge;
-	    
         int img_width = bgs[0]->width;
         int img_height = bgs[0]->height;
         int n_channels = bgs[0]->nChannels;
@@ -68,24 +68,51 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 	    cout << img_height << endl;
 	    cout << n_channels << endl;
 	    
+	    cout << "depth = " << bgs[0]->depth << endl;
+	    cout << IPL_DEPTH_8U << endl;
+	    
 	    ave_bg = cvCreateImage(cvSize(img_width, img_height), bgs[0]->depth, n_channels);
 	    uchar *ave_data = (uchar *) ave_bg->imageData;
 	    
-        for (int i = 0; i < bgs[0]->imageSize; ++i)
+	    // figure out the actual size of image array
+	    int size = img_width * img_height * n_channels;
+	    
+	    uchar *temp[NUM_BGS];
+	    
+	    for (int i = 0; i < NUM_BGS; ++i)
+	    {
+	        temp[i] = (uchar *) bgs[i]->imageData;
+	    }
+	    
+        for (int i = 0; i < size; ++i)
         {
             double sum = 0.0;
             
 	        for (int j = 0; j < NUM_BGS; ++j)
             {
-                sum += bgs[j]->imageData[i];
+                sum += temp[j][i];
             }
             
-            ave_data[i] = (int) (sum / NUM_BGS);
+            ave_data[i] = sum / (double) NUM_BGS;
         }
         
-        for (int j = 0; j < NUM_BGS; ++j)
+        std_dev.resize(size);
+        
+        for (int i = 0; i < size; ++i)
         {
-            cvReleaseImage(&bgs[j]);
+            double sum = 0.0;
+        
+	        for (int j = 0; j < NUM_BGS; ++j)
+            {
+                 sum += pow(temp[j][i] - ave_data[i], 2.0);
+            }
+            
+            std_dev[i] = sqrt(sum / (double) (NUM_BGS - 1));
+        }
+        
+        for (int i = 0; i < NUM_BGS; ++i)
+        {
+            cvReleaseImage(&bgs[i]);
         }
         
         have_ave_bg = true;
@@ -96,6 +123,14 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 	}
 }
 
+bool callback(background_filters::GetBgStats::Request& request, background_filters::GetBgStats::Response& response)
+{
+    sensor_msgs::CvBridge::fromIpltoRosImage(ave_bg, response.ave_bg);
+    response.std_dev = std_dev;
+
+    return true;
+}
+
 int main (int argc, char **argv)
 {
     ros::init(argc, argv, "background_sampler");
@@ -103,6 +138,8 @@ int main (int argc, char **argv)
     
     image_sub = n.subscribe("/camera/image_color", 1, handle_image);
     ave_bg_pub = n.advertise<sensor_msgs::Image>("average_bg", 1);
+    
+    service = n.advertiseService("get_bg_stats", callback);
 
     boost::thread t = boost::thread::thread(boost::bind(&publish_average_background));
     ros::spin();
@@ -112,3 +149,4 @@ int main (int argc, char **argv)
     
     return 0;
 }
+
