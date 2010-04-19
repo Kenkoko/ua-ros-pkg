@@ -13,8 +13,11 @@ def register_game_player(req):
     global num_registered_players
     global num_players
     global registration_service
+
+    # Change so that there is a map from the IP message to a unique numberic ID.
+
     num_registered_players+=1
-    print "Registering player " + str(num_registered_players)
+    print "Registering player " + str(num_registered_players) + " named " + req.IP
     print "num_registered_players, num_players:" + str(num_registered_players) + " " + str(num_players)
     if num_registered_players==num_players:
         #if  == :
@@ -91,16 +94,16 @@ def game_master_start():
     num_blocks = 3
     for i in range(num_blocks):
         if i == 0:
-            pairs = create_block(num_players, True):
+            pairs = create_block(num_players, True)
             game_type = "TrustGame"
         if i == 1:
-            pairs = create_block(num_players, False):
+            pairs = create_block(num_players, False)
             game_type = "Prisoners"
         if i == 2:
-            pairs = create_block(num_players, True):
+            pairs = create_block(num_players, True)
             game_type = "Ultimatum"
 
-        for block_round in pairs
+        for block_round in pairs:
             game_topic = 0
             for pair in block_round:
                 print "pair: " + str(pair)
