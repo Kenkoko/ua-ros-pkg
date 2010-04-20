@@ -1,15 +1,41 @@
 (in-package :simulation_semantics)
 
+;; TODO: Un-hardcode this, we are only doing this avoid symbol package problems
+;; created by s-xml
+;; ... and it doesn't seem to do that anyway
+(defparameter *example-xml* 
+  (parse-xml-file "/home/dhewlett/ros/ua-ros-pkg/arrg/ua_experimental/simulator_experiments/objects/blue_box.xml"))
+
 ;;====================================================
-;; Class Definition
+;; Class Definition 
 
 (defclass physical-object ()
   ((gazebo-name :accessor gazebo-name :initarg :gazebo-name :initform "blue_box")
    (shape :accessor shape :initform 'box)
    (xyz :accessor xyz :initarg :xyz :initform '(0 0 0))
-   (is-static :accessor is-static :initform nil)
+   (is-static :accessor is-static :initarg :is-static :initform nil)
+   
+   ;; "Private" fields
+   (xml-string :accessor xml-string :initform nil)
+   (force-pub :accessor force-pub :initform nil)
  )
 )
+
+;;====================================================
+;; Constructor
+
+(defmethod initialize-instance :after ((obj physical-object) &key)
+  (setf (xml-string obj) 
+        (let ((xml-list (list (gen-header obj)
+                              (xyz-xml obj)
+                              (list :|rpy| "0 0 0")
+                              (list :|static| (boolean-string (is-static obj)))
+                              (body-xml obj))))
+          (if (not (is-static obj))
+              (setf xml-list (append xml-list (list (force-xml obj)))))
+          (print-xml-string xml-list :pretty nil)))
+  (setf (force-pub obj) (advertise (concatenate 'string (gazebo-name obj) "_force") 
+                                   "geometry_msgs/Wrench")))
 
 ;;====================================================
 ;; ROS-based methods
@@ -24,16 +50,20 @@
   (call-service "delete_model" 'gazebo_plugins-srv:DeleteModel
                 :model_name (model-name obj)))
 
-;;======================================================
+(defmethod apply-force ((obj physical-object) force)
+  (publish-msg (force-pub obj) 
+               (x force) (first force)
+               (y force) (second force)
+               (z force) (third force))
+)
 
-(defmethod xml-rep ((obj physical-object))
-  (print-xml-string (list (gen-header obj)
-                          (xyz-xml obj)
-                          (list :|rpy| "0 0 0")
-                          (list :|static| (boolean-string (is-static obj)))
-                          (body-xml obj)
-                          )
-                    :pretty t))
+
+
+;;======================================================
+;; Gazebo XML Generation
+
+(defmethod xml-rep ((obj physical-object)) 
+  (xml-string obj))
 
 (defmethod gen-header ((obj physical-object))
   (list '|model|:|physical| 
@@ -90,6 +120,21 @@
                                           (:|material| "Gazebo/Blue")))))))
           )
         (t (format t "DEATH DEATH DEATH~%"))))
+
+(defmethod force-xml ((obj physical-object))
+  (let* ((name (gazebo-name obj))
+         (body (concatenate 'string name "_body"))
+         (controller (concatenate 'string name "_force"))
+         (iface (concatenate 'string controller "_iface")))
+  (list (list '|controller|:|gazebo_ros_force| 
+              ':|name| controller
+              ':|plugin| "libgazebo_ros_force.so")
+        '(:|alwaysOn| "true") 
+        '(:|updateRate| "15.0") 
+        (list ':|topicName| controller)
+        (list ':|bodyName| body) 
+        '(:|robotNamespace| "/")
+        (list (list '|interface|:|position| ':|name| iface)))))
 
 ;;=====================================================
 ;; Helpers
