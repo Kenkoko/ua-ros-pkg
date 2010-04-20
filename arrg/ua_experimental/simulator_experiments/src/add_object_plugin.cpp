@@ -44,6 +44,7 @@ AddObjectPlugin::~AddObjectPlugin()
 // utilites for checking incoming string
 bool AddObjectPlugin::isGazeboModelXML(std::string robot_model)
 {
+  ROS_INFO(robot_model.c_str());
   TiXmlDocument doc_in;
   doc_in.Parse(robot_model.c_str());
   if (doc_in.FirstChild("model:physical"))

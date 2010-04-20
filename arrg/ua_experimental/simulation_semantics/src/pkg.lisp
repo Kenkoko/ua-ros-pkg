@@ -3,5 +3,5 @@
         :roslisp 
         :s-xml
         :std_srvs-srv 
-        :std_msgs-msg))
-  ;(:export :test))
+        :std_msgs-msg
+        :geometry_msgs-msg))
