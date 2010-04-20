@@ -1,19 +1,20 @@
 <package>
-  <description brief="Demo application of GBBopen and Wubble Robot">
+    <description brief="Demo application of GBBopen and Wubble Robot">
 
      blackboard_demo
 
-  </description>
-  <author>Daniel Hewlett</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/blackboard_demo</url>
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/blackboard_demo</url>
 
-  <depend package="roslisp"/>
-  <depend package="gbbopen"/>
+    <depend package="roslisp"/>
 
-  <depend package="gazebo_plugins"/>
-  <depend package="wubble_actions"/>
+    <depend package="gbbopen"/>
+
+    <depend package="gazebo_plugins"/>
+    <depend package="wubble_actions"/>
 </package>
 
 
