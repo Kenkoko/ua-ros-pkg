@@ -10,6 +10,7 @@
     <url>http://ros.org/wiki/gbbopen</url>
 
     <depend package="roslisp"/>
+    <depend package="roslisp_runtime"/>
 
 </package>
 
