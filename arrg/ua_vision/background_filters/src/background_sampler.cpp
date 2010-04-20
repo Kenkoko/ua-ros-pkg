@@ -17,6 +17,7 @@ using namespace std;
 IplImage *bgs[NUM_BGS];
 IplImage *ave_bg;
 vector<double> std_dev;
+vector<double> cov_mat;
 int bg_counter = 0;
 bool have_ave_bg = false;
 
@@ -109,13 +110,56 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
             
             std_dev[i] = sqrt(sum / (double) (NUM_BGS - 1));
         }
+
+        cout << "cp 1" << endl; 
+
+        // a 3x3 covariance matrix for each pixel in the image
+        cov_mat.resize(img_width * img_height * 9);
         
+        cout << "cp 2" << endl; 
+
+        CvMat *ave = cvCreateMat(1, 3, CV_32FC1);
+        CvMat *covMat = cvCreateMat(3, 3, CV_32FC1);
+        CvMat **vects = (CvMat **) calloc(NUM_BGS, sizeof(CvMat *));
+
+        cout << "cp 3" << endl;
+
+        for (int i = 0, k = 0; i < size; i += 3, ++k)
+        {
+            for (int j = 0; j < NUM_BGS; ++j)
+            {
+                if (i == 0) vects[j] = (CvMat *) calloc(1, sizeof(CvMat));
+                uchar vals[] = { temp[j][i], temp[j][i+1], temp[j][i+2] };
+                cvInitMatHeader(vects[j], 1, 3, CV_8UC1, vals);
+            }
+
+            cvCalcCovarMatrix((const CvArr**) vects, NUM_BGS, covMat, ave, CV_COVAR_NORMAL);
+            
+            for (int row = 0; row < covMat->rows; ++row)
+            {
+                const float* ptr = (const float*)(covMat->data.ptr + row * covMat->step);
+                
+                for (int col = 0; col < covMat->cols; ++col)
+                {
+                    cov_mat[k] = *ptr++;
+                }
+            }
+        }
+
+        //cout << "cp 4" << endl; 
+
         for (int i = 0; i < NUM_BGS; ++i)
         {
+            if (vects[i]) free(vects[i]);
             cvReleaseImage(&bgs[i]);
         }
         
+        cvReleaseMat(&ave);
+        cvReleaseMat(&covMat);
+        if (vects) free(vects);
+        
         have_ave_bg = true;
+        cout << "cp 5" << endl; 
 	}
 	else
 	{
