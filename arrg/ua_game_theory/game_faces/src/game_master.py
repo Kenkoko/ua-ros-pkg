@@ -4,10 +4,12 @@ from game_faces.srv import *
 from game_faces.msg import TwoPersonGame
 import rospy
 import numpy
+from game_faces.msg import GamePlay
 
 num_registered_players = 0
 num_players = 0
 registration_service = []
+outstanding_games = 0
 
 def register_game_player(req):
     global num_registered_players
@@ -24,6 +26,19 @@ def register_game_player(req):
         print "We would return"
         registration_service.shutdown()
     return RegisterGamePlayerResponse(num_registered_players)
+
+def game_play_observer(msg, the_topic):
+    global outstanding_games
+    print "Callback: the_topic: " + str(the_topic)
+    print "callback: outstanding_games: " + str(outstanding_games)
+
+    # Store data
+    print "Game play: " + str(msg)
+    # Gather data about game
+    if msg.amount == -1:
+        outstanding_games -= 1
+        
+
 
 # Below round robin code from
 ## {{{ http://code.activestate.com/recipes/65200/ (r1)
@@ -44,7 +59,7 @@ def roundRobin(units, sets=None):
     return schedule
  
 def create_block(num_players, do_twice):
-    pairs = roundRobin(range(num_players))
+    pairs = roundRobin(range(1,num_players+1))
     if do_twice:
         pc = pairs[:]
         for p in pc:
@@ -54,25 +69,33 @@ def create_block(num_players, do_twice):
                 g.reverse()
                 rp.append(tuple(g))
             pairs.append(rp)
-        
-    for pairings in pairs:
-        print pairings
-    
+            print "Reversed pair: " + str(rp)
+
+	numpy.random.shuffle(pairs)
+    print "Randomized Pairs: "
+    for p in pairs:
+        print p
     return pairs
+
+	#order=range(0,len(pairs))
+	#numpy.random.shuffle(order)
+	#randomized_block=[]
+	
+	#for i in range(0,len(pairs)):
+	#	randomized_block.append(pairs[order[i]])
+
+    #print "Randomized Pairs: "
+    #for p in randomized_block:
+    #    print p
+        
+	#return randomized_block
 
 def game_master_start():
     global num_registered_players
     global num_players
     global registration_service
+    global outstanding_games
     print "welcome to the game master"
-
-    #rospy.init_node('game_master', anonymous=False)
-    #rospy.Subscriber("game_master", String, )
-    
-    #while num_subscribers < num_players:
-    #    # Find out how many computers are subscribed to the game_master topic
-    #    print num_subscribers + "subscribed"
-    #    rospy.sleep(1.0)
 
     # Instead of above, we will become a service that hands out ids to clients
     gameTopic = rospy.Publisher('game_master',TwoPersonGame)
@@ -84,15 +107,11 @@ def game_master_start():
     # We wait until the expected number signs in
     registration_service.spin()
     print "Got: " + str(num_registered_players) + " players"
-    #rospy.sleep(3.0)
     
-    # Now pick random assignment of players
-    # Need to know:
-    #  Number of experimental blocks
-    #  Desired number of times a pair occurs
 
+    game_topic = 0
     num_blocks = 3
-    for i in range(num_blocks):
+    for i in range(0,num_blocks):
         if i == 0:
             pairs = create_block(num_players, True)
             game_type = "TrustGame"
@@ -102,19 +121,25 @@ def game_master_start():
         if i == 2:
             pairs = create_block(num_players, True)
             game_type = "Ultimatum"
-
+        print game_type
         for block_round in pairs:
-            game_topic = 0
             for pair in block_round:
                 print "pair: " + str(pair)
                 game_topic+=1
                 try:
-                    msg = TwoPersonGame('game_topic'+str(game_topic), pair[0], pair[1], game_type)                
-                    print 'game_topic'+str(game_topic)
+                    msg = TwoPersonGame('game_topic'+str(game_topic), pair[0], pair[1], game_type)
+                    the_topic = 'game_topic'+str(game_topic)
+                    print the_topic
+                    rospy.Subscriber(the_topic, GamePlay, game_play_observer, the_topic)
+                    outstanding_games += 1
                     gameTopic.publish(msg)
+                    if outstanding_games == num_players / 2:
+                        while outstanding_games > 0 and not rospy.is_shutdown():
+                            print "Outer loop: outstanding_games: " + str(outstanding_games)
+                            rospy.sleep(1)
                 except rospy.ROSInterruptException, e:
                     print "something terrible happened"
-            # Some logic here to wait until all the games finish playing
+                   
 
         
 import sys
