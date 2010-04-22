@@ -3,74 +3,118 @@
 ;;=====================================================
 ;; Objects
 
-(defparameter *object-hash* (make-hash-table))
+(defun make-object-space ()
+  (if (null (find-space-instance-by-path '(object-library)))
+      (make-space-instance '(object-library))))
 
 (defun make-self ()
-  (make-instance 'physical-object 
-                 :gazebo-name "self"
-                 :xyz '(0 0 0.1)))
+  (if (null (find-instance-by-name 'self 'physical-object))
+      (make-instance 'physical-object 
+                     :instance-name 'self
+                     :gazebo-name "self"
+                     :color "Gazebo/Green"
+                     :xyz '(0 0 0.1))))
 
 (defun make-above-box ()
-  (make-instance 'physical-object 
-                 :gazebo-name "above_box"
-                 :xyz '(0 0 0.4)))
+  (if (null (find-instance-by-name 'above-box 'physical-object))
+      (make-instance 'physical-object 
+                     :instance-name 'above-box
+                     :gazebo-name "above_box"
+                     :xyz '(0 0 0.4))))
 
 (defun make-front-box ()
-  (make-instance 'physical-object 
-                 :gazebo-name "front_box"
-                 :xyz '(0.4 0 0.1)))
+  (if (null (find-instance-by-name 'front-box 'physical-object))
+      (make-instance 'physical-object 
+                     :instance-name 'front-box
+                     :gazebo-name "front_box"
+                     :xyz '(0.4 0 0.1))))
 
 (defun make-static-box ()
-  (make-instance 'physical-object 
-                 :gazebo-name "stuck_box"
-                 :xyz '(0.4 0 0.1)
-                 :is-static t))
+  (if (null (find-instance-by-name 'stuck-box 'physical-object))
+      (make-instance 'physical-object 
+                     :instance-name 'stuck-box
+                     :gazebo-name "stuck_box"
+                     :color "Gazebo/Red"
+                     :xyz '(0.4 0 0.1)
+                     :static? t)))
 
 (defun init-objects ()
-  (setf (gethash "self" *object-hash*) (make-self))
-  (setf (gethash "above_box" *object-hash*) (make-above-box))
-  (setf (gethash "front_box" *object-hash*) (make-front-box))
-  (setf (gethash "stuck_box" *object-hash*) (make-static-box)))
+  (make-object-space)
+  (make-self)
+  (make-above-box)
+  (make-front-box)
+  (make-static-box))
   
 ;;=====================================================
 ;; Simulators
 
+(defun make-simulator-space ()
+  (if (null (find-space-instance-by-path '(simulator-library)))
+      (progn (make-space-instance '(simulator-library))
+             (make-space-instance '(running-simulators)))))
+
 (defun free-sim ()
-  (let ((objects (list (gethash "self" *object-hash*))))
-    (make-instance 'simulator 
-                   :objects objects
-                   :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                 (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
-                                 ht))))
+  (if (null (find-instance-by-name 'free 'simulator))
+      (let ((objects (list (find-instance-by-name 'self 'physical-object))))
+        (make-instance 'simulator 
+                       :instance-name 'free
+                       :objects objects
+                       :policy-map (let ((ht (make-hash-table :test 'eq)))
+                                     (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
+                                     ht)))))
 
 (defun push-sim ()
-  (let ((objects (list (gethash "self" *object-hash*) (gethash "front_box" *object-hash*))))
+  (if (null (find-instance-by-name 'push 'simulator))
+  (let ((objects (list (find-instance-by-name 'self 'physical-object)
+                       (find-instance-by-name 'front-box 'physical-object))))
     (make-instance 'simulator 
+                   :instance-name 'push
                    :objects objects
                    :policy-map (let ((ht (make-hash-table :test 'eq)))
                                  (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
-                                 ht))))
+                                 ht)))))
 
 (defun carry-sim ()
-  (let ((objects (list (gethash "self" *object-hash*) (gethash "above_box" *object-hash*))))
+  (if (null (find-instance-by-name 'carry 'simulator))
+  (let ((objects (list (find-instance-by-name 'self 'physical-object) 
+                       (find-instance-by-name 'above-box 'physical-object))))
     (make-instance 'simulator 
+                   :instance-name 'carry
                    :objects objects
                    :policy-map (let ((ht (make-hash-table :test 'eq)))
                                  (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
-                                 ht))))
+                                 ht)))))
 
 (defun block-sim ()
-  (let ((objects (list (gethash "self" *object-hash*) (gethash "stuck_box" *object-hash*))))
+  (if (null (find-instance-by-name 'block 'simulator))
+  (let ((objects (list (find-instance-by-name 'self 'physical-object) 
+                       (find-instance-by-name 'stuck-box 'physical-object))))
     (make-instance 'simulator 
+                   :instance-name 'block
                    :objects objects
                    :policy-map (let ((ht (make-hash-table :test 'eq)))
                                  (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
-                                 ht))))
+                                 ht)))))
+
+(defun init-simulators ()
+  (make-simulator-space)
+  (free-sim)
+  (push-sim)
+  (carry-sim)
+  (block-sim))
 
 ;;=====================================================
 
+(defun test-all-simulators ()
+  (init-objects)
+  (init-simulators)
+  (test-simulator (find-instance-by-name 'free 'simulator))
+  (test-simulator (find-instance-by-name 'push 'simulator))
+  (test-simulator (find-instance-by-name 'carry 'simulator))
+  (test-simulator (find-instance-by-name 'block 'simulator)))
+
 (defun test-simulator (sim)
-    (load-simulator sim)
+    ;(load-simulator sim)
     (run-simulator sim)
     (sleep 2)
     (destroy sim)

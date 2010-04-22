@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 
   boost::thread starter_thread(boost::bind(&startSimulationManager));
 
-  const char* worldFileName = "/home/dhewlett/ros/ua-ros-pkg/arrg/ua_experimental/simulator_experiments/worlds/empty.world";
+  const char* worldFileName = argv[1]; //"/home/dhewlett/ros/ua-ros-pkg/arrg/ua_experimental/simulator_experiments/worlds/empty.world";
 
   gazebo::Simulator::Instance()->SetGuiEnabled(true);
   gazebo::Simulator::Instance()->SetRenderEngineEnabled(true);
