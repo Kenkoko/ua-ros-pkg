@@ -9,7 +9,26 @@ from game_faces.msg import GamePlay
 num_registered_players = 0
 num_players = 0
 registration_service = []
-outstanding_games = 0
+
+class game_observer:
+    def __init__(self, game, the_topic):
+        self.twopersongame = game
+        self.still_playing = True
+        self.turns = set()
+        self.the_topic = the_topic
+        self.sub = rospy.Subscriber(self.the_topic, GamePlay, self.game_play_observer)
+
+    def game_play_observer(self, msg):
+        print "Callback: the_topic: " + str(self.the_topic)
+        print "Game play: " + str(msg)
+        
+        if msg.play_number not in self.turns:
+            self.turns.add(msg.play_number)
+        
+        if self.turns == set(range(4)):
+            self.still_playing = False
+            self.sub.unregister()
+
 
 def register_game_player(req):
     global num_registered_players
@@ -27,16 +46,6 @@ def register_game_player(req):
         registration_service.shutdown()
     return RegisterGamePlayerResponse(num_registered_players)
 
-def game_play_observer(msg, the_topic):
-    global outstanding_games
-    print "Callback: the_topic: " + str(the_topic)
-    print "callback: outstanding_games: " + str(outstanding_games)
-
-    # Store data
-    print "Game play: " + str(msg)
-    # Gather data about game
-    if msg.amount == -1:
-        outstanding_games -= 1
         
 
 
@@ -94,7 +103,6 @@ def game_master_start():
     global num_registered_players
     global num_players
     global registration_service
-    global outstanding_games
     print "welcome to the game master"
 
     # Instead of above, we will become a service that hands out ids to clients
@@ -111,6 +119,7 @@ def game_master_start():
 
     game_topic = 0
     num_blocks = 3
+    game_observers = []
     for i in range(0,num_blocks):
         if i == 0:
             pairs = create_block(num_players, True)
@@ -129,13 +138,13 @@ def game_master_start():
                 try:
                     msg = TwoPersonGame('game_topic'+str(game_topic), pair[0], pair[1], game_type)
                     the_topic = 'game_topic'+str(game_topic)
-                    print the_topic
-                    rospy.Subscriber(the_topic, GamePlay, game_play_observer, the_topic)
-                    outstanding_games += 1
+                    observer = game_observer(msg, the_topic)
+                    game_observers.append(observer)
                     gameTopic.publish(msg)
-                    if outstanding_games == num_players / 2:
-                        while outstanding_games > 0 and not rospy.is_shutdown():
-                            print "Outer loop: outstanding_games: " + str(outstanding_games)
+                    if len(game_observers) == num_players / 2:
+                        while len(game_observers) > 0 and not rospy.is_shutdown():
+                            #print "Outer loop: outstanding_games: " + str(len(game_observers))
+                            game_observers = filter(lambda obj:obj.still_playing, game_observers )
                             rospy.sleep(1)
                 except rospy.ROSInterruptException, e:
                     print "something terrible happened"
