@@ -1,4 +1,6 @@
 ---
-sensor_msgs/Image ave_bg
-float64[] std_dev
+sensor_msgs/Image average_background    # mean image composed from n samples
+float64[] covariance_matrix             # 3x3 covariance matrix array for each pixel in the image
+float64[] covariance_matrix_dets        # covariance matrix determinant array for each pixel
+float64[] standard_deviations           # standard deviation array for each component of a pixel (bgr)
 

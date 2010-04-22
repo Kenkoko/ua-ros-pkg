@@ -14,6 +14,10 @@
 using namespace std;
 
 IplImage *ave_bg;
+uchar *ave_img;
+
+vector<double> cov_mats;
+vector<double> dets;
 vector<double> std_dev;
 
 ros::Subscriber image_sub;
@@ -29,11 +33,10 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     }
     catch (sensor_msgs::CvBridgeException error)
     {
-	    ROS_ERROR("CvBridgeError");
+        ROS_ERROR("CvBridgeError");
     }
     
     uchar *new_img = (uchar *) bg->imageData;
-    uchar *ave_img = (uchar *) ave_bg->imageData;
     
     IplImage *prob_img = cvCreateImage(cvGetSize(bg), IPL_DEPTH_64F, 1);
 
@@ -49,6 +52,8 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
         double p = scale * exp(-0.5 * pow((px_new - px_ave) / sd, 2.0));
     }
     
+    new_img = NULL;
+    
     cvReleaseImage(&prob_img);
 }
 
@@ -57,8 +62,8 @@ int main (int argc, char **argv)
     ros::init(argc, argv, "background_sub");
     ros::NodeHandle n;
     
-    image_sub = n.subscribe("/camera/image_color", 1, handle_image);
-    ros::ServiceClient client = n.serviceClient<background_filters::GetBgStats>("get_bg_stats");
+    image_sub = n.subscribe("image", 1, handle_image);
+    ros::ServiceClient client = n.serviceClient<background_filters::GetBgStats>("get_background_stats");
     ros::Publisher ave_bg_pub = n.advertise<sensor_msgs::Image>("average_bg_service", 1);
     
     background_filters::GetBgStats srv;
@@ -66,9 +71,12 @@ int main (int argc, char **argv)
 
     if (client.call(srv))
     {
-        b.fromImage(srv.response.ave_bg, "bgr8");
+        b.fromImage(srv.response.average_background, "bgr8");
         ave_bg = b.toIpl();
-        std_dev = srv.response.std_dev;
+        ave_img = (uchar *) ave_bg->imageData;
+        cov_mats = srv.response.covariance_matrix;
+        dets = srv.response.covariance_matrix_dets;
+        std_dev = srv.response.standard_deviations;
     }
     else
     {
