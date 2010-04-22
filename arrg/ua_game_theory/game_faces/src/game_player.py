@@ -13,8 +13,6 @@ class Game:
     def __init__(self, player):
         self.player = player
         self.player_id = player.player_id
-        self.play_pub = []
-        self.play_sub = []
         self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=True)
         self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
 
