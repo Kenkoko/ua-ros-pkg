@@ -1,8 +1,15 @@
 <launch>
     <group ns="prosilica">
-        <include file="$(find prosilica_camera)/cam_settings.xml"/>
         <param name="trigger_mode" type="str" value="streaming"/>
         <param name="ip_address" type="str" value="169.254.192.221"/>
+        <param name="auto_exposure" type="bool" value="False"/>
+        <param name="auto_gain" type="bool" value="False"/>
+        <param name="auto_whitebalance" type="bool" value="False"/>
+        <param name="exposure" type="double" value="0.04"/>
+        <param name="gain" type="int" value="1"/>
+        <param name="whitebalance_red" type="int" value="100"/>
+        <param name="whitebalance_blue" type="int" value="100"/>
+        <param name="frame_id" type="string" value="high_def_optical_frame" />
     </group>
   
     <node name="prosilica" pkg="prosilica_camera" type="prosilica_node" respawn="false" output="screen"/>
