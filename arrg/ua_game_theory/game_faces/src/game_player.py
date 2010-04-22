@@ -15,11 +15,23 @@ class Game:
         self.player_id = player.player_id
         self.play_pub = []
         self.play_sub = []
+        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=True)
+        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
 
+    def take_turn(self):
+        print "take_turn must be overloaded!"
+        raise rospy.ROSInterruptException()
+        pass
+
+    def take_first_turn(self):
+        print "take_first_turn must be overloaded!"
+        raise rospy.ROSInterruptException()
+        pass
+        
     def unregister_game(self):
+        self.player.game_topic_lock.acquire()
         self.play_sub.unregister()
         self.play_pub.unregister()
-        self.player.game_topic_lock.acquire()
         self.player.game_topic = ""
         self.player.game_topic_lock.release()
 
@@ -27,9 +39,6 @@ class Game:
 class TrustGame(Game):
     def __init__(self, player):
         Game.__init__(self, player)
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=True)
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
-    
         self.current_amount = 10
     
     def take_first_turn(self):
@@ -57,14 +66,16 @@ class TrustGame(Game):
                 # Check that it is legal
                 self.current_amount = game_play.amount * 3 - offer
                 print "Your payoff is now: " + str(self.current_amount)
-                print "I am player " + str(self.player_id) + " and I am about to publish " + str(offer)
+                print "I am player " + str(self.player_id) + " and I am about to publish:"
+                print GamePlay(2,offer, self.player_id)
                 self.play_pub.publish(GamePlay(2,offer, self.player_id))
         elif play_number == 2:
             if self.player.is_first_player:
                 print "You recieved " + str(game_play.amount) + " from the other player"
                 self.current_amount += game_play.amount
                 print "Your total payoff is: " +str(self.current_amount)
-                print "I am player " + str(self.player_id) + " and I am about to publish " + str(GamePlay(3,-1, self.player_id))
+                print "I am player " + str(self.player_id) + " and I am about to publish:"
+                print GamePlay(3,-1, self.player_id)
                 self.play_pub.publish(GamePlay(3,-1, self.player_id))  
             else:
                 pass
@@ -74,8 +85,6 @@ class TrustGame(Game):
 class Prisoners(Game):
     def __init__(self, player):
         Game.__init__(self, player)
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=True)
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
     
     def take_first_turn(self):
         if player.is_first_player:
@@ -161,7 +170,6 @@ class game_player:
 
         print "We would startup the video capture node and create topic here"
         video_topic = "Video" + str(self.player_id)
-        print video_topic
         self.video_pub = rospy.Publisher(video_topic, TwoPersonGame)
         
         #run_video_command = 'rosrun game_faces game_video_capture ' + str(player_id)
@@ -220,12 +228,6 @@ class game_player:
         self.game_topic_lock.release()
 
 if __name__ == '__main__':
-
-    capture_video = 0
-    numargs = len(sys.argv)
-    if numargs > 1:
-        capture_video = int(sys.argv[1])
-
     game_topic_lock = threading.Lock()
     try:
         rospy.init_node("game_player", anonymous=True)
