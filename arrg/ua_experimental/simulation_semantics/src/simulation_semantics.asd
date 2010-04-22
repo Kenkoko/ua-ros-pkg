@@ -2,7 +2,8 @@
 
 (defsystem "simulation_semantics/simulation_semantics"
     :components ((:file "pkg")
-                 (:file "object-class" :depends-on ("pkg"))
+                 (:file "xml" :depends-on ("pkg"))
+                 (:file "object-class" :depends-on ("xml"))
                  (:file "simulator-class" :depends-on ("object-class"))
                  (:file "simulators" :depends-on ("simulator-class")))
     :depends-on ("roslisp" 
@@ -11,4 +12,5 @@
                  "gazebo_plugins-msg"
                  "geometry_msgs-msg"
                  "std_srvs-srv"
-                 "std_msgs-msg"))
+                 "std_msgs-msg"
+                 "gbbopen/gbbopen"))

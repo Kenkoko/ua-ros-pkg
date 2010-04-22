@@ -1,63 +1,85 @@
 (in-package :simulation_semantics)
 
 ;;=========================================================
+;; Simulator Class Definition
 
-(defparameter *current-simulator* nil)
+(define-unit-class simulator ()
+  ((objects :initform '())
+   (goal-map :initform (make-hash-table :test 'eq))
+   (policy-map :initform (make-hash-table :test 'eq))
+   (termination-time :initform 5)
 
-(defclass simulator ()
-  ((objects :initarg :objects :accessor objects :initform '())
-   (policy-map :initarg :policy-map :accessor policy-map :initform (make-hash-table :test 'eq))
-   (termination-time :initarg :termination-time :accessor termination-time :initform 5)
    ;; "private" members
-   (current-time :initform 0 :accessor current-time)
-))
+   (current-time :initform 0))
+  (:initial-space-instances (simulator-library))
+)
 
+;;=========================================================
+;; Simulator Class Methods
+
+;; This is a bit harsher on the simulator (kills everything when it is done)
 (defmethod run-simulator ((sim simulator))
+  (add-instance-to-space-instance sim (find-space-instance-by-path '(running-simulators)))
+
+  (construct sim)
   (start sim)
 
+  (loop for obj in (objects-of sim)
+     do (activate obj))
+
   (loop with step = 0.1
-     until (>= (current-time sim) (termination-time sim))
-     do (format t "Time Step ~a:~%" (current-time sim)) 
-       (loop for obj being the hash-keys of (policy-map sim) using (hash-value action)
+     until (>= (current-time-of sim) (termination-time-of sim))
+     do (format t "Time Step ~a:~%" (current-time-of sim)) 
+       (loop for obj being the hash-keys of (policy-map-of sim) using (hash-value action)
           if action do 
             (format t "~a is doing ~a.~%" obj action)
             (funcall (first action) obj (second action))
           else do 
             (format t "~a is doing nothing.~%" obj))
-       (incf (current-time sim) step)
+       (incf (current-time-of sim) step)
        (sleep step))
 
+  (loop for obj in (objects-of sim)
+     do (deactivate obj))
+
   (pause sim)
-  (setf (current-time sim) 0)
+  (destroy sim)
+  (setf (current-time-of sim) 0)
+
+  (remove-instance-from-space-instance sim (find-space-instance-by-path '(running-simulators)))
 )
 
 (defmethod construct ((sim simulator))
-  (loop for obj in (objects sim)
+  (loop for obj in (objects-of sim)
      do (add-to-world obj)
        (sleep 0.5)))
 
 (defmethod destroy ((sim simulator))
-  (loop for obj in (objects sim)
+  (loop for obj in (objects-of sim)
      do (remove-from-world obj)))
 
 (defmethod start ((sim simulator))
   (call-service "start_world" 'std_srvs-srv:Empty))
 
-;; Note: Simulator does not publish a time while the world is paused
+;; Note: Gazebo does not publish a time when paused
 (defmethod pause ((sim simulator))
   (call-service "pause_world" 'std_srvs-srv:Empty))
 
 (defmethod reset ((sim simulator))
   (call-service "reset_world" 'std_srvs-srv:Empty)
-  (setf (current-time sim) 0))
+  (setf (current-time-of sim) 0))
 
-(defmethod load-simulator ((sim simulator))
-  (pause sim)
-  (if *current-simulator* 
-      (destroy *current-simulator*))
-  (setf *current-simulator* sim)
-  (construct sim))
+;(defmethod load-simulator ((sim simulator))
+;  (pause sim)
+;  (if *current-simulator* 
+;      (destroy *current-simulator*))
+;  (setf *current-simulator* sim)
+;  (construct sim))
       
+
+
+
+
 ;;=========================================================
 ;; Tests
 
