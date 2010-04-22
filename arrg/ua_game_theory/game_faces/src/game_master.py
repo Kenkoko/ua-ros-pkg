@@ -35,8 +35,8 @@ class game_observer:
         self.sub = rospy.Subscriber(self.the_topic, GamePlay, self.game_play_observer)
 
     def game_play_observer(self, msg):
-        print "Callback: the_topic: " + str(self.the_topic)
-        print "Game play: " + str(msg)
+        # print "Callback: the_topic: " + str(self.the_topic)
+        # print "Game play: " + str(msg)
         
         if msg.play_number not in self.turns:
             self.turns.add(msg.play_number)
@@ -120,7 +120,7 @@ class game_master:
             for block_round in pairs:
                 # Serve up all the games
                 for pair in block_round:
-                    print "pair: " + str(pair) + str(game_type)
+                    print "pair: " + str(pair) + " will play " + str(game_type)
                     game_topic+=1
                     msg = TwoPersonGame('game_topic'+str(game_topic), pair[0], pair[1], game_type)
                     the_topic = 'game_topic'+str(game_topic)

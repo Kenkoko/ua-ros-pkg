@@ -64,16 +64,16 @@ class TrustGame(Game):
                 # Check that it is legal
                 self.current_amount = game_play.amount * 3 - offer
                 print "Your payoff is now: " + str(self.current_amount)
-                print "I am player " + str(self.player_id) + " and I am about to publish:"
-                print GamePlay(2,offer, self.player_id)
+                #print "I am player " + str(self.player_id) + " and I am about to publish:"
+                #print GamePlay(2,offer, self.player_id)
                 self.play_pub.publish(GamePlay(2,offer, self.player_id))
         elif play_number == 2:
             if self.player.is_first_player:
                 print "You recieved " + str(game_play.amount) + " from the other player"
                 self.current_amount += game_play.amount
                 print "Your total payoff is: " +str(self.current_amount)
-                print "I am player " + str(self.player_id) + " and I am about to publish:"
-                print GamePlay(3,-1, self.player_id)
+                #print "I am player " + str(self.player_id) + " and I am about to publish:"
+                #print GamePlay(3,-1, self.player_id)
                 self.play_pub.publish(GamePlay(3,-1, self.player_id))  
             else:
                 pass
@@ -189,31 +189,24 @@ class game_player:
             print "Could not get a player_id from master"
 
     def play_game(self, gamedata):
-        print gamedata
-        print "------"
+        # print gamedata
+        # print "------"
         self.game_topic_lock.acquire()
         if self.game_topic is "":
             self.is_first_player = (gamedata.first_player == self.player_id)
             self.is_second_player = (gamedata.second_player == self.player_id)
-            print "   is_first_player " + str(self.is_first_player)
-            print "   is_second_player " + str(self.is_second_player)
+            # print "   is_first_player " + str(self.is_first_player)
+            # print "   is_second_player " + str(self.is_second_player)
             if self.is_first_player or self.is_second_player:
-                print "      I get to play!"
+                # print "      I get to play!"
                 # Register the game playing topic
                 self.game_topic = gamedata.game_topic
                 game_type = str(gamedata.game_type)
-                print "Is it a string? " + str(isinstance(game_type, str))
-                print "How about this? " + str(isinstance("TrustGame",str))
-                print "GameType0: " + str(game_type)
-                game_type = "TrustGame"
-                if game_type is str("TrustGame"):
-                    print "GameType: " + str(game_type)
+                if game_type == str("TrustGame"):
                     self.the_game = TrustGame(self)
-                elif game_type is str("Prisoners"):
-                    print "GameType: " + str(game_type)
+                elif game_type == str("Prisoners"):
                     self.the_game = Prisoners(self)
-                elif game_type is "Ultimatum":
-                    print "GameType: " + str(game_type)
+                elif game_type == "Ultimatum":
                     self.the_game = Ultimatum(self)
                 else:
                     print "Didnt match game_type: " + str(game_type)
@@ -221,8 +214,8 @@ class game_player:
                 self.the_game.take_first_turn()
         else:
             print "skipped a game message from master, because I'm already in a game"
-        print "Unlocking"
-        print "--"
+        # print "Unlocking"
+        # print "--"
         self.game_topic_lock.release()
 
 if __name__ == '__main__':
