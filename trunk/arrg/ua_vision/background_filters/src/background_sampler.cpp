@@ -12,182 +12,200 @@
 
 using namespace std;
 
-#define NUM_BGS 100
-
-IplImage *bgs[NUM_BGS];
-IplImage *ave_bg;
-vector<double> std_dev;
-vector<double> cov_mat;
-int bg_counter = 0;
-bool have_ave_bg = false;
-
-ros::ServiceServer service;
-ros::Subscriber image_sub;
-ros::Publisher ave_bg_pub;
-
-void publish_average_background()
+class BackgroundAverager
 {
-    sensor_msgs::CvBridge b;
-    ros::Rate r(1.0);
+private:
+    double delay;
+    int num_samples;
+    
+    IplImage **bgs;
+    IplImage *ave_bg;
+    vector<double> std_dev;
+    vector<double> cov_mat;
+    vector<double> dets;
+    int bg_counter;
+    bool have_ave_bg;
+    
+    ros::ServiceServer service;
+    ros::Subscriber image_sub;
+    ros::Publisher ave_bg_pub;
 
-    while (ros::ok())
+public:
+    BackgroundAverager(ros::NodeHandle& nh)
     {
-        if (have_ave_bg)
+        ros::NodeHandle ln("~");
+        ln.param("number_of_samples", num_samples, 10);
+        ln.param("sampling_delay", delay, 0.0);
+        
+        bgs = (IplImage **) calloc(num_samples, sizeof(IplImage *));
+        bg_counter = 0;
+        have_ave_bg = false;
+        
+        image_sub = nh.subscribe("image", 1, &BackgroundAverager::handle_image, this);
+        ave_bg_pub = nh.advertise<sensor_msgs::Image>("average_bg", 1);
+        service = nh.advertiseService("get_background_stats", &BackgroundAverager::get_background_stats, this);
+    }
+    
+    void publish_average_background()
+    {
+        ros::Rate r(1.0);
+        
+        while (ros::ok())
         {
-            ave_bg_pub.publish(b.cvToImgMsg(ave_bg, "bgr8"));
-            r.sleep();
+            if (have_ave_bg)
+            {
+                ave_bg_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(ave_bg, "bgr8"));
+                r.sleep();
+            }
         }
     }
-}
 
-void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
-{
-	if (bg_counter < NUM_BGS)
-	{
-        sensor_msgs::CvBridge bridge;
-        IplImage *bg = NULL;
-
-        try
-	    {
-	        bg = bridge.imgMsgToCv(msg_ptr, "bgr8");
-	        bgs[bg_counter++] = cvCloneImage(bg);
-        }
-	    catch (sensor_msgs::CvBridgeException error)
-	    {
-		    ROS_ERROR("CvBridgeError");
-	    }
-	    
-	    return;
-	}
-	
-	if (!have_ave_bg)
-	{
-        int img_width = bgs[0]->width;
-        int img_height = bgs[0]->height;
-        int n_channels = bgs[0]->nChannels;
-	    cout << img_width << endl;
-	    cout << img_height << endl;
-	    cout << n_channels << endl;
-	    
-	    cout << "depth = " << bgs[0]->depth << endl;
-	    cout << IPL_DEPTH_8U << endl;
-	    
-	    ave_bg = cvCreateImage(cvSize(img_width, img_height), bgs[0]->depth, n_channels);
-	    uchar *ave_data = (uchar *) ave_bg->imageData;
-	    
-	    // figure out the actual size of image array
-	    int size = img_width * img_height * n_channels;
-	    
-	    uchar *temp[NUM_BGS];
-	    
-	    for (int i = 0; i < NUM_BGS; ++i)
-	    {
-	        temp[i] = (uchar *) bgs[i]->imageData;
-	    }
-	    
-        for (int i = 0; i < size; ++i)
+    void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
+    {
+        if (bg_counter < num_samples)
         {
-            double sum = 0.0;
+            sensor_msgs::CvBridge bridge;
+            IplImage *bg = NULL;
             
-	        for (int j = 0; j < NUM_BGS; ++j)
+            try
             {
-                sum += temp[j][i];
+                bg = bridge.imgMsgToCv(msg_ptr, "bgr8");
+                bgs[bg_counter++] = cvCloneImage(bg);
+                if (delay > 0.0) { ros::Duration(delay).sleep(); }
+            }
+            catch (sensor_msgs::CvBridgeException error)
+            {
+                ROS_ERROR("CvBridgeError");
             }
             
-            ave_data[i] = sum / (double) NUM_BGS;
+            return;
         }
         
-        std_dev.resize(size);
-        
-        for (int i = 0; i < size; ++i)
+        if (!have_ave_bg)
         {
-            double sum = 0.0;
-        
-	        for (int j = 0; j < NUM_BGS; ++j)
+            ROS_INFO("Collected samples for background avergaing");
+            
+            int img_width = bgs[0]->width;
+            int img_height = bgs[0]->height;
+            int img_depth = bgs[0]->depth;
+            int img_channels = bgs[0]->nChannels;
+            
+            ROS_INFO("Image: %dx%d with %d channels (depth is %d)", img_width, img_height, img_channels, img_depth);
+            
+            ave_bg = cvCreateImage(cvSize(img_width, img_height), img_depth, img_channels);
+            uchar *ave_data = (uchar *) ave_bg->imageData;
+            
+            // figure out the actual size of image array
+            int size = img_width * img_height * img_channels;
+            
+            uchar *temp[num_samples];
+            
+            for (int i = 0; i < num_samples; ++i)
             {
-                 sum += pow(temp[j][i] - ave_data[i], 2.0);
+                temp[i] = (uchar *) bgs[i]->imageData;
             }
             
-            std_dev[i] = sqrt(sum / (double) (NUM_BGS - 1));
-        }
-
-        cout << "cp 1" << endl; 
-
-        // a 3x3 covariance matrix for each pixel in the image
-        cov_mat.resize(img_width * img_height * 9);
-        
-        cout << "cp 2" << endl; 
-
-        CvMat *ave = cvCreateMat(1, 3, CV_32FC1);
-        CvMat *covMat = cvCreateMat(3, 3, CV_32FC1);
-        CvMat **vects = (CvMat **) calloc(NUM_BGS, sizeof(CvMat *));
-
-        cout << "cp 3" << endl;
-
-        for (int i = 0, k = 0; i < size; i += 3, ++k)
-        {
-            for (int j = 0; j < NUM_BGS; ++j)
-            {
-                if (i == 0) vects[j] = (CvMat *) calloc(1, sizeof(CvMat));
-                uchar vals[] = { temp[j][i], temp[j][i+1], temp[j][i+2] };
-                cvInitMatHeader(vects[j], 1, 3, CV_8UC1, vals);
-            }
-
-            cvCalcCovarMatrix((const CvArr**) vects, NUM_BGS, covMat, ave, CV_COVAR_NORMAL);
+            // a 3x3 covariance matrix for each pixel in the image
+            cov_mat.resize(img_width * img_height * 9);
+            dets.resize(img_width * img_height);
+            std_dev.resize(size);
             
-            for (int row = 0; row < covMat->rows; ++row)
+            CvMat *ave = cvCreateMat(1, 3, CV_32FC1);
+            CvMat *covMat = cvCreateMat(3, 3, CV_32FC1);
+            CvMat **vects = (CvMat **) calloc(num_samples, sizeof(CvMat *));
+
+            // for each pixel in the image
+            for (int i = 0; i < size; i += 3)
             {
-                const float* ptr = (const float*)(covMat->data.ptr + row * covMat->step);
-                
-                for (int col = 0; col < covMat->cols; ++col)
+                // for each image sampled
+                for (int j = 0; j < num_samples; ++j)
                 {
-                    cov_mat[k] = *ptr++;
+                    if (i == 0) vects[j] = cvCreateMat(1, 3, CV_8UC1);
+                    cvSet1D(vects[j], 0, cvScalar(temp[j][i]));
+                    cvSet1D(vects[j], 1, cvScalar(temp[j][i+1]));
+                    cvSet1D(vects[j], 2, cvScalar(temp[j][i+2]));
                 }
+                
+                cvCalcCovarMatrix((const CvArr**) vects, num_samples, covMat, ave, CV_COVAR_NORMAL);
+                dets[i/3] = cvDet(covMat);
+                
+                for (int row = 0; row < covMat->rows; ++row)
+                {
+                    const float* ptr = (const float*)(covMat->data.ptr + row * covMat->step);
+                    
+                    for (int col = 0; col < covMat->cols; ++col)
+                    {
+                        cov_mat[i + row*covMat->cols + col] = *ptr++;
+                    }
+                }
+                
+                for (int row = 0; row < ave->rows; ++row)
+                {
+                    const float* ptr = (const float*)(ave->data.ptr + row * ave->step);
+                    
+                    for (int col = 0; col < ave->cols; ++col)
+                    {
+                        ave_data[i + row*ave->cols + col] = *ptr++;
+                    }
+                }
+                
+                double sumb = 0.0;
+                double sumg = 0.0;
+                double sumr = 0.0;
+                
+                for (int j = 0; j < num_samples; ++j)
+                {
+                     sumb += pow(temp[j][i] - ave_data[i], 2.0);
+                     sumg += pow(temp[j][i+1] - ave_data[i+1], 2.0);
+                     sumr += pow(temp[j][i+2] - ave_data[i+2], 2.0);
+                }
+                
+                std_dev[i] = sqrt(sumb / (double) (num_samples - 1));
+                std_dev[i+1] = sqrt(sumg / (double) (num_samples - 1));
+                std_dev[i+2] = sqrt(sumr / (double) (num_samples - 1));
             }
+            
+            for (int i = 0; i < num_samples; ++i)
+            {
+                cvReleaseMat(&vects[i]);
+                temp[i] = NULL;
+                cvReleaseImage(&bgs[i]);
+            }
+            
+            cvReleaseMat(&ave);
+            cvReleaseMat(&covMat);
+            if (vects) free(vects);
+            if (bgs) free(bgs);
+            
+            have_ave_bg = true;
+            ROS_INFO("Computed average background from samples");
         }
-
-        //cout << "cp 4" << endl; 
-
-        for (int i = 0; i < NUM_BGS; ++i)
+        else
         {
-            if (vects[i]) free(vects[i]);
-            cvReleaseImage(&bgs[i]);
+            image_sub.shutdown();
         }
-        
-        cvReleaseMat(&ave);
-        cvReleaseMat(&covMat);
-        if (vects) free(vects);
-        
-        have_ave_bg = true;
-        cout << "cp 5" << endl; 
-	}
-	else
-	{
-	    image_sub.shutdown();
-	}
-}
+    }
 
-bool callback(background_filters::GetBgStats::Request& request, background_filters::GetBgStats::Response& response)
-{
-    sensor_msgs::CvBridge::fromIpltoRosImage(ave_bg, response.ave_bg);
-    response.std_dev = std_dev;
-
-    return true;
-}
+    bool get_background_stats(background_filters::GetBgStats::Request& request, background_filters::GetBgStats::Response& response)
+    {
+        sensor_msgs::CvBridge::fromIpltoRosImage(ave_bg, response.average_background);
+        response.covariance_matrix = cov_mat;
+        response.covariance_matrix_dets = dets;
+        response.standard_deviations = std_dev;
+        
+        return true;
+    }
+};
 
 int main (int argc, char **argv)
 {
     ros::init(argc, argv, "background_sampler");
     ros::NodeHandle n;
     
-    image_sub = n.subscribe("/camera/image_color", 1, handle_image);
-    ave_bg_pub = n.advertise<sensor_msgs::Image>("average_bg", 1);
-    
-    service = n.advertiseService("get_bg_stats", callback);
-
-    boost::thread t = boost::thread::thread(boost::bind(&publish_average_background));
+    BackgroundAverager ba(n);
+    boost::thread t = boost::thread::thread(boost::bind(&BackgroundAverager::publish_average_background, &ba));
     ros::spin();
-
+    
     t.interrupt();
     t.join();
     
