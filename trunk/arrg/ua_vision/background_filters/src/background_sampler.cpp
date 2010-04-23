@@ -151,39 +151,46 @@ public:
                 // for each image sampled
                 for (int j = 0; j < num_samples; ++j)
                 {
-                    if (i == 0) vects[j] = cvCreateMat(1, 3, CV_8UC1);
+                    if (i == 0 || i == 3) vects[j] = cvCreateMat(1, 3, CV_8UC1);
                     cvSet1D(vects[j], 0, cvScalar(temp[j][i]));
                     cvSet1D(vects[j], 1, cvScalar(temp[j][i+1]));
                     cvSet1D(vects[j], 2, cvScalar(temp[j][i+2]));
                 }
                 
-                if (i == 0)
+                if (i == 0 || i == 3)
                 {
                     for (int j = 0; j < num_samples; ++j)
                     {
                         print_mat(vects[j]);
-                        cout << endl;
                     }
                 }
                 
-                if (i == 0)
+                if (i == 0 || i == 3)
                 cout << "Printing covar mat" << endl;
                 cvCalcCovarMatrix((const CvArr**) vects, num_samples, covMat, ave, CV_COVAR_NORMAL);
                 
-                if (i == 0)
+                if (i == 0 || i == 3)
                 {
                     print_mat(covMat);
-                    cout << endl << endl;
+                    cout << endl;
                 }
                 
+                if (i == 0 || i == 3)
+                cout << "Printing averages of input vectors" << endl;
+                if (i == 0 || i == 3)
+                {
+                    print_mat(ave);
+                    cout << endl;
+                }
+
                 cvSet2D(covMat, 0, 0, cvScalar(cvGet2D(covMat, 0, 0).val[0] + alpha));
                 cvSet2D(covMat, 1, 1, cvScalar(cvGet2D(covMat, 1, 1).val[0] + alpha));
                 cvSet2D(covMat, 2, 2, cvScalar(cvGet2D(covMat, 2, 2).val[0] + alpha));
                 
-                if (i == 0)
+                if (i == 0 || i == 3)
                 cout << "Printing covar mat after business" << endl;
 
-                if (i == 0)
+                if (i == 0 || i == 3)
                 {
                     print_mat(covMat);
                     cout << endl << endl;
