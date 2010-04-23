@@ -56,7 +56,8 @@
 
 (defmethod destroy ((sim simulator))
   (loop for obj in (objects-of sim)
-     do (remove-from-world obj)))
+     do (remove-from-world obj)
+       (sleep 0.5)))
 
 (defmethod start ((sim simulator))
   (call-service "start_world" 'std_srvs-srv:Empty))
