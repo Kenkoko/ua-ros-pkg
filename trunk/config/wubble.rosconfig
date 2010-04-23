@@ -5,7 +5,7 @@
     uri: https://code.ros.org/svn/wg-ros-pkg/all
     local-name: pkgs
 - svn:
-    uri: https://ua-ros-pkg.googlecode.com/svn/trunk
+    uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
     local-name: ua-ros-pkg
 - svn:
     uri: https://ua-cs665-ros-pkg.googlecode.com/svn/trunk/
