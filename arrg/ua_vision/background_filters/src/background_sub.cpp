@@ -66,17 +66,22 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
         double unnorm_gaussian = exp(-0.5 * mah_dist);        
         double partition = 1.0 / (pow(TWO_PI, 1.5) * sqrt(dets[i]));
 
-        cout << "mah = " << mah_dist << ", guss = " << unnorm_gaussian << ", part = " << partition << endl;
+        //cout << "mah = " << mah_dist << ", guss = " << unnorm_gaussian << ", part = " << partition << endl;
+        float p = partition * unnorm_gaussian;
 
-        prob_data[i] = (float) partition * unnorm_gaussian;
-        if (prob_data[i] > 1 || prob_data[i] < 0)
+//        if (p > 1 || p < 0)
         {
-            cout << i << " : " << prob_data[i] << endl;
+            cout << i << " : " << p << endl;
         }
+
+        prob_data[i] = p;
+
         cvReleaseMat(&bgr_new);
         cvReleaseMat(&bgr_ave);
     }
-    
+
+    cvShowImage("prob_img", prob_img);
+    cvWaitKey(1000);
     prob_img_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(prob_img));
     
     new_img = NULL;
@@ -89,13 +94,15 @@ int main (int argc, char **argv)
     ros::init(argc, argv, "background_sub");
     ros::NodeHandle n;
     
-    image_sub = n.subscribe("/camera/image_color", 1, handle_image);
+    image_sub = n.subscribe("image", 1, handle_image);
     ros::ServiceClient client = n.serviceClient<background_filters::GetBgStats>("get_background_stats");
     ros::Publisher ave_bg_pub = n.advertise<sensor_msgs::Image>("average_bg_service", 1);
     prob_img_pub = n.advertise<sensor_msgs::Image>("prob_img", 1);
     
     background_filters::GetBgStats srv;
     sensor_msgs::CvBridge b;
+
+    cvNamedWindow("prob_img");
 
     if (client.call(srv))
     {
