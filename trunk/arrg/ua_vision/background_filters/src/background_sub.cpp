@@ -16,10 +16,10 @@ using namespace std;
 IplImage *ave_bg;
 uchar *ave_img;
 
-vector<double> cov_mats;
-vector<double> cov_mats_inv;
-vector<double> dets;
-vector<double> std_dev;
+vector<float> cov_mats;
+vector<float> cov_mats_inv;
+vector<float> dets;
+vector<float> std_dev;
 
 ros::Subscriber image_sub;
 ros::Publisher prob_img_pub;
@@ -68,7 +68,7 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 
         cout << "mah = " << mah_dist << ", guss = " << unnorm_gaussian << ", part = " << partition << endl;
 
-        prob_data[i] = partition * unnorm_gaussian;
+        prob_data[i] = (float) partition * unnorm_gaussian;
         if (prob_data[i] > 1 || prob_data[i] < 0)
         {
             cout << i << " : " << prob_data[i] << endl;

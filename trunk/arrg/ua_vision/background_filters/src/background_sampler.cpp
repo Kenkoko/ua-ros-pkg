@@ -20,10 +20,10 @@ private:
     
     IplImage **bgs;
     IplImage *ave_bg;
-    vector<double> std_dev;
-    vector<double> cov_mat;
-    vector<double> cov_mat_inv;
-    vector<double> dets;
+    vector<float> std_dev;
+    vector<float> cov_mat;
+    vector<float> cov_mat_inv;
+    vector<float> dets;
     int bg_counter;
     bool have_ave_bg;
     
@@ -143,7 +143,7 @@ public:
             CvMat *covMatInv = cvCreateMat(3, 3, CV_32FC1);
             CvMat **vects = (CvMat **) calloc(num_samples, sizeof(CvMat *));
 
-            double alpha = 0.5;
+            float alpha = 0.5;
 
             // for each pixel in the image
             for (int i = 0; i < size; i += 3)
@@ -197,7 +197,7 @@ public:
                     
                     for (int col = 0; col < covMat->cols; ++col)
                     {
-                        cov_mat[i + row*covMat->cols + col] = *ptr++;
+                        cov_mat[i*3 + row*covMat->cols + col] = *ptr++;
                     }
                 }
                 
@@ -207,7 +207,7 @@ public:
                     
                     for (int col = 0; col < covMatInv->cols; ++col)
                     {
-                        cov_mat_inv[i + row*covMatInv->cols + col] = *ptr++;
+                        cov_mat_inv[i*3 + row*covMatInv->cols + col] = *ptr++;
                     }
                 }
 
@@ -221,9 +221,9 @@ public:
                     }
                 }
                 
-                double sumb = 0.0;
-                double sumg = 0.0;
-                double sumr = 0.0;
+                float sumb = 0.0;
+                float sumg = 0.0;
+                float sumr = 0.0;
                 
                 for (int j = 0; j < num_samples; ++j)
                 {
@@ -232,9 +232,9 @@ public:
                      sumr += pow(temp[j][i+2] - ave_data[i+2], 2.0);
                 }
                 
-                std_dev[i] = sqrt(sumb / (double) (num_samples - 1));
-                std_dev[i+1] = sqrt(sumg / (double) (num_samples - 1));
-                std_dev[i+2] = sqrt(sumr / (double) (num_samples - 1));
+                std_dev[i] = sqrt(sumb / (num_samples - 1));
+                std_dev[i+1] = sqrt(sumg / (num_samples - 1));
+                std_dev[i+2] = sqrt(sumr / (num_samples - 1));
             }
             
             for (int i = 0; i < num_samples; ++i)
