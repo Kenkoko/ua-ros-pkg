@@ -22,6 +22,7 @@ private:
     IplImage *ave_bg;
     vector<double> std_dev;
     vector<double> cov_mat;
+    vector<double> cov_mat_inv;
     vector<double> dets;
     int bg_counter;
     bool have_ave_bg;
@@ -55,9 +56,35 @@ public:
             if (have_ave_bg)
             {
                 ave_bg_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(ave_bg, "bgr8"));
-                r.sleep();
+            }
+            
+            r.sleep();
+        }
+    }
+
+    void print_mat(CvMat *A)
+    {
+        int i, j;
+        for (i = 0; i < A->rows; i++)
+        {
+            printf("\n");
+            switch (CV_MAT_DEPTH(A->type))
+            {
+                case CV_32F:
+                case CV_64F:
+                    for (j = 0; j < A->cols; j++)
+                    printf ("%8.3f ", (float)cvGetReal2D(A, i, j));
+                    break;
+                case CV_8U:
+                case CV_16U:
+                    for(j = 0; j < A->cols; j++)
+                    printf ("%6d",(int)cvGetReal2D(A, i, j));
+                    break;
+                default:
+                break;
             }
         }
+        printf("\n");
     }
 
     void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
@@ -107,12 +134,16 @@ public:
             
             // a 3x3 covariance matrix for each pixel in the image
             cov_mat.resize(img_width * img_height * 9);
+            cov_mat_inv.resize(img_width * img_height * 9);
             dets.resize(img_width * img_height);
             std_dev.resize(size);
             
             CvMat *ave = cvCreateMat(1, 3, CV_32FC1);
             CvMat *covMat = cvCreateMat(3, 3, CV_32FC1);
+            CvMat *covMatInv = cvCreateMat(3, 3, CV_32FC1);
             CvMat **vects = (CvMat **) calloc(num_samples, sizeof(CvMat *));
+
+            double alpha = 0.5;
 
             // for each pixel in the image
             for (int i = 0; i < size; i += 3)
@@ -126,8 +157,39 @@ public:
                     cvSet1D(vects[j], 2, cvScalar(temp[j][i+2]));
                 }
                 
+                if (i == 0)
+                {
+                    for (int j = 0; j < num_samples; ++j)
+                    {
+                        print_mat(vects[j]);
+                        cout << endl;
+                    }
+                }
+                
+                if (i == 0)
+                cout << "Printing covar mat" << endl;
                 cvCalcCovarMatrix((const CvArr**) vects, num_samples, covMat, ave, CV_COVAR_NORMAL);
-                dets[i/3] = cvDet(covMat);
+                
+                if (i == 0)
+                {
+                    print_mat(covMat);
+                    cout << endl << endl;
+                }
+                
+                cvSet2D(covMat, 0, 0, cvScalar(cvGet2D(covMat, 0, 0).val[0] + alpha));
+                cvSet2D(covMat, 1, 1, cvScalar(cvGet2D(covMat, 1, 1).val[0] + alpha));
+                cvSet2D(covMat, 2, 2, cvScalar(cvGet2D(covMat, 2, 2).val[0] + alpha));
+                
+                if (i == 0)
+                cout << "Printing covar mat after business" << endl;
+
+                if (i == 0)
+                {
+                    print_mat(covMat);
+                    cout << endl << endl;
+                }
+
+                dets[i/3] = cvInvert(covMat, covMatInv, CV_LU);
                 
                 for (int row = 0; row < covMat->rows; ++row)
                 {
@@ -139,6 +201,16 @@ public:
                     }
                 }
                 
+                for (int row = 0; row < covMatInv->rows; ++row)
+                {
+                    const float* ptr = (const float*)(covMatInv->data.ptr + row * covMatInv->step);
+                    
+                    for (int col = 0; col < covMatInv->cols; ++col)
+                    {
+                        cov_mat_inv[i + row*covMatInv->cols + col] = *ptr++;
+                    }
+                }
+
                 for (int row = 0; row < ave->rows; ++row)
                 {
                     const float* ptr = (const float*)(ave->data.ptr + row * ave->step);
@@ -174,6 +246,10 @@ public:
             
             cvReleaseMat(&ave);
             cvReleaseMat(&covMat);
+            cvReleaseMat(&covMatInv);
+            ave = NULL;
+            covMat = NULL;
+            covMatInv = NULL;
             if (vects) free(vects);
             if (bgs) free(bgs);
             
@@ -190,6 +266,7 @@ public:
     {
         sensor_msgs::CvBridge::fromIpltoRosImage(ave_bg, response.average_background);
         response.covariance_matrix = cov_mat;
+        response.covariance_matrix_inv = cov_mat_inv;
         response.covariance_matrix_dets = dets;
         response.standard_deviations = std_dev;
         
