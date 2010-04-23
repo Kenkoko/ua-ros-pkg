@@ -2,4 +2,6 @@
      <!-- Overhead Cam -->
     <param name="cam_description" command="$(find xacro)/xacro.py '$(find overhead_cam_description)/urdf/overhead_cam.urdf.xacro'" />
     <node name="spawn_overhead_cam" pkg="gazebo_tools" type="gazebo_model" args="-z 0.051 -p cam_description spawn cam_description" respawn="false" output="screen" />
+    <node name="overhead_cam_tf" pkg="tf" type="static_transform_publisher" args="0 0 3 0 1.570795 0 /map /overhead_cam 100" respawn="false" output="screen" />
+    
 </launch>

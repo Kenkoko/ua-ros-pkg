@@ -9,10 +9,10 @@
     <joint name="base_joint" type="fixed">
         <origin xyz="0 0 3" rpy="0 ${M_PI/2} 0"/>
         <parent link="world"/>
-        <child link="camera_link"/>
+        <child link="overhead_cam_link"/>
     </joint>
 
-    <link name="camera_link">
+    <link name="overhead_cam_link">
         <inertial>
           <mass value="0.001" />
           <origin xyz="0 0 0" />
@@ -36,11 +36,15 @@
         </collision>
     </link>
 
-    <gazebo reference="camera_link">
+    <property name="image_width" value="1024"/>
+    <property name="image_height" value="1024"/>
+    <property name="hfov" value="90"/>
+
+    <gazebo reference="overhead_cam_link">
         <sensor:camera name="overhead_cam_sensor">
-            <imageSize>1024 1024</imageSize>
+            <imageSize>${image_width} ${image_height}</imageSize>
             <imageFormat>PF_B8G8R8</imageFormat>
-            <hfov>90</hfov>
+            <hfov>${hfov}</hfov>
             <nearClip>0.1</nearClip>
             <farClip>100</farClip>
             <updateRate>15.0</updateRate>
@@ -50,10 +54,11 @@
                 <imageTopicName>overhead_cam/image_raw</imageTopicName>
                 <cameraInfoTopicName>overhead_cam/camera_info</cameraInfoTopicName>
                 <frameName>overhead_cam_link</frameName>
-                <CxPrime>320.5</CxPrime>
-                <Cx>320.5</Cx>
-                <Cy>240.5</Cy>
-                <focal_length>320</focal_length> 
+                <CxPrime>${(image_width+1)/2}</CxPrime>
+                <Cx>${(image_width+1)/2}</Cx>
+                <Cy>${(image_height+1)/2}</Cy>
+                <!-- focal_length = image_width / (2*tan(hfov_radian /2)) BUT tan(45 deg) = 1 -->
+                <focal_length>${image_width / 2}</focal_length> 
                 <distortion_k1>0</distortion_k1>
                 <distortion_k2>0</distortion_k2>
                 <distortion_k3>0</distortion_k3>
@@ -64,7 +69,7 @@
         </sensor:camera>
     </gazebo>
 
-    <gazebo reference="camera_link">
+    <gazebo reference="overhead_cam_link">
         <material>Gazebo/Black</material>
     </gazebo>
 
