@@ -7,11 +7,16 @@
     :link (simulator simulations)
     :singular t)))
 
-(defmethod create-simulator-instance ((sim simulator))
+(defmethod create-simulation ((sim simulator))
   (let* ((simulation-count (length (simulations-of sim))))
-    (linkf (simulations-of sim) (make-space-instance (list (instance-name-of sim)
-                                                           (1+ simulation-count))
-                                                     :class 'simulation))))
+    (if (= 0 simulation-count)
+        (make-space-instance (list (instance-name-of sim))))
+    (linkf (simulations-of sim) 
+           (make-space-instance (list (instance-name-of sim)
+                                      (gensym "SIMULATION"))
+                                :class 'simulation
+                                :allowed-unit-classes '(world-state)
+                                :dimensions (dimensions-of 'world-state)))))
 
 (define-unit-class world-state ()
   (time

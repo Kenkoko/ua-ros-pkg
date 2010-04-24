@@ -25,6 +25,9 @@
   (add-instance-to-space-instance sim (find-space-instance-by-path '(running-simulators)))
 
   (construct sim)
+  
+  (create-simulation sim)
+
   (start sim)
 
   (loop for obj in (objects-of sim)

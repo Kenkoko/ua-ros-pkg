@@ -4,18 +4,18 @@
 ;; Class Definition 
 
 (define-unit-class physical-object ()
-  ((gazebo-name :initform "blue_box")
+  ((gazebo-name :initform "blue_box") ;; This name is used for the body
    (shape :initform 'box)
    (color :initform "Gazebo/Blue")
    (xyz  :initform '(0 0 0))
    (static? :initform nil)
-   
    ;; "Private" fields
    (xml-string :initform nil)
    (force-pub :initform nil))
   (:initial-space-instances (object-library))
   (:dimensional-values 
-   (static? :boolean static?))
+   (static? :boolean static?)
+   (gazebo-name :element gazebo-name))
 )
 
 ;;====================================================
@@ -99,7 +99,7 @@
 (defmethod body-xml ((obj physical-object))
   (cond ((eq (shape-of obj) 'box)
          (append (list (list '|body|:|box| 
-                             ':|name| (concatenate 'string (gazebo-name-of obj) "_body"))) 
+                             ':|name| (gazebo-name-of obj)))
                  (append '((:|turnGravityOff| "false")
                            (:|dampingFactor| "0.01") 
                            (:|selfCollide| "false") 
@@ -131,7 +131,6 @@
 
 (defmethod force-xml ((obj physical-object))
   (let* ((name (gazebo-name-of obj))
-         (body (concatenate 'string name "_body"))
          (controller (concatenate 'string name "_force"))
          (iface (concatenate 'string controller "_iface")))
   (list (list '|controller|:|gazebo_ros_force| 
@@ -140,7 +139,7 @@
         '(:|alwaysOn| "true") 
         '(:|updateRate| "15.0") 
         (list ':|topicName| controller)
-        (list ':|bodyName| body) 
+        (list ':|bodyName| name) 
         '(:|robotNamespace| "/")
         (list (list '|interface|:|position| ':|name| iface)))))
 

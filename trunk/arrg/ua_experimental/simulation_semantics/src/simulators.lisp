@@ -5,7 +5,8 @@
 
 (defun make-object-space ()
   (if (null (find-space-instance-by-path '(object-library)))
-      (make-space-instance '(object-library))))
+      (make-space-instance '(object-library)
+                           :dimensions (dimensions-of 'physical-object))))
 
 (defun make-self ()
   (if (null (find-instance-by-name 'self 'physical-object))
@@ -106,12 +107,14 @@
 ;;=====================================================
 
 (defun test-all-simulators ()
-  (init-objects)
-  (init-simulators)
-  (test-simulator (find-instance-by-name 'free 'simulator))
-  (test-simulator (find-instance-by-name 'push 'simulator))
-  (test-simulator (find-instance-by-name 'carry 'simulator))
-  (test-simulator (find-instance-by-name 'block 'simulator)))
+  (with-ros-node ("simulators")
+    (init-objects)
+    (init-simulators)
+    (subscribe-to-world-state)
+    (test-simulator (find-instance-by-name 'free 'simulator))
+    (test-simulator (find-instance-by-name 'push 'simulator))
+    (test-simulator (find-instance-by-name 'carry 'simulator))
+    (test-simulator (find-instance-by-name 'block 'simulator))))
 
 (defun test-simulator (sim)
     ;(load-simulator sim)
