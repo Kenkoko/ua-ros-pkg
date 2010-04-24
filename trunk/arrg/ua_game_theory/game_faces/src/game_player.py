@@ -41,7 +41,9 @@ class TrustGame(Game):
     
     def take_first_turn(self):
         if player.is_first_player:
-            self.play_pub.publish(GamePlay(0,0, self.player_id))
+            gp = GamePlay(play_number=0,amount=0, player_id=self.player_id)
+            gp.header.stamp = rospy.Time.now()
+            self.play_pub.publish(gp)
         
     def take_turn(self, game_play):
         play_number = game_play.play_number
@@ -49,7 +51,9 @@ class TrustGame(Game):
             if self.player.is_first_player:
                 offer = input("Input the first amount, between 0 and 10: ")
                 self.current_amount -= offer
-                self.play_pub.publish(GamePlay(1,offer, self.player_id))
+                gp = GamePlay(play_number=1,amount=offer, player_id=self.player_id)
+                gp.header.stamp = rospy.Time.now()
+                self.play_pub.publish(gp)
                 print "Waiting for second player"
             else:
                 currrent_amount = 0
@@ -66,7 +70,9 @@ class TrustGame(Game):
                 print "Your payoff is now: " + str(self.current_amount)
                 #print "I am player " + str(self.player_id) + " and I am about to publish:"
                 #print GamePlay(2,offer, self.player_id)
-                self.play_pub.publish(GamePlay(2,offer, self.player_id))
+                gp = GamePlay(play_number=2,amount=offer, player_id=self.player_id)
+                gp.header.stamp = rospy.Time.now()
+                self.play_pub.publish(gp)
         elif play_number == 2:
             if self.player.is_first_player:
                 print "You recieved " + str(game_play.amount) + " from the other player"
@@ -74,7 +80,9 @@ class TrustGame(Game):
                 print "Your total payoff is: " +str(self.current_amount)
                 #print "I am player " + str(self.player_id) + " and I am about to publish:"
                 #print GamePlay(3,-1, self.player_id)
-                self.play_pub.publish(GamePlay(3,-1, self.player_id))  
+                gp = GamePlay(play_number=3,amount=-1, player_id=self.player_id)
+                gp.header.stamp = rospy.Time.now()
+                self.play_pub.publish(gp)  
             else:
                 pass
             print "Please wait for the next game to start"
@@ -86,7 +94,9 @@ class Prisoners(Game):
     
     def take_first_turn(self):
         if player.is_first_player:
-            self.play_pub.publish(GamePlay(0,0, self.player_id))
+            gp = GamePlay(play_number=0,amount=0, player_id=self.player_id)
+            gp.header.stamp = rospy.Time.now()
+            self.play_pub.publish(gp)
 
     def take_turn(self, game_play):
         top_raw=([10, 10], [12, 2])
@@ -102,7 +112,9 @@ class Prisoners(Game):
 			        while (str(choice_raw) is ('U')) or (str(choice_raw) is ('L')):
 				        print "You entered an invalid character, please try again"
 				        choice_raw = input("Please type 'U' for Upper or 'L' Lower raw:")
-		        self.play_pub.publish(GamePlay(1,choice_raw, self.player_id))
+				gp = GamePlay(play_number=1,amount=choice_raw, player_id=self.player_id)
+				gp.header.stamp = rospy.Time.now()
+				self.play_pub.publish(gp)
 		        print "Waiting for second player"
             else:
                 print "Wait"
@@ -115,7 +127,9 @@ class Prisoners(Game):
 		        print bottom_raw
 		        print "Your possible payoffs are on the right in each cell"
 		        choice_column = input("Please type 'L' for Left or 'R' for Right column:")
-		        self.play_pub.publish(GamePlay(2,choice_column, self.player_id))
+		        gp = GamePlay(play_number=2,amount=choice_column, player_id=self.player_id)
+		        gp.header.stamp = rospy.Time.now()
+		        self.play_pub.publish(gp)
 
         elif play_number == 2:
             if str(choice_raw) is str('U'):
@@ -131,7 +145,9 @@ class Prisoners(Game):
             if self.player.is_first_player:
                 print "You chose " + str(choice_raw) + "The other player chose" + str(choice_column)
                 print "Your total payoff is: " +str(outcome[0])
-                self.play_pub.publish(GamePlay(3,-1, self.player_id))
+                gp = GamePlay(play_number=3,amount=-1, player_id=self.player_id)
+                gp.header.stamp = rospy.Time.now()
+                self.play_pub.publish(gp)
             else:
                 print "You chose " + str(choice_column) + "The other player chose" + str(choice_raw)
                 print "Your total payoff is: " +str(outcome[1])
@@ -202,6 +218,7 @@ class game_player:
                 # Register the game playing topic
                 self.game_topic = gamedata.game_topic
                 game_type = str(gamedata.game_type)
+                #game_type = "TrustGame"
                 if game_type == str("TrustGame"):
                     self.the_game = TrustGame(self)
                 elif game_type == str("Prisoners"):

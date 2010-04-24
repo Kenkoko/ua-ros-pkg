@@ -35,15 +35,20 @@ class game_observer:
         self.sub = rospy.Subscriber(self.the_topic, GamePlay, self.game_play_observer)
 
     def game_play_observer(self, msg):
-        # print "Callback: the_topic: " + str(self.the_topic)
-        # print "Game play: " + str(msg)
+        if not self.still_playing or msg.play_number in self.turns:
+            print "Callback: Got repeated message on the_topic: " + str(self.the_topic)
+            print msg
+        else:
+            print "Callback: the_topic: " + str(self.the_topic)
+            print msg
         
-        if msg.play_number not in self.turns:
-            self.turns.add(msg.play_number)
+            if msg.play_number not in self.turns:
+                self.turns.add(msg.play_number)
         
-        if self.turns == set(range(4)):
-            self.still_playing = False
-            self.sub.unregister()
+            if self.turns == set(range(4)):
+                self.still_playing = False
+                self.sub.unregister()
+
 
 class game_master:
     def __init__(self, num_players):
