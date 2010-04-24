@@ -8,9 +8,12 @@
    (goal-map :initform (make-hash-table :test 'eq))
    (policy-map :initform (make-hash-table :test 'eq))
    (termination-time :initform 5)
-
    ;; "private" members
-   (current-time :initform 0))
+   (current-time :initform 0)
+   ;; links
+   (simulations 
+    :link (simulation simulator :singular t)))
+
   (:initial-space-instances (simulator-library))
 )
 
@@ -70,12 +73,12 @@
   (call-service "reset_world" 'std_srvs-srv:Empty)
   (setf (current-time-of sim) 0))
 
-;(defmethod load-simulator ((sim simulator))
-;  (pause sim)
-;  (if *current-simulator* 
-;      (destroy *current-simulator*))
-;  (setf *current-simulator* sim)
-;  (construct sim))
+#+ignore(defmethod load-simulator ((sim simulator))
+  (pause sim)
+  (if *current-simulator* 
+      (destroy *current-simulator*))
+  (setf *current-simulator* sim)
+  (construct sim))
       
 
 
@@ -86,7 +89,7 @@
 
 (defparameter *counter* 0)
 
-(defun test-load ()
+#+ignore(defun test-load ()
   (with-ros-node ("tester")
     (let* ((obj1 (make-instance 'physical-object :gazebo-name "bottom_box" :xyz '(0 0 0.2)))
            (obj2 (make-instance 'physical-object :gazebo-name "top_box" :xyz '(0 0 0.6)))
