@@ -4,9 +4,10 @@
     :components ((:file "pkg")
                  (:file "xml" :depends-on ("pkg"))
                  (:file "object-class" :depends-on ("xml"))
-                 (:file "state" :depends-on ("object-class"))
                  (:file "simulator-class" :depends-on ("object-class"))
-                 (:file "simulators" :depends-on ("simulator-class")))
+                 (:file "classes" :depends-on ("object-class" "simulator-class"))
+                 (:file "state" :depends-on ("classes"))
+                 (:file "simulators" :depends-on ("classes")))
     :depends-on ("roslisp" 
                  "simulator_experiments-msg"
                  "simulator_experiments-srv"

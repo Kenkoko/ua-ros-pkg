@@ -14,6 +14,8 @@
    (xml-string :initform nil)
    (force-pub :initform nil))
   (:initial-space-instances (object-library))
+  (:dimensional-values 
+   (static? :boolean static?))
 )
 
 ;;====================================================
