@@ -143,7 +143,7 @@ public:
             CvMat *covMatInv = cvCreateMat(3, 3, CV_32FC1);
             CvMat **vects = (CvMat **) calloc(num_samples, sizeof(CvMat *));
 
-            float alpha = 0.5;
+            float alpha = 50;
 
             // for each pixel in the image
             for (int i = 0; i < size; i += 3)
@@ -168,6 +168,8 @@ public:
                 if (i == 0 || i == 3)
                 cout << "Printing covar mat" << endl;
                 cvCalcCovarMatrix((const CvArr**) vects, num_samples, covMat, ave, CV_COVAR_NORMAL);
+                
+                cvConvertScale(covMat, covMat, 1.0 / num_samples);
                 
                 if (i == 0 || i == 3)
                 {
