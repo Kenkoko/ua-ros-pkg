@@ -24,6 +24,33 @@ vector<float> std_dev;
 ros::Subscriber image_sub;
 ros::Publisher prob_img_pub;
 
+void print_mat(CvMat *A)
+{
+    int i, j;
+    for (i = 0; i < A->rows; i++)
+    {
+        printf("\n");
+        switch (CV_MAT_DEPTH(A->type))
+        {
+            case CV_32F:
+            case CV_64F:
+                for (j = 0; j < A->cols; j++)
+                printf ("%8.3f ", (float)cvGetReal2D(A, i, j));
+                break;
+            case CV_8U:
+            case CV_16U:
+                for(j = 0; j < A->cols; j++)
+                printf ("%6d",(int)cvGetReal2D(A, i, j));
+                break;
+            default:
+            break;
+        }
+    }
+    printf("\n");
+}
+
+bool first = true;
+
 void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 {
     sensor_msgs::CvBridge bridge;
@@ -70,9 +97,9 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
         float p = partition * unnorm_gaussian;
 
 //        if (p > 1 || p < 0)
-        {
-            cout << i << " : " << p << endl;
-        }
+//        {
+//            cout << i << " : " << p << endl;
+//        }
 
         prob_data[i] = p;
 
@@ -80,8 +107,19 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
         cvReleaseMat(&bgr_ave);
     }
 
+    double min, max;
+    cvMinMaxLoc(prob_img, &min, &max);
+    cvConvertScale(prob_img, prob_img, 1.0 / max);
+
     cvShowImage("prob_img", prob_img);
-    cvWaitKey(1000);
+    cvWaitKey(100);
+    if (first)
+    {
+        CvMat* m = cvCreateMatHeader(prob_img->height, prob_img->width, CV_32FC1);
+        cvGetMat(prob_img, m);
+        print_mat(m);
+        first = false;
+    }
     prob_img_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(prob_img));
     
     new_img = NULL;
