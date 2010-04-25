@@ -114,14 +114,14 @@ class game_master:
         for i in range(0,num_blocks):
             if i == 0:
                 pairs = self.create_block(True)
-                game_type = "TrustGame"
+                game_type = "Ultimatum"
             elif i == 1:
+                pairs = self.create_block(True)
+                game_type = "TrustGame"
+            elif i == 2:
                 # Note that for this game it doesn't make sense to play the same person twice
                 pairs = self.create_block(False)
                 game_type = "Prisoners"
-            elif i == 2:
-                pairs = self.create_block(True)
-                game_type = "Ultimatum"
             for block_round in pairs:
                 # Serve up all the games
                 for pair in block_round:
@@ -138,6 +138,9 @@ class game_master:
                 while len(game_observers) > 0 and not rospy.is_shutdown():
                     # The filter below will remove any finished game_observers
                     game_observers = filter(lambda obj:obj.still_playing, game_observers )
+                    for ob in game_observers:
+                        print "Which game: " + str(ob.twopersongame)
+                        print "Playing? " + str(ob.still_playing)
                     rospy.sleep(1)
 
         
