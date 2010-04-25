@@ -106,6 +106,10 @@
 
 ;;=====================================================
 
+(defun cleanup ()
+  (shutdown-ros-node)
+  (delete-blackboard-repository))
+
 (defun test-all-simulators ()
   (with-ros-node ("simulators")
     (init-objects)
@@ -115,6 +119,10 @@
     (test-simulator (find-instance-by-name 'push 'simulator))
     (test-simulator (find-instance-by-name 'carry 'simulator))
     (test-simulator (find-instance-by-name 'block 'simulator))))
+
+(defun stress-test ()
+  (dotimes (x 20)
+    (test-all-simulators)))
 
 (defun test-simulator (sim)
     ;(load-simulator sim)

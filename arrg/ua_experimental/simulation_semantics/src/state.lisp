@@ -50,21 +50,20 @@
                                                      (simulator_experiments-msg:velocity-val info)))
                                           )))
 
-(defun translate-world-state (msg simulation)
+(defun translate-world-state (msg simn)
   (loop with ws = (make-instance 'world-state 
                                  :time (roslib-msg:stamp-val
                                         (simulator_experiments-msg:header-val msg))
-                                 :space-instances simulation)
+                                 :space-instances (list simn))
      for obj-info across (simulator_experiments-msg:object_info-val msg)
      do (translate-object obj-info ws)
      finally (return ws)))
 
-;; TODO: Can't rely on order here? Or is it that we actually want "first"?
-;; NB: I think it's the latter                                                                      
 (defun world-state-handler (msg)
-  (loop for simulator in (find-instances 'simulator '(running-simulators) :all)
-     for simulation = (last (simulations-of simulator))
-     do (translate-world-state msg simulation)))
+  (loop for simr in (find-instances 'simulator '(running-simulators) :all)
+     for simn = (current-simulation simr)
+     for ws = (translate-world-state msg simn)
+     do (annotate-with-predicates ws)))
               
 (defun subscribe-to-world-state ()
   (subscribe "gazebo_world_state" "simulator_experiments/WorldState" #'world-state-handler))
