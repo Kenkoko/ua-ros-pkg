@@ -9,6 +9,9 @@
    (color :initform "Gazebo/Blue")
    (xyz  :initform '(0 0 0))
    (static? :initform nil)
+   ;; Predicates
+   (self-predicates :initform nil)
+   (binary-predicates :initform nil)
    ;; "Private" fields
    (xml-string :initform nil)
    (force-pub :initform nil))
@@ -30,7 +33,8 @@
                               (body-xml obj))))
           (if (not (static?-of obj))
               (setf xml-list (append xml-list (list (force-xml obj)))))
-          (print-xml-string xml-list :pretty nil))))
+          (concatenate 'string "<?xml version=\"1.0\"?>"
+                       (print-xml-string xml-list :pretty nil)))))
 
 ;;====================================================
 ;; ROS-based methods

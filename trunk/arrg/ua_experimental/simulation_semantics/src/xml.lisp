@@ -7,7 +7,7 @@
                  (read-line (sb-ext:process-output proc))
                  "/objects/")))
 
-;; TODO: Un-hardcode this, we are only doing this avoid symbol package problems
+;; TODO: probably get rid of this, we are only doing this avoid symbol package problems
 ;; created by s-xml
 ;; ... and it doesn't seem to do that anyway
 (defparameter *example-xml* 
