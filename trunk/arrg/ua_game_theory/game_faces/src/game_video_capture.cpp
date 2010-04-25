@@ -6,12 +6,6 @@
 // THIS PROGRAM IS RUN JUST ONCE DURING THE WHOSE SESSION
 // IT IS NOT CLOSED UNTIL THE EXPERIMENT IS DONE
 
-#define CV_NO_BACKWARD_COMPATIBILITY
-
-// OpenCV stuff
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-
 // ROS stuff
 #include <ros/ros.h>
 #include "ros/network.h"
@@ -19,26 +13,25 @@
 #include "game_faces/TwoPersonGame.h"
 #include "game_faces/GamePlay.h"
 
-// C++ stuff
-#include <sstream>
-#include <iostream>
-#include <cstdio>
-#include <string>
+// OpenCV and Boost
+#include <cv.h>
+#include <cxcore.h>
+#include <highgui.h>
+#include <boost/thread/thread.hpp>
 
-#ifdef _EiC
-#define WIN32
-#endif
+// C++ stuff
+#include <cassert>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
-using namespace cv;
+using namespace boost::gregorian;
+using namespace boost::posix_time;
 
-int frame_id=0;
-int player_id = 0;
-String Logmsg; 
+int done = false;
+FILE * pFile = 0;
+int frame_number = 0;
 ros::Subscriber game_sub;
-
-
-int videoCaptureThread();
 
 template <class T>
 inline std::string to_string (const T& t)
@@ -48,9 +41,109 @@ inline std::string to_string (const T& t)
 	return ss.str();
 }
 
+// Add time in nanoseconds
+void add_time(boost::xtime &xt, long dur){
+    if(xt.nsec > 1e9-dur){
+        xt.sec += 1;
+        xt.nsec = xt.nsec+dur - 1e9;
+    } else {
+        xt.nsec += dur;                        
+    }
+}
+
+long time_diff(boost::xtime &xt2, boost::xtime &xt1){
+    return (xt2.sec-xt1.sec) * 1e9 + (xt2.nsec-xt1.nsec);
+}
+
+void VideoCaptureThread(){
+	CvCapture* capture = NULL; 
+    int wait_len = 10; // wait 10ms for a key...?  boo.
+
+    {
+        /* OpenCV connect camera*/    	
+        //cout << "Getting Camera " << CV_CAP_ANY << endl; 	
+        capture = cvCreateCameraCapture (CV_CAP_ANY);
+        //capture = cvCaptureFromCAM(-1);
+        
+        // For each frame, write the frame to video and write to the logfile:
+        //   FrameId, message, time, game#, block#, turn#, play#, value#
+
+        if( !capture ){
+            printf("--- Could not start video capture\n");
+        }
+        else {
+            cout << "Capturing" << endl;
+            IplImage* frame = cvQueryFrame( capture );
+            CvSize imgSize;
+            imgSize.width = frame->width;
+            imgSize.height = frame->height;
+            double fps = cvGetCaptureProperty(capture,CV_CAP_PROP_FPS);
+            if (fps < 1){
+                cout << "Could not get camera capture rate, so guessing 15fps." << endl;
+                fps = 15;
+            }
+            CvVideoWriter *writer = cvCreateVideoWriter("/tmp/out.avi", 
+                                                        CV_FOURCC('M', 'J', 'P', 'G'), 
+                                                        fps,imgSize);
+            if( !writer ){
+                printf("--- Could not start video writing\n");                
+            } else {                
+                cout << "Writing movie file." << endl;
+                boost::xtime xt, xt2;
+                while( !done )
+                {
+            	    boost::xtime_get(&xt, boost::TIME_UTC);
+                    frame = cvQueryFrame(capture);
+                    /* Recording */
+                    if(frame==NULL)
+                    {
+                        printf("--- There's a problem with the video capture\n");
+                        break;
+                    }
+                    else
+                    {
+                        frame_number++;
+                        cvWriteFrame(writer, frame);
+                    }
+                    //Check if any keys have been pressed, for quitting.
+                    // Note:  This is only for the GUI interface, and we don't have one.
+                    // However, without it, it appears to burn lots of CPU somewhere
+            		//key = cvWaitKey (wait_len);
+            		//if( key == 'q' || key == 'Q' ){
+                    //    done = true;
+                    //}
+                    // This version tries to burn less, but it doesn't seem to interact with OpenCV as expected
+                    //cout << "Time started loop:   " << xt.sec<< "." << xt.nsec/1.0e9 << endl;
+            	    boost::xtime_get(&xt2, boost::TIME_UTC);
+                    //cout << "Time now:            " << xt2.sec<< "." << xt2.nsec/1.0e9 << endl;
+                    add_time(xt, 1e9L/15L);
+                    //cout << "Time to sleep until: " << xt.sec<< "." << xt.nsec/1.0e9 << ", diff: "<< time_diff(xt,xt2) << endl;
+                    boost::this_thread::sleep(xt);
+                    if (time_diff(xt,xt2) < 0){
+                    //    if (wait_len > 1)
+                    //        --wait_len;
+                        cout << "Dropped frame." << endl;
+                    }
+                }
+                cout << "Shutting down movie capture" << endl;
+            }
+            cvReleaseVideoWriter(&writer);
+        }
+        cvReleaseCapture( &capture );
+    }
+    fclose (pFile);
+    done = true;
+    return;
+}
+
 void gamePlayCallback(const game_faces::GamePlayConstPtr& msg)
 {
-    ROS_INFO("Received game play number: %d, amount: %d", msg->play_number, msg->amount);
+    char log_string[256];
+    ROS_INFO("Received game play number: %d, amount: %d,  frame_number: %d", 
+              msg->play_number, msg->amount, frame_number);
+
+    sprintf(log_string, "New Message at Frame: %d\n", frame_number);
+    fputs (log_string,pFile);
 }
 
 void gameStartCallback(const game_faces::TwoPersonGameConstPtr& msg)
@@ -83,12 +176,18 @@ int main( int argc,  char** argv )
     ros::NodeHandle video_listener_node;
     ros::Subscriber game_start_sub = video_listener_node.subscribe(String("Video") + to_string(player_id), 100, gameStartCallback);
 
-    // Initialize the video 
-
-    // Wait until the video is definitely ready to go
+    // Initialize the logfile
+    char filename[]="logfile.txt"; /* Construct the filename */
+    pFile = fopen (filename,"w");
+    if (!pFile)
+    {
+        printf(" ---  Couldn't create or open logfile :S  ----\n");
+        exit(1);
+    }
 
     // Create the video capture thread
-    videoCaptureThread();
+    boost::thread t1 = boost::thread::thread(boost::bind(&VideoCaptureThread));
+    
 
     ros::Rate loop_rate(30);
     while(ros::ok()){
@@ -96,124 +195,12 @@ int main( int argc,  char** argv )
         loop_rate.sleep();
     }
     // Shutdown the video thread cleanly
-    // Close all files
+    done = true;
+    t1.join();
+
     exit(0);
 }
 
-int videoCaptureThread(){
-	
-    CvCapture* capture = 0;
-   	Mat frame, image;
- 	char log_string[9];
-
-	/* Logfile is open for append */ 
-	FILE * pFile;
-	char filename[]="logfile.txt"; /* Construct the filename */
-	pFile = fopen (filename,"a");
-	if (!pFile)
-	{
-  	  	printf(" ---  Couldn't create or open logfile :S  ----\n");
-		return 1;
-    }	
- 	
-	/* OpenCV connect camera*/
-
-	
-   		/* Receive video from webcam */
-  	      capture = cvCaptureFromCAM(-1 );
- 	
-
-
-
-
-    
-    /*	cvNamedWindow( "VideoCapture", 1 );******/
-
-
-
-
-
-
-/* For each frame write to video each frame
-    and to the logfile: FrameId, message, time, game#, block#, turn#, play#, value# */
-   cout << "Got past initialization.  Entering capture loop." << endl;
-   if( capture )
-    {
-
-	 IplImage* iplImg = cvQueryFrame( capture );
-	 CvSize imgSize;
-	 imgSize.width = iplImg->width;
- 	 imgSize.height = iplImg->height;
-
-	 double fps = cvGetCaptureProperty(capture,CV_CAP_PROP_FPS);
-    	 CvVideoWriter *writer = cvCreateVideoWriter("/tmp/out.avi", CV_FOURCC('M', 'J', 'P', 'G'), fps,imgSize); /*construct the filename for video*/
-    cout << "Capturing" << endl;
-	/* Publish Ready */
-	/*if(ros::ok())
-        {
- 		std::stringstream ss;
- 		ss << "Ready";
- 		std_msgs::String msg;
- 		msg.data = ss.str();
- 		video.publish(msg);
- 		ROS_INFO("I published [%s]", ss.str().c_str());
- 		ros::spinOnce();
- 		loop_rate.sleep();
-       }
-    */
-
-        for(frame_id=1;;)
-        {
-            iplImg = cvQueryFrame( capture );
-            frame = iplImg;
-
-            if( frame.empty() )
-                break;
-
-	    /*log_string= "Frame: " + itoa(Id);	  */
-	    strcpy(log_string, "Frame: \n");	
-	    fputs (log_string,pFile);
-
-	    /* Recording */
-   	    if(iplImg==NULL)
-        	printf("--- There's a problem with the video capture\n");
-  	    else
-	        cvWriteFrame(writer, iplImg);
-
-    		
-            if( waitKey( 10 ) >= 0 ) /*Check for a special key*/
-                goto _cleanup_;
-        }
-
-        waitKey(0);
-_cleanup_:
-	/* Publish Finish */
-/*
-	if(ros::ok())
-        {
- 		std::stringstream ss;
- 		ss << "Finish";
- 		std_msgs::String msg;
- 		msg.data = ss.str();
- 		video.publish(msg);
- 		ROS_INFO("I published [%s]", ss.str().c_str());
- 		ros::spinOnce();
- 		loop_rate.sleep();
-       }
-*/
-	
-        cvReleaseCapture( &capture );
-        cvReleaseVideoWriter(&writer);
-
-    }
-
-    else
-       printf("~~~ There is no capture ~~~\n");
-
-/*     cvDestroyWindow("VideoCapture");*/
-    fclose (pFile);
-    return 0;
-}
 
 
 
