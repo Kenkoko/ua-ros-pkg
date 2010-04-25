@@ -2,7 +2,7 @@
 
 try:
 
-	rosrun color_based_tracking camshift5 true overhead_cam/image_raw histograms/white_block_hist
+	rosrun color_based_tracking ian_method overhead_cam/image_raw histograms/white_block_hist
 
 Written by: Jeremy Wright
 with code borrowed from various sources

@@ -29,17 +29,9 @@ rosbuild_genmsg()
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-
-#rosbuild_add_library(blob src/cvBlobsLib/Blob.cpp src/cvBlobsLib/BlobResult.cpp src/cvBlobsLib/BlobExtraction.cpp)
-#rosbuild_add_executable(single_color_tracking src/single_color_tracking.cpp)
-#rosbuild_add_executable(single_color_tracking2 src/single_color_tracking2.cpp)
-#target_link_libraries(cvblobslib blob)
-
-#rosbuild_add_executable(blobtracking src/blobtracking.cpp)
 #rosbuild_add_executable(hsv_camshift src/hsv_camshift.cpp)
 #rosbuild_add_executable(rgb_camshift src/rgb_camshift.cpp)
 #rosbuild_add_executable(ian_demo src/ian_method_demo.cpp)
 #rosbuild_add_executable(ian_method src/ian_method.cpp)
-#rosbuild_add_executable(discover src/discover_objects.cpp)
 rosbuild_add_executable(ian_method3 src/ian_method3.cpp)
 

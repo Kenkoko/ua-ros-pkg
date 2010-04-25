@@ -13,7 +13,7 @@ with code borrowed from various sources
 #include <std_msgs/String.h>
 #include "sensor_msgs/Image.h"
 #include "image_transport/image_transport.h"
-#include "geometry_msgs/Polygon.h"
+#include "geometry_msgs/PolygonStamped.h"
 //#include "wubble_vision/bounding_box.h"
 #include "cv_bridge/CvBridge.h"
 #include <opencv/cv.h>
@@ -30,6 +30,23 @@ with code borrowed from various sources
 
 namespace ublas = boost::numeric::ublas;
 
+IplImage *image, *frame, *mask, *backproject, *bp8U, *sum, *r, *g, *b, *planes[3];
+CvHistogram *bg_hist, *fg_hist, *lglikrat;
+CvMemStorage* storage;
+CvSeq* contour;
+
+CvPoint origin;
+CvRect selection, box;
+CvRect track_window;
+CvBox2D track_box;
+CvConnectedComp track_comp;
+float range_arr[2], *ranges[3], value, maxlik, epsilon;
+double *sumdata;
+int track_object, h, w, step, boxhstep, dims[3], thepoint[2];
+char* object;
+bool show_images;
+FILE *histogram;
+
 ublas::matrix<double> K (3, 3);
 
 class Tracker {
@@ -40,35 +57,33 @@ Tracker(ros::NodeHandle &n, int argc, char** argv) :
 	n_(n), it_(n_)
 {
 	track_object = 0;
-	dims[0] = 8; dims[1] = 8; dims[2] = 8;
-	range_arr[0] = 0; range_arr[1] = 255;
-	ranges[0] = range_arr; ranges[1] = range_arr; ranges[2] = range_arr;
+	dims = {8,8,8};
+	range_arr = {0,255};
+	ranges = {range_arr,range_arr,range_arr};
 	epsilon = 0.1;
 	fg_hist = cvCreateHist( 3, dims, CV_HIST_ARRAY, ranges, 1 );
 	storage = cvCreateMemStorage(0);
 	contour = 0;
 
-/**/	cvNamedWindow( "Extra", 1 );
-	cvNamedWindow( "Demo", 1 );
+	show_images = argc < 4;
+	if( show_images ) {
+/**/		cvNamedWindow( "Extra", 1 );
+		cvNamedWindow( "Demo", 1 );
+	}
 
+	arg1 = argv[1];
+	arg2 = argv[2];
+	foundpoints.header.frame_id = arg1;
 	object_sub_ = n.subscribe("look_for_this", 1, &Tracker::stringCallback, this);
-	camera_sub_ = n.subscribe(argv[2], 1, &Tracker::cameraCallback, this);
-	image_sub_ = it_.subscribe(argv[1], 1, &Tracker::imageCallback, this);
-	bound_pub_ = n_.advertise<geometry_msgs::Polygon>("/look_for_this/found_it",1);
+//	camera_sub_ = n.subscribe(argv[2], 1, &Tracker::cameraCallback, this);
+	image_sub_ = it_.subscribe(arg1+arg2, 1, &Tracker::imageCallback, this);
+	bound_pub_ = n_.advertise<geometry_msgs::PolygonStamped>("/look_for_this/found_it",1);
+
 }
 
 ~Tracker()
 {
-	cvDestroyWindow("Demo");
-	cvDestroyWindow("Extra");
-	cvReleaseImage(&image);
-	cvReleaseImage(&frame);
-	cvReleaseImage(&mask);
-	cvReleaseImage(&backproject);
-	cvReleaseImage(&sum);
-	cvReleaseImage(&r);
-	cvReleaseImage(&g);
-	cvReleaseImage(&b);
+
 }
 
 void myBackProjectAndIntegrate( IplImage* img, IplImage* backprojection, IplImage* sum, const CvHistogram* hist )
@@ -166,6 +181,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	try
 	{
 		frame = bridge_.imgMsgToCv(msg_ptr, "bgr8");
+		foundpoints.header.stamp = ros::Time();
 	}
 	catch (sensor_msgs::CvBridgeException error)
 	{
@@ -174,7 +190,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 
 	if( !image )
 	{
-		int scale_factor = 2;
+		int scale_factor = 1;
 		image = cvCreateImage( cvSize(cvGetSize(frame).width/scale_factor,cvGetSize(frame).height/scale_factor), 8, 3 );
 		image->origin = frame->origin;
 		mask = cvCreateImage( cvGetSize(image), IPL_DEPTH_8U, 1 );
@@ -187,8 +203,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 		b = cvCreateImage( cvGetSize(image), 8, 1 );
 	}
 
-//	cvCopy( frame, image, 0 );
-	cvResize( frame, image );
+	cvCopy( frame, image, 0 );
+//	cvResize( frame, image );
 
 	if( track_object )
 	{
@@ -196,19 +212,17 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 		{
 		
 			cvSplit( image, b, g, r, 0 );
-			planes[0]=b; planes[1] = g; planes[2]=r;
+			planes = {b,g,r};
 			
 			float max_val = 0.f, min_val = 0.f;
 			cvCalcHist( planes, bg_hist, 0, 0 );
-//			cvGetMinMaxHistValue( fg_hist, 0, &max_val, 0, 0 );
 
 	                cvGetMinMaxHistValue( fg_hist, &min_val, &max_val, 0, 0 );
 	                cvConvertScale( fg_hist->bins, fg_hist->bins, max_val ? 255. / max_val : 0., 0 );
 	                cvCalcBackProject( planes, backproject, fg_hist);
 			cvThreshold( backproject, backproject, 127, 255, CV_THRESH_BINARY_INV);
-       	       		cvShowImage( "Extra", backproject);
        			cvCalcHist( planes, bg_hist, 0, backproject );
-       			cvCalcBackProject( planes, backproject, bg_hist);
+//       			cvCalcBackProject( planes, backproject, bg_hist);
 
 			cvNormalizeHist(bg_hist, 1);
 			cvNormalizeHist(fg_hist, 1);
@@ -248,24 +262,32 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 			}
 		}
 /**/
-//		cvRectangle(image,cvPoint(box.x,box.y),cvPoint(box.x+box.width,box.y+box.height),cvScalar(0,0,255),3,8,0);
 		cvRectangle(image,cvPoint(foundbox.x,foundbox.y),cvPoint(foundbox.x+foundbox.width,foundbox.y+foundbox.height),cvScalarAll(255),1,8,0);	
-		
-//		cvShowImage( "Extra", backproject);
 		
 		cvSetImageROI( backproject, foundbox );
 		cvSetImageROI( image, foundbox);
 		contour = 0;
 		cvFindContours( backproject, storage, &contour, sizeof(CvContour), CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+
+
+		foundpoints.polygon.set_points_size(4);
+		CvPoint2D32f arrrrgh[4];		
 		for( ; contour != 0; contour = contour->h_next )
 		{
+			cvBoxPoints( cvMinAreaRect2( contour ), arrrrgh );
+			for( int i=0; i<4; i++ ) {
+				foundpoints.polygon.points[i].x = arrrrgh[i].x+foundbox.x;
+				foundpoints.polygon.points[i].y = arrrrgh[i].y+foundbox.y;
+			}
+/**/		
 			CvScalar color = CV_RGB( rand()&255, rand()&255, rand()&255 );
 			cvDrawContours( image, contour, color, color, -1, 1, 8 );
 	        }
 	        cvResetImageROI( backproject );
 	        cvResetImageROI( image );
+	
 
-        	ublas::matrix<double> output (3,2);
+/*        	ublas::matrix<double> output (3,2);
         	printf("%i %i\n", foundbox.x, foundbox.y);
 		output(0,0) = 2*foundbox.x;
 		output(1,0) = 2*foundbox.y;
@@ -283,13 +305,16 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	        
 /**/	}
 
-	cvShowImage( "Demo", image );
-//	cvShowImage( "Extra", backproject);
-	cvWaitKey(3);
+
+	if( show_images ) {
+		cvShowImage( "Demo", image );
+		cvShowImage( "Extra", backproject);
+		cvWaitKey(3);
+	}
 
 	try
 	{
-    	bound_pub_.publish(foundpoints);
+		bound_pub_.publish(foundpoints);
 	}
 	catch (sensor_msgs::CvBridgeException error)
 	{
@@ -311,18 +336,10 @@ ros::Subscriber object_sub_;
 ros::Subscriber camera_sub_;
 char** args;
 bool show_image;
-geometry_msgs::Polygon foundpoints;
+geometry_msgs::PolygonStamped foundpoints;
+std::string arg1, arg2;
 
-IplImage *image, *frame, *mask, *backproject, *bp8U, *sum, *r, *g, *b, *planes[3];
-CvHistogram *bg_hist, *fg_hist, *lglikrat;
-CvMemStorage* storage;
-CvSeq* contour;
 
-int track_object, dims[3], thepoint[2], h, w, step, boxhstep;
-float range_arr[2], *ranges[3], value, maxlik, epsilon;
-double *sumdata;
-char* object;
-FILE *histogram;
 };
 
 int main(int argc, char** argv)
