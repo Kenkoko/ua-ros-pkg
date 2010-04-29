@@ -74,6 +74,10 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     int width = bg->width;
     int height = bg->height;
     
+    CvMat *bgr_new = cvCreateMat(1, 3, CV_32FC1);
+    CvMat *bgr_ave = cvCreateMat(1, 3, CV_32FC1);
+    CvMat *inv_cov = cvCreateMatHeader(3, 3, CV_32FC1);
+    
     for (int y = 0; y < height; ++y)
     {
         uchar* ptr_bg = bg_data + y * bg->widthStep;
@@ -81,32 +85,29 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
         
         for (int x = 0; x < width; ++x)
         {
-            CvMat *bgr_new = cvCreateMat(1, 3, CV_32FC1);
-            CvMat *bgr_ave = cvCreateMat(1, 3, CV_32FC1);
-            CvMat inv_cov;
-            
             cvSet1D(bgr_new, 0, cvScalar(ptr_bg[3*x]));
             cvSet1D(bgr_new, 1, cvScalar(ptr_bg[3*x+1]));
             cvSet1D(bgr_new, 2, cvScalar(ptr_bg[3*x+2]));
-
+            
             cvSet1D(bgr_ave, 0, cvScalar(ptr_ave[3*x]));
             cvSet1D(bgr_ave, 1, cvScalar(ptr_ave[3*x+1]));
             cvSet1D(bgr_ave, 2, cvScalar(ptr_ave[3*x+2]));
-
-            cvInitMatHeader(&inv_cov, 3, 3, CV_32FC1, &cov_mats_inv[(y*width+x)*9]);
             
-            double mah_dist = cvMahalanobis(bgr_new, bgr_ave, &inv_cov);
-            double unnorm_gaussian = exp(-0.5 * mah_dist);        
+            cvInitMatHeader(inv_cov, 3, 3, CV_32FC1, &cov_mats_inv[(y*width+x)*9]);
+            
+            double mah_dist = cvMahalanobis(bgr_new, bgr_ave, inv_cov);
+            double unnorm_gaussian = exp(-0.5 * mah_dist);
             double partition = 1.0 / (pow(TWO_PI, 1.5) * sqrt(dets[y*width+x]));
             float p = partition * unnorm_gaussian;
-
-            prob_data[y*width+x] = p;
             
-            cvReleaseMat(&bgr_new);
-            cvReleaseMat(&bgr_ave);
+            prob_data[y*width+x] = p;
         }
     }
-
+    
+    cvReleaseMat(&bgr_new);
+    cvReleaseMat(&bgr_ave);
+    cvReleaseMat(&inv_cov);
+    
     double min, max;
     cvMinMaxLoc(prob_img, &min, &max);
     cvConvertScale(prob_img, prob_img, 1.0 / max);
@@ -122,9 +123,10 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 //    }
     prob_img_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(prob_img));
     
-    cvReleaseImage(&bg);
     bg_data = NULL;
+    cvReleaseImage(&bg);
     
+    prob_data = NULL;
     cvReleaseImage(&prob_img);
 }
 
