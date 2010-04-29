@@ -14,7 +14,7 @@
 using namespace std;
 
 IplImage *ave_bg;
-uchar *ave_img;
+uchar *ave_data;
 
 vector<float> cov_mats;
 vector<float> cov_mats_inv;
@@ -58,53 +58,53 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 
     try
     {
-        bg = bridge.imgMsgToCv(msg_ptr, "bgr8");
+        bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, ave_bg->nChannels);
+        cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), bg);
     }
     catch (sensor_msgs::CvBridgeException error)
     {
         ROS_ERROR("CvBridgeError");
     }
     
-    uchar *new_img = (uchar *) bg->imageData;
+    uchar *bg_data = (uchar *) bg->imageData;
     
     IplImage *prob_img = cvCreateImage(cvGetSize(bg), IPL_DEPTH_32F, 1);
     float *prob_data = (float *) prob_img->imageData;
 
     int width = bg->width;
     int height = bg->height;
-
-    for (int i = 0; i < width*height; ++i)
+    
+    for (int y = 0; y < height; ++y)
     {
-        CvMat *bgr_new = cvCreateMat(1, 3, CV_32FC1);
-        CvMat *bgr_ave = cvCreateMat(1, 3, CV_32FC1);
-        CvMat inv_cov;
+        uchar* ptr_bg = bg_data + y * bg->widthStep;
+        uchar* ptr_ave = ave_data + y * ave_bg->widthStep;
         
-        cvSet1D(bgr_new, 0, cvScalar(new_img[i*3]));
-        cvSet1D(bgr_new, 1, cvScalar(new_img[i*3+1]));
-        cvSet1D(bgr_new, 2, cvScalar(new_img[i*3+2]));
+        for (int x = 0; x < width; ++x)
+        {
+            CvMat *bgr_new = cvCreateMat(1, 3, CV_32FC1);
+            CvMat *bgr_ave = cvCreateMat(1, 3, CV_32FC1);
+            CvMat inv_cov;
+            
+            cvSet1D(bgr_new, 0, cvScalar(ptr_bg[3*x]));
+            cvSet1D(bgr_new, 1, cvScalar(ptr_bg[3*x+1]));
+            cvSet1D(bgr_new, 2, cvScalar(ptr_bg[3*x+2]));
 
-        cvSet1D(bgr_ave, 0, cvScalar(ave_img[i*3]));
-        cvSet1D(bgr_ave, 1, cvScalar(ave_img[i*3+1]));
-        cvSet1D(bgr_ave, 2, cvScalar(ave_img[i*3+2]));
+            cvSet1D(bgr_ave, 0, cvScalar(ptr_ave[3*x]));
+            cvSet1D(bgr_ave, 1, cvScalar(ptr_ave[3*x+1]));
+            cvSet1D(bgr_ave, 2, cvScalar(ptr_ave[3*x+2]));
 
-        cvInitMatHeader(&inv_cov, 3, 3, CV_32FC1, &cov_mats_inv[i*9]);
-        
-        double mah_dist = cvMahalanobis(bgr_new, bgr_ave, &inv_cov);
-        double unnorm_gaussian = exp(-0.5 * mah_dist);        
-        double partition = 1.0 / (pow(TWO_PI, 1.5) * sqrt(dets[i]));
+            cvInitMatHeader(&inv_cov, 3, 3, CV_32FC1, &cov_mats_inv[(y*width+x)*9]);
+            
+            double mah_dist = cvMahalanobis(bgr_new, bgr_ave, &inv_cov);
+            double unnorm_gaussian = exp(-0.5 * mah_dist);        
+            double partition = 1.0 / (pow(TWO_PI, 1.5) * sqrt(dets[y*width+x]));
+            float p = partition * unnorm_gaussian;
 
-        //cout << "mah = " << mah_dist << ", guss = " << unnorm_gaussian << ", part = " << partition << endl;
-        float p = partition * unnorm_gaussian;
-
-//        if (p > 1 || p < 0)
-//        {
-//            cout << i << " : " << p << endl;
-//        }
-
-        prob_data[i] = p;
-
-        cvReleaseMat(&bgr_new);
-        cvReleaseMat(&bgr_ave);
+            prob_data[y*width+x] = p;
+            
+            cvReleaseMat(&bgr_new);
+            cvReleaseMat(&bgr_ave);
+        }
     }
 
     double min, max;
@@ -113,16 +113,16 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 
     cvShowImage("prob_img", prob_img);
     cvWaitKey(100);
-    if (first)
-    {
-        CvMat* m = cvCreateMatHeader(prob_img->height, prob_img->width, CV_32FC1);
-        cvGetMat(prob_img, m);
-        print_mat(m);
-        first = false;
-    }
+//    if (first)
+//    {
+//        CvMat* m = cvCreateMatHeader(prob_img->height, prob_img->width, CV_32FC1);
+//        cvGetMat(prob_img, m);
+//        print_mat(m);
+//        first = false;
+//    }
     prob_img_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(prob_img));
     
-    new_img = NULL;
+    bg_data = NULL;
     
     cvReleaseImage(&prob_img);
 }
@@ -132,10 +132,7 @@ int main (int argc, char **argv)
     ros::init(argc, argv, "background_sub");
     ros::NodeHandle n;
     
-    image_sub = n.subscribe("image", 1, handle_image);
     ros::ServiceClient client = n.serviceClient<background_filters::GetBgStats>("get_background_stats");
-    ros::Publisher ave_bg_pub = n.advertise<sensor_msgs::Image>("average_bg_service", 1);
-    prob_img_pub = n.advertise<sensor_msgs::Image>("prob_img", 1);
     
     background_filters::GetBgStats srv;
     sensor_msgs::CvBridge b;
@@ -144,13 +141,17 @@ int main (int argc, char **argv)
 
     if (client.call(srv))
     {
+        cout << "calling service" << endl;
+
         b.fromImage(srv.response.average_background, "bgr8");
         ave_bg = b.toIpl();
-        ave_img = (uchar *) ave_bg->imageData;
+        ave_data = (uchar *) ave_bg->imageData;
         cov_mats = srv.response.covariance_matrix;
         cov_mats_inv = srv.response.covariance_matrix_inv;
         dets = srv.response.covariance_matrix_dets;
         std_dev = srv.response.standard_deviations;
+
+        cout << "done calling service" << endl;
     }
     else
     {
@@ -158,6 +159,12 @@ int main (int argc, char **argv)
         return 1;
     }
     
+    cout << "subscribing" << endl;
+    image_sub = n.subscribe("image", 1, handle_image);
+    ros::Publisher ave_bg_pub = n.advertise<sensor_msgs::Image>("average_bg_service", 1);
+    prob_img_pub = n.advertise<sensor_msgs::Image>("prob_img", 1);
+    cout << "done subscribing" << endl;
+
 //    ros::Rate r(1.0);
 //    while (ros::ok())
 //    {
