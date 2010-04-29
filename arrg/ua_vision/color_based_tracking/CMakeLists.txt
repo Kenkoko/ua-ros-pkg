@@ -17,9 +17,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
-rosbuild_genmsg()
+#rosbuild_genmsg()
 #uncomment if you have defined services
-#rosbuild_gensrv()
+rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
@@ -33,5 +33,6 @@ rosbuild_genmsg()
 #rosbuild_add_executable(rgb_camshift src/rgb_camshift.cpp)
 #rosbuild_add_executable(ian_demo src/ian_method_demo.cpp)
 #rosbuild_add_executable(ian_method src/ian_method.cpp)
-rosbuild_add_executable(ian_method3 src/ian_method3.cpp)
-
+#rosbuild_add_executable(ian_method3 src/ian_method3.cpp)
+#rosbuild_add_executable(find_by_color src/find_by_color.cpp)
+rosbuild_add_executable(color_specific_tracker src/color_specific_tracker.cpp)
