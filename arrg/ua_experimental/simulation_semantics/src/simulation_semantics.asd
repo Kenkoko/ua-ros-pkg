@@ -8,7 +8,7 @@
                  (:file "simulator-class" :depends-on ("object-class"))
                  (:file "classes" :depends-on ("object-class" "simulator-class"))
                  (:file "state" :depends-on ("classes"))
-                 (:file "predicates" :depends-on ("state" "permutations"))
+                 (:file "predicates" :depends-on ("object-class" "state" "permutations"))
                  (:file "simulators" :depends-on ("classes")))
     :depends-on ("roslisp" 
                  "simulator_experiments-msg"

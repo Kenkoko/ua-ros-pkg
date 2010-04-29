@@ -40,6 +40,9 @@
   (:dimensional-values
    (time :point time)))
 
+(defmethod initialize-instance :after ((ws world-state) &key)
+  (annotate-with-predicates ws))
+
 ;;===========================================================
 
 (define-unit-class object-state ()

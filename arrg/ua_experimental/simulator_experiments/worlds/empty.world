@@ -88,22 +88,31 @@
       <interface:audio name="dummy_iface1"/>
     </controller:gazebo_ros_time>
   
+<!--    <controller:gazebo_ros_factory name="gazebo_ros_factory" plugin="libgazebo_ros_factory.so">-->
+<!--      <alwaysOn>true</alwaysOn>-->
+<!--      <updateRate>20.0</updateRate>-->
+<!--      <robotNamespace>/</robotNamespace>-->
+<!--      <spawnModelServiceName>add_model</spawnModelServiceName>-->
+<!--      <deleteModelServiceName>delete_model</deleteModelServiceName>-->
+<!--      <interface:audio name="dummy_iface2"/>-->
+<!--    </controller:gazebo_ros_factory>-->
+
     <controller:delete_object_plugin name="delete_object_plugin" plugin="libdelete_object_plugin.so">
         <alwaysOn>true</alwaysOn>
-        <updateRate>1.0</updateRate>
+        <updateRate>20.0</updateRate>
         <interface:audio name="dummy_iface2"/>
     </controller:delete_object_plugin>
 
     <controller:add_object_plugin name="add_object_plugin" plugin="libadd_object_plugin.so">
         <alwaysOn>true</alwaysOn>
-        <updateRate>1.0</updateRate>
+        <updateRate>20.0</updateRate>
         <interface:audio name="dummy_iface3"/>
     </controller:add_object_plugin>
 
     <controller:world_state_publisher name="world_state_publisher" plugin="libworld_state_publisher.so">
         <alwaysOn>true</alwaysOn>
         <topicName>gazebo_world_state</topicName>
-        <updateRate>20.0</updateRate>
+        <updateRate>1.0</updateRate>
         <interface:audio name="world_state_dummy_iface" />
     </controller:world_state_publisher>
   </model:physical>
