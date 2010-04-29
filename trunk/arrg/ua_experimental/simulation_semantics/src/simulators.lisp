@@ -14,6 +14,7 @@
                      :instance-name 'self
                      :gazebo-name "self"
                      :color "Gazebo/Green"
+                     :self-predicates '(force-mag)
                      :xyz '(0 0 0.1))))
 
 (defun make-above-box ()

@@ -61,9 +61,12 @@
 
 (defun world-state-handler (msg)
   (loop for simr in (find-instances 'simulator '(running-simulators) :all)
-     for simn = (current-simulation simr)
-     for ws = (translate-world-state msg simn)
-     do (annotate-with-predicates ws)))
-              
+     for simn = (current-simulation simr) ;; This is somethings null - why?
+     if (null simn)
+     do (ros-error "TEST" "SIMULATION IS NULL IN WS HANDLER")
+       (format t "SIMULATION IS NULL for simulator ~a~%" simr)
+     else do (let* ((ws (translate-world-state msg simn)))
+               (annotate-with-predicates ws))))
+                   
 (defun subscribe-to-world-state ()
   (subscribe "gazebo_world_state" "simulator_experiments/WorldState" #'world-state-handler))
