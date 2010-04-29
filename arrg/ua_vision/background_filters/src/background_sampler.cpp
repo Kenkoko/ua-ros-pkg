@@ -17,6 +17,13 @@ class BackgroundAverager
 private:
     double delay;
     int num_samples;
+    int scale;
+    string colorspace;
+    
+    int img_width;
+    int img_height;
+    int img_depth;
+    int img_n_chan;
     
     IplImage **bgs;
     IplImage *ave_bg;
@@ -26,6 +33,7 @@ private:
     vector<float> dets;
     int bg_counter;
     bool have_ave_bg;
+    bool initialized;
     
     ros::ServiceServer service;
     ros::Subscriber image_sub;
@@ -35,12 +43,15 @@ public:
     BackgroundAverager(ros::NodeHandle& nh)
     {
         ros::NodeHandle ln("~");
+        ln.param("scale", scale, 1);
+        ln.param("colorspace", colorspace, string("bgr"));
         ln.param("number_of_samples", num_samples, 10);
         ln.param("sampling_delay", delay, 0.0);
         
         bgs = (IplImage **) calloc(num_samples, sizeof(IplImage *));
         bg_counter = 0;
         have_ave_bg = false;
+        initialized = false;
         
         image_sub = nh.subscribe("image", 1, &BackgroundAverager::handle_image, this);
         ave_bg_pub = nh.advertise<sensor_msgs::Image>("average_bg", 1);
@@ -89,6 +100,27 @@ public:
 
     void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     {
+        if (!initialized)
+        {
+            sensor_msgs::CvBridge bridge;
+            IplImage *img = NULL;
+            
+            try
+            {
+                img = bridge.imgMsgToCv(msg_ptr, "bgr8");
+                img_width = img->width / scale;
+                img_height = img->height / scale;
+                img_depth = img->depth;
+                img_n_chan = img->nChannels;
+            }
+            catch (sensor_msgs::CvBridgeException error)
+            {
+                ROS_ERROR("CvBridgeError");
+            }
+            
+            initialized = true;
+        }
+        
         if (bg_counter < num_samples)
         {
             sensor_msgs::CvBridge bridge;
@@ -96,8 +128,20 @@ public:
             
             try
             {
-                bg = bridge.imgMsgToCv(msg_ptr, "bgr8");
-                bgs[bg_counter++] = cvCloneImage(bg);
+                if (scale != 1)
+                {
+                    bg = cvCreateImage(cvSize(img_width, img_height), IPL_DEPTH_8U, img_n_chan);
+                    cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), bg);
+                    bgs[bg_counter++] = bg;
+                }
+                else
+                {
+                    bg = bridge.imgMsgToCv(msg_ptr, "bgr8");
+                    bgs[bg_counter++] = cvCloneImage(bg);
+                }
+                
+                cout << bgs[bg_counter - 1] << endl;
+                
                 if (delay > 0.0) { ros::Duration(delay).sleep(); }
             }
             catch (sensor_msgs::CvBridgeException error)
@@ -111,19 +155,13 @@ public:
         if (!have_ave_bg)
         {
             ROS_INFO("Collected samples for background avergaing");
+            ROS_INFO("Image: %dx%d with %d channels (depth is %d)", img_width, img_height, img_n_chan, img_depth);
             
-            int img_width = bgs[0]->width;
-            int img_height = bgs[0]->height;
-            int img_depth = bgs[0]->depth;
-            int img_channels = bgs[0]->nChannels;
-            
-            ROS_INFO("Image: %dx%d with %d channels (depth is %d)", img_width, img_height, img_channels, img_depth);
-            
-            ave_bg = cvCreateImage(cvSize(img_width, img_height), img_depth, img_channels);
+            ave_bg = cvCreateImage(cvSize(img_width, img_height), img_depth, img_n_chan);
             uchar *ave_data = (uchar *) ave_bg->imageData;
             
             // figure out the actual size of image array
-            int size = img_width * img_height * img_channels;
+            int size = img_width * img_height * img_n_chan;
             
             uchar *temp[num_samples];
             
