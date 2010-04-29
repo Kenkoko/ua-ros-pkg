@@ -1,0 +1,3 @@
+string color
+---
+geometry_msgs/PolygonStamped bounding_box
