@@ -233,7 +233,7 @@ public:
                 if (i == 0 || i == 3)
                 {
                     print_mat(covMat);
-                    cout << endl << endl;
+                    cout << endl;
                 }
 
                 dets[i/3] = cvInvert(covMat, covMatInv, CV_LU);

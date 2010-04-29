@@ -122,6 +122,7 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 //    }
     prob_img_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(prob_img));
     
+    cvReleaseImage(&bg);
     bg_data = NULL;
     
     cvReleaseImage(&prob_img);
