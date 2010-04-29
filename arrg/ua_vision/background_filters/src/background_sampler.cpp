@@ -17,7 +17,7 @@ class BackgroundAverager
 private:
     double delay;
     int num_samples;
-    int scale;
+    double scale;
     string colorspace;
     
     int img_width;
@@ -33,7 +33,6 @@ private:
     vector<float> dets;
     int bg_counter;
     bool have_ave_bg;
-    bool initialized;
     
     ros::ServiceServer service;
     ros::Subscriber image_sub;
@@ -43,15 +42,14 @@ public:
     BackgroundAverager(ros::NodeHandle& nh)
     {
         ros::NodeHandle ln("~");
-        ln.param("scale", scale, 1);
-        ln.param("colorspace", colorspace, string("bgr"));
+        ln.param("scale", scale, 1.0);
+        ln.param("colorspace", colorspace, string("rgb"));
         ln.param("number_of_samples", num_samples, 10);
         ln.param("sampling_delay", delay, 0.0);
         
         bgs = (IplImage **) calloc(num_samples, sizeof(IplImage *));
         bg_counter = 0;
         have_ave_bg = false;
-        initialized = false;
         
         image_sub = nh.subscribe("image", 1, &BackgroundAverager::handle_image, this);
         ave_bg_pub = nh.advertise<sensor_msgs::Image>("average_bg", 1);
@@ -100,27 +98,9 @@ public:
 
     void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     {
-        if (!initialized)
-        {
-            sensor_msgs::CvBridge bridge;
-            IplImage *img = NULL;
-            
-            try
-            {
-                img = bridge.imgMsgToCv(msg_ptr, "bgr8");
-                img_width = img->width / scale;
-                img_height = img->height / scale;
-                img_depth = img->depth;
-                img_n_chan = img->nChannels;
-            }
-            catch (sensor_msgs::CvBridgeException error)
-            {
-                ROS_ERROR("CvBridgeError");
-            }
-            
-            initialized = true;
-        }
-        
+        img_width = (int) (msg_ptr->width / scale);
+        img_height = (int) (msg_ptr->height / scale);
+
         if (bg_counter < num_samples)
         {
             sensor_msgs::CvBridge bridge;
@@ -128,19 +108,12 @@ public:
             
             try
             {
-                if (scale != 1)
-                {
-                    bg = cvCreateImage(cvSize(img_width, img_height), IPL_DEPTH_8U, img_n_chan);
-                    cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), bg);
-                    bgs[bg_counter++] = bg;
-                }
-                else
-                {
-                    bg = bridge.imgMsgToCv(msg_ptr, "bgr8");
-                    bgs[bg_counter++] = cvCloneImage(bg);
-                }
+                bg = cvCreateImage(cvSize(img_width, img_height), IPL_DEPTH_8U, 3);
+                cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), bg);
+                bgs[bg_counter++] = bg;
                 
-                cout << bgs[bg_counter - 1] << endl;
+                img_depth = bg->depth;
+                img_n_chan = bg->nChannels;
                 
                 if (delay > 0.0) { ros::Duration(delay).sleep(); }
             }
@@ -163,13 +136,6 @@ public:
             // figure out the actual size of image array
             int size = img_width * img_height * img_n_chan;
             
-            uchar *temp[num_samples];
-            
-            for (int i = 0; i < num_samples; ++i)
-            {
-                temp[i] = (uchar *) bgs[i]->imageData;
-            }
-            
             // a 3x3 covariance matrix for each pixel in the image
             cov_mat.resize(img_width * img_height * 9);
             cov_mat_inv.resize(img_width * img_height * 9);
@@ -181,113 +147,113 @@ public:
             CvMat *covMatInv = cvCreateMat(3, 3, CV_32FC1);
             CvMat **vects = (CvMat **) calloc(num_samples, sizeof(CvMat *));
 
+            for (int i = 0; i < num_samples; ++i)
+            {
+                vects[i] = cvCreateMatHeader(1, 3, CV_8UC1);
+            }
+
             float alpha = 50;
 
-            // for each pixel in the image
-            for (int i = 0; i < size; i += 3)
+            for (int y = 0; y < img_height; ++y)
             {
-                // for each image sampled
-                for (int j = 0; j < num_samples; ++j)
-                {
-                    if (i == 0 || i == 3) vects[j] = cvCreateMat(1, 3, CV_8UC1);
-                    cvSet1D(vects[j], 0, cvScalar(temp[j][i]));
-                    cvSet1D(vects[j], 1, cvScalar(temp[j][i+1]));
-                    cvSet1D(vects[j], 2, cvScalar(temp[j][i+2]));
-                }
-                
-                if (i == 0 || i == 3)
+                for (int x = 0; x < img_width; ++x)
                 {
                     for (int j = 0; j < num_samples; ++j)
                     {
-                        print_mat(vects[j]);
+                        uchar* ptr = (uchar *) (bgs[j]->imageData + y * bgs[j]->widthStep + x*3);
+                        cvInitMatHeader(vects[j], 1, 3, CV_8UC1, ptr);
                     }
-                }
-                
-                if (i == 0 || i == 3)
-                cout << "Printing covar mat" << endl;
-                cvCalcCovarMatrix((const CvArr**) vects, num_samples, covMat, ave, CV_COVAR_NORMAL);
-                
-                cvConvertScale(covMat, covMat, 1.0 / num_samples);
-                
-                if (i == 0 || i == 3)
-                {
-                    print_mat(covMat);
-                    cout << endl;
-                }
-                
-                if (i == 0 || i == 3)
-                cout << "Printing averages of input vectors" << endl;
-                if (i == 0 || i == 3)
-                {
-                    print_mat(ave);
-                    cout << endl;
-                }
-
-                cvSet2D(covMat, 0, 0, cvScalar(cvGet2D(covMat, 0, 0).val[0] + alpha));
-                cvSet2D(covMat, 1, 1, cvScalar(cvGet2D(covMat, 1, 1).val[0] + alpha));
-                cvSet2D(covMat, 2, 2, cvScalar(cvGet2D(covMat, 2, 2).val[0] + alpha));
-                
-                if (i == 0 || i == 3)
-                cout << "Printing covar mat after business" << endl;
-
-                if (i == 0 || i == 3)
-                {
-                    print_mat(covMat);
-                    cout << endl;
-                }
-
-                dets[i/3] = cvInvert(covMat, covMatInv, CV_LU);
-                
-                for (int row = 0; row < covMat->rows; ++row)
-                {
-                    const float* ptr = (const float*)(covMat->data.ptr + row * covMat->step);
                     
-                    for (int col = 0; col < covMat->cols; ++col)
-                    {
-                        cov_mat[i*3 + row*covMat->cols + col] = *ptr++;
-                    }
-                }
-                
-                for (int row = 0; row < covMatInv->rows; ++row)
-                {
-                    const float* ptr = (const float*)(covMatInv->data.ptr + row * covMatInv->step);
+                    int pixel = y * img_width + x;
                     
-                    for (int col = 0; col < covMatInv->cols; ++col)
+                    if (pixel == 0)
                     {
-                        cov_mat_inv[i*3 + row*covMatInv->cols + col] = *ptr++;
-                    }
-                }
+                        for (int j = 0; j < num_samples; ++j)
+                        {
+                            print_mat(vects[j]);
+                        }
 
-                for (int row = 0; row < ave->rows; ++row)
-                {
-                    const float* ptr = (const float*)(ave->data.ptr + row * ave->step);
-                    
-                    for (int col = 0; col < ave->cols; ++col)
-                    {
-                        ave_data[i + row*ave->cols + col] = *ptr++;
+                        cout << "Printing covar mat" << endl;
                     }
+                    
+                    cvCalcCovarMatrix((const CvArr**) vects, num_samples, covMat, ave, CV_COVAR_NORMAL);
+                    cvConvertScale(covMat, covMat, 1.0 / num_samples);
+                    
+                    if (pixel == 0)
+                    {
+                        print_mat(covMat);
+                        cout << endl;
+
+                        cout << "Printing averages of input vectors" << endl;
+                        print_mat(ave);
+                        cout << endl;
+                    }
+
+                    cvSet2D(covMat, 0, 0, cvScalar(cvGet2D(covMat, 0, 0).val[0] + alpha));
+                    cvSet2D(covMat, 1, 1, cvScalar(cvGet2D(covMat, 1, 1).val[0] + alpha));
+                    cvSet2D(covMat, 2, 2, cvScalar(cvGet2D(covMat, 2, 2).val[0] + alpha));
+                    
+                    if (pixel == 0)
+                    {
+                        cout << "Printing covar mat after adding alpha" << endl;
+                        print_mat(covMat);
+                        cout << endl;
+                    }
+
+                    dets[pixel] = cvInvert(covMat, covMatInv, CV_LU);
+                    
+                    if (pixel == 0)
+                    {
+                        cout << "Printing covar mat after copying" << endl;
+                    }
+                    
+                    for (int row = 0; row < covMat->rows; ++row)
+                    {
+                        const float* ptr = (const float*)(covMat->data.ptr + row * covMat->step);
+                        
+                        for (int col = 0; col < covMat->cols; ++col)
+                        {
+                            cov_mat[pixel*9 + row*covMat->cols + col] = *ptr++;
+                            if (pixel == 0)
+                            {
+                                cout << cov_mat[pixel*9 + row*covMat->cols + col] << " ";
+                            }
+                        }
+                    }                    
+                    if (pixel == 0)
+                    {
+                        cout << endl;
+                    }
+
+                    for (int row = 0; row < covMatInv->rows; ++row)
+                    {
+                        const float* ptr = (const float*)(covMatInv->data.ptr + row * covMatInv->step);
+                        
+                        for (int col = 0; col < covMatInv->cols; ++col)
+                        {
+                            cov_mat_inv[pixel*9 + row*covMatInv->cols + col] = *ptr++;
+                        }
+                    }
+
+                    for (int row = 0; row < ave->rows; ++row)
+                    {
+                        const float* ptr = (const float*)(ave->data.ptr + row * ave->step);
+                        
+                        for (int col = 0; col < ave->cols; ++col)
+                        {
+                            ave_data[pixel*3 + row*ave->cols + col] = *ptr++;
+                        }
+                    }
+                    
+                    std_dev[pixel*3] = sqrt(cvGet2D(covMat, 0, 0).val[0]);
+                    std_dev[pixel*3+1] = sqrt(cvGet2D(covMat, 1, 1).val[0]);
+                    std_dev[pixel*3+2] = sqrt(cvGet2D(covMat, 2, 2).val[0]);
                 }
-                
-                float sumb = 0.0;
-                float sumg = 0.0;
-                float sumr = 0.0;
-                
-                for (int j = 0; j < num_samples; ++j)
-                {
-                     sumb += pow(temp[j][i] - ave_data[i], 2.0);
-                     sumg += pow(temp[j][i+1] - ave_data[i+1], 2.0);
-                     sumr += pow(temp[j][i+2] - ave_data[i+2], 2.0);
-                }
-                
-                std_dev[i] = sqrt(sumb / (num_samples - 1));
-                std_dev[i+1] = sqrt(sumg / (num_samples - 1));
-                std_dev[i+2] = sqrt(sumr / (num_samples - 1));
             }
-            
+
             for (int i = 0; i < num_samples; ++i)
             {
                 cvReleaseMat(&vects[i]);
-                temp[i] = NULL;
                 cvReleaseImage(&bgs[i]);
             }
             
