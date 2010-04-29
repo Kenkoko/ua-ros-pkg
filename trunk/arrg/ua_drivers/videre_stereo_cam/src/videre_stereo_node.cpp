@@ -171,6 +171,7 @@ class StereoDcamNode
     
     ros::Subscriber check_param_sub_;
     
+    videre_proc_mode_t videre_mode;
     int count_;
     double desired_freq_;
     
@@ -247,7 +248,7 @@ public:
             
             // Get the videre processing mode if available:
             string str_videre_mode;
-            videre_proc_mode_t videre_mode = PROC_MODE_NONE;
+            videre_mode = PROC_MODE_NONE;
             local_node_handle_.param("videre_mode", str_videre_mode, string("none"));
             
             if (str_videre_mode == string("rectified")) { videre_mode = PROC_MODE_RECTIFIED; }
@@ -278,10 +279,19 @@ public:
             stcam_->setCompanding(true);
             
             left_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("left/image_raw", 1);
-            right_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("right/image_raw", 1);
             left_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("left/camera_info", 1);
-            right_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("right/camera_info", 1);
-            //      disparity_pub_ = node_handle_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+
+            switch (videre_mode)
+            {
+                case PROC_MODE_NONE:
+                    right_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("right/image_raw", 1);
+                    right_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("right/camera_info", 1);
+                    break;
+                case PROC_MODE_DISPARITY:
+                case PROC_MODE_DISPARITY_RAW:
+                    disparity_pub_ = node_handle_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+                    break;
+            }
             
             check_param_sub_ = local_node_handle_.subscribe("check_params", 1, &StereoDcamNode::checkParams, this);
             
@@ -426,16 +436,21 @@ public:
         timestamp_diag_.tick(timestamp);
         
         left_image_pub_.publish(left_image_);
-        right_image_pub_.publish(right_image_);
         left_cam_info_pub_.publish(left_info_);
-        right_cam_info_pub_.publish(right_info_);
+
+        switch (videre_mode)
+        {
+            case PROC_MODE_NONE:
+                right_image_pub_.publish(right_image_);
+                right_cam_info_pub_.publish(right_info_);
+                break;
+            case PROC_MODE_DISPARITY:
+            case PROC_MODE_DISPARITY_RAW:
+                if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(disparity_image_); }
+                break;
+        }
         
-        //    if (stcam_->stIm->hasDisparity)
-        //    {
-        //        disparity_pub_.publish(disparity_image_);
-        //    }
-        
-        count_++;
+        ++count_;
         return true;
     }
 
