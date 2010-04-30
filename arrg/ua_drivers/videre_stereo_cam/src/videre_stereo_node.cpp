@@ -278,17 +278,25 @@ public:
             stcam_->setSpeckleDiff(10);
             stcam_->setCompanding(true);
             
-            left_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("left/image_raw", 1);
-            left_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("left/camera_info", 1);
-
             switch (videre_mode)
             {
+                // publish raw left and right images
                 case PROC_MODE_NONE:
+                    left_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("left/image_raw", 1);
+                    left_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("left/camera_info", 1);
                     right_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("right/image_raw", 1);
                     right_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("right/camera_info", 1);
                     break;
+                // publish monochrome rectified left image and disparity image from the camera
                 case PROC_MODE_DISPARITY:
+                    left_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("left/image_rect", 1);
+                    left_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("left/camera_info", 1);
+                    disparity_pub_ = node_handle_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+                    break;
+                // publish raw left image and disparity image from the camera
                 case PROC_MODE_DISPARITY_RAW:
+                    left_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("left/image_raw", 1);
+                    left_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("left/camera_info", 1);
                     disparity_pub_ = node_handle_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
                     break;
             }
@@ -437,7 +445,7 @@ public:
         
         left_image_pub_.publish(left_image_);
         left_cam_info_pub_.publish(left_info_);
-
+        
         switch (videre_mode)
         {
             case PROC_MODE_NONE:
