@@ -11,6 +11,7 @@ with code borrowed from various sources
 
 #include <ros/ros.h>
 #include <std_msgs/String.h>
+#include <std_msgs/Empty.h>
 #include "sensor_msgs/Image.h"
 #include "image_transport/image_transport.h"
 #include "geometry_msgs/PolygonStamped.h"
@@ -73,19 +74,20 @@ Tracker(ros::NodeHandle &n, int argc, char** argv) :
 	}
 #endif
 
-        input_cam_name = argv[1];
-        input_subtopic = argv[2];
-	input_topic    = input_cam_name + input_subtopic;
+        input_topic   = argv[1];
+        input_tf_name = argv[2];
 
 	histogram_name = argv[3];
 	output_topic   = argv[4];
 
-	foundpoints.header.frame_id = input_cam_name;
+	foundpoints.header.frame_id = input_tf_name;
 //	object_sub_ = n.subscribe("look_for_this", 1, &Tracker::stringCallback, this);
 //	camera_sub_ = n.subscribe(argv[2], 1, &Tracker::cameraCallback, this);
 
         /* this sets up the input stream */
 	image_sub_ = it_.subscribe(input_topic, 1, &Tracker::imageCallback, this);
+
+	reset_tracking_sub = n.subscribe(output_topic + "/reset_tracking", 1, &Tracker::resetTrackingCallback, this);
 
         /* this sets up the histogram.  Note that in this version of the
          * tracker, the histogram is determined by a command-line argument,
@@ -191,6 +193,11 @@ ublas::matrix<double> invertMatrix( ublas::matrix<double> ){
 	invK(2,2) = ( K(0,0)*K(1,1) - K(0,1)*K(1,0) ) / detK;	
 
 	return invK;
+}
+
+void resetTrackingCallback(const std_msgs::EmptyConstPtr &msg)
+{
+	track_object = -1;
 }
 
 #if 0
@@ -359,6 +366,7 @@ protected:
 ros::NodeHandle n_;
 image_transport::ImageTransport it_;
 image_transport::Subscriber image_sub_;
+ros::Subscriber reset_tracking_sub;
 sensor_msgs::CvBridge bridge_;
 image_transport::Publisher image_pub_;
 ros::Publisher bound_pub_;
@@ -367,7 +375,7 @@ ros::Subscriber camera_sub_;
 char** args;
 bool show_image;
 geometry_msgs::PolygonStamped foundpoints;
-std::string input_cam_name, input_subtopic, input_topic, histogram_name, output_topic;
+std::string input_topic, input_tf_name, histogram_name, output_topic;
 
 
 };
