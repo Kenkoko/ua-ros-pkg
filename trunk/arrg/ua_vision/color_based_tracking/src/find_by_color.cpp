@@ -159,10 +159,18 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 	{
 		ROS_ERROR("error");
 	}
+	
+	if( show_images && track_object ) {
+		cvShowImage( "Demo", image );
+		cvShowImage( "Extra", backproject);
+		cvWaitKey(3);
+	}
+	
 }
 
 bool find_by_color(color_based_tracking::FindByColor::Request &req, color_based_tracking::FindByColor::Response &res)
 {
+
 		printf("TEST 1\n");
 //	n_.getParam("histograms_path", histograms_path);
 	object = histograms_path + "sim_" + req.color + "_hist";
@@ -298,10 +306,10 @@ bool find_by_color(color_based_tracking::FindByColor::Request &req, color_based_
 /**/	}
 
 
-	if( show_images ) {
+	if( false ) {
 		cvShowImage( "Demo", image );
 		cvShowImage( "Extra", backproject);
-		cvWaitKey(3);
+		cvWaitKey(100);
 	}
 
 	res.bounding_box = foundpoints;
