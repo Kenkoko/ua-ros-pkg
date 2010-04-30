@@ -140,6 +140,7 @@ The camera will read from the following parameters:
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <stereo_msgs/DisparityImage.h>
+#include <sensor_msgs/PointCloud.h>
 
 #include <dcam1394/dcam1394.h>
 #include "videre_stereo_cam/stereodcam.h"
@@ -159,6 +160,7 @@ class StereoDcamNode
     sensor_msgs::CameraInfo left_info_;
     sensor_msgs::CameraInfo right_info_;
     stereo_msgs::DisparityImage disparity_image_;
+    sensor_msgs::PointCloud cloud_;
     
     diagnostic_updater::Updater diagnostic_;
     diagnostic_updater::TimeStampStatus timestamp_diag_;
@@ -168,10 +170,13 @@ class StereoDcamNode
     ros::Publisher left_cam_info_pub_;
     ros::Publisher right_cam_info_pub_;
     ros::Publisher disparity_pub_;
+    ros::Publisher cloud_pub_;
     
     ros::Subscriber check_param_sub_;
     
-    videre_proc_mode_t videre_mode;
+    videre_proc_mode_t videre_mode_;
+    bool do_calc_points_;
+    bool do_keep_coords_;
     int count_;
     double desired_freq_;
     
@@ -248,13 +253,17 @@ public:
             
             // Get the videre processing mode if available:
             string str_videre_mode;
-            videre_mode = PROC_MODE_NONE;
+            videre_mode_ = PROC_MODE_NONE;
             local_node_handle_.param("videre_mode", str_videre_mode, string("none"));
             
-            if (str_videre_mode == string("rectified")) { videre_mode = PROC_MODE_RECTIFIED; }
-            else if (str_videre_mode == string("disparity")) { videre_mode = PROC_MODE_DISPARITY; }
-            else if (str_videre_mode == string("disparity_raw")) { videre_mode = PROC_MODE_DISPARITY_RAW; }
-            else { videre_mode = PROC_MODE_NONE; }
+            if (str_videre_mode == string("rectified")) { videre_mode_ = PROC_MODE_RECTIFIED; }
+            else if (str_videre_mode == string("disparity")) { videre_mode_ = PROC_MODE_DISPARITY; }
+            else if (str_videre_mode == string("disparity_raw")) { videre_mode_ = PROC_MODE_DISPARITY_RAW; }
+            else { videre_mode_ = PROC_MODE_NONE; }
+            
+            local_node_handle_.param("calculate_points", do_calc_points_, false);
+            do_calc_points_ = do_calc_points_ && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW);
+            do_keep_coords_ = true;
             
             // Create the StereoDcam
             stcam_ = new dcam::StereoDcam(guid);
@@ -271,20 +280,28 @@ public:
             
             // Configure camera
             stcam_->setFormat(mode, fps, speed);
-            stcam_->setProcMode(videre_mode);
+            stcam_->setProcMode(videre_mode_);
             stcam_->setUniqueThresh(36);
             stcam_->setTextureThresh(30);
             stcam_->setSpeckleSize(100);
             stcam_->setSpeckleDiff(10);
             stcam_->setCompanding(true);
             
-            switch (videre_mode)
+            switch (videre_mode_)
             {
                 // publish raw left and right images
                 case PROC_MODE_NONE:
+                case PROC_MODE_OFF:
                     left_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("left/image_raw", 1);
                     left_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("left/camera_info", 1);
                     right_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("right/image_raw", 1);
+                    right_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("right/camera_info", 1);
+                    break;
+                // publish monochrome rectified left and right images
+                case PROC_MODE_RECTIFIED:
+                    left_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("left/image_rect", 1);
+                    left_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("left/camera_info", 1);
+                    right_image_pub_ = node_handle_.advertise<sensor_msgs::Image>("right/image_rect", 1);
                     right_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("right/camera_info", 1);
                     break;
                 // publish monochrome rectified left image and disparity image from the camera
@@ -299,6 +316,11 @@ public:
                     left_cam_info_pub_ = node_handle_.advertise<sensor_msgs::CameraInfo>("left/camera_info", 1);
                     disparity_pub_ = node_handle_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
                     break;
+            }
+            
+            if (do_calc_points_)
+            {
+                cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud>("points", 1);
             }
             
             check_param_sub_ = local_node_handle_.subscribe("check_params", 1, &StereoDcamNode::checkParams, this);
@@ -421,12 +443,54 @@ public:
             return false;
         }
         
+        ros::Time timestamp = ros::Time::now();
+        
         cam_bridge::StereoDataToRawStereo(stcam_->stIm,
                                           left_image_, right_image_,
                                           left_info_, right_info_,
                                           disparity_image_);
         
-        ros::Time timestamp = ros::Time::now();
+        if (do_calc_points_)
+        {
+            stcam_->doCalcPts();
+            
+            cloud_.header.stamp = timestamp;
+            cloud_.header.frame_id = frame_id_;
+            cloud_.points.resize(stcam_->stIm->numPts);
+            
+            if (do_keep_coords_) { cloud_.channels.resize(3); }
+            else { cloud_.channels.resize(1); }
+            
+            cloud_.channels[0].name = "rgb";
+            cloud_.channels[0].values.resize(stcam_->stIm->numPts);
+            
+            if (do_keep_coords_)
+            {
+                cloud_.channels[1].name = "u";
+                cloud_.channels[1].values.resize(stcam_->stIm->numPts);
+                cloud_.channels[2].name = "v";
+                cloud_.channels[2].values.resize(stcam_->stIm->numPts);
+            }
+            
+            for (int i = 0; i < stcam_->stIm->numPts; i++)
+            {
+                cloud_.points[i].x = stcam_->stIm->imPts[3*i + 0];
+                cloud_.points[i].y = stcam_->stIm->imPts[3*i + 1];
+                cloud_.points[i].z = stcam_->stIm->imPts[3*i + 2];
+            }
+            
+            for (int i = 0; i < stcam_->stIm->numPts; i++)
+            {
+                int rgb = (stcam_->stIm->imPtsColor[3*i] << 16) | (stcam_->stIm->imPtsColor[3*i + 1] << 8) | stcam_->stIm->imPtsColor[3*i + 2];
+                cloud_.channels[0].values[i] = *(float*)(&rgb);
+                
+                if (do_keep_coords_)
+                {
+                    cloud_.channels[1].values[i] = stcam_->stIm->imCoords[2*i+0];
+                    cloud_.channels[2].values[i] = stcam_->stIm->imCoords[2*i+1];
+                }
+            }
+        }
         
         left_image_.header.frame_id = frame_id_;
         left_image_.header.stamp = timestamp;
@@ -446,15 +510,18 @@ public:
         left_image_pub_.publish(left_image_);
         left_cam_info_pub_.publish(left_info_);
         
-        switch (videre_mode)
+        switch (videre_mode_)
         {
             case PROC_MODE_NONE:
+            case PROC_MODE_OFF:
+            case PROC_MODE_RECTIFIED:
                 right_image_pub_.publish(right_image_);
                 right_cam_info_pub_.publish(right_info_);
                 break;
             case PROC_MODE_DISPARITY:
             case PROC_MODE_DISPARITY_RAW:
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(disparity_image_); }
+                cloud_pub_.publish(cloud_);
                 break;
         }
         
