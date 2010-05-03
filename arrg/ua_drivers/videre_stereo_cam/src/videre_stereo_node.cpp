@@ -521,7 +521,7 @@ public:
             case PROC_MODE_DISPARITY:
             case PROC_MODE_DISPARITY_RAW:
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(disparity_image_); }
-                cloud_pub_.publish(cloud_);
+                if (do_calc_points_) { cloud_pub_.publish(cloud_); }
                 break;
         }
         
