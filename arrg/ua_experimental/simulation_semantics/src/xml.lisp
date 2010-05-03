@@ -7,9 +7,7 @@
                  (read-line (sb-ext:process-output proc))
                  "/objects/")))
 
-;; TODO: probably get rid of this, we are only doing this avoid symbol package problems
-;; created by s-xml
-;; ... and it doesn't seem to do that anyway
+;; Seems like we do actually need this?
 (defparameter *example-xml* 
   (parse-xml-file 
    (concatenate 'string (get-object-path) "blue_box.xml")))
