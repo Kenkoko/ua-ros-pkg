@@ -10,7 +10,7 @@
 
 (defun get-states-from-last-run (simulator-name)
   (reverse (find-instances 'world-state 
-                           (simulations-of (find-instance-by-name simulator-name 'simulator)) 
+                           (first (simulations-of (find-instance-by-name simulator-name 'simulator)))
                            :all)))
 
                 

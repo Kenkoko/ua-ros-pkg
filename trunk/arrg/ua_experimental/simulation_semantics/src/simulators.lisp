@@ -14,7 +14,7 @@
                      :instance-name 'self
                      :gazebo-name "self"
                      :color "Gazebo/Green"
-                     :self-predicates '(force-mag vel-mag dist-to-goal)
+                     :self-predicates '(force-mag vel-mag dist-to-goal x-pos)
                      :xyz '(0 0 0.1))))
 
 (defun make-above-box ()
@@ -22,7 +22,7 @@
       (make-instance 'physical-object 
                      :instance-name 'above-box
                      :gazebo-name "above_box"
-                     :self-predicates '(force-mag vel-mag)
+                     :self-predicates '(force-mag vel-mag x-pos)
                      :xyz '(0 0 0.4))))
 
 (defun make-front-box ()
@@ -30,7 +30,7 @@
       (make-instance 'physical-object 
                      :instance-name 'front-box
                      :gazebo-name "front_box"
-                     :self-predicates '(force-mag vel-mag)
+                     :self-predicates '(force-mag vel-mag x-pos)
                      :xyz '(0.4 0 0.1))))
 
 (defun make-static-box ()
@@ -39,7 +39,7 @@
                      :instance-name 'stuck-box
                      :gazebo-name "stuck_box"
                      :color "Gazebo/Red"
-                     :self-predicates '(force-mag vel-mag)
+                     :self-predicates '(force-mag vel-mag x-pos)
                      :xyz '(0.4 0 0.1)
                      :static? t)))
 
