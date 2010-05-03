@@ -14,7 +14,6 @@
 using namespace std;
 
 IplImage *ave_bg;
-uchar *ave_data;
 
 vector<float> cov_mats;
 vector<float> cov_mats_inv;
@@ -23,6 +22,8 @@ vector<float> std_dev;
 
 ros::Subscriber image_sub;
 ros::Publisher prob_img_pub;
+
+string colorspace = "rgb";
 
 void print_mat(CvMat *A)
 {
@@ -35,7 +36,7 @@ void print_mat(CvMat *A)
             case CV_32F:
             case CV_64F:
                 for (j = 0; j < A->cols; j++)
-                printf ("%8.3f ", (float)cvGetReal2D(A, i, j));
+                printf ("%8.6e ", (float)cvGetReal2D(A, i, j));
                 break;
             case CV_8U:
             case CV_16U:
@@ -49,24 +50,67 @@ void print_mat(CvMat *A)
     printf("\n");
 }
 
+void convertToChroma(IplImage *in_bgr, IplImage *out_rgc)
+{
+    int img_height = in_bgr->height;
+    int img_width = in_bgr->width;
+    
+    for (int y = 0; y < img_height; ++y)
+    {
+        uchar* ptr = (uchar *) (in_bgr->imageData + y * in_bgr->widthStep);
+        float* out_ptr = (float *) (out_rgc->imageData + y * out_rgc->widthStep);
+
+        for (int x = 0; x < img_width; ++x)
+        {
+            float b = ptr[3*x+0];
+            float g = ptr[3*x+1];
+            float r = ptr[3*x+2];
+            
+            float r_chroma = r / (b + g + r);
+            float g_chroma = g / (b + g + r);
+            float b_chroma = 1.0 - (r_chroma + g_chroma);
+            
+            out_ptr[3*x+0] = b_chroma;
+            out_ptr[3*x+1] = g_chroma;
+            out_ptr[3*x+2] = r_chroma;
+        }
+    }
+}
+
 bool first = true;
 
 void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 {
     sensor_msgs::CvBridge bridge;
     IplImage *bg = NULL;
+    cout << colorspace << endl;
 
     try
     {
-        bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, ave_bg->nChannels);
-        cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), bg);
+        if (colorspace == "rgb")
+        {
+            bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, ave_bg->nChannels);
+            cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), bg);
+        }
+        else if (colorspace == "hsv")
+        {
+            bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, ave_bg->nChannels);
+            cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), bg);
+            cvCvtColor(bg, bg, CV_BGR2HSV);
+        }
+        else if (colorspace == "rgchroma")
+        {
+            IplImage *img = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, ave_bg->nChannels);
+            cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), img);
+            bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_32F, 3);
+            convertToChroma(img, bg);
+            cvReleaseImage(&img);
+        }
     }
     catch (sensor_msgs::CvBridgeException error)
     {
         ROS_ERROR("CvBridgeError");
     }
-    
-    uchar *bg_data = (uchar *) bg->imageData;
     
     IplImage *prob_img = cvCreateImage(cvGetSize(bg), IPL_DEPTH_32F, 1);
     float *prob_data = (float *) prob_img->imageData;
@@ -80,27 +124,56 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     
     for (int y = 0; y < height; ++y)
     {
-        uchar* ptr_bg = bg_data + y * bg->widthStep;
-        uchar* ptr_ave = ave_data + y * ave_bg->widthStep;
-        
-        for (int x = 0; x < width; ++x)
+        if (colorspace == "rgb" || colorspace == "hsv")
         {
-            cvSet1D(bgr_new, 0, cvScalar(ptr_bg[3*x]));
-            cvSet1D(bgr_new, 1, cvScalar(ptr_bg[3*x+1]));
-            cvSet1D(bgr_new, 2, cvScalar(ptr_bg[3*x+2]));
-            
-            cvSet1D(bgr_ave, 0, cvScalar(ptr_ave[3*x]));
-            cvSet1D(bgr_ave, 1, cvScalar(ptr_ave[3*x+1]));
-            cvSet1D(bgr_ave, 2, cvScalar(ptr_ave[3*x+2]));
-            
-            cvInitMatHeader(inv_cov, 3, 3, CV_32FC1, &cov_mats_inv[(y*width+x)*9]);
-            
-            double mah_dist = cvMahalanobis(bgr_new, bgr_ave, inv_cov);
-            double unnorm_gaussian = exp(-0.5 * mah_dist);
-            double partition = 1.0 / (pow(TWO_PI, 1.5) * sqrt(dets[y*width+x]));
-            float p = partition * unnorm_gaussian;
-            
-            prob_data[y*width+x] = p;
+            uchar* ptr_bg = (uchar *) (bg->imageData + y * bg->widthStep);
+            uchar* ptr_ave = (uchar *) (ave_bg->imageData + y * ave_bg->widthStep);
+        
+            for (int x = 0; x < width; ++x)
+            {
+                cvSet1D(bgr_new, 0, cvScalar(ptr_bg[3*x+0]));
+                cvSet1D(bgr_new, 1, cvScalar(ptr_bg[3*x+1]));
+                cvSet1D(bgr_new, 2, cvScalar(ptr_bg[3*x+2]));
+                
+                cvSet1D(bgr_ave, 0, cvScalar(ptr_ave[3*x+0]));
+                cvSet1D(bgr_ave, 1, cvScalar(ptr_ave[3*x+1]));
+                cvSet1D(bgr_ave, 2, cvScalar(ptr_ave[3*x+2]));
+                
+                cvInitMatHeader(inv_cov, 3, 3, CV_32FC1, &cov_mats_inv[(y*width+x)*9]);
+                
+                double mah_dist = cvMahalanobis(bgr_new, bgr_ave, inv_cov);
+                double unnorm_gaussian = exp(-0.5 * mah_dist);
+                double partition = 1.0 / (pow(TWO_PI, 1.5) * sqrt(dets[y*width+x]));
+                float p = partition * unnorm_gaussian;
+                
+                prob_data[y*width+x] = p;
+            }
+        }
+        else if (colorspace == "rgchroma")
+        {
+            float* ptr_bg = (float *) (bg->imageData + y * bg->widthStep);
+            float* ptr_ave = (float *) (ave_bg->imageData + y * ave_bg->widthStep);
+
+            for (int x = 0; x < width; ++x)
+            {
+                cvSet1D(bgr_new, 0, cvScalar(ptr_bg[3*x+0]));
+                cvSet1D(bgr_new, 1, cvScalar(ptr_bg[3*x+1]));
+                cvSet1D(bgr_new, 2, cvScalar(ptr_bg[3*x+2]));
+                
+                cvSet1D(bgr_ave, 0, cvScalar(ptr_ave[3*x+0]));
+                cvSet1D(bgr_ave, 1, cvScalar(ptr_ave[3*x+1]));
+                cvSet1D(bgr_ave, 2, cvScalar(ptr_ave[3*x+2]));
+                
+                cvInitMatHeader(inv_cov, 3, 3, CV_32FC1, &cov_mats_inv[(y*width+x)*9]);
+                
+                double mah_dist = cvMahalanobis(bgr_new, bgr_ave, inv_cov);
+                double unnorm_gaussian = exp(-0.5 * mah_dist);
+                double partition = 1.0 / (pow(TWO_PI, 1.5) * sqrt(dets[y*width+x]));
+                float p = partition * unnorm_gaussian;
+                
+                if (y*width+x < 100) cout << mah_dist << ", " << p << endl;
+                prob_data[y*width+x] = p;
+            }
         }
     }
     
@@ -123,9 +196,7 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 //    }
     prob_img_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(prob_img));
     
-    bg_data = NULL;
     cvReleaseImage(&bg);
-    
     prob_data = NULL;
     cvReleaseImage(&prob_img);
 }
@@ -148,7 +219,6 @@ int main (int argc, char **argv)
 
         b.fromImage(srv.response.average_background, "bgr8");
         ave_bg = b.toIpl();
-        ave_data = (uchar *) ave_bg->imageData;
         cov_mats = srv.response.covariance_matrix;
         cov_mats_inv = srv.response.covariance_matrix_inv;
         dets = srv.response.covariance_matrix_dets;
