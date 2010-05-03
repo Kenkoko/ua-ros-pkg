@@ -12,34 +12,23 @@ import time
 from plotter.msg import *
 from plotter.srv import *
 
-is_shown = False
-
 def plot(plot_data):
-    global is_shown
-    t = time.time()
-    
-    plt.clf()
     plt.plot(plot_data.x_data, plot_data.y_data, label=plot_data.name)
 
     plt.xlabel(plot_data.x_label)
     plt.ylabel(plot_data.y_label)
-    plt.title('plot' + str(t))
+    plt.title(plot_data.name)
     plt.legend(loc=0)
     
     plt.draw()
-    #if not is_shown:
-    #    is_shown = True
-    #    plt.show()
-    plt.savefig('../plots/' + str(t) + '-plot.png')
- 
-# TODO: Need to make this multithreaded somehow   
-def show():
-    plt.show()
     
 def handle_plot(req):
+    t = time.time()
+    plt.clf()
     for plot_data in req.plots:
         plot(plot_data)
-        
+    plt.savefig('../plots/' + str(t) + '.png')
+    
     return PlotResponse()
 
 def plot_server():

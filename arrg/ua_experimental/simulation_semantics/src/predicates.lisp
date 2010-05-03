@@ -25,7 +25,7 @@
 ;; This sort of needs access to the simulator too, huh? - goals, etc.
 (defmethod compute-my-predicates ((my-state object-state))
   (loop with me = (first (object-of my-state))
-     for pred in (self-predicates-of me) ;; Why is there a problem with self-predicates-of?
+     for pred in (self-predicates-of me) 
      collect (list pred (gazebo-name-of me) (funcall pred my-state))))
    
 (defun print-last-predicates (sim)
@@ -34,28 +34,31 @@
 
 ;;==================================================================
 
-(defun plot-predicates (sim pred obj)
+(defun plot-predicates (sims pred obj)
   (call-service "plot" 'plotter-srv:Plot
-                :plots (vector 
-                        (loop with states = (get-states-from-last-run sim)
-                           with x = (make-array (length states) :adjustable t :fill-pointer 0)
-                           with y = (make-array (length states) :adjustable t :fill-pointer 0)
-                           for state in states
-                           for predicates = (predicates-of state)
-                           do (loop for p in predicates 
-                                 for obj = (second p)
-                                 when (and (eq (first p) pred) (eq (second p) obj))
-                                 do (vector-push-extend (time-of state) x)
-                                   (vector-push-extend (first (last p)) y))
-                           finally (return (make-msg "plotter/PlotData"
-                                                     (name) "test"
-                                                     (x_label) "time"
-                                                     (y_label) (format nil "(~a ~a)"
-                                                                            pred obj)
-                                                     (x_data) x
-                                                     (y_data) y))))))
+                :plots (loop for sim in sims collect 
+                            (loop with states = (get-states-from-last-run sim)
+                               with start-time = (time-of (first states))
+                               with x = (make-array (length states) :adjustable t :fill-pointer 0)
+                               with y = (make-array (length states) :adjustable t :fill-pointer 0)
+                               for state in states
+                               for predicates = (predicates-of state)
+                               do (loop for p in predicates 
+                                     for obj = (second p)
+                                     when (and (eq (first p) pred) (eq (second p) obj))
+                                     do (vector-push-extend (- (time-of state) start-time) x)
+                                       (vector-push-extend (first (last p)) y))
+                               finally (return (make-msg "plotter/PlotData"
+                                                         (name) (format nil "Predicate (~a ~a) of ~a simulator"
+                                                                        pred obj sim)
+                                                         (x_label) "time"
+                                                         (y_label) (format nil "(~a ~a)"
+                                                                           pred obj)
+                                                         (x_data) x
+                                                         (y_data) y))))))
 
 ;;==================================================================
+;; Predicates
 
 (defun force-mag (os)
   (sqrt (sum-of-squares (as-list (linear-of (force-of os))))))
@@ -63,10 +66,15 @@
 (defun vel-mag (os)
   (sqrt (sum-of-squares (as-list (linear-of (velocity-of os))))))
 
+(defun x-pos (os)
+  (x-of (position-of (pose-of os))))
+
 ;; Hardcoded point for now
 (defun dist-to-goal (os)
   (distance (position-of (pose-of os)) (make-instance 'xyz :x 4 :y 0 :z 0)))
                           
+;;==================================================================
+
 (defun sum-of-squares (numbers)
   (loop for x in numbers summing (expt x 2)))
 
