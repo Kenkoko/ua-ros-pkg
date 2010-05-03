@@ -1,14 +1,17 @@
 (in-package :simulation_semantics)
 
-;; TODO: Finish predicate system.
-
 (defmethod annotate-with-predicates ((ws world-state))
   (let* ((predicates (loop for obj1-state in (objects-of ws)
-                        collect (compute-my-predicates obj1-state))))
+                        append (compute-my-predicates obj1-state))))
                         ;collect (loop for obj2 in objects 
                         ;           unless (eq obj1 obj2) ;; Don't compute binary predicates with yourself
                         ;           do (compute-binary-predictes obj1 obj2 ws)))))
-    (print predicates)))
+    (setf (predicates-of ws) predicates)))
+
+(defmethod print-predicates ((ws world-state))
+  (format t "Predicates of ~a at time ~d:~%" (first (space-instances-of ws)) (time-of ws))
+  (loop for pred in (predicates-of ws)
+     do (format t "~t~a~%" pred)))
 
 #+ignore(defun compute-predicates (objects)
   "Generate all pairs of objects x and y, and compute 
@@ -19,17 +22,51 @@
        unless (eq (first x) (second x))
        do (print x))))
          
-;; HEY! DELETE ALL YOUR FASLS AND SEE IF THAT FIXES IT
-
 ;; This sort of needs access to the simulator too, huh? - goals, etc.
 (defmethod compute-my-predicates ((my-state object-state))
   (loop with me = (first (object-of my-state))
      for pred in (self-predicates-of me) ;; Why is there a problem with self-predicates-of?
-     collect (list pred (funcall pred my-state))))
+     collect (list pred (gazebo-name-of me) (funcall pred my-state))))
    
+(defun print-last-predicates (sim)
+  (loop for state in (get-states-from-last-run sim)
+     do (print-predicates state)))
+
+;;==================================================================
+
+(defun plot-predicates (sim pred obj)
+  (call-service "plot" 'plotter-srv:Plot
+                :plots (vector 
+                        (loop with states = (get-states-from-last-run sim)
+                           with x = (make-array (length states) :adjustable t :fill-pointer 0)
+                           with y = (make-array (length states) :adjustable t :fill-pointer 0)
+                           for state in states
+                           for predicates = (predicates-of state)
+                           do (loop for p in predicates 
+                                 for obj = (second p)
+                                 when (and (eq (first p) pred) (eq (second p) obj))
+                                 do (vector-push-extend (time-of state) x)
+                                   (vector-push-extend (first (last p)) y))
+                           finally (return (make-msg "plotter/PlotData"
+                                                     (name) "test"
+                                                     (x_label) "time"
+                                                     (y_label) (format nil "(~a ~a)"
+                                                                            pred obj)
+                                                     (x_data) x
+                                                     (y_data) y))))))
+
+;;==================================================================
+
 (defun force-mag (os)
-  (sqrt (sum-of-squares (linear-of (force-of os)))))
+  (sqrt (sum-of-squares (as-list (linear-of (force-of os))))))
        
+(defun vel-mag (os)
+  (sqrt (sum-of-squares (as-list (linear-of (velocity-of os))))))
+
+;; Hardcoded point for now
+(defun dist-to-goal (os)
+  (distance (position-of (pose-of os)) (make-instance 'xyz :x 4 :y 0 :z 0)))
+                          
 (defun sum-of-squares (numbers)
   (loop for x in numbers summing (expt x 2)))
 

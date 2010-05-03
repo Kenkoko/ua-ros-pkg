@@ -2,22 +2,17 @@
 
 (defparameter *current-state* nil)
 
+;; Don't think we need this anymore
 (defun create-world-space ()
   (if (null (find-space-instance-by-path '(world-state)))
       (make-space-instance '(world-state))))
 
-(defun translate-xyz (msg)
-  (make-instance 'xyz 
-                 :x (geometry_msgs-msg:x-val msg)
-                 :y (geometry_msgs-msg:y-val msg)
-                 :z (geometry_msgs-msg:z-val msg)))
 
-(defun translate-xyzw (msg)
-  (make-instance 'quaternion 
-                 :x (geometry_msgs-msg:x-val msg)
-                 :y (geometry_msgs-msg:y-val msg)
-                 :z (geometry_msgs-msg:z-val msg)
-                 :w (geometry_msgs-msg:w-val msg)))
+(defun get-states-from-last-run (simulator-name)
+  (reverse (find-instances 'world-state 
+                           (simulations-of (find-instance-by-name simulator-name 'simulator)) 
+                           :all)))
+
                 
 (defun translate-object (info ws)
   (make-instance 'object-state

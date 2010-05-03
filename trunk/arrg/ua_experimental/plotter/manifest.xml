@@ -1,0 +1,20 @@
+<package>
+    <description brief="A service for plotting data with matplotlib">
+
+    Creates static plots that can be saved to a file or displayed. Basically a static version of rxplot.    
+
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/plotter</url>
+
+    <depend package="rospy"/>
+    <depend package="std_msgs"/>
+    <depend package="opencv2"/>
+
+<!--    <rosdep name="matplotlib"/>-->
+
+</package>
+
+

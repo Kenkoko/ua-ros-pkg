@@ -11,6 +11,7 @@
                  (:file "predicates" :depends-on ("object-class" "state" "permutations"))
                  (:file "simulators" :depends-on ("classes")))
     :depends-on ("roslisp" 
+                 "plotter-srv"
                  "simulator_experiments-msg"
                  "simulator_experiments-srv"
                  "gazebo_plugins-srv" 
