@@ -8,6 +8,8 @@
                  "/objects/")))
 
 ;; Seems like we do actually need this?
-(defparameter *example-xml* 
-  (parse-xml-file 
-   (concatenate 'string (get-object-path) "blue_box.xml")))
+(parse-xml-file 
+ (concatenate 'string (get-object-path) "blue_box.xml"))
+
+(parse-xml-file 
+ (concatenate 'string (get-object-path) "blue_sphere.xml"))

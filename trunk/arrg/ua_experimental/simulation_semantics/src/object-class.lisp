@@ -7,6 +7,8 @@
   ((gazebo-name :initform "blue_box") ;; This name is used for the body
    (shape :initform 'box)
    (color :initform "Gazebo/Blue")
+   (size :initform 0.2)
+   (mass :initform 0.2)
    (xyz  :initform '(0 0 0))
    (static? :initform nil)
    ;; Predicates
@@ -100,38 +102,57 @@
 (defmethod xyz-xml ((obj physical-object))
   (list :|xyz| (format nil "~{~a ~}" (xyz-of obj)))) 
 
+(defmethod get-shape-xml ((obj physical-object))
+  (cond ((eq (shape-of obj) 'sphere) 
+         '|body|:|sphere|)
+        (t 
+         '|body|:|box|)))
+
+(defmethod get-size-xml ((obj physical-object))
+  (cond ((eq (shape-of obj) 'sphere) 
+         (format nil "~d" (size-of obj)))
+        (t 
+         (format nil "~d ~d ~d" (size-of obj) (size-of obj) (size-of obj)))))
+
+(defmethod get-mesh-xml ((obj physical-object))
+  (cond ((eq (shape-of obj) 'sphere) "unit_sphere")
+        (t "unit_box")))
+
+(defmethod get-scale-xml ((obj physical-object))
+  (format nil "~d ~d ~d" (size-of obj) (size-of obj) (size-of obj)))
+
+(defmethod get-geom-xml ((obj physical-object))
+  (cond ((eq (shape-of obj) 'sphere) '|geom|:|sphere|)
+        (t '|geom|:|box|)))
+
 (defmethod body-xml ((obj physical-object))
-  (cond ((eq (shape-of obj) 'box)
-         (append (list (list '|body|:|box| 
-                             ':|name| (gazebo-name-of obj)))
-                 (append '((:|turnGravityOff| "false")
-                           (:|dampingFactor| "0.01") 
-                           (:|selfCollide| "false") 
-                           (:|massMatrix| "true")
-                           (:|mass| "0.2") 
-                           (:|ixx| "0.001") (:|ixy| "0.0") (:|ixz| "0.0")
-                           (:|iyy| "0.001") (:|iyz| "0.0") 
-                           (:|izz| "0.001") 
-                           (:|cx| "0.0") (:|cy| "0.0") (:|cz| "0.0") 
-                           (:|xyz| "0 0 0") (:|rpy| "0 0 0"))
-                         (list (append (list (list '|geom|:|box| 
-                                                   ':|name| (concatenate 'string 
-                                                                         (gazebo-name-of obj)
-                                                                         "_geom")))
-                                       (list '(:|mu1| "1.0") 
-                                             '(:|mu2| "1.0")
-                                             '(:|kp| "100000000.0") 
-                                             '(:|kd| "1.0") 
-                                             '(:|size| "0.2 0.2 0.2") 
-                                             '(:|mass| "0.2")
-                                             (list :|visual| 
-                                                   '(:|xyz| "0 0 0") 
-                                                   '(:|rpy| "0 0 0") 
-                                                   '(:|scale| "0.2 0.2 0.2")
-                                                   '(:|mesh| "unit_box") 
-                                                   (list :|material| (color-of obj))))))))
-          )
-        (t (format t "DEATH DEATH DEATH~%"))))
+  (append (list (list (get-shape-xml obj) :|name| (gazebo-name-of obj)))
+          (append '((:|turnGravityOff| "false")
+                    (:|dampingFactor| "0.01") 
+                    (:|selfCollide| "false") 
+                    (:|massMatrix| "true")
+                    (:|mass| "0.2") 
+                    (:|ixx| "0.001") (:|ixy| "0.0") (:|ixz| "0.0")
+                    (:|iyy| "0.001") (:|iyz| "0.0") 
+                    (:|izz| "0.001") 
+                    (:|cx| "0.0") (:|cy| "0.0") (:|cz| "0.0") 
+                    (:|xyz| "0 0 0") (:|rpy| "0 0 0"))
+                  (list (append (list (list (get-geom-xml obj) 
+                                            :|name| (concatenate 'string 
+                                                                  (gazebo-name-of obj)
+                                                                  "_geom")))
+                                (list '(:|mu1| "1.0") 
+                                      '(:|mu2| "1.0")
+                                      '(:|kp| "100000000.0") 
+                                      '(:|kd| "1.0") 
+                                      (list :|size| (get-size-xml obj))
+                                      (list :|mass| (format nil "~d" (mass-of obj)))
+                                      (list :|visual| 
+                                            '(:|xyz| "0 0 0") 
+                                            '(:|rpy| "0 0 0") 
+                                            (list :|scale| (get-scale-xml obj))
+                                            (list :|mesh| (get-mesh-xml obj)) 
+                                            (list :|material| (color-of obj)))))))))
 
 (defmethod force-xml ((obj physical-object))
   (let* ((name (gazebo-name-of obj))

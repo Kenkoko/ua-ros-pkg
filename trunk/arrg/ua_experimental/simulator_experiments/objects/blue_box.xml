@@ -12,7 +12,7 @@
                 xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics" 
         name="blue_box_model">
 
-    <xyz>0 0 0</xyz>
+    <xyz>0.02 0.02 0.3</xyz>
     <rpy>0 0 0</rpy>
 
     <static>false</static>

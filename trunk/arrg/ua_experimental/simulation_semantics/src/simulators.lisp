@@ -14,7 +14,8 @@
                      :instance-name 'self
                      :gazebo-name "self"
                      :color "Gazebo/Green"
-                     :self-predicates '(force-mag vel-mag dist-to-goal x-pos)
+                     :self-predicates '(force-mag vel-mag dist-to-goal x-pos diff-speed)
+                     :binary-predicates '(dist-between)
                      :xyz '(0 0 0.1))))
 
 (defun make-above-box ()
@@ -43,12 +44,38 @@
                      :xyz '(0.4 0 0.1)
                      :static? t)))
 
+(defun make-sphere ()
+  (if (null (find-instance-by-name 'sphere 'physical-object))
+      (make-instance 'physical-object 
+                     :instance-name 'sphere
+                     :gazebo-name "the_sphere"
+                     :shape 'sphere
+                     :size 0.1
+                     :color "Gazebo/Blue"
+                     :self-predicates '(force-mag vel-mag x-pos)
+                     :xyz '(0.5 0 0.15)
+                     :static? nil)))
+
+(defun make-above-sphere ()
+  (if (null (find-instance-by-name 'above-sphere 'physical-object))
+      (make-instance 'physical-object 
+                     :instance-name 'above-sphere
+                     :gazebo-name "above_sphere"
+                     :shape 'sphere
+                     :size 0.1
+                     :color "Gazebo/Blue"
+                     :self-predicates '(force-mag vel-mag x-pos)
+                     :xyz '(0.0 0 0.4)
+                     :static? nil)))
+
 (defun init-objects ()
   (make-object-space)
   (make-self)
   (make-above-box)
   (make-front-box)
-  (make-static-box))
+  (make-static-box)
+  (make-sphere)
+  (make-above-sphere))
   
 ;;=====================================================
 ;; Simulators
@@ -79,12 +106,34 @@
                                  (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
                                  ht)))))
 
+(defun push-sphere-sim ()
+  (if (null (find-instance-by-name 'push-sphere 'simulator))
+  (let ((objects (list (find-instance-by-name 'self 'physical-object)
+                       (find-instance-by-name 'sphere 'physical-object))))
+    (make-instance 'simulator 
+                   :instance-name 'push-sphere
+                   :objects objects
+                   :policy-map (let ((ht (make-hash-table :test 'eq)))
+                                 (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
+                                 ht)))))
+
 (defun carry-sim ()
   (if (null (find-instance-by-name 'carry 'simulator))
   (let ((objects (list (find-instance-by-name 'self 'physical-object) 
                        (find-instance-by-name 'above-box 'physical-object))))
     (make-instance 'simulator 
                    :instance-name 'carry
+                   :objects objects
+                   :policy-map (let ((ht (make-hash-table :test 'eq)))
+                                 (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
+                                 ht)))))
+
+(defun carry-sphere-sim ()
+  (if (null (find-instance-by-name 'carry-sphere 'simulator))
+  (let ((objects (list (find-instance-by-name 'self 'physical-object) 
+                       (find-instance-by-name 'above-sphere 'physical-object))))
+    (make-instance 'simulator 
+                   :instance-name 'carry-sphere
                    :objects objects
                    :policy-map (let ((ht (make-hash-table :test 'eq)))
                                  (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
@@ -106,7 +155,9 @@
   (free-sim)
   (push-sim)
   (carry-sim)
-  (block-sim))
+  (block-sim)
+  (push-sphere-sim)
+  (carry-sphere-sim))
 
 ;;=====================================================
 
@@ -119,6 +170,10 @@
     (init-objects)
     (init-simulators)
     (subscribe-to-world-state)
+
+    (test-simulator (find-instance-by-name 'carry-sphere 'simulator))
+    (test-simulator (find-instance-by-name 'push-sphere 'simulator))
+
     (test-simulator (find-instance-by-name 'free 'simulator))
     (test-simulator (find-instance-by-name 'push 'simulator))
     (test-simulator (find-instance-by-name 'carry 'simulator))

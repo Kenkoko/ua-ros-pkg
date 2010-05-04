@@ -1,11 +1,7 @@
 (in-package :simulation_semantics)
 
+;; Do we still need this?
 (defparameter *current-state* nil)
-
-;; Don't think we need this anymore
-;(defun create-world-space ()
-;  (if (null (find-space-instance-by-path '(world-state)))
-;      (make-space-instance '(world-state))))
 
 ;;============================================================                
 

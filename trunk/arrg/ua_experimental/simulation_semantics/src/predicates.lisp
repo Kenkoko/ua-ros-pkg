@@ -1,14 +1,16 @@
 (in-package :simulation_semantics)
 
+;; NB: The entities computed here are really features, not just predicates
+
 ;;=================================================================
 ;; Predicate-related methods of world-state class
 
 (defmethod annotate-with-predicates ((ws world-state))
-  (let* ((predicates (loop for obj1-state in (objects-of ws)
-                        append (compute-my-predicates obj1-state))))
-                        ;collect (loop for obj2 in objects 
-                        ;           unless (eq obj1 obj2) ;; Don't compute binary predicates with yourself
-                        ;           do (compute-binary-predictes obj1 obj2 ws)))))
+  (let* ((last-ws (if (prev-state-of ws) (prev-state-of ws) ws))
+         (predicates (append (loop for obj-state in (objects-of ws)
+                                for obj-last-state in (objects-of last-ws)
+                                append (compute-my-predicates obj-state obj-last-state))
+                             (compute-binary-predicates (objects-of ws)))))
     (setf (predicates-of ws) predicates)))
 
 (defmethod print-predicates ((ws world-state))
@@ -18,21 +20,29 @@
 
 ;;=================================================================
 
-#+ignore(defun compute-predicates (objects)
+(defun compute-binary-predicates (objects)
   "Generate all pairs of objects x and y, and compute 
    the predicates p(x,y) for each of them"
-  (let* ((prm (make-permutator objects objects)))
-    (loop for x = (funcall prm)
-       until (null x)
-       unless (eq (first x) (second x))
-       do (print x))))
+  (if (> (length objects) 1)
+      (let* ((prm (make-permutator objects objects))
+             (pairs (loop for x = (funcall prm)
+                       until (null x)
+                       unless (eq (first x) (second x))
+                       collect x)))
+        (loop for pair in pairs 
+           for self = (first (object-of (first pair)))
+           for other = (first (object-of (second pair)))
+           when (binary-predicates-of self)
+           append (loop for bpred in (binary-predicates-of self)
+                     collect (list bpred (gazebo-name-of self) (gazebo-name-of other)  
+                                   (funcall bpred (first pair) (second pair))))))))
          
 ;; This sort of needs access to the simulator too, huh? - goals, etc.
-(defmethod compute-my-predicates ((my-state object-state))
-  (loop with me = (first (object-of my-state))
-     for pred in (self-predicates-of me) 
-     collect (list pred (gazebo-name-of me) (funcall pred my-state))))
-   
+(defmethod compute-my-predicates ((my-state object-state) (my-last-state object-state))
+  (let* ((me (first (object-of my-state))))
+    (loop for pred in (self-predicates-of me) 
+       collect (list pred (gazebo-name-of me) (funcall pred my-state my-last-state)))))
+              
 (defun print-last-predicates (sim)
   (loop for state in (get-states-from-last-run sim)
      do (print-predicates state)))
@@ -63,25 +73,41 @@
                                                          (y_data) y))))))
 
 ;;==================================================================
-;; Predicates
+;; Self-Predicates
 
-(defun force-mag (os)
+(defun force-mag (os last-os)
+  (declare (ignore last-os))
   (sqrt (sum-of-squares (as-list (linear-of (force-of os))))))
        
-(defun vel-mag (os)
+(defun vel-mag (os last-os)
+  (declare (ignore last-os))
   (sqrt (sum-of-squares (as-list (linear-of (velocity-of os))))))
 
-(defun x-pos (os)
+(defun x-pos (os last-os)
+  (declare (ignore last-os))
   (x-of (position-of (pose-of os))))
 
 ;; Hardcoded point for now
-(defun dist-to-goal (os)
+(defun dist-to-goal (os last-os)
+  (declare (ignore last-os))
   (distance (position-of (pose-of os)) (make-instance 'xyz :x 4 :y 0 :z 0)))
-                          
+                  
+;;==================================================================
+;; Differential Self-Predicates
+
+(defun diff-speed (os last-os)
+  (distance (position-of (pose-of os)) (position-of (pose-of last-os))))
+        
+;;==================================================================
+;; Binary Predicates
+
+(defun dist-between (self-state other-state)
+  (distance (position-of (pose-of self-state)) (position-of (pose-of other-state))))
+
 ;;==================================================================
 
 (defun sum-of-squares (numbers)
   (loop for x in numbers summing (expt x 2)))
 
-(defmethod distance ((self physical-object) (other physical-object))
-  (distance (position-of (pose-of self)) (position-of (pose-of other))))
+;(defmethod distance ((self physical-object) (other physical-object))
+;  (distance (position-of (pose-of self)) (position-of (pose-of other))))
