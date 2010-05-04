@@ -1,5 +1,8 @@
 (in-package :simulation_semantics)
 
+;;=================================================================
+;; Predicate-related methods of world-state class
+
 (defmethod annotate-with-predicates ((ws world-state))
   (let* ((predicates (loop for obj1-state in (objects-of ws)
                         append (compute-my-predicates obj1-state))))
@@ -12,6 +15,8 @@
   (format t "Predicates of ~a at time ~d:~%" (first (space-instances-of ws)) (time-of ws))
   (loop for pred in (predicates-of ws)
      do (format t "~t~a~%" pred)))
+
+;;=================================================================
 
 #+ignore(defun compute-predicates (objects)
   "Generate all pairs of objects x and y, and compute 

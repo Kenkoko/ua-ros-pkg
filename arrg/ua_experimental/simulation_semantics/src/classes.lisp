@@ -21,8 +21,6 @@
                                 :allowed-unit-classes '(world-state)
                                 :dimensions (dimensions-of 'world-state)))))
 
-;; TODO: can probably just return (first (simulations-of sim)) here
-;; if there's at least one
 (defmethod current-simulation ((sim simulator))
   (let* ((simulations (simulations-of sim)))
     (if (null simulations)
@@ -36,6 +34,12 @@
   (time
    (objects
     :link (object-state world :singular t))
+   (prev-state 
+    :link (world-state next-state :singular t)
+    :singular t)
+   (next-state
+    :link (world-state prev-state :singular t)
+    :singular t)
    predicates)
   (:dimensional-values
    (time :point time)))
