@@ -2,6 +2,7 @@
 import roslib; roslib.load_manifest('simulator_experiments')
 
 import sys
+import time
 
 import rospy
 from gazebo_plugins.srv import *
@@ -20,10 +21,10 @@ def spawn_model_client(name, xml):
 
         sp.model.robot_namespace = '/'
         
-        #sp.model.initial_pose.position.x = 0
-        #sp.model.initial_pose.position.y = 0
-        #sp.model.initial_pose.position.z = 0.3
-        #sp.model.initial_pose.orientation.w = 1
+        sp.model.initial_pose.position.x = 0
+        sp.model.initial_pose.position.y = 0
+        sp.model.initial_pose.position.z = 0.3
+        sp.model.initial_pose.orientation.w = 1
 
         resp1 = spawn_model(sp)
         print resp1.success
@@ -31,9 +32,15 @@ def spawn_model_client(name, xml):
     except rospy.ServiceException, e:
         print "Service call failed: %s"%e
 
+count = 0
+def spawn_model(file_name):
+    global count
+    xml_file = open(roslib.packages.find_resource("simulator_experiments", file_name)[0])
+    gazebo_xml = xml_file.read()
+    count += 1
+    spawn_model_client('test_object' + str(count), gazebo_xml)
 
 if __name__ == "__main__":
-    xml_file = open(roslib.packages.find_resource("simulator_experiments", "blue_box.xml")[0])
-#    xml_file = open(roslib.packages.find_resource("simulator_experiments", "object_model.urdf")[0])
-    gazebo_xml = xml_file.read()
-    spawn_model_client('test_object', gazebo_xml)
+    spawn_model("blue_sphere.xml")
+    time.sleep(3)
+    spawn_model("blue_box.xml")
