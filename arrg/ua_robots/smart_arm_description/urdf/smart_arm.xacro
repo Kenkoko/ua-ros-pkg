@@ -73,9 +73,9 @@
             
             <axis xyz="0 0 1"/>
             <!-- From 14 to -45 degrees -->
-            <limit  lower="-0.785398163" upper="0.244346095" effort="300" velocity="1.17" />
+            <limit  lower="-0.838576116" upper="0.245436912" effort="300" velocity="1.17" />
             <dynamics damping="50" friction="1"/>
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.785398163+0.1}" soft_upper_limit="${0.244346095-0.1}" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.838576116+0.1}" soft_upper_limit="${0.245436912-0.1}" />
         </joint>
         
         <!-- Gripper left finger joint -->
@@ -86,9 +86,9 @@
             
             <axis xyz="0 0 1"/>
             <!-- From -14 to 45 degrees -->
-            <limit  lower="-0.244346095" upper="0.785398163" effort="300" velocity="1.17" />
+            <limit  lower="-0.240323643" upper="0.843689385" effort="300" velocity="1.17" />
             <dynamics damping="50" friction="1"/>
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.244346095+0.1}" soft_upper_limit="${0.785398163-0.1}" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.240323643+0.1}" soft_upper_limit="${0.843689385-0.1}" />
         </joint>
         
         <!-- ****** LINK DEFINITIONS ****** -->
