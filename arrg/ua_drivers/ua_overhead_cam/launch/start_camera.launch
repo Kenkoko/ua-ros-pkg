@@ -15,4 +15,6 @@
     <node name="prosilica" pkg="prosilica_camera" type="prosilica_node" respawn="false" output="screen"/>
     
     <node name="image_proc" pkg="image_proc" type="image_proc" ns="camera" output="screen"/>
+    
+    <node name="map_to_overhead" pkg="tf" type="static_transform_publisher" args="0 0 3.2 0 0 0 map high_def_optical_frame 100" />
 </launch>
