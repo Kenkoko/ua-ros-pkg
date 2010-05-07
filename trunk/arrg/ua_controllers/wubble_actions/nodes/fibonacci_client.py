@@ -54,7 +54,7 @@ def fibonacci_client():
     client.send_goal(goal)
 
     # Waits for the server to finish performing the action.
-    client.wait_for_goal_to_finish()
+    client.wait_for_result()
 
     # Prints out the result of executing the action
     return client.get_result()  # A FibonacciResult

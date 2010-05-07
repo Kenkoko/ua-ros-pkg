@@ -49,7 +49,7 @@ def tilt(n=1):
     client.send_goal(goal)
 
     # Waits for the server to finish performing the action.
-    client.wait_for_goal_to_finish()
+    client.wait_for_result()
 
     # Return result
     return client.get_result()

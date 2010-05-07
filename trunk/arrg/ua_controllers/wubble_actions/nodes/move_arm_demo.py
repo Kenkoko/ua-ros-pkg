@@ -50,7 +50,7 @@ def move_arm(shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate):
     client.send_goal(goal)
 
     # Waits for the server to finish performing the action.
-    client.wait_for_goal_to_finish()
+    client.wait_for_result()
 
     # Return result
     return client.get_result()
@@ -70,7 +70,7 @@ def reach_at(frame_id, x, y, z):
     client.send_goal(goal)
 
     # Waits for the server to finish performing the action.
-    client.wait_for_goal_to_finish()
+    client.wait_for_result()
 
     # Return result
     return client.get_result()
