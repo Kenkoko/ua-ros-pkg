@@ -63,7 +63,7 @@ finger_right_controller:
     joint_speed: 1.17
     motor:
         id: 16
-        init: 512
+        init: 676
         min: 512
         max: 724
 
@@ -76,7 +76,7 @@ finger_left_controller:
     joint_speed: 1.17
     motor:
         id: 18
-        init: 512
-        min: 512
-        max: 300
+        init: 347
+        min: 300
+        max: 512
 
