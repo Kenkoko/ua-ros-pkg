@@ -45,7 +45,7 @@ def move_head(head_pan, head_tilt):
     goal.target_joints = [head_pan, head_tilt]
 
     head_client.send_goal(goal)
-    head_client.wait_for_goal_to_finish()
+    head_client.wait_for_result()
 
     result = head_client.get_result()
     if result.success == False:
@@ -63,7 +63,7 @@ def look_at(frame_id, x, y, z):
     goal.target_point.point.z = z
 
     head_client.send_goal(goal)
-    head_client.wait_for_goal_to_finish()
+    head_client.wait_for_result()
 
     result = head_client.get_result()
     if result.success == False:
@@ -77,7 +77,7 @@ def move_arm(shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate):
     goal.target_joints = [shoulder_pan, shoulder_tilt, elbow_tilt, wrist_rotate]
 
     arm_client.send_goal(goal)
-    arm_client.wait_for_goal_to_finish()
+    arm_client.wait_for_result()
 
     result = arm_client.get_result()
     if result.success == False:
@@ -96,7 +96,7 @@ def reach_at(frame_id, x, y, z):
     goal.target_point.point.z = z
 
     arm_client.send_goal(goal)
-    arm_client.wait_for_goal_to_finish()
+    arm_client.wait_for_result()
 
     result = arm_client.get_result()
     if result.success == False:
@@ -111,7 +111,7 @@ def move_gripper(left_finger, right_finger):
     goal.target_joints = [left_finger, right_finger]
 
     gripper_client.send_goal(goal)
-    gripper_client.wait_for_goal_to_finish()
+    gripper_client.wait_for_result()
 
     result = gripper_client.get_result()
     if result.success == False:
@@ -125,7 +125,7 @@ def tilt_laser(n=1):
     goal.tilt_cycles = n
 
     laser_client.send_goal(goal)
-    laser_client.wait_for_goal_to_finish()
+    laser_client.wait_for_result()
 
     result = laser_client.get_result()
     if result.success == False:
