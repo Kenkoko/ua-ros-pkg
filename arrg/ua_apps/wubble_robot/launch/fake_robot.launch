@@ -1,0 +1,45 @@
+<launch>
+    <!-- send erratic description to param server -->
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble.urdf.xacro'" />
+    
+    <!-- start all hardware systems -->
+    <include file="$(find wubble_controllers)/launch/wubble_controllers.launch" />
+    
+    <!-- Publish joint_states information -->
+    <node name="joint_states_publisher" pkg="wubble_controllers" type="joint_states_publisher.py" />
+    <node name="erratic_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+    
+    <!-- Start the hokuyo laser -->
+    <node name="tilt_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">
+        <remap from="scan" to="tilt_laser/scan"/>
+        <param name="frame_id" value="laser_link"/>
+    </node>
+    
+    <!-- Laser Filters -->
+    <node pkg="laser_filters" type="scan_to_cloud_filter_chain" respawn="true" name="laser_shadow_filter">
+        <remap from="scan" to="tilt_laser/scan" />
+        <remap from="cloud_filtered" to="tilt_scan_shadow_filtered" />
+        <param name="target_frame" value="base_footprint" />
+        <param name="high_fidelity" value="true" />
+        <rosparam command="load" file="$(find wubble_description)/params/shadow_filter.yaml" />
+    </node>
+
+    <!-- Start Actions -->
+    <include file="$(find wubble_robot)/launch/robot_actions.launch" />
+
+    <node name="map_to_odom" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom 100" />
+    <node name="odom_to_footprint" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 odom base_footprint 100" />
+    
+    <group ns="stereo">
+        <node  name="stereodcam" pkg="videre_stereo_cam" type="videre_stereo_node" respawn="true" output="screen">
+            <param name="frame_id" type="str" value="stereo_optical_frame"/>
+            <param name="videre_mode" type="str" value="none"/>
+            <param name="calculate_points" type="bool" value="True"/>
+            <param name="exposure_auto" type="bool" value="True"/>
+            <param name="brightness_auto" type="bool" value="True"/>
+            <param name="gain_auto" type="bool" value="True"/>
+        </node>
+    </group>
+
+</launch>
+
