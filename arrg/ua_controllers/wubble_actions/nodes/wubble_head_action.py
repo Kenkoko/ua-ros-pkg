@@ -52,7 +52,7 @@ class WubbleHeadActionServer():
 
         # Initialize constants
         self.JOINTS_COUNT = 2                           # Number of joints to manage
-        self.ERROR_THRESHOLD = 0.01                     # Report success if error reaches below threshold
+        self.ERROR_THRESHOLD = 0.02                     # Report success if error reaches below threshold (0.015 also works)
         self.TIMEOUT_THRESHOLD = rospy.Duration(15.0)   # Report failure if action does not succeed within timeout threshold
 
         # Initialize new node

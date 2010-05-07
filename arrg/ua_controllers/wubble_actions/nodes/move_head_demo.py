@@ -84,27 +84,27 @@ if __name__ == '__main__':
         client.wait_for_server()
 
         print "Look forward and slightly up"
-        result = look_at("/base_footprint", 5.0, 0.0, 3.0);
+        result = look_at("/base_footprint", 5.0, 0.0, 4.0);
         if result.success == False:
             print "Action failed"
         else:
             print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
 
         print "Look to the right and slightly down"
-        result = look_at("/base_footprint", 1.0, -5.0, 0.0);
+        result = look_at("/base_footprint", 3.0, -4.0, -2.0);
         if result.success == False:
             print "Action failed"
         else:
             print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
 
         print "Look to the left and slightly up"
-        result = look_at("/base_footprint", 1.0, 5.0, 2.0);
+        result = look_at("/base_footprint", 3.0, 4.0, 4.0);
         if result.success == False:
             print "Action failed"
         else:
             print "Result: [" + str(result.head_position[0]) + ", " + str(result.head_position[1]) + "]"
 
-        print "Look at the gripper"
+        print "Look at the left gripper"
         result = look_at("/arm_left_finger_link", 0.0, 0.0, 0.0);
         if result.success == False:
             print "Action failed"
