@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/wubble_environments</url>
   
+  <depend package="gazebo"/>
   <depend package="pr2_gazebo"/>
 
 </package>
