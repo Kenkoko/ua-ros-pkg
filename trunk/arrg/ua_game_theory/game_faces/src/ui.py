@@ -1,127 +1,184 @@
 #!/usr/bin/env python
 
-import time
-import wx                  
+# example spinbutton.py
 
-#---------------------------------------------------------------------------
+import pygtk
+pygtk.require('2.0')
+import gtk
 
-class MyFrame(wx.Frame):
+class SpinButtonExample:
+    def toggle_snap(self, widget, spin):
+        spin.set_snap_to_ticks(widget.get_active())
 
-    def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title,
-                         (100, 100), (400, 300))
+    def toggle_numeric(self, widget, spin):
+        spin.set_numeric(widget.get_active())
 
-        # self.Bind(wx.EVT_SIZE, self.OnSize)
-        # self.Bind(wx.EVT_MOVE, self.OnMove)
-        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
-        # self.Bind(wx.EVT_IDLE, self.OnIdle)
+    def change_digits(self, widget, spin, spin1):
+        spin1.set_digits(spin.get_value_as_int())
 
-        self.count = 0
+    def get_value(self, widget, data, spin, spin2, label):
+        if data == 1:
+            buf = "%d" % spin.get_value_as_int()
+        else:
+            buf = "%0.*f" % (spin2.get_value_as_int(),
+                             spin.get_value())
+        label.set_text(buf)
 
-        panel = wx.Panel(self)
-        sizer = wx.FlexGridSizer(cols=2, hgap=5, vgap=5)
+    def __init__(self):
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.connect("destroy", lambda w: gtk.main_quit())
+        window.set_title("Game")
+        #window.resize(400, 300)
+
+        main_vbox = gtk.VBox(False, 8)
+        main_vbox.set_border_width(10)
+        window.add(main_vbox)
         
-        self.balanceCtrl = wx.TextCtrl(panel, -1, "10", style=wx.TE_READONLY)
-        sizer.Add(wx.StaticText(panel, -1, "Balance:"))
-        sizer.Add(self.balanceCtrl)
-
-        #self.biddingCtrl = wx.TextCtrl(panel, -1, "")
+        self.box_status = gtk.HBox(False, 8)
+        main_vbox.add(self.box_status)
         
-        self.biddingCtrl = wx.ComboBox(panel, -1, "0",
-                         choices=map(str, range(0, 10)),
-                         style=wx.CB_DROPDOWN | wx.CB_READONLY
-                         #| wx.TE_PROCESS_ENTER
-                         #| wx.CB_SORT
-                         )
+        self.current_balance = gtk.Label('Your current balance is ...')
+        self.current_balance.set_alignment(0, 0.5)
+        self.box_status.add(self.current_balance)
+
+
+        self.box_control = gtk.HBox(False, 8)
+        #main_vbox.pack_start(self.box_control, True, True, 0)
+        main_vbox.add(self.box_control)
         
-        sizer.Add(wx.StaticText(panel, -1, "Your Bidding:"))
-        sizer.Add(self.biddingCtrl)
+        self.box_control.add(gtk.Label('Your bid'))
         
-        self.biddingButton = wx.Button(panel, -1, "Bid!")
-        self.Bind(wx.EVT_BUTTON, self.OnClickBid, self.biddingButton)
-        sizer.Add(wx.StaticText(panel, -1, ""))
-        sizer.Add(self.biddingButton)
-
-        border = wx.BoxSizer()
-        border.Add(sizer, 0, wx.ALL, 20)
-        panel.SetSizer(border)
+        self.spin_bid = gtk.SpinButton(adjustment=gtk.Adjustment(lower=1, upper=10, step_incr=1))
+        self.box_control.add(self.spin_bid)
         
+        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
+        self.button_bid.set_size_request(80, 30)
+        self.box_control.add(self.button_bid)
+        
+  
+        # vbox = gtk.VBox(False, 0)
+        # vbox.set_border_width(5)
+        # frame.add(vbox)
+        # 
+        # # Day, month, year spinners
+        # hbox = gtk.HBox(False, 0)
+        # vbox.pack_start(hbox, True, True, 5)
+        #   
+        # vbox2 = gtk.VBox(False, 0)
+        # hbox.pack_start(vbox2, True, True, 5)
+        # 
+        # label = gtk.Label("Day :")
+        # label.set_alignment(0, 0.5)
+        # vbox2.pack_start(label, False, True, 0)
+        #   
+        # adj = gtk.Adjustment(1.0, 1.0, 31.0, 1.0, 5.0, 0.0)
+        # spinner = gtk.SpinButton(adj, 0, 0)
+        # spinner.set_wrap(True)
+        # vbox2.pack_start(spinner, False, True, 0)
+        #   
+        # vbox2 = gtk.VBox(False, 0)
+        # hbox.pack_start(vbox2, True, True, 5)
+        #   
+        # label = gtk.Label("Month :")
+        # label.set_alignment(0, 0.5)
+        # vbox2.pack_start(label, False, True, 0)
+        # 
+        # adj = gtk.Adjustment(1.0, 1.0, 12.0, 1.0, 5.0, 0.0)
+        # spinner = gtk.SpinButton(adj, 0, 0)
+        # spinner.set_wrap(True)
+        # vbox2.pack_start(spinner, False, True, 0)
+        #   
+        # vbox2 = gtk.VBox(False, 0)
+        # hbox.pack_start(vbox2, True, True, 5)
+        #   
+        # label = gtk.Label("Year :")
+        # label.set_alignment(0, 0.5)
+        # vbox2.pack_start(label, False, True, 0)
+        #   
+        # adj = gtk.Adjustment(1998.0, 0.0, 2100.0, 1.0, 100.0, 0.0)
+        # spinner = gtk.SpinButton(adj, 0, 0)
+        # spinner.set_wrap(False)
+        # spinner.set_size_request(55, -1)
+        # vbox2.pack_start(spinner, False, True, 0)
+        #   
+        # frame = gtk.Frame("Accelerated")
+        # main_vbox.pack_start(frame, True, True, 0)
+        #   
+        # vbox = gtk.VBox(False, 0)
+        # vbox.set_border_width(5)
+        # frame.add(vbox)
+        #   
+        # hbox = gtk.HBox(False, 0)
+        # vbox.pack_start(hbox, False, True, 5)
+        #   
+        # vbox2 = gtk.VBox(False, 0)
+        # hbox.pack_start(vbox2, True, True, 5)
+        #   
+        # label = gtk.Label("Value :")
+        # label.set_alignment(0, 0.5)
+        # vbox2.pack_start(label, False, True, 0)
+        #   
+        # adj = gtk.Adjustment(0.0, -10000.0, 10000.0, 0.5, 100.0, 0.0)
+        # spinner1 = gtk.SpinButton(adj, 1.0, 2)
+        # spinner1.set_wrap(True)
+        # spinner1.set_size_request(100, -1)
+        # vbox2.pack_start(spinner1, False, True, 0)
+        #   
+        # vbox2 = gtk.VBox(False, 0)
+        # hbox.pack_start(vbox2, True, True, 5)
+        #   
+        # label = gtk.Label("Digits :")
+        # label.set_alignment(0, 0.5)
+        # vbox2.pack_start(label, False, True, 0)
+        #   
+        # adj = gtk.Adjustment(2, 1, 5, 1, 1, 0)
+        # spinner2 = gtk.SpinButton(adj, 0.0, 0)
+        # spinner2.set_wrap(True)
+        # adj.connect("value_changed", self.change_digits, spinner2, spinner1)
+        # vbox2.pack_start(spinner2, False, True, 0)
+        #   
+        # hbox = gtk.HBox(False, 0)
+        # vbox.pack_start(hbox, False, True, 5)
+        # 
+        # button = gtk.CheckButton("Snap to 0.5-ticks")
+        # button.connect("clicked", self.toggle_snap, spinner1)
+        # vbox.pack_start(button, True, True, 0)
+        # button.set_active(True)
+        #   
+        # button = gtk.CheckButton("Numeric only input mode")
+        # button.connect("clicked", self.toggle_numeric, spinner1)
+        # vbox.pack_start(button, True, True, 0)
+        # button.set_active(True)
+        #   
+        # val_label = gtk.Label("")
+        #   
+        # hbox = gtk.HBox(False, 0)
+        # vbox.pack_start(hbox, False, True, 5)
+        # button = gtk.Button("Value as Int")
+        # button.connect("clicked", self.get_value, 1, spinner1, spinner2,
+        #                val_label)
+        # hbox.pack_start(button, True, True, 5)
+        #   
+        # button = gtk.Button("Value as Float")
+        # button.connect("clicked", self.get_value, 2, spinner1, spinner2,
+        #                val_label)
+        # hbox.pack_start(button, True, True, 5)
+        #   
+        # vbox.pack_start(val_label, True, True, 0)
+        # val_label.set_text("0")
+        #   
+        hbox = gtk.HBox(False, 0)
+        main_vbox.pack_start(hbox, False, True, 0)
+  
+        button = gtk.Button("Close")
+        button.connect("clicked", lambda w: gtk.main_quit())
+        hbox.pack_start(button, True, True, 5)
+        window.show_all()
 
-    def OnCloseWindow(self, event):
-        app.keepGoing = False
-        self.Destroy()
+def main():
+    gtk.main()
+    return 0
 
-    # def OnIdle(self, event):
-    #     self.idleCtrl.SetValue(str(self.count))
-    #     self.count = self.count + 1
-    # 
-    # def OnSize(self, event):
-    #     size = event.GetSize()
-    #     self.balanceCtrl.SetValue("%s, %s" % (size.width, size.height))
-    #     event.Skip()
-    # 
-    # def OnMove(self, event):
-    #     pos = event.GetPosition()
-    #     self.biddingCtrl.SetValue("%s, %s" % (pos.x, pos.y))
-
-    def OnClickBid(self, event):
-        print event
-
-
-#---------------------------------------------------------------------------
-
-class MyApp(wx.App):
-    def MainLoop(self):
-
-        # Create an event loop and make it active.  If you are
-        # only going to temporarily have a nested event loop then
-        # you should get a reference to the old one and set it as
-        # the active event loop when you are done with this one...
-        evtloop = wx.EventLoop()
-        old = wx.EventLoop.GetActive()
-        wx.EventLoop.SetActive(evtloop)
-
-        # This outer loop determines when to exit the application,
-        # for this example we let the main frame reset this flag
-        # when it closes.
-        while self.keepGoing:
-            # At this point in the outer loop you could do
-            # whatever you implemented your own MainLoop for.  It
-            # should be quick and non-blocking, otherwise your GUI
-            # will freeze.  
-
-            # call_your_code_here()
-
-
-            # This inner loop will process any GUI events
-            # until there are no more waiting.
-            while evtloop.Pending():
-                evtloop.Dispatch()
-
-            # Send idle events to idle handlers.  You may want to
-            # throttle this back a bit somehow so there is not too
-            # much CPU time spent in the idle handlers.  For this
-            # example, I'll just snooze a little...
-            time.sleep(0.10)
-            self.ProcessIdle()
-
-        wx.EventLoop.SetActive(old)
-
-
-
-    def OnInit(self):
-        frame = MyFrame(None, -1, "This is a test")
-        frame.Show(True)
-        self.SetTopWindow(frame)
-
-        self.keepGoing = True
-        return True
-
-
-app = MyApp(False)
-app.MainLoop()
-
-
-
-
-
+if __name__ == "__main__":
+    SpinButtonExample()
+    main()
