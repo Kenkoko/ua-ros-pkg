@@ -23,7 +23,7 @@ vector<float> std_dev;
 ros::Subscriber image_sub;
 ros::Publisher prob_img_pub;
 
-string colorspace = "rgb";
+string colorspace = "rgchroma";
 
 void print_mat(CvMat *A)
 {
@@ -36,7 +36,7 @@ void print_mat(CvMat *A)
             case CV_32F:
             case CV_64F:
                 for (j = 0; j < A->cols; j++)
-                printf ("%8.6e ", (float)cvGetReal2D(A, i, j));
+                printf ("%8.6f ", (float)cvGetReal2D(A, i, j));
                 break;
             case CV_8U:
             case CV_16U:
@@ -50,7 +50,7 @@ void print_mat(CvMat *A)
     printf("\n");
 }
 
-void convertToChroma(IplImage *in_bgr, IplImage *out_rgc)
+void convertToChroma(IplImage *in_bgr, IplImage *out_rgchroma)
 {
     int img_height = in_bgr->height;
     int img_width = in_bgr->width;
@@ -58,7 +58,7 @@ void convertToChroma(IplImage *in_bgr, IplImage *out_rgc)
     for (int y = 0; y < img_height; ++y)
     {
         uchar* ptr = (uchar *) (in_bgr->imageData + y * in_bgr->widthStep);
-        float* out_ptr = (float *) (out_rgc->imageData + y * out_rgc->widthStep);
+        float* out_ptr = (float *) (out_rgchroma->imageData + y * out_rgchroma->widthStep);
 
         for (int x = 0; x < img_width; ++x)
         {
@@ -66,13 +66,8 @@ void convertToChroma(IplImage *in_bgr, IplImage *out_rgc)
             float g = ptr[3*x+1];
             float r = ptr[3*x+2];
             
-            float r_chroma = r / (b + g + r);
-            float g_chroma = g / (b + g + r);
-            float b_chroma = 1.0 - (r_chroma + g_chroma);
-            
-            out_ptr[3*x+0] = b_chroma;
-            out_ptr[3*x+1] = g_chroma;
-            out_ptr[3*x+2] = r_chroma;
+            out_ptr[2*x+0] = r / (b + g + r);
+            out_ptr[2*x+1] = g / (b + g + r);
         }
     }
 }
@@ -89,20 +84,20 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     {
         if (colorspace == "rgb")
         {
-            bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, ave_bg->nChannels);
+            bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, 3);
             cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), bg);
         }
         else if (colorspace == "hsv")
         {
-            bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, ave_bg->nChannels);
+            bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, 3);
             cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), bg);
             cvCvtColor(bg, bg, CV_BGR2HSV);
         }
         else if (colorspace == "rgchroma")
         {
-            IplImage *img = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, ave_bg->nChannels);
+            IplImage *img = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_8U, 3);
             cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), img);
-            bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_32F, 3);
+            bg = cvCreateImage(cvGetSize(ave_bg), IPL_DEPTH_32F, 2);
             convertToChroma(img, bg);
             cvReleaseImage(&img);
         }
@@ -118,9 +113,22 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     int width = bg->width;
     int height = bg->height;
     
-    CvMat *bgr_new = cvCreateMat(1, 3, CV_32FC1);
-    CvMat *bgr_ave = cvCreateMat(1, 3, CV_32FC1);
-    CvMat *inv_cov = cvCreateMatHeader(3, 3, CV_32FC1);
+    CvMat *bgr_new = NULL;
+    CvMat *bgr_ave = NULL;
+    CvMat *inv_cov = NULL;
+    
+    if (colorspace == "rgb" || colorspace == "hsv")
+    {
+        bgr_new = cvCreateMat(1, 3, CV_32FC1);
+        bgr_ave = cvCreateMat(1, 3, CV_32FC1);
+        inv_cov = cvCreateMatHeader(3, 3, CV_32FC1);
+    }
+    else if (colorspace == "rgchroma")
+    {
+        bgr_new = cvCreateMat(1, 2, CV_32FC1);
+        bgr_ave = cvCreateMat(1, 2, CV_32FC1);
+        inv_cov = cvCreateMatHeader(2, 2, CV_32FC1);
+    }
     
     for (int y = 0; y < height; ++y)
     {
@@ -156,22 +164,29 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 
             for (int x = 0; x < width; ++x)
             {
-                cvSet1D(bgr_new, 0, cvScalar(ptr_bg[3*x+0]));
-                cvSet1D(bgr_new, 1, cvScalar(ptr_bg[3*x+1]));
-                cvSet1D(bgr_new, 2, cvScalar(ptr_bg[3*x+2]));
+                cvSet1D(bgr_new, 0, cvScalar(ptr_bg[2*x+0]));
+                cvSet1D(bgr_new, 1, cvScalar(ptr_bg[2*x+1]));
                 
-                cvSet1D(bgr_ave, 0, cvScalar(ptr_ave[3*x+0]));
-                cvSet1D(bgr_ave, 1, cvScalar(ptr_ave[3*x+1]));
-                cvSet1D(bgr_ave, 2, cvScalar(ptr_ave[3*x+2]));
+                cvSet1D(bgr_ave, 0, cvScalar(ptr_ave[2*x+0]));
+                cvSet1D(bgr_ave, 1, cvScalar(ptr_ave[2*x+1]));
                 
-                cvInitMatHeader(inv_cov, 3, 3, CV_32FC1, &cov_mats_inv[(y*width+x)*9]);
+                cvInitMatHeader(inv_cov, 2, 2, CV_32FC1, &cov_mats_inv[(y*width+x)*4]);
+                
+                if ((y*width+x)*4 == 0)
+                {
+                    cout << cvGet2D(inv_cov, 0, 0).val[0] << " ";
+                    cout << cvGet2D(inv_cov, 0, 1).val[0] << " ";
+                    cout << cvGet2D(inv_cov, 1, 0).val[0] << " ";
+                    cout << cvGet2D(inv_cov, 1, 1).val[0] << " ";
+                    cout << endl;
+                }
                 
                 double mah_dist = cvMahalanobis(bgr_new, bgr_ave, inv_cov);
                 double unnorm_gaussian = exp(-0.5 * mah_dist);
-                double partition = 1.0 / (pow(TWO_PI, 1.5) * sqrt(dets[y*width+x]));
+                double partition = 1.0 / (TWO_PI * sqrt(dets[y*width+x]));
                 float p = partition * unnorm_gaussian;
                 
-                if (y*width+x < 100) cout << mah_dist << ", " << p << endl;
+                //if (y*width+x < 100) cout << mah_dist << ", " << p << endl;
                 prob_data[y*width+x] = p;
             }
         }
