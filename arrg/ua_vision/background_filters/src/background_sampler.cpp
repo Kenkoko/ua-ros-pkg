@@ -82,7 +82,7 @@ public:
                 case CV_32F:
                 case CV_64F:
                     for (j = 0; j < A->cols; j++)
-                    printf ("%8.6e ", (float)cvGetReal2D(A, i, j));
+                    printf ("%8.6f ", (float)cvGetReal2D(A, i, j));
                     break;
                 case CV_8U:
                 case CV_16U:
@@ -96,12 +96,12 @@ public:
         printf("\n");
     }
 
-    void convertToChroma(IplImage *in_bgr, IplImage *out_rgc)
+    void convertToChroma(IplImage *in_bgr, IplImage *out_rgchroma)
     {
         for (int y = 0; y < img_height; ++y)
         {
             uchar* ptr = (uchar *) (in_bgr->imageData + y * in_bgr->widthStep);
-            float* out_ptr = (float *) (out_rgc->imageData + y * out_rgc->widthStep);
+            float* out_ptr = (float *) (out_rgchroma->imageData + y * out_rgchroma->widthStep);
 
             for (int x = 0; x < img_width; ++x)
             {
@@ -109,13 +109,8 @@ public:
                 float g = ptr[3*x+1];
                 float r = ptr[3*x+2];
                 
-                float r_chroma = r / (b + g + r);
-                float g_chroma = g / (b + g + r);
-                float b_chroma = 1.0 - (r_chroma + g_chroma);
-                
-                out_ptr[3*x+0] = b_chroma;
-                out_ptr[3*x+1] = g_chroma;
-                out_ptr[3*x+2] = r_chroma;
+                out_ptr[2*x+0] = r / (b + g + r);
+                out_ptr[2*x+1] = g / (b + g + r);
             }
         }
     }
@@ -147,7 +142,7 @@ public:
                 {
                     IplImage *img = cvCreateImage(cvSize(img_width, img_height), IPL_DEPTH_8U, 3);
                     cvResize(bridge.imgMsgToCv(msg_ptr, "bgr8"), img);
-                    bg = cvCreateImage(cvSize(img_width, img_height), IPL_DEPTH_32F, 3);
+                    bg = cvCreateImage(cvSize(img_width, img_height), IPL_DEPTH_32F, 2);
                     convertToChroma(img, bg);
                     cvReleaseImage(&img);
                 }
@@ -278,7 +273,7 @@ public:
                             cout << cov_mat[pixel*9 + row*covMat->cols + col] << " ";
                         }
                     }
-                }                    
+                }
                 if (pixel == 0)
                 {
                     cout << endl;
@@ -419,7 +414,7 @@ public:
                             cout << cov_mat[pixel*9 + row*covMat->cols + col] << " ";
                         }
                     }
-                }                    
+                }
                 if (pixel == 0)
                 {
                     cout << endl;
@@ -471,26 +466,26 @@ public:
     {
         cout << "colorspace = rgchroma" << endl;
         
-        ave_bg = cvCreateImage(cvSize(img_width, img_height), IPL_DEPTH_32F, img_n_chan);
+        ave_bg = cvCreateImage(cvSize(img_width, img_height), IPL_DEPTH_32F, 2);
         float *ave_data = (float *) ave_bg->imageData;
         
         // figure out the actual size of image array
-        int size = img_width * img_height * img_n_chan;
+        int size = img_width * img_height * 2;
         
-        // a 3x3 covariance matrix for each pixel in the image
-        cov_mat.resize(img_width * img_height * 9);
-        cov_mat_inv.resize(img_width * img_height * 9);
+        // a 2x2 covariance matrix for each pixel in the image
+        cov_mat.resize(img_width * img_height * 4);
+        cov_mat_inv.resize(img_width * img_height * 4);
         dets.resize(img_width * img_height);
         std_dev.resize(size);
         
-        CvMat *ave = cvCreateMat(1, 3, CV_32FC1);
-        CvMat *covMat = cvCreateMat(3, 3, CV_32FC1);
-        CvMat *covMatInv = cvCreateMat(3, 3, CV_32FC1);
+        CvMat *ave = cvCreateMat(1, 2, CV_32FC1);
+        CvMat *covMat = cvCreateMat(2, 2, CV_32FC1);
+        CvMat *covMatInv = cvCreateMat(2, 2, CV_32FC1);
         CvMat **vects = (CvMat **) calloc(num_samples, sizeof(CvMat *));
 
         for (int i = 0; i < num_samples; ++i)
         {
-            vects[i] = cvCreateMatHeader(1, 3, CV_32FC1);
+            vects[i] = cvCreateMatHeader(1, 2, CV_32FC1);
         }
 
         float alpha = 50;
@@ -501,8 +496,8 @@ public:
             {
                 for (int j = 0; j < num_samples; ++j)
                 {
-                    float* ptr = (float *) (bgs[j]->imageData + y * bgs[j]->widthStep + x*3);
-                    cvInitMatHeader(vects[j], 1, 3, CV_32FC1, ptr);
+                    float* ptr = (float *) (bgs[j]->imageData + y * bgs[j]->widthStep + x*2);
+                    cvInitMatHeader(vects[j], 1, 2, CV_32FC1, ptr);
                 }
                 
                 int pixel = y * img_width + x;
@@ -532,7 +527,6 @@ public:
 
                 cvSet2D(covMat, 0, 0, cvScalar(cvGet2D(covMat, 0, 0).val[0] + alpha));
                 cvSet2D(covMat, 1, 1, cvScalar(cvGet2D(covMat, 1, 1).val[0] + alpha));
-                cvSet2D(covMat, 2, 2, cvScalar(cvGet2D(covMat, 2, 2).val[0] + alpha));
                 
                 if (pixel == 0)
                 {
@@ -554,25 +548,33 @@ public:
                     
                     for (int col = 0; col < covMat->cols; ++col)
                     {
-                        cov_mat[pixel*9 + row*covMat->cols + col] = *ptr++;
+                        cov_mat[pixel*4 + row*covMat->cols + col] = *ptr++;
                         if (pixel == 0)
                         {
-                            cout << cov_mat[pixel*9 + row*covMat->cols + col] << " ";
+                            cout << cov_mat[pixel*4 + row*covMat->cols + col] << " ";
                         }
                     }
-                }                    
+                }
                 if (pixel == 0)
                 {
                     cout << endl;
                 }
 
+                if (pixel == 0)
+                {
+                    cout << "Printing inverse covar mat" << endl;
+                }
                 for (int row = 0; row < covMatInv->rows; ++row)
                 {
                     const float* ptr = (const float*)(covMatInv->data.ptr + row * covMatInv->step);
                     
                     for (int col = 0; col < covMatInv->cols; ++col)
                     {
-                        cov_mat_inv[pixel*9 + row*covMatInv->cols + col] = *ptr++;
+                        cov_mat_inv[pixel*4 + row*covMatInv->cols + col] = *ptr++;
+                        if (pixel == 0)
+                        {
+                            cout << cov_mat_inv[pixel*4 + row*covMatInv->cols + col] << " ";
+                        }
                     }
                 }
 
@@ -582,13 +584,12 @@ public:
                     
                     for (int col = 0; col < ave->cols; ++col)
                     {
-                        ave_data[pixel*3 + row*ave->cols + col] = *ptr++;
+                        ave_data[pixel*2 + row*ave->cols + col] = *ptr++;
                     }
                 }
                 
-                std_dev[pixel*3+0] = sqrt(cvGet2D(covMat, 0, 0).val[0]);
-                std_dev[pixel*3+1] = sqrt(cvGet2D(covMat, 1, 1).val[0]);
-                std_dev[pixel*3+2] = sqrt(cvGet2D(covMat, 2, 2).val[0]);
+                std_dev[pixel*2+0] = sqrt(cvGet2D(covMat, 0, 0).val[0]);
+                std_dev[pixel*2+1] = sqrt(cvGet2D(covMat, 1, 1).val[0]);
             }
         }
 
