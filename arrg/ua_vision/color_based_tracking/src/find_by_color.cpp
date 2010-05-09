@@ -30,7 +30,7 @@ with code borrowed from various sources
 
 namespace ublas = boost::numeric::ublas;
 
-IplImage *image, *frame, *mask, *backproject, *bp8U, *sum, *r, *g, *b, *planes[3];
+IplImage *image, *frame, *mask, *backproject, *bp8U, *sum, *r, *g, *b;
 CvHistogram *bg_hist, *fg_hist, *lglikrat;
 CvMemStorage* storage;
 CvSeq* contour;
@@ -40,9 +40,12 @@ CvRect selection, box;
 CvRect track_window;
 CvBox2D track_box;
 CvConnectedComp track_comp;
-float range_arr[2], *ranges[3], value, maxlik, epsilon;
+float value, maxlik, epsilon;
+float range_arr[] = {0,255};
+float *ranges[] = {range_arr,range_arr,range_arr};
 double *sumdata;
-int track_object, h, w, step, boxhstep, dims[3], thepoint[2];
+int track_object, h, w, step, boxhstep, thepoint[2];
+int dims[] = {8,8,8};
 std::string histograms_path;
 std::string object;
 bool show_images;
@@ -58,9 +61,6 @@ Tracker(ros::NodeHandle &n, int argc, char** argv) :
 	n_(n), it_(n_)
 {
 	track_object = 0;
-	dims = {8,8,8};
-	range_arr = {0,255};
-	ranges = {range_arr,range_arr,range_arr};
 	epsilon = 0.1;
 	fg_hist = cvCreateHist( 3, dims, CV_HIST_ARRAY, ranges, 1 );
 	storage = cvCreateMemStorage(0);
@@ -212,7 +212,7 @@ bool find_by_color(color_based_tracking::FindByColor::Request &req, color_based_
 		{
 		
 			cvSplit( image, b, g, r, 0 );
-			planes = {b,g,r};
+			IplImage *planes[] = {b,g,r};
 			
 			float max_val = 0.f, min_val = 0.f;
 			cvCalcHist( planes, bg_hist, 0, 0 );
