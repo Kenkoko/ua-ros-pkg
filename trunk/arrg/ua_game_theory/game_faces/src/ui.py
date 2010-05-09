@@ -55,6 +55,14 @@ class SpinButtonExample:
         self.button_bid.set_size_request(80, 30)
         self.box_control.add(self.button_bid)
         
+        text_buffer = gtk.TextBuffer()
+        text_buffer.insert(text_buffer.get_end_iter(), "test...\n")
+        text_buffer.insert(text_buffer.get_end_iter(), "more test\n")
+        self.textview_console = gtk.TextView(text_buffer)
+        self.textview_console.set_editable(False)
+        self.textview_console.set_size_request(400, 120)
+        main_vbox.add(self.textview_console)
+        
   
         # vbox = gtk.VBox(False, 0)
         # vbox.set_border_width(5)
@@ -175,10 +183,6 @@ class SpinButtonExample:
         hbox.pack_start(button, True, True, 5)
         window.show_all()
 
-def main():
-    gtk.main()
-    return 0
-
 if __name__ == "__main__":
     SpinButtonExample()
-    main()
+    gtk.main()
