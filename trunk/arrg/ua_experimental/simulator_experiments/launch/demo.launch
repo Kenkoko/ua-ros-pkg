@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find simulator_experiments)/launch/empty_world.launch"/>
+    <include file="$(find simulator_experiments)/launch/simple_robot.launch"/>
+</launch>
