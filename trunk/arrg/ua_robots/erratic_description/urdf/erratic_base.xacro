@@ -30,7 +30,7 @@
 
     <macro name="erratic">
         <!-- base_footprint is a fictitious link(frame) that is on the ground right below base_link origin,
-             navigation stack dedpends on this frame -->
+             navigation stack depends on this frame -->
         <link name="base_footprint">
             <inertial>
                 <mass value="0.0001" />
