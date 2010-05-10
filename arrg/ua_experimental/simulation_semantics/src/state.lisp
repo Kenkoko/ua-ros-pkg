@@ -13,14 +13,20 @@
 
 ;;============================================================                
 
-(defun translate-object (info ws)
+(defun find-object-by-gazebo-name (gazebo-name)
+  (let* ((result (find-instances 'physical-object
+                              '(object-library)
+                              (list 'is-equal 
+                                    'gazebo-name 
+                                    gazebo-name))))
+    (if result (first result) nil)))
+
+;;============================================================                
+
+(defun translate-object (info object ws)
   (make-instance 'object-state
                  :world ws
-                 :object (find-instances 'physical-object
-                                         '(object-library)
-                                         (list 'is-equal 
-                                               'gazebo-name 
-                                               (simulator_experiments-msg:name-val info)))
+                 :object object
                  :pose (make-instance 'pose
                                       :position (translate-xyz
                                                  (geometry_msgs-msg:position-val 
@@ -44,6 +50,8 @@
                                                      (simulator_experiments-msg:velocity-val info)))
                                           )))
 
+;;============================================================                
+
 (defun translate-world-state (msg simn)
   (loop with states = (find-instances 'world-state simn :all)
      with last-state = (if states (first states) nil)
@@ -53,7 +61,9 @@
                                  :space-instances (list simn)
                                  :prev-state last-state)
      for obj-info across (simulator_experiments-msg:object_info-val msg)
-     do (translate-object obj-info ws)
+     for object = (find-object-by-gazebo-name (simulator_experiments-msg:name-val obj-info))
+     when object 
+     do (translate-object obj-info object ws)
      finally (return ws)))
 
 ;;============================================================                

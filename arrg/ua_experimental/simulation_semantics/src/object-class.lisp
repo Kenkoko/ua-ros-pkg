@@ -10,6 +10,7 @@
    (size :initform 0.2)
    (mass :initform 0.2)
    (xyz  :initform '(0 0 0))
+   (rpy :initform '(0 0 0))
    (static? :initform nil)
    ;; Predicates
    (self-predicates :initform nil)
@@ -30,7 +31,7 @@
   (setf (xml-string-of obj) 
         (let ((xml-list (list (gen-header obj)
                               (xyz-xml obj)
-                              (list :|rpy| "0 0 0")
+                              (rpy-xml obj)
                               (list :|static| (boolean-string (static?-of obj)))
                               (body-xml obj))))
           (if (not (static?-of obj))
@@ -102,24 +103,32 @@
 (defmethod xyz-xml ((obj physical-object))
   (list :|xyz| (format nil "~{~a ~}" (xyz-of obj)))) 
 
+(defmethod rpy-xml ((obj physical-object))
+  (list :|rpy| (format nil "~{~a ~}" (rpy-of obj))))
+
 (defmethod get-shape-xml ((obj physical-object))
   (cond ((eq (shape-of obj) 'sphere) 
          '|body|:|sphere|)
         (t 
          '|body|:|box|)))
 
+(defmethod get-size-vector ((obj physical-object))
+  (if (numberp (size-of obj))
+      (list (size-of obj) (size-of obj) (size-of obj))
+      (list (first (size-of obj)) (second (size-of obj)) (third (size-of obj)))))
+
 (defmethod get-size-xml ((obj physical-object))
   (cond ((eq (shape-of obj) 'sphere) 
          (format nil "~d" (size-of obj)))
         (t 
-         (format nil "~d ~d ~d" (size-of obj) (size-of obj) (size-of obj)))))
+         (format nil "~{~a ~}" (get-size-vector obj)))))
 
 (defmethod get-mesh-xml ((obj physical-object))
   (cond ((eq (shape-of obj) 'sphere) "unit_sphere")
         (t "unit_box")))
 
 (defmethod get-scale-xml ((obj physical-object))
-  (format nil "~d ~d ~d" (size-of obj) (size-of obj) (size-of obj)))
+  (format nil "~{~a ~}" (get-size-vector obj)))
 
 (defmethod get-geom-xml ((obj physical-object))
   (cond ((eq (shape-of obj) 'sphere) '|geom|:|sphere|)
