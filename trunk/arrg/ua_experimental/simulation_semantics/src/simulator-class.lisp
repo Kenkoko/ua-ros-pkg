@@ -24,6 +24,8 @@
 (defmethod run-simulator ((sim simulator))
   (add-instance-to-space-instance sim (find-space-instance-by-path '(running-simulators)))
 
+  (reset sim)
+
   (construct sim)
   
   (create-simulation sim)
@@ -38,8 +40,9 @@
      do (format t "Time Step ~a:~%" (current-time-of sim)) 
        (loop for obj being the hash-keys of (policy-map-of sim) using (hash-value action)
           if action do 
-            (format t "~a is doing ~a.~%" obj action)
-            (funcall (first action) obj (second action))
+            (funcall action (current-time-of sim) nil)
+            ;(format t "~a is doing ~a.~%" obj action)
+            ;(funcall (first action) obj (second action))
           else do 
             (format t "~a is doing nothing.~%" obj))
        (incf (current-time-of sim) step)

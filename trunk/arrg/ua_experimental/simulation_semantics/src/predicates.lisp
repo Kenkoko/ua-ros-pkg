@@ -30,8 +30,8 @@
                        unless (eq (first x) (second x))
                        collect x)))
         (loop for pair in pairs 
-           for self = (first (object-of (first pair)))
-           for other = (first (object-of (second pair)))
+           for self = (object-of (first pair))
+           for other = (object-of (second pair))
            when (binary-predicates-of self)
            append (loop for bpred in (binary-predicates-of self)
                      collect (list bpred (gazebo-name-of self) (gazebo-name-of other)  
@@ -39,7 +39,7 @@
          
 ;; This sort of needs access to the simulator too, huh? - goals, etc.
 (defmethod compute-my-predicates ((my-state object-state) (my-last-state object-state))
-  (let* ((me (first (object-of my-state))))
+  (let* ((me (object-of my-state)))
     (loop for pred in (self-predicates-of me) 
        collect (list pred (gazebo-name-of me) (funcall pred my-state my-last-state)))))
               
@@ -49,7 +49,14 @@
 
 ;;==================================================================
 
-(defun plot-predicates (sims pred obj)
+(defun match-predicate (target-pred pred-name objects)
+  ;(format t "~a ~a ~a~%" target-pred pred-name objects)
+  (if (eq (first target-pred) pred-name)
+      (let ((match-index (search objects (rest target-pred) :test 'equal)))
+        (if match-index
+            (zerop match-index)))))
+
+(defun plot-predicates (sims pred &rest objects)
   (call-service "plot" 'plotter-srv:Plot
                 :plots (loop for sim in sims collect 
                             (loop with states = (get-states-from-last-run sim)
@@ -59,16 +66,15 @@
                                for state in states
                                for predicates = (predicates-of state)
                                do (loop for p in predicates 
-                                     for obj = (second p)
-                                     when (and (eq (first p) pred) (eq (second p) obj))
+                                     when (match-predicate p pred objects)
                                      do (vector-push-extend (- (time-of state) start-time) x)
                                        (vector-push-extend (first (last p)) y))
                                finally (return (make-msg "plotter/PlotData"
                                                          (name) (format nil "Predicate (~a ~a) of ~a simulator"
-                                                                        pred obj sim)
+                                                                        pred objects sim)
                                                          (x_label) "time"
                                                          (y_label) (format nil "(~a ~a)"
-                                                                           pred obj)
+                                                                           pred objects)
                                                          (x_data) x
                                                          (y_data) y))))))
 
@@ -87,11 +93,27 @@
   (declare (ignore last-os))
   (x-of (position-of (pose-of os))))
 
+(defun y-pos (os last-os)
+  (declare (ignore last-os))
+  (y-of (position-of (pose-of os))))
+
+(defun z-pos (os last-os)
+  (declare (ignore last-os))
+  (z-of (position-of (pose-of os))))
+
 ;; Hardcoded point for now
 (defun dist-to-goal (os last-os)
   (declare (ignore last-os))
   (distance (position-of (pose-of os)) (make-instance 'xyz :x 4 :y 0 :z 0)))
-                  
+          
+(defun x-vel (os last-os)
+  (declare (ignore last-os))
+  (x-of (linear-of (velocity-of os))))
+
+(defun z-vel (os last-os)
+  (declare (ignore last-os))
+  (z-of (linear-of (velocity-of os))))
+
 ;;==================================================================
 ;; Differential Self-Predicates
 
