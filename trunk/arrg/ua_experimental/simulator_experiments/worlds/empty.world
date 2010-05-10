@@ -47,8 +47,8 @@
     <frames>
       <row height="100%">
         <camera width="100%">
-          <xyz>0 0 3</xyz>
-          <rpy>0 90 90</rpy>
+          <xyz>0 0 2.0</xyz>
+          <rpy>-5.0 6.75 1.8</rpy>
         </camera>
       </row>
     </frames>
@@ -88,25 +88,25 @@
       <interface:audio name="dummy_iface1"/>
     </controller:gazebo_ros_time>
   
-<!--    <controller:gazebo_ros_factory name="gazebo_ros_factory" plugin="libgazebo_ros_factory.so">-->
-<!--      <alwaysOn>true</alwaysOn>-->
-<!--      <updateRate>20.0</updateRate>-->
-<!--      <robotNamespace>/</robotNamespace>-->
-<!--      <spawnModelServiceName>add_model</spawnModelServiceName>-->
-<!--      <deleteModelServiceName>delete_model</deleteModelServiceName>-->
-<!--      <interface:audio name="dummy_iface2"/>-->
-<!--    </controller:gazebo_ros_factory>-->
+    <controller:gazebo_ros_factory name="gazebo_ros_factory" plugin="libgazebo_ros_factory.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>20.0</updateRate>
+      <robotNamespace>/</robotNamespace>
+      <spawnModelServiceName>spawn_model</spawnModelServiceName>
+      <deleteModelServiceName>bad_delete_model</deleteModelServiceName>
+      <interface:audio name="dummy_iface2"/>
+    </controller:gazebo_ros_factory>
 
     <controller:delete_object_plugin name="delete_object_plugin" plugin="libdelete_object_plugin.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>20.0</updateRate>
-        <interface:audio name="dummy_iface2"/>
+        <interface:audio name="dummy_iface3"/>
     </controller:delete_object_plugin>
 
     <controller:add_object_plugin name="add_object_plugin" plugin="libadd_object_plugin.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>20.0</updateRate>
-        <interface:audio name="dummy_iface3"/>
+        <interface:audio name="dummy_iface4"/>
     </controller:add_object_plugin>
 
     <controller:world_state_publisher name="world_state_publisher" plugin="libworld_state_publisher.so">
