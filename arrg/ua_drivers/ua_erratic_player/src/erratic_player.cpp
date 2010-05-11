@@ -1,5 +1,6 @@
 /*
  * erratic_player
+ * Copyright (c) 2010, Antons Rebguns.
  * Copyright (c) 2008, Willow Garage, Inc.
  * All rights reserved.
  *
@@ -68,9 +69,20 @@ Publishes to (name / type):
 
 @section parameters ROS parameters
 
-- None
-
-@todo Expose the various erratic parameters via ROS.
+- @b port_name (string) : Port that the robot base is connected to.
+- @b max_trans_vel (string) : Maximum translational velocity. Default: 0.5 m/s.
+- @b max_rot_vel (string) : Maximum rotational velocity. Default: 100 deg/s.
+- @b trans_acc (string) : Maximum translational acceleration, in length/sec/sec; nonnegative.
+    Zero means use the robot's default value. Default: 0.
+- @b trans_decel (string) : Maximum translational deceleration, in length/sec/sec; nonpositive.
+    Zero means use the robot's default value. Default: trans_acc.
+- @b rot_acc (string) : Maximum rotational acceleration, in angle/sec/sec; nonnegative.
+    Zero means use the robot's default value. Default: 0.
+- @b rot_decel (string) : Maximum rotational deceleration, in angle/sec/sec; nonpositive.
+    Zero means use the robot's default value. Default: rot_acc.
+- @b enable_ir (bool) : Whether to enable IR sensors. Default: false.
+- @b odometry_frame_id (string) : Frame name which will be used to send stamped transforms
+    through the TF mechanism. Default: odom.
 
  **/
 
@@ -120,11 +132,6 @@ public:
         ros::NodeHandle private_nh("~");
 
         std::string port = "/dev/ttyUSB0";
-        private_nh.getParam("port_name", port);
-
-        private_nh.param("enable_ir", enable_ir, false);
-        private_nh.param("odometry_frame_id", odom_frame_id, string("odom"));
-
         std::string max_trans_vel = "0.5";
         std::string max_rot_vel = "100";
         std::string trans_acc = "0";   // use robot's default value
@@ -132,12 +139,16 @@ public:
         std::string rot_acc = "0";     // use robot's default value
         std::string rot_decel = rot_acc;
 
+        private_nh.getParam("port_name", port);
         private_nh.getParam("max_trans_vel", max_trans_vel);
         private_nh.getParam("max_rot_vel", max_rot_vel);
         private_nh.getParam("trans_acc", trans_acc);
         private_nh.getParam("trans_decel", trans_decel);
         private_nh.getParam("rot_acc", rot_acc);
         private_nh.getParam("rot_decel", rot_decel);
+
+        private_nh.param("enable_ir", enable_ir, false);
+        private_nh.param("odometry_frame_id", odom_frame_id, string("odom"));
 
         tf_prefix_ = tf::getPrefixParam(node_);
 
