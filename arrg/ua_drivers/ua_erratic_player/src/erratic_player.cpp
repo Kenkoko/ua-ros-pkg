@@ -118,11 +118,26 @@ public:
     ErraticNode() : watts_charging_(10), watts_unplugged_(-10), charging_threshold_(12.98)
     {
         ros::NodeHandle private_nh("~");
-        std::string port = "/dev/ttyUSB0";
 
+        std::string port = "/dev/ttyUSB0";
         private_nh.getParam("port_name", port);
+
         private_nh.param("enable_ir", enable_ir, false);
         private_nh.param("odometry_frame_id", odom_frame_id, string("odom"));
+
+        std::string max_trans_vel = "0.5";
+        std::string max_rot_vel = "100";
+        std::string trans_acc = "0";   // use robot's default value
+        std::string trans_decel = trans_acc;
+        std::string rot_acc = "0";     // use robot's default value
+        std::string rot_decel = rot_acc;
+
+        private_nh.getParam("max_trans_vel", max_trans_vel);
+        private_nh.getParam("max_rot_vel", max_rot_vel);
+        private_nh.getParam("trans_acc", trans_acc);
+        private_nh.getParam("trans_decel", trans_decel);
+        private_nh.getParam("rot_acc", rot_acc);
+        private_nh.getParam("rot_decel", rot_decel);
 
         tf_prefix_ = tf::getPrefixParam(node_);
 
@@ -157,7 +172,14 @@ public:
         this->cf->InsertFieldValue(0, "provides", player_addr_pos);
         this->cf->InsertFieldValue(1, "provides", player_addr_power);
         if (enable_ir) { this->cf->InsertFieldValue(2, "provides", player_addr_ir); }
+
         this->cf->InsertFieldValue(0, "port", port.c_str());
+        this->cf->InsertFieldValue(0, "max_trans_vel", max_trans_vel.c_str());
+        this->cf->InsertFieldValue(0, "max_rot_vel", max_rot_vel.c_str());
+        this->cf->InsertFieldValue(0, "trans_acc", trans_acc.c_str());
+        this->cf->InsertFieldValue(0, "trans_decel", trans_decel.c_str());
+        this->cf->InsertFieldValue(0, "rot_acc", rot_acc.c_str());
+        this->cf->InsertFieldValue(0, "rot_decel", rot_decel.c_str());
 
         // Create an instance of the driver, passing it the ConfigFile object.
         // The -1 tells it to look into the "global" section of the ConfigFile,
