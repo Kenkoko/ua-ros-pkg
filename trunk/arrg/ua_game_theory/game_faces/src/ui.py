@@ -27,39 +27,14 @@ class GtkThreadSafe:
         # error, True if handled here
         gtk.gdk.threads_leave()
 
-class RosTopicProxy:
-    def __init__(self, topic, msg_type, callback):
-        self.sub = None
-        self.topic = topic
-        self.msg_type = msg_type
-        self.callback = callback
-    
-    def connect(self):
-        if not rospy.core.is_initialized():
-            # only called once per execution
-            try:
-                print roslib.scriptutil.get_master().getPid('/')
-            except socket.error:
-                print "Unable to communicate with master!"
-            else:
-                rospy.init_node('ui_topic_proxy', anonymous=True)
-        self.sub = rospy.Subscriber(self.topic, self.msg_type, self.callback)
-    
-    def disconnect(self):
-        if self.sub:
-            self.sub.unregister()
-    
-    def __del__(self):
-        self.disconnect()
-
 class GFPlayer:
-    def __init__(self, player_id, is_first, game_topic):
+    def __init__(self, player_id=-1, is_first=False, game_topic=''):
         self.player_id = player_id
         self.is_first = is_first
         self.game_topic = game_topic
         self.game_topic_lock = threading.Lock()
 
-class UltimatumGame:
+class UltimatumGameController:
     def __init__(self, parent, shared_console, player):
         self.parent = parent
         self.shared_console = shared_console
@@ -70,9 +45,9 @@ class UltimatumGame:
         self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
         
         self.title = "Ultimatum"
-        self.frame = gtk.Frame(self.title)
+        self.view = gtk.Frame(self.title)
         game_vbox = gtk.VBox(False, 8)
-        self.frame.add(game_vbox)
+        self.view.add(game_vbox)
         
         self.box_status = gtk.HBox(False, 8)
         game_vbox.pack_start(self.box_status, expand=False, fill=False)
@@ -97,7 +72,7 @@ class UltimatumGame:
         self.button_bid.connect("clicked", self.ok_button_clicked)
         self.box_control.add(self.button_bid)
         
-        self.frame.show_all()
+        self.view.show_all()
         self.toggle_user_interaction()
     
     def ok_button_clicked(self, widget, data=None):
@@ -136,8 +111,7 @@ class UltimatumGame:
                     self.shared_console.append_text("Waiting for first player...\n")
         elif play_number == 1:
             if self.player.is_first:
-                with gts:
-                    print 'First Player // Turn 2 // Waiting'   
+                pass   
             else:
                 with gts:
                     label_prompt = gtk.Label('Player 1 has sent %d.\nYou can either accept or reject this offer.' %game_play.amount)
@@ -168,14 +142,14 @@ class UltimatumGame:
                         self.shared_console.append_text('rejected. Your payoff is now 0.\n')
                         self.set_balance(0)
                     else:
-                        self.shared_console.append_text('accepted. Your payoff is now %d.\n' %game_play.amount)
-                        self.set_balance(10 - game_play.amount)
+                        new_balance = 10 - game_play.amount
+                        self.shared_console.append_text('accepted. Your payoff is now %d.\n' %new_balance)
+                        self.set_balance(new_balance)
                     gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
                     gp.header.stamp = rospy.Time.now()
                     self.play_pub.publish(gp)
             else:
-                with gts:
-                    print 'Player 2 // Turn 3 // Game Over'
+                pass
             with gts:
                 self.shared_console.append_text("\n\nPlease wait for the next game to start.\n")
             self.unregister_game()
@@ -187,9 +161,127 @@ class UltimatumGame:
         self.player.game_topic = ""
         self.player.game_topic_lock.release()
 
-class GFConsole:
+class TrustGameController:
+    def __init__(self, parent, shared_console, player):
+        self.parent = parent
+        self.shared_console = shared_console
+        self.player = player
+        self.balance = 0
+        
+        self.enabled = True
+        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(not self.player.is_first))
+        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
+        
+        self.title = "Trust"
+        self.view = gtk.Frame(self.title)
+        game_vbox = gtk.VBox(False, 8)
+        self.view.add(game_vbox)
+        
+        self.box_status = gtk.HBox(False, 8)
+        game_vbox.pack_start(self.box_status, expand=False, fill=False)
+        
+        self.label_balance_desc = gtk.Label('Your current balance is')
+        self.box_status.add(self.label_balance_desc)
+        
+        self.label_balance_amt = gtk.Label()
+        self.set_balance(0)
+        self.box_status.add(self.label_balance_amt)
+
+        self.box_control = gtk.HBox(False, 8)
+        game_vbox.pack_start(self.box_control, expand=False, fill=False)
+        
+        self.box_control.add(gtk.Label('Amount to give'))
+        
+        self.spin_bid = gtk.SpinButton(adjustment=gtk.Adjustment(lower=1, upper=10, step_incr=1))
+        self.box_control.add(self.spin_bid)
+        
+        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
+        self.button_bid.set_size_request(80, 30)
+        self.button_bid.connect("clicked", self.ok_button_clicked)
+        self.box_control.add(self.button_bid)
+        
+        self.view.show_all()
+        self.toggle_user_interaction()
+    
+    def ok_button_clicked(self, widget, data=None):
+        offer = self.spin_bid.get_value_as_int()
+        self.toggle_user_interaction()
+        if self.player.is_first:
+            play_num = 1
+            self.balance = 10 - offer
+            self.set_balance(self.balance)
+            self.shared_console.append_text('You sent %d.\nYour current payoff is %d\nWaiting for second player...\n' %(offer, self.balance))
+        else:
+            play_num = 2
+            self.set_balance(self.valueX3 - offer)
+            self.shared_console.append_text('You returned %d.\nYour current payoff is %d\n' %(offer, self.valueX3 - offer))
+        gp = GamePlay(play_number=play_num,amount=offer, player_id=self.player.player_id)
+        gp.header.stamp = rospy.Time.now()
+        self.play_pub.publish(gp)
+    
+    def set_balance(self, balance):
+        self.label_balance_amt.set_markup('<span size="20000" weight="bold">%d</span>' %balance)
+    
+    def toggle_user_interaction(self):
+        self.enabled = not self.enabled
+        self.box_control.set_sensitive(self.enabled)
+    
+    def take_first_turn(self):
+        if not self.player.is_first:
+            gp = GamePlay(play_number=0,amount=0, player_id=self.player.player_id)
+            gp.header.stamp = rospy.Time.now()
+            self.play_pub.publish(gp)
+        
+    def take_turn(self, game_play):
+        gts = GtkThreadSafe()
+        play_number = game_play.play_number
+        if play_number == 0:
+            if self.player.is_first:
+                with gts:
+                    self.set_balance(10)
+                    self.toggle_user_interaction()
+                    self.shared_console.append_text("Choose an amount, between 0 and 10 and press OK\n")
+            else:
+                with gts:
+                    self.shared_console.append_text("Waiting for first player...\n")
+        elif play_number == 1:
+            if self.player.is_first:
+                pass   
+            else:
+                with gts:
+                    value = game_play.amount
+                    self.valueX3 = value * 3
+                    s = 'Player 1 has sent %d. The tripled value is %d.\nChoose an amount to return to player 1 and press OK.\n' %(value, self.valueX3)
+                    self.shared_console.append_text(s)
+                    self.spin_bid.get_adjustment().set_upper(self.valueX3)
+                    self.set_balance(self.valueX3)
+                    self.toggle_user_interaction()
+        elif play_number == 2:
+            if self.player.is_first:
+                with gts:
+                    self.shared_console.append_text('Player 2 returned %d.\n' %game_play.amount)
+                    new_balance = self.balance + game_play.amount
+                    self.shared_console.append_text('Your payoff is now %d.\n' %new_balance)
+                    self.set_balance(new_balance)
+                    gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
+                    gp.header.stamp = rospy.Time.now()
+                    self.play_pub.publish(gp)
+            else:
+                pass
+            with gts:
+                self.shared_console.append_text("\n\nPlease wait for the next game to start.\n")
+            self.unregister_game()
+    
+    def unregister_game(self):
+        self.player.game_topic_lock.acquire()
+        self.play_pub.unregister()
+        self.play_sub.unregister()
+        self.player.game_topic = ""
+        self.player.game_topic_lock.release()
+
+class GFConsoleController:
     def __init__(self):
-        self.frame = gtk.Frame()
+        self.view = gtk.Frame()
         self.text_buffer = gtk.TextBuffer()
         self.textview = gtk.TextView(self.text_buffer)
         self.textview.set_editable(False)
@@ -197,8 +289,8 @@ class GFConsole:
         self.scrollview = gtk.ScrolledWindow()
         self.scrollview.add_with_viewport(self.textview)
         self.scrollview.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.frame.add(self.scrollview)
-        self.frame.show_all()
+        self.view.add(self.scrollview)
+        self.view.show_all()
 
     def scroll_to_bottom(self):
         v_adj = self.scrollview.get_vadjustment()
@@ -218,8 +310,8 @@ class GFConsole:
 class GameFacesUI:
     def __init__(self):
         # ivars
-        self.player = GFPlayer(-1, False, '')
-        self.the_game = None
+        self.player = GFPlayer()
+        self.the_game_controller = None
     
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.connect("destroy", lambda w: gtk.main_quit())
@@ -230,8 +322,8 @@ class GameFacesUI:
         self.content_vbox.set_border_width(10)
         self.window.add(self.content_vbox)
         
-        self.console = GFConsole()
-        self.content_vbox.pack_end(self.console.frame)
+        self.console = GFConsoleController()
+        self.content_vbox.pack_end(self.console.view)
         
         self.window.show_all()
         self.register_player()
@@ -253,8 +345,8 @@ class GameFacesUI:
         self.console.append_text("Ready to play.\nWaiting for your opponent...\n")
 
     def play_game(self, gamedata):
-        if self.the_game:
-            self.content_vbox.remove(self.the_game.frame)
+        if self.the_game_controller:
+            self.content_vbox.remove(self.the_game_controller.view)
         self.console.append_text("\nStarting game: %s\n\n\n" %gamedata.game_type)
         time.sleep(1.0)
         self.player.game_topic_lock.acquire()
@@ -269,22 +361,23 @@ class GameFacesUI:
                 self.player.game_topic = game_topic
                 game_type = str(gamedata.game_type)
                 if game_type == "TrustGame":
-                    self.the_game = None #TrustGame(self)
                     with gts:
-                        print 'Start TrustGame'
+                        self.the_game_controller = TrustGameController(self.window, self.console, self.player)
+                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
                 elif game_type == "Prisoners":
-                    self.the_game = None #Prisoners(self)
                     with gts:
-                        print 'Start Prisoners'
+#                        self.the_game_controller = PrisonersGameController(self.window, self.console, self.player)
+#                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+                        print 'Start a Prisoners Game!'
                 elif game_type == "Ultimatum":
                     with gts:
-                        self.the_game = UltimatumGame(self.window, self.console, self.player)
-                        self.content_vbox.pack_start(self.the_game.frame, expand=False)
-
+                        self.the_game_controller = UltimatumGameController(self.window, self.console, self.player)
+                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
                 else:
                     with gts:
                         print "Didnt match game_type: %s" %game_type
-                self.the_game.take_first_turn()
+                        sys.exit(1)
+                self.the_game_controller.take_first_turn()
         else:
             with gts:
                 print "skipped a game message from master, because I'm already in a game"
