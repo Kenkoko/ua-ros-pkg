@@ -65,19 +65,16 @@ Tracker(ros::NodeHandle &n, int argc, char** argv) :
 	fg_hist = cvCreateHist( 3, dims, CV_HIST_ARRAY, ranges, 1 );
 	storage = cvCreateMemStorage(0);
 	contour = 0;
-
-	show_images = argc < 5;
+	
+	printf("argc = %i\n", argc);
+	show_images = (argc > 3 && (std::string)argv[3] == "show_images");
 	if( show_images ) {
 /**/		cvNamedWindow( "Extra", 1 );
 		cvNamedWindow( "Demo", 1 );
 	}
 
-	arg1 = argv[1];
-	arg2 = argv[2];
-	histograms_path = argv[3];
-	foundpoints.header.frame_id = arg1;
-
-	image_sub_ = it_.subscribe(arg1+arg2, 1, &Tracker::imageCallback, this);	
+	histograms_path = argv[2];
+	image_sub_ = it_.subscribe(argv[1], 1, &Tracker::imageCallback, this);	
 	service_ = n_.advertiseService("find_by_color", &Tracker::find_by_color, this);
 	
 //	object_sub_ = n.subscribe("look_for_this", 1, &Tracker::stringCallback, this);
@@ -162,21 +159,10 @@ if (object != ""){
 	{
 		ROS_ERROR("error");
 	}
-	printf("TEST 1\n");
-
-
-	printf("TEST 2\n");
-	printf("%s\n", object.c_str());
-	printf("TEST 3\n");
-
 	track_object = -1;
-	printf("TEST 4\n");
-    histogram = fopen(object.c_str(),"rb");
-	printf("TEST 5\n");
+	histogram = fopen(object.c_str(),"rb");
 	fread(cvGetHistValue_3D(fg_hist,0,0,0),sizeof(float),dims[0]*dims[1]*dims[2],histogram);
-	printf("TEST 6\n");
 	fclose(histogram);
-	printf("TEST 7\n");
 
 	if( !image )
 	{
@@ -276,24 +262,7 @@ if (object != ""){
 	        cvResetImageROI( backproject );
 	        cvResetImageROI( image );
 	
-
-/*        	ublas::matrix<double> output (3,2);
-        	printf("%i %i\n", foundbox.x, foundbox.y);
-		output(0,0) = 2*foundbox.x;
-		output(1,0) = 2*foundbox.y;
-		output(2,0) = 2;
-		output(0,1) = foundbox.x+foundbox.width;
-		output(1,1) = foundbox.y+foundbox.height;
-		output(2,1) = 2;
-
-		output = ublas::prod (invertMatrix(K),output);
-
-		foundpoints.set_points_size(1);
-		foundpoints.points[0].x = output(0,0);
-		foundpoints.points[0].y = output(1,0);
-		foundpoints.points[0].z = output(2,0);
-	        
-/**/	}
+	}
 
     object = "";
 
