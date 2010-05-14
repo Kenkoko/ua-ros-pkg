@@ -1,5 +1,5 @@
-<model:physical xmlns:gazebo="http://playerstage.sourceforge.net/gazebo/xmlschema/#gz" xmlns:model="http://playerstage.sourceforge.net/gazebo/xmlschema/#model" xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#joint" xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller" xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" xmlns:rendering="http://playerstage.sourceforge.net/gazebo/xmlschema/#rendering" xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics" name="erratic">
-    <xyz>0 0 0</xyz>
+<model:physical xmlns:gazebo="http://playerstage.sourceforge.net/gazebo/xmlschema/#gz" xmlns:model="http://playerstage.sourceforge.net/gazebo/xmlschema/#model" xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body" xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom" xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#joint" xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller" xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" xmlns:rendering="http://playerstage.sourceforge.net/gazebo/xmlschema/#rendering" xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics" name="robot_description">
+    <xyz>0 0 0.01</xyz>
     <rpy>0 0 0</rpy>
     <body:box name="base_footprint">
         <massMatrix>true</massMatrix>
@@ -411,8 +411,10 @@
         <damping>0</damping>
     </joint:hinge>
     <static>false</static>
-    <controller:differential_position2d name="controller1">
+    <controller:diffdrive_plugin name="differential_drive_controller" plugin="libdiffdrive_plugin.so">
+        <alwaysOn>true</alwaysOn>
         <update>100</update>
+        <updateRate>100.0</updateRate>
         <leftJoint>base_link_right_wheel_joint</leftJoint>
         <rightJoint>base_link_left_wheel_joint</rightJoint>
         <wheelSeparation>0.34</wheelSeparation>
@@ -420,25 +422,7 @@
         <torque>5</torque>
         <interface:position name="position_iface_0" />
         <robotNamespace>/</robotNamespace>
-    </controller:differential_position2d>
-    <controller:gazebo_ros_p3d name="p3d_base_controller" plugin="libgazebo_ros_p3d.so">
-        <alwaysOn>true</alwaysOn>
-        <updateRate>100.0</updateRate>
-        <bodyName>base_link</bodyName>
-        <topicName>base_pose_ground_truth</topicName>
-        <gaussianNoise>0.01</gaussianNoise>
-        <frameName>map</frameName>
-        <xyzOffsets>0 0 0</xyzOffsets>
-        <!-- initialize odometry for fake localization-->
-        <rpyOffsets>0 0 0</rpyOffsets>
-        <interface:position name="p3d_base_position" />
-        <robotNamespace>/</robotNamespace>
-    </controller:gazebo_ros_p3d>
+        <topicName>cmd_vel</topicName>
+    </controller:diffdrive_plugin>
     <canonicalBody>base_footprint</canonicalBody>
-    <controller:gazebo_ros_controller_manager name="gazebo_ros_controller_manager" plugin="libgazebo_ros_controller_manager.so">
-        <alwaysOn>true</alwaysOn>
-        <updateRate>100.0</updateRate>
-        <interface:audio name="gazebo_ros_controller_manager_dummy_iface" />
-        <robotNamespace>/</robotNamespace>
-    </controller:gazebo_ros_controller_manager>
 </model:physical>
