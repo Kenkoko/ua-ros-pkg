@@ -9,6 +9,7 @@ with code borrowed from various sources
 *********************************************/
 
 #include <ros/ros.h>
+#include <ros/callback_queue.h>
 #include <std_msgs/String.h>
 #include "sensor_msgs/Image.h"
 #include "image_transport/image_transport.h"
@@ -30,7 +31,9 @@ with code borrowed from various sources
 
 namespace ublas = boost::numeric::ublas;
 
-IplImage *image, *frame, *mask, *backproject, *bp8U, *sum, *r, *g, *b;
+ros::CallbackQueue callback_queue_;
+
+IplImage *image, *frame, *mask, *backproject, *bp8U, *sum, *planes[3];
 CvHistogram *bg_hist, *fg_hist, *lglikrat;
 CvMemStorage* storage;
 CvSeq* contour;
@@ -40,12 +43,9 @@ CvRect selection, box;
 CvRect track_window;
 CvBox2D track_box;
 CvConnectedComp track_comp;
-float value, maxlik, epsilon;
-float range_arr[] = {0,255};
-float *ranges[] = {range_arr,range_arr,range_arr};
+float range_arr[] = {0,255}, *ranges[] = {range_arr,range_arr,range_arr}, value, maxlik, epsilon;
 double *sumdata;
-int track_object, h, w, step, boxhstep, thepoint[2];
-int dims[] = {8,8,8};
+int track_object, h, w, step, boxhstep, dims[] = {8,8,8}, thepoint[2];
 std::string histograms_path;
 std::string object;
 bool show_images;
@@ -150,43 +150,33 @@ void myBackProjectAndIntegrate( IplImage* img, IplImage* backprojection, IplImag
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
 {
+
+if (object != ""){
+
 	try
 	{
 		frame = bridge_.imgMsgToCv(msg_ptr, "bgr8");
-		foundpoints.header.stamp = ros::Time();
+		foundpoints.header = msg_ptr->header;
 	}
 	catch (sensor_msgs::CvBridgeException error)
 	{
 		ROS_ERROR("error");
 	}
-	
-	if( show_images && track_object ) {
-		cvShowImage( "Demo", image );
-		cvShowImage( "Extra", backproject);
-		cvWaitKey(3);
-	}
-	
-}
+	printf("TEST 1\n");
 
-bool find_by_color(color_based_tracking::FindByColor::Request &req, color_based_tracking::FindByColor::Response &res)
-{
 
-		printf("TEST 1\n");
-//	n_.getParam("histograms_path", histograms_path);
-	object = histograms_path + "sim_" + req.color + "_hist";
-		printf("TEST 2\n");
+	printf("TEST 2\n");
 	printf("%s\n", object.c_str());
-		printf("TEST 3\n");
-//	strcat(object, strdup(req.color.c_str()));
-//	strcat(object, "_hist");
+	printf("TEST 3\n");
+
 	track_object = -1;
-		printf("TEST 4\n");
-	histogram = fopen(object.c_str(),"rb");
-		printf("TEST 5\n");
+	printf("TEST 4\n");
+    histogram = fopen(object.c_str(),"rb");
+	printf("TEST 5\n");
 	fread(cvGetHistValue_3D(fg_hist,0,0,0),sizeof(float),dims[0]*dims[1]*dims[2],histogram);
-		printf("TEST 6\n");
+	printf("TEST 6\n");
 	fclose(histogram);
-		printf("TEST 7\n");
+	printf("TEST 7\n");
 
 	if( !image )
 	{
@@ -198,21 +188,20 @@ bool find_by_color(color_based_tracking::FindByColor::Request &req, color_based_
 		backproject = cvCreateImage( cvGetSize(image), IPL_DEPTH_8U, 1 );
 		bg_hist = cvCreateHist( 3, dims, CV_HIST_ARRAY, ranges, 1 );
 		lglikrat = cvCreateHist( 3, dims, CV_HIST_ARRAY, ranges, 1 );
-		r = cvCreateImage( cvGetSize(image), 8, 1 );
-		g = cvCreateImage( cvGetSize(image), 8, 1 );
-		b = cvCreateImage( cvGetSize(image), 8, 1 );
+		planes[0] = cvCreateImage( cvGetSize(image), 8, 1 );
+		planes[1] = cvCreateImage( cvGetSize(image), 8, 1 );
+		planes[2] = cvCreateImage( cvGetSize(image), 8, 1 );
 	}
 
-	cvCopy( frame, image, 0 );
-//	cvResize( frame, image );
+//	cvCopy( frame, image, 0 );
+	cvResize( frame, image );
 
 	if( track_object )
 	{
 		if( track_object < 0 )
 		{
 		
-			cvSplit( image, b, g, r, 0 );
-			IplImage *planes[] = {b,g,r};
+			cvSplit( image, planes[0], planes[1], planes[2], 0 );
 			
 			float max_val = 0.f, min_val = 0.f;
 			cvCalcHist( planes, bg_hist, 0, 0 );
@@ -220,8 +209,9 @@ bool find_by_color(color_based_tracking::FindByColor::Request &req, color_based_
 	                cvGetMinMaxHistValue( fg_hist, &min_val, &max_val, 0, 0 );
 	                cvConvertScale( fg_hist->bins, fg_hist->bins, max_val ? 255. / max_val : 0., 0 );
 	                cvCalcBackProject( planes, backproject, fg_hist);
-			cvThreshold( backproject, backproject, 127, 255, CV_THRESH_BINARY_INV);
-       			cvCalcHist( planes, bg_hist, 0, backproject );
+        			cvThreshold( backproject, backproject, 127, 255, CV_THRESH_BINARY_INV);
+        					cvShowImage( "Extra", backproject);
+       	    		cvCalcHist( planes, bg_hist, 0, backproject );
 //       			cvCalcBackProject( planes, backproject, bg_hist);
 
 			cvNormalizeHist(bg_hist, 1);
@@ -305,16 +295,35 @@ bool find_by_color(color_based_tracking::FindByColor::Request &req, color_based_
 	        
 /**/	}
 
+    object = "";
 
-	if( false ) {
+} //end if (object != "")
+	if( show_images && track_object ) {
 		cvShowImage( "Demo", image );
-		cvShowImage( "Extra", backproject);
-		cvWaitKey(100);
+//		cvShowImage( "Extra", backproject);
+		cvWaitKey(3);
 	}
+
+return;
+	
+}
+
+bool find_by_color(color_based_tracking::FindByColor::Request &req, color_based_tracking::FindByColor::Response &res)
+{
+    
+    object = histograms_path + req.color + "_hist";
+
+        ros::Rate rate(10);
+        while( object != "" )
+        {
+            printf("Testing\n");
+            callback_queue_.callOne(ros::WallDuration());
+            rate.sleep();
+        }
 
 	res.bounding_box = foundpoints;
 	return true;
-/**/
+
 
 }
 
@@ -341,9 +350,13 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "tracker");
 	ros::NodeHandle n;
+
+    n.setCallbackQueue(&callback_queue_);
 	
 	Tracker ic(n,argc,argv);
-	ros::spin();
+	
+    ros::MultiThreadedSpinner spinner(0);
+    spinner.spin(&callback_queue_);
 	return 0;
 }
 
