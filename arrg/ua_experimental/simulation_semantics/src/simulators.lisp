@@ -16,9 +16,9 @@
                      :color "Gazebo/Green"
                      :self-predicates '(force-mag vel-mag dist-to-goal x-pos diff-speed)
                      :binary-predicates '(dist-between)
-                     :mass 20
-                     :size 0.4
-                     :xyz '(-5.0 0 0.22))))
+                     ;:mass 0.2 
+                     :size 0.2
+                     :xyz '(0 0 0.1))))
 
 (defun make-above-box ()
   (if (null (find-instance-by-name 'above-box 'physical-object))
@@ -81,7 +81,7 @@
                      :instance-name 'ramp
                      :gazebo-name "ramp"
                      :shape 'box
-                     :size '(100 10 0.1)
+                     :size '(100 100 0.1)
                      :color "Gazebo/Green"
                      :self-predicates nil
                      :xyz '(4 0 0.1)
@@ -89,17 +89,15 @@
                      :static? t)))
 
 (defun make-robot ()
-  (if (null (find-instance-by-name 'robot 'physical-object))
-      (make-instance 'physical-object 
+  (if (null (find-instance-by-name 'robot 'robot))
+      (make-instance 'robot 
                      :instance-name 'robot
                      :gazebo-name "base_link"
-                     :shape 'box
-                     :size '(0.3 0.3 0.2)
-                     :color "Wubble/Green"
+                     ;:size '(0.3 0.3 0.2)
                      :self-predicates '(force-mag vel-mag x-pos z-pos diff-speed x-vel z-vel)
-                     :binary-predicates '(dist-between)
-                     :xyz '(0 0 0.1)
-                     :rpy '(0 0 0))))
+                     :binary-predicates '(dist-between))))
+                     ;:xyz '(0 0 0.1)
+                     ;:rpy '(0 0 0))))
 
 ;;=====================================================
 
@@ -129,7 +127,7 @@
                        :instance-name 'free
                        :objects objects
                        :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                     (setf (gethash (first objects) ht) '(apply-force (2000 0 0)))
+                                     (setf (gethash (first objects) ht) 'move-forward-policy)
                                      ht)))))
 
 (defun push-sim ()
@@ -140,7 +138,7 @@
                    :instance-name 'push
                    :objects objects
                    :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                 (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
+                                 (setf (gethash (first objects) ht) 'move-forward-policy)
                                  ht)))))
 
 (defun push-sphere-sim ()
@@ -151,7 +149,7 @@
                    :instance-name 'push-sphere
                    :objects objects
                    :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                 (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
+                                 (setf (gethash (first objects) ht) 'move-forward-policy)
                                  ht)))))
 
 (defun carry-sim ()
@@ -162,7 +160,7 @@
                    :instance-name 'carry
                    :objects objects
                    :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                 (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
+                                 (setf (gethash (first objects) ht) 'move-forward-policy)
                                  ht)))))
 
 (defun carry-sphere-sim ()
@@ -173,7 +171,7 @@
                    :instance-name 'carry-sphere
                    :objects objects
                    :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                 (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
+                                 (setf (gethash (first objects) ht) 'move-forward-policy)
                                  ht)))))
 
 (defun block-sim ()
@@ -184,7 +182,7 @@
                    :instance-name 'block
                    :objects objects
                    :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                 (setf (gethash (first objects) ht) '(apply-force (200 0 0)))
+                                 (setf (gethash (first objects) ht) 'move-forward-policy)
                                  ht)))))
 
 (defun hill-sim ()
@@ -220,12 +218,10 @@
 (defun uphill ()
   (cleanup)
   (with-ros-node ("simulators")
-    (init-robot)
     (init-objects)
     (init-simulators)
     (subscribe-to-world-state)
-    (test-simulator (find-instance-by-name 'hill 'simulator))
-    (cleanup-robot)))
+    (test-simulator (find-instance-by-name 'hill 'simulator))))
 
 (defun test-all-simulators ()
   (with-ros-node ("simulators")
@@ -251,3 +247,11 @@
     (sleep 2)
     (destroy sim)
     (sleep 2))
+
+;;=====================================================
+;; Policy
+
+(defun move-forward-policy (obj sim-time ws)
+  (declare (ignore ws)
+           (ignore sim-time))
+  (apply-force obj '(200 0 0)))

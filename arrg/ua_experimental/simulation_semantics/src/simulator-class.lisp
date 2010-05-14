@@ -38,9 +38,9 @@
   (loop with step = 0.1
      until (>= (current-time-of sim) (termination-time-of sim))
      do (format t "Time Step ~a:~%" (current-time-of sim)) 
-       (loop for obj being the hash-keys of (policy-map-of sim) using (hash-value action)
-          if action do 
-            (funcall action (current-time-of sim) nil)
+       (loop for obj being the hash-keys of (policy-map-of sim) using (hash-value policy)
+          if policy do 
+            (funcall policy obj (current-time-of sim) nil)
             ;(format t "~a is doing ~a.~%" obj action)
             ;(funcall (first action) obj (second action))
           else do 

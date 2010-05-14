@@ -2,11 +2,14 @@
 
 (defsystem "simulation_semantics/simulation_semantics"
     :components ((:file "pkg")
+
                  (:file "xml" :depends-on ("pkg"))
                  (:file "permutations" :depends-on ("pkg"))
-                 (:file "robot" :depends-on ("pkg"))
 
-                 (:file "object-class" :depends-on ("xml"))
+                 (:file "thing-class" :depends-on ("xml"))
+                 (:file "robot" :depends-on ("thing-class"))
+                 (:file "object-class" :depends-on ("thing-class"))
+
                  (:file "simulator-class" :depends-on ("object-class"))
                  (:file "classes" :depends-on ("object-class" "simulator-class"))
                  (:file "state" :depends-on ("classes"))

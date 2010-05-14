@@ -3,8 +3,8 @@
 ;;====================================================
 ;; Class Definition 
 
-(define-unit-class physical-object ()
-  ((gazebo-name :initform "blue_box") ;; This name is used for the body
+(define-unit-class physical-object (thing)
+  (;(gazebo-name :initform "blue_box") ;; This name is used for the body
    (shape :initform 'box)
    (color :initform "Gazebo/Blue")
    (size :initform 0.2)
@@ -13,15 +13,15 @@
    (rpy :initform '(0 0 0))
    (static? :initform nil)
    ;; Predicates
-   (self-predicates :initform nil)
-   (binary-predicates :initform nil)
+   ;(self-predicates :initform nil)
+   ;(binary-predicates :initform nil)
    ;; "Private" fields
-   (xml-string :initform nil)
+   ;(xml-string :initform nil)
    (force-pub :initform nil))
-  (:initial-space-instances (object-library))
+
   (:dimensional-values 
    (static? :boolean static?)
-   (gazebo-name :element gazebo-name))
+   )
 )
 
 ;;====================================================

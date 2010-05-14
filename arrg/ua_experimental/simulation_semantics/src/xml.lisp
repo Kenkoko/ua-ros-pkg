@@ -13,3 +13,7 @@
 
 (parse-xml-file 
  (concatenate 'string (get-object-path) "blue_sphere.xml"))
+
+(defparameter *robot-xml* 
+  (parse-xml-file 
+   (concatenate 'string (get-object-path) "robot.xml")))

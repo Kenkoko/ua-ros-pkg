@@ -8,6 +8,8 @@
 #include <gazebo/gazebo.h>
 #include <gazebo/GazeboError.hh>
 #include <gazebo/ControllerFactory.hh>
+#include <gazebo/Simulator.hh>
+//#include <gazebo/OgreCreator.hh>
 
 using namespace gazebo;
 
@@ -52,18 +54,24 @@ bool DeleteObjectPlugin::deleteModel(gazebo_plugins::DeleteModel::Request &req,
         
     } else {
         // Delete the model from the world
+        //boost::recursive_mutex::scoped_lock render_lock(*Simulator::Instance()->GetMRMutex());
+        boost::recursive_mutex::scoped_lock delete_lock(*Simulator::Instance()->GetMDMutex());
+        //boost::recursive_mutex::scoped_lock delete_lock(gazebo::Simulator::Instance()->GetMDMutex());        
+
         gazebo::World::Instance()->DeleteEntity(req.model_name.c_str());
 
-        while (gazebo::World::Instance()->GetModelByName(req.model_name))
-        {
-            ROS_DEBUG("Waiting for model deletion (%s)",req.model_name.c_str());
-            usleep(1000);
-        }
+//        while (gazebo::World::Instance()->GetModelByName(req.model_name))
+//        {
+//            ROS_INFO("Waiting for model deletion (%s)",req.model_name.c_str());
+//            usleep(1000);
+//        }
 
         // set result
         res.success = true;
         res.status_message = std::string("successfully deleted model");
     }
+
+    ROS_INFO("Exiting deleteModel");
 
     return 1;
 }

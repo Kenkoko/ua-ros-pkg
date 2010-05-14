@@ -22,6 +22,10 @@ rosbuild_link_boost(add_object_plugin thread)
 rosbuild_add_library(world_state_publisher src/world_state_publisher.cpp)
 rosbuild_link_boost(world_state_publisher thread)
 
+rosbuild_add_library(diffdrive_plugin src/diffdrive_plugin.cpp)
+rosbuild_link_boost(diffdrive_plugin thread)
+
+
 # SIMULATION MANAGER (replacement for main.cc in Gazebo)
 
 rosbuild_add_executable(simulation_manager src/simulation_manager.cpp)
