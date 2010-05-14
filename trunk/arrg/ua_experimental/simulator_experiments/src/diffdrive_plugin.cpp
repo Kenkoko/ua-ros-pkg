@@ -287,7 +287,7 @@ void DiffDrivePlugin::GetPositionCmd()
 
 // NEW: Store the velocities from the ROS message
 void DiffDrivePlugin::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_msg) {
-    std::cout << "BEGIN CALLBACK\n";
+    //std::cout << "BEGIN CALLBACK\n";
 
     this->lock.lock();
     
@@ -296,7 +296,7 @@ void DiffDrivePlugin::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_m
     
     this->lock.unlock();
 
-    std::cout << "END CALLBACK\n";
+    //std::cout << "END CALLBACK\n";
 }
 
 // NEW: custom callback queue thread

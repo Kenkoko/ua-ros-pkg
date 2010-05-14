@@ -71,6 +71,6 @@
                     (t nil))))
     (if vel
         (progn (format t "TIME: ~a, VEL: ~a~%" sim-time vel)
-               (funcall 'move-robot r (first vel) (second vel))))))
+               (move-robot r (first vel) (second vel))))))
     
       
