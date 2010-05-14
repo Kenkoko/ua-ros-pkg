@@ -122,7 +122,8 @@
 
 (defun free-sim ()
   (if (null (find-instance-by-name 'free 'simulator))
-      (let ((objects (list (find-instance-by-name 'self 'physical-object))))
+      (let ((objects (list ;(find-instance-by-name 'self 'physical-object))))
+                      (find-instance-by-name 'robot 'robot))))
         (make-instance 'simulator 
                        :instance-name 'free
                        :objects objects
@@ -132,8 +133,9 @@
 
 (defun push-sim ()
   (if (null (find-instance-by-name 'push 'simulator))
-  (let ((objects (list (find-instance-by-name 'self 'physical-object)
-                       (find-instance-by-name 'front-box 'physical-object))))
+  (let ((objects (list ;(find-instance-by-name 'self 'physical-object)
+                  (find-instance-by-name 'robot 'robot)
+                  (find-instance-by-name 'front-box 'physical-object))))
     (make-instance 'simulator 
                    :instance-name 'push
                    :objects objects
@@ -143,8 +145,9 @@
 
 (defun push-sphere-sim ()
   (if (null (find-instance-by-name 'push-sphere 'simulator))
-  (let ((objects (list (find-instance-by-name 'self 'physical-object)
-                       (find-instance-by-name 'sphere 'physical-object))))
+  (let ((objects (list ;(find-instance-by-name 'self 'physical-object)
+                  (find-instance-by-name 'robot 'robot)
+                  (find-instance-by-name 'sphere 'physical-object))))
     (make-instance 'simulator 
                    :instance-name 'push-sphere
                    :objects objects
@@ -154,8 +157,9 @@
 
 (defun carry-sim ()
   (if (null (find-instance-by-name 'carry 'simulator))
-  (let ((objects (list (find-instance-by-name 'self 'physical-object) 
-                       (find-instance-by-name 'above-box 'physical-object))))
+  (let ((objects (list ;(find-instance-by-name 'self 'physical-object) 
+                  (find-instance-by-name 'robot 'robot)
+                  (find-instance-by-name 'above-box 'physical-object))))
     (make-instance 'simulator 
                    :instance-name 'carry
                    :objects objects
@@ -165,35 +169,38 @@
 
 (defun carry-sphere-sim ()
   (if (null (find-instance-by-name 'carry-sphere 'simulator))
-  (let ((objects (list (find-instance-by-name 'self 'physical-object) 
-                       (find-instance-by-name 'above-sphere 'physical-object))))
-    (make-instance 'simulator 
-                   :instance-name 'carry-sphere
-                   :objects objects
-                   :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                 (setf (gethash (first objects) ht) 'move-forward-policy)
-                                 ht)))))
+      (let ((objects (list ;(find-instance-by-name 'self 'physical-object) 
+                      (find-instance-by-name 'robot 'robot)
+                      (find-instance-by-name 'above-sphere 'physical-object))))
+        (make-instance 'simulator 
+                       :instance-name 'carry-sphere
+                       :objects objects
+                       :policy-map (let ((ht (make-hash-table :test 'eq)))
+                                     (setf (gethash (first objects) ht) 'move-forward-policy)
+                                     ht)))))
 
 (defun block-sim ()
   (if (null (find-instance-by-name 'block 'simulator))
-  (let ((objects (list (find-instance-by-name 'self 'physical-object) 
-                       (find-instance-by-name 'stuck-box 'physical-object))))
-    (make-instance 'simulator 
-                   :instance-name 'block
-                   :objects objects
-                   :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                 (setf (gethash (first objects) ht) 'move-forward-policy)
-                                 ht)))))
+      (let ((objects (list (find-instance-by-name 'robot 'robot)
+                                        ;(find-instance-by-name 'self 'physical-object) 
+                           (find-instance-by-name 'stuck-box 'physical-object))))
+        (make-instance 'simulator 
+                       :instance-name 'block
+                       :objects objects
+                       :policy-map (let ((ht (make-hash-table :test 'eq)))
+                                     (setf (gethash (first objects) ht) 'move-forward-policy)
+                                     ht)))))
 
 (defun hill-sim ()
   (if (null (find-instance-by-name 'hill 'simulator))
-      (let ((objects (list (find-instance-by-name 'sphere 'physical-object)
+      (let ((objects (list (find-instance-by-name 'robot 'robot)
+                           (find-instance-by-name 'sphere 'physical-object)
                            (find-instance-by-name 'ramp 'physical-object))))
         (make-instance 'simulator 
                        :instance-name 'hill
                        :objects objects
                        :policy-map (let ((ht (make-hash-table :test 'eq)))
-                                     (setf (gethash 'robot ht) 'demo-policy)
+                                     (setf (gethash (first objects) ht) 'demo-policy)
                                      ht)
                        :termination-time 30))))
 
@@ -254,4 +261,6 @@
 (defun move-forward-policy (obj sim-time ws)
   (declare (ignore ws)
            (ignore sim-time))
-  (apply-force obj '(200 0 0)))
+  (if (eq 'robot (class-name (class-of obj)))
+      (move-robot obj 0.1 0.0)
+      (apply-force obj '(200 0 0))))
