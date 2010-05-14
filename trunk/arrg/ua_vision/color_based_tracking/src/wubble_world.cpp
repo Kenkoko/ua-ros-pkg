@@ -33,9 +33,9 @@ std::vector<string> unknown;
 char* word;
 CvBox2D minBox;
 CvPoint2D32f some_stupid_points[4];
-double similarity_score = -INFINITY, best_score = -INFINITY;
+double distance_score = INFINITY, lowest_score = INFINITY;
 string result_shape;
-bool undecidable = true;
+bool undecidable = true, clicked = false;
 
 void add_hist_to_hist(CvHistogram* original, CvHistogram* addee)
 {
@@ -205,6 +205,17 @@ void onMouse(int event, int x, int y, int flags, void *param){
     }
 }
 
+void onMouse2(int event, int x, int y, int flags, void *param){
+    switch(event){
+        case CV_EVENT_LBUTTONDOWN: //single click
+        case CV_EVENT_LBUTTONDBLCLK: //double click
+        case CV_EVENT_LBUTTONUP: //single click up
+        case 10: //double-click up? (not documented)
+            clicked = true;
+            break;
+    }
+}
+
 string get_shape(CvSeq* contour)
 {
 //    printf("Getting shape\n");
@@ -227,6 +238,7 @@ string get_shape(CvSeq* contour)
 void update_words(CvHistogram* given_hist, string given_shape, std::vector<string> known, std::vector<string> unknown)
 {
 
+    std::cout << "=====================" << unknown.size() << "=====================" << std::endl;
     for( uint i=0; i<unknown.size(); i++)
     {                    
         known_words[unknown[i]] = new Word( given_hist, given_shape );
@@ -331,6 +343,8 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
         
         printf("Test 3.2\n");
         
+        known.clear();
+        unknown.clear();
         all_words_known = true;
         word = strtok ( strdup(phrase.c_str()), " ");
         for( ; word != 0; word = strtok (NULL, " ") )
@@ -356,27 +370,26 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
             cvClearHist(combined_hists);
             for( uint i=1; i<known.size(); i++)
                 add_hist_to_hist(combined_hists, known_words[known[i]]->get_color());
-        
-            similarity_score = -INFINITY;
-            best_score = -INFINITY;
+                
+            distance_score = INFINITY;
+            lowest_score = INFINITY;
             
             for( contour = contours, result_contour = NULL; contour != 0; contour = contour->h_next )
             {
                 printf("What the what\n");
                 get_color_hist( planes, mono_image, contour, result_hist );
-                similarity_score = cvCompareHist( combined_hists, result_hist, CV_COMP_CORREL );
-                if (similarity_score > best_score)
+                distance_score = cvCompareHist( combined_hists, result_hist, CV_COMP_CORREL );
+                if (distance_score < lowest_score)
                 {
                     result_contour = contour;
-                    best_score = similarity_score;
+                    lowest_score = distance_score;
                 }
             }
-            
 //            if something undecidable = true;
         }
         
         
-        if ( !all_words_known or phrase == "no" or undecidable)
+        if (!all_words_known or phrase == "no" or undecidable)
         {
             CvScalar color = cvScalarAll( 0 );
             for( contour = contours; contour != 0; contour = contour->h_next )
@@ -396,7 +409,21 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
             cvDestroyWindow( "Window" );
             
         }
-        else 
+
+            CvScalar color = cvScalarAll( 255 );
+            cvDrawContours( original, result_contour, color, color, -1, 2, 8 );
+ 
+            cvNamedWindow( "Window", 1 );
+            cvSetMouseCallback("Window", onMouse2, 0);
+            for( clicked = false; clicked == false;    )
+            {            
+                cvShowImage( "Window", original);
+                cvWaitKey(3);
+            }
+            cvSetMouseCallback("Window", 0);
+            cvDestroyWindow( "Window" );
+            cvDestroyWindow( "Window" );
+
         
         printf("Test 3.5\n");
         
@@ -486,6 +513,7 @@ int main (int argc, char **argv)
     n.setCallbackQueue(&callback_queue_);
     
     foundpoints.header.frame_id = "";
+                cvNamedWindow( "Window", 1 );
     ros::ServiceServer service = n.advertiseService("find_by_color", serviceCallback);
 
     ros::Subscriber image_sub = n.subscribe(argv[2], 20, handleImage);

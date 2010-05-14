@@ -262,7 +262,7 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
     {
         // We now know that the last iteration provided correct results
         //   so update the words (the values should still be in these globals)
-        if ( phrase != "no" and not isFirst)
+        if ( function == "make" and phrase != "no" and not isFirst)
             update_words(result_hist, result_shape, known, unknown);
 
         printf("Test 3\n");
@@ -270,8 +270,6 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
         try
         {
             original = bridge.imgMsgToCv(msg_ptr, "bgr8");
-            foundpoints.header.stamp = ros::Time();
-            foundpoints.header.frame_id = "something";
         }
         catch (sensor_msgs::CvBridgeException error)
         {
@@ -358,7 +356,7 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
 
         printf("Test 3.3\n");
 
-        if (function == "find" and all_words_known and phrase != "no")
+        if (function == "find" )
         {
             undecidable = false;
             // Still need to account for shape in comparison here
@@ -377,7 +375,6 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
             
             for( contour = contours, result_contour = NULL; contour != 0; contour = contour->h_next )
             {
-                printf("What the what\n");
                 get_color_hist( planes, mono_image, contour, result_hist );
                 similarity_score = cvCompareHist( combined_hists, result_hist, CV_COMP_CORREL );
                 if (similarity_score > best_score)
@@ -398,7 +395,7 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
         }
         
         
-        if (function == "make" and !all_words_known)
+        if (function == "make")
         {
             CvScalar color = cvScalarAll( 0 );
             for( contour = contours; contour != 0; contour = contour->h_next )
@@ -415,18 +412,13 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
             }
             cvSetMouseCallback("Window", 0);
             cvDestroyWindow( "Window" );
-            cvDestroyWindow( "Window" );
+
+            printf("Test 3.4\n");
             
+            // Store results for update later
+            get_color_hist( planes, mono_image, result_contour, result_hist );
+            result_shape = get_shape( result_contour );
         }
-        else 
-        
-        printf("Test 3.5\n");
-        
-        // Store results for update later
-        get_color_hist( planes, mono_image, result_contour, result_hist );
-        result_shape = get_shape( result_contour );
-        
-        
         
         printf("Test 3.5\n");
         
@@ -456,6 +448,8 @@ void handleImage(const sensor_msgs::ImageConstPtr& msg_ptr)
 
 
     }//end if (phrase != "") else
+
+    printf("Test 4.2\n");
 
     return;
     
@@ -517,6 +511,8 @@ int main (int argc, char **argv)
     
     ros::MultiThreadedSpinner spinner(0);
     spinner.spin(&callback_queue_);
+    
+    cvDestroyWindow( "Window" );
     
     return 0;
 }
