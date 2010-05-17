@@ -253,7 +253,9 @@ class TrustGameController:
                     self.valueX3 = value * 3
                     s = 'Player 1 has sent %d. The tripled value is %d.\nChoose an amount to return to player 1 and press OK.\n' %(value, self.valueX3)
                     self.shared_console.append_text(s)
+                    self.spin_bid.get_adjustment().set_lower(0)
                     self.spin_bid.get_adjustment().set_upper(self.valueX3)
+                    self.spin_bid.set_value(0)
                     self.set_balance(self.valueX3)
                     self.toggle_user_interaction()
         elif play_number == 2:
