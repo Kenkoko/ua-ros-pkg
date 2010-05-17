@@ -109,8 +109,8 @@ public:
                 float g = ptr[3*x+1];
                 float r = ptr[3*x+2];
                 
-                out_ptr[2*x+0] = r / (b + g + r);
-                out_ptr[2*x+1] = g / (b + g + r);
+                out_ptr[2*x+0] = r / (1 + b + g + r);
+                out_ptr[2*x+1] = g / (1 + b + g + r);
             }
         }
     }
@@ -206,7 +206,7 @@ public:
             vects[i] = cvCreateMatHeader(1, 3, CV_8UC1);
         }
 
-        float alpha = 50;
+        float alpha = 1;
 
         for (int y = 0; y < img_height; ++y)
         {
@@ -485,10 +485,10 @@ public:
 
         for (int i = 0; i < num_samples; ++i)
         {
-            vects[i] = cvCreateMatHeader(1, 2, CV_32FC1);
+            vects[i] = cvCreateMat(1, 2, CV_32FC1);
         }
 
-        float alpha = 50;
+        float alpha = 0.001;
 
         for (int y = 0; y < img_height; ++y)
         {
@@ -496,13 +496,15 @@ public:
             {
                 for (int j = 0; j < num_samples; ++j)
                 {
-                    float* ptr = (float *) (bgs[j]->imageData + y * bgs[j]->widthStep + x*2);
-                    cvInitMatHeader(vects[j], 1, 2, CV_32FC1, ptr);
+                    float* ptr = (float *) (bgs[j]->imageData + y * bgs[j]->widthStep);
+//                    cvInitMatHeader(vects[j], 1, 2, CV_32FC1, ptr);
+                    cvSet1D(vects[j], 0, cvScalar(ptr[2*x+0]));
+                    cvSet1D(vects[j], 1, cvScalar(ptr[2*x+1]));
                 }
                 
                 int pixel = y * img_width + x;
                 
-                if (pixel == 0)
+                if (pixel < 100)
                 {
                     for (int j = 0; j < num_samples; ++j)
                     {
@@ -584,7 +586,9 @@ public:
                     
                     for (int col = 0; col < ave->cols; ++col)
                     {
-                        ave_data[pixel*2 + row*ave->cols + col] = *ptr++;
+                        float t = *ptr++;
+                        //cout << "[" << pixel*2 + row*ave->cols + col << "] = " << t << endl;
+                        ave_data[pixel*2 + row*ave->cols + col] = t;
                     }
                 }
                 
@@ -611,6 +615,17 @@ public:
     
     bool get_background_stats(background_filters::GetBgStats::Request& request, background_filters::GetBgStats::Response& response)
     {
+        for (int y = 0; y < ave_bg->height; ++y)
+        {
+            float* ptr = (float*) (ave_bg->imageData + y * ave_bg->widthStep);
+
+            for (int x = 0; x < ave_bg->width; ++x)
+            {
+                int pixel = y * ave_bg->width + x;
+                cout << "[" << pixel << "] = " << "(" << ptr[2*x+0] << ", " << ptr[2*x+1] << ")" << endl;
+            }
+        }
+
         sensor_msgs::CvBridge::fromIpltoRosImage(ave_bg, response.average_background);
         response.covariance_matrix = cov_mat;
         response.covariance_matrix_inv = cov_mat_inv;

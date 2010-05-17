@@ -66,8 +66,8 @@ void convertToChroma(IplImage *in_bgr, IplImage *out_rgchroma)
             float g = ptr[3*x+1];
             float r = ptr[3*x+2];
             
-            out_ptr[2*x+0] = r / (b + g + r);
-            out_ptr[2*x+1] = g / (b + g + r);
+            out_ptr[2*x+0] = r / (1 + b + g + r);
+            out_ptr[2*x+1] = g / (1 + b + g + r);
         }
     }
 }
@@ -172,15 +172,6 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
                 
                 cvInitMatHeader(inv_cov, 2, 2, CV_32FC1, &cov_mats_inv[(y*width+x)*4]);
                 
-                if ((y*width+x)*4 == 0)
-                {
-                    cout << cvGet2D(inv_cov, 0, 0).val[0] << " ";
-                    cout << cvGet2D(inv_cov, 0, 1).val[0] << " ";
-                    cout << cvGet2D(inv_cov, 1, 0).val[0] << " ";
-                    cout << cvGet2D(inv_cov, 1, 1).val[0] << " ";
-                    cout << endl;
-                }
-                
                 double mah_dist = cvMahalanobis(bgr_new, bgr_ave, inv_cov);
                 double unnorm_gaussian = exp(-0.5 * mah_dist);
                 double partition = 1.0 / (TWO_PI * sqrt(dets[y*width+x]));
@@ -188,6 +179,14 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
                 
                 //if (y*width+x < 100) cout << mah_dist << ", " << p << endl;
                 prob_data[y*width+x] = p;
+
+                if ((y*width+x) < 100)
+                {
+                    cout << "[" << y*width+x << "] = " << p << endl;
+                    cout << ptr_ave[2*x+0] << endl;
+                    cout << ptr_ave[2*x+1] << endl;
+                }
+                
             }
         }
     }
@@ -196,9 +195,20 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     cvReleaseMat(&bgr_ave);
     cvReleaseMat(&inv_cov);
     
-    double min, max;
-    cvMinMaxLoc(prob_img, &min, &max);
-    cvConvertScale(prob_img, prob_img, 1.0 / max);
+    if (colorspace == "rgb" || colorspace == "hsv")
+    {
+        cvLog(prob_img, prob_img);
+        
+        double min, max;
+        cvMinMaxLoc(prob_img, &min, &max);
+        cvConvertScale(prob_img, prob_img, 1.0 / (max - min), -min / (max - min));
+    }
+    else
+    {
+        double min, max;
+        cvMinMaxLoc(prob_img, &min, &max);
+        cvConvertScale(prob_img, prob_img, 1.0 / max);
+    }
 
     cvShowImage("prob_img", prob_img);
     cvWaitKey(100);
@@ -232,8 +242,21 @@ int main (int argc, char **argv)
     {
         cout << "calling service" << endl;
 
-        b.fromImage(srv.response.average_background, "bgr8");
+        b.fromImage(srv.response.average_background);
         ave_bg = b.toIpl();
+        
+        for (int y = 0; y < ave_bg->height; ++y)
+        {
+            float* ptr = (float*) (ave_bg->imageData + y * ave_bg->widthStep);
+
+            for (int x = 0; x < ave_bg->width; ++x)
+            {
+                int pixel = y * ave_bg->width + x;
+                cout << "[" << pixel << "] = " << "(" << ptr[2*x+0] << ", " << ptr[2*x+1] << ")" << endl;
+            }
+        }
+
+        
         cov_mats = srv.response.covariance_matrix;
         cov_mats_inv = srv.response.covariance_matrix_inv;
         dets = srv.response.covariance_matrix_dets;
