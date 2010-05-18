@@ -19,10 +19,9 @@
  *
  */
 /*
- * Desc: Position2d controller for a Differential drive.
- * Author: Nathan Koenig
- * Date: 01 Feb 2007
- * SVN: $Id: Differential_Position2d.hh 8433 2009-11-22 20:15:37Z natepak $
+ * Desc: ROS interface to a Position2d controller for a Differential drive.
+ * Author: Daniel Hewlett (adapted from Nathan Koenig)
+ * Date: 17 May 2010
  */
 #ifndef DIFFDRIVE_PLUGIN_HH
 #define DIFFDRIVE_PLUGIN_HH
@@ -50,137 +49,92 @@
 
 namespace gazebo
 {
-  class Joint;
-  class Entity;
-  class PositionIface;
+class Joint;
+class Entity;
+class PositionIface;
 
-/// \addtogroup gazebo_controller
-/// \{
-/** \defgroup pioneer2dx_position2d pioneer2dx_position2d
+/** \brief Pioneer 2 DX Position2D controller.
+ This is a controller that simulates a Pioneer 2DX motion
+ TODO: Need to update this documentation block with correct values
 
-  \brief Pioneer 2 DX Position2D controller.
+ \verbatim
+ <controller:pioneer2dx_position2d name="controller-name">
+ <leftJoint>left-joint-name</leftJoint>
+ <rightJoint>right-join-name</rightJoint>
+ <wheelDiameter>diameter_in_meters</wheelDiameter>
+ <wheelSeparation>separation_in_meters</wheelSeparation>
+ <torque></torque>
+ <interface:position name="iface-name"/>
+ </controller:pioneer2dx_position2d>
+ \endverbatim
 
-  This is a controller that simulates a Pioneer 2DX motion
+ \{
+ */
 
-  \verbatim
-  <controller:pioneer2dx_position2d name="controller-name">
-    <leftJoint>left-joint-name</leftJoint>
-    <rightJoint>right-join-name</rightJoint>
-    <wheelDiameter>diameter_in_meters</wheelDiameter>
-    <wheelSeparation>separation_in_meters</wheelSeparation>
-    <torque></torque>
-    <interface:position name="iface-name"/>
-  </controller:pioneer2dx_position2d>
-  \endverbatim
-  
-  \{
-*/
-
-/// \brief Pioneer 2 DX Position2D controller.
-/// This is a controller that simulates a Pioneer 2DX motion
 class DiffDrivePlugin : public Controller
 {
-  /// Constructor
-  public: DiffDrivePlugin(Entity *parent );
 
-  /// Destructor
-  public: virtual ~DiffDrivePlugin();
+public:
+  DiffDrivePlugin(Entity *parent);
+  virtual ~DiffDrivePlugin();
 
-  /// Load the controller
-  /// \param node XML config node
-  protected: virtual void LoadChild(XMLConfigNode *node);
+protected:
+  virtual void LoadChild(XMLConfigNode *node);
+  void SaveChild(std::string &prefix, std::ostream &stream);
+  virtual void InitChild();
+  void ResetChild();
+  virtual void UpdateChild();
+  virtual void FiniChild();
 
-  /// \brief Save the controller.
-  /// \stream Output stream
-  protected: void SaveChild(std::string &prefix, std::ostream &stream);
+private:
+  void PutPositionData();
+  void GetPositionCmd();
 
-  /// Init the controller
-  protected: virtual void InitChild();
-
-  /// \brief Reset the controller
-  protected: void ResetChild();
-
-  /// Update the controller
-  protected: virtual void UpdateChild();
-
-  /// Finalize the controller
-  protected: virtual void FiniChild();
-
-  /// Update the data in the interface
-  private: void PutPositionData();
-
-  /// Get the position command from libgazebo
-  private: void GetPositionCmd();
-
-  /// The Position interface
-  private: PositionIface *myIface;
-
-  /// The parent Model
-  private: Model *myParent;
-
-  /// Separation between the wheels
-  private: ParamT<float> *wheelSepP;
-
-  /// Diameter of the wheels
-  private: ParamT<float> *wheelDiamP;
-
-  ///Torque applied to the wheels
-  private: ParamT<float> *torqueP;
-
-  /// Speeds of the wheels
-  private: float wheelSpeed[2];
+  PositionIface *myIface;
+  Model *myParent;
+  ParamT<float> *wheelSepP;
+  ParamT<float> *wheelDiamP;
+  ParamT<float> *torqueP;
+  float wheelSpeed[2];
 
   // Simulation time of the last update
-  private: Time prevUpdateTime;
+  Time prevUpdateTime;
 
-  /// True = enable motors
-  private: bool enableMotors;
+  bool enableMotors;
+  float odomPose[3];
+  float odomVel[3];
 
-  private: float odomPose[3];
-  private: float odomVel[3];
-
-  private: Joint *joints[2];
-
-  private: PhysicsEngine  *physicsEngine;
-
-  private: ParamT<std::string> *leftJointNameP;
-  private: ParamT<std::string> *rightJointNameP;
+  Joint *joints[2];
+  PhysicsEngine *physicsEngine;
+  ParamT<std::string> *leftJointNameP;
+  ParamT<std::string> *rightJointNameP;
 
   // ROS STUFF
+  ros::NodeHandle* rosnode_;
+  ros::Publisher pub_;
+  ros::Subscriber sub_;
 
-  /// \bridf: ros node handle and publisher
-  private: ros::NodeHandle* rosnode_;
-  private: ros::Publisher pub_;
-  private: ros::Subscriber sub_;
+  boost::mutex lock;
 
-  /// \brief A mutex to lock access to fields that are used in message callbacks
-  private: boost::mutex lock;
+  ParamT<std::string> *robotNamespaceP;
+  std::string robotNamespace;
 
-  /// \brief for setting ROS name space
-  private: ParamT<std::string> *robotNamespaceP;
-  private: std::string robotNamespace;
-
-  /// \brief topic name
-  private: ParamT<std::string> *topicNameP;
-  private: std::string topicName;
+  ParamT<std::string> *topicNameP;
+  std::string topicName;
 
   // Custom Callback Queue
-  private: ros::CallbackQueue queue_;
-  private: void QueueThread();
-  private: boost::thread* callback_queue_thread_;
-
+  ros::CallbackQueue queue_;
+  void QueueThread();
+  boost::thread* callback_queue_thread_;
 
   // DiffDrive stuff
-  private: gazebo::PositionIface *posIface;
-  private: void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_msg);
-  //private: geometry_msgs::Twist::ConstPtr cmd_msg;
-  private: float x_;
-  private: float rot_;
-  private: bool alive_;
-};
+  gazebo::PositionIface *posIface;
+  void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_msg);
 
-/** \} */
-/// \}
+  float x_;
+  float rot_;
+  bool alive_;
+};
 
 }
 

@@ -18,6 +18,7 @@ def spawn_model_client(name, xml):
         sp.model.robot_model = xml
         
         sp.model.xml_type = sp.model.GAZEBO_XML
+        sp.model.model_name = "blue_sphere_model"
 
         sp.model.robot_namespace = '/'
         
@@ -35,15 +36,15 @@ def spawn_model_client(name, xml):
 count = 0
 def spawn_model(file_name):
     global count
-    #xml_file = open(roslib.packages.find_resource("simulator_experiments", file_name)[0])
-    xml_file = open(roslib.packages.find_resource("gazebo", file_name)[0])
+    xml_file = open(roslib.packages.find_resource("simulator_experiments", file_name)[0])
+    #xml_file = open(roslib.packages.find_resource("gazebo", file_name)[0])
     gazebo_xml = xml_file.read()
     count += 1
     spawn_model_client('test_object2' + str(count), gazebo_xml)
 
 if __name__ == "__main__":
-    spawn_model("simplecar.model")
-    #spawn_model("blue_sphere.xml")
+    #spawn_model("simplecar.model")
+    spawn_model("blue_sphere.xml")
     #time.sleep(3)
     #spawn_model("blue_box.xml")
     #spawn_model("pr2.model")

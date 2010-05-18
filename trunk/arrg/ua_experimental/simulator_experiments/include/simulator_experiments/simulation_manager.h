@@ -22,28 +22,20 @@
 
 #include "simulator_experiments/CreateWorld.h"
 
-class SimulationManager {
+class SimulationManager
+{
 public:
   SimulationManager();
-  void spin();
 
+  void spin();
   bool createWorldHandler(simulator_experiments::CreateWorld::Request &req,
                           simulator_experiments::CreateWorld::Response &resp);
-
   bool createWorld(const char *world_file_name, int server_id, bool start_paused);
-
-  bool startWorldHandler(std_srvs::Empty::Request &req,
-                         std_srvs::Empty::Response &resp);
-
-  bool pauseWorldHandler(std_srvs::Empty::Request &req,
-                         std_srvs::Empty::Response &resp);
-
-  bool resetWorldHandler(std_srvs::Empty::Request &req,
-                         std_srvs::Empty::Response &resp);
+  bool startWorldHandler(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp);
+  bool pauseWorldHandler(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp);
+  bool resetWorldHandler(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp);
 
 private:
-  
-
   // Fields
   int next_server_id_;
 
@@ -53,7 +45,7 @@ private:
   // ROS Services
   ros::ServiceServer create_world_srv_, delete_world_srv_;
   ros::ServiceServer start_world_srv_, pause_world_srv_, reset_world_srv_;
-  
+
   //ros::ServiceServer pause_service_, start_service_, print_service_;
 
   // Other fields, representing the default values from main.cc
@@ -65,6 +57,7 @@ private:
   static const int optTimeControl = 1;
   //const bool optPhysicsEnabled  = true;
   static const bool optPaused = false;
+
 };
 
 #endif
