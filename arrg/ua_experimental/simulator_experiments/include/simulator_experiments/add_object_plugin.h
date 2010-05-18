@@ -19,42 +19,28 @@ namespace gazebo
 
 class AddObjectPlugin : public Controller
 {
-  /// \brief Constructor
-  /// \param parent The parent entity, must be a Model or a Sensor
-  public: AddObjectPlugin(Entity *parent);
 
-  /// \brief Destructor
-  public: virtual ~AddObjectPlugin();
+public:
+  AddObjectPlugin(Entity *parent);
+  virtual ~AddObjectPlugin();
 
-  /// \brief Load the controller
-  /// \param node XML config node
-  protected: virtual void LoadChild(XMLConfigNode *node);
+protected:
+  virtual void LoadChild(XMLConfigNode *node);
+  virtual void InitChild();
+  virtual void UpdateChild();
+  virtual void FiniChild();
 
-  /// \brief Init the controller
-  protected: virtual void InitChild();
+private:
+  ros::NodeHandle* rosnode_;
+  ros::ServiceServer addModelService_;
 
-  /// \brief Update the controller
-  protected: virtual void UpdateChild();
+  bool isGazeboModelXML(std::string robot_model);
 
-  /// \brief Finalize the controller
-  protected: virtual void FiniChild();
+  bool addModel(gazebo_plugins::SpawnModel::Request &req, gazebo_plugins::SpawnModel::Response &res);
 
-  /// \brief A pointer to the ROS node.  A node will be instantiated if it does not exist.
-  private: ros::NodeHandle* rosnode_;
-  /// \brief ros service
-  private: ros::ServiceServer addModelService_;
-
-  private: bool isGazeboModelXML(std::string robot_model);
-
-  /// \brief ros service call to delete model in Gazebo
-  private: bool addModel(gazebo_plugins::SpawnModel::Request &req,
-                         gazebo_plugins::SpawnModel::Response &res);
-
-  /// \brief use custom callback queue
-  private: ros::CallbackQueue callback_queue_;
-  private: void CallbackQueueThread();
-  private: boost::thread* callback_queue_thread_;
-
+  ros::CallbackQueue callback_queue_;
+  void CallbackQueueThread();
+  boost::thread* callback_queue_thread_;
 };
 
 }

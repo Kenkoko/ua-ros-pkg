@@ -35,30 +35,35 @@
 #include <gazebo/ControllerFactory.hh>
 #include <boost/bind.hpp>
 
+using namespace std;
 using namespace gazebo;
 
-GZ_REGISTER_DYNAMIC_CONTROLLER("world_state_publisher", WorldStatePublisher);
+GZ_REGISTER_DYNAMIC_CONTROLLER("world_state_publisher", WorldStatePublisher)
+;
 
-////////////////////////////////////////////////////////////////////////////////
 // Constructor
-WorldStatePublisher::WorldStatePublisher(Entity *parent)
-    : Controller(parent)
+WorldStatePublisher::WorldStatePublisher(Entity *parent) :
+  Controller(parent)
 {
-  this->parent_model_ = dynamic_cast<Model*>(this->parent);
+  this->parent_model_ = dynamic_cast<Model*> (this->parent);
 
   if (!this->parent_model_)
     gzthrow("GazeboMechanismControl controller requires a Model as its parent");
 
   Param::Begin(&this->parameters);
-  this->robotNamespaceP = new ParamT<std::string>("robotNamespace", "/", 0);
-  this->topicNameP = new ParamT<std::string>("topicName", "", 1);
-  this->frameNameP = new ParamT<std::string>("frameName", "map", 0);
+  this->robotNamespaceP = new ParamT<string> ("robotNamespace", "/", 0);
+  this->topicNameP = new ParamT<string> ("topicName", "", 1);
+  this->frameNameP = new ParamT<string> ("frameName", "map", 0);
   Param::End();
+
+  // TODO: Hardcoded for now, should probably be from a ROS param
+  this->blacklist_.push_back("clock_body");
+  this->blacklist_.push_back("plane");
+  this->blacklist_.push_back("point_white_RenderableBody_0");
 
   this->worldStateConnectCount = 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Destructor
 WorldStatePublisher::~WorldStatePublisher()
 {
@@ -68,8 +73,6 @@ WorldStatePublisher::~WorldStatePublisher()
   delete this->rosnode_;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Load the controller
 void WorldStatePublisher::LoadChild(XMLConfigNode *node)
 {
   this->robotNamespaceP->Load(node);
@@ -77,7 +80,7 @@ void WorldStatePublisher::LoadChild(XMLConfigNode *node)
 
   int argc = 0;
   char** argv = NULL;
-  ros::init(argc,argv,"gazebo",ros::init_options::NoSigintHandler|ros::init_options::AnonymousName);
+  ros::init(argc, argv, "gazebo", ros::init_options::NoSigintHandler | ros::init_options::AnonymousName);
   this->rosnode_ = new ros::NodeHandle(this->robotNamespace);
 
   this->topicNameP->Load(node);
@@ -86,53 +89,40 @@ void WorldStatePublisher::LoadChild(XMLConfigNode *node)
   this->frameName = this->frameNameP->GetValue();
 
   // Custom Callback Queue
-  ros::AdvertiseOptions ao = ros::AdvertiseOptions::create<simulator_experiments::WorldState>(
-    this->topicName,1,
-    boost::bind( &WorldStatePublisher::WorldStateConnect,this),
-    boost::bind( &WorldStatePublisher::WorldStateDisconnect,this), ros::VoidPtr(), &this->queue_);
+  ros::AdvertiseOptions
+                        ao =
+                            ros::AdvertiseOptions::create<simulator_experiments::WorldState>(
+                                                                                             this->topicName,
+                                                                                             1,
+                                                                                             boost::bind(
+                                                                                                         &WorldStatePublisher::WorldStateConnect,
+                                                                                                         this),
+                                                                                             boost::bind(
+                                                                                                         &WorldStatePublisher::WorldStateDisconnect,
+                                                                                                         this),
+                                                                                             ros::VoidPtr(),
+                                                                                             &this->queue_);
   this->pub_ = this->rosnode_->advertise(ao);
-
-  // Hardcoded for now, should probably be from a ROS param
-  this->blacklist_.push_back("clock_body");
-  this->blacklist_.push_back("plane");
-  this->blacklist_.push_back("point_white_RenderableBody_0");
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Someone subscribes to me
 void WorldStatePublisher::WorldStateConnect()
 {
   this->worldStateConnectCount++;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Someone subscribes to me
+// Someone unsubscribes from me
 void WorldStatePublisher::WorldStateDisconnect()
 {
   this->worldStateConnectCount--;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Initialize the controller
 void WorldStatePublisher::InitChild()
 {
   // Custom Callback Queue
-  this->callback_queue_thread_ = new boost::thread( boost::bind( &WorldStatePublisher::QueueThread,this ) );
+  this->callback_queue_thread_ = new boost::thread(boost::bind(&WorldStatePublisher::QueueThread, this));
 }
 
-bool contains(std::vector<std::string> v, std::string s) 
-{
-  //for(vector<std::string>::const_iterator it = v.begin(); it != v.end(); ++it) {
-  for (uint i = 0; i < v.size(); i++) {
-    if (v[i].compare(s) == 0) {
-      return true;
-    }
-  }
-    return false;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Update the controller
 void WorldStatePublisher::UpdateChild()
 {
   // Return if there's no one subscribing
@@ -143,13 +133,13 @@ void WorldStatePublisher::UpdateChild()
   Time cur_time = Simulator::Instance()->GetSimTime();
 
   /// \bridf: list of all models in the world
-  std::vector<gazebo::Model*> models;
-  std::vector<gazebo::Model*>::iterator miter;
+  vector<gazebo::Model*> models;
+  vector<gazebo::Model*>::iterator miter;
 
   /// \bridf: list of all bodies in the model
-  const std::map<std::string,gazebo::Body*> *bodies;
+  const map<string, gazebo::Body*> *bodies;
 
-  std::map<std::string,gazebo::Body*> all_bodies;
+  map<string, gazebo::Body*> all_bodies;
   all_bodies.clear();
 
   models = gazebo::World::Instance()->GetModels();
@@ -159,10 +149,10 @@ void WorldStatePublisher::UpdateChild()
   {
     bodies = (*miter)->GetBodies();
     // Iterate through all bodies
-    std::map<std::string, Body*>::const_iterator biter;
-    for (biter=bodies->begin(); biter!=bodies->end(); biter++)
+    map<string, Body*>::const_iterator biter;
+    for (biter = bodies->begin(); biter != bodies->end(); biter++)
     {
-      all_bodies.insert(make_pair(biter->first,biter->second));
+      all_bodies.insert(make_pair(biter->first, biter->second));
     }
   }
   //ROS_ERROR("debug: %d",all_bodies.size());
@@ -181,12 +171,14 @@ void WorldStatePublisher::UpdateChild()
     this->worldStateMsg.object_info.clear();
 
     // Iterate through all_bodies
-    std::map<std::string, Body*>::iterator biter;
-    for (biter=all_bodies.begin(); biter!=all_bodies.end(); biter++)
+    map<string, Body*>::iterator biter;
+    for (biter = all_bodies.begin(); biter != all_bodies.end(); biter++)
     {
-      std::string name = std::string(biter->second->GetName());
+      string name = string(biter->second->GetName());
 
-      if (!contains(blacklist_, name)) {
+      vector<string>::iterator result = find(blacklist_.begin(), blacklist_.end(), name);
+      if (result == blacklist_.end())
+      {
         simulator_experiments::ObjectInfo info;
 
         info.name = name;
@@ -198,12 +190,12 @@ void WorldStatePublisher::UpdateChild()
         Vector3 pos;
         // Get Pose/Orientation 
         pose = (biter->second)->GetAbsPose();
-        pos = pose.pos; 
+        pos = pose.pos;
         rot = pose.rot;
-         
-        info.pose.position.x    = pos.x;
-        info.pose.position.y    = pos.y;
-        info.pose.position.z    = pos.z;
+
+        info.pose.position.x = pos.x;
+        info.pose.position.y = pos.y;
+        info.pose.position.z = pos.z;
         info.pose.orientation.x = rot.x;
         info.pose.orientation.y = rot.y;
         info.pose.orientation.z = rot.z;
@@ -216,13 +208,13 @@ void WorldStatePublisher::UpdateChild()
         Vector3 veul = (biter->second)->GetEulerRate(); // get velocity in gazebo frame
 
         // pass linear rates
-        info.velocity.linear.x        = vpos.x;
-        info.velocity.linear.y        = vpos.y;
-        info.velocity.linear.z        = vpos.z;
+        info.velocity.linear.x = vpos.x;
+        info.velocity.linear.y = vpos.y;
+        info.velocity.linear.z = vpos.z;
         // pass euler angular rates
-        info.velocity.angular.x    = veul.x;
-        info.velocity.angular.y    = veul.y;
-        info.velocity.angular.z    = veul.z;
+        info.velocity.angular.x = veul.x;
+        info.velocity.angular.y = veul.y;
+        info.velocity.angular.z = veul.z;
 
         // get forces
         Vector3 force = (biter->second)->GetForce(); // get velocity in gazebo frame
@@ -246,8 +238,6 @@ void WorldStatePublisher::UpdateChild()
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Finalize the controller
 void WorldStatePublisher::FiniChild()
 {
   // Custom Callback Queue
@@ -257,9 +247,6 @@ void WorldStatePublisher::FiniChild()
   this->callback_queue_thread_->join();
 }
 
-
-// Custom Callback Queue
-////////////////////////////////////////////////////////////////////////////////
 // custom callback queue thread
 void WorldStatePublisher::QueueThread()
 {
@@ -270,5 +257,4 @@ void WorldStatePublisher::QueueThread()
     this->queue_.callAvailable(ros::WallDuration(timeout));
   }
 }
-
 

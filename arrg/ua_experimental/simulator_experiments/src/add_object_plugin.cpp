@@ -13,8 +13,6 @@ using namespace gazebo;
 
 GZ_REGISTER_DYNAMIC_CONTROLLER("add_object_plugin", AddObjectPlugin);
 
-////////////////////////////////////////////////////////////////////////////////
-// Constructor
 AddObjectPlugin::AddObjectPlugin(Entity *parent)
     : Controller(parent)
 {
@@ -33,18 +31,14 @@ AddObjectPlugin::AddObjectPlugin(Entity *parent)
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Destructor
 AddObjectPlugin::~AddObjectPlugin()
 {
-    // TODO: Probably should have a destructor!
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // utilites for checking incoming string
 bool AddObjectPlugin::isGazeboModelXML(std::string robot_model)
 {
-  ROS_INFO(robot_model.c_str());
+  ROS_INFO("%s\n", robot_model.c_str());
   TiXmlDocument doc_in;
   doc_in.Parse(robot_model.c_str());
   if (doc_in.FirstChild("model:physical"))
@@ -53,7 +47,6 @@ bool AddObjectPlugin::isGazeboModelXML(std::string robot_model)
     return false;
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Service for spawning models in Gazebo
 bool AddObjectPlugin::addModel(gazebo_plugins::SpawnModel::Request &req,
                                gazebo_plugins::SpawnModel::Response &res)
@@ -93,12 +86,18 @@ bool AddObjectPlugin::addModel(gazebo_plugins::SpawnModel::Request &req,
     }
   }
 
-  ROS_INFO("Inserting Entity...");
-
+  ROS_INFO("Inserting Entity (Model name is [%s])", req.model.model_name.c_str());
   gazebo::World::Instance()->InsertEntity(robot_model);
   
+  // Wait for model to be created
+  while (!gazebo::World::Instance()->GetModelByName(req.model.model_name))
+  {
+    ROS_INFO("Waiting for model creation (%s)", req.model.model_name.c_str());
+    usleep(1000);
+  }
+
   res.success = true;
-  res.status_message = std::string("Model created (maybe!)");
+  res.status_message = std::string("Model successfully created.");
 
   return true;
 }
@@ -114,26 +113,22 @@ void AddObjectPlugin::CallbackQueueThread()
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
 // Load the controller
 void AddObjectPlugin::LoadChild(XMLConfigNode *node)
 {
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Initialize the controller
 void AddObjectPlugin::InitChild()
 {
     this->callback_queue_thread_ = new boost::thread( boost::bind( &AddObjectPlugin::CallbackQueueThread, this ) );
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Update the controller
 void AddObjectPlugin::UpdateChild()
 {
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Finalize the controller
 void AddObjectPlugin::FiniChild()
 {
