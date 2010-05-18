@@ -1,4 +1,5 @@
 ---
+string colorspace                       # average background image colorspce (rgb, hsv or rgchroma)
 sensor_msgs/Image average_background    # mean image composed from n samples
 float32[] covariance_matrix             # 3x3 covariance matrix array for each pixel in the image
 float32[] covariance_matrix_inv         # inverse of covariance matrices
