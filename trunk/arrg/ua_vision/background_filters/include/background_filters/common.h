@@ -43,38 +43,68 @@ void print_mat(CvMat *mat)
 {
     for (int i = 0; i < mat->rows; i++)
     {
-        printf("\n");
+        std::printf("\n");
 
         switch (CV_MAT_DEPTH(mat->type))
         {
             case CV_32F:
             case CV_64F:
                 for (int j = 0; j < mat->cols; j++)
-                printf ("%8.6f ", (float) cvGetReal2D(mat, i, j));
+                std::printf ("%8.6f ", (float) cvGetReal2D(mat, i, j));
                 break;
             case CV_8U:
             case CV_16U:
                 for(int j = 0; j < mat->cols; j++)
-                printf ("%6d", (int) cvGetReal2D(mat, i, j));
+                std::printf ("%6d", (int) cvGetReal2D(mat, i, j));
                 break;
             default:
             break;
         }
     }
 
-    printf("\n");
+    std::printf("\n");
 }
 
 void print_img(IplImage *img)
 {
-    for (int y = 0; y < img->height; ++y)
+    if (img->depth == IPL_DEPTH_32F)
     {
-        float* ptr = (float*) (img->imageData + y * img->widthStep);
-
-        for (int x = 0; x < img->width; ++x)
+        for (int y = 0; y < img->height; ++y)
         {
-            int pixel = y * img->width + x;
-            std::cout << "[" << pixel << "] = " << "(" << ptr[2*x+0] << ", " << ptr[2*x+1] << ")" << std::endl;
+            float* ptr = (float*) (img->imageData + y * img->widthStep);
+
+            for (int x = 0; x < img->width; ++x)
+            {
+                int pixel = y * img->width + x;
+                std::cout << "[" << pixel << "] = " << "(";
+
+                for (int i = 0; i < img->nChannels; ++i)
+                {
+                    std::cout << ptr[img->nChannels*x + i] << ", ";
+                }
+
+                std::cout << ")" << std::endl;
+            }
+        }
+    }
+    else if (img->depth == IPL_DEPTH_8U)
+    {
+        for (int y = 0; y < img->height; ++y)
+        {
+            uchar* ptr = (uchar *) (img->imageData + y * img->widthStep);
+
+            for (int x = 0; x < img->width; ++x)
+            {
+                int pixel = y * img->width + x;
+                std::cout << "[" << pixel << "] = " << "(";
+
+                for (int i = 0; i < img->nChannels; ++i)
+                {
+                    std::cout << (int) ptr[img->nChannels*x + i] << ", ";
+                }
+
+                std::cout << ")" << std::endl;
+            }
         }
     }
 }

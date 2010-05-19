@@ -184,20 +184,10 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     cvReleaseMat(&bgr_ave);
     cvReleaseMat(&inv_cov);
 
-    if (colorspace == "rgb" || colorspace == "hsv")
-    {
-        cvLog(prob_img, prob_img);
-
-        double min, max;
-        cvMinMaxLoc(prob_img, &min, &max);
-        cvConvertScale(prob_img, prob_img, 1.0 / (max - min), -min / (max - min));
-    }
-    else
-    {
-        double min, max;
-        cvMinMaxLoc(prob_img, &min, &max);
-        cvConvertScale(prob_img, prob_img, 1.0 / max);
-    }
+    double min, max;
+    cvLog(prob_img, prob_img);
+    cvMinMaxLoc(prob_img, &min, &max);
+    cvConvertScale(prob_img, prob_img, 1.0 / (max - min), -min / (max - min));
 
     cvShowImage("prob_img", prob_img);
 
@@ -228,6 +218,21 @@ int main (int argc, char **argv)
         ave_bg = b.toIpl();
 
         print_img(ave_bg);
+//         CvMat *temp = cvCreateMat(ave_bg->height, ave_bg->width, CV_8UC3);
+//         cvGetMat(ave_bg, temp);
+// 
+//         for (int row = 0; row < temp->rows; ++row)
+//         {
+//             uchar* ptr = (uchar*) temp->data.ptr + row * temp->step;
+// 
+//             for (int col = 0; col < temp->cols; ++col)
+//             {
+//                 uchar t = *ptr++;
+//                 cout << "[" << (row*(temp->cols) + col) << "] = {r: " << row << ", c: " << col << "} " << (float) t << endl;
+//             }
+//         }
+/*
+        cout << "h: " << temp->rows << ", w: " << temp->cols << endl;*/
 
         colorspace = srv.response.colorspace;
         cov_mats = srv.response.covariance_matrix;
