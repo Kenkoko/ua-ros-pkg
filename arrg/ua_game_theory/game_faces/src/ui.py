@@ -145,9 +145,10 @@ class UltimatumGameController:
                         new_balance = 10 - game_play.amount
                         self.shared_console.append_text('accepted. Your payoff is now %d.\n' %new_balance)
                         self.set_balance(new_balance)
-                    gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-                    gp.header.stamp = rospy.Time.now()
-                    self.play_pub.publish(gp)
+                time.sleep(3)
+                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
+                gp.header.stamp = rospy.Time.now()
+                self.play_pub.publish(gp)
             else:
                 pass
             with gts:
@@ -265,9 +266,10 @@ class TrustGameController:
                     new_balance = self.balance + game_play.amount
                     self.shared_console.append_text('Your payoff is now %d.\n' %new_balance)
                     self.set_balance(new_balance)
-                    gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-                    gp.header.stamp = rospy.Time.now()
-                    self.play_pub.publish(gp)
+                time.sleep(3)
+                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
+                gp.header.stamp = rospy.Time.now()
+                self.play_pub.publish(gp)
             else:
                 pass
             with gts:
@@ -458,9 +460,10 @@ class PrisonersGameController:
                     new_balance = self.payoffs[self.row_choice][self.col_choice][self.player.is_first]
                     self.shared_console.append_text('Your payoff is now %d.\n' %new_balance)
                     self.set_balance(new_balance)
-                    gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-                    gp.header.stamp = rospy.Time.now()
-                    self.play_pub.publish(gp)
+                time.sleep(3)
+                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
+                gp.header.stamp = rospy.Time.now()
+                self.play_pub.publish(gp)
             else:
                 pass
             with gts:
@@ -540,20 +543,19 @@ class GameFacesUI:
         self.console.append_text("Ready to play.\nWaiting for your opponent...\n")
 
     def play_game(self, gamedata):
-        if self.the_game_controller:
-            self.content_vbox.remove(self.the_game_controller.view)
+        gts = GtkThreadSafe()
         if gamedata.game_type == 'NO_MORE_GAMES':
             self.console.append_text('\n\nNo more games!\n')
             return
-        self.console.clear()
-        self.console.append_text("\nStarting game: %s\n\n\n" %gamedata.game_type)
-        time.sleep(1.0)
         self.player.game_topic_lock.acquire()
         if self.player.game_topic is '':
             is_first_player = (gamedata.first_player == self.player.player_id)
             is_second_player = (gamedata.second_player == self.player.player_id)
             if is_first_player or is_second_player:
-                gts = GtkThreadSafe()
+                if self.the_game_controller:
+                    self.content_vbox.remove(self.the_game_controller.view)
+                self.console.clear()
+                self.console.append_text("\nStarting game: %s\n\n\n" %gamedata.game_type)
                 # Register the game playing topic
                 game_topic = gamedata.game_topic
                 self.player.is_first = is_first_player
