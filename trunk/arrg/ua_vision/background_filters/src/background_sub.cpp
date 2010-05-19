@@ -1,5 +1,3 @@
-#include <ros/ros.h>
-#include <sensor_msgs/Image.h>
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
@@ -33,6 +31,9 @@
 *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
+
+#include <ros/ros.h>
+#include <sensor_msgs/Image.h>
 
 #include <cv_bridge/CvBridge.h>
 #include <boost/thread/thread.hpp>
