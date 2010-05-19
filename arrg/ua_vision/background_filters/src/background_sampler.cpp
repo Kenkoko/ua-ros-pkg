@@ -164,14 +164,11 @@ public:
     {
         ave_bg = cvCreateImage(cvSize(img_width, img_height), img_depth, img_n_chan);
 
-        // figure out the actual size of image array
-        int size = img_width * img_height * img_n_chan;
-
         // a img_n_chan x img_n_chan covariance matrix for each pixel in the image
         cov_mat.resize(img_width * img_height * (img_n_chan * img_n_chan));
         cov_mat_inv.resize(img_width * img_height * (img_n_chan * img_n_chan));
         dets.resize(img_width * img_height);
-        std_dev.resize(size);
+        std_dev.resize(img_width * img_height * img_n_chan);
 
         CvMat *ave = cvCreateMat(1, img_n_chan, CV_32FC1);
         CvMat *covMat = cvCreateMat(img_n_chan, img_n_chan, CV_32FC1);
