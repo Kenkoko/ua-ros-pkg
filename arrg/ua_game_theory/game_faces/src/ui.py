@@ -493,7 +493,7 @@ class GFConsoleController:
     
     def set_text(self, text):
         self.text_buffer.set_text(str(text))
-        self.scroll_to_bottom()    
+        self.scroll_to_bottom()
         
     def append_text(self, text):
         self.text_buffer.insert(self.text_buffer.get_end_iter(), text)
@@ -511,7 +511,7 @@ class GameFacesUI:
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.connect("destroy", lambda w: gtk.main_quit())
         self.window.set_title("Game")
-        self.window.resize(500, 250)
+        self.window.resize(500, 500)
 
         self.content_vbox = gtk.VBox(False, 8)
         self.content_vbox.set_border_width(10)
@@ -526,7 +526,7 @@ class GameFacesUI:
     def register_player(self):
         self.console.append_text("Connecting to Game Master...\n")
         rospy.init_node('game_faces_ui', anonymous=True)
-        rospy.Subscriber("game_master", TwoPersonGame, self.play_game)
+        self.game_server_sub = rospy.Subscriber("game_master", TwoPersonGame, self.play_game)
 
         rospy.wait_for_service('register_game_player')
         try:
@@ -542,6 +542,10 @@ class GameFacesUI:
     def play_game(self, gamedata):
         if self.the_game_controller:
             self.content_vbox.remove(self.the_game_controller.view)
+        if gamedata.game_type == 'NO_MORE_GAMES':
+            self.console.append_text('\n\nNo more games!\n')
+            return
+        self.console.clear()
         self.console.append_text("\nStarting game: %s\n\n\n" %gamedata.game_type)
         time.sleep(1.0)
         self.player.game_topic_lock.acquire()
