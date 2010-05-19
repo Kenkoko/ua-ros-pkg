@@ -142,6 +142,8 @@ class game_master:
                         print "Which game: " + str(ob.twopersongame)
                         print "Playing? " + str(ob.still_playing)
                     rospy.sleep(1)
+        msg = TwoPersonGame('', -1, -1, 'NO_MORE_GAMES')
+        gameTopic.publish(msg)
 
         
 import sys
