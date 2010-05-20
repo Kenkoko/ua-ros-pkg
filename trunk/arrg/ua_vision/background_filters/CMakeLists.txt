@@ -22,4 +22,5 @@ rosbuild_add_executable(overhead_filter src/overhead_filter.cpp)
 rosbuild_add_executable(background_sampler src/background_sampler.cpp)
 rosbuild_add_executable(background_sub src/background_sub.cpp)
 rosbuild_add_executable(testing src/test.cpp)
+rosbuild_add_executable(rewrite_background_sampler src/background_sampler_rewrite.cpp)
 
