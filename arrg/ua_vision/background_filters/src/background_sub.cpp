@@ -217,14 +217,14 @@ int main (int argc, char **argv)
         b.fromImage(srv.response.average_background);
         ave_bg = b.toIpl();
 
-        print_img(ave_bg);
+        //print_img(ave_bg);
 //         CvMat *temp = cvCreateMat(ave_bg->height, ave_bg->width, CV_8UC3);
 //         cvGetMat(ave_bg, temp);
-// 
+//
 //         for (int row = 0; row < temp->rows; ++row)
 //         {
 //             uchar* ptr = (uchar*) temp->data.ptr + row * temp->step;
-// 
+//
 //             for (int col = 0; col < temp->cols; ++col)
 //             {
 //                 uchar t = *ptr++;

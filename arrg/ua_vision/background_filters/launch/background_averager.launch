@@ -1,9 +1,9 @@
 <launch>
     <node name="background_averager" pkg="background_filters" type="background_sampler" output="screen" >
         <remap from="image" to="logitech_usb_webcam/image_raw" />
-        <param name="scale" value="6" />
+        <param name="scale" value="1" />
         <param name="colorspace" value="rgb" />
-        <param name="number_of_samples" value="10" />
+        <param name="number_of_samples" value="100" />
         <param name="sampling_delay" value="0.0" />
     </node>
 </launch>
