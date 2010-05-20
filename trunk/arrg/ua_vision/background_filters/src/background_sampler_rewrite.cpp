@@ -296,7 +296,7 @@ public:
                     float& f = ave.at<float>(0, ch);
                     if (colorspace == "rgb" || colorspace == "hsv") { avg_img.ptr<uchar>(row)[col*img_n_chan + ch] = f; }
                     else if (colorspace == "rgchroma") { avg_img.ptr<float>(row)[col*img_n_chan + ch] = f; }
-                    cout << "[" << pixel << ", " << ch << "] = " << f << " ~ " << (int) (avg_img.ptr<uchar>(row)[col*img_n_chan + ch]) << endl;
+                    //cout << "[" << pixel << ", " << ch << "] = " << f << " ~ " << (int) (avg_img.ptr<uchar>(row)[col*img_n_chan + ch]) << endl;
                 }
 
                 // get standard deviations from the diagonal of covariance matrix
@@ -306,13 +306,15 @@ public:
                 }
             }
         }
+
+        samples.clear();
     }
 
     bool get_background_stats(background_filters::GetBgStats::Request& request, background_filters::GetBgStats::Response& response)
     {
         IplImage avg_img_ipl = avg_img;
-        cout << "In service" << endl;
-        print_img(&avg_img_ipl);
+        //cout << "In service" << endl;
+        //print_img(&avg_img_ipl);
         response.colorspace = colorspace;
         sensor_msgs::CvBridge::fromIpltoRosImage(&avg_img_ipl, response.average_background);
         response.covariance_matrix = cov_mat;
