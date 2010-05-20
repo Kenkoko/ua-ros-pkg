@@ -130,3 +130,25 @@ void convertToChroma(IplImage *in_bgr, IplImage *out_rgchroma)
         }
     }
 }
+
+void convertToChroma(const cv::Mat& in_bgr, cv::Mat& out_rgchroma)
+{
+    int img_height = in_bgr.rows;
+    int img_width = in_bgr.cols;
+
+    for (int row = 0; row < img_height; ++row)
+    {
+        const uchar* ptr = in_bgr.ptr<const uchar>(row);
+        float* out_ptr = out_rgchroma.ptr<float>(row);
+
+        for (int col = 0; col < img_width; ++col)
+        {
+            float b = ptr[3*col+0];
+            float g = ptr[3*col+1];
+            float r = ptr[3*col+2];
+
+            out_ptr[2*col+0] = r / (1 + b + g + r);
+            out_ptr[2*col+1] = g / (1 + b + g + r);
+        }
+    }
+}
