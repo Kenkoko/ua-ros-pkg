@@ -104,22 +104,22 @@ public:
                 if (colorspace == "rgb")
                 {
                     img_n_chan = 3;
-                    sample = cv::Mat(img_width, img_height, CV_8UC3);
+                    sample = cv::Mat(img_height, img_width, CV_8UC3);
                     cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), sample, cv::Size(img_width, img_height));
                 }
                 else if (colorspace == "hsv")
                 {
                     img_n_chan = 3;
-                    sample = cv::Mat(img_width, img_height, CV_8UC3);
+                    sample = cv::Mat(img_height, img_width, CV_8UC3);
                     cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), sample, cv::Size(img_width, img_height));
                     cv::cvtColor(sample, sample, CV_BGR2HSV);
                 }
                 else if (colorspace == "rgchroma")
                 {
                     img_n_chan = 2;
-                    cv::Mat img(img_width, img_height, CV_8UC3);
+                    cv::Mat img(img_height, img_width, CV_8UC3);
                     cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), img, cv::Size(img_width, img_height));
-                    sample = cv::Mat(img_width, img_height, CV_32FC2);
+                    sample = cv::Mat(img_height, img_width, CV_32FC2);
                     convertToChroma(img, sample);
                 }
 

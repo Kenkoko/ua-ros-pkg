@@ -168,14 +168,6 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 
                 //if (y*width+x < 100) cout << mah_dist << ", " << p << endl;
                 prob_data[y*width+x] = p;
-
-                if ((y*width+x) < 100)
-                {
-                    cout << "[" << y*width+x << "] = " << p << endl;
-                    cout << ptr_ave[2*x+0] << endl;
-                    cout << ptr_ave[2*x+1] << endl;
-                }
-
             }
         }
     }
