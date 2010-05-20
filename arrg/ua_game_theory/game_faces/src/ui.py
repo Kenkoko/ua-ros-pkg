@@ -16,6 +16,8 @@ import rospy
 from game_faces.srv import *
 from game_faces.msg import TwoPersonGame, GamePlay
 
+TIME_BETWEEN_GAMES = 0.5 #seconds
+
 gtk.gdk.threads_init()
 
 class GtkThreadSafe:
@@ -145,7 +147,7 @@ class UltimatumGameController:
                         new_balance = 10 - game_play.amount
                         self.shared_console.append_text('accepted. Your payoff is now %d.\n' %new_balance)
                         self.set_balance(new_balance)
-                time.sleep(3)
+                time.sleep(TIME_BETWEEN_GAMES)
                 gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
                 gp.header.stamp = rospy.Time.now()
                 self.play_pub.publish(gp)
@@ -266,7 +268,7 @@ class TrustGameController:
                     new_balance = self.balance + game_play.amount
                     self.shared_console.append_text('Your payoff is now %d.\n' %new_balance)
                     self.set_balance(new_balance)
-                time.sleep(3)
+                time.sleep(TIME_BETWEEN_GAMES)
                 gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
                 gp.header.stamp = rospy.Time.now()
                 self.play_pub.publish(gp)
@@ -320,59 +322,46 @@ class PrisonersGameController:
         self.button_left = None
         self.button_right = None
 
-        table_cells = []
-
         if self.player.is_first:
             nrows = 2
             ncols = 3
             
             self.button_top = gtk.CheckButton("Top")
             self.button_top.connect("toggled", self.checkbox_toggled, "Top")
-            table_cells.append(self.button_top)
             
             self.button_bottom = gtk.CheckButton("Bottom")
             self.button_bottom.connect("toggled", self.checkbox_toggled, "Bottom")
-            table_cells.append(self.button_bottom)
         else:
             nrows = 3
             ncols = 2
             
             self.button_left = gtk.CheckButton("Left")
             self.button_left.connect("toggled", self.checkbox_toggled, "Left")
-            table_cells.append(self.button_left)
             
             self.button_right = gtk.CheckButton("Right")
             self.button_right.connect("toggled", self.checkbox_toggled, "Right")
-            table_cells.append(self.button_right)
         
         self.table = gtk.Table(rows=nrows, columns=ncols, homogeneous=False)
         
         self.label_tl = gtk.Label("10 | 10")
-        table_cells.append(self.label_tl)
-        
         self.label_tr = gtk.Label("12 | 2")
-        table_cells.append(self.label_tr)
-        
         self.label_bl = gtk.Label("2 | 12")
-        table_cells.append(self.label_bl)
-        
         self.label_br = gtk.Label("2 | 2")
-        table_cells.append(self.label_br)
-        
-        table_cells.reverse()
         
         if self.player.is_first:
-            i_max = ncols
-            j_max = nrows
+            self.table.attach(self.button_top, 0, 1, 0, 1, xoptions=gtk.EXPAND)
+            self.table.attach(self.button_bottom, 0, 1, 1, 2, xoptions=gtk.EXPAND)
+            self.table.attach(self.label_tl, 1, 2, 0, 1, xoptions=gtk.EXPAND)
+            self.table.attach(self.label_bl, 1, 2, 1, 2, xoptions=gtk.EXPAND)
+            self.table.attach(self.label_tr, 2, 3, 0, 1, xoptions=gtk.EXPAND)
+            self.table.attach(self.label_br, 2, 3, 1, 2, xoptions=gtk.EXPAND)
         else:
-            i_max = nrows
-            j_max = ncols
-        for i in xrange(i_max):
-            for j in xrange(j_max):
-                if self.player.is_first:
-                    self.table.attach(table_cells.pop(), i, i + 1, j, j + 1, xoptions=gtk.EXPAND)
-                else:
-                    self.table.attach(table_cells.pop(), j, j + 1, i, i + 1, xoptions=gtk.EXPAND)
+            self.table.attach(self.button_left, 0, 1, 0, 1, xoptions=gtk.EXPAND)
+            self.table.attach(self.button_right, 1, 2, 0, 1, xoptions=gtk.EXPAND)
+            self.table.attach(self.label_tl, 0, 1, 1, 2, xoptions=gtk.EXPAND)
+            self.table.attach(self.label_bl, 0, 1, 2, 3, xoptions=gtk.EXPAND)
+            self.table.attach(self.label_tr, 1, 2, 1, 2, xoptions=gtk.EXPAND)
+            self.table.attach(self.label_br, 1, 2, 2, 3, xoptions=gtk.EXPAND)
         
         self.box_control.add(self.table)
         
@@ -410,7 +399,7 @@ class PrisonersGameController:
             r_str = ('top', 'bottom')[self.row_choice]
             c_str = ('left', 'right')[self.col_choice]
             self.shared_console.append_text('You chose the %s column and player 1 chose the %s row.\n' %(c_str, r_str))
-            new_balance = self.payoffs[self.row_choice][self.col_choice][self.player.is_first]
+            new_balance = self.payoffs[self.row_choice][self.col_choice][not self.player.is_first]
             self.set_balance(new_balance)
         gp = GamePlay(play_number=play_num,amount=amt_val, player_id=self.player.player_id)
         gp.header.stamp = rospy.Time.now()
@@ -457,10 +446,10 @@ class PrisonersGameController:
                     r_str = ('top', 'bottom')[self.row_choice]
                     c_str = ('left', 'right')[self.col_choice]
                     self.shared_console.append_text('You chose the %s row and player 2 chose the %s column.\n' %(r_str, c_str))
-                    new_balance = self.payoffs[self.row_choice][self.col_choice][self.player.is_first]
+                    new_balance = self.payoffs[self.row_choice][self.col_choice][not self.player.is_first]
                     self.shared_console.append_text('Your payoff is now %d.\n' %new_balance)
                     self.set_balance(new_balance)
-                time.sleep(3)
+                time.sleep(TIME_BETWEEN_GAMES)
                 gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
                 gp.header.stamp = rospy.Time.now()
                 self.play_pub.publish(gp)
