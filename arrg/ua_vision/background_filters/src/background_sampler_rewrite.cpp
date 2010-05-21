@@ -81,7 +81,7 @@ public:
         local_nh.param("number_of_samples", num_samples, 10);
         local_nh.param("sampling_delay", delay, 0.0);
 
-        samples.resize(num_samples);;
+        samples.resize(num_samples);
         sample_counter = 0;
         have_avg_img = false;
 
