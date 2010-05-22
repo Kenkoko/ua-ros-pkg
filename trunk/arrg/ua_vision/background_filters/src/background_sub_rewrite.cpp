@@ -35,20 +35,202 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
+#include <image_transport/image_transport.h>
+#include <geometry_msgs/Point.h>
+
+#include <boost/thread.hpp>
+#include <boost/format.hpp>
+
+#include <nmpt/BlockTimer.h>
+#include <nmpt/FastSaliency.h>
+
 #include <cv_bridge/CvBridge.h>
-#include <boost/thread/thread.hpp>
 #include <math.h>
 #include <background_filters/GetBgStats.h>
 
-#include <cv.h>
-#include <cxcore.h>
-#include <highgui.h>
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
 
 #include "background_filters/common.h"
 
 #define TWO_PI 6.28318531
 
 using namespace std;
+
+class SaliencyTracker
+{
+private:
+    std::string window_name;
+    CvFont font;
+
+    IplImage* small_color_image;
+    IplImage* small_float_image;
+    IplImage* composite_image;
+
+    //The timer is used to track the frame rate
+    BlockTimer timer;
+    FastSaliency* saltracker;
+
+    // FastSUN saliency tracker parameters
+    int sp_scales;
+    int tm_scales;
+    int tau0;
+    int rad0;
+    int doeFeat;
+    int dobFeat;
+    int colorFeat;
+    int useParams;
+    int estParams;
+    int power;
+
+    int imwidth;
+    int imheight;
+
+    // Parameter constraints
+    int maxPowers;
+    int maxScales;
+    int maxRad;
+    int maxTau;
+
+    bool initialized;
+
+public:
+    SaliencyTracker(ros::NodeHandle& local_nh)
+    {
+        window_name = "saliency";
+        cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, .33, .33);
+
+        saltracker = NULL;
+
+        // Parameter constraints
+        maxPowers = 19;
+        maxScales = 6;
+        maxRad = 3;
+        maxTau = 10;
+
+        // FastSUN saliency tracker parameters
+        local_nh.param("spatial_scales", sp_scales, 5);
+        local_nh.param("temporal_scales", tm_scales, 0);
+        local_nh.param("spatial_size", rad0, 0);
+        local_nh.param("temporal_falloff", tau0, 0);
+        local_nh.param("distribution_power", power, 9);
+        local_nh.param("use_spatial_features", dobFeat, 1);
+        local_nh.param("use_temporal_features", doeFeat, 1);
+        local_nh.param("use_color_contrast", colorFeat, 1);
+        local_nh.param("estimate_histogram", estParams, 1);
+        local_nh.param("use_histogram", useParams, 1);
+
+        if (sp_scales > maxScales) { sp_scales = maxScales; }
+        else if (sp_scales < 0) { sp_scales = 0; }
+
+        if (tm_scales > maxScales) { tm_scales = maxScales; }
+        else if (tm_scales < 0) { tm_scales = 0; }
+
+        if (rad0 > maxRad) { rad0 = maxRad; }
+        else if (rad0 < 0) { rad0 = 0; }
+
+        if (tau0 > maxTau) { tau0 = maxTau; }
+        else if (tau0 < 0) { tau0 = 0; }
+
+        if (power > maxPowers) { power = maxPowers; }
+        else if (power < 0) { power = 0; }
+
+        initialized = false;
+    }
+
+    ~SaliencyTracker()
+    {
+        cvDestroyWindow(window_name.c_str());
+        cvReleaseImage(&small_color_image);
+        cvReleaseImage(&small_float_image);
+        cvReleaseImage(&composite_image);
+        delete saltracker;
+    }
+
+    void init(IplImage* img)
+    {
+        imwidth = img->width;
+        imheight = img->height;
+
+        ROS_INFO("Initializing saliency tracker");
+        ROS_INFO("Saliency image size is (%d, %d)", imwidth, imheight);
+
+        int nspatial = sp_scales + 1;       // [2 3 4 5 ...]
+        int ntemporal = tm_scales + 2;      // [2 3 4 5 ...]
+        float first_tau = 1.0 / (tau0 + 1); // [1 1/2 1/3 1/4 1/5 ...]
+        int first_rad = (1 << rad0) / 2;    // [0 1 2 4 8 16 ...]
+
+        saltracker = new FastSaliency(imwidth, imheight, ntemporal, nspatial, first_tau, first_rad);
+
+        double mypower = 0.1 + power / 10.0;
+        saltracker->setGGDistributionPower(mypower);
+        saltracker->setUseDoEFeatures(doeFeat);
+        saltracker->setUseDoBFeatures(dobFeat);
+        saltracker->setUseColorInformation(colorFeat);
+        saltracker->setUseGGDistributionParams(useParams);
+        saltracker->setEstimateGGDistributionParams(estParams);
+
+        //Make some intermediate image representations:
+        //(1) The downsized representation of the original image frame
+        small_color_image = cvCreateImage(cvSize(imwidth, imheight), img->depth, img->nChannels);
+
+        //(2) The floating point image that is passed to the saliency algorithm; this also
+        //doubles as an intermediate representation for the output.
+        small_float_image = cvCreateImage(cvSize(imwidth, imheight), IPL_DEPTH_32F, img->nChannels);
+
+        //(3) An image to visualize both the original image and the saliency image simultaneously
+        composite_image = cvCreateImage(cvSize(imwidth * 2, imheight), img->depth, img->nChannels);
+
+        timer.blockStart(0);
+        cvNamedWindow(window_name.c_str(), CV_WINDOW_AUTOSIZE);
+        initialized = true;
+    }
+
+    void process_image(IplImage* img)
+    {
+        //Put the current frame into the format expected by the saliency algorithm
+        cvResize(img, small_color_image, CV_INTER_LINEAR);
+        cvConvert(small_color_image, small_float_image);
+
+        //Call the "updateSaliency" method, and time how long it takes to run
+        timer.blockStart(1);
+        saltracker->updateSaliency(small_float_image);
+        timer.blockStop(1);
+
+        //Paste the original color image into the left half of the display image
+        CvRect half = cvRect(0, 0, imwidth, imheight);
+        cvSetImageROI(composite_image, half);
+        cvCopy(small_color_image, composite_image, NULL);
+
+        cvCvtColor(saltracker->salImageFloat, small_float_image, CV_GRAY2BGR);
+
+        // Paste the saliency map into the right half of the color image
+        half = cvRect(imwidth, 0, imwidth, imheight);
+        cvSetImageROI(composite_image, half);
+        cvConvertScale(small_float_image, composite_image, 255, 0);
+        cvResetImageROI(composite_image);
+
+        //on some systems, the image is upside down
+        if( img->origin != IPL_ORIGIN_TL ) { cvFlip(composite_image, NULL, 0); }
+
+        timer.blockStop(0);
+
+        double tot = timer.getTotTime(0);
+        double fps = timer.getTotTime(1);
+
+        timer.blockReset(0);
+        timer.blockReset(1);
+        timer.blockStart(0);
+
+        //Print the timing information to the display image
+        char str[1000] = {'\0'};
+        sprintf(str,"FastSUN: %03.1f MS;   Total: %03.1f MS", 1000.0*fps, 1000.0*tot);
+        cvPutText(composite_image, str, cvPoint(20,20), &font, CV_RGB(255,0,255));
+
+        cvShowImage(window_name.c_str(), composite_image);
+    }
+};
 
 class BackgroundSubtractor
 {
@@ -62,8 +244,8 @@ private:
 
     int img_n_chan;
     string colorspace;
-    bool first;
 
+    SaliencyTracker* sal_tracker;
     ros::Subscriber image_sub;
     ros::Publisher prob_img_pub;
 
@@ -71,8 +253,6 @@ public:
     BackgroundSubtractor(ros::NodeHandle& nh)
     {
         ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
-
-        first = true;
 
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
@@ -94,8 +274,20 @@ public:
             ROS_ERROR("Failed to call service get_bg_stats");
         }
 
+        IplImage avg_img_ipl = avg_img;
+
+        ros::NodeHandle local_nh = ros::NodeHandle("~");
+        sal_tracker = new SaliencyTracker(local_nh);
+        sal_tracker->init(&avg_img_ipl);
+
         image_sub = nh.subscribe("image", 1, &BackgroundSubtractor::handle_image, this);
         prob_img_pub = nh.advertise<sensor_msgs::Image>("probability_image", 1);
+    }
+
+    ~BackgroundSubtractor()
+    {
+        cvDestroyWindow("prob_img");
+        delete sal_tracker;
     }
 
     void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
@@ -193,6 +385,10 @@ public:
         prob_img.convertTo(prob_img, prob_img.type(), 1.0 / (max - min), -min / (max - min));
 
         cv::imshow("prob_img", prob_img);
+
+        IplImage new_img_ipl = new_img;
+        sal_tracker->process_image(&new_img_ipl);
+
         IplImage prob_img_ipl = prob_img;
         prob_img_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(&prob_img_ipl));
     }
