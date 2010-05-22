@@ -393,10 +393,11 @@ public:
             }
         }
 
+        // calculate negative log-likelihood, darker areas are background, lighter - not
         double min, max;
         cv::log(prob_img, prob_img);
         cv::minMaxLoc(prob_img, &min, &max);
-        prob_img.convertTo(prob_img, prob_img.type(), 1.0 / (max - min), -min / (max - min));
+        prob_img.convertTo(prob_img, prob_img.type(), -1.0 / (max - min), 1 + min / (max - min));
 
         cv::imshow("prob_img", prob_img);
 
