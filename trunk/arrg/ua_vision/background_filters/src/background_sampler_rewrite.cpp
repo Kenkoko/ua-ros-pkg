@@ -143,17 +143,17 @@ public:
             if (colorspace == "rgb")
             {
                 avg_img = cv::Mat(img_height, img_width, CV_8UC3);
-                calculate_avg_img(1.0f);
+                calculate_avg_img<uchar>(1.0f);
             }
             if (colorspace == "hsv")
             {
                 avg_img = cv::Mat(img_height, img_width, CV_8UC3);
-                calculate_avg_img(50.0f);
+                calculate_avg_img<uchar>(50.0f);
             }
             else if (colorspace == "rgchroma")
             {
                 avg_img = cv::Mat(img_height, img_width, CV_32FC2);
-                calculate_avg_img(0.001f);
+                calculate_avg_img<float>(0.001f);
             }
 
             have_avg_img = true;
@@ -166,6 +166,7 @@ public:
 
     }
 
+    template <class T>
     void calculate_avg_img(float alpha)
     {
         int pixel_num = img_width * img_height;
@@ -193,23 +194,11 @@ public:
 
                 for (int i = 0; i < num_samples; ++i)
                 {
-                    if (colorspace == "rgb" || colorspace == "hsv")
-                    {
-                        const uchar* ptr = samples[i].ptr<const uchar>(row);
+                    const T* ptr = samples[i].ptr<const T>(row);
 
-                        for (int ch = 0; ch < img_n_chan; ++ch)
-                        {
-                            vects.at<uchar>(i, ch) = ptr[img_n_chan*col + ch];
-                        }
-                    }
-                    else if (colorspace == "rgchroma")
+                    for (int ch = 0; ch < img_n_chan; ++ch)
                     {
-                        const float* ptr = samples[i].ptr<const float>(row);
-
-                        for (int ch = 0; ch < img_n_chan; ++ch)
-                        {
-                            vects.at<float>(i, ch) = ptr[img_n_chan*col + ch];
-                        }
+                        vects.at<T>(i, ch) = ptr[img_n_chan*col + ch];
                     }
                 }
 
@@ -294,8 +283,7 @@ public:
                 for (int ch = 0; ch < img_n_chan; ++ch)
                 {
                     float& f = ave.at<float>(0, ch);
-                    if (colorspace == "rgb" || colorspace == "hsv") { avg_img.ptr<uchar>(row)[col*img_n_chan + ch] = f; }
-                    else if (colorspace == "rgchroma") { avg_img.ptr<float>(row)[col*img_n_chan + ch] = f; }
+                    avg_img.ptr<T>(row)[col*img_n_chan + ch] = f;
                     //cout << "[" << pixel << ", " << ch << "] = " << f << " ~ " << (int) (avg_img.ptr<uchar>(row)[col*img_n_chan + ch]) << endl;
                 }
 
