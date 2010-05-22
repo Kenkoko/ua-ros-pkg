@@ -249,6 +249,8 @@ private:
     ros::Subscriber image_sub;
     ros::Publisher prob_img_pub;
 
+    //boost::function<void (const cv::Mat&)> diff_func;
+
 public:
     BackgroundSubtractor(ros::NodeHandle& nh)
     {
@@ -256,6 +258,8 @@ public:
 
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
+
+        //diff_func = boost::bind(&BackgroundSubtractor::difference, this, _1);
 
         cvNamedWindow("prob_img");
 
@@ -324,6 +328,18 @@ public:
             ROS_ERROR("CvBridgeError");
         }
 
+        difference(new_img);
+
+        IplImage new_img_ipl = new_img;
+        sal_tracker->process_image(&new_img_ipl);
+
+        //diff_func(new_img);
+        //boost::thread diff_thread = boost::thread(diff_func, new_img);
+        //diff_thread.join();
+    }
+
+    void difference(const cv::Mat& new_img)
+    {
         cv::Mat prob_img(new_img.size(), CV_32FC1);
         float *prob_data = prob_img.ptr<float>();
 
@@ -385,9 +401,6 @@ public:
         prob_img.convertTo(prob_img, prob_img.type(), 1.0 / (max - min), -min / (max - min));
 
         cv::imshow("prob_img", prob_img);
-
-        IplImage new_img_ipl = new_img;
-        sal_tracker->process_image(&new_img_ipl);
 
         IplImage prob_img_ipl = prob_img;
         prob_img_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(&prob_img_ipl));
