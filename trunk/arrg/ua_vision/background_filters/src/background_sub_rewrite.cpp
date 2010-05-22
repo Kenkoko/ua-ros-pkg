@@ -241,6 +241,7 @@ private:
     vector<float> cov_mats_inv;
     vector<float> dets;
     vector<float> std_dev;
+    vector<double> partition;
 
     int img_n_chan;
     string colorspace;
@@ -272,6 +273,16 @@ public:
             cov_mats_inv = srv.response.covariance_matrix_inv;
             dets = srv.response.covariance_matrix_dets;
             std_dev = srv.response.standard_deviations;
+
+            img_n_chan = avg_img.channels();
+
+            partition.resize(dets.size());
+            double coef = pow(TWO_PI, img_n_chan / 2.0);
+
+            for (unsigned i = 0; i < dets.size(); ++i)
+            {
+                partition[i] = 1.0 / (coef * sqrt(dets[i]));
+            }
         }
         else
         {
@@ -280,9 +291,12 @@ public:
 
         IplImage avg_img_ipl = avg_img;
 
-        ros::NodeHandle local_nh = ros::NodeHandle("~");
-        sal_tracker = new SaliencyTracker(local_nh);
-        sal_tracker->init(&avg_img_ipl);
+        if (colorspace == "rgb" || colorspace == "hsv")
+        {
+            ros::NodeHandle local_nh = ros::NodeHandle("~");
+            sal_tracker = new SaliencyTracker(local_nh);
+            sal_tracker->init(&avg_img_ipl);
+        }
 
         image_sub = nh.subscribe("image", 1, &BackgroundSubtractor::handle_image, this);
         prob_img_pub = nh.advertise<sensor_msgs::Image>("probability_image", 1);
@@ -291,7 +305,7 @@ public:
     ~BackgroundSubtractor()
     {
         cvDestroyWindow("prob_img");
-        delete sal_tracker;
+        if (colorspace == "rgb" || colorspace == "hsv") { delete sal_tracker; }
     }
 
     void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
@@ -303,20 +317,17 @@ public:
         {
             if (colorspace == "rgb")
             {
-                img_n_chan = 3;
                 new_img = cv::Mat(avg_img.size(), CV_8UC3);
                 cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), new_img, avg_img.size());
             }
             else if (colorspace == "hsv")
             {
-                img_n_chan = 3;
                 new_img = cv::Mat(avg_img.size(), CV_8UC3);
                 cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), new_img, avg_img.size());
                 cv::cvtColor(new_img, new_img, CV_BGR2HSV);
             }
             else if (colorspace == "rgchroma")
             {
-                img_n_chan = 2;
                 cv::Mat temp(avg_img.size(), CV_8UC3);
                 cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), temp, avg_img.size());
                 new_img = cv::Mat(avg_img.size(), CV_32FC2);
@@ -328,16 +339,23 @@ public:
             ROS_ERROR("CvBridgeError");
         }
 
-        difference(new_img);
-
-        IplImage new_img_ipl = new_img;
-        sal_tracker->process_image(&new_img_ipl);
+        if (colorspace == "rgb" || colorspace == "hsv")
+        {
+            IplImage new_img_ipl = new_img;
+            sal_tracker->process_image(&new_img_ipl);
+            difference<const uchar>(new_img);
+        }
+        else if (colorspace == "rgchroma")
+        {
+            difference<const float>(new_img);
+        }
 
         //diff_func(new_img);
         //boost::thread diff_thread = boost::thread(diff_func, new_img);
         //diff_thread.join();
     }
 
+    template <class T>
     void difference(const cv::Mat& new_img)
     {
         cv::Mat prob_img(new_img.size(), CV_32FC1);
@@ -352,19 +370,8 @@ public:
 
         for (int row = 0; row < height; ++row)
         {
-            const void* ptr_bg = NULL;
-            const void* ptr_ave = NULL;
-
-            if (colorspace == "rgb" || colorspace == "hsv")
-            {
-                ptr_bg = new_img.ptr<const uchar>(row);
-                ptr_ave = avg_img.ptr<const uchar>(row);
-            }
-            else if (colorspace == "rgchroma")
-            {
-                ptr_bg = new_img.ptr<const float>(row);
-                ptr_ave = avg_img.ptr<const float>(row);
-            }
+            T* ptr_bg = new_img.ptr<T>(row);
+            T* ptr_ave = avg_img.ptr<T>(row);
 
             for (int col = 0; col < width; ++col)
             {
@@ -372,24 +379,15 @@ public:
 
                 for (int ch = 0; ch < img_n_chan; ++ch)
                 {
-                    if (colorspace == "rgb" || colorspace == "hsv")
-                    {
-                        bgr_new.at<float>(0, ch) = ((const uchar*) ptr_bg)[img_n_chan*col + ch];
-                        bgr_ave.at<float>(0, ch) = ((const uchar*) ptr_ave)[img_n_chan*col + ch];
-                    }
-                    else if (colorspace == "rgchroma")
-                    {
-                        bgr_new.at<float>(0, ch) = ((const float*) ptr_bg)[img_n_chan*col + ch];
-                        bgr_ave.at<float>(0, ch) = ((const float*) ptr_ave)[img_n_chan*col + ch];
-                    }
+                    bgr_new.at<float>(0, ch) = ptr_bg[img_n_chan*col + ch];
+                    bgr_ave.at<float>(0, ch) = ptr_ave[img_n_chan*col + ch];
                 }
 
                 inv_cov = cv::Mat(img_n_chan, img_n_chan, CV_32FC1, &cov_mats_inv[pixel*(img_n_chan*img_n_chan)], sizeof(float)*img_n_chan);
 
                 double mah_dist = cv::Mahalanobis(bgr_new, bgr_ave, inv_cov);
                 double unnorm_gaussian = exp(-0.5 * mah_dist);
-                double partition = 1.0 / (pow(TWO_PI, 1.5) * sqrt(dets[pixel]));
-                float p = partition * unnorm_gaussian;
+                float p = partition[pixel] * unnorm_gaussian;
 
                 prob_data[pixel] = p;
             }
