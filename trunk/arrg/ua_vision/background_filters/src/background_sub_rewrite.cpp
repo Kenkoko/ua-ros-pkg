@@ -187,7 +187,7 @@ public:
         initialized = true;
     }
 
-    void process_image(IplImage* img)
+    cv::Mat process_image(IplImage* img)
     {
         //Put the current frame into the format expected by the saliency algorithm
         cvResize(img, small_color_image, CV_INTER_LINEAR);
@@ -203,6 +203,8 @@ public:
         cvSetImageROI(composite_image, half);
         cvCopy(small_color_image, composite_image, NULL);
 
+        cv::Mat result = cv::Mat(saltracker->salImageFloat).clone();
+        cvNormalize(saltracker->salImageFloat, saltracker->salImageFloat, 0, 1, CV_MINMAX, NULL);
         cvCvtColor(saltracker->salImageFloat, small_float_image, CV_GRAY2BGR);
 
         // Paste the saliency map into the right half of the color image
@@ -229,6 +231,7 @@ public:
         cvPutText(composite_image, str, cvPoint(20,20), &font, CV_RGB(255,0,255));
 
         cvShowImage(window_name.c_str(), composite_image);
+        return result;
     }
 };
 
@@ -263,6 +266,7 @@ public:
         //diff_func = boost::bind(&BackgroundSubtractor::difference, this, _1);
 
         cvNamedWindow("prob_img");
+        cvNamedWindow("combined");
 
         if (client.call(srv))
         {
@@ -342,8 +346,11 @@ public:
         if (colorspace == "rgb" || colorspace == "hsv")
         {
             IplImage new_img_ipl = new_img;
-            sal_tracker->process_image(&new_img_ipl);
-            difference<const uchar>(new_img);
+            cv::Mat result = sal_tracker->process_image(&new_img_ipl) +
+                             difference<const uchar>(new_img);
+
+            cv::normalize(result, result, 0.0, 1.0, cv::NORM_MINMAX);
+            cv::imshow("combined", result);
         }
         else if (colorspace == "rgchroma")
         {
@@ -356,7 +363,7 @@ public:
     }
 
     template <class T>
-    void difference(const cv::Mat& new_img)
+    cv::Mat difference(const cv::Mat& new_img)
     {
         cv::Mat prob_img(new_img.size(), CV_32FC1);
         float *prob_data = prob_img.ptr<float>();
@@ -393,16 +400,18 @@ public:
             }
         }
 
-        // calculate negative log-likelihood, darker areas are background, lighter - not
-        double min, max;
+        // calculate negative log-likelihood, darker areas are background, lighter - objects
         cv::log(prob_img, prob_img);
-        cv::minMaxLoc(prob_img, &min, &max);
-        prob_img.convertTo(prob_img, prob_img.type(), -1.0 / (max - min), 1 + min / (max - min));
+        prob_img.convertTo(prob_img, prob_img.type(), -1.0);
 
-        cv::imshow("prob_img", prob_img);
+        cv::Mat result = prob_img.clone();
+        cv::normalize(prob_img, prob_img, 0.0, 1.0, cv::NORM_MINMAX);
 
         IplImage prob_img_ipl = prob_img;
         prob_img_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(&prob_img_ipl));
+        cv::imshow("prob_img", prob_img);
+
+        return result;
     }
 };
 
