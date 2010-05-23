@@ -52,6 +52,8 @@
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
 
+#include <nmpt/OpenCVBoxFilter.h>
+
 #include "background_filters/common.h"
 
 #define TWO_PI 6.28318531
@@ -253,6 +255,11 @@ private:
     ros::Subscriber image_sub;
     ros::Publisher prob_img_pub;
 
+    OpenCVBoxFilter* box_filter;
+    int box_rad;
+    cv::Rect box_position;
+    cv::Mat filtered;
+
     //boost::function<void (const cv::Mat&)> diff_func;
 
 public:
@@ -267,6 +274,7 @@ public:
 
         cvNamedWindow("prob_img");
         cvNamedWindow("combined");
+        cvNamedWindow("filtered");
 
         if (client.call(srv))
         {
@@ -300,6 +308,11 @@ public:
             ros::NodeHandle local_nh = ros::NodeHandle("~");
             sal_tracker = new SaliencyTracker(local_nh);
             sal_tracker->init(&avg_img_ipl);
+
+            box_rad = 15;
+            box_position = cv::Rect(-box_rad/2, -box_rad/2, box_rad, box_rad);
+            box_filter = new OpenCVBoxFilter(avg_img.cols, avg_img.rows, box_rad / 2);
+            filtered = cv::Mat::zeros(avg_img.size(), CV_64FC1);
         }
 
         image_sub = nh.subscribe("image", 1, &BackgroundSubtractor::handle_image, this);
@@ -309,7 +322,12 @@ public:
     ~BackgroundSubtractor()
     {
         cvDestroyWindow("prob_img");
-        if (colorspace == "rgb" || colorspace == "hsv") { delete sal_tracker; }
+
+        if (colorspace == "rgb" || colorspace == "hsv")
+        {
+            delete sal_tracker;
+            delete box_filter;
+        }
     }
 
     void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
@@ -349,8 +367,17 @@ public:
             cv::Mat result = sal_tracker->process_image(&new_img_ipl) +
                              difference<const uchar>(new_img);
 
+            // use box filter for smoothing
+            IplImage in = result;
+            IplImage out = filtered;
+            box_filter->setNewImage(&in);
+            box_filter->setBoxFilter(&out, box_position, 1.0/(box_position.width*box_position.height));
+
+            cv::normalize(filtered, filtered, 0.0, 1.0, cv::NORM_MINMAX);
             cv::normalize(result, result, 0.0, 1.0, cv::NORM_MINMAX);
+
             cv::imshow("combined", result);
+            cv::imshow("filtered", filtered);
         }
         else if (colorspace == "rgchroma")
         {
