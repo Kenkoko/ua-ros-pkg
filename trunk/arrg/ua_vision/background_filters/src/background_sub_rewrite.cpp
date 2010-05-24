@@ -40,6 +40,7 @@
 
 #include <boost/thread.hpp>
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 
 #include <nmpt/BlockTimer.h>
 #include <nmpt/FastSaliency.h>
@@ -275,6 +276,8 @@ public:
         cvNamedWindow("prob_img");
         cvNamedWindow("combined");
         cvNamedWindow("filtered");
+        cvNamedWindow("binary");
+        cvNamedWindow("contours");
 
         if (client.call(srv))
         {
@@ -376,8 +379,32 @@ public:
             cv::normalize(filtered, filtered, 0.0, 1.0, cv::NORM_MINMAX);
             cv::normalize(result, result, 0.0, 1.0, cv::NORM_MINMAX);
 
+            cv::Mat f8;
+            filtered.convertTo(f8, CV_8U, 255.0);
+            cv::threshold(f8, f8, 130, 255, cv::THRESH_BINARY);
+
             cv::imshow("combined", result);
             cv::imshow("filtered", filtered);
+            cv::imshow("binary", f8);
+
+            vector<vector<cv::Point> > contours;
+            cv::findContours(f8, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+            vector<vector<cv::Point> > contours_to_draw;
+
+            BOOST_FOREACH(vector<cv::Point> contour, contours)
+            {
+                double area = fabs(cv::contourArea(cv::Mat(contour)));
+
+                if (area > 250)
+                {
+                    cv::RotatedRect min_box = cv::minAreaRect(cv::Mat(contour));
+                    contours_to_draw.push_back(contour);
+                }
+            }
+
+            cv::Scalar color(rand()&255, rand()&255, rand()&255);
+            cv::drawContours(new_img, contours_to_draw, -1, color, 1);
+            cv::imshow("contours", new_img);
         }
         else if (colorspace == "rgchroma")
         {
