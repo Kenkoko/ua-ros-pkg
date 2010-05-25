@@ -25,6 +25,7 @@
 (defmethod add-to-world ((r robot))
   (call-service "add_model" 'gazebo_plugins-srv:SpawnModel 
                 :model (make-message "gazebo_plugins/GazeboModel" 
+                                     :model_name "robot_description"
                                      :xml_type 1
                                      :robot_model (xml-rep r))))
 

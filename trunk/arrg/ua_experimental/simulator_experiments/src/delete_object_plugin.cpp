@@ -57,7 +57,7 @@ bool DeleteObjectPlugin::deleteModel(gazebo_plugins::DeleteModel::Request &req,
   ROS_INFO("Entering deleteModel");
 
   // If the model doesn't exist, don't delete it.
-  if (!gazebo::World::Instance()->GetModelByName(req.model_name))
+  if (!gazebo::World::Instance()->GetEntityByName(req.model_name))
   {
     res.success = false;
     res.status_message = string("Cannot delete non-existent model");
@@ -72,7 +72,7 @@ bool DeleteObjectPlugin::deleteModel(gazebo_plugins::DeleteModel::Request &req,
   }
 
   // Moved outside of the "else" so that the lock is surrendered, preventing deadlock
-  while (gazebo::World::Instance()->GetModelByName(req.model_name))
+  while (gazebo::World::Instance()->GetEntityByName(req.model_name))
   {
     ROS_INFO("Waiting for model deletion (%s)", req.model_name.c_str());
     usleep(1000);
@@ -118,7 +118,7 @@ bool DeleteObjectPlugin::deleteAllModels(std_srvs::Empty::Request &req, std_srvs
     allGone = true;
     for (vector<string>::iterator it = deleted_models.begin(); it != deleted_models.end(); ++it)
     {
-      if (gazebo::World::Instance()->GetModelByName(*it))
+      if (gazebo::World::Instance()->GetEntityByName(*it))
       {
         allGone = false;
         break;

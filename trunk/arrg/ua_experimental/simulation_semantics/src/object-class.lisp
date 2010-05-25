@@ -57,6 +57,7 @@
 (defmethod add-to-world ((obj physical-object))
   (call-service "add_model" 'gazebo_plugins-srv:SpawnModel 
                 :model (make-message "gazebo_plugins/GazeboModel" 
+                                     :model_name (model-name obj)
                                      :xml_type 1
                                      :robot_model (xml-rep obj))))
 

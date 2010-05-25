@@ -137,7 +137,7 @@ void WorldStatePublisher::UpdateChild()
   vector<gazebo::Model*>::iterator miter;
 
   /// \bridf: list of all bodies in the model
-  const map<string, gazebo::Body*> *bodies;
+//  const map<string, gazebo::Body*> *bodies;
 
   map<string, gazebo::Body*> all_bodies;
   all_bodies.clear();
@@ -147,13 +147,17 @@ void WorldStatePublisher::UpdateChild()
   // aggregate all bodies into a single vector
   for (miter = models.begin(); miter != models.end(); miter++)
   {
-    bodies = (*miter)->GetBodies();
+    // bodies = (*miter)->GetBodies(); // This has been removed?
     // Iterate through all bodies
-    map<string, Body*>::const_iterator biter;
-    for (biter = bodies->begin(); biter != bodies->end(); biter++)
-    {
-      all_bodies.insert(make_pair(biter->first, biter->second));
-    }
+//    map<string, Body*>::const_iterator biter;
+//    for (biter = bodies->begin(); biter != bodies->end(); biter++)
+//    {
+//      all_bodies.insert(make_pair(biter->first, biter->second));
+//    }
+
+    // TODO: For now, we can only get the default body
+    Body *body = (*miter)->GetBody();
+    all_bodies.insert(make_pair(body->GetName(), body));
   }
   //ROS_ERROR("debug: %d",all_bodies.size());
 
