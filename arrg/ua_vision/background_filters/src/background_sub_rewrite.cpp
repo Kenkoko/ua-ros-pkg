@@ -96,6 +96,9 @@ private:
     int maxRad;
     int maxTau;
 
+    float g_min;
+    float g_max;
+
     bool initialized;
 
 public:
@@ -138,6 +141,9 @@ public:
 
         if (power > maxPowers) { power = maxPowers; }
         else if (power < 0) { power = 0; }
+
+        g_min = numeric_limits<float>::max();
+        g_max = numeric_limits<float>::min();
 
         initialized = false;
     }
@@ -201,13 +207,21 @@ public:
         saltracker->updateSaliency(small_float_image);
         timer.blockStop(1);
 
+        // copy over the saliency map before we further modify it,
+        // values in result matrix are unnormalized negative log likelihoods
+        cv::Mat result = cv::Mat(saltracker->salImageFloat).clone();
+
         //Paste the original color image into the left half of the display image
         CvRect half = cvRect(0, 0, imwidth, imheight);
         cvSetImageROI(composite_image, half);
         cvCopy(small_color_image, composite_image, NULL);
 
-        cv::Mat result = cv::Mat(saltracker->salImageFloat).clone();
-        cvNormalize(saltracker->salImageFloat, saltracker->salImageFloat, 0, 1, CV_MINMAX, NULL);
+        double min, max;
+        cvMinMaxLoc(saltracker->salImageFloat, &min, &max);
+        if (min < g_min) { g_min = min; }
+        if (max > g_max) { g_max = max; }
+        cvConvertScale(saltracker->salImageFloat, saltracker->salImageFloat, 1.0 / (g_max - g_min), -g_min / (g_max - g_min));
+        //cvNormalize(saltracker->salImageFloat, saltracker->salImageFloat, 0, 1, CV_MINMAX, NULL);
         cvCvtColor(saltracker->salImageFloat, small_float_image, CV_GRAY2BGR);
 
         // Paste the saliency map into the right half of the color image
@@ -261,6 +275,9 @@ private:
     cv::Rect box_position;
     cv::Mat filtered;
 
+    float g_min;
+    float g_max;
+
     //boost::function<void (const cv::Mat&)> diff_func;
 
 public:
@@ -270,6 +287,9 @@ public:
 
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
+
+        g_min = numeric_limits<float>::max();
+        g_max = numeric_limits<float>::min();
 
         //diff_func = boost::bind(&BackgroundSubtractor::difference, this, _1);
 
@@ -366,6 +386,8 @@ public:
 
         if (colorspace == "rgb" || colorspace == "hsv")
         {
+            // add negative log likelihoods obtained from probabilistic
+            // background subtraction and fast saliency algorithm
             IplImage new_img_ipl = new_img;
             cv::Mat result = sal_tracker->process_image(&new_img_ipl) +
                              difference<const uchar>(new_img);
@@ -376,6 +398,11 @@ public:
             box_filter->setNewImage(&in);
             box_filter->setBoxFilter(&out, box_position, 1.0/(box_position.width*box_position.height));
 
+            //double min, max;
+            //cv::minMaxLoc(filtered, &min, &max);
+            //if (min < g_min) { g_min = min; }
+            //if (max > g_max) { g_max = max; }
+            //filtered.convertTo(filtered, filtered.type(), 1.0 / (g_max - g_min), -g_min / (g_max - g_min));
             cv::normalize(filtered, filtered, 0.0, 1.0, cv::NORM_MINMAX);
             cv::normalize(result, result, 0.0, 1.0, cv::NORM_MINMAX);
 
@@ -398,6 +425,8 @@ public:
                 if (area > 250)
                 {
                     cv::RotatedRect min_box = cv::minAreaRect(cv::Mat(contour));
+                    cv::Rect bound_box = cv::boundingRect(cv::Mat(contour));
+                    cv::rectangle(new_img, bound_box, cv::Scalar(255, 0, 0));
                     contours_to_draw.push_back(contour);
                 }
             }
