@@ -6,7 +6,7 @@
 
 (define-unit-class robot (thing)
   ((vel-pub :initform nil)
-   )
+   (intended-velocity :initform 0))
   )
 
 ;;=====================================================================
@@ -21,7 +21,6 @@
   (unadvertise "cmd_vel")
   (setf (vel-pub-of r) nil))
 
-;; NOTE: This is exactly the same in physical-object, can we move it up?
 (defmethod add-to-world ((r robot))
   (call-service "add_model" 'gazebo_plugins-srv:SpawnModel 
                 :model (make-message "gazebo_plugins/GazeboModel" 
@@ -42,6 +41,7 @@
 
 (defmethod move-robot ((r robot) forward-vel rot-vel)
   (format t "~a ~a~%" forward-vel rot-vel)
+  (setf (intended-velocity-of r) (list forward-vel rot-vel))
   (publish (vel-pub-of r) (make-msg "geometry_msgs/Twist"
                                     (x linear) forward-vel
                                     (z angular) rot-vel)))

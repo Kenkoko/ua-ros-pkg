@@ -26,11 +26,11 @@ def handle_plot(req):
     t = time.time()
     plt.clf()
     ax = plt.subplot(111)
-    #plt.subplots_adjust(top=0.6)
+    plt.subplots_adjust(top=0.6)
     for plot_data in req.plots:
         plot(plot_data)
     labels = [line.get_label() for line in ax.lines]
-    #plt.figlegend(ax.lines, labels, 'upper right')
+    plt.figlegend(ax.lines, labels, 'upper right')
     plt.savefig('../plots/' + str(t) + '.png')
     
     return PlotResponse()

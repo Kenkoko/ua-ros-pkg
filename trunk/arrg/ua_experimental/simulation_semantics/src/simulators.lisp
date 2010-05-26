@@ -88,13 +88,17 @@
                      :rpy '(0 -10 0)
                      :static? t)))
 
+;;=====================================================
+
 (defun make-robot ()
   (if (null (find-instance-by-name 'robot 'robot))
       (make-instance 'robot 
                      :instance-name 'robot
-                     :gazebo-name "base_link"
+                     :gazebo-name "base_footprint"
                      ;:size '(0.3 0.3 0.2)
-                     :self-predicates '(force-mag vel-mag x-pos z-pos diff-speed x-vel z-vel)
+                     :self-predicates '(force-mag
+                                        x-pos z-pos 
+                                        int-vel vel-mag diff-speed x-vel z-vel)
                      :binary-predicates '(dist-between))))
                      ;:xyz '(0 0 0.1)
                      ;:rpy '(0 0 0))))
