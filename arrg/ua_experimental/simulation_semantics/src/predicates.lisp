@@ -56,7 +56,8 @@
         (if match-index
             (zerop match-index)))))
 
-(defun plot-predicates (sims pred &rest objects)
+(defun plot-by-predicate (sims pred &rest objects)
+  "Plots each predicate on a separate chart, across simulators."
   (call-service "plot" 'plotter-srv:Plot
                 :plots (loop for sim in sims collect 
                             (loop with states = (get-states-from-last-run sim)
@@ -65,7 +66,8 @@
                                with y = (make-array (length states) :adjustable t :fill-pointer 0)
                                for state in states
                                for predicates = (predicates-of state)
-                               do (loop for p in predicates 
+                               do ;(format t "~a~%" state) 
+                                 (loop for p in predicates 
                                      when (match-predicate p pred objects)
                                      do (vector-push-extend (- (time-of state) start-time) x)
                                        (vector-push-extend (first (last p)) y))
@@ -77,6 +79,31 @@
                                                                            pred objects)
                                                          (x_data) x
                                                          (y_data) y))))))
+
+(defun plot-by-simulator (sims preds &rest objects)
+  "Plots each predicate on a separate chart, across simulators."
+  (loop for sim in sims 
+     do (call-service "plot" 'plotter-srv:Plot
+                      :plots (loop for pred in preds collect 
+                                  (loop with states = (get-states-from-last-run sim)
+                                     with start-time = (time-of (first states))
+                                     with x = (make-array (length states) :adjustable t :fill-pointer 0)
+                                     with y = (make-array (length states) :adjustable t :fill-pointer 0)
+                                     for state in states
+                                     for predicates = (predicates-of state)
+                                     do ;(format t "~a~%" state) 
+                                       (loop for p in predicates 
+                                    when (match-predicate p pred objects)
+                                          do (vector-push-extend (- (time-of state) start-time) x)
+                                            (vector-push-extend (first (last p)) y))
+                                     finally (return (make-msg "plotter/PlotData"
+                                                               (name) (format nil "Predicate (~a ~a) of ~a simulator"
+                                                                              pred objects sim)
+                                                               (x_label) "time"
+                                                               (y_label) (format nil "(~a ~a)"
+                                                                                 pred objects)
+                                                               (x_data) x
+                                                               (y_data) y)))))))
 
 ;;==================================================================
 ;; Self-Predicates
@@ -113,6 +140,10 @@
 (defun z-vel (os last-os)
   (declare (ignore last-os))
   (z-of (linear-of (velocity-of os))))
+
+(defun int-vel (os last-os)
+  (declare (ignore last-os))
+  (first (intended-velocity-of (object-of os))))
 
 ;;==================================================================
 ;; Differential Self-Predicates

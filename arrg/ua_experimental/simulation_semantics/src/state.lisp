@@ -14,11 +14,11 @@
 ;;============================================================                
 
 (defun find-object-by-gazebo-name (gazebo-name)
-  (let* ((result (find-instances 'physical-object
-                              '(object-library)
-                              (list 'is-equal 
-                                    'gazebo-name 
-                                    gazebo-name))))
+  (let* ((result (find-instances '(thing :plus-subclasses)
+                                 '(object-library)
+                                 (list 'is-equal 
+                                       'gazebo-name 
+                                       gazebo-name))))
     (if result (first result) nil)))
 
 ;;============================================================                
@@ -53,6 +53,7 @@
 ;;============================================================                
 
 (defun translate-world-state (msg simn)
+  (print msg)
   (loop with states = (find-instances 'world-state simn :all)
      with last-state = (if states (first states) nil)
      with ws = (make-instance 'world-state 
