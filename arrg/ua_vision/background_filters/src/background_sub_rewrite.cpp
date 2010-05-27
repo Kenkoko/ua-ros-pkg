@@ -58,12 +58,13 @@
 #include "background_filters/common.h"
 
 #define TWO_PI 6.28318531
+#include <boost/concept_check.hpp>
 
 using namespace std;
 
 class SaliencyTracker
 {
-private:
+public:
     std::string window_name;
     CvFont font;
 
@@ -271,12 +272,14 @@ private:
     ros::Publisher prob_img_pub;
 
     OpenCVBoxFilter* box_filter;
-    int box_rad;
-    cv::Rect box_position;
-    cv::Mat filtered;
+    vector<int> box_size;
+    vector<cv::Rect> box_position;
+    vector<cv::Mat> filtered;
 
     float g_min;
     float g_max;
+
+    int counter;
 
     //boost::function<void (const cv::Mat&)> diff_func;
 
@@ -291,6 +294,8 @@ public:
         g_min = numeric_limits<float>::max();
         g_max = numeric_limits<float>::min();
 
+        counter = 0;
+
         //diff_func = boost::bind(&BackgroundSubtractor::difference, this, _1);
 
         cvNamedWindow("prob_img");
@@ -298,6 +303,7 @@ public:
         cvNamedWindow("filtered");
         cvNamedWindow("binary");
         cvNamedWindow("contours");
+        cvNamedWindow("fg_prob_img");
 
         if (client.call(srv))
         {
@@ -332,13 +338,24 @@ public:
             sal_tracker = new SaliencyTracker(local_nh);
             sal_tracker->init(&avg_img_ipl);
 
-            box_rad = 15;
-            box_position = cv::Rect(-box_rad/2, -box_rad/2, box_rad, box_rad);
-            box_filter = new OpenCVBoxFilter(avg_img.cols, avg_img.rows, box_rad / 2);
-            filtered = cv::Mat::zeros(avg_img.size(), CV_64FC1);
+            box_size.push_back(1);
+
+            for (int i = 1; i <= 4; ++i)
+            {
+                box_size.push_back(2 * box_size[i-1]);
+            }
+
+            for (int i = 0; i <= 4; ++i)
+            {
+                box_size[i] = 2 * box_size[i] + 1;
+                box_position.push_back(cv::Rect(-box_size[i]/2, -box_size[i]/2, box_size[i], box_size[i]));
+                filtered.push_back(cv::Mat::zeros(avg_img.size(), CV_64FC1));
+            }
+
+            box_filter = new OpenCVBoxFilter(avg_img.cols, avg_img.rows, box_size[4] / 2);
         }
 
-        image_sub = nh.subscribe("image", 1, &BackgroundSubtractor::handle_image, this);
+        image_sub = nh.subscribe("camera/image_color", 1, &BackgroundSubtractor::handle_image, this);
         prob_img_pub = nh.advertise<sensor_msgs::Image>("probability_image", 1);
     }
 
@@ -386,35 +403,105 @@ public:
 
         if (colorspace == "rgb" || colorspace == "hsv")
         {
+            if (counter > 0)
+            {
+                sal_tracker->saltracker->setEstimateGGDistributionParams(false);
+                sal_tracker->saltracker->setUseGGDistributionParams(true);
+            }
+            else
+            {
+                IplImage new_img_ipl = new_img;
+                sal_tracker->process_image(&new_img_ipl);
+                ++counter;
+                return;
+            }
+
             // add negative log likelihoods obtained from probabilistic
             // background subtraction and fast saliency algorithm
             IplImage new_img_ipl = new_img;
-            cv::Mat result = sal_tracker->process_image(&new_img_ipl) +
+            cv::Mat result = //sal_tracker->process_image(&new_img_ipl) +
                              difference<const uchar>(new_img);
 
-            // use box filter for smoothing
-            IplImage in = result;
-            IplImage out = filtered;
-            box_filter->setNewImage(&in);
-            box_filter->setBoxFilter(&out, box_position, 1.0/(box_position.width*box_position.height));
+            //print_img(&((IplImage) result));
 
-            //double min, max;
-            //cv::minMaxLoc(filtered, &min, &max);
+            double w = -1/20.0, b = 1;
+            cv::Mat fg_prob_img = result.clone();
+            fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), w, b);
+            cv::exp(fg_prob_img, fg_prob_img);
+            fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), 1, 1);
+            cv::divide(1.0, fg_prob_img, fg_prob_img);
+            cv::imshow("fg_prob_img", fg_prob_img);
+
+            double sum = cv::sum(fg_prob_img)[0];
+
+            // use box filter for smoothing
+            IplImage in = fg_prob_img;
+            box_filter->setNewImage(&in);
+
+            // create a bunch of images filtered with different sized box filters
+            for (int i = 0; i <= 4; ++i)
+            {
+                IplImage out = filtered[i];
+                box_filter->setBoxFilter(&out, box_position[i], 1.0/(box_position[i].width*box_position[i].height));
+                double h = box_size[i] * box_size[i];
+                filtered[i].convertTo(filtered[i], filtered[i].type(), -2*h, sum+h);
+                //filtered[i].convertTo(filtered[i], filtered[i].type(), 1.0/(filtered[i].rows*filtered[i].cols));
+            }
+
+            double current_best = numeric_limits<double>::max();
+            int current_best_id = -1;
+            cv::Point current_best_point;
+
+            for (int i = 0; i <= 4; ++i)
+            {
+                double min, max;
+                cv::Point min_p;
+                cv::minMaxLoc(filtered[i], &min, &max, &min_p);
+
+                double t = -((min - sum)/(box_size[i] * box_size[i]) - 1)/2.0;
+                if (t > 0.8 && min < current_best)
+                {
+                    current_best = min;
+                    current_best_id = i;
+                    current_best_point = min_p;
+                }
+            }
+
+            for (int i = 0; i <= 4; ++i)
+            {
+                int hb = box_size[i] / 2;
+                for (int row = hb + 1; row < filtered[i].rows - hb - 1; ++row)
+                {
+                    for (int col = hb + 1; col < filtered[i].cols - hb - 1; ++col)
+                    {
+                        const double* ptr = filtered[i].ptr<const double>(row);
+                        if (ptr[col] < 0.32)
+                        {
+                            //printf("row = %d, col = %d, val = %g\n", row, col, ptr[col]);
+                            int x = col - hb;
+                            int y = row - hb;
+                            cv::Rect roi(x, y, box_size[i], box_size[i]);
+                            cv::rectangle(new_img, roi, cv::Scalar(255, 0, 0));
+                        }
+                    }
+                }
+            }
+
             //if (min < g_min) { g_min = min; }
             //if (max > g_max) { g_max = max; }
             //filtered.convertTo(filtered, filtered.type(), 1.0 / (g_max - g_min), -g_min / (g_max - g_min));
-            cv::normalize(filtered, filtered, 0.0, 1.0, cv::NORM_MINMAX);
+            //cv::normalize(filtered[3], filtered[3], 0.0, 1.0, cv::NORM_MINMAX);
             cv::normalize(result, result, 0.0, 1.0, cv::NORM_MINMAX);
 
-            cv::Mat f8;
-            filtered.convertTo(f8, CV_8U, 255.0);
-            cv::threshold(f8, f8, 130, 255, cv::THRESH_BINARY);
+            //cv::Mat f8;
+            //filtered[3].convertTo(f8, CV_8U, 255.0);
+            //cv::threshold(f8, f8, 130, 255, cv::THRESH_BINARY);
 
             cv::imshow("combined", result);
-            cv::imshow("filtered", filtered);
-            cv::imshow("binary", f8);
+            //cv::imshow("filtered", filtered[3]);
+            //cv::imshow("binary", f8);
 
-            vector<vector<cv::Point> > contours;
+/*            vector<vector<cv::Point> > contours;
             cv::findContours(f8, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
             vector<vector<cv::Point> > contours_to_draw;
 
@@ -432,7 +519,7 @@ public:
             }
 
             cv::Scalar color(rand()&255, rand()&255, rand()&255);
-            cv::drawContours(new_img, contours_to_draw, -1, color, 1);
+            cv::drawContours(new_img, contours_to_draw, -1, color, 1);*/
             cv::imshow("contours", new_img);
         }
         else if (colorspace == "rgchroma")
