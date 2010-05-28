@@ -339,6 +339,7 @@ public:
             sal_tracker->init(&avg_img_ipl);
 
             box_size.push_back(1);
+//             box_size.push_back(2);
 
             for (int i = 1; i <= 4; ++i)
             {
@@ -424,6 +425,7 @@ public:
 
             //print_img(&((IplImage) result));
 
+            // Compute the (foreground) probability image under the logistic model
             double w = -1/20.0, b = 1;
             cv::Mat fg_prob_img = result.clone();
             fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), w, b);
@@ -444,48 +446,83 @@ public:
                 IplImage out = filtered[i];
                 box_filter->setBoxFilter(&out, box_position[i], 1.0/(box_position[i].width*box_position[i].height));
                 double h = box_size[i] * box_size[i];
-                filtered[i].convertTo(filtered[i], filtered[i].type(), -2*h, sum+h);
+                filtered[i].convertTo(filtered[i], filtered[i].type(), -2*h, (sum) + h);
                 //filtered[i].convertTo(filtered[i], filtered[i].type(), 1.0/(filtered[i].rows*filtered[i].cols));
             }
 
-            double current_best = numeric_limits<double>::max();
-            int current_best_id = -1;
-            cv::Point current_best_point;
+            double threshold = 0.7; // 0.8
 
-            for (int i = 0; i <= 4; ++i)
+            int death_count = 0;
+            std::vector<cv::Rect> fg_rects;
+            double sum_best = 0;
+            bool found_something = true;
+            // Iterate until we no longer have any good boxes (death_count is just to avoid infinite loops)
+            while (found_something && death_count < 1000)
             {
-                double min, max;
-                cv::Point min_p;
-                cv::minMaxLoc(filtered[i], &min, &max, &min_p);
+                std::cout << "ITERATION " << death_count << std::endl;
 
-                double t = -((min - sum)/(box_size[i] * box_size[i]) - 1)/2.0;
-                if (t > 0.8 && min < current_best)
-                {
-                    current_best = min;
-                    current_best_id = i;
-                    current_best_point = min_p;
-                }
-            }
+                double current_best = numeric_limits<double>::max();
+                int current_best_id = -1;
+                cv::Point current_best_point;
 
-            for (int i = 0; i <= 4; ++i)
-            {
-                int hb = box_size[i] / 2;
-                for (int row = hb + 1; row < filtered[i].rows - hb - 1; ++row)
+                found_something = false;
+                // Iterating over the box filter sizes, find the best box
+                for (int i = 0; i <= 4; ++i)
                 {
-                    for (int col = hb + 1; col < filtered[i].cols - hb - 1; ++col)
+                    double min = 0.0, max = 0.0;
+                    cv::Point min_p;
+                    cv::minMaxLoc(filtered[i], &min, &max, &min_p); // Store the center of the minimum risk region into min_p
+                    double t = -((min - sum)/(box_size[i] * box_size[i]) - 1)/2.0;
+
+                    if (t > threshold && min < current_best)
                     {
-                        const double* ptr = filtered[i].ptr<const double>(row);
-                        if (ptr[col] < 0.32)
-                        {
-                            //printf("row = %d, col = %d, val = %g\n", row, col, ptr[col]);
-                            int x = col - hb;
-                            int y = row - hb;
-                            cv::Rect roi(x, y, box_size[i], box_size[i]);
-                            cv::rectangle(new_img, roi, cv::Scalar(255, 0, 0));
-                        }
+                        current_best = min;
+                        current_best_id = i;
+                        current_best_point = min_p;
+
+                        found_something = true;
                     }
                 }
+
+                if (found_something)
+                {
+                    cv::Rect rect(current_best_point.x - box_size[current_best_id]/2, current_best_point.y - box_size[current_best_id]/2,
+                                  box_size[current_best_id], box_size[current_best_id]); // TODO: may need to shift by height/2, etc.
+                    fg_rects.push_back(rect);
+                    sum_best += current_best * box_size[current_best_id] * box_size[current_best_id];
+                    std::cout << "FOUND RECT: " << rect.x << " " << rect.y << " " << rect.area() << std::endl;
+
+                    cv::rectangle(new_img, rect, cv::Scalar(255, 0, 0));
+
+                    // Prevent re-finding it
+                    for (int i = 0; i <= 4; ++i)
+                    {
+                        cv::rectangle(filtered[i], rect, cv::Scalar(numeric_limits<double>::max()), CV_FILLED);
+                    }
+                }
+
+                ++death_count;
             }
+
+//             for (int i = 0; i <= 4; ++i)
+//             {
+//                 int hb = box_size[i] / 2;
+//                 for (int row = hb + 1; row < filtered[i].rows - hb - 1; ++row)
+//                 {
+//                     for (int col = hb + 1; col < filtered[i].cols - hb - 1; ++col)
+//                     {
+//                         const double* ptr = filtered[i].ptr<const double>(row);
+//                         if (ptr[col] < 0.32)
+//                         {
+//                             printf("row = %d, col = %d, val = %g\n", row, col, ptr[col]);
+//                             int x = col - hb;
+//                             int y = row - hb;
+//                             cv::Rect roi(x, y, box_size[i], box_size[i]);
+//                             cv::rectangle(new_img, roi, cv::Scalar(255, 0, 0));
+//                         }
+//                     }
+//                 }
+//             }
 
             //if (min < g_min) { g_min = min; }
             //if (max > g_max) { g_max = max; }
