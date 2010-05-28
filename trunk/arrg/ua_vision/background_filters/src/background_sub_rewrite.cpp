@@ -426,7 +426,7 @@ public:
             //print_img(&((IplImage) result));
 
             // Compute the (foreground) probability image under the logistic model
-            double w = -1/20.0, b = 1;
+            double w = -1/5.0, b = 4.0;
             cv::Mat fg_prob_img = result.clone();
             fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), w, b);
             cv::exp(fg_prob_img, fg_prob_img);
@@ -436,30 +436,37 @@ public:
 
             double sum = cv::sum(fg_prob_img)[0];
 
-            // use box filter for smoothing
-            IplImage in = fg_prob_img;
-            box_filter->setNewImage(&in);
+            // Find and draw contours (for comparison)
+            std::vector<std::vector<cv::Point> > contours;
+            cv::Mat bin_image = (fg_prob_img > 0.6);
+            cv::imshow("binary", bin_image);
+            cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+            cv::drawContours(new_img, contours, -1, cv::Scalar(0, 255, 0));
 
-            // create a bunch of images filtered with different sized box filters
-            for (int i = 0; i <= 4; ++i)
-            {
-                IplImage out = filtered[i];
-                box_filter->setBoxFilter(&out, box_position[i], 1.0/(box_position[i].width*box_position[i].height));
-                double h = box_size[i] * box_size[i];
-                filtered[i].convertTo(filtered[i], filtered[i].type(), -2*h, (sum) + h);
-                //filtered[i].convertTo(filtered[i], filtered[i].type(), 1.0/(filtered[i].rows*filtered[i].cols));
-            }
-
-            double threshold = 0.7; // 0.8
+            double threshold = 0.7; // was 0.8
 
             int death_count = 0;
             std::vector<cv::Rect> fg_rects;
             double sum_best = 0;
             bool found_something = true;
-            // Iterate until we no longer have any good boxes (death_count is just to avoid infinite loops)
+            // Iterate until we no longer have any good boxes (death_count is just to avoid infinite loops if something is wrong)
             while (found_something && death_count < 1000)
             {
-                std::cout << "ITERATION " << death_count << std::endl;
+//                 std::cout << "ITERATION " << death_count << std::endl;
+
+                // use box filter for smoothing
+                IplImage in = fg_prob_img;
+                box_filter->setNewImage(&in);
+
+                // create a bunch of images filtered with different sized box filters
+                for (int i = 0; i <= 4; ++i)
+                {
+                    IplImage out = filtered[i];
+                    box_filter->setBoxFilter(&out, box_position[i], 1.0/(box_position[i].width*box_position[i].height));
+                    double h = box_size[i] * box_size[i];
+                    filtered[i].convertTo(filtered[i], filtered[i].type(), -2*h, (sum) + h);
+                    //filtered[i].convertTo(filtered[i], filtered[i].type(), 1.0/(filtered[i].rows*filtered[i].cols));
+                }
 
                 double current_best = numeric_limits<double>::max();
                 int current_best_id = -1;
@@ -490,15 +497,17 @@ public:
                                   box_size[current_best_id], box_size[current_best_id]); // TODO: may need to shift by height/2, etc.
                     fg_rects.push_back(rect);
                     sum_best += current_best * box_size[current_best_id] * box_size[current_best_id];
-                    std::cout << "FOUND RECT: " << rect.x << " " << rect.y << " " << rect.area() << std::endl;
+//                     std::cout << "FOUND RECT: " << rect.x << " " << rect.y << " " << rect.area() << std::endl;
 
                     cv::rectangle(new_img, rect, cv::Scalar(255, 0, 0));
 
                     // Prevent re-finding it
-                    for (int i = 0; i <= 4; ++i)
-                    {
-                        cv::rectangle(filtered[i], rect, cv::Scalar(numeric_limits<double>::max()), CV_FILLED);
-                    }
+//                     for (int i = 0; i <= 4; ++i)
+//                     {
+//                         cv::rectangle(filtered[i], rect, cv::Scalar(numeric_limits<double>::max()), CV_FILLED);
+//                     }
+                    // Now we are zeroing out the region in the probability image
+                    cv::rectangle(fg_prob_img, rect, 0, CV_FILLED);
                 }
 
                 ++death_count;
