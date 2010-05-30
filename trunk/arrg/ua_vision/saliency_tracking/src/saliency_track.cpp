@@ -45,6 +45,10 @@
 #include <image_transport/image_transport.h>
 #include <geometry_msgs/Point.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <driver_base/SensorLevels.h>
+#include <saliency_tracking/FastSaliencyConfig.h>
+
 #include <boost/thread.hpp>
 #include <boost/format.hpp>
 
@@ -57,6 +61,11 @@ private:
     image_transport::Subscriber sub;
     sensor_msgs::CvBridge cv_bridge;
     ros::Publisher saliency_poi_pub;
+
+    /** dynamic parameter configuration */
+    typedef saliency_tracking::FastSaliencyConfig Config;
+    Config config;
+    dynamic_reconfigure::Server<Config> srv;
 
     std::string window_name;
     CvFont font;
@@ -94,7 +103,7 @@ private:
     int maxTau;
     int maxsalscale;
 
-    int first_frame;
+    bool initialized;
 
 public:
     SaliencyTracker(ros::NodeHandle& nh, const std::string& transport)
@@ -105,6 +114,7 @@ public:
         window_name = topic;
         cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, .33, .33);
 
+        initialized = false;
         saltracker = NULL;
 
         // Parameter constraints
@@ -119,7 +129,7 @@ public:
         local_nh.param("temporal_scales", tm_scales, 0);
         local_nh.param("spatial_size", rad0, 0);
         local_nh.param("temporal_falloff", tau0, 0);
-        local_nh.param("image_size", salscale, 6);
+        local_nh.param("image_scale", salscale, 4);
         local_nh.param("distribution_power", power, 9);
         local_nh.param("use_spatial_features", dobFeat, 1);
         local_nh.param("use_temporal_features", doeFeat, 1);
@@ -140,37 +150,11 @@ public:
         else if (tau0 < 0) { tau0 = 0; }
 
         if (salscale > maxsalscale) { salscale = maxsalscale; }
-        else if (salscale < 0) { salscale = 0; }
+        else if (salscale < 1) { salscale = 1; }
 
         if (power > maxPowers) { power = maxPowers; }
         else if (power < 0) { power = 0; }
 
-        local_nh.param("input_image_width", imwidth, 640);
-        local_nh.param("input_image_height", imheight, 480);
-
-        saliencyMapWidth = imwidth / (maxsalscale + 1 - salscale);
-        saliencyMapHeight = imheight / (maxsalscale + 1 - salscale);
-
-        ROS_INFO("ih:%d, iw:%d; h: %d, w: %d\n", imwidth, imheight, saliencyMapWidth, saliencyMapHeight);
-
-        int nspatial = sp_scales + 1;       // [2 3 4 5 ...]
-        int ntemporal = tm_scales + 2;      // [2 3 4 5 ...]
-        float first_tau = 1.0 / (tau0 + 1); // [1 1/2 1/3 1/4 1/5 ...]
-        int first_rad = (1 << rad0) / 2;    // [0 1 2 4 8 16 ...]
-
-        saltracker = new FastSaliency(saliencyMapWidth, saliencyMapHeight, ntemporal, nspatial, first_tau, first_rad);
-
-        double mypower = 0.1 + power / 10.0;
-        saltracker->setGGDistributionPower(mypower);
-        saltracker->setUseDoEFeatures(doeFeat);
-        saltracker->setUseDoBFeatures(dobFeat);
-        saltracker->setUseColorInformation(colorFeat);
-        saltracker->setUseGGDistributionParams(useParams);
-        saltracker->setEstimateGGDistributionParams(estParams);
-
-        first_frame = 1;
-
-        cvNamedWindow(window_name.c_str(), CV_WINDOW_AUTOSIZE);
         cvStartWindowThread();
 
         image_transport::ImageTransport it(nh);
@@ -184,9 +168,51 @@ public:
         cvDestroyWindow(window_name.c_str());
     }
 
-    void first_time(IplImage * current_frame)
+    void reconfig(Config &newconfig, uint32_t level)
+    {
+        ROS_INFO("dynamic reconfigure level 0x%x", level);
+
+        config = newconfig;                // update parameter values
+
+        double mypower = 0.1 + newconfig.distribution_power / 10.0;
+        saltracker->setGGDistributionPower(mypower);
+        saltracker->setUseDoEFeatures(newconfig.use_temporal_features);
+        saltracker->setUseDoBFeatures(newconfig.use_spatial_features);
+        saltracker->setUseColorInformation(newconfig.use_color_contrast);
+        saltracker->setUseGGDistributionParams(newconfig.use_histogram);
+        saltracker->setEstimateGGDistributionParams(newconfig.estimate_histogram);
+
+        ROS_INFO_STREAM("Setting Current FastSaliency Parameters.");
+        ROS_INFO_STREAM("  Generalized Gaussian Distribution Power: " << newconfig.distribution_power);
+        ROS_INFO_STREAM("  Use Difference of Exponential Features:  " << newconfig.use_temporal_features);
+        ROS_INFO_STREAM("  Use Difference of Box Features:          " << newconfig.use_spatial_features);
+        ROS_INFO_STREAM("  Use Color Information:                   " << newconfig.use_color_contrast);
+        ROS_INFO_STREAM("  Use Estimated GG Distribution Params:    " << newconfig.use_histogram);
+        ROS_INFO_STREAM("  Estimate GG Dist Params from Data:       " << newconfig.estimate_histogram);
+    }
+
+    void initialize(IplImage* current_frame)
     {
         ROS_INFO("Initializing saliency tracker");
+
+        imwidth = current_frame->width;
+        imheight = current_frame->height;
+
+        saliencyMapWidth = imwidth / salscale;
+        saliencyMapHeight = imheight / salscale;
+
+        ROS_INFO("ih:%d, iw:%d; h: %d, w: %d\n", imwidth, imheight, saliencyMapWidth, saliencyMapHeight);
+
+        int nspatial = sp_scales + 1;       // [2 3 4 5 ...]
+        int ntemporal = tm_scales + 2;      // [2 3 4 5 ...]
+        float first_tau = 1.0 / (tau0 + 1); // [1 1/2 1/3 1/4 1/5 ...]
+        int first_rad = (1 << rad0) / 2;    // [0 1 2 4 8 16 ...]
+
+        saltracker = new FastSaliency(saliencyMapWidth, saliencyMapHeight, ntemporal, nspatial, first_tau, first_rad);
+
+        dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(&SaliencyTracker::reconfig, this, _1, _2);
+        srv.setCallback(f);
+
         //Make some intermediate image representations:
 
         //(1) The downsized representation of the original image frame
@@ -202,23 +228,17 @@ public:
         composite_image = cvCreateImage(cvSize(saliencyMapWidth * 2, saliencyMapHeight),
                                         current_frame->depth, current_frame->nChannels);
 
+        cvNamedWindow(window_name.c_str(), CV_WINDOW_AUTOSIZE);
+        initialized = true;
         timer.blockStart(0);
-        first_frame = 0;
     }
 
     void image_cb(const sensor_msgs::ImageConstPtr& msg)
     {
-        // May want to view raw bayer data
-        // NB: This is hacky, but should be OK since we have only one image CB.
-        if (msg->encoding.find("bayer") != std::string::npos)
-        {
-            boost::const_pointer_cast<sensor_msgs::Image>(msg)->encoding = "mono8";
-        }
-
         if (cv_bridge.fromImage(*msg, "bgr8"))
         {
-            IplImage * current_frame = cv_bridge.toIpl();
-            if (first_frame) { first_time(current_frame); }
+            IplImage* current_frame = cv_bridge.toIpl();
+            if (!initialized) { initialize(current_frame); }
 
             //Put the current frame into the format expected by the saliency algorithm
             cvResize(current_frame, small_color_image, CV_INTER_LINEAR);
@@ -227,6 +247,7 @@ public:
             //Call the "updateSaliency" method, and time how long it takes to run
             timer.blockStart(1);
             saltracker->updateSaliency(small_float_image);
+            cvNormalize(saltracker->salImageFloat, saltracker->salImageFloat, 0, 1, CV_MINMAX, NULL);
             timer.blockStop(1);
 
             //Paste the original color image into the left half of the display image
@@ -237,30 +258,14 @@ public:
             cvCvtColor(saltracker->salImageFloat, small_float_image, CV_GRAY2BGR);
 
             // Find and publish poi
-            CvScalar s;
-            float max = -1;
-            int max_x = -1;
-            int max_y = -1;
-
-            for (int x = 0; x < saltracker->salImageFloat->width; ++x)
-            {
-                for (int y = 0; y < saltracker->salImageFloat->height; ++y)
-                {
-                    s = cvGet2D(saltracker->salImageFloat, y, x); // get the (i,j) pixel value
-
-                    if (s.val[0] > max)
-                    {
-                        max = s.val[0];
-                        max_x = x;
-                        max_y = y;
-                    }
-                }
-            }
+            double min, max;
+            CvPoint p_min, p_max;
+            cvMinMaxLoc(saltracker->salImageFloat, &min, &max, &p_min, &p_max);
 
             //printf("intensity=%f at (%d, %d)\n", max, max_x, max_y);
             geometry_msgs::Point poi;
-            poi.x = max_x * (maxsalscale+1-salscale);
-            poi.y = max_y * (maxsalscale+1-salscale);
+            poi.x = p_max.x * salscale;
+            poi.y = p_max.y * salscale;
             poi.z = 0.0;
             saliency_poi_pub.publish(poi);
 
@@ -269,11 +274,6 @@ public:
             cvSetImageROI(composite_image, half);
             cvConvertScale(small_float_image, composite_image, 255, 0);
             cvResetImageROI(composite_image);
-
-            if( current_frame->origin != IPL_ORIGIN_TL ) //on some systems, the image is upside down
-            {
-                cvFlip(composite_image, NULL, 0);
-            }
 
             timer.blockStop(0);
 

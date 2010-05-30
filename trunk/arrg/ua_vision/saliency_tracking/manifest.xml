@@ -18,6 +18,9 @@
     <depend package="nmpt"/>
     <depend package="pr2_controllers_msgs"/>
     <depend package="std_msgs"/>
+    <depend package="dynamic_reconfigure" />
+    <depend package="driver_base" />
+
 </package>
 
 
