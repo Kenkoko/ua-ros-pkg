@@ -50,10 +50,13 @@
 #include <saliency_tracking/FastSaliencyConfig.h>
 
 #include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
 #include <boost/format.hpp>
 
 #include <nmpt/BlockTimer.h>
 #include <nmpt/FastSaliency.h>
+
+typedef driver_base::SensorLevels Levels;
 
 class SaliencyTracker
 {
@@ -66,6 +69,7 @@ private:
     typedef saliency_tracking::FastSaliencyConfig Config;
     Config config;
     dynamic_reconfigure::Server<Config> srv;
+    boost::mutex st_mutex;
 
     std::string window_name;
     CvFont font;
@@ -79,29 +83,12 @@ private:
     FastSaliency* saltracker;
 
     // FastSUN saliency tracker parameters
-    int sp_scales;
-    int tm_scales;
     int salscale;
-    int tau0;
-    int rad0;
-    int doeFeat;
-    int dobFeat;
-    int colorFeat;
-    int useParams;
-    int estParams;
-    int power;
 
     int saliencyMapWidth;
     int saliencyMapHeight;
     int imwidth;
     int imheight;
-
-    // Parameter constraints
-    int maxPowers;
-    int maxScales;
-    int maxRad;
-    int maxTau;
-    int maxsalscale;
 
     bool initialized;
 
@@ -115,45 +102,23 @@ public:
         cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, .33, .33);
 
         initialized = false;
+        small_color_image = NULL;
+        small_float_image = NULL;
+        composite_image = NULL;
         saltracker = NULL;
 
-        // Parameter constraints
-        maxPowers = 19;
-        maxScales = 6;
-        maxRad = 3;
-        maxTau = 10;
-        maxsalscale = 9;
-
         // FastSUN saliency tracker parameters
-        local_nh.param("spatial_scales", sp_scales, 5);
-        local_nh.param("temporal_scales", tm_scales, 0);
-        local_nh.param("spatial_size", rad0, 0);
-        local_nh.param("temporal_falloff", tau0, 0);
-        local_nh.param("image_scale", salscale, 4);
-        local_nh.param("distribution_power", power, 9);
-        local_nh.param("use_spatial_features", dobFeat, 1);
-        local_nh.param("use_temporal_features", doeFeat, 1);
-        local_nh.param("use_color_contrast", colorFeat, 1);
-        local_nh.param("estimate_histogram", estParams, 1);
-        local_nh.param("use_histogram", useParams, 1);
-
-        if (sp_scales > maxScales) { sp_scales = maxScales; }
-        else if (sp_scales < 0) { sp_scales = 0; }
-
-        if (tm_scales > maxScales) { tm_scales = maxScales; }
-        else if (tm_scales < 0) { tm_scales = 0; }
-
-        if (rad0 > maxRad) { rad0 = maxRad; }
-        else if (rad0 < 0) { rad0 = 0; }
-
-        if (tau0 > maxTau) { tau0 = maxTau; }
-        else if (tau0 < 0) { tau0 = 0; }
-
-        if (salscale > maxsalscale) { salscale = maxsalscale; }
-        else if (salscale < 1) { salscale = 1; }
-
-        if (power > maxPowers) { power = maxPowers; }
-        else if (power < 0) { power = 0; }
+        local_nh.param("img_scale", config.img_scale, 4);
+        local_nh.param("spatial_scales", config.spatial_scales, 5);
+        local_nh.param("temporal_scales", config.temporal_scales, 0);
+        local_nh.param("spatial_size", config.spatial_size, 0);
+        local_nh.param("temporal_falloff", config.temporal_falloff, 0);
+        local_nh.param("distribution_power", config.distribution_power, 9);
+        local_nh.param("use_spatial_features", config.use_spatial_features, true);
+        local_nh.param("use_temporal_features", config.use_temporal_features, true);
+        local_nh.param("use_color_contrast", config.use_color_contrast, true);
+        local_nh.param("estimate_histogram", config.estimate_histogram, true);
+        local_nh.param("use_histogram", config.use_histogram, true);
 
         cvStartWindowThread();
 
@@ -172,23 +137,82 @@ public:
     {
         ROS_INFO("dynamic reconfigure level 0x%x", level);
 
-        config = newconfig;                // update parameter values
+        if (initialized) { config = newconfig; }                // update parameter values
 
-        double mypower = 0.1 + newconfig.distribution_power / 10.0;
+        boost::mutex::scoped_lock lock(st_mutex);
+
+        if (level & Levels::RECONFIGURE_CLOSE)
+        {
+            saliencyMapWidth = imwidth / config.img_scale;
+            saliencyMapHeight = imheight / config.img_scale;
+
+            //Make some intermediate image representations:
+            if (small_color_image != NULL)
+            {
+                cvReleaseImage(&small_color_image);
+                small_color_image = NULL;
+            }
+
+            if (small_float_image != NULL)
+            {
+                cvReleaseImage(&small_float_image);
+                small_float_image = NULL;
+            }
+
+            if (composite_image != NULL)
+            {
+                cvReleaseImage(&composite_image);
+                composite_image = NULL;
+            }
+
+            //(1) The downsized representation of the original image frame
+            small_color_image = cvCreateImage(cvSize(saliencyMapWidth, saliencyMapHeight), IPL_DEPTH_8U, 3);
+
+            //(2) The floating point image that is passed to the saliency algorithm; this also
+            //doubles as an intermediate representation for the output.
+            small_float_image = cvCreateImage(cvSize(saliencyMapWidth, saliencyMapHeight), IPL_DEPTH_32F, 3);
+
+            //(3) An image to visualize both the original image and the saliency image simultaneously
+            composite_image = cvCreateImage(cvSize(saliencyMapWidth * 2, saliencyMapHeight), IPL_DEPTH_8U, 3);
+
+            int nspatial = config.spatial_scales + 1;               // [2 3 4 5 ...]
+            int ntemporal = config.temporal_scales + 2;             // [2 3 4 5 ...]
+            float first_tau = 1.0 / (config.temporal_falloff + 1);  // [1 1/2 1/3 1/4 1/5 ...]
+            int first_rad = (1 << config.spatial_size) / 2;         // [0 1 2 4 8 16 ...]
+
+            if (saltracker != NULL)
+            {
+                delete(saltracker);
+                saltracker = NULL;
+            }
+
+            saltracker = new FastSaliency(saliencyMapWidth, saliencyMapHeight, ntemporal, nspatial, first_tau, first_rad);
+
+            ROS_INFO_STREAM("Created new FastSaliency object with the following parameters.");
+            ROS_INFO_STREAM("  Width:                                   " << saliencyMapWidth);
+            ROS_INFO_STREAM("  Height:                                  " << saliencyMapHeight);
+            ROS_INFO_STREAM("  Image Scale:                             " << config.img_scale);
+            ROS_INFO_STREAM("  # Temporal Scales:                       " << config.temporal_scales);
+            ROS_INFO_STREAM("  # Spatial Scales:                        " << config.spatial_scales);
+            ROS_INFO_STREAM("  Slowest Temporal Feature Decay:          " << config.temporal_falloff);
+            ROS_INFO_STREAM("  Smallest Spatial Scale Radius:           " << config.spatial_size);
+        }
+
+        double mypower = 0.1 + config.distribution_power / 10.0;
         saltracker->setGGDistributionPower(mypower);
-        saltracker->setUseDoEFeatures(newconfig.use_temporal_features);
-        saltracker->setUseDoBFeatures(newconfig.use_spatial_features);
-        saltracker->setUseColorInformation(newconfig.use_color_contrast);
-        saltracker->setUseGGDistributionParams(newconfig.use_histogram);
-        saltracker->setEstimateGGDistributionParams(newconfig.estimate_histogram);
+        saltracker->setUseDoEFeatures(config.use_temporal_features);
+        saltracker->setUseDoBFeatures(config.use_spatial_features);
+        saltracker->setUseColorInformation(config.use_color_contrast);
+        saltracker->setUseGGDistributionParams(config.use_histogram);
+        saltracker->setEstimateGGDistributionParams(config.estimate_histogram);
 
         ROS_INFO_STREAM("Setting Current FastSaliency Parameters.");
-        ROS_INFO_STREAM("  Generalized Gaussian Distribution Power: " << newconfig.distribution_power);
-        ROS_INFO_STREAM("  Use Difference of Exponential Features:  " << newconfig.use_temporal_features);
-        ROS_INFO_STREAM("  Use Difference of Box Features:          " << newconfig.use_spatial_features);
-        ROS_INFO_STREAM("  Use Color Information:                   " << newconfig.use_color_contrast);
-        ROS_INFO_STREAM("  Use Estimated GG Distribution Params:    " << newconfig.use_histogram);
-        ROS_INFO_STREAM("  Estimate GG Dist Params from Data:       " << newconfig.estimate_histogram);
+        ROS_INFO_STREAM("  Generalized Gaussian Distribution Power: " << config.distribution_power);
+        ROS_INFO_STREAM("  Use Difference of Exponential Features:  " << config.use_temporal_features);
+        ROS_INFO_STREAM("  Use Difference of Box Features:          " << config.use_spatial_features);
+        ROS_INFO_STREAM("  Use Color Information:                   " << config.use_color_contrast);
+        ROS_INFO_STREAM("  Use Estimated GG Distribution Params:    " << config.use_histogram);
+        ROS_INFO_STREAM("  Estimate GG Dist Params from Data:       " << config.estimate_histogram);
     }
 
     void initialize(IplImage* current_frame)
@@ -198,35 +222,8 @@ public:
         imwidth = current_frame->width;
         imheight = current_frame->height;
 
-        saliencyMapWidth = imwidth / salscale;
-        saliencyMapHeight = imheight / salscale;
-
-        ROS_INFO("ih:%d, iw:%d; h: %d, w: %d\n", imwidth, imheight, saliencyMapWidth, saliencyMapHeight);
-
-        int nspatial = sp_scales + 1;       // [2 3 4 5 ...]
-        int ntemporal = tm_scales + 2;      // [2 3 4 5 ...]
-        float first_tau = 1.0 / (tau0 + 1); // [1 1/2 1/3 1/4 1/5 ...]
-        int first_rad = (1 << rad0) / 2;    // [0 1 2 4 8 16 ...]
-
-        saltracker = new FastSaliency(saliencyMapWidth, saliencyMapHeight, ntemporal, nspatial, first_tau, first_rad);
-
         dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(&SaliencyTracker::reconfig, this, _1, _2);
         srv.setCallback(f);
-
-        //Make some intermediate image representations:
-
-        //(1) The downsized representation of the original image frame
-        small_color_image = cvCreateImage(cvSize(saliencyMapWidth, saliencyMapHeight),
-                                          current_frame->depth, current_frame->nChannels);
-
-        //(2) The floating point image that is passed to the saliency algorithm; this also
-        //doubles as an intermediate representation for the output.
-        small_float_image = cvCreateImage(cvSize(saliencyMapWidth, saliencyMapHeight),
-                                          IPL_DEPTH_32F, current_frame->nChannels);
-
-        //(3) An image to visualize both the original image and the saliency image simultaneously
-        composite_image = cvCreateImage(cvSize(saliencyMapWidth * 2, saliencyMapHeight),
-                                        current_frame->depth, current_frame->nChannels);
 
         cvNamedWindow(window_name.c_str(), CV_WINDOW_AUTOSIZE);
         initialized = true;
@@ -239,6 +236,8 @@ public:
         {
             IplImage* current_frame = cv_bridge.toIpl();
             if (!initialized) { initialize(current_frame); }
+
+            boost::mutex::scoped_lock lock(st_mutex);
 
             //Put the current frame into the format expected by the saliency algorithm
             cvResize(current_frame, small_color_image, CV_INTER_LINEAR);

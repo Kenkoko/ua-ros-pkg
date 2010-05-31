@@ -1,16 +1,16 @@
 <launch>
     <node name="saliency_track" pkg="saliency_tracking" type="saliency_track" output="screen">
         <remap from="image" to="stereo/left/image_rect_color"/>
+        <param name="img_scale" type="int" value="4"/>
         <param name="spatial_scales" type="int" value="5"/>
         <param name="temporal_scales" type="int" value="0"/>
         <param name="spatial_size" type="int" value="0"/>
         <param name="temporal_falloff" type="int" value="0"/>
-        <param name="image_size" type="int" value="6"/>
         <param name="distribution_power" type="int" value="9"/>
-        <param name="use_spatial_features" type="int" value="1"/>
-        <param name="use_temporal_features" type="int" value="1"/>
-        <param name="use_color_contrast" type="int" value="1"/>
-        <param name="estimate_histogram" type="int" value="1"/>
-        <param name="use_histogram" type="int" value="1"/>
+        <param name="use_spatial_features" type="bool" value="True"/>
+        <param name="use_temporal_features" type="bool" value="True"/>
+        <param name="use_color_contrast" type="bool" value="True"/>
+        <param name="estimate_histogram" type="bool" value="True"/>
+        <param name="use_histogram" type="bool" value="True"/>
     </node>
 </launch>
