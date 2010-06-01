@@ -1,13 +1,13 @@
 /*********************************************************************
 * Software License Agreement (BSD License)
-* 
+*
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
 *   * Neither the name of the Willow Garage nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -37,9 +37,9 @@
 // Main class is StereoCam for processing
 // Subclasses:
 //   StereoDcam - gets stereo images from DCAM (IEEE1394) devices
-//   
+//
 
-#include <stereo_image_proc/stereolib.h>
+#include "videre_stereo_cam/stereolib.h"
 #include "videre_stereo_cam/stereodcam.h"
 
 #define PRINTF(a...) printf(a)
@@ -61,7 +61,7 @@ StereoDcam::StereoDcam(uint64_t guid, size_t buffersize)
 {
   // set up stereo image data
   stIm = new StereoData();
-  
+
   // set up a Videre stereo cam
   if (isVidereStereo)
     {
@@ -82,11 +82,11 @@ StereoDcam::~StereoDcam()
 {
   delete stIm;
 }
- 
+
 
 // format of image
 
-void 
+void
 StereoDcam::setFormat(dc1394video_mode_t video, dc1394framerate_t fps,
 		      dc1394speed_t speed)
 {
@@ -151,7 +151,7 @@ StereoDcam::getImage(int ms)	// gets the next image, with timeout
 
 	case VIDERE_STOC_RAW_RAW_MONO:
 	case VIDERE_STEREO_MONO:
-	  stereoDeinterlace(camIm->imRaw, &stIm->imLeft->im, &stIm->imLeft->imSize, 
+	  stereoDeinterlace(camIm->imRaw, &stIm->imLeft->im, &stIm->imLeft->imSize,
 			    &stIm->imRight->im, &stIm->imRight->imSize);
 	  stIm->imLeft->imType = COLOR_CODING_MONO8;
 	  stIm->imRight->imType = COLOR_CODING_MONO8;
@@ -171,7 +171,7 @@ StereoDcam::getImage(int ms)	// gets the next image, with timeout
 
 
 	case VIDERE_STOC_RECT_DISP:
-	  stereoDeinterlace2(camIm->imRaw, &stIm->imLeft->imRect, &stIm->imLeft->imRectSize, 
+	  stereoDeinterlace2(camIm->imRaw, &stIm->imLeft->imRect, &stIm->imLeft->imRectSize,
 			    &stIm->imDisp, &stIm->imDispSize);
 	  stIm->imLeft->imRectType = COLOR_CODING_MONO8;
 	  stIm->hasDisparity = true;
@@ -179,7 +179,7 @@ StereoDcam::getImage(int ms)	// gets the next image, with timeout
 	  break;
 
 	case VIDERE_STOC_RAW_DISP_MONO:
-	  stereoDeinterlace2(camIm->imRaw, &stIm->imLeft->im, &stIm->imLeft->imSize, 
+	  stereoDeinterlace2(camIm->imRaw, &stIm->imLeft->im, &stIm->imLeft->imSize,
 			    &stIm->imDisp, &stIm->imDispSize);
 	  stIm->imLeft->imType = COLOR_CODING_MONO8;
 	  //          printf("Setting stIm->imLeft->imType to %d\n", stIm->imLeft->imType);
@@ -189,7 +189,7 @@ StereoDcam::getImage(int ms)	// gets the next image, with timeout
 	  break;
 
 	case VIDERE_STOC_RAW_DISP_GRBG:
-	  stereoDeinterlace2(camIm->imRaw, &stIm->imLeft->imRaw, &stIm->imLeft->imRawSize, 
+	  stereoDeinterlace2(camIm->imRaw, &stIm->imLeft->imRaw, &stIm->imLeft->imRawSize,
 			    &stIm->imDisp, &stIm->imDispSize);
 	  stIm->imLeft->imRawType = COLOR_CODING_BAYER8_GRBG;
 	  stIm->imLeft->doBayerColorRGB();
@@ -218,21 +218,21 @@ StereoDcam::setFeature(dc1394feature_t feature, uint32_t value, uint32_t value2)
 }
 
 
-void 
+void
 StereoDcam::setFeatureAbsolute(dc1394feature_t feature, float value)
 {
   Dcam::setFeatureAbsolute(feature, value);
 }
 
 
-void 
+void
 StereoDcam::setFeatureMode(dc1394feature_t feature, dc1394feature_mode_t mode)
 {
   Dcam::setFeatureMode(feature, mode);
 }
 
 
-void 
+void
 StereoDcam::setRegister(uint64_t offset, uint32_t value)
 {
   Dcam::setRegister(offset, value);
@@ -306,7 +306,7 @@ StereoDcam::setHoropter(int val)
 bool
 StereoDcam::setNumDisp(int val)
 {
-  stIm->setNumDisp(val);	
+  stIm->setNumDisp(val);
   return false;			// can't set number of disparities in STOC
 }
 
@@ -361,7 +361,7 @@ StereoDcam::setUniqueCheck(bool unique_check)
 // de-interlace stereo data, reserving storage if necessary
 
 void
-StereoDcam::stereoDeinterlace(uint8_t *src, uint8_t **d1, size_t *s1, 
+StereoDcam::stereoDeinterlace(uint8_t *src, uint8_t **d1, size_t *s1,
 			     uint8_t **d2, size_t *s2)
 {
   size_t size = stIm->imWidth*stIm->imHeight;
@@ -377,7 +377,7 @@ StereoDcam::stereoDeinterlace(uint8_t *src, uint8_t **d1, size_t *s1,
       *d2 = (uint8_t *)MEMALIGN(size);
       *s2 = size;
     }
-  
+
   uint8_t *dd1 = *d1;
   uint8_t *dd2 = *d2;
   for (int i=0; i<(int)size; i++)
@@ -392,7 +392,7 @@ StereoDcam::stereoDeinterlace(uint8_t *src, uint8_t **d1, size_t *s1,
 // second buffer is 16-bit disparity data
 
 void
-StereoDcam::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1, 
+StereoDcam::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1,
 			      int16_t **d2, size_t *s2)
 {
   int w = stIm->imWidth;
@@ -411,7 +411,7 @@ StereoDcam::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1,
       *d2 = (int16_t *)MEMALIGN(size*2);
       *s2 = size*2;
     }
-  
+
   uint8_t *dd1 = *d1;
   int16_t *dd2 = *d2;
 
@@ -431,7 +431,7 @@ StereoDcam::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1,
    * (dleft-6,dtop)        => upper left
    * (dwidth,dheight)      => size
    */
-  
+
   dd2 += (dt*w + dl - 6) - ((h-dh)*w + w - dw);
 
   size = (h-dh)*w;

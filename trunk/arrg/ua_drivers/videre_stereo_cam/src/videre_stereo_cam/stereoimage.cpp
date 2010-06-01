@@ -38,7 +38,7 @@
 // classes for stereo images
 //
 
-#include <stereo_image_proc/stereolib.h>
+#include "videre_stereo_cam/stereolib.h"
 #include "videre_stereo_cam/stereoimage.h"
 
 #include <sstream>
@@ -121,7 +121,7 @@ StereoData::setReprojection()
 
   if (Tx < 1e-10 &&
       Tx > -1e-10)		// too small, complain
-    return false;		
+    return false;
 
   // first column
   RP[0] = 1.0;
@@ -1173,7 +1173,7 @@ ImageData::doBayerColorRGB()
     case COLOR_CODING_BAYER8_BGGR:
       convertBayerBGGRColorRGB(imRaw, imColor, im, imWidth, imHeight, colorConvertType);
       break;
-      
+
     default:
       PRINTF("Unsupported color coding %i", imRawType);
       return;
@@ -1215,7 +1215,7 @@ ImageData::doBayerMono()
     case COLOR_CODING_BAYER8_BGGR:
       convertBayerBGGRMono(imRaw, im, imWidth, imHeight, colorConvertType);
       break;
-      
+
     default:
       PRINTF("Unsupported color coding %i", imRawType);
       return;
@@ -1454,7 +1454,7 @@ ImageData::convertBayerBGGRColorRGB(uint8_t *src, uint8_t *dstc, uint8_t *dstm,
 	    }
 	  cd +=6;
 	  md +=2;
-          
+
 	  // red line (GRGR...)
 	  for (j=0; j<width; j+=2, cd+=6, md+=2)
 	    {
@@ -1531,7 +1531,7 @@ ImageData::convertBayerBGGRColorRGB(uint8_t *src, uint8_t *dstc, uint8_t *dstm,
 	  cd += 6;
 	  md += 2;
 	  s += 2;
-          
+
 	  // GR line
 	  // do first two pixels
 	  cd += 6;
@@ -1734,7 +1734,7 @@ ImageData::convertBayerBGGRMono(uint8_t *src, uint8_t *dstm,
 	  s++;
 	  *(md+1) = *s++;	// green pixel
 	  md +=2;
-          
+
 	  // red line (GRGR...)
 	  for (j=0; j<width; j+=2, md+=2)
 	    {
@@ -1781,7 +1781,7 @@ ImageData::convertBayerBGGRMono(uint8_t *src, uint8_t *dstm,
 	  // last two pixels
 	  md += 2;
 	  s += 2;
-          
+
 	  // GR line
 	  // do first two pixels
 	  md += 2;
