@@ -1,7 +1,7 @@
 <launch>
     <group ns="prosilica">
         <param name="trigger_mode" type="str" value="streaming"/>
-        <param name="ip_address" type="str" value="169.254.192.221"/>
+        <param name="ip_address" type="str" value="10.68.0.20"/>
         <param name="auto_exposure" type="bool" value="False"/>
         <param name="auto_gain" type="bool" value="False"/>
         <param name="auto_whitebalance" type="bool" value="False"/>
