@@ -1,0 +1,25 @@
+<package>
+
+    <description brief="Trivial service interface to eSpeak TTS System">
+
+    A trivial text-to-speech system to serve as a small reference 
+    for more interesting packages to come. 
+
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/espeak</url>
+
+    <!-- These are basic ROS packages that python nodes depend on -->
+    <depend package="rospy" />
+    <depend package="std_msgs" />
+    <depend package="std_srvs" />
+
+    <!-- This is how you specify a system dependency 
+         i.e., a package from the Ubuntu repository -->
+    <rosdep name="espeak" />
+
+</package>
+
+
