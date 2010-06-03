@@ -131,7 +131,7 @@
 ;; Hardcoded point for now
 (defun dist-to-goal (os last-os)
   (declare (ignore last-os))
-  (distance (position-of (pose-of os)) (make-instance 'xyz :x 4 :y 0 :z 0)))
+  (distance (position-of (pose-of os)) (make-instance 'xyz :x 2 :y 0 :z 0)))
           
 (defun x-vel (os last-os)
   (declare (ignore last-os))

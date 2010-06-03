@@ -25,6 +25,7 @@
       (make-instance 'physical-object 
                      :instance-name 'above-box
                      :gazebo-name "above_box"
+                     :mass 5.0
                      :self-predicates '(force-mag vel-mag x-pos)
                      :xyz '(0 0 0.4))))
 
@@ -34,6 +35,7 @@
                      :instance-name 'front-box
                      :gazebo-name "front_box"
                      :size 0.3
+                     :mass 1000.0
                      :color "WubbleWorld/Blue"
                      :self-predicates '(force-mag vel-mag x-pos)
                      :xyz '(0.5 0 0.3))))
@@ -45,7 +47,8 @@
                      :gazebo-name "stuck_box"
                      :color "Gazebo/Red"
                      :self-predicates '(force-mag vel-mag x-pos)
-                     :xyz '(0.4 0 0.1)
+                     :xyz '(1.0 0 0.1)
+                     :size '(0.2 0.6 0.2)
                      :static? t)))
 
 (defun make-above-sphere ()
@@ -96,7 +99,7 @@
                      :instance-name 'robot
                      :gazebo-name "base_footprint"
                      ;:size '(0.3 0.3 0.2)
-                     :self-predicates '(force-mag
+                     :self-predicates '(dist-to-goal
                                         x-pos z-pos 
                                         int-vel vel-mag diff-speed x-vel z-vel)
                      :binary-predicates '(dist-between))))
@@ -195,6 +198,18 @@
                                      (setf (gethash (first objects) ht) 'move-forward-policy)
                                      ht)))))
 
+(defun double-block-sim ()
+  (if (null (find-instance-by-name 'double-block 'simulator))
+      (let ((objects (list (find-instance-by-name 'robot 'robot)
+                           (find-instance-by-name 'stuck-box 'physical-object)
+                           (find-instance-by-name 'front-box 'physical-object))))
+        (make-instance 'simulator 
+                       :instance-name 'double-block
+                       :objects objects
+                       :policy-map (let ((ht (make-hash-table :test 'eq)))
+                                     (setf (gethash (first objects) ht) 'move-forward-policy)
+                                     ht)))))
+
 (defun hill-sim ()
   (if (null (find-instance-by-name 'hill 'simulator))
       (let ((objects (list (find-instance-by-name 'robot 'robot)
@@ -216,6 +231,7 @@
   (push-sim)
   (carry-sim)
   (block-sim)
+  (double-block-sim)
   (push-sphere-sim)
   (carry-sphere-sim)
   (hill-sim))
@@ -226,19 +242,20 @@
   (shutdown-ros-node)
   (delete-blackboard-repository))
 
+(defun get-ready ()
+  (init-objects)
+  (init-simulators)
+  (subscribe-to-world-state))
+
 (defun uphill ()
   (cleanup)
   (with-ros-node ("simulators")
-    (init-objects)
-    (init-simulators)
-    (subscribe-to-world-state)
+    (get-ready)
     (test-simulator (find-instance-by-name 'hill 'simulator))))
 
 (defun test-all-simulators ()
   (with-ros-node ("simulators")
-    (init-objects)
-    (init-simulators)
-    (subscribe-to-world-state)
+    (get-ready)
 
     (test-simulator (find-instance-by-name 'carry-sphere 'simulator))
     (test-simulator (find-instance-by-name 'push-sphere 'simulator))
@@ -251,6 +268,31 @@
 (defun stress-test ()
   (dotimes (x 20)
     (test-all-simulators)))
+
+(defun easy-test (sim)
+  (with-ros-node ("simtest")
+    (get-ready)
+    (test-simulator (find-instance-by-name sim 'simulator))))
+
+(defun test-blocking (sim obj)
+  (with-ros-node ("simtest")
+    (get-ready)
+    (if (is-blocking? sim obj)
+        (format t "~%~%~%Answer: YES, ~a is blocking the robot." obj)
+        (format t "~%~%~%Answer: NO, ~a is not blocking the robot." obj))))
+    
+(defun is-blocking? (sim-name obj-name)
+  (let* ((sim (find-instance-by-name sim-name 'simulator))
+         (obj (find-instance-by-name obj-name)))
+    ;; First, simulate to see if there is any blockage at all
+    (run-simulator sim)
+    ;; If there is, we can test to see if the object was responsible (i.e., "caused" it)
+    (if (not (success-of (current-simulation sim)))
+        (let* ()
+          (suppress sim obj) ;; Intervention 
+          (run-simulator sim) ;; Simple counterfactual test
+          (revive sim obj) ;; Restore the simulator for future runs
+          (success-of (current-simulation sim))))))
 
 (defun test-simulator (sim)
     ;(load-simulator sim)
