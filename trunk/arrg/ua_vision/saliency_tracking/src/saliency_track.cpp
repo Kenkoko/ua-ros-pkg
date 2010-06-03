@@ -35,23 +35,23 @@
 
 // Author Antons Rebguns with code adapted from image_view and FastSUN
 
+#include <ros/ros.h>
+
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
 
-#include <ros/ros.h>
-#include <sensor_msgs/Image.h>
 #include <cv_bridge/CvBridge.h>
 #include <image_transport/image_transport.h>
+
+#include <sensor_msgs/Image.h>
 #include <geometry_msgs/Point.h>
 
-#include <dynamic_reconfigure/server.h>
 #include <driver_base/SensorLevels.h>
+#include <dynamic_reconfigure/server.h>
 #include <saliency_tracking/FastSaliencyConfig.h>
 
-#include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/format.hpp>
 
 #include <nmpt/BlockTimer.h>
 #include <nmpt/FastSaliency.h>
