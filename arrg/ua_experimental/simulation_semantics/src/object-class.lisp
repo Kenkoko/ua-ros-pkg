@@ -9,7 +9,7 @@
    (color :initform "Gazebo/Blue")
    (size :initform 0.2)
    (mass :initform 0.2)
-   (xyz  :initform '(0 0 0))
+   (xyz  :initform '(1.0 0 0.2))
    (rpy :initform '(0 0 0))
    (static? :initform nil)
    ;; Predicates
