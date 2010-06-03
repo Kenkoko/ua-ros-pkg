@@ -2,6 +2,7 @@ all: checkout test
 
 SVN_DIR = gbbopen
 SVN_URL = http://GBBopen.org/svn/GBBopen/trunk/
+SVN_REVISION = -r 906
 include $(shell rospack find mk)/svn_checkout.mk
 
 checkout: $(SVN_DIR)
