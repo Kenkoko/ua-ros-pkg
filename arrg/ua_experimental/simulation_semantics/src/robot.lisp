@@ -40,7 +40,7 @@
 ;;=====================================================================
 
 (defmethod move-robot ((r robot) forward-vel rot-vel)
-  (format t "~a ~a~%" forward-vel rot-vel)
+  ;(format t "~a ~a~%" forward-vel rot-vel)
   (setf (intended-velocity-of r) (list forward-vel rot-vel))
   (publish (vel-pub-of r) (make-msg "geometry_msgs/Twist"
                                     (x linear) forward-vel

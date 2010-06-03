@@ -5,7 +5,9 @@
 (define-space-class simulation ()
   ((simulator 
     :link (simulator simulations)
-    :singular t)))
+    :singular t)
+   (success :initform nil)
+   ))
 
 ;;===========================================================
 ;; Extra methods for simulator class, probably want to move these
