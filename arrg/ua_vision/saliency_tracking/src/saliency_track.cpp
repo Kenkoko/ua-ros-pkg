@@ -64,32 +64,31 @@ private:
     image_transport::Subscriber sub;
     sensor_msgs::CvBridge cv_bridge;
     ros::Publisher saliency_poi_pub;
+    ros::Publisher saliency_img_pub;
 
     /** dynamic parameter configuration */
     typedef saliency_tracking::FastSaliencyConfig Config;
-    Config config;
     dynamic_reconfigure::Server<Config> srv;
     boost::mutex st_mutex;
+    Config current_config;
 
     std::string window_name;
     CvFont font;
 
     IplImage* small_color_image;
     IplImage* small_float_image;
-    IplImage* composite_image;
 
     //The timer is used to track the frame rate
     BlockTimer timer;
     FastSaliency* saltracker;
 
     // FastSUN saliency tracker parameters
-    int salscale;
-
     int saliencyMapWidth;
     int saliencyMapHeight;
     int imwidth;
     int imheight;
 
+    bool window_exists;
     bool initialized;
 
 public:
@@ -101,24 +100,11 @@ public:
         window_name = topic;
         cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, .33, .33);
 
+        window_exists = false;
         initialized = false;
         small_color_image = NULL;
         small_float_image = NULL;
-        composite_image = NULL;
         saltracker = NULL;
-
-        // FastSUN saliency tracker parameters
-        local_nh.param("img_scale", config.img_scale, 4);
-        local_nh.param("spatial_scales", config.spatial_scales, 5);
-        local_nh.param("temporal_scales", config.temporal_scales, 0);
-        local_nh.param("spatial_size", config.spatial_size, 0);
-        local_nh.param("temporal_falloff", config.temporal_falloff, 0);
-        local_nh.param("distribution_power", config.distribution_power, 9);
-        local_nh.param("use_spatial_features", config.use_spatial_features, true);
-        local_nh.param("use_temporal_features", config.use_temporal_features, true);
-        local_nh.param("use_color_contrast", config.use_color_contrast, true);
-        local_nh.param("estimate_histogram", config.estimate_histogram, true);
-        local_nh.param("use_histogram", config.use_histogram, true);
 
         cvStartWindowThread();
 
@@ -126,19 +112,20 @@ public:
         sub = it.subscribe(topic, 1, &SaliencyTracker::image_cb, this, transport);
 
         saliency_poi_pub = nh.advertise<geometry_msgs::Point>("saliency_poi", 1);
+        saliency_img_pub = nh.advertise<sensor_msgs::Image>("saliency_img", 1);
     }
 
     ~SaliencyTracker()
     {
         cvDestroyWindow(window_name.c_str());
+        cvReleaseImage(&small_color_image);
+        cvReleaseImage(&small_float_image);
+        delete saltracker;
     }
 
-    void reconfig(Config &newconfig, uint32_t level)
+    void reconfig(Config &config, uint32_t level)
     {
         ROS_INFO("dynamic reconfigure level 0x%x", level);
-
-        if (initialized) { config = newconfig; }                // update parameter values
-
         boost::mutex::scoped_lock lock(st_mutex);
 
         if (level & Levels::RECONFIGURE_CLOSE)
@@ -159,21 +146,12 @@ public:
                 small_float_image = NULL;
             }
 
-            if (composite_image != NULL)
-            {
-                cvReleaseImage(&composite_image);
-                composite_image = NULL;
-            }
-
             //(1) The downsized representation of the original image frame
             small_color_image = cvCreateImage(cvSize(saliencyMapWidth, saliencyMapHeight), IPL_DEPTH_8U, 3);
 
             //(2) The floating point image that is passed to the saliency algorithm; this also
             //doubles as an intermediate representation for the output.
             small_float_image = cvCreateImage(cvSize(saliencyMapWidth, saliencyMapHeight), IPL_DEPTH_32F, 3);
-
-            //(3) An image to visualize both the original image and the saliency image simultaneously
-            composite_image = cvCreateImage(cvSize(saliencyMapWidth * 2, saliencyMapHeight), IPL_DEPTH_8U, 3);
 
             int nspatial = config.spatial_scales + 1;               // [2 3 4 5 ...]
             int ntemporal = config.temporal_scales + 2;             // [2 3 4 5 ...]
@@ -213,6 +191,8 @@ public:
         ROS_INFO_STREAM("  Use Color Information:                   " << config.use_color_contrast);
         ROS_INFO_STREAM("  Use Estimated GG Distribution Params:    " << config.use_histogram);
         ROS_INFO_STREAM("  Estimate GG Dist Params from Data:       " << config.estimate_histogram);
+
+        current_config = config;
     }
 
     void initialize(IplImage* current_frame)
@@ -225,7 +205,6 @@ public:
         dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(&SaliencyTracker::reconfig, this, _1, _2);
         srv.setCallback(f);
 
-        cvNamedWindow(window_name.c_str(), CV_WINDOW_AUTOSIZE);
         initialized = true;
         timer.blockStart(0);
     }
@@ -246,49 +225,55 @@ public:
             //Call the "updateSaliency" method, and time how long it takes to run
             timer.blockStart(1);
             saltracker->updateSaliency(small_float_image);
-            cvNormalize(saltracker->salImageFloat, saltracker->salImageFloat, 0, 1, CV_MINMAX, NULL);
             timer.blockStop(1);
 
-            //Paste the original color image into the left half of the display image
-            CvRect half = cvRect(0, 0, saliencyMapWidth, saliencyMapHeight);
-            cvSetImageROI(composite_image, half);
-            cvCopy(small_color_image, composite_image, NULL);
-
-            cvCvtColor(saltracker->salImageFloat, small_float_image, CV_GRAY2BGR);
-
             // Find and publish poi
-            double min, max;
-            CvPoint p_min, p_max;
-            cvMinMaxLoc(saltracker->salImageFloat, &min, &max, &p_min, &p_max);
+            CvPoint p_max;
+            cvMinMaxLoc(saltracker->salImageFloat, NULL, NULL, NULL, &p_max);
 
-            //printf("intensity=%f at (%d, %d)\n", max, max_x, max_y);
             geometry_msgs::Point poi;
-            poi.x = p_max.x * salscale;
-            poi.y = p_max.y * salscale;
+            poi.x = p_max.x * current_config.img_scale;
+            poi.y = p_max.y * current_config.img_scale;
             poi.z = 0.0;
-            saliency_poi_pub.publish(poi);
-
-            // Paste the saliency map into the right half of the color image
-            half = cvRect(saliencyMapWidth, 0, saliencyMapWidth, saliencyMapHeight);
-            cvSetImageROI(composite_image, half);
-            cvConvertScale(small_float_image, composite_image, 255, 0);
-            cvResetImageROI(composite_image);
 
             timer.blockStop(0);
 
-            double tot = timer.getTotTime(0);
-            double fps = timer.getTotTime(1);
+            double total_time = timer.getTotTime(0);
+            double fastsun_time = timer.getTotTime(1);
 
             timer.blockReset(0);
             timer.blockReset(1);
             timer.blockStart(0);
 
-            //Print the timing information to the display image
-            char str[1000] = {'\0'};
-            sprintf(str,"FastSUN: %03.1f MS;   Total: %03.1f MS", 1000.0*fps, 1000.0*tot);
-            cvPutText( composite_image, str, cvPoint(20,20), &font, CV_RGB(255,0,255) );
+            saliency_poi_pub.publish(poi);
+            saliency_img_pub.publish(cv_bridge.cvToImgMsg(saltracker->salImageFloat));
 
-            cvShowImage(window_name.c_str(), composite_image);
+            if (current_config.display_img)
+            {
+                // Normalize saliency map image for display
+                cvNormalize(saltracker->salImageFloat, saltracker->salImageFloat, 0, 1, CV_MINMAX, NULL);
+
+                //Print the timing information to the display image
+                char str[1000] = {'\0'};
+                sprintf(str,"s: %03.1f ms; t: %03.1f ms", 1000.0 * fastsun_time, 1000.0 * total_time);
+                cvPutText(saltracker->salImageFloat, str, cvPoint(5, 10), &font, CV_RGB(255, 0, 255));
+
+                if (!window_exists)
+                {
+                    cvNamedWindow(window_name.c_str(), CV_WINDOW_AUTOSIZE);
+                    window_exists = true;
+                }
+
+                cvShowImage(window_name.c_str(), saltracker->salImageFloat);
+            }
+            else
+            {
+                if (window_exists)
+                {
+                    cvDestroyWindow(window_name.c_str());
+                    window_exists = false;
+                }
+            }
         }
         else
         {
@@ -313,4 +298,3 @@ int main(int argc, char **argv)
     ros::spin();
     return 0;
 }
-
