@@ -6,8 +6,8 @@
 (define-unit-class thing ()
   (gazebo-name ;; no initform so it must be bound
    (default-xyz :initform '(0 0 0))
-   (self-predicates :initform nil)
-   (binary-predicates :initform nil)
+   (self-predicates :initform '(diff-speed x-pos y-pos z-pos x-vel y-vel z-vel))
+   (binary-predicates :initform '(dist-between))
    (xml-string :initform nil))
   (:initial-space-instances 
    (object-library))
