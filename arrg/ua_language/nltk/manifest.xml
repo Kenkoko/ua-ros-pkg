@@ -1,0 +1,16 @@
+<package>
+    <description brief="nltk">
+    NLTK is the Natural Langauge Toolkit, available from http://www.nltk.org/. 
+    This package is a wrapper to make NLTK functionality available in ROS.
+    </description>
+
+    <author>Derek Green</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/nltk</url>
+
+    <rosdep name="nltk" />
+    <depend package="rospy" />
+</package>
+
+

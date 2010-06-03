@@ -1,0 +1,11 @@
+espeak:
+  ubuntu: espeak
+
+pocketsphinx:
+  ubuntu: gstreamer0.10-pocketsphinx libpocketsphinx1 libpocketsphinx-dev libsphinxbase1 libsphinxbase-dev pocketsphinx-hmm-wsj1 pocketsphinx-lm-wsj pocketsphinx-utils python-pocketsphinx python-sphinxbase
+
+sphinx4:
+  ubuntu: sharutils ant
+
+nltk:
+  ubuntu: python-matplotlib python-matplotlib-data python-numpy

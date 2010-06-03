@@ -1,0 +1,12 @@
+<stack>
+    <description brief="Packages for natural language processing ">
+    When migration is complete, this stack will contain packages for speech
+    recognition, parsing, text-to-speech, and other NL-related tasks.
+    </description>
+
+    <author>Maintained by Daniel Hewlett</author>
+    <license>BSD</license>  
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/ua_language</url>
+    <depend stack="ros" />
+</stack>
