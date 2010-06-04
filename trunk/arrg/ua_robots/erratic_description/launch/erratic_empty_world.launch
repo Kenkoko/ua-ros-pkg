@@ -1,14 +1,8 @@
 <launch>
-     <!-- start gazebo with an empty plane -->
-    <param name="/use_sim_time" value="true" />
-    
-    <node name="gazebo" pkg="gazebo" type="gazebo" args="$(find gazebo_worlds)/worlds/empty.world" respawn="false" >
-        <env name="LD_LIBRARY_PATH" value="$(find gazebo_plugins)/lib:$(find pr2_gazebo_plugins)/lib:$(find gazebo)/gazebo/lib:$(optenv LD_LIBRARY_PATH)" />
-        <env name="GAZEBO_RESOURCE_PATH" value="$(find gazebo_worlds):$(find gazebo)/gazebo/share/gazebo:$(find erratic_description)" />
-        <env name="OGRE_RESOURCE_PATH" value="$(find ogre)/ogre/lib/OGRE" />
-    </node>
+
+    <node name="gazebo" pkg="gazebo" type="gazebo" 
+          args="$(find gazebo_worlds)/worlds/empty.world" output="screen" respawn="false" />
     
     <include file="$(find erratic_description)/launch/erratic_mobile_base.launch" />
+
 </launch>
-
-

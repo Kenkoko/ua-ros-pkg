@@ -14,6 +14,11 @@
     <depend package="convex_decomposition"/>
     <depend package="ivcon"/>
     <depend package="urdf" />
+    <depend package="gazebo" />
+
+    <export>
+        <gazebo gazebo_media_path="${prefix}" />
+    </export>
 
 </package>
 

@@ -22,6 +22,10 @@
     <depend package="gazebo_tools"/>
     <depend package="gazebo_plugins"/>
 
+    <export>
+        <gazebo plugin_path="${prefix}/lib" />
+    </export>
+
 </package>
 
 

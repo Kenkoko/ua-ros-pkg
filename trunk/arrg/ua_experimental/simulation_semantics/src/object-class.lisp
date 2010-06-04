@@ -4,24 +4,15 @@
 ;; Class Definition 
 
 (define-unit-class physical-object (thing)
-  (;(gazebo-name :initform "blue_box") ;; This name is used for the body
-   (shape :initform 'box)
+  ((shape :initform 'box)
    (color :initform "Gazebo/Blue")
    (size :initform 0.2)
    (mass :initform 0.2)
    (xyz  :initform '(1.0 0 0.2))
    (rpy :initform '(0 0 0))
-   (static? :initform nil)
-   ;; Predicates
-   ;(self-predicates :initform nil)
-   ;(binary-predicates :initform nil)
-   ;; "Private" fields
-   ;(xml-string :initform nil)
-   (force-pub :initform nil))
-
+   (static? :initform nil)) 
   (:dimensional-values 
-   (static? :boolean static?)
-   )
+   (static? :boolean static?))
 )
 
 ;;====================================================
@@ -34,8 +25,6 @@
                               (rpy-xml obj)
                               (list :|static| (boolean-string (static?-of obj)))
                               (body-xml obj))))
-          (if (not (static?-of obj))
-              (setf xml-list (append xml-list (list (force-xml obj)))))
           (concatenate 'string "<?xml version=\"1.0\"?>"
                        (print-xml-string xml-list :pretty nil)))))
 
@@ -43,34 +32,58 @@
 ;; ROS-based methods
 
 (defmethod activate ((obj physical-object))
-  "Creates a ROS publisher for the object's relevant topics (just <name>_force for now)"
-  (if (force-pub-of obj)
+  "Creates a ROS publisher for the object's relevant topics (does nothing for now)"
+  #+ignore(if (force-pub-of obj)
       (print "Warning: Object is already activated?")
       (setf (force-pub-of obj) (advertise (concatenate 'string (gazebo-name-of obj) "_force") 
                                           "geometry_msgs/Wrench"))))
 
 (defmethod deactivate ((obj physical-object))
-  "Un-registers ROS publisher for the object's relevant topics (just <name>_force for now)"
-  (unadvertise (concatenate 'string (gazebo-name-of obj) "_force"))
-  (setf (force-pub-of obj) nil))
+  "Un-registers ROS publisher for the object's relevant topics (does nothing for now)"
+  #+ignore(unadvertise (concatenate 'string (gazebo-name-of obj) "_force"))
+  #+ignore(setf (force-pub-of obj) nil))
 
 (defmethod add-to-world ((obj physical-object))
-  (call-service "add_model" 'gazebo_plugins-srv:SpawnModel 
-                :model (make-message "gazebo_plugins/GazeboModel" 
-                                     :model_name (model-name obj)
-                                     :xml_type 1
-                                     :robot_model (xml-rep obj))))
+  (call-service "gazebo/spawn_gazebo_model" 'gazebo-srv:SpawnModel 
+                :model_name (model-name obj)
+                :model_xml (xml-rep obj)
+                :initial_pose (get-initial-pose obj)
+                :robot_namespace "/"
+))                
+
+(defmethod get-initial-pose ((obj physical-object))
+  (make-message "geometry_msgs/Pose"
+                :position (make-message "geometry_msgs/Point"
+                                     :x (first (xyz-of obj))
+                                     :y (second (xyz-of obj))
+                                     :z (third (xyz-of obj)))))
 
 (defmethod remove-from-world ((obj physical-object))
-  (call-service "delete_model" 'gazebo_plugins-srv:DeleteModel
+  (call-service "gazebo/delete_model" 'gazebo-srv:DeleteModel
                 :model_name (model-name obj)))
 
-(defmethod apply-force ((obj physical-object) force)
-  (publish-msg (force-pub-of obj) 
-               (x force) (first force)
-               (y force) (second force)
-               (z force) (third force))
-)
+
+;;======================================================
+;; Manipulating objects
+
+(defmethod move-to ((obj physical-object) new-pos)
+  (call-service "gazebo/set_model_state" 'gazebo-srv:SetModelState
+                :model_state (make-msg "gazebo/ModelState"
+                                       (model_name) (model-name obj)
+                                       (x position pose) (first new-pos)
+                                       (y position pose) (second new-pos)
+                                       (z position pose) (third new-pos))))
+                                           
+(defmethod apply-force ((obj physical-object) force duration)
+  (call-service "gazebo/apply_body_wrench" 'gazebo-srv:ApplyBodyWrench
+                :body_name (concatenate 'string (model-name obj) "::" (gazebo-name-of obj))
+                :wrench (make-msg "geometry_msgs/Wrench"
+                                  (x force) (first force)
+                                  (y force) (second force)
+                                  (z force) (third force))
+                :start_time (ros-time)
+                :duration duration
+))
 
 
 
@@ -164,7 +177,7 @@
                                             (list :|mesh| (get-mesh-xml obj)) 
                                             (list :|material| (color-of obj)))))))))
 
-(defmethod force-xml ((obj physical-object))
+#+ignore(defmethod force-xml ((obj physical-object))
   (let* ((name (gazebo-name-of obj))
          (controller (concatenate 'string name "_force"))
          (iface (concatenate 'string controller "_iface")))

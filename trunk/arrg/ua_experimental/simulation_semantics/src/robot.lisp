@@ -22,15 +22,14 @@
   (setf (vel-pub-of r) nil))
 
 (defmethod add-to-world ((r robot))
-  (call-service "add_model" 'gazebo_plugins-srv:SpawnModel 
-                :model (make-message "gazebo_plugins/GazeboModel" 
-                                     :model_name "robot_description"
-                                     :xml_type 1
-                                     :robot_model (xml-rep r))))
+  (call-service "gazebo/spawn_gazebo_model" 'gazebo-srv:SpawnModel 
+                :model_name "robot_description"
+                :model_xml (xml-rep r)
+                :robot_namespace "/"))
 
 ;; TODO: Model name should not be hardcoded
 (defmethod remove-from-world ((r robot))
-  (call-service "delete_model" 'gazebo_plugins-srv:DeleteModel
+  (call-service "gazebo/delete_model" 'gazebo-srv:DeleteModel
                 :model_name "robot_description"))
 
 ;; TODO: Need to use the robot's location not just what's in the XML

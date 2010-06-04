@@ -1,16 +1,20 @@
 <package>
-  <description brief="Gazebo simulation environments for Wubble World">
+    <description brief="Gazebo simulation environments for Wubble World">
 
      wubble_environments
 
-  </description>
-  <author>Anh Tran</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/wubble_environments</url>
-  
-  <depend package="gazebo"/>
-  <depend package="pr2_gazebo"/>
+    </description>
+    <author>Anh Tran</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_environments</url>
+
+    <depend package="gazebo"/>
+    <depend package="pr2_gazebo"/>
+
+    <export>
+        <gazebo gazebo_media_path="${prefix}" />
+    </export>
 
 </package>
 

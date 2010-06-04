@@ -42,17 +42,18 @@
 
   <rendering:gui>
     <type>fltk</type>
-    <size>480 320</size>
+    <size>1024 768</size>
     <pos>0 0</pos>
     <frames>
       <row height="100%">
         <camera width="100%">
-          <xyz>0 0 2.0</xyz>
-          <rpy>-5.0 6.75 1.8</rpy>
+          <xyz>1.0 -4.0 4.0</xyz>
+          <rpy>0 35 90</rpy>
         </camera>
       </row>
     </frames>
   </rendering:gui>
+
 
   <rendering:ogre>
     <ambient>0.8 0.8 0.8 0.8</ambient>
@@ -61,7 +62,7 @@
     </sky>
     <grid>false</grid>
     <maxUpdateRate>10.</maxUpdateRate>
-    <shadowTechnique>stencilAdditive</shadowTechnique>
+    <shadowTechnique>none</shadowTechnique>
   </rendering:ogre>
 
   <!-- clock -->
@@ -80,76 +81,86 @@
         </visual>
       </geom:box>
     </body:box>
-
     <!-- broadcast ros /time with simTime -->
     <controller:gazebo_ros_time name="gazebo_ros_time" plugin="libgazebo_ros_time.so">
       <alwaysOn>true</alwaysOn>
       <updateRate>1000.0</updateRate>
-      <interface:audio name="dummy_iface1"/>
+      <interface:audio name="dummy_gazebo_ros_time_iface_should_not_be_here"/>
     </controller:gazebo_ros_time>
-  
-<!--    <controller:gazebo_ros_factory name="gazebo_ros_factory" plugin="libgazebo_ros_factory.so">-->
-<!--      <alwaysOn>true</alwaysOn>-->
-<!--      <updateRate>20.0</updateRate>-->
-<!--      <robotNamespace>/</robotNamespace>-->
-<!--      <spawnModelServiceName>spawn_model</spawnModelServiceName>-->
-<!--      <deleteModelServiceName>bad_delete_model</deleteModelServiceName>-->
-<!--      <interface:audio name="dummy_iface2"/>-->
-<!--    </controller:gazebo_ros_factory>-->
-
-<!--    <controller:delete_object_plugin name="delete_object_plugin" plugin="libdelete_object_plugin.so">-->
-<!--        <alwaysOn>true</alwaysOn>-->
-<!--        <updateRate>20.0</updateRate>-->
-<!--        <interface:audio name="dummy_iface3"/>-->
-<!--    </controller:delete_object_plugin>-->
-
-<!--    <controller:add_object_plugin name="add_object_plugin" plugin="libadd_object_plugin.so">-->
-<!--        <alwaysOn>true</alwaysOn>-->
-<!--        <updateRate>20.0</updateRate>-->
-<!--        <interface:audio name="dummy_iface4"/>-->
-<!--    </controller:add_object_plugin>-->
-
-<!--    <controller:world_state_publisher name="world_state_publisher" plugin="libworld_state_publisher.so">-->
-<!--        <alwaysOn>true</alwaysOn>-->
-<!--        <topicName>gazebo_world_state</topicName>-->
-<!--        <updateRate>10.0</updateRate>-->
-<!--        <interface:audio name="world_state_dummy_iface" />-->
-<!--    </controller:world_state_publisher>-->
+    <!-- offer ROS services to spawn and delete models -->
+    <controller:gazebo_ros_factory name="gazebo_ros_factory" plugin="libgazebo_ros_factory.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>1.0</updateRate>
+      <interface:audio name="dummy_gazebo_ros_factory_iface_should_not_be_here"/>
+    </controller:gazebo_ros_factory>
+    <!-- custom world state publisher, probably will get phased out at some point -->
+    <controller:world_state_publisher name="world_state_publisher" plugin="libworld_state_publisher.so">
+        <alwaysOn>true</alwaysOn>
+        <topicName>gazebo_world_state</topicName>
+        <updateRate>10.0</updateRate>
+        <interface:audio name="world_state_dummy_iface" />
+    </controller:world_state_publisher>
   </model:physical>
 
   <!-- ground plane -->
-    <model:physical name="gplane">
-        <xyz>0 0 0</xyz>	
-        <rpy>0 0 0</rpy>
-        <static>true</static>
+  <model:physical name="gplane">
+    <xyz>0 0 0</xyz>	
+    <rpy>0 0 0</rpy>
+    <static>true</static>
 
-        <body:plane name="plane">
-          <geom:plane name="plane">
-            <laserRetro>2000.0</laserRetro>
-            <mu1>50.0</mu1>
-            <mu2>50.0</mu2>
-            <kp>1000000000.0</kp>
-            <kd>1.0</kd>
-            <normal>0 0 1</normal>
-            <size>51.3 51.3</size>
-            <segments>10 10</segments>
-            <uvTile>100 100</uvTile>
-            <material>Gazebo/GrayGrid</material>
-          </geom:plane>
-        </body:plane>
-    </model:physical>
+    <body:plane name="plane">
+      <geom:plane name="plane">
+        <laserRetro>2000.0</laserRetro>
+        <mu1>50.0</mu1>
+        <mu2>50.0</mu2>
+        <kp>1000000000.0</kp>
+        <kd>1.0</kd>
+        <normal>0 0 1</normal>
+        <size>51.3 51.3</size>
+        <segments>10 10</segments>
+        <uvTile>100 100</uvTile>
+        <material>Gazebo/GrayGrid</material>
+      </geom:plane>
+    </body:plane>
+  </model:physical>
 
-    <!-- White Point light -->
-    <model:renderable name="point_white">
-        <xyz>0.0 0.0 3</xyz>
-        <enableGravity>false</enableGravity>
-        <light>
-            <type>point</type>
-            <diffuseColor>0.5 0.5 0.5</diffuseColor>
-            <specularColor>.1 .1 .1</specularColor>
-            <attenuation>0.2 0.1 0</attenuation>
-            <range>10</range>
-        </light>
-    </model:renderable>
+<!--
+  <model:physical name="walls">
+    <include embedded="false">
+      <xi:include href="tests/willow-walls.model" />
+    </include>
+  </model:physical>
+-->
+<!--
+  <model:physical name="willow_map">
+   <xyz>-25.65 25.65 1.0</xyz>	
+   <rpy>180 0 0</rpy>
+   <static>true</static>
+   <body:map name="willow_map_body">
+     <geom:map name="willow_map_geom">
+       <image>willowMap.png</image>
+       <threshold>200</threshold>
+       <granularity>1</granularity>
+       <negative>false</negative>
+       <scale>0.1</scale>
+       <offset>0 0 0</offset>
+       <material>Gazebo/Rocky</material>
+     </geom:map>
+   </body:map>
+  </model:physical>
+-->
+
+  <!-- White Point light -->
+  <model:renderable name="point_white">
+    <xyz>0.0 0.0 8</xyz>
+    <enableGravity>false</enableGravity>
+    <light>
+      <type>point</type>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <specularColor>.1 .1 .1</specularColor>
+      <attenuation>0.2 0.1 0</attenuation>
+      <range>10</range>
+    </light>
+  </model:renderable>
 
 </gazebo:world>

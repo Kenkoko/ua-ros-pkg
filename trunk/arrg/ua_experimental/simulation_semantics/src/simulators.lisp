@@ -101,7 +101,8 @@
                      ;:size '(0.3 0.3 0.2)
                      :self-predicates '(dist-to-goal
                                         x-pos z-pos 
-                                        int-vel vel-mag diff-speed x-vel z-vel)
+                                        int-vel vel-mag diff-speed x-vel z-vel
+                                        force-mag)
                      :binary-predicates '(dist-between))))
                      ;:xyz '(0 0 0.1)
                      ;:rpy '(0 0 0))))
@@ -295,11 +296,9 @@
           (success-of (current-simulation sim))))))
 
 (defun test-simulator (sim)
-    ;(load-simulator sim)
     (run-simulator sim)
-    (sleep 2)
-    (destroy sim)
     (sleep 2))
+    
 
 ;;=====================================================
 ;; Policy
@@ -309,4 +308,4 @@
            (ignore sim-time))
   (if (eq 'robot (class-name (class-of obj)))
       (move-robot obj 0.1 0.0)
-      (apply-force obj '(200 0 0))))
+      (apply-force obj '(200 0 0) 0.1)))
