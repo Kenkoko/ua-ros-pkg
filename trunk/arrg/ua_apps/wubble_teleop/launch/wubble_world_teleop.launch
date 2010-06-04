@@ -5,7 +5,8 @@
     <include file="$(find wubble_description)/launch/wubble_robot.launch" />
 
     <include file="$(find wubble_teleop)/launch/wubble_logitech.launch" />
-    <!-- since there is no way to localize, just set /map = /odom -->
-<!--    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />-->
 
+    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
+        <param name="odom_frame_id" value="odom"/>
+    </node>
 </launch>
