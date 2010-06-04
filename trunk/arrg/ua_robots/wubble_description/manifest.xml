@@ -20,7 +20,7 @@
     <depend package="gazebo_tools" />
     <depend package="gazebo_worlds"/>
     <depend package="gazebo_plugins"/>
-    <depend package="wubble_plugins"/>
+    <depend package="erratic_gazebo_plugins"/>
     <depend package="wubble_environments"/>
 
     <depend package="fake_localization"/>

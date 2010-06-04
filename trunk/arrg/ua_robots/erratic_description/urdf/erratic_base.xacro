@@ -265,17 +265,17 @@
                 <topicName>cmd_vel</topicName>
             </controller:diffdrive_plugin>
 
-<!--            <controller:gazebo_ros_p3d name="p3d_base_controller" plugin="libgazebo_ros_p3d.so">-->
-<!--                <alwaysOn>true</alwaysOn>-->
-<!--                <updateRate>100.0</updateRate>-->
-<!--                <bodyName>base_link</bodyName>-->
-<!--                <topicName>base_pose_ground_truth</topicName>-->
-<!--                <gaussianNoise>0.01</gaussianNoise>-->
-<!--                <frameName>map</frameName>-->
-<!--                <xyzOffsets>0 0 0</xyzOffsets> -->
-<!--                <rpyOffsets>0 0 0</rpyOffsets>-->
-<!--                <interface:position name="p3d_base_position"/>-->
-<!--            </controller:gazebo_ros_p3d>-->
+            <controller:gazebo_ros_p3d name="p3d_base_controller" plugin="libgazebo_ros_p3d.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>100.0</updateRate>
+                <bodyName>base_link</bodyName>
+                <topicName>base_pose_ground_truth</topicName>
+                <gaussianNoise>0.01</gaussianNoise>
+                <frameName>map</frameName>
+                <xyzOffsets>0 0 0</xyzOffsets> 
+                <rpyOffsets>0 0 0</rpyOffsets>
+                <interface:position name="p3d_base_position"/>
+            </controller:gazebo_ros_p3d>
 
             <canonicalBody>base_footprint</canonicalBody>
 

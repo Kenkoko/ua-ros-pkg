@@ -16,7 +16,7 @@
     <depend package="gazebo" />
     <depend package="gazebo_tools" />
     <depend package="fake_localization" />
-    <depend package="wubble_plugins" />
+    <depend package="erratic_gazebo_plugins"/>
 
     <export>
         <gazebo gazebo_media_path="${prefix}" />
