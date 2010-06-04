@@ -11,10 +11,6 @@
         <param name="tf_prefix" type="string" value="" />
     </node>
     
-<!--    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >-->
-<!--        <param name="odom_frame_id" value="odom"/>-->
-<!--    </node>-->
-    
     <!-- Laser Controller -->
     <rosparam file="$(find wubble_description)/controllers/wubble_laser_controller.yaml" command="load" />
     <node name="laser_controller_spawner" pkg="pr2_controller_manager" type="spawner" 

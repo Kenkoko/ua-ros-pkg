@@ -11,7 +11,7 @@
           args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml" respawn="false" output="screen" />
 
     <!-- since there is no way to localize, just set /map = /odom -->
-    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />
+<!--    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />-->
 
 </launch>
 
