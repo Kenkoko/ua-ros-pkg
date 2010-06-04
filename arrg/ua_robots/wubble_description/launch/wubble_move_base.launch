@@ -4,7 +4,7 @@
     
     <!-- for moving -->
     <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen">
-        <remap from="odom" to="erratic_odometry/odom" />
+<!--        <remap from="odom" to="erratic_odometry/odom" />-->
         <param name="global_frame" value="0.59" />
         
         <rosparam file="$(find wubble_description)/params/move_base_params.yaml" command="load" />

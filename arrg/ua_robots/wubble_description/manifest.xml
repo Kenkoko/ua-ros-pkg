@@ -34,4 +34,8 @@
 
     <depend package="pr2_controller_manager"/>
     <depend package="pr2_gazebo_plugins"/>
+
+    <export>
+        <gazebo gazebo_media_path="${prefix}" />
+    </export>
 </package>

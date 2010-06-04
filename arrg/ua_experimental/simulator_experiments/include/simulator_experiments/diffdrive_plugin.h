@@ -87,11 +87,12 @@ protected:
   virtual void FiniChild();
 
 private:
-  void PutPositionData();
+  void write_position_data();
+  void publish_odometry();
   void GetPositionCmd();
 
-  PositionIface *myIface;
-  Model *myParent;
+  PositionIface *pos_iface_;
+  Model *parent_;
   ParamT<float> *wheelSepP;
   ParamT<float> *wheelDiamP;
   ParamT<float> *torqueP;
@@ -113,6 +114,9 @@ private:
   ros::NodeHandle* rosnode_;
   ros::Publisher pub_;
   ros::Subscriber sub_;
+  tf::TransformBroadcaster *transform_broadcaster_;
+  nav_msgs::Odometry odom_;
+  std::string tf_prefix_;
 
   boost::mutex lock;
 
@@ -124,11 +128,10 @@ private:
 
   // Custom Callback Queue
   ros::CallbackQueue queue_;
-  void QueueThread();
   boost::thread* callback_queue_thread_;
+  void QueueThread();
 
   // DiffDrive stuff
-  gazebo::PositionIface *posIface;
   void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_msg);
 
   float x_;

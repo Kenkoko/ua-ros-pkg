@@ -18,6 +18,10 @@
     <depend package="fake_localization" />
     <depend package="wubble_plugins" />
 
+    <export>
+        <gazebo gazebo_media_path="${prefix}" />
+    </export>
+
 </package>
 
 

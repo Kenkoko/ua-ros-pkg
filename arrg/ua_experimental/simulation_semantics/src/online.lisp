@@ -4,7 +4,7 @@
 (defparameter *simulation* nil)
 (defparameter *got-ws* nil)
 
-(defun get-ready ()
+(defun start-session ()
   (start-ros-node "learner")
   (init-objects)
   (imagine 'robot)
@@ -13,11 +13,13 @@
   (format t "Ready!~%"))
 
 (defun stop ()
-  (clear)
-  (setf *we-care* nil)
-  (setf *simulation* nil)
-  (setf *got-ws* nil)
-  (shutdown-ros-node))
+  (unwind-protect (clear)
+    (setf *we-care* nil)
+    (setf *simulation* nil)
+    (setf *got-ws* nil)
+    (shutdown-ros-node)
+    )
+  )
 
 (defun imagine (what &optional where)
   (let* ((old (find-instance-by-name what))

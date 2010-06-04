@@ -11,12 +11,7 @@
         <param name="tf_prefix" type="string" value="" />
     </node>
     
-    <!-- start differential drive controller -->
-    <node name="diffdrive" pkg="wubble_plugins" type="gazebo_ros_diffdrive" respawn="true" output="screen" />
-    
-    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
-        <param name="odom_frame_id" value="odom"/>
-    </node>
+<!--    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >-->
+<!--        <param name="odom_frame_id" value="odom"/>-->
+<!--    </node>-->
 </launch>
-
-

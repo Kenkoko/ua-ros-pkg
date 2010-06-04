@@ -1,0 +1,12 @@
+<launch>
+
+    <!-- spawn stock gazebo with a slightly customized empty world -->
+    <node name="gazebo" pkg="gazebo" type="gazebo" 
+          args="$(find simulation_semantics)/worlds/empty.world" 
+          respawn="false" output="screen"/>
+
+    <!-- start the map server -->
+    <node name="map_node" pkg="map_server" type="map_server" 
+          args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml" respawn="false" output="screen" />
+
+</launch>
