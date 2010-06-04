@@ -32,16 +32,10 @@
 ;; ROS-based methods
 
 (defmethod activate ((obj physical-object))
-  "Creates a ROS publisher for the object's relevant topics (does nothing for now)"
-  #+ignore(if (force-pub-of obj)
-      (print "Warning: Object is already activated?")
-      (setf (force-pub-of obj) (advertise (concatenate 'string (gazebo-name-of obj) "_force") 
-                                          "geometry_msgs/Wrench"))))
+  "Creates a ROS publisher for the object's relevant topics (does nothing for now)")
 
 (defmethod deactivate ((obj physical-object))
-  "Un-registers ROS publisher for the object's relevant topics (does nothing for now)"
-  #+ignore(unadvertise (concatenate 'string (gazebo-name-of obj) "_force"))
-  #+ignore(setf (force-pub-of obj) nil))
+  "Un-registers ROS publisher for the object's relevant topics (does nothing for now)")
 
 (defmethod add-to-world ((obj physical-object))
   (call-service "gazebo/spawn_gazebo_model" 'gazebo-srv:SpawnModel 
@@ -155,9 +149,9 @@
                     (:|selfCollide| "false") 
                     (:|massMatrix| "true")
                     (:|mass| "0.2") 
-                    (:|ixx| "0.001") (:|ixy| "0.0") (:|ixz| "0.0")
-                    (:|iyy| "0.001") (:|iyz| "0.0") 
-                    (:|izz| "0.001") 
+                    (:|ixx| "0.1") (:|ixy| "0.0") (:|ixz| "0.0")
+                    (:|iyy| "0.1") (:|iyz| "0.0") 
+                    (:|izz| "0.1") 
                     (:|cx| "0.0") (:|cy| "0.0") (:|cz| "0.0") 
                     (:|xyz| "0 0 0") (:|rpy| "0 0 0"))
                   (list (append (list (list (get-geom-xml obj) 
@@ -176,20 +170,6 @@
                                             (list :|scale| (get-scale-xml obj))
                                             (list :|mesh| (get-mesh-xml obj)) 
                                             (list :|material| (color-of obj)))))))))
-
-#+ignore(defmethod force-xml ((obj physical-object))
-  (let* ((name (gazebo-name-of obj))
-         (controller (concatenate 'string name "_force"))
-         (iface (concatenate 'string controller "_iface")))
-  (list (list '|controller|:|gazebo_ros_force| 
-              ':|name| controller
-              ':|plugin| "libgazebo_ros_force.so")
-        '(:|alwaysOn| "true") 
-        '(:|updateRate| "15.0") 
-        (list ':|topicName| controller)
-        (list ':|bodyName| name) 
-        '(:|robotNamespace| "/")
-        (list (list '|interface|:|position| ':|name| iface)))))
 
 ;;=====================================================
 ;; Helpers
