@@ -245,8 +245,11 @@ public:
             timer.blockReset(1);
             timer.blockStart(0);
 
+            sensor_msgs::Image saliency_msg = *sensor_msgs::CvBridge::cvToImgMsg(saltracker->salImageFloat);
+            saliency_msg.header.stamp = msg->header.stamp;
+
             saliency_poi_pub.publish(poi);
-            saliency_img_pub.publish(cv_bridge.cvToImgMsg(saltracker->salImageFloat));
+            saliency_img_pub.publish(saliency_msg);
 
             if (current_config.display_img)
             {
@@ -289,8 +292,8 @@ int main(int argc, char **argv)
 
     if (n.resolveName("image") == "/image")
     {
-        ROS_WARN("saliency_tracker: image has not been remapped! Typical command-line usage:\n"
-                 "\t$ ./saliency_tracker image:=<image topic> [transport]");
+        ROS_WARN("saliency_track: image has not been remapped! Typical command-line usage:\n"
+                 "\t$ ./saliency_track image:=<image topic> [transport]");
     }
 
     SaliencyTracker tracker(n, (argc > 1) ? argv[1] : "raw");
