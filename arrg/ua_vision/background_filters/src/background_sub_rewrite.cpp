@@ -41,6 +41,7 @@
 #include <boost/thread.hpp>
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
+#include <boost/random.hpp>
 
 #include <nmpt/BlockTimer.h>
 #include <nmpt/FastSaliency.h>
@@ -59,6 +60,8 @@
 
 #define TWO_PI 6.28318531
 #include <boost/concept_check.hpp>
+
+#include <iomanip>
 
 using namespace std;
 
@@ -441,12 +444,89 @@ public:
             cv::Mat bin_image = (fg_prob_img > 0.6);
             cv::imshow("binary", bin_image);
             cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-            cv::drawContours(new_img, contours, -1, cv::Scalar(0, 255, 0));
+//
+
+
+
+            // Make an HSV image
+            cv::Mat hsv_img = new_img.clone();
+            cv::cvtColor(new_img, hsv_img, CV_BGR2HSV);
+
+            cv::namedWindow("hsv_img");
+            cv::imshow("hsv_img", hsv_img);
+
+//             cv::drawContours(new_img, contours, -1, cv::Scalar(0, 255, 0));
+
+            srand ( time(NULL) );
+
+            std::vector<cv::Rect> fg_rects;
+            std::vector<cv::MatND> histograms;
+
+            int h_bins = 30, s_bins = 32;
+
+            for (int i = 0; i < contours.size(); ++i)
+            {
+                std::vector<cv::Point> con = contours[i];
+
+                int r, g, b;
+                r = rand() % 255;
+                g = rand() % 255;
+                b = rand() % 255;
+
+                std::vector<std::vector<cv::Point> > one_contour;
+                one_contour.push_back(con);
+
+                cv::drawContours(new_img, one_contour, -1, cv::Scalar(r, g, b));
+                cv::Rect bounder = cv::boundingRect(cv::Mat(con));
+                if (cv::contourArea(cv::Mat(con)) > 10)
+                {
+                    fg_rects.push_back(bounder);
+                    cv::Mat mask = bin_image(bounder);
+                    cv::Mat hsv_roi = hsv_img(bounder);
+
+                    cv::MatND hist;
+
+                    int hist_size[] = {h_bins, s_bins};
+                    // hue varies from 0 to 179, see cvtColor
+                    float hranges[] = { 0, 180 };
+                    // saturation varies from 0 (black-gray-white) to
+                    // 255 (pure spectrum color)
+                    float sranges[] = { 0, 256 };
+                    const float* ranges[] = { hranges, sranges };
+//                     int hist_size[] = {num_bins, num_bins};
+                    int channels[] = {0, 1};
+//                     float range[] = {0, 256};
+//                     const float* ranges[] = {range, range};
+                    cv::calcHist(&hsv_roi, 1, channels, mask, hist, 2, hist_size, ranges);
+                    histograms.push_back(hist);
+
+                    cv::Mat back_project;
+                    cv::calcBackProject(&hsv_img, 1, channels, hist, back_project, ranges);
+
+                    std::string window_name = boost::lexical_cast<string>(i) + "back_project";
+                    cv::namedWindow( window_name, 1 );
+//                     cv::imshow( window_name, back_project );
+                    cv::Mat bp_prob;
+                    back_project.convertTo(bp_prob, CV_32FC1, 1.0/255.0);
+                    cv::imshow( window_name, bp_prob );
+
+                    double max;
+                    cv::minMaxLoc(bp_prob, 0, &max);
+                    std::cout << window_name << " " << max << std::endl;
+
+                    cv::Mat fg_combined_prob;
+                    cv::multiply(fg_prob_img, bp_prob, fg_combined_prob);
+                    cv::normalize(fg_combined_prob, fg_combined_prob, 0, 1, cv::NORM_MINMAX);
+                    window_name = boost::lexical_cast<string>(i) + "fg_combined_prob";
+                    cv::namedWindow(window_name);
+                    cv::imshow( window_name, fg_combined_prob );
+                }
+            }
 
             double threshold = 0.7; // was 0.8
 
             int death_count = 0;
-            std::vector<cv::Rect> fg_rects;
+
             double sum_best = 0;
             bool found_something = true;
             // Iterate until we no longer have any good boxes (death_count is just to avoid infinite loops if something is wrong)
@@ -494,23 +574,78 @@ public:
                 if (found_something)
                 {
                     cv::Rect rect(current_best_point.x - box_size[current_best_id]/2, current_best_point.y - box_size[current_best_id]/2,
-                                  box_size[current_best_id], box_size[current_best_id]); // TODO: may need to shift by height/2, etc.
-                    fg_rects.push_back(rect);
+                                  box_size[current_best_id], box_size[current_best_id]);
+                    //fg_rects.push_back(rect);
                     sum_best += current_best * box_size[current_best_id] * box_size[current_best_id];
-//                     std::cout << "FOUND RECT: " << rect.x << " " << rect.y << " " << rect.area() << std::endl;
 
                     cv::rectangle(new_img, rect, cv::Scalar(255, 0, 0));
-
-                    // Prevent re-finding it
-//                     for (int i = 0; i <= 4; ++i)
-//                     {
-//                         cv::rectangle(filtered[i], rect, cv::Scalar(numeric_limits<double>::max()), CV_FILLED);
-//                     }
-                    // Now we are zeroing out the region in the probability image
                     cv::rectangle(fg_prob_img, rect, 0, CV_FILLED);
+
                 }
 
                 ++death_count;
+            }
+
+            for (int i = 0; i < fg_rects.size(); ++i)
+            {
+                // Calculation of histogram, this can be moved outside of loop if needed
+//                cv::Mat roi = hsv_img(fg_rects[i]);
+//                cv::MatND hist;
+//                int num_bins = 16;
+//                int hist_size[] = {num_bins, num_bins};
+//                int channels[] = {0, 1};
+//                float range[] = {0, 256};
+//                const float* ranges[] = {range, range};
+//                cv::calcHist(&roi, 1, channels, cv::Mat(), hist, 2, hist_size, ranges, true);
+
+//                 histograms.push_back(hist);
+
+                double maxVal=0;
+                cv::minMaxLoc(histograms[i], 0, &maxVal);
+                int scale = 10;
+                cv::Mat histImg = cv::Mat::zeros(h_bins*scale, s_bins*scale, CV_8UC3);
+
+                for( int h = 0; h < h_bins; h++ )
+                {
+                    for( int s = 0; s < s_bins; s++ )
+                    {
+                        float binVal = histograms[i].at<float>(h, s);
+                        int intensity = cvRound(binVal*255/maxVal);
+                        cv::rectangle( histImg, cv::Point(h*scale, s*scale),
+                                       cv::Point( (h+1)*scale - 1, (s+1)*scale - 1),
+                                       cv::Scalar::all(intensity),
+                                       CV_FILLED );
+                    }
+                }
+
+                std::string window_name = boost::lexical_cast<string>( i ) + "hist";
+                cv::namedWindow( window_name, 1 );
+                cv::imshow( window_name, histImg );
+            }
+
+            std::cout << "=====================================================" << std::endl;
+            double hist_dist[histograms.size()][histograms.size()];
+            for (int i = 0; i < histograms.size(); ++i)
+            {
+                for (int j = i; j < histograms.size(); ++j)
+                {
+                    cv::MatND hist1 = histograms[i];
+                    cv::MatND hist2 = histograms[j];
+
+                    hist_dist[i][j] = cv::compareHist(hist1, hist2, CV_COMP_BHATTACHARYYA);
+                }
+            }
+
+            for (int i = 0; i < histograms.size(); ++i)
+            {
+                for (int j = 0; j < histograms.size(); ++j)
+                {
+                    if (j < i)
+                        std::cout << "---- ";
+                    else
+                        std::cout << std::fixed << setprecision(2) << hist_dist[i][j] << " ";
+                }
+                std::cout << std::endl;
             }
 
 //             for (int i = 0; i <= 4; ++i)
