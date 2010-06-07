@@ -359,7 +359,7 @@ public:
             box_filter = new OpenCVBoxFilter(avg_img.cols, avg_img.rows, box_size[4] / 2);
         }
 
-        image_sub = nh.subscribe("camera/image_color", 1, &BackgroundSubtractor::handle_image, this);
+        image_sub = nh.subscribe("image", 1, &BackgroundSubtractor::handle_image, this);
         prob_img_pub = nh.advertise<sensor_msgs::Image>("probability_image", 1);
     }
 
