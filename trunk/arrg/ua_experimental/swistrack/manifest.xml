@@ -1,0 +1,21 @@
+<package>
+    <description brief="Multi-Object Tracking Software for Robotics and Biology">
+        SwisTrack is a powerful tool for tracking robots, humans, animals and
+        objects using a camera or a recorded video as input source. It uses
+        OpenCV library for fast image processing and contains interfaces for
+        USB, FireWire and GigE cameras, as well as AVI files.
+    </description>
+    <author>Distributed Intelligent Systems and Algorithms Laboratory (DISAL) and the LPM Vision Group at EPFL in Lausanne, Switzerland. Packaged for ROS build system by Antons Rebguns</author>
+    <license>GPL v3</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://www5.epfl.ch/swis/page3080.html</url>
+    <depend package="roscpp"/>
+    <depend package="opencv2"/>
+
+    <export>
+        <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lcamshift_wrapper -lcvblobslib -ltsai -lswistrackcore"/>
+    </export>
+
+</package>
+
+
