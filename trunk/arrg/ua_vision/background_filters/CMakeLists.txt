@@ -26,3 +26,6 @@ rosbuild_add_executable(rewrite_background_sampler src/background_sampler_rewrit
 
 rosbuild_add_executable(rewrite_background_sub src/background_sub_rewrite.cpp)
 target_link_libraries(rewrite_background_sub nmpt)
+
+rosbuild_add_executable(background_subtractor src/background_subtractor.cpp)
+rosbuild_add_executable(object_tracker src/object_tracker.cpp)
