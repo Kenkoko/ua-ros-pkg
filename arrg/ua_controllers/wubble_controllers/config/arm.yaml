@@ -8,8 +8,8 @@ shoulder_pan_controller:
     motor:
         id: 10
         init: 512
-        min: 751
-        max: 273
+        min: 273
+        max: 751
 
 shoulder_tilt_controller:
     controller:
@@ -51,8 +51,8 @@ wrist_rotate_controller:
     motor:
         id: 15
         init: 512
-        min: 0
-        max: 1023
+        min: 1023
+        max: 0
 
 finger_right_controller:
     controller:
