@@ -12,6 +12,7 @@
     <depend package="openrave"/>
     <depend package="geometry_msgs"/>
     <depend package="tf"/>
+    <depend package="urdf"/>
 
 </package>
 

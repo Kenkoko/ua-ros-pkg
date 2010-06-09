@@ -54,9 +54,9 @@ if __name__ == '__main__':
             point = PointStamped()
             point.header.stamp = rospy.Time.now()
             point.header.frame_id = 'arm_base_link'
-            point.point.x = 0.0
-            point.point.y = 0.0
-            point.point.z = 0.3
+            point.point.x = 0.15
+            point.point.y = 0.20
+            point.point.z = 0.0
             resp = ik_service(point)
             
             if resp:
