@@ -445,6 +445,25 @@ class AX12_IO(object):
         # use sync write to broadcast multi servo message
         self.__sio.sync_write_to_servos(AX_GOAL_POSITION_L, tuple(writeableVals))
 
+    def set_min_max_voltage_limits(self, servoId, minVoltage, maxVoltage):
+        """
+        Set the min and max voltage limits.
+        NOTE: the absolute min is 6v and the absolute max is 19v
+        """
+        
+        if minVoltage < 6: minVoltage = 6
+        if maxVoltage > 19: maxVoltage = 19
+        
+        minVal = int(minVoltage * 10)
+        maxVal = int(maxVoltage * 10)
+        
+        # set 4 register values with low and high bytes for min and max angles
+        response = self.__sio.write_to_servo(servoId, AX_DOWN_LIMIT_VOLTAGE, (minVal, maxVal))
+        
+        if response:
+            self.exception_on_error(response[4], 'when setting servo with id %d to min angle %d and max angle %d' %(servoId, minVoltage, maxVoltage))
+        return response
+
     def set_min_max_angle_limits(self, servoId, minAngle, maxAngle):
         """
         Set the min and max angle of rotation limits.
