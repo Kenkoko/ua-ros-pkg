@@ -142,7 +142,7 @@ class SerialProxy():
                         if ax12_io.exception: raise ax12_io.exception
                 except ax12_io.FatalErrorCodeError, fece:
                     rospy.logfatal(fece)
-                    signal_shutdown(fece)
+                    rospy.signal_shutdown(fece)
                 except ax12_io.NonfatalErrorCodeError, nfece:
                     rospy.logwarn(nfece)
                 except ax12_io.ChecksumError, cse:
