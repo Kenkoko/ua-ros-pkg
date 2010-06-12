@@ -70,11 +70,11 @@ public:
     {
         ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
 
-        cvStartWindowThread();
+        //cvStartWindowThread();
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
 
-        cvNamedWindow("prob_img");
+        //cvNamedWindow("prob_img");
 
         if (client.call(srv))
         {
@@ -201,7 +201,7 @@ public:
 
         cv::Mat result = prob_img.clone();
         cv::normalize(prob_img, prob_img, 0.0, 1.0, cv::NORM_MINMAX);
-        cv::imshow("prob_img", prob_img);
+        //cv::imshow("prob_img", prob_img);
     }
 };
 

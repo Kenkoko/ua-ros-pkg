@@ -13,19 +13,19 @@ rosbuild_gensrv()
 
 rosbuild_add_boost_directories()
 
+# OLD
 rosbuild_add_library(background_filters src/floor_filter.cpp)
-
 rosbuild_add_executable(floor_filter_node src/floor_filter_node.cpp)
 target_link_libraries(floor_filter_node background_filters)
-
 rosbuild_add_executable(overhead_filter src/overhead_filter.cpp)
-rosbuild_add_executable(background_sampler src/background_sampler.cpp)
-rosbuild_add_executable(background_sub src/background_sub.cpp)
-rosbuild_add_executable(testing src/test.cpp)
+
+#rosbuild_add_executable(background_sampler src/background_sampler.cpp)
+#rosbuild_add_executable(background_sub src/background_sub.cpp)
+#rosbuild_add_executable(testing src/test.cpp)
+#rosbuild_add_executable(rewrite_background_sub src/background_sub_rewrite.cpp)
+#target_link_libraries(rewrite_background_sub nmpt)
+
+# NEW
 rosbuild_add_executable(rewrite_background_sampler src/background_sampler_rewrite.cpp)
-
-rosbuild_add_executable(rewrite_background_sub src/background_sub_rewrite.cpp)
-target_link_libraries(rewrite_background_sub nmpt)
-
 rosbuild_add_executable(background_subtractor src/background_subtractor.cpp)
 rosbuild_add_executable(object_tracker src/object_tracker.cpp)
