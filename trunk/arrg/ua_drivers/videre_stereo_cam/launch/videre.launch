@@ -1,17 +1,17 @@
 <launch>
-  <group ns="stereo">
-    <node  name="stereodcam" pkg="videre_stereo_cam" type="videre_stereo_node" respawn="true" output="screen">
-      <!--param name="videre_mode" type="str" value="none"/>-->
-      <param name="videre_mode" type="str" value="disparity_raw"/>
-      <param name="calculate_points" type="bool" value="True"/>
-      <!--param name="exposure" type="int" value="450"/-->
-      <param name="exposure_auto" type="bool" value="True"/>
-      <!--param name="brightness" type="int" value="50"/-->
-      <param name="brightness_auto" type="bool" value="True"/>
-      <!--param name="gain" type="int" value="10"/-->
-      <param name="gain_auto" type="bool" value="True"/>
-    </node>
-  </group>
+    <group ns="stereo">
+        <node  name="stereodcam" pkg="videre_stereo_cam" type="videre_stereo_node" respawn="true" output="screen">
+        <!--param name="videre_mode" type="str" value="none"/>-->
+        <param name="videre_mode" type="str" value="disparity_raw"/>
+        <param name="calculate_points" type="bool" value="True"/>
+        <!--param name="exposure" type="int" value="450"/-->
+        <param name="exposure_auto" type="bool" value="True"/>
+        <!--param name="brightness" type="int" value="50"/-->
+        <param name="brightness_auto" type="bool" value="True"/>
+        <!--param name="gain" type="int" value="10"/-->
+        <param name="gain_auto" type="bool" value="True"/>
+        </node>
+    </group>
 </launch>
 
 

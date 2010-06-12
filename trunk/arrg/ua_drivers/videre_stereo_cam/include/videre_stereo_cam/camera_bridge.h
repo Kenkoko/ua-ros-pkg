@@ -1,13 +1,13 @@
 /*********************************************************************
 * Software License Agreement (BSD License)
-* 
+*
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
 *   * Neither the name of the Willow Garage nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -62,46 +62,49 @@ namespace cam_bridge
         return "";
     }
 
-    void CamDataToRawStereo(cam::ImageData* im, sensor_msgs::Image& im_msg, sensor_msgs::CameraInfo& info_msg)
+    void fill_img_msg(cam::ImageData* img_raw, sensor_msgs::Image& img_msg)
     {
         // @todo: this could all be less hard-coded
-        if (im->imRawType != COLOR_CODING_NONE)
+        if (img_raw->imRawType != COLOR_CODING_NONE)
         {
-            std::string encoding = ColorCodingToImageEncoding(im->imRawType);
-            sensor_msgs::fillImage(im_msg, encoding, im->imHeight, im->imWidth, im->imWidth, im->imRaw);
+            std::string encoding = ColorCodingToImageEncoding(img_raw->imRawType);
+            sensor_msgs::fillImage(img_msg, encoding, img_raw->imHeight, img_raw->imWidth, img_raw->imWidth, img_raw->imRaw);
         }
-        else if (im->imType != COLOR_CODING_NONE)
+        else if (img_raw->imType != COLOR_CODING_NONE)
         {
-            sensor_msgs::fillImage(im_msg, sensor_msgs::image_encodings::MONO8, im->imHeight, im->imWidth, im->imWidth, im->im);
+            sensor_msgs::fillImage(img_msg, sensor_msgs::image_encodings::MONO8, img_raw->imHeight, img_raw->imWidth, img_raw->imWidth, img_raw->im);
         }
-        else if (im->imColorType != COLOR_CODING_NONE && im->imColorType == COLOR_CODING_RGBA8)
+        else if (img_raw->imColorType != COLOR_CODING_NONE && img_raw->imColorType == COLOR_CODING_RGBA8)
         {
-            sensor_msgs::fillImage(im_msg, sensor_msgs::image_encodings::RGBA8, im->imHeight, im->imWidth, 4 * im->imWidth, im->imColor);
+            sensor_msgs::fillImage(img_msg, sensor_msgs::image_encodings::RGBA8, img_raw->imHeight, img_raw->imWidth, 4 * img_raw->imWidth, img_raw->imColor);
         }
-        else if (im->imColorType != COLOR_CODING_NONE && im->imColorType == COLOR_CODING_RGB8)
+        else if (img_raw->imColorType != COLOR_CODING_NONE && img_raw->imColorType == COLOR_CODING_RGB8)
         {
-            sensor_msgs::fillImage(im_msg, sensor_msgs::image_encodings::RGB8, im->imHeight, im->imWidth, 3 * im->imWidth, im->imColor);
+            sensor_msgs::fillImage(img_msg, sensor_msgs::image_encodings::RGB8, img_raw->imHeight, img_raw->imWidth, 3 * img_raw->imWidth, img_raw->imColor);
         }
-        else if (im->imRectType != COLOR_CODING_NONE)
+        else if (img_raw->imRectType != COLOR_CODING_NONE)
         {
-            sensor_msgs::fillImage(im_msg, sensor_msgs::image_encodings::MONO8, im->imHeight, im->imWidth, im->imWidth, im->imRect);
+            sensor_msgs::fillImage(img_msg, sensor_msgs::image_encodings::MONO8, img_raw->imHeight, img_raw->imWidth, img_raw->imWidth, img_raw->imRect);
         }
-        else if (im->imRectColorType != COLOR_CODING_NONE && im->imRectColorType == COLOR_CODING_RGBA8)
+        else if (img_raw->imRectColorType != COLOR_CODING_NONE && img_raw->imRectColorType == COLOR_CODING_RGBA8)
         {
-            sensor_msgs::fillImage(im_msg, sensor_msgs::image_encodings::RGBA8, im->imHeight, im->imWidth, 4 * im->imWidth, im->imRectColor);
+            sensor_msgs::fillImage(img_msg, sensor_msgs::image_encodings::RGBA8, img_raw->imHeight, img_raw->imWidth, 4 * img_raw->imWidth, img_raw->imRectColor);
         }
-        else if (im->imRectColorType != COLOR_CODING_NONE && im->imRectColorType == COLOR_CODING_RGB8)
+        else if (img_raw->imRectColorType != COLOR_CODING_NONE && img_raw->imRectColorType == COLOR_CODING_RGB8)
         {
-            sensor_msgs::fillImage(im_msg, sensor_msgs::image_encodings::RGB8, im->imHeight, im->imWidth, 3 * im->imWidth, im->imRectColor);
+            sensor_msgs::fillImage(img_msg, sensor_msgs::image_encodings::RGB8, img_raw->imHeight, img_raw->imWidth, 3 * img_raw->imWidth, img_raw->imRectColor);
         }
+    }
 
-        info_msg.height = im->imHeight;
-        info_msg.width  = im->imWidth;
+    void fill_info_msg(cam::ImageData* img_raw, sensor_msgs::CameraInfo& info_msg)
+    {
+        info_msg.height = img_raw->imHeight;
+        info_msg.width  = img_raw->imWidth;
 
-        memcpy((char*)(&info_msg.D[0]), (char*)(im->D),  5*sizeof(double));
-        memcpy((char*)(&info_msg.K[0]), (char*)(im->K),  9*sizeof(double));
-        memcpy((char*)(&info_msg.R[0]), (char*)(im->R),  9*sizeof(double));
-        memcpy((char*)(&info_msg.P[0]), (char*)(im->P), 12*sizeof(double));
+        memcpy((char*)(&info_msg.D[0]), (char*)(img_raw->D),  5*sizeof(double));
+        memcpy((char*)(&info_msg.K[0]), (char*)(img_raw->K),  9*sizeof(double));
+        memcpy((char*)(&info_msg.R[0]), (char*)(img_raw->R),  9*sizeof(double));
+        memcpy((char*)(&info_msg.P[0]), (char*)(img_raw->P), 12*sizeof(double));
     }
 
     void StereoDataToRawStereo(cam::StereoData* stIm,
@@ -113,13 +116,19 @@ namespace cam_bridge
     {
         ros::Time timestamp = ros::Time().fromNSec(stIm->imLeft->im_time * 1000);
 
+        // Populate image message
         left_image.header.stamp = timestamp;
         right_image.header.stamp = timestamp;
+
+        fill_img_msg(stIm->imLeft, left_image);
+        fill_img_msg(stIm->imRight, right_image);
+
+        // Populate camera info message
         left_info.header.stamp = timestamp;
         right_info.header.stamp = timestamp;
 
-        CamDataToRawStereo(stIm->imLeft, left_image, left_info);
-        CamDataToRawStereo(stIm->imRight, right_image, right_info);
+        fill_info_msg(stIm->imLeft, left_info);
+        fill_info_msg(stIm->imRight, right_info);
 
         if (stIm->hasDisparity)
         {
