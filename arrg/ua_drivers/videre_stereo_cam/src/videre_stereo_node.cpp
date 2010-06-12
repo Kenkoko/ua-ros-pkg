@@ -173,34 +173,35 @@ class VidereStereoNode
 
     image_transport::CameraPublisher left_camera_pub_;
     image_transport::CameraPublisher right_camera_pub_;
-
-    diagnostic_updater::Updater diagnostic_;
-    diagnostic_updater::TimeStampStatus timestamp_diag_;
+    image_transport::Publisher left_color_image_pub_;
+    image_transport::Publisher right_color_image_pub_;
 
     ros::Publisher disparity_pub_;
     ros::Publisher cloud_pub_;
-    image_transport::Publisher left_color_image_pub_;
-    image_transport::Publisher right_color_image_pub_;
 
     ros::Subscriber check_param_sub_;
 
     videre_proc_mode_t videre_mode_;
+    string frame_id_;
     bool do_calc_points_;
     bool do_keep_coords_;
     bool do_color_conv_;
+
+    // Diagnostic updater stuff
+    diagnostic_updater::Updater diagnostic_;
+    diagnostic_updater::TimeStampStatus timestamp_diag_;
+
     int count_;
     double desired_freq_;
 
-    string frame_id_;
     std::map<std::string, int> paramcache_;
 
 public:
     dcam::StereoDcam* stcam_;
 
-    VidereStereoNode()
-        : nh_(ros::NodeHandle()), local_nh_(ros::NodeHandle("~")),
-          left_nh_(ros::NodeHandle("left")), right_nh_(ros::NodeHandle("right")),
-          diagnostic_(), count_(0)
+    VidereStereoNode() : nh_(ros::NodeHandle()), local_nh_(ros::NodeHandle("~")),
+                         left_nh_(ros::NodeHandle("left")), right_nh_(ros::NodeHandle("right")),
+                         diagnostic_(), count_(0)
     {
         // Set up segfault handler
         signal(SIGSEGV, &sigsegv_handler);
