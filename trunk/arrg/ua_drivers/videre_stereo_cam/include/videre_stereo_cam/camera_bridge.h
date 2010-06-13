@@ -114,7 +114,7 @@ namespace cam_bridge
                                sensor_msgs::CameraInfo& right_info,
                                stereo_msgs::DisparityImage& disparity_image)
     {
-        ros::Time timestamp = ros::Time().fromNSec(stIm->imLeft->im_time * 1000);
+        ros::Time timestamp = ros::Time::now();
 
         // Populate image message
         left_image.header.stamp = timestamp;
