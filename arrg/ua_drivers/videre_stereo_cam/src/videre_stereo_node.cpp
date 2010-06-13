@@ -1,6 +1,7 @@
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
+*  Copyright (c) 2010, Antons Rebguns
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  All rights reserved.
 *
@@ -67,14 +68,14 @@ the event that two cameras are sharing the same ROS system.
 
 @par Example
 
-Running in the stereo namespace:
+Running the driver with non STOC devices
 @verbatim
-$ rosrun dcam stereodcam
+$ roslaunch videre_stereo_cam videre_non_stoc.launch
 @endverbatim
 
-Running in a different namespace
+Running the driver with STOC devices
 @verbatim
-$ rosrun dcam stereodcam stereo:=head_cam
+$ roslaunch videre_stereo_cam videre.launch
 @endverbatim
 
 <hr>
@@ -82,10 +83,15 @@ $ rosrun dcam stereodcam stereo:=head_cam
 @section topics Topics
 
 Subscribes to (name/type):
-- @b "stereo/check_params" : std_msgs/Empty : signal to recheck all of the parameters
+- @b "stereo/check_params" : std_msgs/Empty : signal to recheck all of the stereo parameters
+
+The driver publishes different set of topics dependeing the "videre_mode" parameter
 
 Publishes to (name : type : description):
-- @b "stereo/raw_stereo" : stereo_msgs/RawStereo : raw stereo information from camera
+- @b "stereo/left/image_raw" : sensor_msgs/Image : raw image from left camera
+- @b "stereo/right/image_raw" : sensor_msgs/Image : raw image from right camera
+- @b "stereo/left/camera_info" : sensor_msgs/CameraInfo : left camera model
+- @b "stereo/right/camera_info" : sensor_msgs/CameraInfo : right camera model
 
 <hr>
 
@@ -137,6 +143,7 @@ The camera will read from the following parameters:
 #include <diagnostic_updater/update_functions.h>
 #include <image_transport/image_transport.h>
 #include <image_transport/camera_publisher.h>
+#include <tf/transform_listener.h>
 
 #include <std_msgs/Empty.h>
 #include <sensor_msgs/Image.h>
@@ -186,7 +193,6 @@ class VidereStereoNode
     ros::Subscriber check_param_sub_;
 
     videre_proc_mode_t videre_mode_;
-    std::string frame_id_;
     bool do_calc_points_;
     bool do_keep_coords_;
     bool do_color_conv_;
@@ -242,8 +248,6 @@ public:
             }
 
             diagnostic_.setHardwareID(boost::lexical_cast<std::string>(guid));
-
-            local_nh_.param("frame_id", frame_id_, std::string("stereo"));
 
             // Get the ISO speed parameter if available
             std::string str_speed;
@@ -390,9 +394,16 @@ public:
     {
         ROS_INFO("dynamic reconfigure level 0x%x", level);
 
+        std::string tf_prefix = tf::getPrefixParam(local_nh_);
+        current_config.frame_id = tf::resolve(tf_prefix, config.frame_id);
+
         stcam_->setExposure(config.exposure, config.exposure_auto);
         stcam_->setGain(config.gain, config.gain_auto);
         stcam_->setBrightness(config.brightness, config.brightness_auto);
+        stcam_->setCompanding(config.companding);
+        stcam_->setHDR(config.hdr);
+
+        ROS_INFO("Stereo camera's frame ID is %s", current_config.frame_id.c_str());
 
         if (config.exposure_auto) { ROS_INFO("Setting Exposure to Auto setting"); }
         else { ROS_INFO("Setting Exposure to %d", config.exposure); }
@@ -402,6 +413,12 @@ public:
 
         if (config.brightness_auto) { ROS_INFO("Setting Brightness to Auto setting"); }
         else { ROS_INFO("Setting Brightness to %d", config.brightness); }
+
+        if (config.companding) { ROS_INFO("Companding mode is Enabled"); }
+        else { ROS_INFO("Companding mode is Disabled"); }
+
+        if (config.hdr) { ROS_INFO("High Dynamic Range mode is Enabled"); }
+        else { ROS_INFO("High Dynamic Range mode is Disabled"); }
     }
 
     void checkParams(const std_msgs::EmptyConstPtr &check_params_msg_)
@@ -411,8 +428,6 @@ public:
 
     void checkAndSetAll()
     {
-        checkAndSetBool("companding",       boost::bind(&dcam::Dcam::setCompanding,    stcam_, _1));
-        checkAndSetBool("hdr",              boost::bind(&dcam::Dcam::setHDR,           stcam_, _1));
         checkAndSetBool("unique_check",     boost::bind(&dcam::StereoDcam::setUniqueCheck,      stcam_, _1));
         checkAndSetInt("texture_thresh",    boost::bind(&dcam::StereoDcam::setTextureThresh,    stcam_, _1));
         checkAndSetInt("unique_thresh",     boost::bind(&dcam::StereoDcam::setUniqueThresh,     stcam_, _1));
@@ -519,7 +534,7 @@ public:
             stcam_->doCalcPts();
 
             cloud_.header.stamp = timestamp;
-            cloud_.header.frame_id = frame_id_;
+            cloud_.header.frame_id = current_config.frame_id;
             cloud_.points.resize(stcam_->stIm->numPts);
 
             if (do_keep_coords_) { cloud_.channels.resize(3); }
@@ -556,22 +571,22 @@ public:
             }
         }
 
-        left_image_.header.frame_id = frame_id_;
+        left_image_.header.frame_id = current_config.frame_id;
         left_image_.header.stamp = timestamp;
-        right_image_.header.frame_id = frame_id_;
+        right_image_.header.frame_id = current_config.frame_id;
         right_image_.header.stamp = timestamp;
 
-        left_color_image_.header.frame_id = frame_id_;
+        left_color_image_.header.frame_id = current_config.frame_id;
         left_color_image_.header.stamp = timestamp;
-        right_color_image_.header.frame_id = frame_id_;
+        right_color_image_.header.frame_id = current_config.frame_id;
         right_color_image_.header.stamp = timestamp;
 
-        left_info_.header.frame_id = frame_id_;
+        left_info_.header.frame_id = current_config.frame_id;
         left_info_.header.stamp = timestamp;
-        right_info_.header.frame_id = frame_id_;
+        right_info_.header.frame_id = current_config.frame_id;
         right_info_.header.stamp = timestamp;
 
-        disparity_image_.header.frame_id = frame_id_;
+        disparity_image_.header.frame_id = current_config.frame_id;
         disparity_image_.header.stamp = timestamp;
 
         timestamp_diag_.tick(timestamp);
