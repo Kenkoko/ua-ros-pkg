@@ -232,6 +232,8 @@ public:
                 guid = dcam::getGuid(0);
             }
 
+            diagnostic_.setHardwareIDf("%u", guid);
+
             local_nh_.param("frame_id", frame_id_, string("stereo"));
 
             // Get the ISO speed parameter if available
@@ -619,7 +621,7 @@ public:
             status.message = "Desired frequency met";
         }
 
-        status.set_values_size(3);
+        status.values.resize(3);
         status.values[0].key = "Images in interval";
         status.values[0].value = count_;
         status.values[1].key = "Desired frequency";
