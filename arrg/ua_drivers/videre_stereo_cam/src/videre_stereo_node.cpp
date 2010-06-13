@@ -166,6 +166,7 @@ void sigsegv_handler(int sig);
 
 class VidereStereoNode
 {
+private:
     ros::NodeHandle nh_;
     ros::NodeHandle local_nh_;
     ros::NodeHandle left_nh_;
@@ -190,8 +191,6 @@ class VidereStereoNode
     ros::Publisher disparity_pub_;
     ros::Publisher cloud_pub_;
 
-    ros::Subscriber check_param_sub_;
-
     videre_proc_mode_t videre_mode_;
     bool do_calc_points_;
     bool do_keep_coords_;
@@ -206,10 +205,8 @@ class VidereStereoNode
 
     /** dynamic parameter configuration */
     typedef videre_stereo_cam::VidereStereoCamConfig Config;
-    dynamic_reconfigure::Server<Config> srv;
-    Config current_config;
-
-    std::map<std::string, int> paramcache_;
+    dynamic_reconfigure::Server<Config> srv_;
+    Config current_config_;
 
 public:
     dcam::StereoDcam* stcam_;
@@ -236,6 +233,7 @@ public:
         {
             // Check our guid parameter, or else use first camera
             uint64_t guid;
+
             if (local_nh_.hasParam("guid"))
             {
                 std::string guid_str;
@@ -248,6 +246,21 @@ public:
             }
 
             diagnostic_.setHardwareID(boost::lexical_cast<std::string>(guid));
+
+            // Create the StereoDcam
+            stcam_ = new dcam::StereoDcam(guid);
+            ROS_INFO_STREAM("Connecting to camera with GUID " << guid << " [" << stcam_->getVendor() << " " << stcam_->getModel() << "]");
+            ROS_INFO("Connected camera is%s a STOC device", stcam_->isSTOC ? "" : " NOT");
+
+            // Fetch the camera string and send it to the parameter server if people want it (they shouldn't)
+            std::string params(stcam_->getParameters());
+            local_nh_.setParam("params", params);
+            local_nh_.setParam("exposure_max", (int)stcam_->expMax);
+            local_nh_.setParam("exposure_min", (int)stcam_->expMin);
+            local_nh_.setParam("gain_max", (int)stcam_->gainMax);
+            local_nh_.setParam("gain_min", (int)stcam_->gainMin);
+            local_nh_.setParam("brightness_max", (int)stcam_->brightMax);
+            local_nh_.setParam("brightness_min", (int)stcam_->brightMin);
 
             // Get the ISO speed parameter if available
             std::string str_speed;
@@ -290,34 +303,26 @@ public:
             else if (str_videre_mode == std::string("disparity_raw")) { videre_mode_ = PROC_MODE_DISPARITY_RAW; }
             else { videre_mode_ = PROC_MODE_NONE; }
 
+            // Check if selected "videre mode" is supported by the camera
+            if (!stcam_->isSTOC && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW))
+            {
+                ROS_WARN("'disparity' and 'disparity_raw' modes are only available on Videre STOC devices");
+                videre_mode_ = PROC_MODE_NONE;
+            }
+
             local_nh_.param("calculate_points", do_calc_points_, false);
             do_calc_points_ = do_calc_points_ && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW);
             do_keep_coords_ = true;
 
             local_nh_.param("convert_to_color", do_color_conv_, false);
 
-            // Create the StereoDcam
-            stcam_ = new dcam::StereoDcam(guid);
-            ROS_INFO_STREAM("Connecting to camera with GUID " << guid);
-
-            // Fetch the camera string and send it to the parameter server if people want it (they shouldn't)
-            std::string params(stcam_->getParameters());
-            local_nh_.setParam("params", params);
-            local_nh_.setParam("exposure_max", (int)stcam_->expMax);
-            local_nh_.setParam("exposure_min", (int)stcam_->expMin);
-            local_nh_.setParam("gain_max", (int)stcam_->gainMax);
-            local_nh_.setParam("gain_min", (int)stcam_->gainMin);
-            local_nh_.setParam("brightness_max", (int)stcam_->brightMax);
-            local_nh_.setParam("brightness_min", (int)stcam_->brightMin);
-
             // Configure camera
             stcam_->setFormat(mode, fps, speed);
             stcam_->setProcMode(videre_mode_);
-            stcam_->setUniqueThresh(36);
-            stcam_->setTextureThresh(30);
-            stcam_->setSpeckleSize(100);
-            stcam_->setSpeckleDiff(10);
-            stcam_->setCompanding(true);
+
+            // Dynamic reconfigure
+            dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(&VidereStereoNode::reconfig, this, _1, _2);
+            srv_.setCallback(f);
 
             switch (videre_mode_)
             {
@@ -372,16 +377,9 @@ public:
                 cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("points", 1);
             }
 
-            check_param_sub_ = local_nh_.subscribe("check_params", 1, &VidereStereoNode::checkParams, this);
-
-            // Dynamic reconfigure
-            dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(&VidereStereoNode::reconfig, this, _1, _2);
-            srv.setCallback(f);
-
             // Start the camera
             stcam_->start();
             usleep(200000);
-            checkAndSetAll();
         }
         else
         {
@@ -392,10 +390,10 @@ public:
 
     void reconfig(Config &config, uint32_t level)
     {
-        ROS_INFO("dynamic reconfigure level 0x%x", level);
+        ROS_INFO("Camera reconfigure request received, level 0x%x", level);
 
         std::string tf_prefix = tf::getPrefixParam(local_nh_);
-        current_config.frame_id = tf::resolve(tf_prefix, config.frame_id);
+        current_config_.frame_id = tf::resolve(tf_prefix, config.frame_id);
 
         stcam_->setExposure(config.exposure, config.exposure_auto);
         stcam_->setGain(config.gain, config.gain_auto);
@@ -403,7 +401,7 @@ public:
         stcam_->setCompanding(config.companding);
         stcam_->setHDR(config.hdr);
 
-        ROS_INFO("Stereo camera's frame ID is %s", current_config.frame_id.c_str());
+        ROS_INFO("Stereo camera's frame ID is %s", current_config_.frame_id.c_str());
 
         if (config.exposure_auto) { ROS_INFO("Setting Exposure to Auto setting"); }
         else { ROS_INFO("Setting Exposure to %d", config.exposure); }
@@ -419,82 +417,16 @@ public:
 
         if (config.hdr) { ROS_INFO("High Dynamic Range mode is Enabled"); }
         else { ROS_INFO("High Dynamic Range mode is Disabled"); }
-    }
 
-    void checkParams(const std_msgs::EmptyConstPtr &check_params_msg_)
-    {
-        checkAndSetAll();
-    }
-
-    void checkAndSetAll()
-    {
-        checkAndSetBool("unique_check",     boost::bind(&dcam::StereoDcam::setUniqueCheck,      stcam_, _1));
-        checkAndSetInt("texture_thresh",    boost::bind(&dcam::StereoDcam::setTextureThresh,    stcam_, _1));
-        checkAndSetInt("unique_thresh",     boost::bind(&dcam::StereoDcam::setUniqueThresh,     stcam_, _1));
-        checkAndSetInt("smoothness_thresh", boost::bind(&dcam::StereoDcam::setSmoothnessThresh, stcam_, _1));
-        checkAndSetInt("horopter",          boost::bind(&dcam::StereoDcam::setHoropter,    stcam_, _1));
-        checkAndSetInt("speckle_size",      boost::bind(&dcam::StereoDcam::setSpeckleSize, stcam_, _1));
-        checkAndSetInt("speckle_diff",      boost::bind(&dcam::StereoDcam::setSpeckleDiff, stcam_, _1));
-        checkAndSetInt("corr_size",         boost::bind(&dcam::StereoDcam::setCorrsize,    stcam_, _1));
-        checkAndSetInt("num_disp",          boost::bind(&dcam::StereoDcam::setNumDisp,     stcam_, _1));
-    }
-
-    void checkAndSetIntBool(std::string param_name, boost::function<void(int, bool)> setfunc)
-    {
-        if (local_nh_.hasParam(param_name) || local_nh_.hasParam(param_name + std::string("_auto")))
+        if (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW)
         {
-            int val = 0;
-            bool isauto = false;
+            stcam_->setUniqueThresh(config.uniqueness_threshold);
+            stcam_->setTextureThresh(config.texture_threshold);
+            stcam_->setHoropter(config.horopter);
 
-            local_nh_.param( param_name, val, 0);
-            local_nh_.param( param_name + std::string("_auto"), isauto, false);
-
-            int testval = (val * (!isauto));
-
-            std::map<std::string, int>::iterator cacheval = paramcache_.find(param_name);
-
-            if ( (cacheval == paramcache_.end()) || (cacheval->second != testval) )
-            {
-                setfunc(val, isauto);
-            }
-
-            paramcache_[param_name] = testval;
-        }
-    }
-
-    void checkAndSetBool(std::string param_name, boost::function<bool(bool)> setfunc)
-    {
-        if (local_nh_.hasParam(param_name))
-        {
-            bool on = false;
-            local_nh_.param(param_name, on, false);
-
-            std::map<std::string, int>::iterator cacheval = paramcache_.find(param_name);
-
-            if ( (cacheval == paramcache_.end()) || (cacheval->second != on) )
-            {
-                setfunc(on);
-            }
-
-            paramcache_[param_name] = on;
-        }
-    }
-
-    void checkAndSetInt(std::string param_name, boost::function<bool(int)> setfunc)
-    {
-        if (local_nh_.hasParam(param_name))
-        {
-            int val = 0;
-            local_nh_.param( param_name, val, 0);
-
-            std::map<std::string, int>::iterator cacheval = paramcache_.find(param_name);
-
-            if ( (cacheval == paramcache_.end()) || (cacheval->second != val) )
-            {
-                setfunc(val);
-            }
-
-            paramcache_[param_name] = val;
+            ROS_INFO("STOC: uniqueness threshold is set to %d", config.uniqueness_threshold);
+            ROS_INFO("STOC: texture threshold is set to %d", config.texture_threshold);
+            ROS_INFO("STOC: horopter is set to %d", config.horopter);
         }
     }
 
@@ -534,7 +466,7 @@ public:
             stcam_->doCalcPts();
 
             cloud_.header.stamp = timestamp;
-            cloud_.header.frame_id = current_config.frame_id;
+            cloud_.header.frame_id = current_config_.frame_id;
             cloud_.points.resize(stcam_->stIm->numPts);
 
             if (do_keep_coords_) { cloud_.channels.resize(3); }
@@ -571,22 +503,22 @@ public:
             }
         }
 
-        left_image_.header.frame_id = current_config.frame_id;
+        left_image_.header.frame_id = current_config_.frame_id;
         left_image_.header.stamp = timestamp;
-        right_image_.header.frame_id = current_config.frame_id;
+        right_image_.header.frame_id = current_config_.frame_id;
         right_image_.header.stamp = timestamp;
 
-        left_color_image_.header.frame_id = current_config.frame_id;
+        left_color_image_.header.frame_id = current_config_.frame_id;
         left_color_image_.header.stamp = timestamp;
-        right_color_image_.header.frame_id = current_config.frame_id;
+        right_color_image_.header.frame_id = current_config_.frame_id;
         right_color_image_.header.stamp = timestamp;
 
-        left_info_.header.frame_id = current_config.frame_id;
+        left_info_.header.frame_id = current_config_.frame_id;
         left_info_.header.stamp = timestamp;
-        right_info_.header.frame_id = current_config.frame_id;
+        right_info_.header.frame_id = current_config_.frame_id;
         right_info_.header.stamp = timestamp;
 
-        disparity_image_.header.frame_id = current_config.frame_id;
+        disparity_image_.header.frame_id = current_config_.frame_id;
         disparity_image_.header.stamp = timestamp;
 
         timestamp_diag_.tick(timestamp);
@@ -698,16 +630,12 @@ void sigsegv_handler(int sig)
 {
     signal(SIGSEGV, SIG_DFL);
     printf("System segfaulted, stopping camera nicely\n");
-
-    if (g_sdc)
-    {
-        g_sdc->cleanup();
-    }
+    if (g_sdc) { g_sdc->cleanup(); }
 }
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "stereodcam");
+    ros::init(argc, argv, "videre_stereo_node", ros::init_options::AnonymousName);
 
     g_sdc = new VidereStereoNode();
     g_sdc->spin();
