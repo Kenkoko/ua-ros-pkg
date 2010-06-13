@@ -149,7 +149,11 @@ The camera will read from the following parameters:
 #include <videre_stereo_cam/camera_bridge.h>
 #include <videre_stereo_cam/stereoimage.h>
 
-using namespace std;
+#include <driver_base/SensorLevels.h>
+#include <dynamic_reconfigure/server.h>
+#include <videre_stereo_cam/VidereStereoCamConfig.h>
+
+typedef driver_base::SensorLevels Levels;
 
 void sigsegv_handler(int sig);
 
@@ -182,7 +186,7 @@ class VidereStereoNode
     ros::Subscriber check_param_sub_;
 
     videre_proc_mode_t videre_mode_;
-    string frame_id_;
+    std::string frame_id_;
     bool do_calc_points_;
     bool do_keep_coords_;
     bool do_color_conv_;
@@ -193,6 +197,11 @@ class VidereStereoNode
 
     int count_;
     double desired_freq_;
+
+    /** dynamic parameter configuration */
+    typedef videre_stereo_cam::VidereStereoCamConfig Config;
+    dynamic_reconfigure::Server<Config> srv;
+    Config current_config;
 
     std::map<std::string, int> paramcache_;
 
@@ -223,7 +232,7 @@ public:
             uint64_t guid;
             if (local_nh_.hasParam("guid"))
             {
-                string guid_str;
+                std::string guid_str;
                 local_nh_.getParam("guid", guid_str);
                 guid = strtoll(guid_str.c_str(), NULL, 16);
             }
@@ -232,17 +241,17 @@ public:
                 guid = dcam::getGuid(0);
             }
 
-            diagnostic_.setHardwareIDf("%u", guid);
+            diagnostic_.setHardwareID(boost::lexical_cast<std::string>(guid));
 
-            local_nh_.param("frame_id", frame_id_, string("stereo"));
+            local_nh_.param("frame_id", frame_id_, std::string("stereo"));
 
             // Get the ISO speed parameter if available
-            string str_speed;
+            std::string str_speed;
             dc1394speed_t speed;
-            local_nh_.param("speed", str_speed, string("S400"));
+            local_nh_.param("speed", str_speed, std::string("S400"));
 
-            if (str_speed == string("S100")) { speed = DC1394_ISO_SPEED_100; }
-            else if (str_speed == string("S200")) { speed = DC1394_ISO_SPEED_200; }
+            if (str_speed == std::string("S100")) { speed = DC1394_ISO_SPEED_100; }
+            else if (str_speed == std::string("S200")) { speed = DC1394_ISO_SPEED_200; }
             else { speed = DC1394_ISO_SPEED_400; }
 
             // Get the FPS parameter if available;
@@ -261,20 +270,20 @@ public:
             else { fps = DC1394_FRAMERATE_1_875; }
 
             // We only support Videre stereo cameras:
-            string str_mode;
+            std::string str_mode;
             dc1394video_mode_t mode = VIDERE_STEREO_640x480;
-            local_nh_.param("mode", str_mode, string("none"));
-            if (str_mode == string("stereo320x240")) { mode = VIDERE_STEREO_320x240; }
-            else if (str_mode == string("stereo640x480")) { mode = VIDERE_STEREO_640x480; }
+            local_nh_.param("mode", str_mode, std::string("none"));
+            if (str_mode == std::string("stereo320x240")) { mode = VIDERE_STEREO_320x240; }
+            else if (str_mode == std::string("stereo640x480")) { mode = VIDERE_STEREO_640x480; }
 
             // Get the videre processing mode if available:
-            string str_videre_mode;
+            std::string str_videre_mode;
             videre_mode_ = PROC_MODE_NONE;
-            local_nh_.param("videre_mode", str_videre_mode, string("none"));
+            local_nh_.param("videre_mode", str_videre_mode, std::string("none"));
 
-            if (str_videre_mode == string("rectified")) { videre_mode_ = PROC_MODE_RECTIFIED; }
-            else if (str_videre_mode == string("disparity")) { videre_mode_ = PROC_MODE_DISPARITY; }
-            else if (str_videre_mode == string("disparity_raw")) { videre_mode_ = PROC_MODE_DISPARITY_RAW; }
+            if (str_videre_mode == std::string("rectified")) { videre_mode_ = PROC_MODE_RECTIFIED; }
+            else if (str_videre_mode == std::string("disparity")) { videre_mode_ = PROC_MODE_DISPARITY; }
+            else if (str_videre_mode == std::string("disparity_raw")) { videre_mode_ = PROC_MODE_DISPARITY_RAW; }
             else { videre_mode_ = PROC_MODE_NONE; }
 
             local_nh_.param("calculate_points", do_calc_points_, false);
@@ -285,7 +294,7 @@ public:
 
             // Create the StereoDcam
             stcam_ = new dcam::StereoDcam(guid);
-            ROS_INFO("Connecting to camera with GUID %u", guid);
+            ROS_INFO_STREAM("Connecting to camera with GUID " << guid);
 
             // Fetch the camera string and send it to the parameter server if people want it (they shouldn't)
             std::string params(stcam_->getParameters());
@@ -361,6 +370,10 @@ public:
 
             check_param_sub_ = local_nh_.subscribe("check_params", 1, &VidereStereoNode::checkParams, this);
 
+            // Dynamic reconfigure
+            dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(&VidereStereoNode::reconfig, this, _1, _2);
+            srv.setCallback(f);
+
             // Start the camera
             stcam_->start();
             usleep(200000);
@@ -368,9 +381,27 @@ public:
         }
         else
         {
-            ROS_FATAL("stereodcam: No cameras found\n");
+            ROS_FATAL("VidereStereoNode:: No cameras found\n");
             ros::shutdown();
         }
+    }
+
+    void reconfig(Config &config, uint32_t level)
+    {
+        ROS_INFO("dynamic reconfigure level 0x%x", level);
+
+        stcam_->setExposure(config.exposure, config.exposure_auto);
+        stcam_->setGain(config.gain, config.gain_auto);
+        stcam_->setBrightness(config.brightness, config.brightness_auto);
+
+        if (config.exposure_auto) { ROS_INFO("Setting Exposure to Auto setting"); }
+        else { ROS_INFO("Setting Exposure to %d", config.exposure); }
+
+        if (config.gain_auto) { ROS_INFO("Setting Gain to Auto setting"); }
+        else { ROS_INFO("Setting Gain to %d", config.gain); }
+
+        if (config.brightness_auto) { ROS_INFO("Setting Brightness to Auto setting"); }
+        else { ROS_INFO("Setting Brightness to %d", config.brightness); }
     }
 
     void checkParams(const std_msgs::EmptyConstPtr &check_params_msg_)
@@ -380,9 +411,6 @@ public:
 
     void checkAndSetAll()
     {
-        checkAndSetIntBool("exposure",      boost::bind(&dcam::Dcam::setExposure,      stcam_, _1, _2));
-        checkAndSetIntBool("gain",          boost::bind(&dcam::Dcam::setGain,          stcam_, _1, _2));
-        checkAndSetIntBool("brightness",    boost::bind(&dcam::Dcam::setBrightness,    stcam_, _1, _2));
         checkAndSetBool("companding",       boost::bind(&dcam::Dcam::setCompanding,    stcam_, _1));
         checkAndSetBool("hdr",              boost::bind(&dcam::Dcam::setHDR,           stcam_, _1));
         checkAndSetBool("unique_check",     boost::bind(&dcam::StereoDcam::setUniqueCheck,      stcam_, _1));
@@ -624,22 +652,25 @@ public:
 
         status.values.resize(3);
         status.values[0].key = "Images in interval";
-        status.values[0].value = boost::lexical_cast<string>(count_);
+        status.values[0].value = boost::lexical_cast<std::string>(count_);
         status.values[1].key = "Desired frequency";
-        status.values[1].value = boost::lexical_cast<string>(desired_freq_);
+        status.values[1].value = boost::lexical_cast<std::string>(desired_freq_);
         status.values[2].key = "Actual frequency";
-        status.values[2].value = boost::lexical_cast<string>(freq);
+        status.values[2].value = boost::lexical_cast<std::string>(freq);
 
         count_ = 0;
     }
 
     bool spin()
     {
+        ROS_INFO("Streaming...");
+
         // Start up the camera
         while (nh_.ok())
         {
             serviceCam();
             diagnostic_.update();
+            ros::spinOnce();
         }
 
         return true;
