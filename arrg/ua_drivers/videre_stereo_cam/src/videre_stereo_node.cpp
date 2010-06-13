@@ -454,12 +454,27 @@ public:
             return false;
         }
 
-        ros::Time timestamp = ros::Time::now();
-
         cam_bridge::StereoDataToRawStereo(stcam_->stIm,
                                           left_image_, right_image_,
                                           left_info_, right_info_,
                                           disparity_image_);
+
+        ros::Time timestamp = left_image_.header.stamp;
+
+        left_image_.header.frame_id = current_config_.frame_id;
+        right_image_.header.frame_id = current_config_.frame_id;
+
+        left_color_image_.header.frame_id = current_config_.frame_id;
+        left_color_image_.header.stamp = timestamp;
+        right_color_image_.header.frame_id = current_config_.frame_id;
+        right_color_image_.header.stamp = timestamp;
+
+        left_info_.header.frame_id = current_config_.frame_id;
+        right_info_.header.frame_id = current_config_.frame_id;
+
+        disparity_image_.header.frame_id = current_config_.frame_id;
+
+        timestamp_diag_.tick(timestamp);
 
         if (do_calc_points_)
         {
@@ -502,26 +517,6 @@ public:
                 }
             }
         }
-
-        left_image_.header.frame_id = current_config_.frame_id;
-        left_image_.header.stamp = timestamp;
-        right_image_.header.frame_id = current_config_.frame_id;
-        right_image_.header.stamp = timestamp;
-
-        left_color_image_.header.frame_id = current_config_.frame_id;
-        left_color_image_.header.stamp = timestamp;
-        right_color_image_.header.frame_id = current_config_.frame_id;
-        right_color_image_.header.stamp = timestamp;
-
-        left_info_.header.frame_id = current_config_.frame_id;
-        left_info_.header.stamp = timestamp;
-        right_info_.header.frame_id = current_config_.frame_id;
-        right_info_.header.stamp = timestamp;
-
-        disparity_image_.header.frame_id = current_config_.frame_id;
-        disparity_image_.header.stamp = timestamp;
-
-        timestamp_diag_.tick(timestamp);
 
         left_camera_pub_.publish(left_image_, left_info_);
 
