@@ -285,6 +285,7 @@ public:
 
             // Create the StereoDcam
             stcam_ = new dcam::StereoDcam(guid);
+            ROS_INFO("Connecting to camera with GUID %u", guid);
 
             // Fetch the camera string and send it to the parameter server if people want it (they shouldn't)
             std::string params(stcam_->getParameters());
@@ -610,7 +611,7 @@ public:
 
         double freq = (double)(count_)/diagnostic_.getPeriod();
 
-        if (freq < (.9*desired_freq_))
+        if (freq < (0.9 * desired_freq_))
         {
             status.level = 2;
             status.message = "Desired frequency not met";
@@ -623,13 +624,11 @@ public:
 
         status.values.resize(3);
         status.values[0].key = "Images in interval";
-        status.values[0].value = count_;
+        status.values[0].value = boost::lexical_cast<string>(count_);
         status.values[1].key = "Desired frequency";
-        status.values[1].value = desired_freq_;
+        status.values[1].value = boost::lexical_cast<string>(desired_freq_);
         status.values[2].key = "Actual frequency";
-        status.values[2].value = freq;
-
-        printf("%g fps\n", freq);
+        status.values[2].value = boost::lexical_cast<string>(freq);
 
         count_ = 0;
     }
