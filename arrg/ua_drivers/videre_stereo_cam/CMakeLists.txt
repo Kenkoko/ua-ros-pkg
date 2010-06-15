@@ -44,13 +44,18 @@ if (PKG_CONFIG_FOUND AND UNIX AND NOT APPLE)
    endif(GTK_FOUND)
 endif(PKG_CONFIG_FOUND AND UNIX AND NOT APPLE)
 
-rosbuild_add_library(videre_stereo_cam src/videre_stereo_cam/stereolib.c src/videre_stereo_cam/stereolib2.cpp src/videre_stereo_cam/stereodcam.cpp src/videre_stereo_cam/stereoimage.cpp)
-rosbuild_add_compile_flags(videre_stereo_cam "-msse2 -mpreferred-stack-boundary=4")
-target_link_libraries(videre_stereo_cam dcam1394 videre_stereo_cam)
+rosbuild_add_library(dcam1394 src/dcam1394/dcam1394.cpp src/dcam1394/image_proc.cpp)
+rosbuild_add_compile_flags(dcam1394 "-msse2 -mpreferred-stack-boundary=4")
+target_link_libraries(dcam1394 dc1394)
 
-rosbuild_add_executable(videre_stereo_node src/videre_stereo_node.cpp)
-rosbuild_add_compile_flags(videre_stereo_node -msse3)
-target_link_libraries(videre_stereo_node videre_stereo_cam)
+rosbuild_add_executable(videre_stereo_node src/videre_stereo_node.cpp
+                                           src/videre_stereo_cam/stereolib.c
+                                           src/videre_stereo_cam/stereolib2.cpp
+                                           src/videre_stereo_cam/stereodcam.cpp
+                                           src/videre_stereo_cam/stereoimage.cpp)
+
+rosbuild_add_compile_flags(videre_stereo_node -msse2 -mpreferred-stack-boundary=4)
+target_link_libraries(videre_stereo_node dcam1394)
 
 rosbuild_add_executable(disparity_view src/disparity_view.cpp)
 target_link_libraries(disparity_view ${GTK_LIBRARIES})
