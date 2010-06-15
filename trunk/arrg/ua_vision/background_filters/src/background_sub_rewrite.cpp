@@ -428,7 +428,6 @@ public:
 
             //print_img(&((IplImage) result));
 
-
             // Compute the (foreground) probability image under the logistic model
             double w = -1/5.0, b = 4.0;
             cv::Mat fg_prob_img = result.clone();

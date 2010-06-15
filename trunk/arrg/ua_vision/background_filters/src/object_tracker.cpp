@@ -55,23 +55,26 @@ using namespace std;
 class ObjectTracker
 {
 private:
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> SyncPolicy;
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> SyncPolicy;
+    message_filters::Subscriber<sensor_msgs::Image> camera_sub;
     message_filters::Subscriber<sensor_msgs::Image> saliency_sub;
     message_filters::Subscriber<sensor_msgs::Image> fg_objects_sub;
     message_filters::Synchronizer<SyncPolicy>* sync;
 
+    sensor_msgs::CvBridge camera_bridge;
     sensor_msgs::CvBridge saliency_bridge;
     sensor_msgs::CvBridge fg_objects_bridge;
 
 public:
     ObjectTracker(ros::NodeHandle& nh)
     {
+        camera_sub.subscribe(nh, "image", 1);
         saliency_sub.subscribe(nh, "saliency_img", 1);
         fg_objects_sub.subscribe(nh, "probability_image", 1);
 
         // ApproximateTime takes a queue size as its constructor argument, hence SyncPolicy(10)
-        sync = new message_filters::Synchronizer<SyncPolicy>(SyncPolicy(10), fg_objects_sub, saliency_sub);
-        sync->registerCallback(boost::bind(&ObjectTracker::process_images, this, _1, _2));
+        sync = new message_filters::Synchronizer<SyncPolicy>(SyncPolicy(10), camera_sub, fg_objects_sub, saliency_sub);
+        sync->registerCallback(boost::bind(&ObjectTracker::process_images, this, _1, _2, _3));
     }
 
     ~ObjectTracker()
@@ -79,11 +82,13 @@ public:
         delete sync;
     }
 
-    void process_images(const sensor_msgs::ImageConstPtr& fg_objects_msg, const sensor_msgs::ImageConstPtr& saliency_msg)
+    void process_images(const sensor_msgs::ImageConstPtr& camera_msg, const sensor_msgs::ImageConstPtr& fg_objects_msg, const sensor_msgs::ImageConstPtr& saliency_msg)
     {
+        ROS_INFO_STREAM("Raw image time:          " << camera_msg->header.stamp);
         ROS_INFO_STREAM("Foreground objects time: " << fg_objects_msg->header.stamp);
         ROS_INFO_STREAM("Saliency time:           " << saliency_msg->header.stamp);
 
+        cv::Mat camera_img(camera_bridge.imgMsgToCv(camera_msg));
         cv::Mat fg_objects_img(fg_objects_bridge.imgMsgToCv(fg_objects_msg));
         cv::Mat saliency_img(saliency_bridge.imgMsgToCv(saliency_msg));
 
