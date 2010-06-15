@@ -56,9 +56,8 @@
 #include <stdint.h>
 #endif
 
-#include <cv.h>
-#include <cxmisc.h>
-#include <cvaux.h>
+#include <opencv2/core/core_c.h>
+#include <opencv2/imgproc/imgproc_c.h>
 
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
