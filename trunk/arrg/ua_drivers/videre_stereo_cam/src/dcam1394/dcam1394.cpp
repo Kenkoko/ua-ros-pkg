@@ -38,10 +38,11 @@
 // Uses CMU driver under MSW
 //
 
-#include "dcam1394/dcam1394.h"
 #include <cstring>
 #include <cstdio>
 #include <errno.h>
+
+#include <dcam1394/dcam1394.h>
 
 #define PRINTF(a...) ROS_INFO(a)
 
@@ -107,7 +108,6 @@ dc1394_feature_whitebalance_set_value_blind(dc1394camera_t *camera, uint32_t u_b
 dc1394error_t
 dc1394_feature_set_value_blind(dc1394camera_t *camera, dc1394feature_t feature, uint32_t value)
 {
-    uint32_t quadval;
     uint64_t offset;
     dc1394error_t err;
 
@@ -122,9 +122,6 @@ dc1394_feature_set_value_blind(dc1394camera_t *camera, dc1394feature_t feature, 
     }
 
     FEATURE_TO_VALUE_OFFSET(feature, offset);
-
-    //    err=dc1394_get_control_register(camera, offset, &quadval);
-    //    DC1394_ERR_RTN(err, "Could not get feature value");
 
     err=dc1394_set_control_register(camera, offset, (value & 0xFFFUL));
     DC1394_ERR_RTN(err, "Could not set feature value");
@@ -281,7 +278,7 @@ dcam::getModel(size_t i)
       if (!camera)
 	{
 	  char msg[256];
-	  snprintf(msg, 256, "Could not acquire camera %d %s", i, __FUNCTION__);
+	  snprintf(msg, 256, "Could not acquire camera %Zu %s", i, __FUNCTION__);
 	  throw DcamException(msg);
 	}
 
@@ -309,7 +306,7 @@ dcam::getVendor(size_t i)
       if (!camera)
 	{
 	  char msg[256];
-	  snprintf(msg, 256, "Could not acquire camera %d %s", i, __FUNCTION__);
+	  snprintf(msg, 256, "Could not acquire camera %Zu %s", i, __FUNCTION__);
 	  throw DcamException(msg);
 	}
 
@@ -454,7 +451,7 @@ dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
 
 	  // parameter string
 	  if (getParameters() != NULL)
-	    PRINTF("[dcam] Calibration, %d bytes", strlen(camIm->params));
+	    PRINTF("[dcam] Calibration, %Zu bytes", strlen(camIm->params));
 	  else
 	    PRINTF("[dcam] No calibration");
 
@@ -1032,7 +1029,7 @@ dcam::Dcam::setParameters()
   if (!camIm->params)
     return false;
 
-  PRINTF(camIm->params);
+  PRINTF("%s", camIm->params);
 
   // check firmware version
   if (camFirmware < 0x0201)
@@ -1050,8 +1047,7 @@ dcam::Dcam::setParameters()
   else
     {
       PRINTF("[Dcam] Erasing calibration parameters");
-      int i;
-      for (i=0; i<VIDERE_CALIB_SIZE; i+=512)
+      for (unsigned int i = 0; i < VIDERE_CALIB_SIZE; i += 512)
 	{
 	  setRegister(VIDERE_LOCAL_BASE,VIDERE_CAM_STORE_MAGIC_NUM);
 	  setRegister(VIDERE_LOCAL_BASE+VIDERE_CALIB_OFFSET+i, ~VIDERE_CAM_STORE_MAGIC_NUM);

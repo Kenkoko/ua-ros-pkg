@@ -35,13 +35,15 @@
 #ifndef CAM_BRIDGE_HH
 #define CAM_BRIDGE_HH
 
+#include <opencv2/core/core.hpp>
+
 #include <sensor_msgs/fill_image.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <stereo_msgs/DisparityImage.h>
 
-#include "videre_stereo_cam/stereoimage.h"
+#include <videre_stereo_cam/stereoimage.h>
 
 namespace cam_bridge
 {
