@@ -16,14 +16,15 @@
     <depend package="diagnostic_updater"/>
     <depend package="sensor_msgs"/>
     <depend package="stereo_msgs"/>
-    <depend package="cameradc1394"/>
-    <depend package="dynamic_reconfigure" />
+    <depend package="dynamic_reconfigure"/>
     <depend package="driver_base" />
     <depend package="tf" />
 
     <export>
-        <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lvidere_stereo_cam" />
+        <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -ldcam1394" />
     </export>
+
+    <rosdep name="libdc1394-dev"/>
 </package>
 
 

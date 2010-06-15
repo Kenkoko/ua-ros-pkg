@@ -119,15 +119,9 @@ The camera will read from the following parameters:
 - @b stereo/brightness_auto (bool)
 - @b stereo/companding (bool)
 - @b stereo/hdr (bool)
-- @b stereo/unique_check (bool)
-- @b stereo/texture_thresh (int)
-- @b stereo/unique_thresh (int)
-- @b stereo/smoothness_thresh (int)
+- @b stereo/texture_threshold (int)
+- @b stereo/uniqueness_threshold (int)
 - @b stereo/horopter (int)
-- @b stereo/speckle_size (int)
-- @b stereo/speckle_diff (int)
-- @b stereo/corr_size (int)
-- @b stereo/num_disp (int)
 
 **/
 
