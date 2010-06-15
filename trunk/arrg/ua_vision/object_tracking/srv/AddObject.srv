@@ -1,3 +1,4 @@
 sensor_msgs/Image histogram
-sensor_msgs/RegionOfInterest roi
+geometry_msgs/Point center
+float64 area
 ---
