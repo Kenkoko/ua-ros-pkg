@@ -1,2 +1,5 @@
 pyserial:
     ubuntu: python-serial
+
+libdc1394-dev:
+    ubuntu: libdc1394-22-dev
