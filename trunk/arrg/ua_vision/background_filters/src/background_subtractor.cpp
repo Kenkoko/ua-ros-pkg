@@ -39,9 +39,8 @@
 #include <cv_bridge/CvBridge.h>
 #include <background_filters/GetBgStats.h>
 
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <nmpt/OpenCVBoxFilter.h>
 #include <background_filters/common.h>
@@ -70,11 +69,11 @@ public:
     {
         ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
 
-        //cvStartWindowThread();
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
 
-        //cvNamedWindow("prob_img");
+//        cv::startWindowThread();
+//        cv::namedWindow("prob_img");
 
         if (client.call(srv))
         {
@@ -199,9 +198,9 @@ public:
         prob_msg->header.stamp = stamp;
         prob_img_pub.publish(prob_msg);
 
-        cv::Mat result = prob_img.clone();
-        cv::normalize(prob_img, prob_img, 0.0, 1.0, cv::NORM_MINMAX);
-        //cv::imshow("prob_img", prob_img);
+//        cv::Mat duplicate = prob_img.clone();
+//        cv::normalize(duplicate, duplicate, 0.0, 1.0, cv::NORM_MINMAX);
+//        cv::imshow("prob_img", duplicate);
     }
 };
 
