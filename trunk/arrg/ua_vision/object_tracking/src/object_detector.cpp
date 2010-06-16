@@ -17,6 +17,8 @@
 
 #include <boost/bind.hpp>
 
+#include <background_filters/common.h>
+
 using namespace std;
 
 ObjectDetector::ObjectDetector(ros::NodeHandle& nh)
@@ -27,11 +29,13 @@ ObjectDetector::ObjectDetector(ros::NodeHandle& nh)
   fg_prob_sub_.subscribe(nh, "occluded_fg_objects", 1);
 
   // ApproximateTime takes a queue size as its constructor argument, hence SyncPolicy(10)
-  sync_ = new message_filters::Synchronizer<SyncPolicy>(SyncPolicy(10), fg_prob_sub_, image_sub_);
+  sync_ = new message_filters::Synchronizer<SyncPolicy>(SyncPolicy(10), image_sub_, fg_prob_sub_);
   sync_->registerCallback(boost::bind(&ObjectDetector::image_callback, this, _1, _2));
 
   // This is the client for the service that tells the tracker a new object has appeared
   add_object_client_ = nh.serviceClient<object_tracking::AddObject> ("add_object");
+
+  cv::startWindowThread();
 }
 
 ObjectDetector::~ObjectDetector()
@@ -43,10 +47,13 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
                                     const sensor_msgs::ImageConstPtr& fg_prob_msg)
 {
   // Convert the ROS Images to OpenCV
-  cv::Mat original(image_bridge_.imgMsgToCv(image_msg));
+  cv::Mat original_big(image_bridge_.imgMsgToCv(image_msg));
   cv::Mat fg_prob_img(fg_prob_bridge_.imgMsgToCv(fg_prob_msg));
 
-  cout << image_msg->encoding << " " << fg_prob_img.at<double>(0, 0) << " " << fg_prob_img.size().height << " " << fg_prob_img.size().width << endl;
+  cv::Mat original;
+  cv::resize(original_big, original, fg_prob_img.size());
+
+//  cout << image_msg->encoding << " " << fg_prob_img.type() << " " << CV_32FC1 << " " << fg_prob_img.size().height << " " << fg_prob_img.size().width << endl;
 
   // Compute the (foreground) probability image under the logistic model
   double w = -1 / 5.0, b = 4.0;
@@ -58,17 +65,27 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
   cv::namedWindow("fg_prob_img");
   cv::imshow("fg_prob_img", fg_prob_img);
 
-  std::vector<std::vector<cv::Point> > contours;
-  cv::Mat bin_image = (fg_prob_img > 0.6);
+  double max;
+  cv::minMaxLoc(fg_prob_img, NULL, &max);
+  ROS_INFO_STREAM(max);
+
+
+  cv::Mat bin_image; // = (fg_prob_img > 0.6);
+  cv::threshold(fg_prob_img, bin_image, 0.6, 1.0, cv::THRESH_BINARY);
+  bin_image.convertTo(bin_image, CV_8UC1);
+
+  cv::namedWindow("binary");
   cv::imshow("binary", bin_image);
+
+  std::vector<std::vector<cv::Point> > contours;
   cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
   // Make an HSV image
   cv::Mat hsv_img = original.clone();
   cv::cvtColor(original, hsv_img, CV_BGR2HSV);
 
-  cv::namedWindow("hsv_img");
-  cv::imshow("hsv_img", hsv_img);
+//  cv::namedWindow("hsv_img");
+//  cv::imshow("hsv_img", hsv_img);
 
   srand(time(NULL));
 
@@ -81,7 +98,6 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
 
   for (uint i = 0; i < contours.size(); ++i)
   {
-    cout << "FOUND " << contours.size() << " POTENTIAL NEW OBJECTS" << endl;
     std::vector<cv::Point> con = contours[i];
 
     int r, g, b;
@@ -92,8 +108,10 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
     // If we have a reasonably large contour, we need to inform the tracker that it
     // is missing an object
     double area = cv::contourArea(cv::Mat(con));
-    if (area > 10)
+    if (area > 100)
     {
+      ROS_INFO_STREAM("FOUND AN OBJECT");
+
       std::vector<std::vector<cv::Point> > one_contour;
       one_contour.push_back(con);
 
@@ -125,6 +143,17 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
       cv::calcHist(&hsv_roi, 1, channels, mask, hist, 2, hist_size, ranges);
       histograms.push_back(hist);
 
+//      // Back project the histogram
+//      cv::Mat back_project;
+//      cv::calcBackProject(&hsv_img, 1, channels, hist, back_project, ranges);
+//
+//      // Convert the 0-255 "probabilities" to float probs (might be able to hack this away later)
+//      cv::Mat bp_prob;
+//      back_project.convertTo(bp_prob, CV_32FC1, 1.0/255.0);
+
+//      cv::namedWindow("TEST");
+//      cv::imshow("TEST", bp_prob);
+
     }
   }
 
@@ -141,7 +170,11 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
 //    srv.request.roi.x_offset = fg_rects[i].x;
 //    srv.request.roi.y_offset = fg_rects[i].y;
 
+
+
+//    displayHist(histograms[i], "MatND");
     cv::SparseMat hist_sparse_mat(histograms[i]);
+//    displayHist(hist_sparse_mat, "SparseMat");
     cv::Mat hist_mat;
     hist_sparse_mat.copyTo(hist_mat);
     IplImage ipl = hist_mat;
@@ -151,10 +184,12 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
     cout << "CALLING SERVICE..." << endl;
     add_object_client_.call(srv);
     cout << "... SERVICE COMPLETE" << endl;
+
+//    cv::waitKey(10000000);
   }
 
-  cv::namedWindow("contours");
-  cv::imshow("contours", original);
+//  cv::namedWindow("contours");
+//  cv::imshow("contours", original);
 
 }
 

@@ -17,6 +17,8 @@
 
 #include <object_tracking/AddObject.h>
 
+#include <background_filters/common.h>
+
 using namespace std;
 
 class Object
@@ -37,37 +39,81 @@ public:
 //     int channels[] = {0, 1};
 
 public:
-    void subtract_self(const cv::Mat& fg_prob_img, const cv::Mat& orig_img, const cv::Mat& bin_img, const cv::Mat& hsv_img, vector<vector<cv::Point> > contours)
+    void subtract_self(const cv::Mat& fg_prob_img, const cv::Mat& orig_img, const cv::Mat& bin_img,
+                       const cv::Mat& hsv_img, vector<vector<cv::Point> > contours, cv::Mat& fg_loglike_img)
     {
-        BOOST_FOREACH(vector<cv::Point> contour, contours)
-        {
-            cv::Rect bounder = cv::boundingRect(cv::Mat(contour));
-            int cx = (bounder.x + bounder.width) / 2;
-            int cy = (bounder.y + bounder.height) / 2;
-            cv::Point center(cx, cy);
+      int h_bins = 30;
+      int s_bins = 32;
+//      int hist_size[] = {h_bins, s_bins};
+      float hranges[] = {0, 180};
+      float sranges[] = {0, 256};
+      const float* ranges[] = {hranges, sranges};
+      int channels[] = {0, 1};
 
-            if (tracks.back().inside(bounder))
-            {
-//                 cv::Mat mask = bin_img(bounder);
-//                 cv::Mat hsv_roi = hsv_img(bounder);
-//                 cv::MatND hist;
-//
-//                 cv::calcHist(&hsv_roi, 1, channels, mask, hist, 2, hist_size, ranges);
-//
-//                 cv::Mat back_project;
-//                 cv::calcBackProject(&hsv_img, 1, channels, hist, back_project, ranges);
-//
-//                 cv::Mat bp_prob;
-//                 back_project.convertTo(bp_prob, CV_32FC1, 1.0/255.0);
-//
-//                 double max;
-//                 cv::minMaxLoc(bp_prob, 0, &max);
-//
-//                 cv::Mat fg_combined_prob;
-//                 cv::multiply(fg_prob_img, bp_prob, fg_combined_prob);
-//                 cv::normalize(fg_combined_prob, fg_combined_prob, 0, 1, cv::NORM_MINMAX);
-            }
+
+      // Back project the histogram
+//      cv::Mat back_project;
+//      cv::calcBackProject(&hsv_img, 1, channels, histogram, back_project, ranges);
+
+      // Convert the 0-255 "probabilities" to float probs (might be able to hack this away later)
+//      cv::Mat bp_prob;
+//      back_project.convertTo(bp_prob, CV_32FC1, 1.0/255.0);
+
+//      cv::namedWindow("TEST");
+//      cv::imshow("TEST", bp_prob);
+
+      // Multiply the back-projected probabilities with the foreground probabilities
+//      cv::Mat fg_combined_prob;
+//      cv::multiply(fg_prob_img, bp_prob, fg_combined_prob);
+
+
+
+      BOOST_FOREACH(vector<cv::Point> contour, contours)
+      {
+        cv::Rect bounder = cv::boundingRect(cv::Mat(contour));
+        int cx = (bounder.x + bounder.width) / 2;
+        int cy = (bounder.y + bounder.height) / 2;
+        cv::Point center(cx, cy);
+
+        if (tracks.back().inside(bounder))
+        {
+          cv::Mat roi = hsv_img(bounder);
+
+          // Back project the histogram
+          cv::Mat back_project;
+          cv::calcBackProject(&roi, 1, channels, histogram, back_project, ranges);
+
+          // Convert the 0-255 "probabilities" to float probs (might be able to hack this away later)
+          cv::Mat bp_prob;
+          back_project.convertTo(bp_prob, CV_32FC1, 1.0/255.0);
+
+          std::vector<std::vector<cv::Point> > my_contours;
+          cv::Mat bin_image = (bp_prob > 0.0);
+
+          cv::Mat real_roi = fg_loglike_img(bounder);
+          bin_image.convertTo(bin_image, CV_32FC1);
+          bin_image.convertTo(bin_image, CV_32FC1, -1, 1);
+          cv::blur(bin_image, bin_image, cv::Size(3, 3));
+          cv::multiply(bin_image, real_roi, real_roi);
+
+          std::string name = "bin_image" + boost::lexical_cast<std::string>(timestamp.nsec);
+
+          cv::namedWindow(name);
+          cv::imshow(name, bin_image);
+
+//          double max;
+//          cv::minMaxLoc(bp_prob, NULL, &max);
+//          ROS_INFO_STREAM("===========");
+//          ROS_INFO_STREAM(max);
+
+//          cv::namedWindow("bp_prob");
+//          cv::imshow("bp_prob", bp_prob);
+
+//          cv::findContours(bin_image, my_contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+          ROS_INFO_STREAM("FOUND SOMETHING");
         }
+      }
     }
 };
 
@@ -105,6 +151,8 @@ public:
 
         add_object_service = nh.advertiseService("add_object", &ContourObjectFinder::add_object, this);
         occluded_fg_objects_pub = nh.advertise<sensor_msgs::Image>("occluded_fg_objects", 1);
+
+        cv::startWindowThread();
     }
 
     ~ContourObjectFinder()
@@ -114,11 +162,14 @@ public:
 
     bool add_object(object_tracking::AddObject::Request& request, object_tracking::AddObject::Response& response)
     {
-        boost::mutex::scoped_lock lock(obj_mutex);
-        new_obj_bridge.fromImage(request.histogram);
+        //boost::mutex::scoped_lock lock(obj_mutex);
+//        new_obj_bridge.fromImage(request.histogram);
+        sensor_msgs::CvBridge new_bridge;
+        new_bridge.fromImage(request.histogram);
 
         Object obj;
-        obj.histogram = cv::Mat(new_obj_bridge.toIpl()).clone();
+        obj.histogram = cv::Mat(new_bridge.toIpl()).clone();
+//        displayHist(obj.histogram, "PLEASE");
         obj.timestamp = request.histogram.header.stamp;
         obj.area = request.area;
         cv::Point center;
@@ -136,43 +187,53 @@ public:
         //ROS_INFO_STREAM("Original time:           " << saliency_msg->header.stamp);
 
         if (objects.empty()) { // If no objects, just pass along the image unchanged - otherwise the other node has no input
-            occluded_fg_objects_pub.publish(fg_objects_msg);
+          ROS_INFO_STREAM("No objects, doing nothing.");
+          occluded_fg_objects_pub.publish(fg_objects_msg);
+
 
         } else {
-            cv::Mat fg_objects_img(fg_objects_bridge.imgMsgToCv(fg_objects_msg));
-            cv::Mat original(image_bridge.imgMsgToCv(image_msg));
+          ROS_INFO_STREAM("BEGIN");
+
+            cv::Mat fg_loglike_img(fg_objects_bridge.imgMsgToCv(fg_objects_msg));
+            cv::Mat original_big(image_bridge.imgMsgToCv(image_msg));
+            cv::Mat original;
+            cv::resize(original_big, original, fg_loglike_img.size());
 
             // Compute the (foreground) probability image under the logistic model
             double w = -1/5.0, b = 4.0;
-            cv::Mat fg_prob_img = fg_objects_img;
+            cv::Mat fg_prob_img = fg_loglike_img.clone();
             fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), w, b);
             cv::exp(fg_prob_img, fg_prob_img);
             fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), 1, 1);
             cv::divide(1.0, fg_prob_img, fg_prob_img);
 
-            cv::namedWindow("fg_prob_img");
-            cv::imshow("fg_prob_img", fg_prob_img);
+//            cv::namedWindow("fg_prob_img");
+//            cv::imshow("fg_prob_img", fg_prob_img);
 
             // Find contours for all the blobs found by background subtraction
             std::vector<std::vector<cv::Point> > contours;
             cv::Mat bin_image = (fg_prob_img > fg_prob_threshold);
-            cv::imshow("binary", bin_image);
+//            cv::imshow("binary", bin_image);
             cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
             // Make an HSV image
             cv::Mat hsv_img = original.clone();
             cv::cvtColor(original, hsv_img, CV_BGR2HSV);
 
-            cv::namedWindow("hsv_img");
-            cv::imshow("hsv_img", hsv_img);
+//            cv::namedWindow("hsv_img");
+//            cv::imshow("hsv_img", hsv_img);
 
             BOOST_FOREACH(Object obj, objects)
             {
-                obj.subtract_self(fg_prob_img, original, bin_image, hsv_img, contours);
+                obj.subtract_self(fg_prob_img, original, bin_image, hsv_img, contours, fg_loglike_img);
             }
 
-            IplImage img_out = fg_prob_img;
-            occluded_fg_objects_pub.publish(sensor_msgs::CvBridge::cvToImgMsg(&img_out));
+            IplImage img_out = fg_loglike_img;
+            sensor_msgs::Image::Ptr img_msg_out = sensor_msgs::CvBridge::cvToImgMsg(&img_out);
+            img_msg_out->header.stamp = fg_objects_msg->header.stamp;
+            occluded_fg_objects_pub.publish(img_msg_out);
+
+            ROS_INFO_STREAM("END");
         }
     }
 };
