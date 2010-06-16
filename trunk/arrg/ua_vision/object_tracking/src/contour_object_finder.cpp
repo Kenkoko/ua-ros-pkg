@@ -135,8 +135,10 @@ public:
         //ROS_INFO_STREAM("Foreground objects time: " << fg_objects_msg->header.stamp);
         //ROS_INFO_STREAM("Original time:           " << saliency_msg->header.stamp);
 
-        if (!objects.empty())
-        {
+        if (objects.empty()) { // If no objects, just pass along the image unchanged - otherwise the other node has no input
+            occluded_fg_objects_pub.publish(fg_objects_msg);
+
+        } else {
             cv::Mat fg_objects_img(fg_objects_bridge.imgMsgToCv(fg_objects_msg));
             cv::Mat original(image_bridge.imgMsgToCv(image_msg));
 
