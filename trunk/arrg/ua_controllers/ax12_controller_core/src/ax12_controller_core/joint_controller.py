@@ -93,9 +93,9 @@ class JointControllerAX12:
         
     def rad_to_raw(self, angle, initial_position_raw, flipped):
         """ angle is in radians """
-        print 'flipped = %s, angle_in = %f, init_raw = %d' % (str(flipped), angle, initial_position_raw)
+        #print 'flipped = %s, angle_in = %f, init_raw = %d' % (str(flipped), angle, initial_position_raw)
         angle_raw = angle * AX_RAW_RAD_RATIO
-        print 'angle = %f, val = %d' % (math.degrees(angle), int(round(initial_position_raw - angle_raw if flipped else initial_position_raw + angle_raw)))
+        #print 'angle = %f, val = %d' % (math.degrees(angle), int(round(initial_position_raw - angle_raw if flipped else initial_position_raw + angle_raw)))
         return int(round(initial_position_raw - angle_raw if flipped else initial_position_raw + angle_raw))
         
     def raw_to_rad(self, raw, initial_position_raw, flipped):
