@@ -186,9 +186,7 @@ private:
     ros::Publisher cloud_pub_;
 
     videre_proc_mode_t videre_mode_;
-    bool do_calc_points_;
     bool do_keep_coords_;
-    bool do_color_conv_;
 
     // Diagnostic updater stuff
     diagnostic_updater::Updater diagnostic_;
@@ -287,90 +285,14 @@ public:
             if (str_mode == std::string("stereo320x240")) { mode = VIDERE_STEREO_320x240; }
             else if (str_mode == std::string("stereo640x480")) { mode = VIDERE_STEREO_640x480; }
 
-            // Get the videre processing mode if available:
-            std::string str_videre_mode;
-            videre_mode_ = PROC_MODE_NONE;
-            local_nh_.param("videre_mode", str_videre_mode, std::string("none"));
-
-            if (str_videre_mode == std::string("rectified")) { videre_mode_ = PROC_MODE_RECTIFIED; }
-            else if (str_videre_mode == std::string("disparity")) { videre_mode_ = PROC_MODE_DISPARITY; }
-            else if (str_videre_mode == std::string("disparity_raw")) { videre_mode_ = PROC_MODE_DISPARITY_RAW; }
-            else { videre_mode_ = PROC_MODE_NONE; }
-
-            // Check if selected "videre mode" is supported by the camera
-            if (!stcam_->isSTOC && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW))
-            {
-                ROS_WARN("'disparity' and 'disparity_raw' modes are only available on Videre STOC devices");
-                videre_mode_ = PROC_MODE_NONE;
-            }
-
-            local_nh_.param("calculate_points", do_calc_points_, false);
-            do_calc_points_ = do_calc_points_ && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW);
             do_keep_coords_ = true;
-
-            local_nh_.param("convert_to_color", do_color_conv_, false);
-            do_color_conv_ = do_color_conv_ && stcam_->isColor;
 
             // Configure camera
             stcam_->setFormat(mode, fps, speed);
-            stcam_->setProcMode(videre_mode_);
 
             // Dynamic reconfigure
             dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(&VidereStereoNode::reconfig, this, _1, _2);
             srv_.setCallback(f);
-
-            switch (videre_mode_)
-            {
-                // publish raw left and right images
-                case PROC_MODE_NONE:
-                case PROC_MODE_OFF:
-                    left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_raw", 1);
-                    right_camera_pub_ = image_transport::ImageTransport(right_nh_).advertiseCamera("image_raw", 1);
-
-                    if (do_color_conv_)
-                    {
-                        left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
-                        right_color_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_color", 1);
-                    }
-
-                    break;
-                // publish monochrome rectified left and right images
-                case PROC_MODE_RECTIFIED:
-                    left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_rect", 1);
-                    right_camera_pub_ = image_transport::ImageTransport(right_nh_).advertiseCamera("image_rect", 1);
-
-                    if (do_color_conv_)
-                    {
-                        left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
-                        right_color_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_color", 1);
-                    }
-
-                    break;
-                // publish raw left image and disparity image from the camera
-                case PROC_MODE_DISPARITY_RAW:
-                    left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_raw", 1);
-                    disparity_pub_ = nh_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
-
-                    if (do_color_conv_)
-                    {
-                        left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
-                    }
-
-                    break;
-                // publish monochrome rectified left image and disparity image from the camera
-                case PROC_MODE_DISPARITY:
-                    left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_rect", 1);
-                    disparity_pub_ = nh_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
-                    break;
-                // do nothing for this case
-                case PROC_MODE_TEST:
-                    break;
-            }
-
-            if (do_calc_points_)
-            {
-                cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("points", 1);
-            }
 
             // Start the camera
             stcam_->start();
@@ -389,6 +311,37 @@ public:
 
         std::string tf_prefix = tf::getPrefixParam(local_nh_);
         current_config_.frame_id = tf::resolve(tf_prefix, config.frame_id);
+
+        if (level & driver_base::SensorLevels::RECONFIGURE_CLOSE)
+        {
+            // Get the videre processing mode if available:
+            if (config.videre_mode == std::string("rectified")) { videre_mode_ = PROC_MODE_RECTIFIED; }
+            else if (config.videre_mode == std::string("disparity_raw")) { videre_mode_ = PROC_MODE_DISPARITY_RAW; }
+            else if (config.videre_mode == std::string("disparity")) { videre_mode_ = PROC_MODE_DISPARITY; }
+            else { videre_mode_ = PROC_MODE_NONE; }
+
+            // Check if selected "videre mode" is supported by the camera
+            if (!stcam_->isSTOC && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW))
+            {
+                ROS_WARN("PROC_MODE_DISPARITY and PROC_MODE_DISPARITY_RAW modes are only available on Videre STOC devices");
+                ROS_WARN("Setting mode to PROC_MODE_NONE");
+                videre_mode_ = PROC_MODE_NONE;
+                config.videre_mode = "none";
+            }
+
+            config.calculate_points = config.calculate_points && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW);
+            config.convert_to_color = config.convert_to_color && stcam_->isColor;
+            current_config_.calculate_points = config.calculate_points;
+            current_config_.convert_to_color = config.convert_to_color;
+
+            ROS_INFO("Setting mode to %s", config.videre_mode.c_str());
+            ROS_INFO("Point cloud calculation and publishing is %s", config.calculate_points ? "Enabled" : "Disabled");
+            ROS_INFO("Color conversion from Bayer pattern is %s", config.convert_to_color ? "Enabled" : "Disabled");
+
+            stcam_->setProcMode(videre_mode_);
+            shutdown_topics();
+            advertise_topics();
+        }
 
         stcam_->setExposure(config.exposure, config.exposure_auto);
         stcam_->setGain(config.gain, config.gain_auto);
@@ -422,6 +375,72 @@ public:
             ROS_INFO("STOC: uniqueness threshold is set to %d", config.uniqueness_threshold);
             ROS_INFO("STOC: texture threshold is set to %d", config.texture_threshold);
             ROS_INFO("STOC: horopter is set to %d", config.horopter);
+        }
+    }
+
+    void shutdown_topics()
+    {
+        left_camera_pub_.shutdown();
+        right_camera_pub_.shutdown();
+        left_color_image_pub_.shutdown();
+        right_color_image_pub_.shutdown();
+        disparity_pub_.shutdown();
+        cloud_pub_.shutdown();
+    }
+
+    void advertise_topics()
+    {
+        switch (videre_mode_)
+        {
+            // publish raw left and right images
+            case PROC_MODE_NONE:
+            case PROC_MODE_OFF:
+                left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_raw", 1);
+                right_camera_pub_ = image_transport::ImageTransport(right_nh_).advertiseCamera("image_raw", 1);
+
+                if (current_config_.convert_to_color)
+                {
+                    left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
+                    right_color_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_color", 1);
+                }
+
+                break;
+            // publish monochrome rectified left and right images
+            case PROC_MODE_RECTIFIED:
+                left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_rect", 1);
+                right_camera_pub_ = image_transport::ImageTransport(right_nh_).advertiseCamera("image_rect", 1);
+
+                if (current_config_.convert_to_color)
+                {
+                    left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
+                    right_color_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_color", 1);
+                }
+
+                break;
+            // publish raw left image and disparity image from the camera
+            case PROC_MODE_DISPARITY_RAW:
+                left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_raw", 1);
+                disparity_pub_ = nh_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+
+                if (current_config_.convert_to_color)
+                {
+                    left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
+                }
+
+                break;
+            // publish monochrome rectified left image and disparity image from the camera
+            case PROC_MODE_DISPARITY:
+                left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_rect", 1);
+                disparity_pub_ = nh_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+                break;
+            // do nothing for this case
+            case PROC_MODE_TEST:
+                break;
+        }
+
+        if (current_config_.calculate_points)
+        {
+            cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("points", 1);
         }
     }
 
@@ -471,7 +490,7 @@ public:
 
         timestamp_diag_.tick(timestamp);
 
-        if (do_calc_points_)
+        if (current_config_.calculate_points)
         {
             stcam_->doCalcPts();
 
@@ -515,11 +534,7 @@ public:
 
         left_camera_pub_.publish(left_image_, left_info_);
 
-        if (do_color_conv_)
-        {
-            stcam_->doBayerColorRGB();
-        }
-
+        if (current_config_.convert_to_color) { stcam_->doBayerColorRGB(); }
         cam::ImageData* img = NULL;
 
         switch (videre_mode_)
@@ -530,7 +545,7 @@ public:
             case PROC_MODE_RECTIFIED:
                 right_camera_pub_.publish(right_image_, right_info_);
 
-                if (do_color_conv_)
+                if (current_config_.convert_to_color)
                 {
                     img = stcam_->stIm->imLeft;
                     sensor_msgs::fillImage(left_color_image_, sensor_msgs::image_encodings::RGB8, img->imHeight, img->imWidth, 3 * img->imWidth, img->imColor);
@@ -546,9 +561,9 @@ public:
             // publish left raw image and disparity image, color information is available
             case PROC_MODE_DISPARITY_RAW:
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(disparity_image_); }
-                if (do_calc_points_) { cloud_pub_.publish(cloud_); }
+                if (current_config_.convert_to_color) { cloud_pub_.publish(cloud_); }
 
-                if (do_color_conv_)
+                if (current_config_.convert_to_color)
                 {
                     img = stcam_->stIm->imLeft;
                     sensor_msgs::fillImage(left_color_image_, sensor_msgs::image_encodings::RGB8, img->imHeight, img->imWidth, 3 * img->imWidth, img->imColor);
@@ -559,7 +574,7 @@ public:
             // publish left mono image and disparity image, color information is NOT available
             case PROC_MODE_DISPARITY:
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(disparity_image_); }
-                if (do_calc_points_) { cloud_pub_.publish(cloud_); }
+                if (current_config_.calculate_points) { cloud_pub_.publish(cloud_); }
                 break;
             case PROC_MODE_TEST:
                 break;
@@ -633,4 +648,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
