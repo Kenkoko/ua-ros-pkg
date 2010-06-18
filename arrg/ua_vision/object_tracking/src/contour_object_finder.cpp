@@ -24,10 +24,12 @@ using namespace std;
 class Object
 {
 public:
+    int id;
     double area;
     vector<cv::Point> tracks;
     cv::SparseMat histogram;
     ros::Time timestamp;
+    bool wasFound;
 
 // private:
 //     int h_bins = 30;
@@ -66,16 +68,29 @@ public:
 //      cv::Mat fg_combined_prob;
 //      cv::multiply(fg_prob_img, bp_prob, fg_combined_prob);
 
-
+        wasFound = false;
 
       BOOST_FOREACH(vector<cv::Point> contour, contours)
       {
         cv::Rect bounder = cv::boundingRect(cv::Mat(contour));
-        int cx = (bounder.x + bounder.width) / 2;
-        int cy = (bounder.y + bounder.height) / 2;
+        int cx = bounder.x + bounder.width / 2;
+        int cy = bounder.y + bounder.height / 2;
         cv::Point center(cx, cy);
 
-        if (tracks.back().inside(bounder))
+        cv::Point new_center(0, 0);
+        cv::Point last = tracks.back();
+
+        if (tracks.size() > 1)
+        {
+            cv::Point last2 = tracks[tracks.size() - 2];
+            new_center.x = last.x - last2.x;
+            new_center.y = last.y - last2.y;
+        }
+
+        new_center += last;
+        cv::Rect new_bounder = bounder + cv::Size(bounder.width / 2, bounder.height / 2);
+
+        if (new_center.inside(new_bounder))
         {
           cv::Mat roi = hsv_img(bounder);
 
@@ -96,10 +111,10 @@ public:
           cv::blur(bin_image, bin_image, cv::Size(3, 3));
           cv::multiply(bin_image, real_roi, real_roi);
 
-          std::string name = "bin_image" + boost::lexical_cast<std::string>(timestamp.nsec);
+          //std::string name = "bin_image" + boost::lexical_cast<std::string>(timestamp.nsec);
 
-          cv::namedWindow(name);
-          cv::imshow(name, bin_image);
+          //cv::namedWindow(name);
+          //cv::imshow(name, bin_image);
 
 //          double max;
 //          cv::minMaxLoc(bp_prob, NULL, &max);
@@ -111,7 +126,10 @@ public:
 
 //          cv::findContours(bin_image, my_contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-          ROS_INFO_STREAM("FOUND SOMETHING");
+            ROS_INFO("Object %d found itself at location (%d, %d)", id, tracks.back().x, tracks.back().y);
+            wasFound = true;
+            tracks.push_back(center);
+            break;
         }
       }
     }
@@ -136,6 +154,7 @@ private:
     vector<Object> objects;
 
     double fg_prob_threshold;
+    CvFont font;
 
 public:
     ContourObjectFinder(ros::NodeHandle& nh)
@@ -151,6 +170,8 @@ public:
 
         add_object_service = nh.advertiseService("add_object", &ContourObjectFinder::add_object, this);
         occluded_fg_objects_pub = nh.advertise<sensor_msgs::Image>("occluded_fg_objects", 1);
+
+        cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, .33, .33);
 
         cv::startWindowThread();
     }
@@ -168,6 +189,7 @@ public:
         new_bridge.fromImage(request.histogram);
 
         Object obj;
+        obj.id = objects.size();
         obj.histogram = cv::Mat(new_bridge.toIpl()).clone();
 //        displayHist(obj.histogram, "PLEASE");
         obj.timestamp = request.histogram.header.stamp;
@@ -223,15 +245,22 @@ public:
 //            cv::namedWindow("hsv_img");
 //            cv::imshow("hsv_img", hsv_img);
 
+            IplImage orig_ipl = original;
+
             BOOST_FOREACH(Object obj, objects)
             {
                 obj.subtract_self(fg_prob_img, original, bin_image, hsv_img, contours, fg_loglike_img);
+                if (obj.wasFound)
+                    cvPutText(&orig_ipl, boost::lexical_cast<std::string>(obj.id).c_str(), cvPoint(obj.tracks.back().x, obj.tracks.back().y), &font, CV_RGB(255, 0, 0));
             }
 
             IplImage img_out = fg_loglike_img;
             sensor_msgs::Image::Ptr img_msg_out = sensor_msgs::CvBridge::cvToImgMsg(&img_out);
             img_msg_out->header.stamp = fg_objects_msg->header.stamp;
             occluded_fg_objects_pub.publish(img_msg_out);
+
+            cv::namedWindow("objects");
+            cv::imshow("objects", original);
 
             ROS_INFO_STREAM("END");
         }

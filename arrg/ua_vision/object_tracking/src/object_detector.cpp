@@ -12,8 +12,8 @@
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/CvBridge.h>
 
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <boost/bind.hpp>
 
@@ -53,8 +53,6 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
   cv::Mat original;
   cv::resize(original_big, original, fg_prob_img.size());
 
-//  cout << image_msg->encoding << " " << fg_prob_img.type() << " " << CV_32FC1 << " " << fg_prob_img.size().height << " " << fg_prob_img.size().width << endl;
-
   // Compute the (foreground) probability image under the logistic model
   double w = -1 / 5.0, b = 4.0;
   fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), w, b);
@@ -71,7 +69,7 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
 
 
   cv::Mat bin_image; // = (fg_prob_img > 0.6);
-  cv::threshold(fg_prob_img, bin_image, 0.6, 1.0, cv::THRESH_BINARY);
+  cv::threshold(fg_prob_img, bin_image, 0.6, 255, cv::THRESH_BINARY);
   bin_image.convertTo(bin_image, CV_8UC1);
 
   cv::namedWindow("binary");
@@ -79,6 +77,7 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
 
   std::vector<std::vector<cv::Point> > contours;
   cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+  ROS_INFO("Found %Zu contours", contours.size());
 
   // Make an HSV image
   cv::Mat hsv_img = original.clone();
@@ -108,7 +107,8 @@ void ObjectDetector::image_callback(const sensor_msgs::ImageConstPtr& image_msg,
     // If we have a reasonably large contour, we need to inform the tracker that it
     // is missing an object
     double area = cv::contourArea(cv::Mat(con));
-    if (area > 100)
+    ROS_INFO("Contour %u has area %f", i, area);
+    if (area > 40)
     {
       ROS_INFO_STREAM("FOUND AN OBJECT");
 
