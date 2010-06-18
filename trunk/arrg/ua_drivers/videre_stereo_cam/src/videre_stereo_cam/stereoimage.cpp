@@ -38,8 +38,8 @@
 // classes for stereo images
 //
 
-#include "videre_stereo_cam/stereolib.h"
-#include "videre_stereo_cam/stereoimage.h"
+#include <videre_stereo_cam/stereolib.h>
+#include <videre_stereo_cam/stereoimage.h>
 
 #include <sstream>
 #include <iostream>

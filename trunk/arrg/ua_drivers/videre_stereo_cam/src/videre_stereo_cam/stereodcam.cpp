@@ -39,8 +39,8 @@
 //   StereoDcam - gets stereo images from DCAM (IEEE1394) devices
 //
 
-#include "videre_stereo_cam/stereolib.h"
-#include "videre_stereo_cam/stereodcam.h"
+#include <videre_stereo_cam/stereolib.h>
+#include <videre_stereo_cam/stereodcam.h>
 
 #define PRINTF(a...) printf(a)
 
