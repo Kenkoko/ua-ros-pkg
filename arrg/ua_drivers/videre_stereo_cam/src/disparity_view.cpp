@@ -1,13 +1,13 @@
 /*********************************************************************
 * Software License Agreement (BSD License)
-* 
+*
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
 *   * Neither the name of the Willow Garage nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -32,8 +32,8 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
@@ -63,7 +63,7 @@ static void destroy(GtkWidget *widget, gpointer data)
 namespace enc = sensor_msgs::image_encodings;
 
 // colormap for disparities, RGB
-static unsigned char colormap[768] = 
+static unsigned char colormap[768] =
   { 150, 150, 150,
     107, 0, 12,
     106, 0, 18,
@@ -334,12 +334,12 @@ private:
   image_transport::SubscriberFilter left_sub_;
   message_filters::Subscriber<stereo_msgs::DisparityImage> disparity_sub_;
   message_filters::TimeSynchronizer<sensor_msgs::Image, stereo_msgs::DisparityImage> sync_;
-  
+
   sensor_msgs::ImageConstPtr last_left_;
   sensor_msgs::CvBridge left_bridge_;
   cv::Mat_<cv::Vec3b> disparity_color_;
   boost::mutex image_mutex_;
-  
+
   boost::format filename_format_;
   int save_count_;
 
@@ -354,11 +354,11 @@ public:
     ros::NodeHandle local_nh("~");
     bool autosize;
     local_nh.param("autosize", autosize, true);
-    
+
     std::string format_string;
     local_nh.param("filename_format", format_string, std::string("%s%04i.pgm"));
     filename_format_.parse(format_string);
-    
+
     cvNamedWindow("left", autosize ? CV_WINDOW_AUTOSIZE : 0);
     cvNamedWindow("disparity", autosize ? CV_WINDOW_AUTOSIZE : 0);
     cvSetMouseCallback("left",  &StereoView::mouseCB, this);
@@ -411,7 +411,7 @@ public:
   {
     {
       boost::lock_guard<boost::mutex> guard(image_mutex_);
-    
+
       // Hang on to message pointers for sake of mouse_cb
       last_left_ = left;
     }
@@ -427,7 +427,7 @@ public:
     const cv::Mat_<float> dmat(disparity_msg->image.height, disparity_msg->image.width,
                                (float*)&disparity_msg->image.data[0], disparity_msg->image.step);
     disparity_color_.create(disparity_msg->image.height, disparity_msg->image.width);
-    
+
     for (int row = 0; row < disparity_color_.rows; ++row) {
       const float* d = dmat[row];
       for (int col = 0; col < disparity_color_.cols; ++col) {
@@ -453,12 +453,12 @@ public:
       ROS_WARN("[stereo_view] Couldn't save image, no data!");
     }
   }
-  
+
   static void mouseCB(int event, int x, int y, int flags, void* param)
   {
     if (event != CV_EVENT_LBUTTONDOWN)
       return;
-    
+
     StereoView *sv = (StereoView*)param;
     boost::lock_guard<boost::mutex> guard(sv->image_mutex_);
 
@@ -496,9 +496,9 @@ int main(int argc, char **argv)
              "images and when stereo_image_proc publishes the computed point cloud. stereo_view "
              "may fail to synchronize these topics.");
   }
-  
+
   StereoView view(nh);
-  
+
   ros::spin();
   return 0;
 }

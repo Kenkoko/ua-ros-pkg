@@ -309,6 +309,7 @@ public:
             do_keep_coords_ = true;
 
             local_nh_.param("convert_to_color", do_color_conv_, false);
+            do_color_conv_ = do_color_conv_ && stcam_->isColor;
 
             // Configure camera
             stcam_->setFormat(mode, fps, speed);
