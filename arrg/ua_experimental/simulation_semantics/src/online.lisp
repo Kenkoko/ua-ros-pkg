@@ -50,10 +50,18 @@
     (print-predicates ws))
   (setf *got-ws* nil))
 
-
 (defun one-world-handler (msg)
   (if *we-care*
       (let* ((ws (translate-world-state msg *simulation*)))
         (annotate-with-predicates ws)
         (setf *we-care* nil)
         (setf *got-ws* t))))
+
+;;=========================================================================
+;; New Stuff
+
+(defun get-models () 
+  (let ((names (gazebo-srv:model_names-val (call-service "/gazebo/get_world_properties" 
+                                                         'gazebo-srv:GetWorldProperties))))
+    (setf names (remove "clock" names :test 'string-equal))
+    (setf names (remove "point_white" names :test 'string-equal))))
