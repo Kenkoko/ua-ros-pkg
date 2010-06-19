@@ -143,7 +143,7 @@
 
 (defun int-vel (os last-os)
   (declare (ignore last-os))
-  (first (intended-velocity-of (object-of os))))
+  (intended-velocity-of (object-of os)))
 
 ;;==================================================================
 ;; Differential Self-Predicates

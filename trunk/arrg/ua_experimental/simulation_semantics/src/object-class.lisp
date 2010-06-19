@@ -19,6 +19,9 @@
 ;; Constructor
 
 (defmethod initialize-instance :after ((obj physical-object) &key)
+  (make-xml-list obj))
+
+(defun make-xml-list (obj)
   (setf (xml-string-of obj) 
         (let ((xml-list (list (gen-header obj)
                               (xyz-xml obj)
