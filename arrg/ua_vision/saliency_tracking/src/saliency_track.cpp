@@ -245,8 +245,8 @@ public:
             timer.blockReset(1);
             timer.blockStart(0);
 
-            sensor_msgs::Image saliency_msg = *sensor_msgs::CvBridge::cvToImgMsg(saltracker->salImageFloat);
-            saliency_msg.header.stamp = msg->header.stamp;
+            sensor_msgs::Image::Ptr saliency_msg = sensor_msgs::CvBridge::cvToImgMsg(saltracker->salImageFloat);
+            saliency_msg->header.stamp = msg->header.stamp;
 
             saliency_poi_pub.publish(poi);
             saliency_img_pub.publish(saliency_msg);
