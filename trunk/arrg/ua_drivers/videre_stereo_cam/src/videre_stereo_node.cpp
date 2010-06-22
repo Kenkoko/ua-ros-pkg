@@ -383,10 +383,14 @@ public:
         {
             stcam_->setUniqueThresh(config.uniqueness_threshold);
             stcam_->setTextureThresh(config.texture_threshold);
+            stcam_->setSpeckleSize(config.speckle_size);
+            stcam_->setSpeckleDiff(config.speckle_range);
             stcam_->setHoropter(config.horopter);
 
             ROS_INFO("STOC: uniqueness threshold is set to %d", config.uniqueness_threshold);
             ROS_INFO("STOC: texture threshold is set to %d", config.texture_threshold);
+            ROS_INFO("STOC: speckle size is set to %d", config.speckle_size);
+            ROS_INFO("STOC: speckle range is set to %d", config.speckle_range);
             ROS_INFO("STOC: horopter is set to %d", config.horopter);
         }
     }
