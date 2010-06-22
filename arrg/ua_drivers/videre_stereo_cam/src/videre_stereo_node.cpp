@@ -597,7 +597,7 @@ public:
             // publish left raw image and disparity image, color information is available
             case PROC_MODE_DISPARITY_RAW:
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(disparity_image_); }
-                if (current_config_.convert_to_color) { cloud_pub_.publish(cloud_); }
+                if (current_config_.calculate_points) { cloud_pub_.publish(cloud_); }
 
                 if (current_config_.convert_to_color)
                 {
