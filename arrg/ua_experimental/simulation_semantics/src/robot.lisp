@@ -6,7 +6,8 @@
 
 (define-unit-class robot (thing)
   ((vel-pub :initform nil)
-   (intended-velocity :initform 0))
+   (intended-velocity :initform 0)
+   (xyz :initform '(0 0 0)))
   )
 
 ;;=====================================================================
@@ -25,6 +26,7 @@
   (call-service "gazebo/spawn_gazebo_model" 'gazebo-srv:SpawnModel 
                 :model_name "robot_description"
                 :model_xml (xml-rep r)
+                :initial_pose (get-initial-pose r)
                 :robot_namespace "/"))
 
 ;; TODO: Model name should not be hardcoded
@@ -36,7 +38,18 @@
 (defmethod xml-rep ((r robot))
   (print-xml-string *robot-xml* :pretty t))
 
+(defmethod get-initial-pose ((r robot))
+  (make-message "geometry_msgs/Pose"
+                :position (make-message "geometry_msgs/Point"
+                                     :x (first (xyz-of r))
+                                     :y (second (xyz-of r))
+                                     :z (third (xyz-of r)))))
+
 ;;=====================================================================
+
+;; TODO: Hardcoded for now
+(defmethod model-name ((r robot))
+  "robot_description")
 
 (defmethod move-robot ((r robot) forward-vel rot-vel)
   ;(format t "~a ~a~%" forward-vel rot-vel)

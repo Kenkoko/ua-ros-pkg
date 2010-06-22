@@ -37,7 +37,7 @@
      do (format t "~%~%Time Step ~,3f:~%" (current-time-of sim)) 
        (loop for obj being the hash-keys of (policy-map-of sim) using (hash-value policy)
           if policy do 
-            (funcall policy obj (current-time-of sim) nil)
+            (funcall policy obj (current-time-of sim) *current-state*)
           else do 
             (format t "~a is doing nothing.~%" obj))
        (if last-state 

@@ -16,7 +16,8 @@
                  (:file "predicates" :depends-on ("object-class" "state" "permutations"))
 
                  (:file "simulators" :depends-on ("classes"))
-                 (:file "online" :depends-on ("simulators")))
+                 (:file "online" :depends-on ("simulators"))
+                 (:file "manipulation" :depends-on ("simulators")))
     :depends-on ("roslisp" 
                  "plotter-srv"
                  "simulator_experiments-msg"
