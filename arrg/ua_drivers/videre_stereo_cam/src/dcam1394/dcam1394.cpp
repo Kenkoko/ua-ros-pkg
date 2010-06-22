@@ -506,31 +506,42 @@ dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
       PRINTF("[Dcam] Brightness min/max: [%d,%d]",brightMin,brightMax);
     }
 
-  else
+    else
     {
-      if (hasFeature(DC1394_FEATURE_EXPOSURE))
-	{
-	  getFeatureBoundaries(DC1394_FEATURE_EXPOSURE,expMin,expMax);
-	  PRINTF("[Dcam] Exposure min/max: [%d,%d]",expMin,expMax);
-	}
-      else
-	PRINTF("[Dcam] No exposure feature");
+        if (hasFeature(DC1394_FEATURE_EXPOSURE))
+        {
+            getFeatureBoundaries(DC1394_FEATURE_EXPOSURE,expMin,expMax);
+            PRINTF("[Dcam] Exposure min/max: [%d,%d]",expMin,expMax);
+        }
+        else
+            PRINTF("[Dcam] No exposure feature");
 
-      if (hasFeature(DC1394_FEATURE_GAIN))
-	{
-	  getFeatureBoundaries(DC1394_FEATURE_GAIN,gainMin,gainMax);
-	  PRINTF("[Dcam] Gain min/max: [%d,%d]",gainMin,gainMax);
-	}
-      else
-	PRINTF("[Dcam] No gain feature");
+        if (hasFeature(DC1394_FEATURE_GAIN))
+        {
+            getFeatureBoundaries(DC1394_FEATURE_GAIN,gainMin,gainMax);
+            PRINTF("[Dcam] Gain min/max: [%d,%d]",gainMin,gainMax);
+        }
+        else
+            PRINTF("[Dcam] No gain feature");
 
-      if (hasFeature(DC1394_FEATURE_BRIGHTNESS))
-	{
-	  getFeatureBoundaries(DC1394_FEATURE_BRIGHTNESS,brightMin,brightMax);
-	  PRINTF("[Dcam] Brightness min/max: [%d,%d]",brightMin,brightMax);
-	}
-      else
-	PRINTF("[Dcam] No brightness feature");
+        if (hasFeature(DC1394_FEATURE_BRIGHTNESS))
+        {
+            getFeatureBoundaries(DC1394_FEATURE_BRIGHTNESS,brightMin,brightMax);
+            PRINTF("[Dcam] Brightness min/max: [%d,%d]",brightMin,brightMax);
+        }
+        else
+            PRINTF("[Dcam] No brightness feature");
+
+
+        if (isColor)
+        {
+            getFeatureBoundaries(DC1394_FEATURE_WHITE_BALANCE, whiteBalanceMin, whiteBalanceMax);
+            PRINTF("[Dcam] Whitebalance min/max: [%d,%d]", whiteBalanceMin, whiteBalanceMax);
+        }
+        else
+        {
+            PRINTF("[Dcam] No whitebalnce feature");
+        }
     }
 
   //  dc1394_iso_release_bandwidth(dcCam, 10000000);
@@ -1326,6 +1337,37 @@ dcam::Dcam::setBrightness(int val, bool isauto)
     }
 }
 
+
+void
+dcam::Dcam::setWhiteBalance(int blue_val, int red_val, bool isauto)
+{
+    usleep(50000);
+
+    uint32_t bv;
+    uint32_t rv;
+
+    if (blue_val < 0) { bv = 0; }
+    else { bv = blue_val;}
+
+    if (bv < whiteBalanceMin) { bv = whiteBalanceMin; }
+    if (bv > whiteBalanceMax) { bv = whiteBalanceMax; }
+
+    if (red_val < 0) { rv = 0; }
+    else { rv = red_val;}
+
+    if (rv < whiteBalanceMin) { rv = whiteBalanceMin; }
+    if (rv > whiteBalanceMax) { rv = whiteBalanceMax; }
+
+    if (isauto)
+    {
+        setFeatureMode(DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_AUTO);
+    }
+    else
+    {
+        setFeatureMode(DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_MANUAL);
+        setFeature(DC1394_FEATURE_WHITE_BALANCE, blue_val, red_val);
+    }
+}
 
 
 //
