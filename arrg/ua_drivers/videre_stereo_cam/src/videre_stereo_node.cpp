@@ -170,6 +170,8 @@ private:
     sensor_msgs::Image right_image_;
     sensor_msgs::Image left_color_image_;
     sensor_msgs::Image right_color_image_;
+    sensor_msgs::Image left_mono_image_;
+    sensor_msgs::Image right_mono_image_;
 
     stereo_msgs::DisparityImage disparity_image_;
     sensor_msgs::PointCloud cloud_;
@@ -181,6 +183,8 @@ private:
     image_transport::CameraPublisher right_camera_pub_;
     image_transport::Publisher left_color_image_pub_;
     image_transport::Publisher right_color_image_pub_;
+    image_transport::Publisher left_mono_image_pub_;
+    image_transport::Publisher right_mono_image_pub_;
 
     ros::Publisher disparity_pub_;
     ros::Publisher cloud_pub_;
@@ -401,6 +405,8 @@ public:
         right_camera_pub_.shutdown();
         left_color_image_pub_.shutdown();
         right_color_image_pub_.shutdown();
+        left_mono_image_pub_.shutdown();
+        right_mono_image_pub_.shutdown();
         disparity_pub_.shutdown();
         cloud_pub_.shutdown();
     }
@@ -420,6 +426,8 @@ public:
                 {
                     left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
                     right_color_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_color", 1);
+                    left_mono_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_mono", 1);
+                    right_mono_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_mono", 1);
                 }
 
                 break;
@@ -432,6 +440,8 @@ public:
                 {
                     left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
                     right_color_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_color", 1);
+                    left_mono_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_mono", 1);
+                    right_mono_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_mono", 1);
                 }
 
                 break;
@@ -443,6 +453,7 @@ public:
                 if (current_config_.convert_to_color)
                 {
                     left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
+                    left_mono_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_mono", 1);
                 }
 
                 break;
@@ -563,14 +574,23 @@ public:
 
                 if (current_config_.convert_to_color)
                 {
+                    // color
                     img = stcam_->stIm->imLeft;
-                    sensor_msgs::fillImage(left_color_image_, sensor_msgs::image_encodings::RGB8, img->imHeight, img->imWidth, 3 * img->imWidth, img->imColor);
-
                     img = stcam_->stIm->imRight;
+                    sensor_msgs::fillImage(left_color_image_, sensor_msgs::image_encodings::RGB8, img->imHeight, img->imWidth, 3 * img->imWidth, img->imColor);
                     sensor_msgs::fillImage(right_color_image_, sensor_msgs::image_encodings::RGB8, img->imHeight, img->imWidth, 3 * img->imWidth, img->imColor);
+
+                    // monochrome
+                    img = stcam_->stIm->imLeft;
+                    img = stcam_->stIm->imRight;
+                    sensor_msgs::fillImage(left_mono_image_, sensor_msgs::image_encodings::MONO8, img->imHeight, img->imWidth, 1 * img->imWidth, img->im);
+                    sensor_msgs::fillImage(right_mono_image_, sensor_msgs::image_encodings::MONO8, img->imHeight, img->imWidth, 1 * img->imWidth, img->im);
 
                     left_color_image_pub_.publish(left_color_image_);
                     right_color_image_pub_.publish(right_color_image_);
+
+                    left_mono_image_pub_.publish(left_mono_image_);
+                    right_mono_image_pub_.publish(right_mono_image_);
                 }
 
                 break;
@@ -581,9 +601,15 @@ public:
 
                 if (current_config_.convert_to_color)
                 {
+                    // color
                     img = stcam_->stIm->imLeft;
                     sensor_msgs::fillImage(left_color_image_, sensor_msgs::image_encodings::RGB8, img->imHeight, img->imWidth, 3 * img->imWidth, img->imColor);
                     left_color_image_pub_.publish(left_color_image_);
+
+                    // monochrome
+                    img = stcam_->stIm->imLeft;
+                    sensor_msgs::fillImage(left_mono_image_, sensor_msgs::image_encodings::MONO8, img->imHeight, img->imWidth, 1 * img->imWidth, img->im);
+                    left_mono_image_pub_.publish(left_mono_image_);
                 }
 
                 break;
