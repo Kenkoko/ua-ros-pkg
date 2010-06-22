@@ -144,6 +144,7 @@ The camera will read from the following parameters:
 #include <sensor_msgs/CameraInfo.h>
 #include <stereo_msgs/DisparityImage.h>
 #include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 
 #include <dcam1394/dcam1394.h>
 #include <videre_stereo_cam/stereodcam.h>
@@ -175,6 +176,7 @@ private:
 
     stereo_msgs::DisparityImage disparity_image_;
     sensor_msgs::PointCloud cloud_;
+    sensor_msgs::PointCloud2 cloud2_;
 
     sensor_msgs::CameraInfo left_info_;
     sensor_msgs::CameraInfo right_info_;
@@ -188,6 +190,7 @@ private:
 
     ros::Publisher disparity_pub_;
     ros::Publisher cloud_pub_;
+    ros::Publisher cloud2_pub_;
 
     videre_proc_mode_t videre_mode_;
     bool do_keep_coords_;
@@ -341,8 +344,10 @@ public:
             }
 
             config.calculate_points = config.calculate_points && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW);
+            config.calculate_points2 = config.calculate_points2 && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW);
             config.convert_to_color = config.convert_to_color && stcam_->isColor;
             current_config_.calculate_points = config.calculate_points;
+            current_config_.calculate_points2 = config.calculate_points2;
             current_config_.convert_to_color = config.convert_to_color;
 
             ROS_INFO("Color conversion from Bayer pattern is %s", config.convert_to_color ? "Enabled" : "Disabled");
@@ -351,6 +356,7 @@ public:
             {
                 stcam_->setProcMode(videre_mode_);
                 ROS_INFO("STOC: Point cloud calculation is %s", config.calculate_points ? "Enabled" : "Disabled");
+                ROS_INFO("STOC: Point cloud 2 calculation is %s", config.calculate_points2 ? "Enabled" : "Disabled");
             }
 
             shutdown_topics();
@@ -360,6 +366,7 @@ public:
         stcam_->setExposure(config.exposure, config.exposure_auto);
         stcam_->setGain(config.gain, config.gain_auto);
         stcam_->setBrightness(config.brightness, config.brightness_auto);
+        stcam_->setWhiteBalance(config.whitebalance_blue, config.whitebalance_red, config.whitebalance_auto);
         stcam_->setCompanding(config.companding);
         stcam_->setHDR(config.hdr);
 
@@ -397,6 +404,8 @@ public:
             ROS_INFO("STOC: speckle range is set to %d", config.speckle_range);
             ROS_INFO("STOC: horopter is set to %d", config.horopter);
         }
+
+        ROS_INFO("-------------------------------------------");
     }
 
     void shutdown_topics()
@@ -409,6 +418,7 @@ public:
         right_mono_image_pub_.shutdown();
         disparity_pub_.shutdown();
         cloud_pub_.shutdown();
+        cloud2_pub_.shutdown();
     }
 
     void advertise_topics()
@@ -464,10 +474,8 @@ public:
                 break;
         }
 
-        if (current_config_.calculate_points)
-        {
-            cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("points", 1);
-        }
+        if (current_config_.calculate_points) { cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("points", 1); }
+        if (current_config_.calculate_points2) { cloud2_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points2", 1); }
     }
 
     void cleanup()
@@ -484,6 +492,90 @@ public:
     ~VidereStereoNode()
     {
         cleanup();
+    }
+
+    void calculate_points(ros::Time timestamp)
+    {
+        cloud_.header.stamp = timestamp;
+        cloud_.header.frame_id = current_config_.frame_id;
+        cloud_.points.resize(stcam_->stIm->numPts);
+
+        if (do_keep_coords_) { cloud_.channels.resize(3); }
+        else { cloud_.channels.resize(1); }
+
+        cloud_.channels[0].name = "rgb";
+        cloud_.channels[0].values.resize(stcam_->stIm->numPts);
+
+        if (do_keep_coords_)
+        {
+            cloud_.channels[1].name = "u";
+            cloud_.channels[1].values.resize(stcam_->stIm->numPts);
+            cloud_.channels[2].name = "v";
+            cloud_.channels[2].values.resize(stcam_->stIm->numPts);
+        }
+
+        for (int i = 0; i < stcam_->stIm->numPts; i++)
+        {
+            cloud_.points[i].x = stcam_->stIm->imPts[3*i + 0];
+            cloud_.points[i].y = stcam_->stIm->imPts[3*i + 1];
+            cloud_.points[i].z = stcam_->stIm->imPts[3*i + 2];
+        }
+
+        for (int i = 0; i < stcam_->stIm->numPts; i++)
+        {
+            int rgb = (stcam_->stIm->imPtsColor[3*i] << 16) | (stcam_->stIm->imPtsColor[3*i + 1] << 8) | stcam_->stIm->imPtsColor[3*i + 2];
+            cloud_.channels[0].values[i] = *(float*)(&rgb);
+
+            if (do_keep_coords_)
+            {
+                cloud_.channels[1].values[i] = stcam_->stIm->imCoords[2*i+0];
+                cloud_.channels[2].values[i] = stcam_->stIm->imCoords[2*i+1];
+            }
+        }
+    }
+
+    void calculate_points2(ros::Time timestamp)
+    {
+        cloud2_.header.stamp = timestamp;
+        cloud2_.header.frame_id = current_config_.frame_id;
+
+        // Fill in sparse point cloud message
+        cloud2_.height = stcam_->stIm->imHeight;
+        cloud2_.width  = stcam_->stIm->imWidth;
+        cloud2_.fields.resize (4);
+        cloud2_.fields[0].name = "x";
+        cloud2_.fields[0].offset = 0;
+        cloud2_.fields[0].datatype = sensor_msgs::PointField::FLOAT32;
+        cloud2_.fields[1].name = "y";
+        cloud2_.fields[1].offset = 4;
+        cloud2_.fields[1].datatype = sensor_msgs::PointField::FLOAT32;
+        cloud2_.fields[2].name = "z";
+        cloud2_.fields[2].offset = 8;
+        cloud2_.fields[2].datatype = sensor_msgs::PointField::FLOAT32;
+        cloud2_.fields[3].name = "rgb";
+        cloud2_.fields[3].offset = 12;
+        cloud2_.fields[3].datatype = sensor_msgs::PointField::FLOAT32;
+
+        //cloud2_.is_bigendian = false; ???
+        cloud2_.point_step = 16;
+        cloud2_.row_step = cloud2_.point_step * cloud2_.width;
+        cloud2_.data.resize (cloud2_.row_step * cloud2_.height);
+        cloud2_.is_dense = true;
+
+        for (int i = 0; i < stcam_->stIm->numPts; i++)
+        {
+            // x,y,z,rgba
+            memcpy (&cloud2_.data[i * cloud2_.point_step + 0], &stcam_->stIm->imPts[3*i + 0], sizeof (float));
+            memcpy (&cloud2_.data[i * cloud2_.point_step + 4], &stcam_->stIm->imPts[3*i + 1], sizeof (float));
+            memcpy (&cloud2_.data[i * cloud2_.point_step + 8], &stcam_->stIm->imPts[3*i + 2], sizeof (float));
+        }
+
+        // Fill in color
+        for (int i = 0; i < stcam_->stIm->numPts; i++)
+        {
+            int32_t rgb_packed = (stcam_->stIm->imPtsColor[3*i] << 16) | (stcam_->stIm->imPtsColor[3*i + 1] << 8) | stcam_->stIm->imPtsColor[3*i + 2];
+            memcpy (&cloud2_.data[i * cloud2_.point_step + 12], &rgb_packed, sizeof (int32_t));
+        }
     }
 
     bool serviceCam()
@@ -516,47 +608,9 @@ public:
 
         timestamp_diag_.tick(timestamp);
 
-        if (current_config_.calculate_points)
-        {
-            stcam_->doCalcPts();
-
-            cloud_.header.stamp = timestamp;
-            cloud_.header.frame_id = current_config_.frame_id;
-            cloud_.points.resize(stcam_->stIm->numPts);
-
-            if (do_keep_coords_) { cloud_.channels.resize(3); }
-            else { cloud_.channels.resize(1); }
-
-            cloud_.channels[0].name = "rgb";
-            cloud_.channels[0].values.resize(stcam_->stIm->numPts);
-
-            if (do_keep_coords_)
-            {
-                cloud_.channels[1].name = "u";
-                cloud_.channels[1].values.resize(stcam_->stIm->numPts);
-                cloud_.channels[2].name = "v";
-                cloud_.channels[2].values.resize(stcam_->stIm->numPts);
-            }
-
-            for (int i = 0; i < stcam_->stIm->numPts; i++)
-            {
-                cloud_.points[i].x = stcam_->stIm->imPts[3*i + 0];
-                cloud_.points[i].y = stcam_->stIm->imPts[3*i + 1];
-                cloud_.points[i].z = stcam_->stIm->imPts[3*i + 2];
-            }
-
-            for (int i = 0; i < stcam_->stIm->numPts; i++)
-            {
-                int rgb = (stcam_->stIm->imPtsColor[3*i] << 16) | (stcam_->stIm->imPtsColor[3*i + 1] << 8) | stcam_->stIm->imPtsColor[3*i + 2];
-                cloud_.channels[0].values[i] = *(float*)(&rgb);
-
-                if (do_keep_coords_)
-                {
-                    cloud_.channels[1].values[i] = stcam_->stIm->imCoords[2*i+0];
-                    cloud_.channels[2].values[i] = stcam_->stIm->imCoords[2*i+1];
-                }
-            }
-        }
+        if (current_config_.calculate_points || current_config_.calculate_points2) { stcam_->doCalcPts(); }
+        if (current_config_.calculate_points) { calculate_points(timestamp); }
+        if (current_config_.calculate_points2) { calculate_points2(timestamp); }
 
         left_camera_pub_.publish(left_image_, left_info_);
 
@@ -598,6 +652,7 @@ public:
             case PROC_MODE_DISPARITY_RAW:
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(disparity_image_); }
                 if (current_config_.calculate_points) { cloud_pub_.publish(cloud_); }
+                if (current_config_.calculate_points2) { cloud2_pub_.publish(cloud2_); }
 
                 if (current_config_.convert_to_color)
                 {
@@ -617,6 +672,7 @@ public:
             case PROC_MODE_DISPARITY:
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(disparity_image_); }
                 if (current_config_.calculate_points) { cloud_pub_.publish(cloud_); }
+                if (current_config_.calculate_points2) { cloud2_pub_.publish(cloud2_); }
                 break;
         }
 
