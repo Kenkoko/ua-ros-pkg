@@ -165,10 +165,13 @@ namespace dcam
     virtual void setExposure(int val, bool isauto);
     virtual void setGain(int val, bool isauto);
     virtual void setBrightness(int val, bool isauto);
+    virtual void setWhiteBalance(int blue_val, int red_val, bool isauto);
+
     // feature boundaries
     uint32_t expMax, expMin;
     uint32_t gainMax, gainMin;
     uint32_t brightMax, brightMin;
+    uint32_t whiteBalanceMin, whiteBalanceMax;
     bool setMaxAutoVals(int exp, int gain); // set max for auto gain and exposure algorithm
 
     // low-level register access

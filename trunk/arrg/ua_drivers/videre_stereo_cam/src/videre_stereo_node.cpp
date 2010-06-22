@@ -195,7 +195,7 @@ private:
     int count_;
     double desired_freq_;
 
-    /** dynamic parameter configuration */
+    // dynamic parameter configuration
     typedef videre_stereo_cam::VidereStereoCamConfig Config;
     dynamic_reconfigure::Server<Config> srv_;
     Config current_config_;
@@ -217,8 +217,8 @@ public:
         int num_cams = dcam::numCameras();
 
         // Register a frequency status updater
-        diagnostic_.add( timestamp_diag_ );
-        diagnostic_.add( "Frequency Status", this, &VidereStereoNode::freqStatus );
+        diagnostic_.add(timestamp_diag_);
+        diagnostic_.add("Frequency Status", this, &VidereStereoNode::freqStatus);
 
         // If there is a camera...
         if (num_cams > 0)
@@ -247,12 +247,14 @@ public:
             // Fetch the camera string and send it to the parameter server if people want it (they shouldn't)
             std::string params(stcam_->getParameters());
             local_nh_.setParam("params", params);
-            local_nh_.setParam("exposure_max", (int)stcam_->expMax);
-            local_nh_.setParam("exposure_min", (int)stcam_->expMin);
-            local_nh_.setParam("gain_max", (int)stcam_->gainMax);
-            local_nh_.setParam("gain_min", (int)stcam_->gainMin);
-            local_nh_.setParam("brightness_max", (int)stcam_->brightMax);
-            local_nh_.setParam("brightness_min", (int)stcam_->brightMin);
+            local_nh_.setParam("exposure_max", (int) stcam_->expMax);
+            local_nh_.setParam("exposure_min", (int) stcam_->expMin);
+            local_nh_.setParam("gain_max", (int) stcam_->gainMax);
+            local_nh_.setParam("gain_min", (int) stcam_->gainMin);
+            local_nh_.setParam("brightness_max", (int) stcam_->brightMax);
+            local_nh_.setParam("brightness_min", (int) stcam_->brightMin);
+            local_nh_.setParam("whitebalance_max", (int) stcam_->whiteBalanceMax);
+            local_nh_.setParam("whitebalance_min", (int) stcam_->whiteBalanceMin);
 
             // Get the ISO speed parameter if available
             std::string str_speed;
@@ -315,18 +317,23 @@ public:
         if (level & driver_base::SensorLevels::RECONFIGURE_CLOSE)
         {
             // Get the videre processing mode if available:
-            if (config.videre_mode == std::string("rectified")) { videre_mode_ = PROC_MODE_RECTIFIED; }
+            if (config.videre_mode == std::string("test")) { videre_mode_ = PROC_MODE_TEST; }
+            else if (config.videre_mode == std::string("rectified")) { videre_mode_ = PROC_MODE_RECTIFIED; }
             else if (config.videre_mode == std::string("disparity_raw")) { videre_mode_ = PROC_MODE_DISPARITY_RAW; }
             else if (config.videre_mode == std::string("disparity")) { videre_mode_ = PROC_MODE_DISPARITY; }
             else { videre_mode_ = PROC_MODE_NONE; }
 
             // Check if selected "videre mode" is supported by the camera
-            if (!stcam_->isSTOC && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW))
+            if (!stcam_->isSTOC && videre_mode_ != PROC_MODE_NONE)
             {
-                ROS_WARN("PROC_MODE_DISPARITY and PROC_MODE_DISPARITY_RAW modes are only available on Videre STOC devices");
-                ROS_WARN("Setting mode to PROC_MODE_NONE");
+                ROS_WARN("Videre Modes other than PROC_MODE_NONE are only available on STOC devices");
+                ROS_WARN("Setting mode to none");
                 videre_mode_ = PROC_MODE_NONE;
                 config.videre_mode = "none";
+            }
+            else
+            {
+                ROS_INFO("Setting mode to %s", config.videre_mode.c_str());
             }
 
             config.calculate_points = config.calculate_points && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW);
@@ -334,11 +341,14 @@ public:
             current_config_.calculate_points = config.calculate_points;
             current_config_.convert_to_color = config.convert_to_color;
 
-            ROS_INFO("Setting mode to %s", config.videre_mode.c_str());
-            ROS_INFO("Point cloud calculation and publishing is %s", config.calculate_points ? "Enabled" : "Disabled");
             ROS_INFO("Color conversion from Bayer pattern is %s", config.convert_to_color ? "Enabled" : "Disabled");
 
-            stcam_->setProcMode(videre_mode_);
+            if (stcam_->isSTOC)
+            {
+                stcam_->setProcMode(videre_mode_);
+                ROS_INFO("STOC: Point cloud calculation is %s", config.calculate_points ? "Enabled" : "Disabled");
+            }
+
             shutdown_topics();
             advertise_topics();
         }
@@ -359,6 +369,9 @@ public:
 
         if (config.brightness_auto) { ROS_INFO("Setting Brightness to Auto setting"); }
         else { ROS_INFO("Setting Brightness to %d", config.brightness); }
+
+        if (config.whitebalance_auto) { ROS_INFO("Setting Whitebalance to Auto setting"); }
+        else { ROS_INFO("Setting Whitebalance to (B: %d, R: %d)", config.whitebalance_blue, config.whitebalance_red); }
 
         if (config.companding) { ROS_INFO("Companding mode is Enabled"); }
         else { ROS_INFO("Companding mode is Disabled"); }
@@ -393,8 +406,9 @@ public:
         switch (videre_mode_)
         {
             // publish raw left and right images
-            case PROC_MODE_NONE:
+            case PROC_MODE_TEST:
             case PROC_MODE_OFF:
+            case PROC_MODE_NONE:
                 left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_raw", 1);
                 right_camera_pub_ = image_transport::ImageTransport(right_nh_).advertiseCamera("image_raw", 1);
 
@@ -432,9 +446,6 @@ public:
             case PROC_MODE_DISPARITY:
                 left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_rect", 1);
                 disparity_pub_ = nh_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
-                break;
-            // do nothing for this case
-            case PROC_MODE_TEST:
                 break;
         }
 
@@ -540,8 +551,9 @@ public:
         switch (videre_mode_)
         {
             // Publish left and right raw images, color information is available
-            case PROC_MODE_NONE:
+            case PROC_MODE_TEST:
             case PROC_MODE_OFF:
+            case PROC_MODE_NONE:
             case PROC_MODE_RECTIFIED:
                 right_camera_pub_.publish(right_image_, right_info_);
 
@@ -576,8 +588,6 @@ public:
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(disparity_image_); }
                 if (current_config_.calculate_points) { cloud_pub_.publish(cloud_); }
                 break;
-            case PROC_MODE_TEST:
-                break;
         }
 
         ++count_;
@@ -589,7 +599,7 @@ public:
     {
         status.name = "Frequency Status";
 
-        double freq = (double)(count_)/diagnostic_.getPeriod();
+        double freq = count_ / diagnostic_.getPeriod();
 
         if (freq < (0.9 * desired_freq_))
         {
