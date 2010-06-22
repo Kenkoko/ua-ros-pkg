@@ -65,6 +65,7 @@
      for object = (find-object-by-gazebo-name (simulator_experiments-msg:name-val obj-info))
      when object 
      do (translate-object obj-info object ws)
+       (setf *current-state* ws)
      finally (return ws)))
 
 ;;============================================================                

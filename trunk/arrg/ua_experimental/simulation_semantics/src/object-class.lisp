@@ -8,8 +8,6 @@
    (color :initform "Gazebo/Blue")
    (size :initform 0.2)
    (mass :initform 0.2)
-   (xyz  :initform '(1.0 0 0.2))
-   (rpy :initform '(0 0 0))
    (static? :initform nil)) 
   (:dimensional-values 
    (static? :boolean static?))
@@ -48,17 +46,16 @@
                 :robot_namespace "/"
 ))                
 
+(defmethod remove-from-world ((obj physical-object))
+  (call-service "gazebo/delete_model" 'gazebo-srv:DeleteModel
+                :model_name (model-name obj)))
+
 (defmethod get-initial-pose ((obj physical-object))
   (make-message "geometry_msgs/Pose"
                 :position (make-message "geometry_msgs/Point"
                                      :x (first (xyz-of obj))
                                      :y (second (xyz-of obj))
                                      :z (third (xyz-of obj)))))
-
-(defmethod remove-from-world ((obj physical-object))
-  (call-service "gazebo/delete_model" 'gazebo-srv:DeleteModel
-                :model_name (model-name obj)))
-
 
 ;;======================================================
 ;; Manipulating objects
@@ -126,7 +123,7 @@
 (defmethod get-size-vector ((obj physical-object))
   (if (numberp (size-of obj))
       (list (size-of obj) (size-of obj) (size-of obj))
-      (list (first (size-of obj)) (second (size-of obj)) (third (size-of obj)))))
+      (size-of obj)))
 
 (defmethod get-size-xml ((obj physical-object))
   (cond ((eq (shape-of obj) 'sphere) 

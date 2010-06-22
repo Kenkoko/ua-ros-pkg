@@ -49,6 +49,12 @@
 (defmethod initialize-instance :after ((ws world-state) &key)
   (annotate-with-predicates ws))
 
+(defmethod get-object-state ((ws world-state) (obj thing))
+  (loop with result = nil
+     for candidate in (objects-of ws)
+     when (eq (object-of candidate) obj)
+     do (setf result candidate)
+     finally (return result)))
 
 ;;===========================================================
 
@@ -113,6 +119,61 @@
                  :y (geometry_msgs-msg:y-val msg)
                  :z (geometry_msgs-msg:z-val msg)
                  :w (geometry_msgs-msg:w-val msg)))
+
+;; http://sunday-lab.blogspot.com/2008/04/get-pitch-yaw-roll-from-quaternion.html
+
+(defmethod get-yaw ((this quaternion))
+  (atan (* 2 (+ (* (x-of this) (y-of this))
+                (* (w-of this) (z-of this))))
+        (+ (expt (w-of this) 2)
+           (expt (x-of this) 2)
+           (- (expt (y-of this) 2))
+           (- (expt (z-of this) 2)))))
+
+(defmethod get-pitch ((this quaternion))
+  (atan (* 2 (+ (* (y-of this) (z-of this))
+                (* (w-of this) (x-of this))))
+        (+ (expt (w-of this) 2)
+           (- (expt (x-of this) 2))
+           (- (expt (y-of this) 2))
+           (expt (z-of this) 2))))
+
+(defmethod get-roll ((this quaternion))
+  (asin (* -2 (- (* (x-of this) (z-of this))
+                 (* (w-of this) (y-of this))))))
+
+;; Convert (-pi,pi) to (0,2*pi)
+(defun shift-angle (theta)
+  (if (< theta 0)
+      (+ theta (* 2 pi))
+      (mod theta (* 2 pi))))
+
+;; Convert (0,2*pi) to (-pi, pi)
+(defun unshift-angle (theta)
+  (if (< theta 0)
+      (print "WTF MATE"))
+  (if (> theta pi)
+      (- theta (* 2 pi))
+      theta))
+
+(defmethod get-abs-yaw ((this quaternion))
+  (shift-angle (get-yaw this)))
+
+;; Returns a shifted angle
+(defun point-at-angle (my-x my-y other-x other-y)
+  (shift-angle (atan (- other-y my-y) (- other-x my-x))))
+
+(defun point-at-natural (my-x my-y other-x other-y)
+  (unshift-angle (shift-angle (atan (- other-y my-y) (- other-x my-x)))))
+
+;; left-of is positive, right-of is negative
+;; Expects an abs-yaw
+(defun relative-angle (my-yaw my-x my-y other-x other-y)
+  (let* ((angle (- (point-at-angle my-x my-y other-x other-y)
+                   my-yaw)))
+    (unshift-angle (if (< angle 0)
+                       (+ (* 2 pi) angle)
+                       angle))))
 
 ;;===========================================================
 

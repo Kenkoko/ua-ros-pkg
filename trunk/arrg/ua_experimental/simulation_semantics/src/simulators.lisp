@@ -307,5 +307,41 @@
   (declare (ignore ws)
            (ignore sim-time))
   (if (eq 'robot (class-name (class-of obj)))
-      (move-robot obj 0.1 0.0)
+      (move-robot obj 0.5 0.0)
       (apply-force obj '(200 0 0) 0.1)))
+
+(defun seek-goal-policy (obj sim-time ws)
+  (declare (ignore sim-time))
+  (if ws
+      (if (eq 'robot (class-name (class-of obj)))
+          (let* ((r-pos (position-of (pose-of (get-object-state ws obj))))
+                 (goal '(6.0 0.0)))
+            (if (> (x-of r-pos) (first goal))
+                (move-robot obj 0.0 0.0)
+                (move-robot obj 0.5 (point-at-natural (x-of r-pos) (y-of r-pos)
+                                                      (first goal) (second goal)))))
+          (apply-force obj '(200 0 0) 0.1))))
+  
+;;=======================================================
+
+(defun clear-simulations ()
+  (loop for sim in (find-instances-of-class 'simulator)
+     for si = (find-space-instance-by-path (list (instance-name-of sim)))
+     when si do (delete-space-instance si)))
+
+;;=======================================================
+
+(defun test-script ()
+  (with-ros-node ("simulators")
+    ;(get-ready)
+    (subscribe-to-world-state)
+
+    (lower-robot)
+    (test-simulator (find-instance-by-name 'block 'simulator))
+    (test-simulator (find-instance-by-name 'free 'simulator))
+    
+    (raise-robot)
+    (open-gap)
+    (test-simulator (find-instance-by-name 'gap 'simulator))
+    (close-gap)
+    (test-simulator (find-instance-by-name 'gap 'simulator))))
