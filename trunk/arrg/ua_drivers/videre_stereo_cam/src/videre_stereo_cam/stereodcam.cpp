@@ -165,8 +165,9 @@ StereoDcam::getImage(int ms)	// gets the next image, with timeout
 			    &stIm->imRight->imRaw, &stIm->imRight->imRawSize);
 	  stIm->imLeft->imRawType = COLOR_CODING_BAYER8_GRBG;
 	  stIm->imRight->imRawType = COLOR_CODING_BAYER8_GRBG;
+/*      printf("will do bayer to color here\n");
 	  stIm->imLeft->doBayerColorRGB();
-	  stIm->imRight->doBayerColorRGB();
+	  stIm->imRight->doBayerColorRGB();*/
 	  break;
 
 
