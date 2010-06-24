@@ -321,105 +321,13 @@ StereoData::doBayerMono()
 // includes post-filtering
 //
 
-bool
-StereoData::doDisparity(stereo_algorithm_t alg)
+bool StereoData::doDisparity()
 {
-  uint8_t *lim, *rim;
+    // first do any rectification necessary
+    doRectify();
 
-  // first do any rectification necessary
-  doRectify();
-
-  // check if disparity is already present
-  if (hasDisparity)
-    return true;
-
-  // check if the rectified images are present
-  if (imLeft->imRectType == COLOR_CODING_NONE ||
-      imRight->imRectType == COLOR_CODING_NONE)
-    return false;
-
-  // variables
-  lim = (uint8_t *)imLeft->imRect;
-  rim = (uint8_t *)imRight->imRect;
-  int xim = imWidth;
-  int yim = imHeight;
-
-  // some parameters
-  int ftzero = 31;		// max 31 cutoff for prefilter value (31 default)
-  int dlen   = numDisp;		// number of disparities
-  int corr   = corrSize;	// correlation window size
-  int tthresh = textureThresh;	// texture threshold
-  int uthresh = uniqueThresh;	// uniqueness threshold, percent
-  int sthresh = smoothThresh;
-  bool unique_c = unique_check;
-
-  // printf("Unique check: %d\r", unique_check);
-
-  // allocate buffers
-  // TODO: make these consistent with current values
-  if (imDispSize < xim*yim*2)
-    {
-      MEMFREE(imDisp);
-      imDispSize = xim*yim*2;
-      imDisp = (int16_t *)MEMALIGN(xim*yim*2);
-    }
-
-  if (!buf || yim*dlen*(corr+5) > maxyim*maxdlen*(maxcorr+5))
-    buf  = (uint8_t *)MEMALIGN(yim*2*dlen*(corr+5)); // local storage for the algorithm
-  if (!flim || xim*yim > maxxim*maxyim)
-    flim = (uint8_t *)MEMALIGN(xim*yim); // feature image
-  if (!frim || xim*yim > maxxim*maxyim)
-    frim = (uint8_t *)MEMALIGN(xim*yim); // feature image
-  if (xim > maxxim) maxxim = xim;
-  if (yim > maxyim) maxyim = yim;
-  if (dlen > maxdlen) maxdlen = dlen;
-  if (corr > maxcorr) maxcorr = corr;
-
-  // prefilter
-  do_prefilter(lim, flim, xim, yim, ftzero, buf);
-  do_prefilter(rim, frim, xim, yim, ftzero, buf);
-
-  // clear disparity buffer - do we need to do this???
-  memset(imDisp, 0, xim*yim*sizeof(int16_t));
-
-
-  // use appropriate algorithm
-  switch(alg){
-	case NORMAL_ALGORITHM:
-  		do_stereo(flim, frim, imDisp, NULL, xim, yim,
-	    	ftzero, corr, corr, dlen, tthresh, uthresh, buf);
-	break;
-	case SCANLINE_ALGORITHM:
-		do_stereo_so(flim, frim, imDisp, xim, yim,
-	    	ftzero, corr, corr, dlen, tthresh, uthresh, sthresh, unique_c);
-	break;
-	case DP_ALGORITHM:
-		do_stereo_dp(flim, frim, imDisp, xim, yim,
-	    	ftzero, corr, corr, dlen, tthresh, uthresh, sthresh, unique_c);
-	break;
-	case MW_ALGORITHM:
-		do_stereo_mw(flim, frim, imDisp, xim, yim,
-		   ftzero, corr, corr, dlen, tthresh, uthresh, unique_c);
-	break;
-	case LS_ALGORITHM:
-		do_stereo_ls(flim, frim, imDisp, xim, yim,
-		    ftzero, corr, corr, dlen, tthresh, uthresh, sthresh, unique_c);
-	break;
-	case NCC_ALGORITHM:
-		do_stereo_ncc(flim, frim, imDisp, xim, yim,
-	    	ftzero, corr, corr, dlen, tthresh, uthresh, unique_c);
-	break;
-
-	default:
-	PRINTF("No algorithm has been selected..sorry!\n");
-  }
-
-
-
-  hasDisparity = true;
-
-  doSpeckle();
-  return true;
+    // check if disparity is already present
+    if (hasDisparity) { return true; }
 }
 
 
@@ -429,26 +337,29 @@ StereoData::doDisparity(stereo_algorithm_t alg)
 // useful for STOC processing, where it's not done on-camera
 //
 
-bool
-StereoData::doSpeckle()
+bool StereoData::doSpeckle()
 {
-  if (!hasDisparity) return false;
+    if (!hasDisparity) { return false; }
 
-  // speckle filter
-  if (speckleRegionSize > 0)
+    // speckle filter
+    if (speckleRegionSize > 0)
     {
-      int xim = imWidth;
-      int yim = imHeight;
-      if (!rbuf)
-	rbuf  = (uint8_t *)malloc(xim*yim); // local storage for the algorithm
-      if (!lbuf)
-	lbuf = (uint32_t *)malloc(xim*yim*sizeof(uint32_t)); // local storage for the algorithm
-      if (!wbuf)
-	wbuf = (uint32_t *)malloc(xim*yim*sizeof(uint32_t)); // local storage for the algorithm
-      do_speckle(imDisp, 0, xim, yim, speckleDiff, speckleRegionSize,
-		 lbuf, wbuf, rbuf);
+        int xim = imWidth;
+        int yim = imHeight;
+
+        // local storage for the algorithm
+        if (!rbuf) { rbuf = (uint8_t*) malloc(xim * yim); }
+
+        // local storage for the algorithm
+        if (!lbuf) { lbuf = (uint32_t*) malloc(xim * yim * sizeof(uint32_t)); }
+
+        // local storage for the algorithm
+        if (!wbuf) { wbuf = (uint32_t*) malloc(xim * yim * sizeof(uint32_t)); }
+
+        do_speckle(imDisp, 0, xim, yim, speckleDiff, speckleRegionSize, lbuf, wbuf, rbuf);
     }
-  return true;
+
+    return true;
 }
 
 

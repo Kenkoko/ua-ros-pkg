@@ -105,7 +105,7 @@ namespace dcam
     void doBayerColorRGB();
     void doBayerMono();
     bool doRectify();
-    bool doDisparity(stereo_algorithm_t alg=NORMAL_ALGORITHM);
+    bool doDisparity();
     bool doCalcPts();
 
   protected:

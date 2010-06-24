@@ -123,17 +123,6 @@ typedef enum {
 #endif
 
 
-typedef enum
-{
-  NORMAL_ALGORITHM,
-  SCANLINE_ALGORITHM,
-  DP_ALGORITHM,
-  MW_ALGORITHM,
-  LS_ALGORITHM,
-  NCC_ALGORITHM
-} stereo_algorithm_t;
-
-
 //
 // structured points in a 4xN point array
 //
@@ -177,19 +166,29 @@ namespace cam
     // the Size info gives the buffer size, for allocation logic
     // NOTE: all data buffers should be 16-byte aligned
     // @todo: can we just use IplImages for these...
-    uint8_t *imRaw;		// raw image
-    color_coding_t imRawType;	// type of raw data
+
+    // raw image
+    uint8_t *imRaw;
+    color_coding_t imRawType;
     size_t imRawSize;
-    uint8_t *im;		// monochrome image
+
+    // monochrome image
+    uint8_t *im;
     color_coding_t imType;
     size_t imSize;
-    uint8_t *imColor;		// color image, always RGB32
+
+    // color image, always RGB32
+    uint8_t *imColor;
     color_coding_t imColorType;
     size_t imColorSize;
-    uint8_t *imRect;		// rectified monochrome image
+
+    // rectified monochrome image
+    uint8_t *imRect;
     color_coding_t imRectType;
     size_t imRectSize;
-    uint8_t *imRectColor;	// rectified color image, always RGB32
+
+    // rectified color image, always RGB32
+    uint8_t *imRectColor;
     color_coding_t imRectColorType;
     size_t imRectColorSize;
 
