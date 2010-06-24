@@ -162,7 +162,7 @@ public:
         //create publishers for odometry and battery information
         odom_pub_ = node_.advertise<nav_msgs::Odometry>("odom", 1);
         battery_pub_ = node_.advertise<pr2_msgs::PowerState>("battery_state", 1);
-        if (enable_ir) { node_.advertise<std_msgs::Float64>("ir", 1); } // TODO: create custom ir message
+        if (enable_ir) { ir_pub_ = node_.advertise<std_msgs::Float64>("ir", 1); } // TODO: create custom ir message
 
         // The Player address that will be assigned to this device.  The format
         // is interface:index.  The interface must match what the driver is
