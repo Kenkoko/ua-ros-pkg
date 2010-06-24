@@ -328,6 +328,8 @@ bool StereoData::doDisparity()
 
     // check if disparity is already present
     if (hasDisparity) { return true; }
+
+    return false;
 }
 
 
