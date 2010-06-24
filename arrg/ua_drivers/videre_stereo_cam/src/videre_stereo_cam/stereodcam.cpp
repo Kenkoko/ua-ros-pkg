@@ -193,7 +193,7 @@ StereoDcam::getImage(int ms)	// gets the next image, with timeout
 	  stereoDeinterlace2(camIm->imRaw, &stIm->imLeft->imRaw, &stIm->imLeft->imRawSize,
 			    &stIm->imDisp, &stIm->imDispSize);
 	  stIm->imLeft->imRawType = COLOR_CODING_BAYER8_GRBG;
-	  stIm->imLeft->doBayerColorRGB();
+	  //stIm->imLeft->doBayerColorRGB();
 	  stIm->hasDisparity = true;
 	  stIm->doSpeckle();	// apply speckle filter
 	  break;

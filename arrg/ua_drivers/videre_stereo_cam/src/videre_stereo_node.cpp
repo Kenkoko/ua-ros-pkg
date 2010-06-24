@@ -608,13 +608,13 @@ public:
 
         timestamp_diag_.tick(timestamp);
 
+        if (current_config_.convert_to_color) { stcam_->doBayerColorRGB(); }
         if (current_config_.calculate_points || current_config_.calculate_points2) { stcam_->doCalcPts(); }
         if (current_config_.calculate_points) { calculate_points(timestamp); }
         if (current_config_.calculate_points2) { calculate_points2(timestamp); }
 
         left_camera_pub_.publish(left_image_, left_info_);
 
-        if (current_config_.convert_to_color) { stcam_->doBayerColorRGB(); }
         cam::ImageData* img = NULL;
 
         switch (videre_mode_)
