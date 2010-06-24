@@ -49,8 +49,7 @@ rosbuild_add_compile_flags(dcam1394 "-msse2 -mpreferred-stack-boundary=4")
 target_link_libraries(dcam1394 dc1394)
 
 rosbuild_add_executable(videre_stereo_node src/videre_stereo_node.cpp
-                                           src/videre_stereo_cam/stereolib.c
-                                           src/videre_stereo_cam/stereolib2.cpp
+                                           src/videre_stereo_cam/stereolib.cpp
                                            src/videre_stereo_cam/stereodcam.cpp
                                            src/videre_stereo_cam/stereoimage.cpp)
 

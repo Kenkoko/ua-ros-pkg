@@ -82,7 +82,7 @@ namespace cam
 
     // disparity and rectification functions
     bool doRectify();		// rectify images
-    bool doDisparity(stereo_algorithm_t alg=NORMAL_ALGORITHM); // calculate disparity image
+    bool doDisparity(); // calculate disparity image
     bool doSpeckle();		// speckle filter post-processing, automatically applied by doDisparity
     bool doCalcPts(bool isArray = false); // calculate 3D points
     bool calcPt(int x, int y, float *fx, float *fy, float *fz); // single point

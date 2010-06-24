@@ -455,9 +455,9 @@ StereoDcam::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1,
 
 // visible calls
 void StereoDcam::doBayerColorRGB() { stIm->doBayerColorRGB(); }
-void StereoDcam::doBayerMono() { stIm->doBayerColorRGB(); }
+void StereoDcam::doBayerMono() { stIm->doBayerMono(); }
 
-bool StereoDcam::doDisparity(stereo_algorithm_t alg) { return stIm->doDisparity(alg); }
+bool StereoDcam::doDisparity() { return stIm->doDisparity(); }
 bool StereoDcam::doRectify() { return stIm->doRectify(); }
 bool StereoDcam::doCalcPts() { return stIm->doCalcPts(); }
 
