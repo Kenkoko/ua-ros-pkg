@@ -26,6 +26,8 @@ class Object
 public:
     int id;
     double area;
+    double alpha;
+    double beta;
     vector<cv::Point> tracks;
     cv::SparseMat histogram;
     ros::Time timestamp;
@@ -73,9 +75,6 @@ public:
       BOOST_FOREACH(vector<cv::Point> contour, contours)
       {
         cv::Rect bounder = cv::boundingRect(cv::Mat(contour));
-        int cx = bounder.x + bounder.width / 2;
-        int cy = bounder.y + bounder.height / 2;
-        cv::Point center(cx, cy);
 
         cv::Point new_center(0, 0);
         cv::Point last = tracks.back();
@@ -100,36 +99,61 @@ public:
 
           // Convert the 0-255 "probabilities" to float probs (might be able to hack this away later)
           cv::Mat bp_prob;
-          back_project.convertTo(bp_prob, CV_32FC1, 1.0/255.0);
-
-          std::vector<std::vector<cv::Point> > my_contours;
-          cv::Mat bin_image = (bp_prob > 0.0);
+          back_project.convertTo(bp_prob, CV_32FC1, 1.0/255.0, 1.0/255.0);
 
           cv::Mat real_roi = fg_loglike_img(bounder);
-          bin_image.convertTo(bin_image, CV_32FC1);
-          bin_image.convertTo(bin_image, CV_32FC1, -1, 1);
-          cv::blur(bin_image, bin_image, cv::Size(3, 3));
-          cv::multiply(bin_image, real_roi, real_roi);
 
-          //std::string name = "bin_image" + boost::lexical_cast<std::string>(timestamp.nsec);
+          cv::log(bp_prob, bp_prob);
+          cv::add(bp_prob, real_roi, bp_prob);
 
-          //cv::namedWindow(name);
-          //cv::imshow(name, bin_image);
+          double min, max;
+          cv::minMaxLoc(bp_prob, &min, &max);
+          ROS_INFO("min = %f, max = %f", min, max);
 
-//          double max;
-//          cv::minMaxLoc(bp_prob, NULL, &max);
-//          ROS_INFO_STREAM("===========");
-//          ROS_INFO_STREAM(max);
+          bp_prob.convertTo(bp_prob, bp_prob.type(), -beta, -alpha);
+          cv::exp(bp_prob, bp_prob);
+          bp_prob.convertTo(bp_prob, bp_prob.type(), 1, 1);
+          cv::divide(1.0, bp_prob, bp_prob);
 
-//          cv::namedWindow("bp_prob");
-//          cv::imshow("bp_prob", bp_prob);
+          cv::Mat bin_image;
+          cv::threshold(bp_prob, bin_image, 0.6, 255, cv::THRESH_BINARY);
+          bin_image.convertTo(bin_image, CV_8UC1);
 
-//          cv::findContours(bin_image, my_contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+          std::vector<std::vector<cv::Point> > contours;
+          cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+          ROS_INFO("Found %Zu contours", contours.size());
 
-            ROS_INFO("Object %d found itself at location (%d, %d)", id, tracks.back().x, tracks.back().y);
-            wasFound = true;
-            tracks.push_back(center);
-            break;
+          for (uint i = 0; i < contours.size(); ++i)
+          {
+              std::vector<cv::Point> con = contours[i];
+
+              // If we have a reasonably large contour, we need to inform the tracker that it
+              // is missing an object
+              double area = cv::contourArea(cv::Mat(con));
+              ROS_INFO("Contour %u has area %f", i, area);
+              if (area > 20)
+              {
+                bin_image.convertTo(bin_image, CV_32FC1);
+                bin_image.convertTo(bin_image, CV_32FC1, -1, 1);
+                cv::blur(bin_image, bin_image, cv::Size(3, 3));
+                cv::multiply(bin_image, real_roi, real_roi);
+
+                cv::namedWindow("obj_" + boost::lexical_cast<string>(id));
+                cv::imshow("obj_" + boost::lexical_cast<string>(id), bp_prob);
+
+                ROS_INFO("Object %d found itself at location (%d, %d)", id, tracks.back().x, tracks.back().y);
+                wasFound = true;
+
+                cv::Rect b = cv::boundingRect(cv::Mat(con));
+                int cx = b.x + b.width / 2 + bounder.x;
+                int cy = b.y + b.height / 2 + bounder.y;
+                cv::Point center(cx, cy);
+
+                tracks.push_back(center);
+              }
+          }
+
+          if (contours.size() > 0) break;
         }
       }
     }
@@ -183,7 +207,7 @@ public:
 
     bool add_object(object_tracking::AddObject::Request& request, object_tracking::AddObject::Response& response)
     {
-        //boost::mutex::scoped_lock lock(obj_mutex);
+        boost::mutex::scoped_lock lock(obj_mutex);
 //        new_obj_bridge.fromImage(request.histogram);
         sensor_msgs::CvBridge new_bridge;
         new_bridge.fromImage(request.histogram);
@@ -197,6 +221,8 @@ public:
         cv::Point center;
         center.x = request.center.x;
         center.y = request.center.y;
+        obj.alpha = request.alpha;
+        obj.beta = request.beta;
         obj.tracks.push_back(center);
 
         objects.push_back(obj);
@@ -229,8 +255,8 @@ public:
             fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), 1, 1);
             cv::divide(1.0, fg_prob_img, fg_prob_img);
 
-//            cv::namedWindow("fg_prob_img");
-//            cv::imshow("fg_prob_img", fg_prob_img);
+            cv::namedWindow("fg_prob_img");
+            cv::imshow("fg_prob_img", fg_prob_img);
 
             // Find contours for all the blobs found by background subtraction
             std::vector<std::vector<cv::Point> > contours;
@@ -250,8 +276,19 @@ public:
             BOOST_FOREACH(Object obj, objects)
             {
                 obj.subtract_self(fg_prob_img, original, bin_image, hsv_img, contours, fg_loglike_img);
+
                 if (obj.wasFound)
+                {
                     cvPutText(&orig_ipl, boost::lexical_cast<std::string>(obj.id).c_str(), cvPoint(obj.tracks.back().x, obj.tracks.back().y), &font, CV_RGB(255, 0, 0));
+
+                    if (obj.tracks.size() > 1)
+                    {
+                        for (int i = 1; i < obj.tracks.size(); ++i)
+                        {
+                            cv::line(original, obj.tracks[i-1], obj.tracks[i], CV_RGB(255, 0, 0));
+                        }
+                    }
+                }
             }
 
             IplImage img_out = fg_loglike_img;
