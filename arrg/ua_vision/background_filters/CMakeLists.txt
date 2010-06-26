@@ -23,6 +23,7 @@ rosbuild_add_executable(overhead_filter src/overhead_filter.cpp)
 rosbuild_add_executable(background_averager src/background_averager.cpp)
 rosbuild_add_executable(background_subtractor src/background_subtractor.cpp)
 rosbuild_add_executable(object_tracker src/object_tracker.cpp)
+rosbuild_add_executable(ground_filter src/ground_filter.cpp)
 
 # BAD
 rosbuild_add_executable(background_sub_rewrite src/background_sub_rewrite.cpp)
