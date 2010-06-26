@@ -26,6 +26,8 @@
 
     <depend package="nmpt"/>
 
+    <depend package="pcl"/>
+
     <export>
         <cpp cflags="-I${prefix}/include `rosboost-cfg --cflags`" lflags=""/>
         <filters plugin="${prefix}/config/background_filters.xml" />
