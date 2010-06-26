@@ -178,9 +178,7 @@ private:
     sensor_msgs::PointCloud cloud_;
     sensor_msgs::PointCloud2 cloud2_;
 
-    sensor_msgs::CameraInfo left_info_;
-    sensor_msgs::CameraInfo right_info_;
-
+    image_geometry::StereoCameraModel stereo_model_;
     image_transport::CameraPublisher left_camera_pub_;
     image_transport::CameraPublisher right_camera_pub_;
     image_transport::Publisher left_color_image_pub_;
@@ -494,10 +492,8 @@ public:
         cleanup();
     }
 
-    void calculate_points(ros::Time timestamp)
+    void calculate_points()
     {
-        cloud_.header.stamp = timestamp;
-        cloud_.header.frame_id = current_config_.frame_id;
         cloud_.points.resize(stcam_->stIm->numPts);
 
         if (do_keep_coords_) { cloud_.channels.resize(3); }
@@ -534,11 +530,8 @@ public:
         }
     }
 
-    void calculate_points2(ros::Time timestamp)
+    void calculate_points2()
     {
-        cloud2_.header.stamp = timestamp;
-        cloud2_.header.frame_id = current_config_.frame_id;
-
         // Fill in sparse point cloud message
         cloud2_.height = stcam_->stIm->imHeight;
         cloud2_.width  = stcam_->stIm->imWidth;
@@ -578,6 +571,60 @@ public:
         }
     }
 
+    void fillHeaders()
+    {
+        ros::Time timestamp = ros::Time::now();
+
+        //-------------- populate header timestamps -------------------------//
+
+        // camera infos
+        stcam_->stIm->imLeft->cam_info.header.stamp = timestamp;
+        stcam_->stIm->imRight->cam_info.header.stamp = timestamp;
+
+        // raw images
+        left_image_.header.stamp = timestamp;
+        right_image_.header.stamp = timestamp;
+
+        // mono images
+        left_mono_image_.header.stamp = timestamp;
+        right_mono_image_.header.stamp = timestamp;
+
+        // color images
+        left_color_image_.header.stamp = timestamp;
+        right_color_image_.header.stamp = timestamp;
+
+        // disparity and clouds
+        disparity_image_.header.stamp = timestamp;
+        cloud_.header.stamp = timestamp;
+        cloud2_.header.stamp = timestamp;
+
+        // diagnostics
+        timestamp_diag_.tick(timestamp);
+
+        //-------------- populate header frame_ids ---------------------------//
+
+        // camera infos
+        stcam_->stIm->imLeft->cam_info.header.frame_id = current_config_.frame_id;
+        stcam_->stIm->imRight->cam_info.header.frame_id = current_config_.frame_id;
+
+        // raw images
+        left_image_.header.frame_id = current_config_.frame_id;
+        right_image_.header.frame_id = current_config_.frame_id;
+
+        // mono images
+        left_mono_image_.header.frame_id = current_config_.frame_id;
+        right_mono_image_.header.frame_id = current_config_.frame_id;
+
+        // color images
+        left_color_image_.header.frame_id = current_config_.frame_id;
+        right_color_image_.header.frame_id = current_config_.frame_id;
+
+        // disparity and clouds
+        disparity_image_.header.frame_id = current_config_.frame_id;
+        cloud_.header.frame_id = current_config_.frame_id;
+        cloud2_.header.frame_id = current_config_.frame_id;
+    }
+
     bool serviceCam()
     {
         if (!stcam_->getImage(100 + (int)(1.0/desired_freq_ * 1000)))
@@ -586,36 +633,21 @@ public:
             return false;
         }
 
-        cam_bridge::StereoDataToRawStereo(stcam_->stIm,
-                                          left_image_, right_image_,
-                                          left_info_, right_info_,
-                                          disparity_image_);
+        cam::ImageData* img_left = stcam_->stIm->imLeft;
+        cam::ImageData* img_right = stcam_->stIm->imRight;
 
-        ros::Time timestamp = left_image_.header.stamp;
+        stereo_model_.fromCameraInfo(img_left->cam_info, img_right->cam_info);
+        fillHeaders();
 
-        left_image_.header.frame_id = current_config_.frame_id;
-        right_image_.header.frame_id = current_config_.frame_id;
-
-        left_color_image_.header.frame_id = current_config_.frame_id;
-        left_color_image_.header.stamp = timestamp;
-        right_color_image_.header.frame_id = current_config_.frame_id;
-        right_color_image_.header.stamp = timestamp;
-
-        left_info_.header.frame_id = current_config_.frame_id;
-        right_info_.header.frame_id = current_config_.frame_id;
-
-        disparity_image_.header.frame_id = current_config_.frame_id;
-
-        timestamp_diag_.tick(timestamp);
+        cam_bridge::StereoDataToRawStereo(stcam_->stIm, stereo_model_,
+                                          left_image_, right_image_, disparity_image_);
 
         if (current_config_.convert_to_color) { stcam_->doBayerColorRGB(); }
         if (current_config_.calculate_points || current_config_.calculate_points2) { stcam_->doCalcPts(); }
-        if (current_config_.calculate_points) { calculate_points(timestamp); }
-        if (current_config_.calculate_points2) { calculate_points2(timestamp); }
+        if (current_config_.calculate_points) { calculate_points(); }
+        if (current_config_.calculate_points2) { calculate_points2(); }
 
-        left_camera_pub_.publish(left_image_, left_info_);
-
-        cam::ImageData* img = NULL;
+        left_camera_pub_.publish(left_image_, img_left->cam_info);
 
         switch (videre_mode_)
         {
@@ -624,21 +656,17 @@ public:
             case PROC_MODE_OFF:
             case PROC_MODE_NONE:
             case PROC_MODE_RECTIFIED:
-                right_camera_pub_.publish(right_image_, right_info_);
+                right_camera_pub_.publish(right_image_, img_right->cam_info);
 
                 if (current_config_.convert_to_color)
                 {
                     // color
-                    img = stcam_->stIm->imLeft;
-                    img = stcam_->stIm->imRight;
-                    sensor_msgs::fillImage(left_color_image_, sensor_msgs::image_encodings::RGB8, img->imHeight, img->imWidth, 3 * img->imWidth, img->imColor);
-                    sensor_msgs::fillImage(right_color_image_, sensor_msgs::image_encodings::RGB8, img->imHeight, img->imWidth, 3 * img->imWidth, img->imColor);
+                    sensor_msgs::fillImage(left_color_image_, sensor_msgs::image_encodings::RGB8, img_left->imHeight, img_left->imWidth, 3 * img_left->imWidth, img_left->imColor);
+                    sensor_msgs::fillImage(right_color_image_, sensor_msgs::image_encodings::RGB8, img_right->imHeight, img_right->imWidth, 3 * img_right->imWidth, img_right->imColor);
 
                     // monochrome
-                    img = stcam_->stIm->imLeft;
-                    img = stcam_->stIm->imRight;
-                    sensor_msgs::fillImage(left_mono_image_, sensor_msgs::image_encodings::MONO8, img->imHeight, img->imWidth, 1 * img->imWidth, img->im);
-                    sensor_msgs::fillImage(right_mono_image_, sensor_msgs::image_encodings::MONO8, img->imHeight, img->imWidth, 1 * img->imWidth, img->im);
+                    sensor_msgs::fillImage(left_mono_image_, sensor_msgs::image_encodings::MONO8, img_left->imHeight, img_left->imWidth, 1 * img_left->imWidth, img_left->im);
+                    sensor_msgs::fillImage(right_mono_image_, sensor_msgs::image_encodings::MONO8, img_right->imHeight, img_right->imWidth, 1 * img_right->imWidth, img_right->im);
 
                     left_color_image_pub_.publish(left_color_image_);
                     right_color_image_pub_.publish(right_color_image_);
@@ -657,13 +685,11 @@ public:
                 if (current_config_.convert_to_color)
                 {
                     // color
-                    img = stcam_->stIm->imLeft;
-                    sensor_msgs::fillImage(left_color_image_, sensor_msgs::image_encodings::RGB8, img->imHeight, img->imWidth, 3 * img->imWidth, img->imColor);
+                    sensor_msgs::fillImage(left_color_image_, sensor_msgs::image_encodings::RGB8, img_left->imHeight, img_left->imWidth, 3 * img_left->imWidth, img_left->imColor);
                     left_color_image_pub_.publish(left_color_image_);
 
                     // monochrome
-                    img = stcam_->stIm->imLeft;
-                    sensor_msgs::fillImage(left_mono_image_, sensor_msgs::image_encodings::MONO8, img->imHeight, img->imWidth, 1 * img->imWidth, img->im);
+                    sensor_msgs::fillImage(left_mono_image_, sensor_msgs::image_encodings::MONO8, img_left->imHeight, img_left->imWidth, 1 * img_left->imWidth, img_left->im);
                     left_mono_image_pub_.publish(left_mono_image_);
                 }
 
@@ -677,7 +703,9 @@ public:
         }
 
         ++count_;
-        img = NULL;
+        img_left = NULL;
+        img_right = NULL;
+
         return true;
     }
 

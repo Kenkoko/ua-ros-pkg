@@ -42,6 +42,7 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <stereo_msgs/DisparityImage.h>
+#include <image_geometry/stereo_camera_model.h>
 
 #include <videre_stereo_cam/stereoimage.h>
 
@@ -98,56 +99,33 @@ namespace cam_bridge
         }
     }
 
-    void fill_info_msg(cam::ImageData* img_raw, sensor_msgs::CameraInfo& info_msg)
-    {
-        info_msg.height = img_raw->imHeight;
-        info_msg.width  = img_raw->imWidth;
-
-        memcpy((char*)(&info_msg.D[0]), (char*)(img_raw->D),  5*sizeof(double));
-        memcpy((char*)(&info_msg.K[0]), (char*)(img_raw->K),  9*sizeof(double));
-        memcpy((char*)(&info_msg.R[0]), (char*)(img_raw->R),  9*sizeof(double));
-        memcpy((char*)(&info_msg.P[0]), (char*)(img_raw->P), 12*sizeof(double));
-    }
-
-    void StereoDataToRawStereo(cam::StereoData* stIm,
+    void StereoDataToRawStereo(const cam::StereoData* stIm,
+                               const image_geometry::StereoCameraModel& model,
                                sensor_msgs::Image& left_image,
                                sensor_msgs::Image& right_image,
-                               sensor_msgs::CameraInfo& left_info,
-                               sensor_msgs::CameraInfo& right_info,
                                stereo_msgs::DisparityImage& disparity_image)
     {
-        ros::Time timestamp = ros::Time::now();
-
-        // Populate image message
-        left_image.header.stamp = timestamp;
-        right_image.header.stamp = timestamp;
-
         fill_img_msg(stIm->imLeft, left_image);
         fill_img_msg(stIm->imRight, right_image);
 
-        // Populate camera info message
-        left_info.header.stamp = timestamp;
-        right_info.header.stamp = timestamp;
-
-        fill_info_msg(stIm->imLeft, left_info);
-        fill_info_msg(stIm->imRight, right_info);
-
         if (stIm->hasDisparity)
         {
-            disparity_image.header.stamp = timestamp;
+            static const double inv_dpp = 1.0 / stIm->dpp;
 
-            disparity_image.f = right_info.P[0];
-            disparity_image.T = -right_info.P[3] / right_info.P[0];
+            // stereo parameters
+            disparity_image.f = model.right().fx();
+            disparity_image.T = model.baseline();
 
+            // window of (potentially) valid disparities
             disparity_image.valid_window.x_offset = stIm->imDleft;
             disparity_image.valid_window.y_offset = stIm->imDtop;
             disparity_image.valid_window.width = stIm->imDwidth;
             disparity_image.valid_window.height = stIm->imDheight;
 
-            disparity_image.min_disparity = 0.0;
-            disparity_image.max_disparity = stIm->numDisp - 1.0;
-
-            disparity_image.delta_d = 1.0 / stIm->dpp;
+            // Disparity search range
+            disparity_image.min_disparity = stIm->offx; // 0 - 63 in Videre STOC
+            disparity_image.max_disparity = stIm->offx + stIm->numDisp - 1;
+            disparity_image.delta_d = inv_dpp;
 
             // Fill in DisparityImage image data, converting to 32-bit float
             sensor_msgs::Image& dimage = disparity_image.image;
@@ -157,12 +135,12 @@ namespace cam_bridge
             dimage.step = dimage.width * sizeof(float);
             dimage.data.resize(dimage.step * dimage.height);
 
-            cv::Mat_<int16_t> disparity16(stIm->imHeight, stIm->imWidth, (int16_t *) &stIm->imDisp[0], stIm->imWidth * sizeof(int16_t));
-            cv::Mat_<float> dmat(dimage.height, dimage.width, (float*)&dimage.data[0], dimage.step);
+            cv::Mat_<int16_t> disparity16(stIm->imHeight, stIm->imWidth, (int16_t*) &stIm->imDisp[0], stIm->imWidth * sizeof(int16_t));
+            cv::Mat_<float> dmat(dimage.height, dimage.width, (float*) &dimage.data[0], dimage.step);
 
             // We convert from fixed-point to float disparity and also adjust for any x-offset between
             // the principal points: d = d_fp*inv_dpp - (cx_l - cx_r)
-            disparity16.convertTo(dmat, dmat.type(), disparity_image.delta_d, -(left_info.K[2] - right_info.K[2]));
+            disparity16.convertTo(dmat, dmat.type(), disparity_image.delta_d, -(model.left().cx() - model.right().cx()));
             ROS_ASSERT(dmat.data == &dimage.data[0]);
         }
     }

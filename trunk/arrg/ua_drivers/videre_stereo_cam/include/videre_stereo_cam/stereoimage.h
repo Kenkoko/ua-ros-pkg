@@ -43,11 +43,11 @@
 
 namespace cam
 {
-  // stereo data structure
 
-  class StereoData
-  {
-  public:
+// stereo data structure
+class StereoData
+{
+public:
     StereoData();
     ~StereoData();
 
@@ -64,128 +64,90 @@ namespace cam
     bool hasRectification;
 
     // disparity data
-    int16_t *imDisp;		// disparity image, negative and zero are invalid pixels
-    size_t imDispSize;		// size of image in bytes
-    int dpp;			// disparity units per pixel, e.g., 16 is 1/16 pixel per disparity
-    bool hasDisparity;		// true if disparity present
-    int numDisp;		// number of search disparities, in pixels
-    int offx;			// x offset of disparity search
+    int16_t *imDisp;    // disparity image, negative and zero are invalid pixels
+    size_t imDispSize;  // size of image in bytes
+    int dpp;            // disparity units per pixel, e.g., 16 is 1/16 pixel per disparity
+    bool hasDisparity;  // true if disparity present
+    int numDisp;        // number of search disparities, in pixels
+    int offx;           // x offset of disparity search
 
-    bool setReprojection();	// sets the reprojection matrix from the two image projection matrices
-
-    bool setHoropter(int offset); // set horopter offset
-    bool setNumDisp(int ndisp);	// set number of disparities
+    bool setHoropter(int offset);   // set horopter offset
 
     // Color conversion:
     void doBayerColorRGB();
     void doBayerMono();
 
     // disparity and rectification functions
-    bool doRectify();		// rectify images
-    bool doDisparity(); // calculate disparity image
-    bool doSpeckle();		// speckle filter post-processing, automatically applied by doDisparity
-    bool doCalcPts(bool isArray = false); // calculate 3D points
-    bool calcPt(int x, int y, float *fx, float *fy, float *fz); // single point
-    bool setRangeMax(double thresh);
-    bool setRangeMin(double thresh);
+    bool doRectify();                       // rectify images
+    bool doDisparity();                     // calculate disparity image
+    bool doSpeckle();                       // speckle filter post-processing, automatically applied by doDisparity
+    bool doCalcPts(bool isArray = false);   // calculate 3D points
 
     // valid stereo data rectangle
     int imDtop, imDleft;
     int imDwidth, imDheight;
-    void setDispOffsets();	// reset them, based on stereo processing params
+    void setDispOffsets();  // reset them, based on stereo processing params
 
     // point cloud data
     // NOTE: imPts buffer should be 16-byte aligned
     // imPts elements will have the form of a pt_xyza_t for a pt array
-    float *imPts;		// points, 3xN floats for vector version, 4xN for array version
-                                // for isPtArray = true, these next two are not needed
-    int *imCoords;		// image coordinates of the point cloud points, 2xN ints
-    uint8_t *imPtsColor;	// color vector corresponding to points, RGB
-    size_t imPtsSize;		// size of array in bytes, for storage manipulation
-    int numPts;			// number of points in array
-    bool isPtArray;		// true if the points are an image array, z=0.0 for no point
-    pt_xyza_t *imPtArray() { return (pt_xyza_t *)imPts; } 
+    float *imPts;           // points, 3xN floats for vector version, 4xN for array version
+    // for isPtArray = true, these next two are not needed
+    int *imCoords;          // image coordinates of the point cloud points, 2xN ints
+    uint8_t *imPtsColor;    // color vector corresponding to points, RGB
+    size_t imPtsSize;       // size of array in bytes, for storage manipulation
+    int numPts;             // number of points in array
+    bool isPtArray;         // true if the points are an image array, z=0.0 for no point
+    pt_xyza_t *imPtArray() { return (pt_xyza_t *)imPts; }
 
     // external parameters for undistorted images
-    double T[3];		// pose of right camera in left camera coords
-    double Om[3];		// rotation vector
+    double T[3];    // pose of right camera in left camera coords
+    double Om[3];   // rotation vector
 
     // reprojection matrix
     double RP[16];
 
     // buffers
-    void releaseBuffers();	// get rid of all buffers
+    void releaseBuffers();  // get rid of all buffers
 
     // parameters
-    void extractParams(char *params, bool store = false); // extracts params from string and puts in vars
-                                // optionally stores into image object
-    char *createParams(bool store = false); // takes parameters and puts them into a string
-                                // optionally stores into image object
+    bool parseCalibrationSVS(std::string params, stereo_side_t side);
+    bool parseCalibrationOST(std::string params, stereo_side_t side);
+    void printCameraInfo(stereo_side_t side);
+    void printCalibration();
+
+    // extracts params from string and puts in vars, optionally stores into image object
+    void extractParams(char *params, bool store = false);
+
+    // takes parameters and puts them into a string, optionally stores into image object
+    char *createParams(bool store = false);
 
     // stereo processing params
-    int corrSize;		// correlation window size, assumed square
-    int filterSize;		// size of prefilter window, assumed square (0 if none)
-    int horOffset;		// horopter offset
+    int corrSize;   // correlation window size, assumed square
+    int filterSize; // size of prefilter window, assumed square (0 if none)
+    int horOffset;  // horopter offset
 
     // filter thresholds
-    int textureThresh;		// percent
-    int uniqueThresh;		// percent
-    int smoothThresh;		// percent
-    int speckleDiff;		// max difference between adjacent disparities in a region
-    int speckleRegionSize;	// minimum size of region to be not a speckle
-    double rangeMax;		// max Z value returned in pt cloud
-    double rangeMin;		// max Z value returned in pt cloud
-    bool unique_check;
+    int textureThresh;      // percent
+    int uniqueThresh;       // percent
+    int speckleDiff;        // max difference between adjacent disparities in a region
+    int speckleRegionSize;  // minimum size of region to be not a speckle
 
     bool setTextureThresh(int thresh);
     bool setUniqueThresh(int thresh);
-    bool setSmoothnessThresh(int thresh);
     bool setSpeckleDiff(int diff);
     bool setSpeckleRegionSize(int size);
-    bool setCorrSize(int size);
-    bool setUniqueCheck(bool val);
 
     // buffers for stereo
     uint8_t *buf, *flim, *frim;
     int maxxim, maxyim, maxdlen, maxcorr; // for changing buffer sizes
 
-  private:
+private:
     // buffers for speckle filter
     uint8_t *rbuf;
     uint32_t *lbuf, *wbuf;
-
-  };
-
-
-  //
-  // Plane finding class
-  //
-
-  class FindPlanes
-  {
-  public:
-    FindPlanes();
-    ~FindPlanes();
-
-    // put points
-    // skip interval is decimation for speed
-    void SetPointCloud(pt_xyza_t *pts, int n, int skip=1);
-
-    // find a plane, return its parameters and (decimated) inlier count
-    int FindPlane(float *pparams, float thresh, int tries);
-
-    // set all plane inliers to an index, return number found
-    // also resets decimated point cloud
-    int IndexPlane(int ind, float thresh, float *pparams);
-
-  private:
-    pt_xyza_t *pts3d;		// input vector of points
-    int n_pts3d;		// number of points
-    pt_xyza_t *pts3d_dec;	// decimated points
-    int n_pts3d_dec;
-  };
+};
 
 }
 
-
-#endif	// STEREOIMAGE_H
+#endif        // STEREOIMAGE_H

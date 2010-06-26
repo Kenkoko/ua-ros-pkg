@@ -32,294 +32,167 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-
-//
-// stereoimage.cpp
-// classes for stereo images
-//
+#include <sstream>
+#include <iostream>
 
 #include <videre_stereo_cam/stereolib.h>
 #include <videre_stereo_cam/stereoimage.h>
-
-#include <sstream>
-#include <iostream>
 
 #define PRINTF(a...) printf(a)
 
 using namespace cam;
 
 // stereo class fns
-
 StereoData::StereoData()
 {
-  imLeft = new ImageData();
-  imRight = new ImageData();
+    imLeft = new ImageData();
+    imRight = new ImageData();
 
-  // disparity buffer
-  imDisp = NULL;
-  imDispSize = 0;
-  buf = NULL;
-  flim = NULL;
-  frim = NULL;
-  wbuf = NULL;
-  rbuf = NULL;
-  lbuf = NULL;
-  maxyim = maxxim = maxdlen = maxcorr = 0;
+    // disparity buffer
+    imDisp = NULL;
+    imDispSize = 0;
+    buf = NULL;
+    flim = NULL;
+    frim = NULL;
+    wbuf = NULL;
+    rbuf = NULL;
+    lbuf = NULL;
+    maxyim = maxxim = maxdlen = maxcorr = 0;
 
-  // nominal values
-  imWidth = 640;
-  imHeight = 480;
-  corrSize = 15;
-  filterSize = 11;
-  horOffset = 0;
-  setDispOffsets();
-  dpp = 16;
-  numDisp = 64;
-  offx = 0;
+    // nominal values
+    imWidth = 640;
+    imHeight = 480;
+    corrSize = 15;
+    filterSize = 11;
+    horOffset = 0;
+    setDispOffsets();
+    dpp = 16;
+    numDisp = 64;
+    offx = 0;
 
-  textureThresh = 10;
-  uniqueThresh = 12;
-  smoothThresh = 30;
-  speckleDiff = 8;
-  speckleRegionSize = 100;
-  rangeMax = 0.0;
-  rangeMin = 0.0;
-  unique_check = 0;
+    textureThresh = 10;
+    uniqueThresh = 12;
+    speckleDiff = 8;
+    speckleRegionSize = 100;
 
-  hasRectification = false;
+    hasRectification = false;
 
-  // point array/vector
-  numPts = 0;
-  imPts = NULL;
-  imCoords = NULL;
-  imPtsColor = NULL;
-  isPtArray = false;
-  imPtsSize = 0;
+    // point array/vector
+    numPts = 0;
+    imPts = NULL;
+    imCoords = NULL;
+    imPtsColor = NULL;
+    isPtArray = false;
+    imPtsSize = 0;
 }
-
 
 StereoData::~StereoData()
 {
-  releaseBuffers();
-  free(imLeft);
-  free(imRight);
-  // should free all buffers
-  MEMFREE(buf);
-  MEMFREE(flim);
-  MEMFREE(frim);
+    releaseBuffers();
+    free(imLeft);
+    free(imRight);
+
+    // should free all buffers
+    MEMFREE(buf);
+    MEMFREE(flim);
+    MEMFREE(frim);
 }
 
-bool
-StereoData::setReprojection()
+bool StereoData::setHoropter(int val)
 {
-  if (imRight->P[3] < 1e-10 &&
-      imRight->P[3] > -1e-10)	// too small, complain
-    return false;
+    if (val < 0) { val = 0; }
+    if (val > 63) { val = 63; }
+    offx = val;
 
-  // reprojection matrix
-  double Tx = imRight->P[0] /  imRight->P[3];
-
-  if (Tx < 1e-10 &&
-      Tx > -1e-10)		// too small, complain
-    return false;
-
-  // first column
-  RP[0] = 1.0;
-  RP[4] = RP[8] = RP[12] = 0.0;
-
-  // second column
-  RP[5] = 1.0;
-  RP[1] = RP[9] = RP[13] = 0.0;
-
-  // third column
-  RP[2] = RP[6] = RP[10] = 0.0;
-  RP[14] = -Tx; /// @todo Think this is incorrect, setting 1/Tx when should be -1/Tx
-
-  // fourth column
-  /// @todo these should be from right P
-  /// @todo What's offx about??
-  RP[3] = -imLeft->P[2];	// cx
-  RP[7] = -imLeft->P[6];	// cy
-  RP[11] = imLeft->P[0];	// fx, fy
-  RP[15] = (imLeft->P[2] - imRight->P[2] - (double)offx) / Tx;
-
-  return true;
+    return true;
 }
 
-bool
-StereoData::setHoropter(int val)
+bool StereoData::setTextureThresh(int val)
 {
-  if (val < 0) val = 0;
-  if (val > 128) val = 128;
-  offx = val;
-  return true;
+    if (val < 0) { val = 0; }
+    if (val > 100) { val = 10; }
+    textureThresh = val;
+
+    return true;
 }
 
-bool
-StereoData::setTextureThresh(int val)
+bool StereoData::setUniqueThresh(int val)
 {
-  if (val < 0) val = 0;
-  if (val > 100) val = 10;
-  textureThresh = val;
-  return true;
+    if (val < 0) { val = 0; }
+    if (val > 100) { val = 10; }
+    uniqueThresh = val;
+
+    return true;
 }
 
-bool
-StereoData::setUniqueThresh(int val)
+void StereoData::setDispOffsets()
 {
-  if (val < 0) val = 0;
-  if (val > 100) val = 10;
-  uniqueThresh = val;
-  return true;
+    /*
+    * disparity image size
+    * ====================
+    * dleft  : (logs + corrs - 2)/2 - 1 + offx
+    * dwidth : w - (logs + corrs + offx - 2)
+    * dtop   : (logs + corrs - 2)/2
+    * dheight: h - (logs + corrs)
+    *
+    */
+
+    imDtop = (filterSize + corrSize - 2) / 2;
+    imDleft = (filterSize + corrSize - 2) / 2 - 1 + offx;
+    imDwidth = imWidth - (filterSize + corrSize + offx - 2);
+    imDheight = imHeight - (filterSize + corrSize);
 }
 
-bool
-StereoData::setSmoothnessThresh(int val)
+void StereoData::releaseBuffers()
 {
-  if (val < 0) val = 0;
-  if (val > 100) val = 10;
-  smoothThresh = val;
-  return true;
+    MEMFREE(imDisp);
+    imDisp = NULL;
+    imDispSize = 0;
+    hasDisparity = false;
+    MEMFREE(imPts);
+    MEMFREE(imCoords);
+    imPtsSize = 0;
+    numPts = 0;
+    imLeft->releaseBuffers();
+    imRight->releaseBuffers();
 }
 
-
-bool
-StereoData::setNumDisp(int val)
+// image size needs to deal with buffers
+void StereoData::setSize(int width, int height)
 {
-  val = (val/16)*16;		// set to multiple of 16
-  if (val < 0) val = 0;
-  if (val > 256) val = 256;
-  numDisp = val;
-  PRINTF("[StereoData] Num disp set to %d\n", val);
-  return true;
+    imWidth = width;
+    imHeight = height;
+
+    imLeft->imWidth = width;
+    imLeft->imHeight = height;
+    imLeft->cam_info.width = width;
+    imLeft->cam_info.height = height;
+
+    imRight->imWidth = width;
+    imRight->imHeight = height;
+    imRight->cam_info.width = width;
+    imRight->cam_info.height = height;
 }
 
-
-bool
-StereoData::setCorrSize(int val)
+bool StereoData::doRectify()
 {
-  val = val | 0x1;		// must be odd
-  if (val < 5) val = 5;
-  if (val > 23) val = 23;
-  corrSize = val;
-  //  PRINTF("[StereoData] Stereo correlation window size set to %d\n", val);
-  setDispOffsets();
-  return true;
+    bool res = imLeft->doRectify();
+    res = imRight->doRectify() && res;
+
+    return res;
 }
 
-
-bool
-StereoData::setRangeMax(double val)
+void StereoData::doBayerColorRGB()
 {
-  if (val < 0.0) val = 0.0;
-  rangeMax = val;
-  return true;
+    imLeft->doBayerColorRGB();
+    imRight->doBayerColorRGB();
 }
 
-
-bool
-StereoData::setRangeMin(double val)
+void StereoData::doBayerMono()
 {
-  if (val < 0.0) val = 0.0;
-  rangeMin = val;
-  return true;
+    imLeft->doBayerMono();
+    imRight->doBayerMono();
 }
-
-bool
-StereoData::setUniqueCheck(bool val)
-{
-  unique_check = !unique_check;
-  return true;
-}
-
-void
-StereoData::setDispOffsets()
-{
-  /*
-   * disparity image size
-   * ====================
-   * dleft  : (logs + corrs - 2)/2 - 1 + offx
-   * dwidth : w - (logs + corrs + offx - 2)
-   * dtop   : (logs + corrs - 2)/2
-   * dheight: h - (logs + corrs)
-   *
-   */
-
-  imDtop = (filterSize + corrSize - 2)/2;
-  imDleft = (filterSize + corrSize - 2)/2 - 1 + horOffset;
-  imDwidth = imWidth - (filterSize + corrSize + horOffset - 2);
-  imDheight = imHeight - (filterSize + corrSize);
-}
-
-void
-StereoData::releaseBuffers()
-{
-  MEMFREE(imDisp);
-  imDisp = NULL;
-  imDispSize = 0;
-  hasDisparity = false;
-  MEMFREE(imPts);
-  MEMFREE(imCoords);
-  imPtsSize = 0;
-  numPts = 0;
-  imLeft->releaseBuffers();
-  imRight->releaseBuffers();
-}
-
-
-
-// image size
-// needs to deal with buffers
-void
-StereoData::setSize(int width, int height)
-{
-  imWidth = width;
-  imHeight = height;
-  imLeft->imWidth = width;
-  imLeft->imHeight = height;
-  //  imLeft->imSize = width*height;
-  imRight->imWidth = width;
-  imRight->imHeight = height;
-  //  imRight->imSize = width*height;
-}
-
-
-//
-// rectification and  stereo processing
-//
-
-bool
-StereoData::doRectify()
-{
-  bool res = imLeft->doRectify();
-  res = imRight->doRectify() && res;
-  return res;
-}
-
-//
-// Color processing
-//
-void
-StereoData::doBayerColorRGB()
-{
-  imLeft->doBayerColorRGB();
-  imRight->doBayerColorRGB();
-}
-
-//
-// Mono processing
-//
-void
-StereoData::doBayerMono()
-{
-  imLeft->doBayerMono();
-  imRight->doBayerMono();
-}
-
-
-//
-// includes post-filtering
-//
 
 bool StereoData::doDisparity()
 {
@@ -332,13 +205,10 @@ bool StereoData::doDisparity()
     return false;
 }
 
-
-
 //
 // apply speckle filter
 // useful for STOC processing, where it's not done on-camera
 //
-
 bool StereoData::doSpeckle()
 {
     if (!hasDisparity) { return false; }
@@ -364,22 +234,17 @@ bool StereoData::doSpeckle()
     return true;
 }
 
-
-bool
-StereoData::setSpeckleRegionSize(int val)
+bool StereoData::setSpeckleRegionSize(int val)
 {
-  speckleRegionSize = val;
-  return true;
+    speckleRegionSize = val;
+    return true;
 }
 
-bool
-StereoData::setSpeckleDiff(int val)
+bool StereoData::setSpeckleDiff(int val)
 {
-  speckleDiff = val;
-  return true;
+    speckleDiff = val;
+    return true;
 }
-
-
 
 //
 // param sting parsing routines
@@ -429,10 +294,7 @@ void extract(std::string& data, std::string section,
 // Convert to vector or image array of pts, depending on isArray arg
 // Should we do disparity automatically here?
 //
-
-
-bool
-StereoData::doCalcPts(bool isArray)
+bool StereoData::doCalcPts(bool isArray)
 {
   numPts = 0;
   doDisparity();
@@ -481,19 +343,6 @@ StereoData::doCalcPts(bool isArray)
   float itx = (float)RP[14];
   itx *= 1.0 / (float)dpp; // adjust for subpixel interpolation
   pcoord = imCoords;
-
-  // set up range max/min disparity
-  if (rangeMax > 0.0)
-    {
-      double dm = f / (rangeMax*itx);
-      dmax = (int)dm;
-    }
-  if (rangeMin > 0.0)
-    {
-      double dm = f / (rangeMin*itx);
-      dmin = (int)dm;
-    }
-
 
   if (isArray)			// make an array of pts
     {
@@ -601,330 +450,314 @@ StereoData::doCalcPts(bool isArray)
   return true;
 }
 
-
-
-//
-// Conversion to 3D points
-// Just a single point
-//
-
-
-bool
-StereoData::calcPt(int x, int y, float *fx, float *fy, float *fz)
+bool StereoData::parseCalibrationSVS(string params, stereo_side_t stereo_side)
 {
-  doDisparity();
-  if (!hasDisparity)
-    return false;
+    string side;
+    ImageData* im_data;
 
-  float cx = (float)RP[3];
-  float cy = (float)RP[7];
-  float f  = (float)RP[11];
-  float itx = (float)RP[14];
-  itx *= 1.0 / (float)dpp; // adjust for subpixel interpolation
-
-  int16_t *p = imDisp + x + y*imWidth;
-
-  if (*p > 0)
+    switch (stereo_side)
     {
-      float ax = (float)x + cx;
-      float ay = (float)y + cy;
-      float aw = 1.0 / (itx * (float)*p);
-      *fx = ax*aw;	// X
-      *fy = ay*aw;	// Y
-      *fz = f*aw;	// Z
+        case SIDE_LEFT:
+            side = "left";
+            im_data = imLeft;
+            break;
+        case SIDE_RIGHT:
+            side = "right";
+            im_data = imRight;
+            break;
+        default:
+            ROS_ERROR("Unknown stereo side specified");
+            return false;
     }
 
-  if (*p)
+    // K - original camera matrix
+    extract(params, "[" + side + " camera]", "f ", im_data->cam_info.K[0]);
+    extract(params, "[" + side + " camera]", "fy", im_data->cam_info.K[4]);
+    extract(params, "[" + side + " camera]", "Cx", im_data->cam_info.K[2]);
+    extract(params, "[" + side + " camera]", "Cy", im_data->cam_info.K[5]);
+
+    im_data->cam_info.K[8] = 1.0;
+
+    // D - distortion params
+    extract(params, "[" + side + " camera]", "kappa1", im_data->cam_info.D[0]);
+    extract(params, "[" + side + " camera]", "kappa2", im_data->cam_info.D[1]);
+    extract(params, "[" + side + " camera]", "tau1", im_data->cam_info.D[2]);
+    extract(params, "[" + side + " camera]", "tau2", im_data->cam_info.D[3]);
+    extract(params, "[" + side + " camera]", "kappa3", im_data->cam_info.D[4]);
+
+    // R - rectification matrix
+    extract(params, "[" + side + " camera]", "rect",  im_data->cam_info.R.c_array(), 9);
+
+    // P - projection matrix
+    extract(params, "[" + side + " camera]", "proj",  im_data->cam_info.P.c_array(), 12);
+    im_data->cam_info.P[3] *= .001;  // convert from mm to m
+
     return true;
-  else
-    return false;
 }
 
+bool StereoData::parseCalibrationOST(string params, stereo_side_t stereo_side)
+{
+    string side;
+    ImageData* im_data;
 
+    switch (stereo_side)
+    {
+        case SIDE_LEFT:
+            side = "left";
+            im_data = imLeft;
+            break;
+        case SIDE_RIGHT:
+            side = "right";
+            im_data = imRight;
+            break;
+        default:
+            ROS_ERROR("Unknown stereo side specified");
+            return false;
+    }
+
+    // K - original camera matrix
+    extract(params, "[" + side + " camera]", "camera matrix", im_data->cam_info.K.c_array(), 9);
+
+    // D - distortion params
+    extract(params, "[" + side + " camera]", "distortion", im_data->cam_info.D.c_array(), 5);
+
+    // R - rectification matrix
+    extract(params, "[" + side + " camera]", "rectification",  im_data->cam_info.R.c_array(), 9);
+
+    // P - projection matrix
+    extract(params, "[" + side + " camera]", "projection",  im_data->cam_info.P.c_array(), 12);
+
+    return true;
+}
+
+void StereoData::printCameraInfo(stereo_side_t stereo_side)
+{
+    string side;
+    ImageData* im_data;
+
+    switch (stereo_side)
+    {
+        case SIDE_LEFT:
+            side = "left";
+            im_data = imLeft;
+            break;
+        case SIDE_RIGHT:
+            side = "right";
+            im_data = imRight;
+            break;
+        default:
+            ROS_ERROR("Unknown stereo side specified");
+            return;
+    }
+
+    PRINTF("[dcam] %s camera matrix (K)\n", side.c_str());
+
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            PRINTF(" %.4f", im_data->cam_info.K[i * 3 + j]);
+        }
+
+        PRINTF("\n");
+    }
+
+    PRINTF("\n[dcam] %s distortion vector (D)\n", side.c_str());
+
+    for (int i = 0; i < 5; ++i)
+    {
+        PRINTF(" %.4f", im_data->cam_info.D[i]);
+    }
+
+    PRINTF("\n\n[dcam] %s rectification matrix (R)\n", side.c_str());
+
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            PRINTF(" %.4f", im_data->cam_info.R[i * 3 + j]);
+        }
+
+        PRINTF("\n");
+    }
+
+    PRINTF("\n[dcam] %s projection matrix (P)\n", side.c_str());
+
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            PRINTF(" %.4f", im_data->cam_info.P[i * 4 + j]);
+        }
+
+        PRINTF("\n");
+    }
+
+    PRINTF("\n");
+}
+
+void StereoData::printCalibration()
+{
+    PRINTF("[dcam] Disparity resolution: 1/%d pixel\n", dpp);
+    PRINTF("[dcam] Correlation window: %d\n", corrSize);
+    PRINTF("[dcam] Prefilter window: %d\n", filterSize);
+    PRINTF("[dcam] Number of disparities: %d\n", numDisp);
+
+    printCameraInfo(SIDE_LEFT);
+    printCameraInfo(SIDE_RIGHT);
+
+    if (hasRectification) { PRINTF("[dcam] Has rectification\n\n"); }
+    else { PRINTF("[dcam] No rectification\n\n"); }
+
+    PRINTF("[dcam] Reprojection matrix\n");
+
+    for (int i = 0; i < 4; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            PRINTF(" %.4f", RP[i * 4 + j]);
+        }
+
+        PRINTF("\n");
+    }
+
+    PRINTF("\n[dcam] External translation vector\n");
+
+    for (int i = 0; i < 3; ++i)
+    {
+        PRINTF(" %.4f", T[i]);
+    }
+
+    PRINTF("\n\n[dcam] External rotation vector\n");
+
+    for (int i = 0; i < 3; ++i)
+    {
+        PRINTF(" %.4f", Om[i]);
+    }
+
+    PRINTF("\n\n");
+}
 
 //
 // gets params from a string
 // "SVS"-type parameter strings use mm for the projection matrices, convert to m
 // "OST"-type parameter strings use m for projection matrices
 //
-
-void
-StereoData::extractParams(char *ps, bool store)
+void StereoData::extractParams(char *ps, bool store)
 {
-  std::string params;
-  params = ps;
-  double *pp;
-  bool isSVS = false;
+    std::string params;
+    params = ps;
 
-  if (store && ps != NULL)
+    if (store && ps != NULL)
     {
-      if (imLeft->params)
-	delete [] imLeft->params;
-      char *bb = new char[strlen(ps)];
-      strcpy(bb,ps);
-      imLeft->params = bb;
+        if (imLeft->params) { delete [] imLeft->params; }
+        char *bb = new char[strlen(ps)];
+        strcpy(bb, ps);
+        imLeft->params = bb;
     }
 
-  PRINTF("\n\n[extractParams] Parameters:\n\n");
+    PRINTF("\n\n[extractParams] Parameters:\n\n");
 
-  if (strncmp(ps,"# SVS",5)==0) // SVS-type parameters
+    // Initialize Translation parameters
+    for (int i = 0; i < 3; ++i)
     {
-      PRINTF("[dcam] SVS-type parameters\n");
-      isSVS = true;
-
-
-      // left image
-      for (int i=0; i<9; i++) imLeft->K[i] = 0.0; // original camera matrix
-      extract(params, "[left camera]", "f ", imLeft->K[0]); // have to use space after "f"
-      extract(params, "[left camera]", "fy", imLeft->K[4]);
-      extract(params, "[left camera]", "Cx", imLeft->K[2]);
-      extract(params, "[left camera]", "Cy", imLeft->K[5]);
-      imLeft->K[8] = 1.0;
-
-      for (int i=0; i<5; i++) imLeft->D[i] = 0.0; // distortion params
-      extract(params, "[left camera]", "kappa1", imLeft->D[0]);
-      extract(params, "[left camera]", "kappa2", imLeft->D[1]);
-      extract(params, "[left camera]", "tau1", imLeft->D[2]);
-      extract(params, "[left camera]", "tau2", imLeft->D[3]);
-      extract(params, "[left camera]", "kappa3", imLeft->D[4]);
-
-      pp = (double *)imLeft->R; // rectification matrix
-      for (int i=0; i<9; i++) pp[i] = 0.0;
-      extract(params, "[left camera]", "rect",  pp, 9);
-
-      pp = (double *)imLeft->P; // projection matrix
-      for (int i=0; i<12; i++) pp[i] = 0.0;
-      extract(params, "[left camera]", "proj",  pp, 12);
-      if (isSVS)
-	imLeft->P[3] *= .001;	// convert from mm to m
-
-      // right image
-      for (int i=0; i<9; i++) imRight->K[i] = 0.0; // original camera matrix
-      extract(params, "[right camera]", "f ", imRight->K[0]); // ?? have to use "f " here
-      extract(params, "[right camera]", "fy", imRight->K[4]);
-      extract(params, "[right camera]", "Cx", imRight->K[2]);
-      extract(params, "[right camera]", "Cy", imRight->K[5]);
-      imRight->K[8] = 1.0;
-
-      for (int i=0; i<5; i++) imRight->D[i] = 0.0; // distortion params
-      extract(params, "[right camera]", "kappa1", imRight->D[0]);
-      extract(params, "[right camera]", "kappa2", imRight->D[1]);
-      extract(params, "[right camera]", "tau1", imRight->D[2]);
-      extract(params, "[right camera]", "tau2", imRight->D[3]);
-      extract(params, "[right camera]", "kappa3", imRight->D[4]);
-
-      pp = (double *)imRight->R; // rectification matrix
-      for (int i=0; i<9; i++) pp[i] = 0.0;
-      extract(params, "[right camera]", "rect",  pp, 9);
-
-      pp = (double *)imRight->P; // projection matrix
-      for (int i=0; i<12; i++) pp[i] = 0.0;
-      extract(params, "[right camera]", "proj",  pp, 12);
-      imRight->P[3] *= .001;	// convert from mm to m
-
-      // external params of undistorted cameras
-      for (int i=0; i<3; i++) T[i] = 0.0;
-      for (int i=0; i<3; i++) Om[i] = 0.0;
-      extract(params, "[external]", "Tx", T[0]);
-      extract(params, "[external]", "Ty", T[1]);
-      extract(params, "[external]", "Tz", T[2]);
-      extract(params, "[external]", "Rx", Om[0]);
-      extract(params, "[external]", "Ry", Om[1]);
-      extract(params, "[external]", "Rz", Om[2]);
-
-      T[0] *= .001;
-      T[1] *= .001;
-      T[2] *= .001;
-
+        T[i] = 0.0;
     }
 
-  // OST-type parameters
-  else
+    // Initialize Rotation parameters
+    for (int i = 0; i < 3; ++i)
+    {
+        Om[i] = 0.0;
+    }
+
+    if (strncmp(ps,"# SVS",5)==0) // SVS-type parameters
+    {
+        PRINTF("[dcam] SVS-type parameters\n");
+
+        // Left camera calibration parameters
+        parseCalibrationSVS(params, SIDE_LEFT);
+
+        // Right camera calibration parameters
+        parseCalibrationSVS(params, SIDE_RIGHT);
+
+        // external params of undistorted cameras
+        extract(params, "[external]", "Tx", T[0]);
+        extract(params, "[external]", "Ty", T[1]);
+        extract(params, "[external]", "Tz", T[2]);
+        extract(params, "[external]", "Rx", Om[0]);
+        extract(params, "[external]", "Ry", Om[1]);
+        extract(params, "[external]", "Rz", Om[2]);
+
+        T[0] *= .001;
+        T[1] *= .001;
+        T[2] *= .001;
+    }
+    else // OST-type parameters
     {
       PRINTF("[dcam] OST-type parameters\n");
-      isSVS = false;
 
-      // left image
-      for (int i=0; i<9; i++) imLeft->K[i] = 0.0; // original camera matrix
-      extract(params, "[left camera]", "camera matrix", imLeft->K, 9);
+      // Left camera calibration parameters
+      parseCalibrationOST(params, SIDE_LEFT);
 
-      for (int i=0; i<5; i++) imLeft->D[i] = 0.0; // distortion params
-      extract(params, "[left camera]", "distortion", imLeft->D, 5);
-
-      pp = (double *)imLeft->R; // rectification matrix
-      for (int i=0; i<9; i++) pp[i] = 0.0;
-      extract(params, "[left camera]", "rectification",  imLeft->R, 9);
-
-      pp = (double *)imLeft->P; // projection matrix
-      for (int i=0; i<12; i++) pp[i] = 0.0;
-      extract(params, "[left camera]", "projection",  imLeft->P, 12);
-
-      // right image
-      for (int i=0; i<9; i++) imRight->K[i] = 0.0; // original camera matrix
-      extract(params, "[right camera]", "camera matrix", imRight->K, 9);
-
-      for (int i=0; i<5; i++) imRight->D[i] = 0.0; // distortion params
-      extract(params, "[right camera]", "distortion", imRight->D, 5);
-
-      pp = (double *)imRight->R; // rectification matrix
-      for (int i=0; i<9; i++) pp[i] = 0.0;
-      extract(params, "[right camera]", "rectification",  pp, 9);
-
-      pp = (double *)imRight->P; // projection matrix
-      for (int i=0; i<12; i++) pp[i] = 0.0;
-      extract(params, "[right camera]", "projection",  pp, 12);
+      // Right camera calibration parameters
+      parseCalibrationOST(params, SIDE_RIGHT);
 
       // external params of undistorted cameras
-      for (int i=0; i<3; i++) T[i] = 0.0;
-      for (int i=0; i<3; i++) Om[i] = 0.0;
       extract(params, "[externals]", "translation", T, 3);
       extract(params, "[externals]", "rotation", Om, 3);
     }
 
+    // disparity resolution
+    extract(params, "[stereo]", "dpp", dpp);
+    extract(params, "[stereo]", "corrxsize", corrSize);
+    extract(params, "[stereo]", "convx", filterSize);
+    extract(params, "[stereo]", "ndisp", numDisp);
 
-
-  // disparity resolution
-  extract(params, "[stereo]", "dpp", dpp);
-  PRINTF("[dcam] Disparity resolution: 1/%d pixel\n", dpp);
-  extract(params, "[stereo]", "corrxsize", corrSize);
-  PRINTF("[dcam] Correlation window: %d\n", corrSize);
-  extract(params, "[stereo]", "convx", filterSize);
-  PRINTF("[dcam] Prefilter window: %d\n", filterSize);
-  extract(params, "[stereo]", "ndisp", numDisp);
-  PRINTF("[dcam] Number of disparities: %d\n", numDisp);
-
-
-  PRINTF("[dcam] Left camera matrix\n");
-  for (int i=0; i<3; i++)
+    // check for left camera matrix
+    if (imLeft->cam_info.K[0] == 0.0)
     {
-      for (int j=0; j<3; j++)
-	PRINTF(" %.4f",imLeft->K[i*3+j]);
-      PRINTF("\n");
+        hasRectification = false;
     }
-  PRINTF("\n");
-
-  PRINTF("[dcam] Left distortion vector\n");
-  for (int i=0; i<5; i++)
-    PRINTF(" %.4f",imLeft->D[i]);
-  PRINTF("\n");
-  PRINTF("\n");
-
-  PRINTF("[dcam] Left rectification matrix\n");
-  for (int i=0; i<3; i++)
+    else
     {
-      for (int j=0; j<3; j++)
-	PRINTF(" %.4f",imLeft->R[i*3+j]);
-      PRINTF("\n");
-    }
-  PRINTF("\n");
-
-  PRINTF("[dcam] Left projection matrix\n");
-  for (int i=0; i<3; i++)
-    {
-      for (int j=0; j<4; j++)
-	PRINTF(" %.4f",imLeft->P[i*4+j]);
-      PRINTF("\n");
-    }
-  PRINTF("\n");
-
-  // check for camera matrix
-  if (imLeft->K[0] == 0.0)
-    {
-      hasRectification = false;
-      PRINTF("[dcam] No rectification\n\n");
-    }
-  else
-    {
-      hasRectification = true;
-      imLeft->hasRectification = true;
-      imLeft->initRect = false;	// haven't initialized arrays, wait for image size
+        hasRectification = true;
+        imLeft->hasRectification = true;
+        imLeft->initRect = false;   // haven't initialized arrays, wait for image size
     }
 
-  PRINTF("[dcam] Right camera matrix\n");
-  for (int i=0; i<3; i++)
+    // check for right camera matrix
+    if (imRight->cam_info.K[0] == 0.0)
     {
-      for (int j=0; j<3; j++)
-	PRINTF(" %.4f",imRight->K[i*3+j]);
-      PRINTF("\n");
+        hasRectification = false;
     }
-  PRINTF("\n");
-
-  PRINTF("[dcam] Right distortion vector\n");
-  for (int i=0; i<5; i++)
-    PRINTF(" %.4f",imRight->D[i]);
-  PRINTF("\n");
-  PRINTF("\n");
-
-  PRINTF("[dcam] Right rectification matrix\n");
-  for (int i=0; i<3; i++)
+    else
     {
-      for (int j=0; j<3; j++)
-	PRINTF(" %.4f",imRight->R[i*3+j]);
-      PRINTF("\n");
+        imRight->hasRectification = true;
+        imRight->initRect = false;  // haven't initialized arrays, wait for image size
     }
-  PRINTF("\n");
 
-  PRINTF("[dcam] Right projection matrix\n");
-  for (int i=0; i<3; i++)
-    {
-      for (int j=0; j<4; j++)
-	PRINTF(" %.4f",imRight->P[i*4+j]);
-      PRINTF("\n");
-    }
-  PRINTF("\n");
+    // reprojection matrix
+    double Tx = imRight->cam_info.P[0] / imRight->cam_info.P[3];
 
-  // reprojection matrix
-  double Tx = imRight->P[0] /  imRight->P[3];
-  // first column
-  RP[0] = 1.0;
-  RP[4] = RP[8] = RP[12] = 0.0;
+    // first column
+    RP[0] = 1.0;
+    RP[4] = RP[8] = RP[12] = 0.0;
 
-  // second column
-  RP[5] = 1.0;
-  RP[1] = RP[9] = RP[13] = 0.0;
+    // second column
+    RP[5] = 1.0;
+    RP[1] = RP[9] = RP[13] = 0.0;
 
-  // third column
-  RP[2] = RP[6] = RP[10] = 0.0;
-  RP[14] = -Tx;
+    // third column
+    RP[2] = RP[6] = RP[10] = 0.0;
+    RP[14] = -Tx;
 
-  // fourth column
-  RP[3] = -imLeft->P[2];	// cx
-  RP[7] = -imLeft->P[6];	// cy
-  RP[11] = imLeft->P[0];	// fx, fy
-  RP[15] = (imLeft->P[2] - imRight->P[2] - (double)offx) / Tx;
+    // fourth column
+    RP[3] = -imLeft->cam_info.P[2];  // cx
+    RP[7] = -imLeft->cam_info.P[6];  // cy
+    RP[11] = imLeft->cam_info.P[0];  // fx, fy
+    RP[15] = (imLeft->cam_info.P[2] - imRight->cam_info.P[2] - (double) offx) / Tx;
 
-  PRINTF("[dcam] Reprojection matrix\n");
-  for (int i=0; i<4; i++)
-    {
-      for (int j=0; j<4; j++)
-	PRINTF(" %.4f",RP[i*4+j]);
-      PRINTF("\n");
-    }
-  PRINTF("\n");
-
-
-  PRINTF("[dcam] External translation vector\n");
-  for (int i=0; i<3; i++)
-    PRINTF(" %.4f",T[i]);
-  PRINTF("\n");
-  PRINTF("\n");
-
-  PRINTF("[dcam] External rotation vector\n");
-  for (int i=0; i<3; i++)
-    PRINTF(" %.4f",Om[i]);
-  PRINTF("\n");
-  PRINTF("\n");
-
-
-  // check for camera matrix
-  if (imRight->K[0] == 0.0)
-    hasRectification = false;
-  else
-    {
-      imRight->hasRectification = true;
-      imRight->initRect = false; // haven't initialized arrays, wait for image size
-      PRINTF("[dcam] Has rectification\n\n");
-    }
+    printCalibration();
 }
 
 
@@ -968,88 +801,83 @@ PrintStr(int val, char *str)
 char *
 StereoData::createParams(bool store)
 {
-  char *str = new char[4096];
-  int n = 0;
+    char *str = new char[4096];
+    int n = 0;
 
-  // header
-  n += sprintf(str,"# oST version %d.%d parameters\n\n", OST_MAJORVERSION, OST_MINORVERSION);
+    // header
+    n += sprintf(str,"# oST version %d.%d parameters\n\n", OST_MAJORVERSION, OST_MINORVERSION);
 
-  // stereo params
-  n += sprintf(&str[n],"\n[stereo]\n");
-  n += sprintf(&str[n],"\nndisp    ");
-  n += PrintStr(numDisp,&str[n]);
-  n += sprintf(&str[n],"\ndpp      ");
-  n += PrintStr(dpp,&str[n]);
-  n += sprintf(&str[n],"\ncorrsize ");
-  n += PrintStr(corrSize,&str[n]);
-  n += sprintf(&str[n],"\npresize  ");
-  n += PrintStr(filterSize,&str[n]);
+    // stereo params
+    n += sprintf(&str[n],"\n[stereo]\n");
+    n += sprintf(&str[n],"\nndisp    ");
+    n += PrintStr(numDisp,&str[n]);
+    n += sprintf(&str[n],"\ndpp      ");
+    n += PrintStr(dpp,&str[n]);
+    n += sprintf(&str[n],"\ncorrsize ");
+    n += PrintStr(corrSize,&str[n]);
+    n += sprintf(&str[n],"\npresize  ");
+    n += PrintStr(filterSize,&str[n]);
 
-  // externals
-  n += sprintf(&str[n],"\n\n[externals]\n");
+    // externals
+    n += sprintf(&str[n],"\n\n[externals]\n");
 
-  n += sprintf(&str[n],"\ntranslation\n");
-  n += PrintMatStr(T,1,3,&str[n]);
+    n += sprintf(&str[n],"\ntranslation\n");
+    n += PrintMatStr(T,1,3,&str[n]);
 
-  n += sprintf(&str[n],"\nrotation\n");
-  n += PrintMatStr(Om,1,3,&str[n]);
+    n += sprintf(&str[n],"\nrotation\n");
+    n += PrintMatStr(Om,1,3,&str[n]);
 
-  // left camera
-  n += sprintf(&str[n],"\n[left camera]\n");
+    // left camera
+    n += sprintf(&str[n],"\n[left camera]\n");
 
-  n += sprintf(&str[n],"\ncamera matrix\n");
-  n += PrintMatStr(imLeft->K,3,3,&str[n]);
+    n += sprintf(&str[n],"\ncamera matrix\n");
+    n += PrintMatStr(imLeft->cam_info.K.c_array(),3,3,&str[n]);
 
-  n += sprintf(&str[n],"\ndistortion\n");
-  n += PrintMatStr(imLeft->D,1,5,&str[n]);
+    n += sprintf(&str[n],"\ndistortion\n");
+    n += PrintMatStr(imLeft->cam_info.D.c_array(),1,5,&str[n]);
 
-  n += sprintf(&str[n],"\nrectification\n");
-  n += PrintMatStr(imLeft->R,3,3,&str[n]);
+    n += sprintf(&str[n],"\nrectification\n");
+    n += PrintMatStr(imLeft->cam_info.R.c_array(),3,3,&str[n]);
 
-  n += sprintf(&str[n],"\nprojection\n");
-  n += PrintMatStr(imLeft->P,3,4,&str[n]);
+    n += sprintf(&str[n],"\nprojection\n");
+    n += PrintMatStr(imLeft->cam_info.P.c_array(),3,4,&str[n]);
 
-  // right camera
-  n += sprintf(&str[n],"\n[right camera]\n");
-  n += sprintf(&str[n],"\ncamera matrix\n");
-  n += PrintMatStr(imRight->K,3,3,&str[n]);
+    // right camera
+    n += sprintf(&str[n],"\n[right camera]\n");
+    n += sprintf(&str[n],"\ncamera matrix\n");
+    n += PrintMatStr(imRight->cam_info.K.c_array(),3,3,&str[n]);
 
-  n += sprintf(&str[n],"\ndistortion\n");
-  n += PrintMatStr(imRight->D,1,5,&str[n]);
+    n += sprintf(&str[n],"\ndistortion\n");
+    n += PrintMatStr(imRight->cam_info.D.c_array(),1,5,&str[n]);
 
-  n += sprintf(&str[n],"\nrectification\n");
-  n += PrintMatStr(imRight->R,3,3,&str[n]);
+    n += sprintf(&str[n],"\nrectification\n");
+    n += PrintMatStr(imRight->cam_info.R.c_array(),3,3,&str[n]);
 
-  n += sprintf(&str[n],"\nprojection\n");
-  n += PrintMatStr(imRight->P,3,4,&str[n]);
+    n += sprintf(&str[n],"\nprojection\n");
+    n += PrintMatStr(imRight->cam_info.P.c_array(),3,4,&str[n]);
 
-  str[n] = 0;			// just in case
+    str[n] = 0; // just in case
 
-  if (store)
+    if (store)
     {
-      if (imLeft->params)
-	delete [] imLeft->params;
-      char *bb = new char[n];
-      strcpy(bb,str);
-      imLeft->params = bb;
+        if (imLeft->params) { delete [] imLeft->params; }
+        char *bb = new char[n];
+        strcpy(bb, str);
+        imLeft->params = bb;
     }
 
-  return str;
+    return str;
 }
-
-
 
 //
 // color processing
 // two algorithms: linear interpolation, and edge-tracking interpolation
 //
 
-// convert from Bayer to RGB (3 bytes)
-
 #define AVG(a,b) (((int)(a) + (int)(b))>>1)
 
-void
-ImageData::doBayerColorRGB()
+// convert from Bayer to RGB (3 bytes)
+void ImageData::doBayerColorRGB()
 {
   if (imRawType == COLOR_CODING_NONE)
   {
