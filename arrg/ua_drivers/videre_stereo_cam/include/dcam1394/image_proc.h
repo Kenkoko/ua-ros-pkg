@@ -72,6 +72,7 @@
 #define MEMFREE(x) {if (x) free(x);}
 #endif
 
+#include <sensor_msgs/CameraInfo.h>
 
 #ifndef COLOR_CODING_T
 typedef enum {
@@ -122,6 +123,10 @@ typedef enum {
 #define COLOR_CONVERSION_T
 #endif
 
+typedef enum {
+    SIDE_LEFT = 0,
+    SIDE_RIGHT
+} stereo_side_t;
 
 //
 // structured points in a 4xN point array
@@ -196,12 +201,9 @@ namespace cam
     uint64_t im_time;		// us time when the frame finished DMA into the host
 
     // calibration parameters
-    // row major order
+    sensor_msgs::CameraInfo cam_info;
+
     bool initRect;		// whether arrays are initialized or not
-    double D[5];		// distortion: k1, k2, t1, t2, k3
-    double K[9];		// original camera matrix
-    double R[9];		// rectification matrix
-    double P[12];		// projection/camera matrix
 
     // raw parameter string
     char *params;		// on-camera parameters

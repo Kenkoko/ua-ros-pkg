@@ -38,10 +38,10 @@
 // classes for monocular and stereo image
 //
 
-#include "dcam1394/image_proc.h"
-
 #include <sstream>
 #include <iostream>
+
+#include <dcam1394/image_proc.h>
 
 #define PRINTF(a...) printf(a)
 
@@ -154,19 +154,19 @@ ImageData::initRectify(bool force)
   // set values of cal matrices
   for (int i=0; i<3; i++)
     for (int j=0; j<3; j++)
-      CV_MAT_ELEM(*rK, double, i, j) = K[i*3+j];
+      CV_MAT_ELEM(*rK, double, i, j) = cam_info.K[i*3+j];
 
   // rectified K matrix, from projection matrix
   for (int i=0; i<3; i++)
     for (int j=0; j<3; j++)
-      CV_MAT_ELEM(*rKp, double, i, j) = P[i*4+j];
+      CV_MAT_ELEM(*rKp, double, i, j) = cam_info.P[i*4+j];
 
   for (int i=0; i<3; i++)
     for (int j=0; j<3; j++)
-      CV_MAT_ELEM(*rR, double, i, j) = R[i*3+j];
+      CV_MAT_ELEM(*rR, double, i, j) = cam_info.R[i*3+j];
 
   for (int i=0; i<5; i++)
-    CV_MAT_ELEM(*rD, double, i, 0) = D[i];
+    CV_MAT_ELEM(*rD, double, i, 0) = cam_info.D[i];
 
   // Set up rectification mapping
   rMapxy = cvCreateMat(imHeight, imWidth, CV_16SC2);
