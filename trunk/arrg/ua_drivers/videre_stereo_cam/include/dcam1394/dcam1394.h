@@ -44,29 +44,6 @@
 #include <dc1394/dc1394.h>
 #include <dcam1394/image_proc.h>
 
-
-// Frame size
-typedef enum {
-  SIZE_640x480 = 0,
-  SIZE_320x240,
-  SIZE_1280x960,
-  SIZE_512x384,
-  SIZE_1024x768
-} size_coding_t;
-
-
-
-// STOC modes
-typedef enum {
-  PROC_MODE_OFF = 0,
-  PROC_MODE_NONE,
-  PROC_MODE_TEST,		// test image
-  PROC_MODE_RECTIFIED,
-  PROC_MODE_DISPARITY,
-  PROC_MODE_DISPARITY_RAW
-} videre_proc_mode_t;
-
-
 // Videre offsets
 #define VIDERE_LOCAL_BASE                     0xF0000UL
 #define VIDERE_PARAM1_OFFSET                  0x0400
@@ -103,29 +80,50 @@ typedef enum {
 #define VIDERE_STEREO_512x384 DC1394_VIDEO_MODE_512x384_YUV422
 #define VIDERE_STEREO_320x240 DC1394_VIDEO_MODE_320x240_YUV422
 
+// STOC modes
+typedef enum
+{
+    PROC_MODE_OFF = 0,
+    PROC_MODE_NONE,
+    PROC_MODE_TEST,
+    PROC_MODE_RECTIFIED,
+    PROC_MODE_DISPARITY,
+    PROC_MODE_DISPARITY_RAW
+} videre_proc_mode_t;
 
 using namespace cam;
 
 namespace dcam
 {
 
-  class DcamException : public std::runtime_error
-  {
-  public:
+class DcamException : public std::runtime_error
+{
+public:
     DcamException(const char* msg) : std::runtime_error(msg) {}
-  };
+};
 
-  void init();			// initializes the bus
-  void fini();			// releases the bus
-  size_t numCameras();		// number of cameras found
-  uint64_t getGuid(size_t i);	// camera ids
-  char *getVendor(size_t i);
-  char *getModel(size_t i);
-  extern dc1394_t *dcRef;	// IEEE 1394 system object
-  const char *getModeString(dc1394video_mode_t mode); // Mode string from mode
+// initializes the bus
+void init();
 
-  class Dcam
-  {
+// releases the bus
+void fini();
+
+// number of cameras found
+size_t numCameras();
+
+// camera ids
+uint64_t getGuid(size_t i);
+char* getVendor(size_t i);
+char* getModel(size_t i);
+
+// IEEE 1394 system object
+extern dc1394_t* dcRef;
+
+// Mode string from mode
+const char* getModeString(dc1394video_mode_t mode);
+
+class Dcam
+{
     friend void init();
     friend void fini();
     friend size_t numCams();
@@ -133,25 +131,30 @@ namespace dcam
     friend char *getVendor(size_t i);
     friend char *getModel(size_t i);
 
-  public:
+public:
     Dcam(uint64_t guid, size_t bufferSize = 8);
 
     virtual ~Dcam();
 
-    char *getVendor();		// just our own
-    char *getModel();
-    virtual dc1394video_modes_t *getModes();
+    char* getVendor();
+    char* getModel();
+    virtual dc1394video_modes_t* getModes();
 
     virtual void setFormat(dc1394video_mode_t video = DC1394_VIDEO_MODE_640x480_MONO8,
-			   dc1394framerate_t fps = DC1394_FRAMERATE_30,
-			   dc1394speed_t speed = DC1394_ISO_SPEED_400);
+                           dc1394framerate_t fps = DC1394_FRAMERATE_30,
+                           dc1394speed_t speed = DC1394_ISO_SPEED_400);
 
     virtual void start();
     virtual void stop();
 
-    ImageData *camIm;		// image data
+    // image data
+    ImageData *camIm;
+    uint64_t camGUID;
+    uint32_t imFirmware, camFirmware, stocFirmware;
+    bool isSTOC, isVidereStereo, isVidere, isColor; // true if a STOC, Videre stereo, color device
 
-    virtual bool getImage(int ms); // gets the next image, with timeout
+    // gets the next image, with timeout
+    virtual bool getImage(int ms);
     virtual void setCapturePolicy(dc1394capture_policy_t policy = DC1394_CAPTURE_POLICY_WAIT);
 
     // general DC1394 interface
@@ -182,23 +185,20 @@ namespace dcam
 
     virtual bool setProcMode(videre_proc_mode_t mode);
 
-    virtual bool setCompanding(bool on); // bring up low light levels
-    virtual bool setHDR(bool on); // high dynamic range
+    virtual bool setCompanding(bool on);    // bring up low light levels
+    virtual bool setHDR(bool on);           // high dynamic range
 
-    virtual char *getParameters(); // download from device
-    virtual char *retParameters(); // just return current param string
-    virtual bool putParameters(char *p); // just set current param string, handle buffering
-    virtual bool setParameters(); // upload to device
+    virtual char *getParameters();          // download from device
+    virtual char *retParameters();          // just return current param string
+    virtual bool putParameters(char *p);    // just set current param string, handle buffering
+    virtual bool setParameters();           // upload to device
     virtual bool setSTOCParams(uint8_t *cbuf, int cn, // upload to STOC device
-			       uint8_t *lbuf, int ln, // STOC firmware, left and right warp tables
-			       uint8_t *rbuf, int rn);
+                               uint8_t *lbuf, int ln, // STOC firmware, left and right warp tables
+                               uint8_t *rbuf, int rn);
 
     virtual int  getIncRectTable(uint8_t *buf);	// make a warp table for a STOC device
-    uint64_t camGUID;		// our own GUID
-    uint32_t imFirmware, camFirmware, stocFirmware;
-    bool isSTOC, isVidereStereo, isVidere, isColor; // true if a STOC, Videre stereo, color device
 
-  protected:
+protected:
     bool started;
     size_t bufferSize;		// number of DMA buffers
     dc1394video_modes_t camModes; // valid modes
@@ -212,9 +212,8 @@ namespace dcam
     dc1394video_mode_t videoMode;
     color_coding_t rawType;	// what type of raw image we receive
     virtual bool store_eeprom_bytes(int addr, uint8_t *buf, int count);
-  };
-
 };
 
+};
 
 #endif
