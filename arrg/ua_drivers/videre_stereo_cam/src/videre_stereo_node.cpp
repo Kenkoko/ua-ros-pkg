@@ -639,8 +639,7 @@ public:
         stereo_model_.fromCameraInfo(img_left->cam_info, img_right->cam_info);
         fillHeaders();
 
-        cam_bridge::StereoDataToRawStereo(stcam_->stIm, stereo_model_,
-                                          left_image_, right_image_, disparity_image_);
+        cam_bridge::StereoDataToRawStereo(stcam_->stIm, stereo_model_, left_image_, right_image_, disparity_image_);
 
         if (current_config_.convert_to_color) { stcam_->doBayerColorRGB(); }
         if (current_config_.calculate_points || current_config_.calculate_points2) { stcam_->doCalcPts(); }

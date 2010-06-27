@@ -131,33 +131,31 @@ typedef enum {
 //
 // structured points in a 4xN point array
 //
-
 typedef struct
 {
   float X;
   float Y;
   float Z;
-  int32_t A;			// negative for undefined point, otherwise arbitrary index
+  int32_t A; // negative for undefined point, otherwise arbitrary index
 } pt_xyza_t;
-
 
 namespace cam
 {
-  // monocular data structure
-  // generally, all images should be on 16-byte alignment
+// monocular data structure
+// generally, all images should be on 16-byte alignment
 
-  // internal types for conversion routines
-  const static uint8_t NONE = 0;
-  const static uint8_t IMAGE_RAW = 1;
-  const static uint8_t IMAGE = 2;
-  const static uint8_t IMAGE_COLOR = 3;
-  const static uint8_t IMAGE_RECT = 4;
-  const static uint8_t IMAGE_RECT_COLOR = 5;
+// internal types for conversion routines
+const static uint8_t NONE = 0;
+const static uint8_t IMAGE_RAW = 1;
+const static uint8_t IMAGE = 2;
+const static uint8_t IMAGE_COLOR = 3;
+const static uint8_t IMAGE_RECT = 4;
+const static uint8_t IMAGE_RECT_COLOR = 5;
 
-  class ImageData
-  {
+class ImageData
+{
 
-  public:
+public:
     ImageData();
     ~ImageData();
 
@@ -198,32 +196,30 @@ namespace cam
     size_t imRectColorSize;
 
     // timing
-    uint64_t im_time;		// us time when the frame finished DMA into the host
+    uint64_t im_time;   // us time when the frame finished DMA into the host
 
     // calibration parameters
     sensor_msgs::CameraInfo cam_info;
 
-    bool initRect;		// whether arrays are initialized or not
+    bool initRect;  // whether arrays are initialized or not
 
     // raw parameter string
-    char *params;		// on-camera parameters
+    char *params;   // on-camera parameters
 
     // buffers
-    void releaseBuffers();	// get rid of all buffers
+    void releaseBuffers();  // get rid of all buffers
 
     // rectification
-    bool hasRectification;	// true if valid rectification present
-    bool doRectify();		// try to rectify images
-    bool initRectify(bool force=false);	// initializes the rectification internals from the
-                                // calibration parameters
+    bool hasRectification;              // true if valid rectification present
+    bool doRectify();                   // try to rectify images
+    bool initRectify(bool force=false); // initializes the rectification internals from the calibration parameters
 
     // color conversion
     color_conversion_t colorConvertType; // BILINEAR or EDGE conversion
-    void doBayerColorRGB();	// does Bayer => color and mono
-    void doBayerMono();		// does Bayer => mono
+    void doBayerColorRGB(); // does Bayer => color and mono
+    void doBayerMono();     // does Bayer => mono
 
-
-  protected:
+protected:
     // rectification arrays from OpenCV
     CvMat *rK;
     CvMat *rD;
@@ -236,20 +232,14 @@ namespace cam
     IplImage* srcIm;		// temps for rectification
     IplImage* dstIm;
 
-  private:
+private:
     // various color converters
-    void convertBayerGRBGColorRGB(uint8_t *src, uint8_t *dstc, uint8_t *dstm,
-				  int width, int height, color_conversion_t colorAlg);
-    void convertBayerBGGRColorRGB(uint8_t *src, uint8_t *dstc, uint8_t *dstm,
-				  int width, int height, color_conversion_t colorAlg);
-    void convertBayerGRBGMono(uint8_t *src, uint8_t *dstm,
-                              int width, int height, color_conversion_t colorAlg);
-    void convertBayerBGGRMono(uint8_t *src, uint8_t *dstm,
-                              int width, int height, color_conversion_t colorAlg);
-  };
+    void convertBayerGRBGColorRGB(uint8_t *src, uint8_t *dstc, uint8_t *dstm, int width, int height, color_conversion_t colorAlg);
+    void convertBayerBGGRColorRGB(uint8_t *src, uint8_t *dstc, uint8_t *dstm, int width, int height, color_conversion_t colorAlg);
+    void convertBayerGRBGMono(uint8_t *src, uint8_t *dstm, int width, int height, color_conversion_t colorAlg);
+    void convertBayerBGGRMono(uint8_t *src, uint8_t *dstm, int width, int height, color_conversion_t colorAlg);
+};
 
 }
-
-
 
 #endif	// IMAGE_H
