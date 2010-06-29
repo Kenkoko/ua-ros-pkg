@@ -27,7 +27,7 @@
                               (list :|static| (boolean-string (static?-of obj)))
                               (body-xml obj))))
           (concatenate 'string "<?xml version=\"1.0\"?>"
-                       (print-xml-string xml-list :pretty nil)))))
+                       (print-xml-string xml-list :pretty t)))))
 
 ;;====================================================
 ;; ROS-based methods
@@ -144,16 +144,16 @@
 
 (defmethod body-xml ((obj physical-object))
   (append (list (list (get-shape-xml obj) :|name| (gazebo-name-of obj)))
-          (append '((:|turnGravityOff| "false")
+          (append `((:|turnGravityOff| "false")
                     (:|dampingFactor| "0.01") 
                     (:|selfCollide| "false") 
                     (:|massMatrix| "true")
-                    (:|mass| "0.2") 
+                    (:|mass| ,(format nil "~d" (mass-of obj))) 
                     (:|ixx| "0.1") (:|ixy| "0.0") (:|ixz| "0.0")
                     (:|iyy| "0.1") (:|iyz| "0.0") 
                     (:|izz| "0.1") 
                     (:|cx| "0.0") (:|cy| "0.0") (:|cz| "0.0") 
-                    (:|xyz| "0 0 0") (:|rpy| "0 0 0"))
+                    (:|xyz| "0 0 0") ,(rpy-xml obj))
                   (list (append (list (list (get-geom-xml obj) 
                                             :|name| (concatenate 'string 
                                                                   (gazebo-name-of obj)
