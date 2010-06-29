@@ -12,6 +12,9 @@ import time
 from plotter.msg import *
 from plotter.srv import *
 
+location = roslib.packages.get_pkg_subdir("plotter", "plots") + "/"
+print location
+
 def plot(plot_data):
     plt.plot(plot_data.x_data, plot_data.y_data, label=plot_data.name)
 
@@ -31,7 +34,7 @@ def handle_plot(req):
         plot(plot_data)
     labels = [line.get_label() for line in ax.lines]
     plt.figlegend(ax.lines, labels, 'upper right')
-    plt.savefig('../plots/' + str(t) + '.png')
+    plt.savefig(location + str(t) + '.png')
     
     return PlotResponse()
 

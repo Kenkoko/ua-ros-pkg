@@ -34,6 +34,7 @@
 #include <gazebo/GazeboError.hh>
 #include <gazebo/ControllerFactory.hh>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace gazebo;
@@ -132,12 +133,13 @@ void WorldStatePublisher::UpdateChild()
   // Publish
   Time cur_time = Simulator::Instance()->GetSimTime();
 
-  /// \bridf: list of all models in the world
+
+//  World::Instance()->GetPhysicsEngine()->
+
+
+
   vector<gazebo::Model*> models;
   vector<gazebo::Model*>::iterator miter;
-
-  /// \bridf: list of all bodies in the model
-//  const map<string, gazebo::Body*> *bodies;
 
   map<string, gazebo::Body*> all_bodies;
   all_bodies.clear();
@@ -147,16 +149,13 @@ void WorldStatePublisher::UpdateChild()
   // aggregate all bodies into a single vector
   for (miter = models.begin(); miter != models.end(); miter++)
   {
-    // bodies = (*miter)->GetBodies(); // This has been removed?
-    // Iterate through all bodies
-//    map<string, Body*>::const_iterator biter;
-//    for (biter = bodies->begin(); biter != bodies->end(); biter++)
-//    {
-//      all_bodies.insert(make_pair(biter->first, biter->second));
+//    BOOST_FOREACH(Entity* e, miter->GetChildren()) {
+//      miter->GetBody(e->GetName());
 //    }
 
     // TODO: For now, we can only get the default body
     Body *body = (*miter)->GetBody();
+
     all_bodies.insert(make_pair(body->GetName(), body));
   }
   //ROS_ERROR("debug: %d",all_bodies.size());
