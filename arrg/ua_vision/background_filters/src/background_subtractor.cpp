@@ -32,191 +32,88 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include <ros/ros.h>
-#include <sensor_msgs/Image.h>
-#include <image_transport/image_transport.h>
-
-#include <cv_bridge/CvBridge.h>
-#include <background_filters/GetBgStats.h>
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <nmpt/OpenCVBoxFilter.h>
-#include <background_filters/common.h>
+#include <background_filters/background_subtractor.h>
 
 #define TWO_PI 6.28318531
 
 using namespace std;
 
-class BackgroundSubtractor
+void BackgroundSubtractor::initialize(const std::string colorspace,
+                                      const cv::Mat avg_img,
+                                      const std::vector<float> cov_mats_inv,
+                                      const std::vector<float> dets)
 {
-private:
-    cv::Mat avg_img;
+    this->colorspace = colorspace;
+    this->avg_img = avg_img;
+    this->img_n_chan = avg_img.channels();
+    this->cov_mats_inv = cov_mats_inv;
+    this->dets = dets;
 
-    vector<float> cov_mats_inv;
-    vector<float> dets;
-    vector<double> partition;
+    partition.resize(dets.size());
+    double coef = pow(TWO_PI, img_n_chan / 2.0);
 
-    int img_n_chan;
-    string colorspace;
-
-    image_transport::Subscriber image_sub;
-    ros::Publisher prob_img_pub;
-
-public:
-    BackgroundSubtractor(ros::NodeHandle& nh, const std::string& transport)
+    for (size_t i = 0; i < dets.size(); ++i)
     {
-        ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
-
-        background_filters::GetBgStats srv;
-        sensor_msgs::CvBridge bridge;
-
-//        cv::startWindowThread();
-//        cv::namedWindow("prob_img");
-
-        if (client.call(srv))
-        {
-            bridge.fromImage(srv.response.average_background);
-            avg_img = cv::Mat(bridge.toIpl()).clone();
-            colorspace = srv.response.colorspace;
-            cov_mats_inv = srv.response.covariance_matrix_inv;
-            dets = srv.response.covariance_matrix_dets;
-
-            img_n_chan = avg_img.channels();
-
-            partition.resize(dets.size());
-            double coef = pow(TWO_PI, img_n_chan / 2.0);
-
-            for (unsigned i = 0; i < dets.size(); ++i)
-            {
-                partition[i] = 1.0 / (coef * sqrt(dets[i]));
-            }
-        }
-        else
-        {
-            ROS_ERROR("Failed to call service get_bg_stats");
-        }
-
-        std::string topic = nh.resolveName("image");
-        image_transport::ImageTransport it(nh);
-
-        image_sub = it.subscribe(topic, 1, &BackgroundSubtractor::handle_image, this);
-        prob_img_pub = nh.advertise<sensor_msgs::Image>("probability_image", 1);
+        partition[i] = 1.0 / (coef * sqrt(dets[i]));
     }
+}
 
-    ~BackgroundSubtractor()
-    {
-        cvDestroyWindow("prob_img");
-    }
-
-    void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
-    {
-        sensor_msgs::CvBridge bridge;
-        cv::Mat new_img;
-
-        try
-        {
-            if (colorspace == "rgb")
-            {
-                new_img = cv::Mat(avg_img.size(), CV_8UC3);
-                cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), new_img, avg_img.size());
-            }
-            else if (colorspace == "hsv")
-            {
-                new_img = cv::Mat(avg_img.size(), CV_8UC3);
-                cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), new_img, avg_img.size());
-                cv::cvtColor(new_img, new_img, CV_BGR2HSV);
-            }
-            else if (colorspace == "rgchroma")
-            {
-                cv::Mat temp(avg_img.size(), CV_8UC3);
-                cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), temp, avg_img.size());
-                new_img = cv::Mat(avg_img.size(), CV_32FC2);
-                convertToChroma(temp, new_img);
-            }
-        }
-        catch (sensor_msgs::CvBridgeException error)
-        {
-            ROS_ERROR("CvBridgeError");
-        }
-
-        if (colorspace == "rgb" || colorspace == "hsv")
-        {
-            difference<const uchar>(new_img, msg_ptr->header.stamp);
-        }
-        else if (colorspace == "rgchroma")
-        {
-            difference<const float>(new_img, msg_ptr->header.stamp);
-        }
-    }
-
-    template <class T>
-    void difference(const cv::Mat& new_img, ros::Time stamp)
-    {
-        cv::Mat prob_img(new_img.size(), CV_32FC1);
-        float *prob_data = prob_img.ptr<float>();
-
-        int height = new_img.rows;
-        int width = new_img.cols;
-
-        cv::Mat bgr_new(1, img_n_chan, CV_32FC1);
-        cv::Mat bgr_ave(1, img_n_chan, CV_32FC1);
-        cv::Mat inv_cov;
-
-        for (int row = 0; row < height; ++row)
-        {
-            T* ptr_bg = new_img.ptr<T>(row);
-            T* ptr_ave = avg_img.ptr<T>(row);
-
-            for (int col = 0; col < width; ++col)
-            {
-                int pixel = row * width + col;
-
-                for (int ch = 0; ch < img_n_chan; ++ch)
-                {
-                    bgr_new.at<float>(0, ch) = ptr_bg[img_n_chan*col + ch];
-                    bgr_ave.at<float>(0, ch) = ptr_ave[img_n_chan*col + ch];
-                }
-
-                inv_cov = cv::Mat(img_n_chan, img_n_chan, CV_32FC1, &cov_mats_inv[pixel*(img_n_chan*img_n_chan)], sizeof(float)*img_n_chan);
-
-                double mah_dist = cv::Mahalanobis(bgr_new, bgr_ave, inv_cov);
-                double unnorm_gaussian = exp(-0.5 * mah_dist);
-                float p = partition[pixel] * unnorm_gaussian;
-
-                prob_data[pixel] = p;
-            }
-        }
-
-        // calculate negative log-likelihood, darker areas are background, lighter - objects
-        cv::log(prob_img, prob_img);
-        prob_img.convertTo(prob_img, prob_img.type(), -1.0);
-
-        IplImage prob_img_ipl = prob_img;
-        sensor_msgs::Image::Ptr prob_msg = sensor_msgs::CvBridge::cvToImgMsg(&prob_img_ipl);
-        prob_msg->header.stamp = stamp;
-        prob_img_pub.publish(prob_msg);
-
-//        cv::Mat duplicate = prob_img.clone();
-//        cv::normalize(duplicate, duplicate, 0.0, 1.0, cv::NORM_MINMAX);
-//        cv::imshow("prob_img", duplicate);
-    }
-};
-
-int main (int argc, char **argv)
+template <class T>
+cv::Mat BackgroundSubtractor::difference(const cv::Mat& new_img)
 {
-    ros::init(argc, argv, "background_subtractor", ros::init_options::AnonymousName);
-    ros::NodeHandle n;
+    cv::Mat prob_img(new_img.size(), CV_32FC1);
+    float *prob_data = prob_img.ptr<float>();
 
-    if (n.resolveName("image") == "/image")
+    int height = new_img.rows;
+    int width = new_img.cols;
+
+    cv::Mat bgr_new(1, img_n_chan, CV_32FC1);
+    cv::Mat bgr_ave(1, img_n_chan, CV_32FC1);
+    cv::Mat inv_cov;
+
+    for (int row = 0; row < height; ++row)
     {
-        ROS_WARN("background_subtractor: image has not been remapped! Typical command-line usage:\n"
-        "\t$ ./background_subtractor image:=<image topic> [transport]");
+        T* ptr_bg = new_img.ptr<T>(row);
+        T* ptr_ave = avg_img.ptr<T>(row);
+
+        for (int col = 0; col < width; ++col)
+        {
+            int pixel = row * width + col;
+
+            for (int ch = 0; ch < img_n_chan; ++ch)
+            {
+                bgr_new.at<float>(0, ch) = ptr_bg[img_n_chan*col + ch];
+                bgr_ave.at<float>(0, ch) = ptr_ave[img_n_chan*col + ch];
+            }
+
+            inv_cov = cv::Mat(img_n_chan, img_n_chan, CV_32FC1, &cov_mats_inv[pixel*(img_n_chan*img_n_chan)], sizeof(float)*img_n_chan);
+
+            double mah_dist = cv::Mahalanobis(bgr_new, bgr_ave, inv_cov);
+            double unnorm_gaussian = exp(-0.5 * mah_dist);
+            float p = partition[pixel] * unnorm_gaussian;
+
+            prob_data[pixel] = p;
+        }
     }
 
-    BackgroundSubtractor subtractor(n, (argc > 1) ? argv[1] : "raw");
+    // calculate negative log-likelihood, darker areas are background, lighter - objects
+    cv::log(prob_img, prob_img);
+    prob_img.convertTo(prob_img, prob_img.type(), -1.0);
 
-    ros::spin();
-    return 0;
+    return prob_img;
+}
+
+cv::Mat BackgroundSubtractor::subtract_background(const cv::Mat& new_img)
+{
+    if (colorspace == "rgb" || colorspace == "hsv")
+    {
+        return difference<const uchar>(new_img);
+    }
+    else if (colorspace == "rgchroma")
+    {
+        return difference<const float>(new_img);
+    }
 }
