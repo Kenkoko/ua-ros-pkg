@@ -5,11 +5,14 @@
 
 (define-unit-class thing ()
   (gazebo-name ;; no initform so it must be bound
-   (xyz  :initform '(1.0 0 0.2))
-   (rpy :initform '(0 0 0))
-   (default-xyz :initform '(0 0 0))
-   (self-predicates :initform '(diff-speed x-pos y-pos z-pos x-vel y-vel z-vel force-mag))
-   (binary-predicates :initform '(dist-between))
+   (xyz  :initform (list 1.0 0 0.2))
+   (rpy :initform (list 0 0 0))
+   (default-xyz :initform (list 0 0 0))
+   (self-predicates :initform (list 'diff-speed 
+                                    'x-pos 'y-pos 'z-pos 
+                                    'x-vel 'y-vel 'z-vel 
+                                    'force-mag))
+   (binary-predicates :initform (list 'dist-between))
    (xml-string :initform nil))
   (:initial-space-instances 
    (object-library))
