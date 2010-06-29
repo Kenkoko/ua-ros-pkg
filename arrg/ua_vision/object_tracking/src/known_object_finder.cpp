@@ -32,20 +32,15 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include <sensor_msgs/Image.h>
-#include <geometry_msgs/Point.h>
-
-#include <boost/thread/mutex.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <background_filters/common.h>
-#include <object_tracking/AddObject.h>
 #include <object_tracking/object.h>
 #include <object_tracking/known_object_finder.h>
-#include <boost/lexical_cast.hpp>
 
 using namespace std;
 

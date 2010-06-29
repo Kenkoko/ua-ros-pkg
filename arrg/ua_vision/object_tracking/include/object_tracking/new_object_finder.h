@@ -35,23 +35,16 @@
 #ifndef NEWOBJECTFINDER_H_
 #define NEWOBJECTFINDER_H_
 
-#include <ros/ros.h>
-
-#include <image_transport/image_transport.h>
-#include <image_transport/subscriber.h>
-#include <sensor_msgs/Image.h>
-#include <cv_bridge/CvBridge.h>
-
+#include <opencv2/core/core.hpp>
 #include <object_tracking/object.h>
 
 class NewObjectFinder
 {
-    public:
-        NewObjectFinder();
-        virtual ~NewObjectFinder();
+public:
+    NewObjectFinder();
 
-        void find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, std::vector<Object>& objects);
-        void sgd(std::vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_ratio, const cv::Mat& obj_mask, double& alpha, double& beta, int id);
+    void find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, std::vector<Object>& objects);
+    void sgd(std::vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_ratio, const cv::Mat& obj_mask, double& alpha, double& beta, int id);
 };
 
 #endif /* OBJECTDETECTOR_H_ */

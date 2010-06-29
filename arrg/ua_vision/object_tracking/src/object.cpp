@@ -32,15 +32,13 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include <geometry_msgs/Point.h>
-
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <background_filters/common.h>
 #include <object_tracking/object.h>
 
 void Object::subtract_self(const cv::Mat& fg_prob_img, const cv::Mat& orig_img, const cv::Mat& bin_img,
