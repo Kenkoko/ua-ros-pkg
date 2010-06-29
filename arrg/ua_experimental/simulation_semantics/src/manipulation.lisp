@@ -45,6 +45,24 @@
               (make-xml-list object)))
   (add-to-world object))
 
+(defun rotate-object (object rpy)
+  (remove-from-world object)
+  (setf (rpy-of object) rpy)
+  (make-xml-list object)
+  (add-to-world object))
+
+(defun morph-object (object new-shape)
+  (remove-from-world object)
+  (setf (shape-of object) new-shape)
+  (make-xml-list object)
+  (add-to-world object))
+
+(defun change-mass (object new-mass)
+  (remove-from-world object)
+  (setf (mass-of object) new-mass)
+  (make-xml-list object)
+  (add-to-world object))
+
 (defun raise-robot ()
   (let ((robot (find-instance-by-name 'robot)))
     (setf (third (xyz-of robot)) 0.6)))
