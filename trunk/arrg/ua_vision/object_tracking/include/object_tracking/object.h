@@ -29,7 +29,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <geometry_msgs/Point.h>
+#include <ros/ros.h>
 #include <opencv2/core/core.hpp>
 
 class Object

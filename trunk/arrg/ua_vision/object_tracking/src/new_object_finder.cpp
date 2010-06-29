@@ -32,22 +32,12 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include <ros/ros.h>
-
-#include <object_tracking/new_object_finder.h>
-#include <object_tracking/AddObject.h>
-#include <sensor_msgs/Image.h>
-#include <cv_bridge/CvBridge.h>
-
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <boost/bind.hpp>
-
-#include <background_filters/common.h>
 #include <object_tracking/object.h>
-
-using namespace std;
+#include <object_tracking/new_object_finder.h>
 
 NewObjectFinder::NewObjectFinder()
 {
@@ -96,6 +86,8 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     // These vectors store information about the new objects
     std::vector<cv::Rect> fg_rects;
     std::vector<cv::MatND> histograms;
+    std::vector<cv::Mat> back_projects;
+    std::vector<cv::Mat> masks;
     std::vector<double> alphas;
     std::vector<double> betas;
     std::vector<double> areas;
@@ -151,9 +143,9 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
             cv::calcHist(&hsv_roi, 1, channels, mask, hist, 2, hist_size, ranges);
             histograms.push_back(hist);
 
-
             cv::Mat obj_mask = cv::Mat::zeros(bin_image.size(), bin_image.type());
             cv::fillConvexPoly(obj_mask, con.data(), con.size(), cv::Scalar(1));
+            masks.push_back(obj_mask);
 
             // Back project the histogram
             cv::Mat back_project;
@@ -164,18 +156,23 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
             back_project.convertTo(bp_prob, CV_32FC1, 1.0/255.0);
             cv::log(bp_prob, bp_prob);
 
-            cv::Mat log_lik_ratio;
-            cv::add(bp_prob, bg_neg_log_lik_img, log_lik_ratio);
-
-            double alpha, beta;
-            sgd(bp_prob, log_lik_ratio, obj_mask, alpha, beta, i);
-            alphas.push_back(alpha);
-            betas.push_back(beta);
-
-            cv::normalize(log_lik_ratio, log_lik_ratio, 0, 1, cv::NORM_MINMAX);
-            cv::namedWindow("hist " + boost::lexical_cast<string>(i));
-            cv::imshow("hist " + boost::lexical_cast<string>(i), log_lik_ratio);
+            back_projects.push_back(bp_prob);
         }
+    }
+
+    for (size_t i = 0; i < histograms.size(); ++i)
+    {
+        cv::Mat log_lik_ratio;
+        cv::add(back_projects[i], bg_neg_log_lik_img, log_lik_ratio);
+
+        double alpha, beta;
+        sgd(back_projects, log_lik_ratio, masks[i], alpha, beta, i);
+        alphas.push_back(alpha);
+        betas.push_back(beta);
+
+        cv::normalize(log_lik_ratio, log_lik_ratio, 0, 1, cv::NORM_MINMAX);
+        cv::namedWindow("hist " + boost::lexical_cast<std::string>(i));
+        cv::imshow("hist " + boost::lexical_cast<std::string>(i), log_lik_ratio);
     }
 
     for (uint i = 0; i < histograms.size(); ++i)
@@ -200,7 +197,7 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     //  cv::imshow("contours", original);
 }
 
-void NewObjectFinder::sgd(vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_ratio, const cv::Mat& obj_mask, double& alpha, double& beta, int id)
+void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_ratio, const cv::Mat& obj_mask, double& alpha, double& beta, int id)
 {
     alpha = beta = 1;
     double step_size = 0.01;
@@ -217,8 +214,8 @@ void NewObjectFinder::sgd(vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_ratio
     int num_objects = 5 + 1;    // TODO: change those/ num objects + background
     int num_features = num_objects + 1; // 1 = bias term
     //int size = 320*240;   //TODO: change those
-    vector<double> mins;
-    vector<double> maxs;
+    std::vector<double> mins;
+    std::vector<double> maxs;
     mins.resize(num_objects);
     maxs.resize(num_objects);
 
@@ -233,7 +230,7 @@ void NewObjectFinder::sgd(vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_ratio
 
     for (int i = 1; i < num_objects; ++i)
     {
-        cv::Mat bp = bp_prob[i-1];
+        cv::Mat bp = bp_prob[i-1].clone();                  // TODO: pass in reshaped back_projects?
         cv::minMaxLoc(bp, &mins[i-1], &maxs[i-1]);
         cv::normalize(bp, bp, 0, 1, cv::NORM_MINMAX);
         bp.reshape(1, 1);   // 1 channel, 1 row matrix [px_1 ... px_size]
