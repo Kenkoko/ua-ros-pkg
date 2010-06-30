@@ -32,12 +32,14 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#ifndef BACKGROUND_FILTERS_COMMON_H
+#define BACKGROUND_FILTERS_COMMON_H
+
 #include <iostream>
 #include <cstdio>
 
-#include <cv.h>
-#include <cxcore.h>
-#include <highgui.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 void print_mat(CvMat *mat)
 {
@@ -196,3 +198,5 @@ void displayHist(cv::SparseMat hist, std::string window_name)
   cv::namedWindow(window_name);
   cv::imshow(window_name, histImg);
 }
+
+#endif

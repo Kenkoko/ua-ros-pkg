@@ -29,7 +29,7 @@
     <depend package="pcl"/>
 
     <export>
-        <cpp cflags="-I${prefix}/include `rosboost-cfg --cflags`" lflags=""/>
+        <cpp cflags="-I${prefix}/include `rosboost-cfg --cflags`" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lbackground_subtractor"/>
         <filters plugin="${prefix}/config/background_filters.xml" />
     </export>
 </package>
