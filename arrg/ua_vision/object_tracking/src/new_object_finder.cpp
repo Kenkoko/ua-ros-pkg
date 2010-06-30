@@ -211,9 +211,9 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_
     cv::minMaxLoc(log_lik_rat_norm, &min, &max);
     cv::normalize(log_lik_rat_norm, log_lik_rat_norm, 0, 1, cv::NORM_MINMAX);
 
-    int num_objects = 5 + 1;    // TODO: change those/ num objects + background
-    int num_features = num_objects + 1; // 1 = bias term
-    //int size = 320*240;   //TODO: change those
+    int num_objects = bp_prob.size() + 1;    // TODO: change those/ num objects + background
+    int num_features = num_objects + 1;      // 1 = bias term
+
     std::vector<double> mins;
     std::vector<double> maxs;
     mins.resize(num_objects);
@@ -231,7 +231,9 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_
     for (int i = 1; i < num_objects; ++i)
     {
         cv::Mat bp = bp_prob[i-1].clone();                  // TODO: pass in reshaped back_projects?
-        cv::minMaxLoc(bp, &mins[i-1], &maxs[i-1]);
+        double* min = &mins[i-1];
+        double* max = &maxs[i-1];
+        cv::minMaxLoc(bp, min, max);
         cv::normalize(bp, bp, 0, 1, cv::NORM_MINMAX);
         bp.reshape(1, 1);   // 1 channel, 1 row matrix [px_1 ... px_size]
         cv::Mat rowi = feature_vectors.row(i);
@@ -260,6 +262,7 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_
             //float p = 1.0 / (1.0 + exp(-(alpha + beta * val)));   // binary variable logisitc regression
 
             cv::Mat feat_col = feature_vectors.col(j);
+            printf("mlr (%d, %d), feat (%d, %d)\n", mlr_weights.cols, mlr_weights.rows, feat_col.cols, feat_col.rows);
             cv::Mat vals = mlr_weights * feat_col;
 
             cv::exp(vals, vals);
