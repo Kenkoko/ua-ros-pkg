@@ -36,12 +36,17 @@
 #include <cstdio>
 #include <errno.h>
 
-#include <dcam1394/dcam1394.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+
+#include <videre_stereo_cam/stereoimage.h>
+#include <videre_stereo_cam/videre_stereo_1394.h>
+#include <videre_stereo_cam/videre_dc1394_control.h>
 
 #define PRINTF(a...) ROS_INFO(a)
 
 #define CHECK_READY()                                                                     \
-    if (!dcam::dcRef)                                                                     \
+    if (!dcRef)                                                                           \
     {                                                                                     \
         char msg[256];                                                                    \
         snprintf(msg, 256, "Tried to call %s before calling dcam::init()", __FUNCTION__); \
@@ -71,302 +76,68 @@
         }                                                                     \
     }
 
-// These defines are taken from libdc1394 to redefine how some features
-// are set on Videre Stereo cameras (whitebalance, )
-#define REG_CAMERA_WHITE_BALANCE            0x80CU
-#define REG_CAMERA_FEATURE_HI_BASE          0x800U
-#define REG_CAMERA_FEATURE_LO_BASE          0x880U
-
-#define FEATURE_TO_VALUE_OFFSET(feature, offset)                                        \
-    {                                                                                   \
-        if ( (feature > DC1394_FEATURE_MAX) || (feature < DC1394_FEATURE_MIN) )         \
-            return DC1394_FAILURE;                                                      \
-        else if (feature < DC1394_FEATURE_ZOOM)                                         \
-            offset= REG_CAMERA_FEATURE_HI_BASE+(feature - DC1394_FEATURE_MIN)*0x04U;    \
-        else if (feature >= DC1394_FEATURE_CAPTURE_SIZE)                                \
-            offset= REG_CAMERA_FEATURE_LO_BASE +(feature+12-DC1394_FEATURE_ZOOM)*0x04U; \
-        else                                                                            \
-            offset= REG_CAMERA_FEATURE_LO_BASE +(feature-DC1394_FEATURE_ZOOM)*0x04U;    \
-    }
-
-dc1394error_t
-dc1394_feature_whitebalance_set_value_blind(dc1394camera_t *camera, uint32_t u_b_value, uint32_t v_r_value)
-{
-    uint32_t curval = ( ((u_b_value & 0xFFFUL) << 12) | (v_r_value & 0xFFFUL) );
-    dc1394error_t err = dc1394_set_control_register(camera, REG_CAMERA_WHITE_BALANCE, curval);
-    DC1394_ERR_RTN(err, "Could not set white balance");
-
-    return err;
-}
-
-dc1394error_t
-dc1394_feature_set_value_blind(dc1394camera_t *camera, dc1394feature_t feature, uint32_t value)
-{
-    uint64_t offset;
-    dc1394error_t err;
-
-    if ( (feature < DC1394_FEATURE_MIN) || (feature > DC1394_FEATURE_MAX) ) { return DC1394_INVALID_FEATURE; }
-
-    if ((feature == DC1394_FEATURE_WHITE_BALANCE) ||
-        (feature == DC1394_FEATURE_WHITE_SHADING) ||
-        (feature == DC1394_FEATURE_TEMPERATURE))
-    {
-        err = DC1394_INVALID_FEATURE;
-        DC1394_ERR_RTN(err, "You should use the specific functions to write from multiple-value features");
-    }
-
-    FEATURE_TO_VALUE_OFFSET(feature, offset);
-
-    err = dc1394_set_control_register(camera, offset, (value & 0xFFFUL));
-    DC1394_ERR_RTN(err, "Could not set feature value");
-
-    return err;
-}
-
-dc1394error_t
-dc1394_feature_set_mode_blind(dc1394camera_t *camera, dc1394feature_t feature, dc1394feature_mode_t mode)
-{
-    dc1394error_t err;
-    uint64_t offset;
-    uint32_t value;
-
-    if ( (feature < DC1394_FEATURE_MIN) || (feature > DC1394_FEATURE_MAX) ) { return DC1394_INVALID_FEATURE; }
-    if ( (mode < DC1394_FEATURE_MODE_MIN) || (mode > DC1394_FEATURE_MODE_MAX) ) { return DC1394_INVALID_FEATURE_MODE; }
-
-    if (feature == DC1394_FEATURE_TRIGGER) { return DC1394_INVALID_FEATURE; }
-
-    FEATURE_TO_VALUE_OFFSET(feature, offset);
-
-    if (mode == DC1394_FEATURE_MODE_AUTO)
-    {
-        value = 0x01000000UL;
-        err = dc1394_set_control_register(camera, offset, value);
-        DC1394_ERR_RTN(err, "Could not set auto mode for feature");
-    }
-    else if (mode == DC1394_FEATURE_MODE_MANUAL)
-    {
-      value = 0;
-      err = dc1394_set_control_register(camera, offset, value);
-      DC1394_ERR_RTN(err, "Could not set auto mode for feature");
-    }
-    else
-    {
-        BOOST_ASSERT(0);
-    }
-
-    return err;
-}
-
-// system object, dc1394_t* for Linux
-dc1394_t *dcam::dcRef = NULL;
-
-void dcam::init()
-{
-    if (dcam::dcRef == NULL)
-    {
-        dcam::dcRef = dc1394_new();
-
-        if (dcam::dcRef == NULL)
-        {
-            throw DcamException("Could not initialize dc1394_context.  Make sure /dev/raw1394 exists and you have permissions to access.");
-        }
-
-        if (numCameras() > 0)
-        {
-            dc1394camera_t* camera = dc1394_camera_new((dc1394_t*) dcam::dcRef, getGuid(0));
-
-            if (!camera)
-            {
-                char msg[256];
-                snprintf(msg, 256, "Could not acquire camera to reset bus in %s", __FUNCTION__);
-                throw DcamException(msg);
-            }
-
-            PRINTF("Reset bus");
-            dc1394_reset_bus(camera);
-
-            usleep(500000);
-
-            PRINTF("Initializing camera, turning off ISO");
-            dc1394_video_set_transmission(camera, DC1394_OFF);
-
-            dc1394_camera_free(camera);
-            dc1394_free((dc1394_t*) dcam::dcRef);
-
-            dcam::dcRef = dc1394_new();
-        }
-
-        if (dcam::dcRef == NULL)
-        {
-            throw DcamException("Could not initialize dc1394_context.  Make sure /dev/raw1394 exists and you have permissions to access.");
-        }
-
-        usleep(500000);
-    }
-}
-
-void dcam::fini()
-{
-    if (dcam::dcRef != NULL) { dc1394_free((dc1394_t*) dcam::dcRef); }
-}
-
-size_t dcam::numCameras()
-{
-    CHECK_READY();
-
-    dc1394camera_list_t* list;
-    CHECK_ERR(dc1394_camera_enumerate(dcam::dcRef, &list), "Could not enumerate cameras");
-
-    size_t num = list->num;
-
-    dc1394_camera_free_list(list);
-
-    return num;
-}
-
-uint64_t dcam::getGuid(size_t i)
-{
-    if (!dcam::dcRef)
-    {
-        char msg[256];
-        snprintf(msg, 256, "Tried to call %s before calling dcam::init()", __FUNCTION__);
-        throw DcamException(msg);
-    }
-
-    dc1394camera_list_t * list;
-    CHECK_ERR( dc1394_camera_enumerate(dcam::dcRef, &list), "Could not enumerate cameras" );
-
-    if (i >= list->num)
-    throw DcamException("Tried to get Guid of non-existant camera");
-
-    uint64_t guid = list->ids[i].guid;
-
-    dc1394_camera_free_list (list);
-
-    return guid;
-}
-
-char* dcam::getModel(size_t i)
-{
-    char* name = NULL;
-    CHECK_READY();
-
-    if (i < numCameras())
-    {
-        dc1394camera_t* camera = dc1394_camera_new(dcam::dcRef, getGuid(i));
-
-        if (!camera)
-        {
-            char msg[256];
-            snprintf(msg, 256, "Could not acquire camera %Zu %s", i, __FUNCTION__);
-            throw DcamException(msg);
-        }
-
-        if (camera->model) { name = strdup(camera->model); }
-        dc1394_camera_free(camera);
-    }
-
-    return name;
-}
-
-char* dcam::getVendor(size_t i)
-{
-    char *name = NULL;
-    CHECK_READY();
-
-    if (i < numCameras())
-    {
-        dc1394camera_t *camera = dc1394_camera_new(dcam::dcRef, getGuid(i));
-
-        if (!camera)
-        {
-            char msg[256];
-            snprintf(msg, 256, "Could not acquire camera %Zu %s", i, __FUNCTION__);
-            throw DcamException(msg);
-        }
-
-        if (camera->vendor) { name = strdup(camera->vendor); }
-        dc1394_camera_free(camera);
-    }
-
-    return name;
-}
-
 static const char *modestrings[DC1394_VIDEO_MODE_NUM] =
-    {
-        "DC1394_VIDEO_MODE_160x120_YUV444",
-        "DC1394_VIDEO_MODE_320x240_YUV422",
-        "DC1394_VIDEO_MODE_640x480_YUV411",
-        "DC1394_VIDEO_MODE_640x480_YUV422",
-        "DC1394_VIDEO_MODE_640x480_RGB8",
-        "DC1394_VIDEO_MODE_640x480_MONO8",
-        "DC1394_VIDEO_MODE_640x480_MONO16",
-        "DC1394_VIDEO_MODE_800x600_YUV422",
-        "DC1394_VIDEO_MODE_800x600_RGB8",
-        "DC1394_VIDEO_MODE_800x600_MONO8",
-        "DC1394_VIDEO_MODE_1024x768_YUV422",
-        "DC1394_VIDEO_MODE_1024x768_RGB8",
-        "DC1394_VIDEO_MODE_1024x768_MONO8",
-        "DC1394_VIDEO_MODE_800x600_MONO16",
-        "DC1394_VIDEO_MODE_1024x768_MONO16",
-        "DC1394_VIDEO_MODE_1280x960_YUV422",
-        "DC1394_VIDEO_MODE_1280x960_RGB8",
-        "DC1394_VIDEO_MODE_1280x960_MONO8",
-        "DC1394_VIDEO_MODE_1600x1200_YUV422",
-        "DC1394_VIDEO_MODE_1600x1200_RGB8",
-        "DC1394_VIDEO_MODE_1600x1200_MONO8",
-        "DC1394_VIDEO_MODE_1280x960_MONO16",
-        "DC1394_VIDEO_MODE_1600x1200_MONO16",
-        "DC1394_VIDEO_MODE_EXIF",
-        "DC1394_VIDEO_MODE_FORMAT7_0",
-        "DC1394_VIDEO_MODE_FORMAT7_1",
-        "DC1394_VIDEO_MODE_FORMAT7_2",
-        "DC1394_VIDEO_MODE_FORMAT7_3",
-        "DC1394_VIDEO_MODE_FORMAT7_4",
-        "DC1394_VIDEO_MODE_FORMAT7_5",
-        "DC1394_VIDEO_MODE_FORMAT7_6",
-        "DC1394_VIDEO_MODE_FORMAT7_7"
-    };
-
-// mode strings from mode
-const char* dcam::getModeString(dc1394video_mode_t mode)
 {
-    if (mode < DC1394_VIDEO_MODE_MAX) { return modestrings[mode - DC1394_VIDEO_MODE_MIN]; }
-    else { return ""; }
-}
+    "DC1394_VIDEO_MODE_160x120_YUV444",
+    "DC1394_VIDEO_MODE_320x240_YUV422",
+    "DC1394_VIDEO_MODE_640x480_YUV411",
+    "DC1394_VIDEO_MODE_640x480_YUV422",
+    "DC1394_VIDEO_MODE_640x480_RGB8",
+    "DC1394_VIDEO_MODE_640x480_MONO8",
+    "DC1394_VIDEO_MODE_640x480_MONO16",
+    "DC1394_VIDEO_MODE_800x600_YUV422",
+    "DC1394_VIDEO_MODE_800x600_RGB8",
+    "DC1394_VIDEO_MODE_800x600_MONO8",
+    "DC1394_VIDEO_MODE_1024x768_YUV422",
+    "DC1394_VIDEO_MODE_1024x768_RGB8",
+    "DC1394_VIDEO_MODE_1024x768_MONO8",
+    "DC1394_VIDEO_MODE_800x600_MONO16",
+    "DC1394_VIDEO_MODE_1024x768_MONO16",
+    "DC1394_VIDEO_MODE_1280x960_YUV422",
+    "DC1394_VIDEO_MODE_1280x960_RGB8",
+    "DC1394_VIDEO_MODE_1280x960_MONO8",
+    "DC1394_VIDEO_MODE_1600x1200_YUV422",
+    "DC1394_VIDEO_MODE_1600x1200_RGB8",
+    "DC1394_VIDEO_MODE_1600x1200_MONO8",
+    "DC1394_VIDEO_MODE_1280x960_MONO16",
+    "DC1394_VIDEO_MODE_1600x1200_MONO16",
+    "DC1394_VIDEO_MODE_EXIF",
+    "DC1394_VIDEO_MODE_FORMAT7_0",
+    "DC1394_VIDEO_MODE_FORMAT7_1",
+    "DC1394_VIDEO_MODE_FORMAT7_2",
+    "DC1394_VIDEO_MODE_FORMAT7_3",
+    "DC1394_VIDEO_MODE_FORMAT7_4",
+    "DC1394_VIDEO_MODE_FORMAT7_5",
+    "DC1394_VIDEO_MODE_FORMAT7_6",
+    "DC1394_VIDEO_MODE_FORMAT7_7"
+};
+
 
 // Set up a camera object
 dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
 {
-    CHECK_READY();
-
-    dcCam = dc1394_camera_new(dcRef, guid);
-    if (!dcCam) { throw DcamException("Could not create camera"); }
-
-    CHECK_ERR( dc1394_video_get_supported_modes(dcCam, &camModes), "Could not get supported modes" );
+    // Initialize the dcam system
+    initialize_camera(guid);
 
     bufferSize = bsize;
     camPolicy = DC1394_CAPTURE_POLICY_POLL;
     camFrame = NULL;
-    camIm = new ImageData();
-    camIm->params = NULL;
-    camIm->imRaw = NULL;
-    camIm->im = NULL;
-    camIm->imColor = NULL;
-    camIm->imRect = NULL;
-    camIm->imRectColor = NULL;
-    camIm->imWidth = 0;
-    camIm->imHeight = 0;
+
+    imRaw = NULL;
+    imWidth = 0;
+    imHeight = 0;
+
     isSTOC = false;
     isVidereStereo = false;
     isVidere = false;
     isColor = false;
     procMode = PROC_MODE_NONE;
 
-    // dc1394_camera_print_info(dcCam,stdout);
+    // set up stereo image data
+    stIm = new StereoData();
 
     // Check Videre camera type and local params
-    if (!strcmp(getModel(),"MDS-STH")) // Videre-type camera
+    if (!strcmp(getModel(), "MDS-STH")) // Videre-type camera
     {
         isVidere = true;
 
@@ -393,7 +164,7 @@ dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
             imFirmware = qval & 0xff;
             PRINTF("[dcam] Imager firmware: %04x", imFirmware);
 
-            if ((qval & 0xff0000)==0x080000)
+            if ((qval & 0xff0000) == 0x080000)
             {
                 isVidereStereo = true;
                 PRINTF("[Dcam] Found stereo device");
@@ -421,7 +192,7 @@ dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
             PRINTF("[dcam] STOC thresholds: %08x", qval);
 
             // parameter string
-            if (getParameters() != NULL) { PRINTF("[dcam] Calibration, %Zu bytes", strlen(camIm->params)); }
+            if (getParameters() != NULL) { PRINTF("[dcam] Calibration, %Zu bytes", strlen(stIm->params)); }
             else { PRINTF("[dcam] No calibration"); }
         }
     }
@@ -444,9 +215,9 @@ dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
     // check registers
     uint32_t qval;
     qval = getRegister(0x404);
-    PRINTF("Feature register hi: %08x", qval);
+    PRINTF("[dcam] Feature register hi: %08x", qval);
     qval = getRegister(0x408);
-    PRINTF("Feature register lo: %08x", qval);
+    PRINTF("[dcam] Feature register lo: %08x", qval);
 
     // set up max/min values
     // NOTE: on Videre cameras with FW firmware < 6.0, control reg
@@ -518,15 +289,83 @@ dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
         }
     }
 
-    //  dc1394_iso_release_bandwidth(dcCam, 10000000);
-    //  CHECK_ERR_CLEAN( dc1394_reset_bus(dcCam), "Could not reset bus" );
+    // set up a Videre stereo cam
+    if (isVidereStereo)
+    {
+        char *params;
+        params = getParameters();
+
+        if (params == NULL) { PRINTF("Could not get parameters from camera\n"); }
+        else { stIm->extractParams(params); }
+    }
 }
 
 // Tear down camera object
 dcam::Dcam::~Dcam()
 {
     if (dcCam != NULL) { cleanup(); }
-    free(camIm);
+    //free(imRaw);
+    delete stIm;
+}
+
+void dcam::Dcam::initialize_camera(uint64_t req_guid)
+{
+    dcRef = dc1394_new();
+
+    if (dcRef == NULL)
+    {
+        throw DcamException("Could not initialize dc1394_context.\n                         \
+        Make sure /dev/raw1394 exists and you have RW permissions\n \
+        and libraw1394-dev package is installed.");
+    }
+
+    dc1394camera_list_t* list;
+    CHECK_ERR(dc1394_camera_enumerate(dcRef, &list), "Could not enumerate cameras");
+
+    if (list->num > 0)
+    {
+        guid = list->ids[0].guid;
+        dc1394camera_t* camera = dc1394_camera_new((dc1394_t*) dcRef, guid);
+        dc1394_camera_free_list(list);
+
+        if (!camera) { throw DcamException("Could not acquire camera to reset bus"); }
+
+        PRINTF("Resetting bus");
+        dc1394_reset_bus(camera);
+
+        PRINTF("Initializing camera, turning off ISO");
+        dc1394_video_set_transmission(camera, DC1394_OFF);
+
+        dc1394_camera_free(camera);
+        dc1394_free((dc1394_t*) dcRef);
+
+        dcRef = dc1394_new();
+
+        if (req_guid != 0) { dcCam = dc1394_camera_new(dcRef, req_guid); }
+        else { dcCam = dc1394_camera_new(dcRef, guid); }
+
+        if (!dcCam) { throw DcamException("Could not create camera"); }
+        CHECK_ERR(dc1394_video_get_supported_modes(dcCam, &camModes), "Could not get supported modes");
+    }
+
+    if (dcRef == NULL)
+    {
+        throw DcamException("Could not initialize dc1394_context.\n                      \
+        Make sure /dev/raw1394 exists and you have RW permissions\n \
+        and libraw1394-dev package is installed.");
+    }
+}
+
+void dcam::Dcam::fini()
+{
+    if (dcRef != NULL) { dc1394_free((dc1394_t*) dcRef); }
+}
+
+// mode strings from mode
+const char* dcam::Dcam::getModeString(dc1394video_mode_t mode)
+{
+    if (mode < DC1394_VIDEO_MODE_MAX) { return modestrings[mode - DC1394_VIDEO_MODE_MIN]; }
+    else { return ""; }
 }
 
 void dcam::Dcam::cleanup()
@@ -559,6 +398,7 @@ char* dcam::Dcam::getVendor()
 // Set up image format
 void dcam::Dcam::setFormat(dc1394video_mode_t video, dc1394framerate_t fps, dc1394speed_t speed)
 {
+    stIm->releaseBuffers();
     videoMode = video;
 
     // tear down any previous capture setup
@@ -591,7 +431,7 @@ void dcam::Dcam::setFormat(dc1394video_mode_t video, dc1394framerate_t fps, dc13
 void dcam::Dcam::start()
 {
     CHECK_READY();
-    CHECK_ERR_CLEAN( dc1394_video_set_transmission(dcCam, DC1394_ON), "Could not start camera iso transmission");
+    CHECK_ERR_CLEAN(dc1394_video_set_transmission(dcCam, DC1394_ON), "Could not start camera iso transmission");
 
     // Some camera take a little while to start.  We check 10 times over the course of a second:
     int tries = 10;
@@ -605,6 +445,9 @@ void dcam::Dcam::start()
         if (pwr == DC1394_ON)
         {
             started = true;
+            setCompanding(true);  // must be set after starting camera
+            setUniqueThresh(stIm->uniqueThresh);
+            setTextureThresh(stIm->textureThresh);
             return;
         }
 
@@ -636,7 +479,7 @@ bool dcam::Dcam::getImage(int ms)
     if (!started) { return false; }
 
     // release previous frame, if it exists
-    if (camFrame) { CHECK_ERR_CLEAN( dc1394_capture_enqueue(dcCam, camFrame), "Could not release frame"); }
+    if (camFrame) { CHECK_ERR_CLEAN(dc1394_capture_enqueue(dcCam, camFrame), "Could not release frame"); }
     camFrame = NULL;
 
     // get the image
@@ -676,37 +519,98 @@ bool dcam::Dcam::getImage(int ms)
     // transfer info
     if (camFrame)
     {
-        // clear everything out first
-        camIm->imRaw = NULL;
-        camIm->imRawType = COLOR_CODING_NONE;
-        camIm->im = NULL;
-        camIm->imType = COLOR_CODING_NONE;
-        camIm->imColor = NULL;
-        camIm->imColorType = COLOR_CODING_NONE;
-        camIm->imRect = NULL;
-        camIm->imRectType = COLOR_CODING_NONE;
-        camIm->imRectColor = NULL;
-        camIm->imRectColorType = COLOR_CODING_NONE;
+        imRaw = camFrame->image;;
+        imRawType = rawType;
+        imRawSize = camFrame->image_bytes;
 
-        camIm->imWidth = camFrame->size[0];
-        camIm->imHeight = camFrame->size[1];
-        camIm->im_time = camFrame->timestamp;
-
-        camIm->imRaw = camFrame->image;
-        camIm->imRawType = rawType;
-        camIm->imRawSize = camFrame->image_bytes;
+        imWidth = camFrame->size[0];
+        imHeight = camFrame->size[1];
+        im_time = camFrame->timestamp;
 
         // PRINTF("Time: %llu", camFrame->timestamp);
-    }
 
-#if 0
-    if (camFrame != NULL &&
-        (camFrame->frames_behind > 1 || dc1394_capture_is_frame_corrupt(dcCam, camFrame) == DC1394_TRUE))
-    {
-        dc1394_capture_enqueue(dcCam, camFrame);
-        camFrame = NULL;
+        // image size
+        stIm->setSize(imWidth, imHeight);
+        stIm->hasDisparity = false;
+
+        stereo_msgs::DisparityImage& img_disparity = stIm->img_disp;
+
+        // check for single-device stereo, and process
+        if (isVidereStereo)
+        {
+            stIm->stereo_model.fromCameraInfo(stIm->left_info, stIm->right_info);
+
+            uint8_t* img_left_data = NULL;
+            uint8_t* img_right_data = NULL;
+
+            size_t img_left_size;
+            size_t img_right_size;
+
+            switch (rawType)
+            {
+                case VIDERE_STOC_RECT_RECT:
+                case VIDERE_STOC_RAW_RAW_MONO:
+                case VIDERE_STEREO_MONO:
+                    fillImageMsg(stIm->left_raw, sensor_msgs::image_encodings::MONO8, sizeof(uint8_t));
+                    img_left_data = stIm->left_raw.data.data();
+                    img_left_size = stIm->left_raw.data.capacity();
+
+                    fillImageMsg(stIm->right_raw, sensor_msgs::image_encodings::MONO8, sizeof(uint8_t));
+                    img_right_data = stIm->right_raw.data.data();
+                    img_right_size = stIm->right_raw.data.capacity();
+
+                    stereoDeinterlace(imRaw, &img_left_data, &img_left_size, &img_right_data, &img_right_size);
+                    break;
+
+                case VIDERE_STOC_RAW_RAW_GRBG:
+                case VIDERE_STEREO_RGGB:
+                case VIDERE_STEREO_BGGR:
+                case VIDERE_STEREO_GRBG:
+                    fillImageMsg(stIm->left_raw, sensor_msgs::image_encodings::BAYER_GRBG8, sizeof(uint8_t));
+                    img_left_data = stIm->left_raw.data.data();
+                    img_left_size = stIm->left_raw.data.capacity();
+
+                    fillImageMsg(stIm->right_raw, sensor_msgs::image_encodings::BAYER_GRBG8, sizeof(uint8_t));
+                    img_right_data = stIm->right_raw.data.data();
+                    img_right_size = stIm->right_raw.data.capacity();
+
+                    stereoDeinterlace(imRaw, &img_left_data, &img_left_size, &img_right_data, &img_right_size);
+                    break;
+
+                case VIDERE_STOC_RECT_DISP:
+                case VIDERE_STOC_RAW_DISP_MONO:
+                    fillImageMsg(stIm->left_raw, sensor_msgs::image_encodings::MONO8, sizeof(uint8_t));
+                    img_left_data = stIm->left_raw.data.data();
+                    img_left_size = stIm->left_raw.data.capacity();
+
+                    stereoDeinterlace2(imRaw, &img_left_data, &img_left_size, &stIm->imDisp, &stIm->imDispSize);
+                    stIm->hasDisparity = true;
+
+                    fillDisparityMsg(img_disparity);
+                    break;
+
+                case VIDERE_STOC_RAW_DISP_GRBG:
+                    fillImageMsg(stIm->left_raw, sensor_msgs::image_encodings::BAYER_GRBG8, sizeof(uint8_t));
+                    img_left_data = stIm->left_raw.data.data();
+                    img_left_size = stIm->left_raw.data.capacity();
+
+                    stereoDeinterlace2(imRaw, &img_left_data, &img_left_size, &stIm->imDisp, &stIm->imDispSize);
+                    stIm->hasDisparity = true;
+
+                    fillDisparityMsg(img_disparity);
+                    break;
+
+                default:
+                    break;
+            }
+
+            stIm->left_info.header.stamp = stIm->left_raw.header.stamp;
+            stIm->right_info.header.stamp = stIm->right_raw.header.stamp;
+
+            img_left_data = NULL;
+            img_right_data = NULL;
+        }
     }
-#endif
 
     return (camFrame != NULL);
 }
@@ -733,22 +637,22 @@ void dcam::Dcam::setFeature(dc1394feature_t feature, uint32_t value, uint32_t va
     {
         if (isVidere)
         {
-            CHECK_ERR_CLEAN( dc1394_feature_whitebalance_set_value_blind(dcCam, value, value2), "Could not set feature");
+            CHECK_ERR_CLEAN(dc1394_feature_whitebalance_set_value_blind(dcCam, value, value2), "Could not set feature");
         }
         else
         {
-            CHECK_ERR_CLEAN( dc1394_feature_whitebalance_set_value(dcCam, value, value2), "Could not set feature");
+            CHECK_ERR_CLEAN(dc1394_feature_whitebalance_set_value(dcCam, value, value2), "Could not set feature");
         }
     }
     else
     {
         if (isVidere)
         {
-            CHECK_ERR_CLEAN( dc1394_feature_set_value_blind(dcCam, feature, value), "Could not set feature");
+            CHECK_ERR_CLEAN(dc1394_feature_set_value_blind(dcCam, feature, value), "Could not set feature");
         }
         else
         {
-            CHECK_ERR_CLEAN( dc1394_feature_set_value(dcCam, feature, value), "Could not set feature");
+            CHECK_ERR_CLEAN(dc1394_feature_set_value(dcCam, feature, value), "Could not set feature");
         }
     }
 }
@@ -757,11 +661,11 @@ void dcam::Dcam::getFeatureBoundaries(dc1394feature_t feature, uint32_t& min, ui
 {
     CHECK_READY();
     dc1394bool_t present;
-    CHECK_ERR_CLEAN( dc1394_feature_is_present(dcCam, feature, &present), "Could not check if feature was present");
+    CHECK_ERR_CLEAN(dc1394_feature_is_present(dcCam, feature, &present), "Could not check if feature was present");
 
     if (present == DC1394_TRUE)
     {
-        CHECK_ERR_CLEAN( dc1394_feature_get_boundaries(dcCam, feature, &min, &max), "Could not find feature boundaries");
+        CHECK_ERR_CLEAN(dc1394_feature_get_boundaries(dcCam, feature, &min, &max), "Could not find feature boundaries");
     }
 }
 
@@ -769,12 +673,12 @@ void dcam::Dcam::setFeatureAbsolute(dc1394feature_t feature, float value)
 {
     CHECK_READY();
     dc1394bool_t present;
-    CHECK_ERR_CLEAN( dc1394_feature_is_present(dcCam, feature, &present), "Could not check if feature was present");
+    CHECK_ERR_CLEAN(dc1394_feature_is_present(dcCam, feature, &present), "Could not check if feature was present");
 
     if (present == DC1394_TRUE)
     {
-        CHECK_ERR_CLEAN( dc1394_feature_set_absolute_control(dcCam, feature,  DC1394_ON), "Could not enable absolute control.");
-        CHECK_ERR_CLEAN( dc1394_feature_set_absolute_value(dcCam, feature, value), "Could not set feature");
+        CHECK_ERR_CLEAN(dc1394_feature_set_absolute_control(dcCam, feature,  DC1394_ON), "Could not enable absolute control.");
+        CHECK_ERR_CLEAN(dc1394_feature_set_absolute_value(dcCam, feature, value), "Could not set feature");
     }
 }
 
@@ -784,25 +688,25 @@ void dcam::Dcam::setFeatureMode(dc1394feature_t feature, dc1394feature_mode_t mo
 
     if (isVidere)
     {
-        CHECK_ERR_CLEAN( dc1394_feature_set_mode_blind(dcCam, feature, mode), "Could not set feature");
+        CHECK_ERR_CLEAN(dc1394_feature_set_mode_blind(dcCam, feature, mode), "Could not set feature");
     }
     else
     {
-        CHECK_ERR_CLEAN( dc1394_feature_set_mode(dcCam, feature, mode), "Could not set feature");
+        CHECK_ERR_CLEAN(dc1394_feature_set_mode(dcCam, feature, mode), "Could not set feature");
     }
 }
 
 void dcam::Dcam::setRegister(uint64_t offset, uint32_t value)
 {
     CHECK_READY();
-    CHECK_ERR_CLEAN( dc1394_set_control_register(dcCam, offset, value), "Could not set control register");
+    CHECK_ERR_CLEAN(dc1394_set_control_register(dcCam, offset, value), "Could not set control register");
 }
 
 uint32_t dcam::Dcam::getRegister(uint64_t offset)
 {
     CHECK_READY();
     uint32_t value;
-    CHECK_ERR_CLEAN( dc1394_get_control_register(dcCam, offset, &value), "Could not get control register");
+    CHECK_ERR_CLEAN(dc1394_get_control_register(dcCam, offset, &value), "Could not get control register");
     return value;
 }
 
@@ -862,7 +766,7 @@ void dcam::Dcam::setRawType()
     else if (isVidereStereo) // stereo device
     {
         // some videre cameras have camFrame as 0
-        //camIm->imRaw = camFrame->image;
+        // imRaw = camFrame->image;
         if (isColor) { rawType = VIDERE_STEREO_GRBG; }
         else { rawType = VIDERE_STEREO_MONO; }
     }
@@ -887,29 +791,29 @@ void dcam::Dcam::setRawType()
 // Parameters
 char* dcam::Dcam::retParameters()
 {
-    return camIm->params;
+    return stIm->params;
 }
 
 bool dcam::Dcam::putParameters(char *bb)
 {
-    if (camIm->params) { delete [] camIm->params; }
+    if (stIm->params) { delete [] stIm->params; }
     int n = strlen(bb);
     char *str = new char[n + 1];
     strcpy(str, bb);
-    camIm->params = str;
+    stIm->params = str;
 
     return true;
 }
 
 char* dcam::Dcam::getParameters()
 {
-    if (camIm->params) { free(camIm->params); }
+    if (stIm->params) { free(stIm->params); }
 
     uint32_t qval = getRegister(VIDERE_LOCAL_BASE + VIDERE_CALIB_OFFSET);
 
     if (qval == 0xffffffff)
     {
-        camIm->params = NULL;
+        stIm->params = NULL;
     }
     else
     {
@@ -940,18 +844,18 @@ char* dcam::Dcam::getParameters()
 
         // just in case we missed the last zero
         *bb = 0;
-        camIm->params = buf;
+        stIm->params = buf;
     }
 
-    return camIm->params;
+    return stIm->params;
 }
 
 // set the calibration and image parameters on a camera
 bool dcam::Dcam::setParameters()
 {
-    if (!camIm->params) { return false; }
+    if (!stIm->params) { return false; }
 
-    PRINTF("%s", camIm->params);
+    PRINTF("%s", stIm->params);
 
     // check firmware version
     if (camFirmware < 0x0201)
@@ -983,7 +887,7 @@ bool dcam::Dcam::setParameters()
     // write out each byte
     int pos = 0;
     uint32_t quad = 0;
-    char *bb = camIm->params;
+    char *bb = stIm->params;
     int n = strlen(bb);
     PRINTF("[Dcam] Writing %d bytes", n);
 
@@ -1572,4 +1476,215 @@ int dcam::Dcam::getIncRectTable(uint8_t *dest)
   return count;
 #endif
   return 0;
+}
+
+// de-interlace stereo data, reserving storage if necessary
+void dcam::Dcam::stereoDeinterlace(uint8_t *src, uint8_t **d1, size_t *s1, uint8_t **d2, size_t *s2)
+{
+    size_t size = stIm->imWidth * stIm->imHeight;
+
+    // need to check alignment here...
+    if (*s1 < size)
+    {
+        MEMFREE(*d1);
+        *d1 = (uint8_t*) MEMALIGN(size);
+        *s1 = size;
+    }
+
+    if (*s2 < size)
+    {
+        MEMFREE(*d2);
+        *d2 = (uint8_t*) MEMALIGN(size);
+        *s2 = size;
+    }
+
+    uint8_t *dd1 = *d1;
+    uint8_t *dd2 = *d2;
+
+    for (size_t i = 0; i < size; ++i)
+    {
+        *dd2++ = *src++;
+        *dd1++ = *src++;
+    }
+}
+
+// de-interlace stereo data, reserving storage if necessary
+// second buffer is 16-bit disparity data
+void dcam::Dcam::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1, int16_t **d2, size_t *s2)
+{
+    int w = stIm->imWidth;
+    int h = stIm->imHeight;
+    size_t size = w * h;
+
+    // need to check alignment here...
+    if (*s1 < size)
+    {
+        MEMFREE(*d1);
+        *d1 = (uint8_t*) MEMALIGN(size);
+        *s1 = size;
+    }
+
+    if (*s2 < size * 2)
+    {
+        MEMFREE(*d2);
+        *d2 = (int16_t*) MEMALIGN(size * 2);
+        *s2 = size * 2;
+    }
+
+    uint8_t *dd1 = *d1;
+    int16_t *dd2 = *d2;
+
+    int dt = stIm->imDtop;
+    int dl = stIm->imDleft;
+    int dw = stIm->imDwidth;
+    int dh = stIm->imDheight;
+
+    /*
+    * source rectangle
+    * ================
+    * (w-dwidth, h-dheight) => upper left
+    * (dwidth, dheight)     => size
+    *
+    * dest rectangle
+    * ==============
+    * (dleft-6,dtop)        => upper left
+    * (dwidth,dheight)      => size
+    */
+
+    dd2 += (dt * w + dl - 6) - ((h - dh) * w + w - dw);
+
+    size = (h - dh) * w;
+
+    for (size_t i = 0; i < size; ++i)
+    {
+        dd2++;
+        src++;
+        *dd1++ = *src++;
+    }
+
+    size = dh * w;
+
+    for (size_t i = 0; i < size; ++i)
+    {
+        *dd2++ = ((uint16_t) *src++) << 2;
+        *dd1++ = *src++;
+    }
+}
+
+void dcam::Dcam::fillImageMsg(sensor_msgs::Image& img, std::string enc, uint32_t bpp)
+{
+    img.header.stamp = ros::Time(im_time * 1.e-6);
+    img.width = stIm->imWidth;
+    img.height = stIm->imHeight;
+    img.step = img.width * bpp;
+    img.encoding = enc;
+    img.data.resize(img.height * img.step);
+}
+
+void dcam::Dcam::fillDisparityMsg(stereo_msgs::DisparityImage& img)
+{
+    static const double inv_dpp = 1.0 / stIm->dpp;
+
+    img.header.stamp = ros::Time(im_time * 1.e-6);
+
+    // stereo parameters
+    img.f = stIm->stereo_model.right().fx();
+    img.T = stIm->stereo_model.baseline();
+
+    // window of (potentially) valid disparities
+    img.valid_window.x_offset = stIm->imDleft;
+    img.valid_window.y_offset = stIm->imDtop;
+    img.valid_window.width = stIm->imDwidth;
+    img.valid_window.height = stIm->imDheight;
+
+    // Disparity search range
+    img.min_disparity = 0; // 0 - 63 in Videre STOC
+    img.max_disparity = stIm->numDisp - 1;
+    img.delta_d = inv_dpp;
+
+    // Fill in DisparityImage image data, converting to 32-bit float
+    sensor_msgs::Image& dimage = img.image;
+    fillImageMsg(dimage, sensor_msgs::image_encodings::TYPE_32FC1, sizeof(float));
+
+    cv::Mat_<int16_t> disparity16(stIm->imHeight, stIm->imWidth, (int16_t*) &stIm->imDisp[0], stIm->imWidth * sizeof(int16_t));
+
+    // do speckle filtering
+    cv::filterSpeckles(disparity16, 0, stIm->speckleRegionSize, stIm->speckleDiff, stIm->buffer);
+
+    cv::Mat_<float> dmat(dimage.height, dimage.width, (float*) &dimage.data[0], dimage.step);
+
+    // We convert from fixed-point to float disparity and also adjust for any x-offset between
+    // the principal points: d = d_fp*inv_dpp - (cx_l - cx_r)
+    disparity16.convertTo(dmat, dmat.type(), img.delta_d, -(stIm->stereo_model.left().cx() - stIm->stereo_model.right().cx()));
+    ROS_ASSERT(dmat.data == &dimage.data[0]);
+}
+
+bool dcam::Dcam::setTextureThresh(int thresh)
+{
+    stIm->setTextureThresh(thresh);
+
+    if (isSTOC)
+    {
+        thresh = thresh/3;
+        usleep(50000);
+
+        if (thresh < 0) { thresh = 0; }
+        if (thresh > 63) { thresh = 63; }
+
+        uint32_t t_thresh = 0x08000000 | (0x40 << 16) | ( thresh << 16);
+        setRegister(0xFF000, t_thresh);
+    }
+
+    return true;
+}
+
+bool dcam::Dcam::setUniqueThresh(int thresh)
+{
+    stIm->setUniqueThresh(thresh);
+
+    if (isSTOC)
+    {
+        thresh = thresh/3;
+        usleep(50000);
+
+        if (thresh < 0) { thresh = 0; }
+        if (thresh > 63) { thresh = 63; }
+
+        uint32_t u_thresh = 0x08000000 | (0x00 << 16) | ( thresh << 16);
+        setRegister(0xFF000, u_thresh);
+    }
+
+    return true;
+}
+
+bool dcam::Dcam::setHoropter(int val)
+{
+    stIm->setHoropter(val);
+    stIm->setDispOffsets(); // reset offsets
+
+    // set it on STOC
+    if (isSTOC)
+    {
+        usleep(50000);
+
+        if (val < 0) { val = 0; }
+        if (val > 63) { val = 63; }
+
+        uint32_t u_val = 0x08000000 | (0xC0 << 16) | ( val << 16);
+        setRegister(0xFF000, u_val);
+    }
+
+    return true;
+}
+
+bool dcam::Dcam::setSpeckleSize(int val)
+{
+    stIm->speckleRegionSize = val;
+    return true;
+}
+
+bool dcam::Dcam::setSpeckleDiff(int val)
+{
+    stIm->speckleDiff = val;
+    return true;
 }

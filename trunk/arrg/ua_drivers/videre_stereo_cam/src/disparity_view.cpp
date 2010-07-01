@@ -427,10 +427,16 @@ public:
     const cv::Mat_<float> dmat(disparity_msg->image.height, disparity_msg->image.width,
                                (float*)&disparity_msg->image.data[0], disparity_msg->image.step);
     disparity_color_.create(disparity_msg->image.height, disparity_msg->image.width);
+    disparity_color_.setTo(cv::Scalar(colormap[2], colormap[1], colormap[0]));
 
-    for (int row = 0; row < disparity_color_.rows; ++row) {
+    int start_row = disparity_msg->valid_window.y_offset;
+    int start_col = disparity_msg->valid_window.x_offset;
+    int end_row = start_row + disparity_msg->valid_window.height;
+    int end_col = start_col + disparity_msg->valid_window.width;
+
+    for (int row = start_row; row < end_row; ++row) {
       const float* d = dmat[row];
-      for (int col = 0; col < disparity_color_.cols; ++col) {
+      for (int col = start_col; col < end_col; ++col) {
         int index = (d[col] - min_disparity) * multiplier + 0.5;
         index = std::min(255, std::max(0, index));
         // Fill as BGR
@@ -473,11 +479,11 @@ public:
       ROS_WARN("[stereo_view] Low number of synchronized left/disparity pairs received.\n"
                "Left images received: %d\n"
                "Disparity images received: %d\n"
-               "Synchronized triplets: %d\n"
+               "Synchronized tuples: %d\n"
                "Possible issues:\n"
                "\t* stereo_image_proc is not running.\n"
                "\t* The cameras are not synchronized.\n"
-               "\t* The network is too slow. One or more images are dropped from each triplet.",
+               "\t* The network is too slow. One or more images are dropped from each tuple.",
                left_received_, disp_received_, all_received_);
     }
   }
@@ -489,7 +495,7 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
   if (ros::names::remap("stereo") == "stereo") {
     ROS_WARN("[stereo_view] stereo has not been remapped! Example command-line usage:\n"
-             "\t$ rosrun image_view stereo_view stereo:=narrow_stereo image:=image_color");
+             "\t$ rosrun videre_stere_cam disparity_view stereo:=narrow_stereo image:=image_color");
   }
   if (ros::names::remap("image") == "/image_raw") {
     ROS_WARN("[stereo_view] There is a delay between when the camera drivers publish the raw "

@@ -35,7 +35,6 @@
 #include <sstream>
 #include <iostream>
 
-#include <videre_stereo_cam/stereolib.h>
 #include <videre_stereo_cam/stereoimage.h>
 
 #define PRINTF(a...) printf(a)
@@ -45,19 +44,9 @@ using namespace cam;
 // stereo class fns
 StereoData::StereoData()
 {
-    imLeft = new ImageData();
-    imRight = new ImageData();
-
     // disparity buffer
     imDisp = NULL;
     imDispSize = 0;
-    buf = NULL;
-    flim = NULL;
-    frim = NULL;
-    wbuf = NULL;
-    rbuf = NULL;
-    lbuf = NULL;
-    maxyim = maxxim = maxdlen = maxcorr = 0;
 
     // nominal values
     imWidth = 640;
@@ -82,20 +71,14 @@ StereoData::StereoData()
     imPts = NULL;
     imCoords = NULL;
     imPtsColor = NULL;
-    isPtArray = false;
     imPtsSize = 0;
+
+    params = NULL;
 }
 
 StereoData::~StereoData()
 {
     releaseBuffers();
-    free(imLeft);
-    free(imRight);
-
-    // should free all buffers
-    MEMFREE(buf);
-    MEMFREE(flim);
-    MEMFREE(frim);
 }
 
 bool StereoData::setHoropter(int val)
@@ -138,8 +121,8 @@ void StereoData::setDispOffsets()
     */
 
     imDtop = (filterSize + corrSize - 2) / 2;
-    imDleft = (filterSize + corrSize - 2) / 2 - 1 + offx;
-    imDwidth = imWidth - (filterSize + corrSize + offx - 2);
+    imDleft = (filterSize + corrSize - 2) / 2 + (numDisp - 1 + offx);
+    imDwidth = imWidth - (filterSize + corrSize - 2) - (numDisp - 1 + offx);
     imDheight = imHeight - (filterSize + corrSize);
 }
 
@@ -153,8 +136,6 @@ void StereoData::releaseBuffers()
     MEMFREE(imCoords);
     imPtsSize = 0;
     numPts = 0;
-    imLeft->releaseBuffers();
-    imRight->releaseBuffers();
 }
 
 // image size needs to deal with buffers
@@ -163,75 +144,11 @@ void StereoData::setSize(int width, int height)
     imWidth = width;
     imHeight = height;
 
-    imLeft->imWidth = width;
-    imLeft->imHeight = height;
-    imLeft->cam_info.width = width;
-    imLeft->cam_info.height = height;
+    left_info.width = width;
+    left_info.height = height;
 
-    imRight->imWidth = width;
-    imRight->imHeight = height;
-    imRight->cam_info.width = width;
-    imRight->cam_info.height = height;
-}
-
-bool StereoData::doRectify()
-{
-    bool res = imLeft->doRectify();
-    res = imRight->doRectify() && res;
-
-    return res;
-}
-
-void StereoData::doBayerColorRGB()
-{
-    imLeft->doBayerColorRGB();
-    imRight->doBayerColorRGB();
-}
-
-void StereoData::doBayerMono()
-{
-    imLeft->doBayerMono();
-    imRight->doBayerMono();
-}
-
-bool StereoData::doDisparity()
-{
-    // first do any rectification necessary
-    doRectify();
-
-    // check if disparity is already present
-    if (hasDisparity) { return true; }
-
-    return false;
-}
-
-//
-// apply speckle filter
-// useful for STOC processing, where it's not done on-camera
-//
-bool StereoData::doSpeckle()
-{
-    if (!hasDisparity) { return false; }
-
-    // speckle filter
-    if (speckleRegionSize > 0)
-    {
-        int xim = imWidth;
-        int yim = imHeight;
-
-        // local storage for the algorithm
-        if (!rbuf) { rbuf = (uint8_t*) malloc(xim * yim); }
-
-        // local storage for the algorithm
-        if (!lbuf) { lbuf = (uint32_t*) malloc(xim * yim * sizeof(uint32_t)); }
-
-        // local storage for the algorithm
-        if (!wbuf) { wbuf = (uint32_t*) malloc(xim * yim * sizeof(uint32_t)); }
-
-        do_speckle(imDisp, 0, xim, yim, speckleDiff, speckleRegionSize, lbuf, wbuf, rbuf);
-    }
-
-    return true;
+    right_info.width = width;
+    right_info.height = height;
 }
 
 bool StereoData::setSpeckleRegionSize(int val)
@@ -251,303 +168,262 @@ bool StereoData::setSpeckleDiff(int val)
 //
 
 #include <iostream>
+#include <sensor_msgs/image_encodings.h>
 using namespace std;
 
 template <class T>
 void extract(std::string& data, std::string section, std::string param, T& t)
 {
-  size_t found = data.find(section);
-  if (found != string::npos)
+    size_t found = data.find(section);
+
+    if (found != string::npos)
     {
-      found = data.find(param,found);
-      if (found != string::npos)
-	{
-	  std::istringstream iss(data.substr(found+param.length()));
-	  iss >> t;
-	}
+        found = data.find(param,found);
+
+        if (found != string::npos)
+        {
+            std::istringstream iss(data.substr(found+param.length()));
+            iss >> t;
+        }
     }
 }
 
 void extract(std::string& data, std::string section,
-		  std::string param, double *m, int n)
+             std::string param, double *m, int n)
 {
-  size_t found = data.find(section);
-  if (found != string::npos)
+    size_t found = data.find(section);
+
+    if (found != string::npos)
     {
-      found = data.find(param,found);
-      if (found != string::npos)
-	{
-	  std::istringstream iss(data.substr(found+param.length()));
-	  double v;
-	  for (int i=0; i<n; i++)
-	    {
-	      iss >> v;
-	      m[i] = v;
-	    }
-	}
+        found = data.find(param,found);
+
+        if (found != string::npos)
+        {
+            std::istringstream iss(data.substr(found + param.length()));
+            double v;
+
+            for (int i = 0; i < n; ++i)
+            {
+                iss >> v;
+                m[i] = v;
+            }
+        }
     }
 }
-
 
 //
 // Conversion to 3D points
 // Convert to vector or image array of pts, depending on isArray arg
 // Should we do disparity automatically here?
 //
-bool StereoData::doCalcPts(bool isArray)
+bool StereoData::doCalcPts(const cv::Mat& rect_img, const std::string& enc)
 {
-  numPts = 0;
-  doDisparity();
-  if (!hasDisparity)
-    return false;
+    numPts = 0;
 
-  int ix = imDleft;
-  int iy = imDtop;
-  int ih = imDheight;
-  int iw = imDwidth;
-  int w = imWidth;
-  int h = imHeight;
-  int dmax = 0;
-  int dmin = 0x7fff;
+    int ix = imDleft;
+    int iy = imDtop;
+    int ih = imDheight;
+    int iw = imDwidth;
 
-  if (isArray)			// don't need these for arrays
+    int w = imWidth;
+    int h = imHeight;
+
+    int dmax = 0;
+    int dmin = 0x7fff;
+
+    if (imPtsSize < 4 * w * h * sizeof(float))
     {
-      isPtArray = true;
-      MEMFREE(imCoords);
-      MEMFREE(imPtsColor);
-    }
-  else
-    isPtArray = false;
+        MEMFREE(imPts);
+        imPtsSize = 4 * w * h * sizeof(float);
+        imPts = (float*) MEMALIGN(imPtsSize);
+        MEMFREE(imCoords);
+        MEMFREE(imPtsColor);
 
-  if (imPtsSize < 4*w*h*sizeof(float))
-    {
-      MEMFREE(imPts);
-      imPtsSize = 4*w*h*sizeof(float);
-      imPts = (float *)MEMALIGN(imPtsSize);
-      MEMFREE(imCoords);
-      MEMFREE(imPtsColor);
-      if (!isArray)
-	{
-	  imPtsColor = (uint8_t *)MEMALIGN(3*w*h);
-	  imCoords = (int *)MEMALIGN(2*w*h*sizeof(int));
-	}
+        imPtsColor = (uint8_t*) MEMALIGN(3 * w * h);
+        imCoords = (int*) MEMALIGN(2 * w * h * sizeof(int));
     }
 
-  float *pt = imPts;
-  pt_xyza_t *ppt = (pt_xyza_t *)imPts;
-  int *pcoord;
-  int y = iy;
-  float cx = (float)RP[3];
-  float cy = (float)RP[7];
-  float f  = (float)RP[11];
-  float itx = (float)RP[14];
-  itx *= 1.0 / (float)dpp; // adjust for subpixel interpolation
-  pcoord = imCoords;
+    float* pt = imPts;
+    int* pcoord;
+    int y = iy;
+    float cx = (float) stereo_model.reprojectionMatrix()(0,3);
+    float cy = (float) stereo_model.reprojectionMatrix()(1,3);
+    float f  = (float) stereo_model.reprojectionMatrix()(2,3);
+    float itx = (float) stereo_model.reprojectionMatrix()(3,2);
+    itx *= 1.0 / (float) dpp; // adjust for subpixel interpolation
+    pcoord = imCoords;
 
-  if (isArray)			// make an array of pts
+    for (int j = 0; j < ih; ++j, ++y)
     {
-      numPts = w*h;
-      for (int j=0; j<h; j++)
-	{
-	  int16_t *p = imDisp + j*w;
+        int x = ix;
+        int16_t* p = imDisp + x + y * w;
 
-	  for (int i=0; i<w; i++, p++, ppt++)
-	    {
-	      if (*p > dmax && *p < dmin)
-		{
-		  float ax = (float)i + cx;
-		  float ay = (float)j + cy;
-		  float aw = 1.0 / (itx * (float)*p);
-		  ppt->X = ax*aw; // X
-		  ppt->Y = ay*aw; // Y
-		  ppt->Z = f*aw; // Z
-		  ppt->A = 0;
-		}
-	      else
-		{
-		  ppt->X = 0.0; // X
-		  ppt->Y = 0.0; // Y
-		  ppt->Z = 0.0; // Z
-		  ppt->A = -1;	// invalid point
-		}
-	    }
-	}
-    }
-  else				// make a vector of pts
-    {
-      for (int j=0; j<ih; j++, y++)
-	{
-	  int x = ix;
-	  int16_t *p = imDisp + x + y*w;
+        for (int i = 0; i < iw; ++i, ++x, ++p)
+        {
+            if (*p > dmax && *p < dmin)
+            {
+                float ax = (float) x + cx;
+                float ay = (float) y + cy;
+                float aw = 1.0 / (itx * (float) *p);
+                *pt++ = ax * aw;        // X
+                *pt++ = ay * aw;        // Y
+                *pt++ = f * aw;         // Z
 
-	  for (int i=0; i<iw; i++, x++, p++)
-	    {
-	      if (*p > dmax && *p < dmin)
-		{
-		  float ax = (float)x + cx;
-		  float ay = (float)y + cy;
-		  float aw = 1.0 / (itx * (float)*p);
-		  *pt++ = ax*aw;	// X
-		  *pt++ = ay*aw;	// Y
-		  *pt++ = f*aw;	// Z
-		  // store point image coordinates
-		  *pcoord++ = x;
-		  *pcoord++ = y;
-		  numPts++;
-		}
-	    }
-	}
+                // store point image coordinates
+                *pcoord++ = x;
+                *pcoord++ = y;
+
+                numPts++;
+            }
+        }
     }
 
-
-  if (isArray) return true;
-
-  if (imLeft->imRectColorType != COLOR_CODING_NONE) // ok, have color
+    if (enc == sensor_msgs::image_encodings::RGB8) // RGB color
     {
-      y = iy;
-      uint8_t *pcout = imPtsColor;
-      for (int j=0; j<ih; j++, y++)
-	{
-	  int x = ix;
-	  int16_t *p = imDisp + x + y*w;
-	  uint8_t *pc = imLeft->imRectColor + (x + y*w)*3;
+        y = iy;
+        uint8_t* pcout = imPtsColor;
 
-	  for (int i=0; i<iw; i++, x++, p++, pc+=3)
-	    {
-	      if (*p > dmax && *p < dmin)
-		{
-		  *pcout++ = *pc;
-		  *pcout++ = *(pc+1);
-		  *pcout++ = *(pc+2);
-		}
-	    }
-	}
+        for (int j = 0; j < ih; ++j, ++y)
+        {
+            int x = ix;
+            int16_t* p = imDisp + x + y * w;
+            uint8_t* pc = const_cast<uint8_t*>(rect_img.data) + (x + y * w) * 3;
+
+            for (int i = 0; i < iw; ++i, ++x, ++p, pc += 3)
+            {
+                if (*p > dmax && *p < dmin)
+                {
+                    *pcout++ = *pc;
+                    *pcout++ = *(pc + 1);
+                    *pcout++ = *(pc + 2);
+                }
+            }
+        }
     }
-  else if (imLeft->imRectType != COLOR_CODING_NONE) // ok, have mono
+    else if (enc == sensor_msgs::image_encodings::BGR8) // BGR color
     {
-      y = iy;
-      uint8_t *pcout = imPtsColor;
-      for (int j=0; j<ih; j++, y++)
-	{
-	  int x = ix;
-	  int16_t *p = imDisp + x + y*w;
-	  uint8_t *pc = imLeft->imRect + (x + y*w);
+        y = iy;
+        uint8_t* pcout = imPtsColor;
 
-	  for (int i=0; i<iw; i++, p++, pc++)
-	    {
-	      if (*p > dmax && *p < dmin)
-		{
-		  *pcout++ = *pc;
-		  *pcout++ = *pc;
-		  *pcout++ = *pc;
-		}
-	    }
-	}
+        for (int j = 0; j < ih; ++j, ++y)
+        {
+            int x = ix;
+            int16_t* p = imDisp + x + y * w;
+            uint8_t* pc = const_cast<uint8_t*>(rect_img.data) + (x + y * w) * 3;
+
+            for (int i = 0; i < iw; ++i, ++x, ++p, pc += 3)
+            {
+                if (*p > dmax && *p < dmin)
+                {
+                    *pcout++ = *(pc + 2);
+                    *pcout++ = *(pc + 1);
+                    *pcout++ = *pc;
+                }
+            }
+        }
     }
-
-
-  //  printf("[Calc Pts] Number of pts: %d\n", numPts);
-  return true;
-}
-
-bool StereoData::parseCalibrationSVS(string params, stereo_side_t stereo_side)
-{
-    string side;
-    ImageData* im_data;
-
-    switch (stereo_side)
+    else if (enc == sensor_msgs::image_encodings::MONO8) // MONO
     {
-        case SIDE_LEFT:
-            side = "left";
-            im_data = imLeft;
-            break;
-        case SIDE_RIGHT:
-            side = "right";
-            im_data = imRight;
-            break;
-        default:
-            ROS_ERROR("Unknown stereo side specified");
-            return false;
+        y = iy;
+        uint8_t* pcout = imPtsColor;
+
+        for (int j = 0; j < ih; ++j, ++y)
+        {
+            int x = ix;
+            int16_t* p = imDisp + x + y * w;
+            uint8_t* pc = const_cast<uint8_t*>(rect_img.data) + (x + y * w);
+
+            for (int i = 0; i < iw; ++i, ++p, ++pc)
+            {
+                if (*p > dmax && *p < dmin)
+                {
+                    *pcout++ = *pc;
+                    *pcout++ = *pc;
+                    *pcout++ = *pc;
+                }
+            }
+        }
     }
-
-    // K - original camera matrix
-    extract(params, "[" + side + " camera]", "f ", im_data->cam_info.K[0]);
-    extract(params, "[" + side + " camera]", "fy", im_data->cam_info.K[4]);
-    extract(params, "[" + side + " camera]", "Cx", im_data->cam_info.K[2]);
-    extract(params, "[" + side + " camera]", "Cy", im_data->cam_info.K[5]);
-
-    im_data->cam_info.K[8] = 1.0;
-
-    // D - distortion params
-    extract(params, "[" + side + " camera]", "kappa1", im_data->cam_info.D[0]);
-    extract(params, "[" + side + " camera]", "kappa2", im_data->cam_info.D[1]);
-    extract(params, "[" + side + " camera]", "tau1", im_data->cam_info.D[2]);
-    extract(params, "[" + side + " camera]", "tau2", im_data->cam_info.D[3]);
-    extract(params, "[" + side + " camera]", "kappa3", im_data->cam_info.D[4]);
-
-    // R - rectification matrix
-    extract(params, "[" + side + " camera]", "rect",  im_data->cam_info.R.c_array(), 9);
-
-    // P - projection matrix
-    extract(params, "[" + side + " camera]", "proj",  im_data->cam_info.P.c_array(), 12);
-    im_data->cam_info.P[3] *= .001;  // convert from mm to m
 
     return true;
 }
 
-bool StereoData::parseCalibrationOST(string params, stereo_side_t stereo_side)
+void StereoData::parseCalibrationSVS(string params, stereo_side_t stereo_side, sensor_msgs::CameraInfo& cam_info)
 {
     string side;
-    ImageData* im_data;
 
     switch (stereo_side)
     {
         case SIDE_LEFT:
             side = "left";
-            im_data = imLeft;
             break;
         case SIDE_RIGHT:
             side = "right";
-            im_data = imRight;
             break;
-        default:
-            ROS_ERROR("Unknown stereo side specified");
-            return false;
     }
 
     // K - original camera matrix
-    extract(params, "[" + side + " camera]", "camera matrix", im_data->cam_info.K.c_array(), 9);
+    extract(params, "[" + side + " camera]", "f ", cam_info.K[0]);
+    extract(params, "[" + side + " camera]", "fy", cam_info.K[4]);
+    extract(params, "[" + side + " camera]", "Cx", cam_info.K[2]);
+    extract(params, "[" + side + " camera]", "Cy", cam_info.K[5]);
+
+    cam_info.K[8] = 1.0;
 
     // D - distortion params
-    extract(params, "[" + side + " camera]", "distortion", im_data->cam_info.D.c_array(), 5);
+    extract(params, "[" + side + " camera]", "kappa1", cam_info.D[0]);
+    extract(params, "[" + side + " camera]", "kappa2", cam_info.D[1]);
+    extract(params, "[" + side + " camera]", "tau1", cam_info.D[2]);
+    extract(params, "[" + side + " camera]", "tau2", cam_info.D[3]);
+    extract(params, "[" + side + " camera]", "kappa3", cam_info.D[4]);
 
     // R - rectification matrix
-    extract(params, "[" + side + " camera]", "rectification",  im_data->cam_info.R.c_array(), 9);
+    extract(params, "[" + side + " camera]", "rect", cam_info.R.c_array(), 9);
 
     // P - projection matrix
-    extract(params, "[" + side + " camera]", "projection",  im_data->cam_info.P.c_array(), 12);
-
-    return true;
+    extract(params, "[" + side + " camera]", "proj", cam_info.P.c_array(), 12);
+    cam_info.P[3] *= .001;  // convert from mm to m
 }
 
-void StereoData::printCameraInfo(stereo_side_t stereo_side)
+void StereoData::parseCalibrationOST(string params, stereo_side_t stereo_side, sensor_msgs::CameraInfo& cam_info)
 {
     string side;
-    ImageData* im_data;
 
     switch (stereo_side)
     {
         case SIDE_LEFT:
             side = "left";
-            im_data = imLeft;
             break;
         case SIDE_RIGHT:
             side = "right";
-            im_data = imRight;
             break;
-        default:
-            ROS_ERROR("Unknown stereo side specified");
-            return;
+    }
+
+    // K - original camera matrix
+    extract(params, "[" + side + " camera]", "camera matrix", cam_info.K.c_array(), 9);
+
+    // D - distortion params
+    extract(params, "[" + side + " camera]", "distortion", cam_info.D.c_array(), 5);
+
+    // R - rectification matrix
+    extract(params, "[" + side + " camera]", "rectification", cam_info.R.c_array(), 9);
+
+    // P - projection matrix
+    extract(params, "[" + side + " camera]", "projection", cam_info.P.c_array(), 12);
+}
+
+void StereoData::printCameraInfo(stereo_side_t stereo_side, const sensor_msgs::CameraInfo& cam_info)
+{
+    string side;
+
+    switch (stereo_side)
+    {
+        case SIDE_LEFT:
+            side = "left";
+            break;
+        case SIDE_RIGHT:
+            side = "right";
+            break;
     }
 
     PRINTF("[dcam] %s camera matrix (K)\n", side.c_str());
@@ -556,7 +432,7 @@ void StereoData::printCameraInfo(stereo_side_t stereo_side)
     {
         for (int j = 0; j < 3; ++j)
         {
-            PRINTF(" %.4f", im_data->cam_info.K[i * 3 + j]);
+            PRINTF(" %.4f", cam_info.K[i * 3 + j]);
         }
 
         PRINTF("\n");
@@ -566,7 +442,7 @@ void StereoData::printCameraInfo(stereo_side_t stereo_side)
 
     for (int i = 0; i < 5; ++i)
     {
-        PRINTF(" %.4f", im_data->cam_info.D[i]);
+        PRINTF(" %.4f", cam_info.D[i]);
     }
 
     PRINTF("\n\n[dcam] %s rectification matrix (R)\n", side.c_str());
@@ -575,7 +451,7 @@ void StereoData::printCameraInfo(stereo_side_t stereo_side)
     {
         for (int j = 0; j < 3; ++j)
         {
-            PRINTF(" %.4f", im_data->cam_info.R[i * 3 + j]);
+            PRINTF(" %.4f", cam_info.R[i * 3 + j]);
         }
 
         PRINTF("\n");
@@ -587,7 +463,7 @@ void StereoData::printCameraInfo(stereo_side_t stereo_side)
     {
         for (int j = 0; j < 4; ++j)
         {
-            PRINTF(" %.4f", im_data->cam_info.P[i * 4 + j]);
+            PRINTF(" %.4f", cam_info.P[i * 4 + j]);
         }
 
         PRINTF("\n");
@@ -603,23 +479,11 @@ void StereoData::printCalibration()
     PRINTF("[dcam] Prefilter window: %d\n", filterSize);
     PRINTF("[dcam] Number of disparities: %d\n", numDisp);
 
-    printCameraInfo(SIDE_LEFT);
-    printCameraInfo(SIDE_RIGHT);
+    printCameraInfo(SIDE_LEFT, left_info);
+    printCameraInfo(SIDE_RIGHT, right_info);
 
     if (hasRectification) { PRINTF("[dcam] Has rectification\n\n"); }
     else { PRINTF("[dcam] No rectification\n\n"); }
-
-    PRINTF("[dcam] Reprojection matrix\n");
-
-    for (int i = 0; i < 4; ++i)
-    {
-        for (int j = 0; j < 4; ++j)
-        {
-            PRINTF(" %.4f", RP[i * 4 + j]);
-        }
-
-        PRINTF("\n");
-    }
 
     PRINTF("\n[dcam] External translation vector\n");
 
@@ -650,10 +514,10 @@ void StereoData::extractParams(char *ps, bool store)
 
     if (store && ps != NULL)
     {
-        if (imLeft->params) { delete [] imLeft->params; }
+        if (this->params) { delete [] this->params; }
         char *bb = new char[strlen(ps)];
         strcpy(bb, ps);
-        imLeft->params = bb;
+        this->params = bb;
     }
 
     PRINTF("\n\n[extractParams] Parameters:\n\n");
@@ -670,15 +534,15 @@ void StereoData::extractParams(char *ps, bool store)
         Om[i] = 0.0;
     }
 
-    if (strncmp(ps,"# SVS",5)==0) // SVS-type parameters
+    if (strncmp(ps, "# SVS", 5) == 0) // SVS-type parameters
     {
         PRINTF("[dcam] SVS-type parameters\n");
 
         // Left camera calibration parameters
-        parseCalibrationSVS(params, SIDE_LEFT);
+        parseCalibrationSVS(params, SIDE_LEFT, left_info);
 
         // Right camera calibration parameters
-        parseCalibrationSVS(params, SIDE_RIGHT);
+        parseCalibrationSVS(params, SIDE_RIGHT, right_info);
 
         // external params of undistorted cameras
         extract(params, "[external]", "Tx", T[0]);
@@ -697,10 +561,10 @@ void StereoData::extractParams(char *ps, bool store)
       PRINTF("[dcam] OST-type parameters\n");
 
       // Left camera calibration parameters
-      parseCalibrationOST(params, SIDE_LEFT);
+      parseCalibrationOST(params, SIDE_LEFT, left_info);
 
       // Right camera calibration parameters
-      parseCalibrationOST(params, SIDE_RIGHT);
+      parseCalibrationOST(params, SIDE_RIGHT, right_info);
 
       // external params of undistorted cameras
       extract(params, "[externals]", "translation", T, 3);
@@ -714,48 +578,11 @@ void StereoData::extractParams(char *ps, bool store)
     extract(params, "[stereo]", "ndisp", numDisp);
 
     // check for left camera matrix
-    if (imLeft->cam_info.K[0] == 0.0)
-    {
-        hasRectification = false;
-    }
-    else
-    {
-        hasRectification = true;
-        imLeft->hasRectification = true;
-        imLeft->initRect = false;   // haven't initialized arrays, wait for image size
-    }
+    if (left_info.K[0] == 0.0) { hasRectification = false; }
+    else { hasRectification = true; }
 
     // check for right camera matrix
-    if (imRight->cam_info.K[0] == 0.0)
-    {
-        hasRectification = false;
-    }
-    else
-    {
-        imRight->hasRectification = true;
-        imRight->initRect = false;  // haven't initialized arrays, wait for image size
-    }
-
-    // reprojection matrix
-    double Tx = imRight->cam_info.P[0] / imRight->cam_info.P[3];
-
-    // first column
-    RP[0] = 1.0;
-    RP[4] = RP[8] = RP[12] = 0.0;
-
-    // second column
-    RP[5] = 1.0;
-    RP[1] = RP[9] = RP[13] = 0.0;
-
-    // third column
-    RP[2] = RP[6] = RP[10] = 0.0;
-    RP[14] = -Tx;
-
-    // fourth column
-    RP[3] = -imLeft->cam_info.P[2];  // cx
-    RP[7] = -imLeft->cam_info.P[6];  // cy
-    RP[11] = imLeft->cam_info.P[0];  // fx, fy
-    RP[15] = (imLeft->cam_info.P[2] - imRight->cam_info.P[2] - (double) offx) / Tx;
+    if (right_info.K[0] == 0.0) { hasRectification = false; }
 
     printCalibration();
 }
@@ -831,729 +658,40 @@ StereoData::createParams(bool store)
     n += sprintf(&str[n],"\n[left camera]\n");
 
     n += sprintf(&str[n],"\ncamera matrix\n");
-    n += PrintMatStr(imLeft->cam_info.K.c_array(),3,3,&str[n]);
+    n += PrintMatStr(left_info.K.c_array(),3,3,&str[n]);
 
     n += sprintf(&str[n],"\ndistortion\n");
-    n += PrintMatStr(imLeft->cam_info.D.c_array(),1,5,&str[n]);
+    n += PrintMatStr(left_info.D.c_array(),1,5,&str[n]);
 
     n += sprintf(&str[n],"\nrectification\n");
-    n += PrintMatStr(imLeft->cam_info.R.c_array(),3,3,&str[n]);
+    n += PrintMatStr(left_info.R.c_array(),3,3,&str[n]);
 
     n += sprintf(&str[n],"\nprojection\n");
-    n += PrintMatStr(imLeft->cam_info.P.c_array(),3,4,&str[n]);
+    n += PrintMatStr(left_info.P.c_array(),3,4,&str[n]);
 
     // right camera
     n += sprintf(&str[n],"\n[right camera]\n");
     n += sprintf(&str[n],"\ncamera matrix\n");
-    n += PrintMatStr(imRight->cam_info.K.c_array(),3,3,&str[n]);
+    n += PrintMatStr(right_info.K.c_array(),3,3,&str[n]);
 
     n += sprintf(&str[n],"\ndistortion\n");
-    n += PrintMatStr(imRight->cam_info.D.c_array(),1,5,&str[n]);
+    n += PrintMatStr(right_info.D.c_array(),1,5,&str[n]);
 
     n += sprintf(&str[n],"\nrectification\n");
-    n += PrintMatStr(imRight->cam_info.R.c_array(),3,3,&str[n]);
+    n += PrintMatStr(right_info.R.c_array(),3,3,&str[n]);
 
     n += sprintf(&str[n],"\nprojection\n");
-    n += PrintMatStr(imRight->cam_info.P.c_array(),3,4,&str[n]);
+    n += PrintMatStr(right_info.P.c_array(),3,4,&str[n]);
 
     str[n] = 0; // just in case
 
     if (store)
     {
-        if (imLeft->params) { delete [] imLeft->params; }
+        if (params) { delete [] params; }
         char *bb = new char[n];
         strcpy(bb, str);
-        imLeft->params = bb;
+        params = bb;
     }
 
     return str;
-}
-
-//
-// color processing
-// two algorithms: linear interpolation, and edge-tracking interpolation
-//
-
-#define AVG(a,b) (((int)(a) + (int)(b))>>1)
-
-// convert from Bayer to RGB (3 bytes)
-void ImageData::doBayerColorRGB()
-{
-  if (imRawType == COLOR_CODING_NONE)
-  {
-    return;		// nothing to colorize
-  }
-
-  if (imColorType != COLOR_CODING_NONE)
-  {
-    return;		// already done
-  }
-
-  // check allocation
-  size_t size = imWidth*imHeight;
-  if (imSize < size)
-    {
-      MEMFREE(im);
-      im = (uint8_t *)MEMALIGN(size);
-      imSize = size;
-    }
-  if (imColorSize < size*3)
-    {
-      MEMFREE(imColor);
-      imColor = (uint8_t *)MEMALIGN(size*3);
-      imColorSize = size*3;
-    }
-  switch (imRawType) {
-    case COLOR_CODING_MONO8:
-      memcpy(im, imRaw, size);
-      imType = COLOR_CODING_MONO8;
-      return;
-    case COLOR_CODING_BAYER8_GRBG:
-      convertBayerGRBGColorRGB(imRaw, imColor, im, imWidth, imHeight, colorConvertType);
-      break;
-    case COLOR_CODING_BAYER8_BGGR:
-      convertBayerBGGRColorRGB(imRaw, imColor, im, imWidth, imHeight, colorConvertType);
-      break;
-
-    default:
-      PRINTF("Unsupported color coding %i", imRawType);
-      return;
-  }
-  imType = COLOR_CODING_MONO8;
-  imColorType = COLOR_CODING_RGB8;
-}
-
-
-void
-ImageData::doBayerMono()
-{
-
-  if (imRawType == COLOR_CODING_NONE)
-  {
-    return;		// nothing to colorize
-  }
-
-  if (imType != COLOR_CODING_NONE)
-  {
-    return;		// already done
-  }
-
-  // check allocation
-  size_t size = imWidth*imHeight;
-  if (imSize < size)
-    {
-      MEMFREE(im);
-      im = (uint8_t *)MEMALIGN(size);
-      imSize = size;
-    }
-  switch (imRawType) {
-    case COLOR_CODING_MONO8:
-      memcpy(im, imRaw, size);
-      break;
-    case COLOR_CODING_BAYER8_GRBG:
-      convertBayerGRBGMono(imRaw, im, imWidth, imHeight, colorConvertType);
-      break;
-    case COLOR_CODING_BAYER8_BGGR:
-      convertBayerBGGRMono(imRaw, im, imWidth, imHeight, colorConvertType);
-      break;
-
-    default:
-      PRINTF("Unsupported color coding %i", imRawType);
-      return;
-  }
-  imType = COLOR_CODING_MONO8;
-}
-
-
-// real funtion to do the job
-// converts to RGB
-
-void
-ImageData::convertBayerGRBGColorRGB(uint8_t *src, uint8_t *dstc, uint8_t *dstm,
-				    int width, int height, color_conversion_t colorAlg)
-{
-  uint8_t *s;
-  int i, j;
-  int ll = width;
-  int ll2 = width*2;
-
-  s = src;
-  int pp2 = width*3*2;          // previous 2 color lines
-  int pp = width*3;             // previous color line
-  uint8_t *cd = dstc;		// color
-  uint8_t *md = dstm;		// monochrome
-
-  // simple, but has "zipper" artifacts
-  if (colorAlg == COLOR_CONVERSION_BILINEAR)
-    {
-      for (i=0; i<height; i+=2)
-	{
-	  // red line (GRGR...)
-	  for (j=0; j<width; j+=2, cd+=6, md+=2)
-	    {
-	      *md = *(cd+1) = *s++;	// green pixel
-	      *(cd+3+0) = *s++;	// red pixel
-	      *(cd+0) = AVG(*(cd+3+0), *(cd-3+0)); // interpolated red pixel
-	      if (i > 1)
-		{
-		  *(cd-pp+0) = AVG(*(cd-pp2+0), *(cd+0)); // interpolated red pixel
-		  *(cd-pp+3+0) = AVG(*(cd-pp2+3+0), *(cd+3+0)); // interpolated red pixel
-		  *(md-ll) = *(cd-pp+1) = ((int)*(cd+1) + (int)*(cd-pp-3+1) + (int)*(cd-pp+3+1) + (int)*(cd-pp2+1)) >> 2;
-		}
-	    }
-
-	  // blue line (BGBG...)
-	  *(cd+2) = *s;		// blue pixel
-	  for (j=0; j<width-2; j+=2, cd+=6, md+=2)
-	    {
-	      s++;
-	      *(md+1) = *(cd+3+1) = *s++; // green pixel
-	      *(cd+6+2) = *s;
-	      *(cd+3+2) = AVG(*(cd+2), *(cd+6+2)); // interpolated blue pixel
-	      if (i > 1)
-		{
-		  *(cd-pp+2) = AVG(*(cd-pp2+2), *(cd+2)); // interpolated blue pixel
-		  *(cd-pp+3+2) = AVG(*(cd-pp2+3+2), *(cd+3+2)); // interpolated blue pixel
-		  *(md-ll+1) = *(cd-pp+3+1) = ((int)*(cd+3+1) + (int)*(cd-pp+1) + (int)*(cd-pp+6+1) + (int)*(cd-pp2+3+1)) >> 2;
-		}
-	    }
-	  // last pixels
-	  s++;
-	  *(md+1) = *(cd+3+1) = *s++;      // green pixel
-	  *(cd+3+2) = *(cd+2);	// interpolated blue pixel
-	  if (i > 1)
-	    {
-	      *(cd-pp+2) = AVG(*(cd-pp2+2), *(cd+2)); // interpolated blue pixel
-	      *(cd-pp+3+2) = AVG(*(cd-pp2+3+2), *(cd+3+2)); // interpolated blue pixel
-	    }
-	  cd +=6;
-	  md +=2;
-	}
-    }
-
-  // EDGE color algorithm, better but slower
-  else
-    {
-      int a,b,c,d;
-      int dc, dv, dh;
-      int ww;
-
-      // do first two lines
-      cd += pp2;
-      s += ll2;
-
-      for (i=0; i<height-4; i+=2)
-	{
-	  // GR line
-	  // do first two pixels
-	  cd += 6;
-	  md += 2;
-	  s += 2;
-
-	  // do most of line
-	  for (j=0; j<width-4; j+=2, cd+=6, md+=2)
-	    {
-	      // green pixels
-	      *md = *(cd+1) = *s++;
-	      dc = 2*(int)*(s);
-	      dh = dc - (int)*(s-2) - (int)*(s+2);
-	      if (dh < 0) dh = -dh;
-	      dv = dc - (int)*(s-ll2) - (int)*(s+ll2);
-	      if (dv < 0) dv = -dv;
-	      if (dv > dh) // vert is stronger, use horz
-		*(md+1) = *(cd+3+1) = ((int)*(s-1) + (int)*(s+1))>>1;
-	      else	// horz is stronger, use vert
-		*(md+1) = *(cd+3+1) = ((int)*(s-ll) + (int)*(s+ll))>>1;
-
-	      // color pixels
-	      *(cd+3+0) = *s;	// red pixel
-
-	      a = (int)*(s) - (int)*(cd+3+1);
-	      b = (int)*(s-2) - (int)*(cd-3+1);
-	      c = (int)*(s-ll2) - (int)*(cd-pp2+3+1);
-	      d = (int)*(s-ll2-2) - (int)*(cd-pp2-3+1);
-
-	      ww = 2*(int)*(cd+1) + (a + b);
-	      if (ww < 0) ww = 0;
-	      *(cd+0) = ww>>1;	// interpolated red pixel
-
-	      ww = 2*(int)*(cd-pp+3+1) + (a + c);
-	      if (ww < 0) ww = 0;
-	      *(cd-pp+3+0) = ww>>1; // interpolated red pixel
-
-	      ww = 4*(int)*(cd-pp+1) + (a + b + c + d);
-	      if (ww < 0) ww = 0;
-	      *(cd-pp+0) = ww>>2; // interpolated red pixel
-
-	      s++;
-	    }
-	  // last two pixels
-	  cd += 6;
-	  md += 2;
-	  s += 2;
-
-	  // BG line
-	  // do first two pixels
-	  cd += 6;
-	  md += 2;
-	  s += 2;
-
-	  // do most of line
-	  for (j=0; j<width-4; j+=2, cd+=6, md+=2)
-	    {
-	      dc = 2*(int)*s;
-	      dh = dc - (int)*(s-2) - (int)*(s+2);
-	      if (dh < 0) dh = -dh;
-	      dv = dc - (int)*(s-ll2) - (int)*(s+ll2);
-	      if (dv < 0) dv = -dv;
-	      if (dh < dv) // vert is stronger, use horz
-		*md = *(cd+1) = ((int)*(s-1) + (int)*(s+1))>>1;
-	      else	// horz is stronger, use vert
-		*md = *(cd+1) = ((int)*(s-ll) + (int)*(s+ll))>>1;
-
-	      *(md+1) = *(cd+3+1) = *(s+1); // green pixel
-
-	      // color pixels
-	      *(cd+3+2) = *s;	// blue pixel
-
-	      a = (int)*(s) - (int)*(cd+3+1);
-	      b = (int)*(s-2) - (int)*(cd-3+1);
-	      c = (int)*(s-ll2) - (int)*(cd-pp2+3+1);
-	      d = (int)*(s-ll2-2) - (int)*(cd-pp2-3+1);
-
-	      ww = 2*(int)*(cd+1) + (a + b);
-	      if (ww < 0) ww = 0;
-	      *(cd+2) = ww>>1;	// interpolated blue pixel
-
-	      ww = 2*(int)*(cd-pp+3+1) + (a + c);
-	      if (ww < 0) ww = 0;
-	      *(cd-pp+3+2) = ww>>1; // interpolated blue pixel
-
-	      ww = 4*(int)*(cd-pp+1) + (a + b + c + d);
-	      if (ww < 0) ww = 0;
-	      *(cd-pp+2) = ww>>2; // interpolated blue pixel
-
-	      s+=2;
-	    }
-	  // last two pixels
-	  cd += 6;
-	  md += 2;
-	  s += 2;
-	}
-
-      // last two lines
-      for (j=0; j<width; j+=2)
-	{
-	}
-    }
-
-}
-
-void
-ImageData::convertBayerBGGRColorRGB(uint8_t *src, uint8_t *dstc, uint8_t *dstm,
-				    int width, int height, color_conversion_t colorAlg)
-{
-  uint8_t *s;
-  int i, j;
-  int ll = width;
-  int ll2 = width*2;
-
-  s = src;
-  int pp2 = width*3*2;          // previous 2 color lines
-  int pp = width*3;             // previous color line
-  uint8_t *cd = dstc;		// color
-  uint8_t *md = dstm;		// monochrome
-
-  // simple, but has "zipper" artifacts
-  if (colorAlg == COLOR_CONVERSION_BILINEAR)
-    {
-      for (i=0; i<height; i+=2)
-	{
-          // blue line (BGBG...)
-	  *(cd+2) = *s;		// blue pixel
-	  for (j=0; j<width-2; j+=2, cd+=6, md+=2)
-	    {
-	      s++;
-	      *(md+1) = *(cd+3+1) = *s++; // green pixel
-	      *(cd+6+2) = *s;
-	      *(cd+3+2) = AVG(*(cd+2), *(cd+6+2)); // interpolated blue pixel
-	      if (i > 1)
-		{
-		  *(cd-pp+2) = AVG(*(cd-pp2+2), *(cd+2)); // interpolated blue pixel
-		  *(cd-pp+3+2) = AVG(*(cd-pp2+3+2), *(cd+3+2)); // interpolated blue pixel
-		  *(md-ll+1) = *(cd-pp+3+1) = ((int)*(cd+3+1) + (int)*(cd-pp+1) + (int)*(cd-pp+6+1) + (int)*(cd-pp2+3+1)) >> 2;
-		}
-	    }
-	  // last pixels
-	  s++;
-	  *(md+1) = *(cd+3+1) = *s++;      // green pixel
-	  *(cd+3+2) = *(cd+2);	// interpolated blue pixel
-	  if (i > 1)
-	    {
-	      *(cd-pp+2) = AVG(*(cd-pp2+2), *(cd+2)); // interpolated blue pixel
-	      *(cd-pp+3+2) = AVG(*(cd-pp2+3+2), *(cd+3+2)); // interpolated blue pixel
-	    }
-	  cd +=6;
-	  md +=2;
-
-	  // red line (GRGR...)
-	  for (j=0; j<width; j+=2, cd+=6, md+=2)
-	    {
-	      *md = *(cd+1) = *s++;	// green pixel
-	      *(cd+3+0) = *s++;	// red pixel
-	      *(cd+0) = AVG(*(cd+3+0), *(cd-3+0)); // interpolated red pixel
-	      if (i > 1)
-		{
-		  *(cd-pp+0) = AVG(*(cd-pp2+0), *(cd+0)); // interpolated red pixel
-		  *(cd-pp+3+0) = AVG(*(cd-pp2+3+0), *(cd+3+0)); // interpolated red pixel
-		  *(md-ll) = *(cd-pp+1) = ((int)*(cd+1) + (int)*(cd-pp-3+1) + (int)*(cd-pp+3+1) + (int)*(cd-pp2+1)) >> 2;
-		}
-	    }
-	}
-    }
-
-  // EDGE color algorithm, better but slower
-  else
-    {
-      int a,b,c,d;
-      int dc, dv, dh;
-      int ww;
-
-      // do first two lines
-      cd += pp2;
-      s += ll2;
-
-      for (i=0; i<height-4; i+=2)
-	{
-          // BG line
-	  // do first two pixels
-	  cd += 6;
-	  md += 2;
-	  s += 2;
-
-	  // do most of line
-	  for (j=0; j<width-4; j+=2, cd+=6, md+=2)
-	    {
-	      dc = 2*(int)*s;
-	      dh = dc - (int)*(s-2) - (int)*(s+2);
-	      if (dh < 0) dh = -dh;
-	      dv = dc - (int)*(s-ll2) - (int)*(s+ll2);
-	      if (dv < 0) dv = -dv;
-	      if (dh < dv) // vert is stronger, use horz
-		*md = *(cd+1) = ((int)*(s-1) + (int)*(s+1))>>1;
-	      else	// horz is stronger, use vert
-		*md = *(cd+1) = ((int)*(s-ll) + (int)*(s+ll))>>1;
-
-	      *(md+1) = *(cd+3+1) = *(s+1); // green pixel
-
-	      // color pixels
-	      *(cd+3+2) = *s;	// blue pixel
-
-	      a = (int)*(s) - (int)*(cd+3+1);
-	      b = (int)*(s-2) - (int)*(cd-3+1);
-	      c = (int)*(s-ll2) - (int)*(cd-pp2+3+1);
-	      d = (int)*(s-ll2-2) - (int)*(cd-pp2-3+1);
-
-	      ww = 2*(int)*(cd+1) + (a + b);
-	      if (ww < 0) ww = 0;
-	      *(cd+2) = ww>>1;	// interpolated blue pixel
-
-	      ww = 2*(int)*(cd-pp+3+1) + (a + c);
-	      if (ww < 0) ww = 0;
-	      *(cd-pp+3+2) = ww>>1; // interpolated blue pixel
-
-	      ww = 4*(int)*(cd-pp+1) + (a + b + c + d);
-	      if (ww < 0) ww = 0;
-	      *(cd-pp+2) = ww>>2; // interpolated blue pixel
-
-	      s+=2;
-	    }
-	  // last two pixels
-	  cd += 6;
-	  md += 2;
-	  s += 2;
-
-	  // GR line
-	  // do first two pixels
-	  cd += 6;
-	  md += 2;
-	  s += 2;
-
-	  // do most of line
-	  for (j=0; j<width-4; j+=2, cd+=6, md+=2)
-	    {
-	      // green pixels
-	      *md = *(cd+1) = *s++;
-	      dc = 2*(int)*(s);
-	      dh = dc - (int)*(s-2) - (int)*(s+2);
-	      if (dh < 0) dh = -dh;
-	      dv = dc - (int)*(s-ll2) - (int)*(s+ll2);
-	      if (dv < 0) dv = -dv;
-	      if (dv > dh) // vert is stronger, use horz
-		*(md+1) = *(cd+3+1) = ((int)*(s-1) + (int)*(s+1))>>1;
-	      else	// horz is stronger, use vert
-		*(md+1) = *(cd+3+1) = ((int)*(s-ll) + (int)*(s+ll))>>1;
-
-	      // color pixels
-	      *(cd+3+0) = *s;	// red pixel
-
-	      a = (int)*(s) - (int)*(cd+3+1);
-	      b = (int)*(s-2) - (int)*(cd-3+1);
-	      c = (int)*(s-ll2) - (int)*(cd-pp2+3+1);
-	      d = (int)*(s-ll2-2) - (int)*(cd-pp2-3+1);
-
-	      ww = 2*(int)*(cd+1) + (a + b);
-	      if (ww < 0) ww = 0;
-	      *(cd+0) = ww>>1;	// interpolated red pixel
-
-	      ww = 2*(int)*(cd-pp+3+1) + (a + c);
-	      if (ww < 0) ww = 0;
-	      *(cd-pp+3+0) = ww>>1; // interpolated red pixel
-
-	      ww = 4*(int)*(cd-pp+1) + (a + b + c + d);
-	      if (ww < 0) ww = 0;
-	      *(cd-pp+0) = ww>>2; // interpolated red pixel
-
-	      s++;
-	    }
-	  // last two pixels
-	  cd += 6;
-	  md += 2;
-	  s += 2;
-	}
-
-      // last two lines
-      for (j=0; j<width; j+=2)
-	{
-	}
-    }
-
-}
-
-
-// real function to do the job
-// converts to monochrome
-
-void
-ImageData::convertBayerGRBGMono(uint8_t *src, uint8_t *dstm,
-				int width, int height, color_conversion_t colorAlg)
-{
-  uint8_t *s;
-  int i, j;
-  int ll = width;
-  int ll2 = width*2;
-
-  s = src;
-  uint8_t *md = dstm;		// monochrome
-
-  // simple, but has "zipper" artifacts
-  if (colorAlg == COLOR_CONVERSION_BILINEAR)
-    {
-      for (i=0; i<height; i+=2)
-	{
-	  // red line (GRGR...)
-	  for (j=0; j<width; j+=2, md+=2)
-	    {
-	      *md = *s++;	// green pixel
-	      s++;	// red pixel
-	      if (i > 1)
-		*(md-ll) = ((int)*(md) + (int)*(md-ll-1) + (int)*(md-ll+1) + (int)*(md-ll2)) >> 2;
-	    }
-
-	  // blue line (BGBG...)
-	  for (j=0; j<width-2; j+=2, md+=2)
-	    {
-	      s++;
-	      *(md+1) = *s++; // green pixel
-	      if (i > 1)
-		*(md-ll+1) = ((int)*(md+1) + (int)*(md-ll) + (int)*(md-ll+2) + (int)*(md-ll2+1)) >> 2;
-	    }
-	  // last pixels
-	  s++;
-	  *(md+1) = *s++;	// green pixel
-	  md +=2;
-	}
-    }
-
-  // EDGE color algorithm, better but slower
-  else
-    {
-      int dc, dv, dh;
-
-      // do first two lines
-      s += ll2;
-
-      for (i=0; i<height-4; i+=2)
-	{
-	  // GR line
-	  // do first two pixels
-	  md += 2;
-	  s += 2;
-
-	  // do most of line
-	  for (j=0; j<width-4; j+=2, md+=2)
-	    {
-	      // green pixels
-	      *md = *s++;
-	      dc = 2*(int)*(s);
-	      dh = dc - (int)*(s-2) - (int)*(s+2);
-	      if (dh < 0) dh = -dh;
-	      dv = dc - (int)*(s-ll2) - (int)*(s+ll2);
-	      if (dv < 0) dv = -dv;
-	      if (dv > dh) // vert is stronger, use horz
-		*(md+1) = ((int)*(s-1) + (int)*(s+1))>>1;
-	      else	// horz is stronger, use vert
-		*(md+1) = ((int)*(s-ll) + (int)*(s+ll))>>1;
-
-	      s++;
-	    }
-	  // last two pixels
-	  md += 2;
-	  s += 2;
-
-	  // BG line
-	  // do first two pixels
-	  md += 2;
-	  s += 2;
-
-	  // do most of line
-	  for (j=0; j<width-4; j+=2, md+=2)
-	    {
-	      dc = 2*(int)*s;
-	      dh = dc - (int)*(s-2) - (int)*(s+2);
-	      if (dh < 0) dh = -dh;
-	      dv = dc - (int)*(s-ll2) - (int)*(s+ll2);
-	      if (dv < 0) dv = -dv;
-	      if (dh < dv) // vert is stronger, use horz
-		*md = ((int)*(s-1) + (int)*(s+1))>>1;
-	      else	// horz is stronger, use vert
-		*md = ((int)*(s-ll) + (int)*(s+ll))>>1;
-
-	      *(md+1) = *(s+1); // green pixel
-
-	      s+=2;
-	    }
-	  // last two pixels
-	  md += 2;
-	  s += 2;
-	}
-
-      // last two lines
-      for (j=0; j<width; j+=2)
-	{
-	}
-    }
-
-}
-
-void
-ImageData::convertBayerBGGRMono(uint8_t *src, uint8_t *dstm,
-				int width, int height, color_conversion_t colorAlg)
-{
-  uint8_t *s;
-  int i, j;
-  int ll = width;
-  int ll2 = width*2;
-
-  s = src;
-  uint8_t *md = dstm;		// monochrome
-
-  // simple, but has "zipper" artifacts
-  if (colorAlg == COLOR_CONVERSION_BILINEAR)
-    {
-      for (i=0; i<height; i+=2)
-	{
-          // blue line (BGBG...)
-	  for (j=0; j<width-2; j+=2, md+=2)
-	    {
-	      s++;
-	      *(md+1) = *s++; // green pixel
-	      if (i > 1)
-		*(md-ll+1) = ((int)*(md+1) + (int)*(md-ll) + (int)*(md-ll+2) + (int)*(md-ll2+1)) >> 2;
-	    }
-	  // last pixels
-	  s++;
-	  *(md+1) = *s++;	// green pixel
-	  md +=2;
-
-	  // red line (GRGR...)
-	  for (j=0; j<width; j+=2, md+=2)
-	    {
-	      *md = *s++;	// green pixel
-	      s++;	// red pixel
-	      if (i > 1)
-		*(md-ll) = ((int)*(md) + (int)*(md-ll-1) + (int)*(md-ll+1) + (int)*(md-ll2)) >> 2;
-	    }
-	}
-    }
-
-  // EDGE color algorithm, better but slower
-  else
-    {
-      int dc, dv, dh;
-
-      // do first two lines
-      s += ll2;
-
-      for (i=0; i<height-4; i+=2)
-	{
-          // BG line
-	  // do first two pixels
-	  md += 2;
-	  s += 2;
-
-	  // do most of line
-	  for (j=0; j<width-4; j+=2, md+=2)
-	    {
-	      dc = 2*(int)*s;
-	      dh = dc - (int)*(s-2) - (int)*(s+2);
-	      if (dh < 0) dh = -dh;
-	      dv = dc - (int)*(s-ll2) - (int)*(s+ll2);
-	      if (dv < 0) dv = -dv;
-	      if (dh < dv) // vert is stronger, use horz
-		*md = ((int)*(s-1) + (int)*(s+1))>>1;
-	      else	// horz is stronger, use vert
-		*md = ((int)*(s-ll) + (int)*(s+ll))>>1;
-
-	      *(md+1) = *(s+1); // green pixel
-
-	      s+=2;
-	    }
-	  // last two pixels
-	  md += 2;
-	  s += 2;
-
-	  // GR line
-	  // do first two pixels
-	  md += 2;
-	  s += 2;
-
-	  // do most of line
-	  for (j=0; j<width-4; j+=2, md+=2)
-	    {
-	      // green pixels
-	      *md = *s++;
-	      dc = 2*(int)*(s);
-	      dh = dc - (int)*(s-2) - (int)*(s+2);
-	      if (dh < 0) dh = -dh;
-	      dv = dc - (int)*(s-ll2) - (int)*(s+ll2);
-	      if (dv < 0) dv = -dv;
-	      if (dv > dh) // vert is stronger, use horz
-		*(md+1) = ((int)*(s-1) + (int)*(s+1))>>1;
-	      else	// horz is stronger, use vert
-		*(md+1) = ((int)*(s-ll) + (int)*(s+ll))>>1;
-
-	      s++;
-	    }
-	  // last two pixels
-	  md += 2;
-	  s += 2;
-	}
-
-      // last two lines
-      for (j=0; j<width; j+=2)
-	{
-	}
-    }
-
 }

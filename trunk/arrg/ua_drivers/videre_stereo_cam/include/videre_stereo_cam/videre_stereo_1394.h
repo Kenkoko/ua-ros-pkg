@@ -38,11 +38,10 @@
 #include <stdexcept>
 #include <cstring>
 
-#include <ros/node_handle.h>
 #include <sensor_msgs/image_encodings.h>
 
 #include <dc1394/dc1394.h>
-#include <dcam1394/image_proc.h>
+#include <videre_stereo_cam/stereoimage.h>
 
 // Videre offsets
 #define VIDERE_LOCAL_BASE                     0xF0000UL
@@ -102,73 +101,46 @@ public:
     DcamException(const char* msg) : std::runtime_error(msg) {}
 };
 
-// initializes the bus
-void init();
-
-// releases the bus
-void fini();
-
-// number of cameras found
-size_t numCameras();
-
-// camera ids
-uint64_t getGuid(size_t i);
-char* getVendor(size_t i);
-char* getModel(size_t i);
-
-// IEEE 1394 system object
-extern dc1394_t* dcRef;
-
-// Mode string from mode
-const char* getModeString(dc1394video_mode_t mode);
-
 class Dcam
 {
-    friend void init();
-    friend void fini();
-    friend size_t numCams();
-    friend uint64_t getGuid(size_t i);
-    friend char *getVendor(size_t i);
-    friend char *getModel(size_t i);
-
 public:
     Dcam(uint64_t guid, size_t bufferSize = 8);
-
-    virtual ~Dcam();
+    ~Dcam();
 
     char* getVendor();
     char* getModel();
-    virtual dc1394video_modes_t* getModes();
+    dc1394video_modes_t* getModes();
 
-    virtual void setFormat(dc1394video_mode_t video = DC1394_VIDEO_MODE_640x480_MONO8,
-                           dc1394framerate_t fps = DC1394_FRAMERATE_30,
-                           dc1394speed_t speed = DC1394_ISO_SPEED_400);
+    void setFormat(dc1394video_mode_t video = DC1394_VIDEO_MODE_640x480_MONO8,
+                   dc1394framerate_t fps = DC1394_FRAMERATE_30,
+                   dc1394speed_t speed = DC1394_ISO_SPEED_400);
 
-    virtual void start();
-    virtual void stop();
+    void initialize_camera(uint64_t guid);
+    void fini();
+    void start();
+    void stop();
+    const char* getModeString(dc1394video_mode_t mode);
 
-    // image data
-    ImageData *camIm;
-    uint64_t camGUID;
+    uint64_t guid;
     uint32_t imFirmware, camFirmware, stocFirmware;
     bool isSTOC, isVidereStereo, isVidere, isColor; // true if a STOC, Videre stereo, color device
 
     // gets the next image, with timeout
-    virtual bool getImage(int ms);
-    virtual void setCapturePolicy(dc1394capture_policy_t policy = DC1394_CAPTURE_POLICY_WAIT);
+    bool getImage(int ms);
+    void setCapturePolicy(dc1394capture_policy_t policy = DC1394_CAPTURE_POLICY_WAIT);
 
     // general DC1394 interface
-    virtual bool hasFeature(dc1394feature_t feature);
-    virtual void getFeatureBoundaries(dc1394feature_t feature, uint32_t& min, uint32_t& max);
-    virtual void setFeature(dc1394feature_t feature, uint32_t value, uint32_t value2 = 0);
-    virtual void setFeatureAbsolute(dc1394feature_t feature, float value);
-    virtual void setFeatureMode(dc1394feature_t feature, dc1394feature_mode_t mode);
+    bool hasFeature(dc1394feature_t feature);
+    void getFeatureBoundaries(dc1394feature_t feature, uint32_t& min, uint32_t& max);
+    void setFeature(dc1394feature_t feature, uint32_t value, uint32_t value2 = 0);
+    void setFeatureAbsolute(dc1394feature_t feature, float value);
+    void setFeatureMode(dc1394feature_t feature, dc1394feature_mode_t mode);
 
     // particular features of importance
-    virtual void setExposure(int val, bool isauto);
-    virtual void setGain(int val, bool isauto);
-    virtual void setBrightness(int val, bool isauto);
-    virtual void setWhiteBalance(int blue_val, int red_val, bool isauto);
+    void setExposure(int val, bool isauto);
+    void setGain(int val, bool isauto);
+    void setBrightness(int val, bool isauto);
+    void setWhiteBalance(int blue_val, int red_val, bool isauto);
 
     // feature boundaries
     uint32_t expMax, expMin;
@@ -180,38 +152,73 @@ public:
     // low-level register access
     // implicitly assumes CCR base, so that DCAM register are at offsets
     //   e.g., for EXPOSURE use 0x804
-    virtual void setRegister(uint64_t offset, uint32_t value);
-    virtual uint32_t getRegister(uint64_t offset);
+    void setRegister(uint64_t offset, uint32_t value);
+    uint32_t getRegister(uint64_t offset);
 
-    virtual bool setProcMode(videre_proc_mode_t mode);
+    bool setProcMode(videre_proc_mode_t mode);
 
-    virtual bool setCompanding(bool on);    // bring up low light levels
-    virtual bool setHDR(bool on);           // high dynamic range
+    bool setCompanding(bool on);    // bring up low light levels
+    bool setHDR(bool on);           // high dynamic range
 
-    virtual char *getParameters();          // download from device
-    virtual char *retParameters();          // just return current param string
-    virtual bool putParameters(char *p);    // just set current param string, handle buffering
-    virtual bool setParameters();           // upload to device
-    virtual bool setSTOCParams(uint8_t *cbuf, int cn, // upload to STOC device
-                               uint8_t *lbuf, int ln, // STOC firmware, left and right warp tables
-                               uint8_t *rbuf, int rn);
+    char *getParameters();          // download from device
+    char *retParameters();          // just return current param string
+    bool putParameters(char *p);    // just set current param string, handle buffering
+    bool setParameters();           // upload to device
+    bool setSTOCParams(uint8_t *cbuf, int cn, // upload to STOC device
+                       uint8_t *lbuf, int ln, // STOC firmware, left and right warp tables
+                       uint8_t *rbuf, int rn);
 
-    virtual int  getIncRectTable(uint8_t *buf);	// make a warp table for a STOC device
+    int getIncRectTable(uint8_t *buf);	// make a warp table for a STOC device
 
-protected:
+    // Videre camera de-interlacing
+    void stereoDeinterlace(uint8_t *src, uint8_t **d1, size_t *s1, uint8_t **d2, size_t *s2);
+    void stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1, int16_t **d2, size_t *s2);
+
+    // stereo image and processing
+    StereoData *stIm;
+
+    // gets the next image, with timeout
+    void fillImageMsg(sensor_msgs::Image& img, std::string enc, uint32_t bpp);
+    void fillDisparityMsg(stereo_msgs::DisparityImage& img);
+
+    // processing parameters
+    bool setTextureThresh(int thresh);
+    bool setUniqueThresh(int thresh);
+    bool setHoropter(int thresh);
+    bool setSpeckleSize(int size);
+    bool setSpeckleDiff(int diff);
+
+    // image parameters
+    int imWidth;
+    int imHeight;
+
+    // raw image
+    uint8_t *imRaw;
+    color_coding_t imRawType;
+    size_t imRawSize;
+
+    // timing
+    uint64_t im_time;   // us time when the frame finished DMA into the host
+
+
+private:
     bool started;
-    size_t bufferSize;		// number of DMA buffers
-    dc1394video_modes_t camModes; // valid modes
-    dc1394capture_policy_t camPolicy; // current capture policy
-    dc1394video_frame_t *camFrame;	// current captured frame
-    dc1394camera_t *dcCam;	// the camera object
-    virtual void cleanup();
-    virtual void setRawType();
-    videre_proc_mode_t procMode; // STOC mode, if applicable
-    dc1394color_filter_t bayerMode; // bayer color encoding
+    size_t bufferSize;                  // number of DMA buffers
+
+    dc1394_t* dcRef;
+    dc1394camera_t *dcCam;              // the camera object
+
+    dc1394video_modes_t camModes;       // valid modes
+    dc1394capture_policy_t camPolicy;   // current capture policy
+    dc1394video_frame_t *camFrame;      // current captured frame
+    videre_proc_mode_t procMode;        // STOC mode, if applicable
+    dc1394color_filter_t bayerMode;     // bayer color encoding
     dc1394video_mode_t videoMode;
-    color_coding_t rawType;	// what type of raw image we receive
-    virtual bool store_eeprom_bytes(int addr, uint8_t *buf, int count);
+    color_coding_t rawType;             // what type of raw image we receive
+
+    void cleanup();
+    void setRawType();
+    bool store_eeprom_bytes(int addr, uint8_t *buf, int count);
 };
 
 };
