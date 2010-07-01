@@ -29,6 +29,7 @@
 #include <simulator_experiments/world_state_publisher.h>
 
 #include <gazebo/Geom.hh>
+#include <gazebo/BoxShape.hh>
 
 #include <gazebo/Global.hh>
 #include <gazebo/XMLConfig.hh>
@@ -38,11 +39,31 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
+#include <BulletCollision/CollisionShapes/btBoxShape.h>
+#include <BulletCollision/NarrowPhaseCollision/btGjkPairDetector.h>
+#include <BulletCollision/NarrowPhaseCollision/btPointCollector.h>
+
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btTransform.h>
+
 using namespace std;
 using namespace gazebo;
 
 GZ_REGISTER_DYNAMIC_CONTROLLER("world_state_publisher", WorldStatePublisher)
 ;
+
+//static btVoronoiSimplexSolver sGjkSimplexSolver;
+//btSimplexSolverInterface& gGjkSimplexSolver = sGjkSimplexSolver;
+
+void print_vector(btVector3 v)
+{
+  cout << v.x() << " " << v.y() << " " << v.z() << endl;
+}
+
+void print_quat(btQuaternion q)
+{
+  cout << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+}
 
 // Constructor
 WorldStatePublisher::WorldStatePublisher(Entity *parent) :
@@ -135,34 +156,15 @@ void WorldStatePublisher::UpdateChild()
   // Publish
   Time cur_time = Simulator::Instance()->GetSimTime();
 
-  //  World::Instance()->GetPhysicsEngine()->
-
-
   vector<gazebo::Model*> models;
   vector<gazebo::Model*>::iterator miter;
 
-  /// \bridf: list of all bodies in the model
-  //  const map<string, gazebo::Body*> *bodies;
+  //  map<string, gazebo::Body*> all_bodies;
+  //  all_bodies.clear();
 
-  map<string, gazebo::Body*> all_bodies;
-  all_bodies.clear();
+  vector<gazebo::Body*> all_bodies;
 
   models = gazebo::World::Instance()->GetModels();
-
-  //  for (miter = models.begin(); miter != models.end(); miter++)
-  //  {
-  //    BOOST_FOREACH(Entity* e, (*miter)->GetChildren())
-  //    {
-  ////      Body* body = dynamic_cast<Body*>(e);
-  //      typedef pair<string, Geom*> pair_t;
-  ////      const map<string, Geom*>::iterator it; // = body->GetGeoms()->iterator;
-  ////      for (it = body->GetGeoms()->begin(); it != body->GetGeoms()->end(); it++)
-  //      BOOST_FOREACH(pair_t p, body->GetGeoms())
-  //      {
-  //        cout << p.first << " | " << p.second << endl;
-  //      }
-  //    }
-  //  }
 
   // aggregate all bodies into a single vector
   for (miter = models.begin(); miter != models.end(); miter++)
@@ -175,7 +177,7 @@ void WorldStatePublisher::UpdateChild()
       gazebo::Body* body = dynamic_cast<gazebo::Body*> (*eiter);
       if (body)
       {
-        all_bodies.insert(make_pair(body->GetName(), body));
+        all_bodies.push_back(body);
       }
     }
   }
@@ -193,31 +195,59 @@ void WorldStatePublisher::UpdateChild()
     // Clear out the old list of objects
     this->worldStateMsg.object_info.clear();
 
+    vector<btBoxShape> boxes;
+    vector<btTransform> tr;
+
     // Iterate through all_bodies
-    map<string, Body*>::iterator biter;
+    //    map<string, Body*>::iterator biter;
+    vector<Body*>::iterator biter;
     for (biter = all_bodies.begin(); biter != all_bodies.end(); biter++)
     {
-      string name = string(biter->second->GetName());
+      Body* body = *biter; //->second;
+
+      string name = string(body->GetName());
 
       vector<string>::iterator result = find(blacklist_.begin(), blacklist_.end(), name);
       if (result == blacklist_.end())
       {
         simulator_experiments::ObjectInfo info;
 
-        info.name = name;
+        info.name = body->GetModel()->GetName();
 
         // Let's try to look at the geoms
-        for (map<string, Geom*>::const_iterator it = biter->second->GetGeoms()->begin(); it
-            != biter->second->GetGeoms()->end(); it++)
+        for (map<string, Geom*>::const_iterator it = body->GetGeoms()->begin(); it != body->GetGeoms()->end(); it++)
         {
           Geom* geom = it->second;
           geom->SetContactsEnabled(true);
-          ROS_ERROR_STREAM(it->first << " | " << geom->GetContactCount());
-          for (unsigned int i = 0; i < geom->GetContactCount(); i++)
+
+          if (geom->GetShapeType() == Shape::BOX)
           {
-            ROS_ERROR_STREAM(geom->GetContact(i).geom1->GetBody()->GetModel()->GetName());
-            ROS_ERROR_STREAM(geom->GetContact(i).geom2->GetBody()->GetModel()->GetName());
+            Shape* shape = geom->GetShape();
+            //            BoxShape* box = dynamic_cast<BoxShape*>(geom->GetShape());
+            ParamT<Vector3>* size = dynamic_cast<ParamT<Vector3>*> (shape->GetParam("size"));
+
+            //            cout << "X: " << size->GetValue().x << endl;
+            //            cout << "Y: " << size->GetValue().y << endl;
+            //            cout << "Z: " << size->GetValue().z << endl;
+
+            // FOR SOME REASON, WE ARE SOMETIMES GETTING NEGATIVE SIZES?
+            boxes.push_back(btBoxShape(btVector3(abs(size->GetValue().x) * 0.5, abs(size->GetValue().y) * 0.5,
+                                                 abs(size->GetValue().z) * 0.5)));
+
+            btVector3 pos(geom->GetAbsPose().pos.x, geom->GetAbsPose().pos.y, geom->GetAbsPose().pos.z);
+            btQuaternion rot(geom->GetAbsPose().rot.x, geom->GetAbsPose().rot.y, geom->GetAbsPose().rot.z,
+                             geom->GetAbsPose().rot.u);
+            btTransform trans(rot, pos);
+
+            tr.push_back(trans);
           }
+
+          //          ROS_ERROR_STREAM(it->first << " | " << geom->GetContactCount());
+          //          for (unsigned int i = 0; i < geom->GetContactCount(); i++)
+          //          {
+          //            ROS_ERROR_STREAM(geom->GetContact(i).geom1->GetBody()->GetModel()->GetName());
+          //            ROS_ERROR_STREAM(geom->GetContact(i).geom2->GetBody()->GetModel()->GetName());
+          //          }
 
         }
 
@@ -227,7 +257,7 @@ void WorldStatePublisher::UpdateChild()
         Quatern rot;
         Vector3 pos;
         // Get Pose/Orientation 
-        pose = (biter->second)->GetAbsPose();
+        pose = body->GetAbsPose();
         pos = pose.pos;
         rot = pose.rot;
 
@@ -241,9 +271,9 @@ void WorldStatePublisher::UpdateChild()
 
         // set velocities
         // get Rates
-        Vector3 vpos = (biter->second)->GetPositionRate(); // get velocity in gazebo frame
-        Quatern vrot = (biter->second)->GetRotationRate(); // get velocity in gazebo frame
-        Vector3 veul = (biter->second)->GetEulerRate(); // get velocity in gazebo frame
+        Vector3 vpos = body->GetPositionRate(); // get velocity in gazebo frame
+        Quatern vrot = body->GetRotationRate(); // get velocity in gazebo frame
+        Vector3 veul = body->GetEulerRate(); // get velocity in gazebo frame
 
         // pass linear rates
         info.velocity.linear.x = vpos.x;
@@ -255,8 +285,8 @@ void WorldStatePublisher::UpdateChild()
         info.velocity.angular.z = veul.z;
 
         // get forces
-        Vector3 force = (biter->second)->GetForce(); // get velocity in gazebo frame
-        Vector3 torque = (biter->second)->GetTorque(); // get velocity in gazebo frame
+        Vector3 force = body->GetForce(); // get velocity in gazebo frame
+        Vector3 torque = body->GetTorque(); // get velocity in gazebo frame
         info.force.force.x = force.x;
         info.force.force.y = force.y;
         info.force.force.z = force.z;
@@ -271,6 +301,54 @@ void WorldStatePublisher::UpdateChild()
     }
     this->pub_.publish(this->worldStateMsg);
     this->lock.unlock();
+
+    if (boxes.size() > 1)
+    {
+      cout << "ATTEMPTING GJK" << endl;
+
+      btVoronoiSimplexSolver sGjkSimplexSolver;
+      //      btSimplexSolverInterface& gGjkSimplexSolver = sGjkSimplexSolver;
+
+      cout << "BOX 0: " << endl;
+      print_vector(boxes[0].getHalfExtentsWithoutMargin());
+      //      print_vector(tr[0].getOrigin());
+      //      print_quat(tr[0].getRotation());
+      cout << "BOX 1: " << endl;
+      print_vector(boxes[1].getHalfExtentsWithoutMargin());
+      //      print_vector(tr[1].getOrigin());
+      //      print_quat(tr[1].getRotation());
+
+      btGjkPairDetector gjk(&boxes[0], &boxes[1], &sGjkSimplexSolver, NULL);
+      btPointCollector gjkOutput;
+      btGjkPairDetector::ClosestPointInput input;
+
+      input.m_transformA = tr[0];
+      input.m_transformB = tr[1];
+
+      cout << "DISTANCES:" << endl;
+
+      gjk.getClosestPoints(input, gjkOutput, 0);
+
+      if (gjkOutput.m_hasResult)
+      {
+        if (gjkOutput.m_distance > 0)
+        {
+          //        btVector3 endPt = gjkOutput.m_pointInWorld + gjkOutput.m_normalOnBInWorld * gjkOutput.m_distance;
+          //        print_vector(gjkOutput.m_pointInWorld);
+          //        print_vector(endPt);
+          cout << "CoM: " << tr[0].getOrigin().distance(tr[1].getOrigin()) << endl;
+          cout << "GJK: " << gjkOutput.m_distance << endl;
+        }
+        else
+        {
+          cout << "SLIGHT COLLISION" << endl;
+        }
+      }
+      else
+      {
+        cout << "DEEP COLLISION" << endl;
+      }
+    }
 
   }
 
