@@ -35,11 +35,68 @@
 #ifndef STEREOIMAGE_H
 #define STEREOIMAGE_H
 
-#include <dcam1394/image_proc.h>
+#include <malloc.h>
+#include <stdint.h>
+
+#include <image_geometry/stereo_camera_model.h>
+#include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <stereo_msgs/DisparityImage.h>
 
 // version of parameter files
 #define OST_MAJORVERSION 5
 #define OST_MINORVERSION 0
+
+#define MEMALIGN(x) memalign(16,x)
+#define MEMFREE(x) {if (x) free(x);}
+
+typedef enum
+{
+    SIDE_LEFT = 0,
+    SIDE_RIGHT
+} stereo_side_t;
+
+typedef enum {
+    COLOR_CODING_MONO8 = 3000,
+    COLOR_CODING_MONO16,
+    COLOR_CODING_BAYER8_RGGB,
+    COLOR_CODING_BAYER8_BGGR,
+    COLOR_CODING_BAYER8_GBRG,
+    COLOR_CODING_BAYER8_GRBG,
+    COLOR_CODING_BAYER16_RGGB,
+    COLOR_CODING_BAYER16_BGGR,
+    COLOR_CODING_BAYER16_GBRG,
+    COLOR_CODING_BAYER16_GRBG,
+    COLOR_CODING_RGB8,        // RGB order
+    COLOR_CODING_RGBA8,       // RGBA order
+    COLOR_CODING_RGB16,       // RGB order
+    COLOR_CODING_RGBA16,      // RGBA order
+
+    // these are stereo interlace encodings
+    // Videre stereo:
+    //   Mono has left/right pixels interlaced
+    //   Color has left/right pixels interlace, bayer pixels
+    //   STOC modes have rectified images, raw encodings, disparity, etc
+    VIDERE_STEREO_MONO,
+    VIDERE_STEREO_RGGB,
+    VIDERE_STEREO_GRBG,
+    VIDERE_STEREO_BGGR,
+    VIDERE_STOC_RECT_RECT,    // left and right rectified mono
+    VIDERE_STOC_RECT_DISP,    // left rectified mono, right disparity
+    VIDERE_STOC_RAW_DISP_MONO,    // left raw mono, right disparity
+    VIDERE_STOC_RAW_DISP_RGGB,    // left raw color, right disparity
+    VIDERE_STOC_RAW_DISP_GRBG,    // left raw color, right disparity
+    VIDERE_STOC_RAW_RAW_MONO, // left and right raw, mono
+    VIDERE_STOC_RAW_RAW_RGGB, // left and right raw, color
+    VIDERE_STOC_RAW_RAW_GRBG, // left and right raw, color
+
+    COLOR_CODING_NONE     // no image info
+} color_coding_t;
+
+typedef enum {
+    COLOR_CONVERSION_BILINEAR,
+    COLOR_CONVERSION_EDGE
+} color_conversion_t;
 
 namespace cam
 {
@@ -56,9 +113,16 @@ public:
     int imHeight;
     void setSize(int width, int height); // sets individual image sizes too
 
+    // left and right camera info
+    sensor_msgs::CameraInfo left_info;
+    sensor_msgs::CameraInfo right_info;
+
     // left and right image data
-    ImageData *imLeft;
-    ImageData *imRight;
+    sensor_msgs::Image left_raw;
+    sensor_msgs::Image right_raw;
+
+    image_geometry::StereoCameraModel stereo_model;
+    stereo_msgs::DisparityImage img_disp;
 
     // rectification
     bool hasRectification;
@@ -73,15 +137,8 @@ public:
 
     bool setHoropter(int offset);   // set horopter offset
 
-    // Color conversion:
-    void doBayerColorRGB();
-    void doBayerMono();
-
     // disparity and rectification functions
-    bool doRectify();                       // rectify images
-    bool doDisparity();                     // calculate disparity image
-    bool doSpeckle();                       // speckle filter post-processing, automatically applied by doDisparity
-    bool doCalcPts(bool isArray = false);   // calculate 3D points
+    bool doCalcPts(const cv::Mat& rect_img, const std::string& enc);   // calculate 3D points
 
     // valid stereo data rectangle
     int imDtop, imDleft;
@@ -97,23 +154,19 @@ public:
     uint8_t *imPtsColor;    // color vector corresponding to points, RGB
     size_t imPtsSize;       // size of array in bytes, for storage manipulation
     int numPts;             // number of points in array
-    bool isPtArray;         // true if the points are an image array, z=0.0 for no point
-    pt_xyza_t *imPtArray() { return (pt_xyza_t *)imPts; }
+    cv::Mat buffer;         // buffer for speckle filtering
 
     // external parameters for undistorted images
     double T[3];    // pose of right camera in left camera coords
     double Om[3];   // rotation vector
 
-    // reprojection matrix
-    double RP[16];
-
     // buffers
     void releaseBuffers();  // get rid of all buffers
 
     // parameters
-    bool parseCalibrationSVS(std::string params, stereo_side_t side);
-    bool parseCalibrationOST(std::string params, stereo_side_t side);
-    void printCameraInfo(stereo_side_t side);
+    void parseCalibrationSVS(std::string params, stereo_side_t side, sensor_msgs::CameraInfo& cam_info);
+    void parseCalibrationOST(std::string params, stereo_side_t side, sensor_msgs::CameraInfo& cam_info);
+    void printCameraInfo(stereo_side_t stereo_side, const sensor_msgs::CameraInfo& cam_info);
     void printCalibration();
 
     // extracts params from string and puts in vars, optionally stores into image object
@@ -138,14 +191,8 @@ public:
     bool setSpeckleDiff(int diff);
     bool setSpeckleRegionSize(int size);
 
-    // buffers for stereo
-    uint8_t *buf, *flim, *frim;
-    int maxxim, maxyim, maxdlen, maxcorr; // for changing buffer sizes
-
-private:
-    // buffers for speckle filter
-    uint8_t *rbuf;
-    uint32_t *lbuf, *wbuf;
+    // raw parameter string
+    char *params;   // on-camera parameters
 };
 
 }
