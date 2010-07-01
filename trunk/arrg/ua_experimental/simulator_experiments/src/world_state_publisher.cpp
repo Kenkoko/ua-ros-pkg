@@ -28,6 +28,8 @@
 
 #include <simulator_experiments/world_state_publisher.h>
 
+#include <gazebo/Geom.hh>
+
 #include <gazebo/Global.hh>
 #include <gazebo/XMLConfig.hh>
 #include <gazebo/gazebo.h>
@@ -133,32 +135,50 @@ void WorldStatePublisher::UpdateChild()
   // Publish
   Time cur_time = Simulator::Instance()->GetSimTime();
 
-
-//  World::Instance()->GetPhysicsEngine()->
-
+  //  World::Instance()->GetPhysicsEngine()->
 
 
   vector<gazebo::Model*> models;
   vector<gazebo::Model*>::iterator miter;
+
+  /// \bridf: list of all bodies in the model
+  //  const map<string, gazebo::Body*> *bodies;
 
   map<string, gazebo::Body*> all_bodies;
   all_bodies.clear();
 
   models = gazebo::World::Instance()->GetModels();
 
+  //  for (miter = models.begin(); miter != models.end(); miter++)
+  //  {
+  //    BOOST_FOREACH(Entity* e, (*miter)->GetChildren())
+  //    {
+  ////      Body* body = dynamic_cast<Body*>(e);
+  //      typedef pair<string, Geom*> pair_t;
+  ////      const map<string, Geom*>::iterator it; // = body->GetGeoms()->iterator;
+  ////      for (it = body->GetGeoms()->begin(); it != body->GetGeoms()->end(); it++)
+  //      BOOST_FOREACH(pair_t p, body->GetGeoms())
+  //      {
+  //        cout << p.first << " | " << p.second << endl;
+  //      }
+  //    }
+  //  }
+
   // aggregate all bodies into a single vector
   for (miter = models.begin(); miter != models.end(); miter++)
   {
-//    BOOST_FOREACH(Entity* e, miter->GetChildren()) {
-//      miter->GetBody(e->GetName());
-//    }
-
-    // TODO: For now, we can only get the default body
-    Body *body = (*miter)->GetBody();
-
-    all_bodies.insert(make_pair(body->GetName(), body));
+    const std::vector<gazebo::Entity*> entities = (*miter)->GetChildren();
+    // Iterate through all bodies
+    std::vector<Entity*>::const_iterator eiter;
+    for (eiter = entities.begin(); eiter != entities.end(); eiter++)
+    {
+      gazebo::Body* body = dynamic_cast<gazebo::Body*> (*eiter);
+      if (body)
+      {
+        all_bodies.insert(make_pair(body->GetName(), body));
+      }
+    }
   }
-  //ROS_ERROR("debug: %d",all_bodies.size());
 
   // construct world state message
   if (!all_bodies.empty())
@@ -185,6 +205,21 @@ void WorldStatePublisher::UpdateChild()
         simulator_experiments::ObjectInfo info;
 
         info.name = name;
+
+        // Let's try to look at the geoms
+        for (map<string, Geom*>::const_iterator it = biter->second->GetGeoms()->begin(); it
+            != biter->second->GetGeoms()->end(); it++)
+        {
+          Geom* geom = it->second;
+          geom->SetContactsEnabled(true);
+          ROS_ERROR_STREAM(it->first << " | " << geom->GetContactCount());
+          for (unsigned int i = 0; i < geom->GetContactCount(); i++)
+          {
+            ROS_ERROR_STREAM(geom->GetContact(i).geom1->GetBody()->GetModel()->GetName());
+            ROS_ERROR_STREAM(geom->GetContact(i).geom2->GetBody()->GetModel()->GetName());
+          }
+
+        }
 
         // set pose
         // get pose from simulator
