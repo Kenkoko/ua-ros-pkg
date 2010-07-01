@@ -62,7 +62,7 @@
     </sky>
     <grid>false</grid>
     <maxUpdateRate>10.</maxUpdateRate>
-    <shadowTechnique>none</shadowTechnique>
+    <shadowTechnique>stencilAdditive</shadowTechnique>
   </rendering:ogre>
 
   <!-- clock -->

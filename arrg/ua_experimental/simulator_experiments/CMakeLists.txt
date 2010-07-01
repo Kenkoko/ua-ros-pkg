@@ -26,4 +26,4 @@ rosbuild_link_boost(world_state_publisher thread)
 # SIMULATION MANAGER (replacement for main.cc in Gazebo)
 
 rosbuild_add_executable(simulation_manager src/simulation_manager.cpp)
-rosbuild_link_boost(simulation_manager thread)
+#rosbuild_link_boost(simulation_manager thread)
