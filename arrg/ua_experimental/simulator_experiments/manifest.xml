@@ -22,6 +22,8 @@
     <depend package="gazebo_tools"/>
     <depend package="gazebo_plugins"/>
 
+    <depend package="bullet"/>
+
     <export>
         <gazebo plugin_path="${prefix}/lib" />
     </export>
