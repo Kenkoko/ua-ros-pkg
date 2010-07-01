@@ -30,6 +30,8 @@
 
 #include <gazebo/Geom.hh>
 #include <gazebo/BoxShape.hh>
+#include <gazebo/SphereShape.hh>
+#include <gazebo/CylinderShape.hh>
 
 #include <gazebo/Global.hh>
 #include <gazebo/XMLConfig.hh>
@@ -40,6 +42,8 @@
 #include <boost/foreach.hpp>
 
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
+#include <BulletCollision/CollisionShapes/btSphereShape.h>
+#include <BulletCollision/CollisionShapes/btCylinderShape.h>
 #include <BulletCollision/NarrowPhaseCollision/btGjkPairDetector.h>
 #include <BulletCollision/NarrowPhaseCollision/btPointCollector.h>
 
@@ -147,6 +151,21 @@ void WorldStatePublisher::InitChild()
   this->callback_queue_thread_ = new boost::thread(boost::bind(&WorldStatePublisher::QueueThread, this));
 }
 
+btVector3 WorldStatePublisher::extract_size(Shape* shape)
+{
+  ParamT<Vector3>* size = dynamic_cast<ParamT<Vector3>*> (shape->GetParam("size"));
+
+  // FOR SOME REASON, WE ARE SOMETIMES GETTING NEGATIVE SIZES?
+  return btVector3(abs(size->GetValue().x), abs(size->GetValue().y), abs(size->GetValue().z));
+}
+
+btTransform WorldStatePublisher::convert_transform(Pose3d pose)
+{
+  btVector3 pos(pose.pos.x, pose.pos.y, pose.pos.z);
+  btQuaternion rot(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.u);
+  return btTransform(rot, pos);
+}
+
 void WorldStatePublisher::UpdateChild()
 {
   // Return if there's no one subscribing
@@ -158,10 +177,6 @@ void WorldStatePublisher::UpdateChild()
 
   vector<gazebo::Model*> models;
   vector<gazebo::Model*>::iterator miter;
-
-  //  map<string, gazebo::Body*> all_bodies;
-  //  all_bodies.clear();
-
   vector<gazebo::Body*> all_bodies;
 
   models = gazebo::World::Instance()->GetModels();
@@ -195,11 +210,11 @@ void WorldStatePublisher::UpdateChild()
     // Clear out the old list of objects
     this->worldStateMsg.object_info.clear();
 
-    vector<btBoxShape> boxes;
+    // This is where we store the shapes and their transforms for GJK
+    vector<btConvexShape*> boxes;
     vector<btTransform> tr;
 
     // Iterate through all_bodies
-    //    map<string, Body*>::iterator biter;
     vector<Body*>::iterator biter;
     for (biter = all_bodies.begin(); biter != all_bodies.end(); biter++)
     {
@@ -218,37 +233,44 @@ void WorldStatePublisher::UpdateChild()
         for (map<string, Geom*>::const_iterator it = body->GetGeoms()->begin(); it != body->GetGeoms()->end(); it++)
         {
           Geom* geom = it->second;
-          geom->SetContactsEnabled(true);
+//          geom->SetContactsEnabled(true);
 
-          if (geom->GetShapeType() == Shape::BOX)
+          switch (geom->GetShapeType())
           {
-            Shape* shape = geom->GetShape();
-            //            BoxShape* box = dynamic_cast<BoxShape*>(geom->GetShape());
-            ParamT<Vector3>* size = dynamic_cast<ParamT<Vector3>*> (shape->GetParam("size"));
+            case Shape::BOX:
+            {
+              BoxShape* box = dynamic_cast<BoxShape*> (geom->GetShape());
+              btVector3 size = extract_size(box);
+              size *= 0.5;
 
-            //            cout << "X: " << size->GetValue().x << endl;
-            //            cout << "Y: " << size->GetValue().y << endl;
-            //            cout << "Z: " << size->GetValue().z << endl;
+              btBoxShape* bt_box = new btBoxShape(size);
+              boxes.push_back(bt_box);
 
-            // FOR SOME REASON, WE ARE SOMETIMES GETTING NEGATIVE SIZES?
-            boxes.push_back(btBoxShape(btVector3(abs(size->GetValue().x) * 0.5, abs(size->GetValue().y) * 0.5,
-                                                 abs(size->GetValue().z) * 0.5)));
+              tr.push_back(convert_transform(geom->GetAbsPose()));
+              break;
+            }
+            case Shape::SPHERE:
+            {
+              cout << "HERE1" << endl;
+              SphereShape* sphere = dynamic_cast<SphereShape*> (geom->GetShape());
+              cout << "HERE1.5" << endl;
+              // TODO: This is breaking it for some reason
+              // Probably the sphere has only one dimension of size, not 3?
+              btVector3 size = extract_size(sphere);
 
-            btVector3 pos(geom->GetAbsPose().pos.x, geom->GetAbsPose().pos.y, geom->GetAbsPose().pos.z);
-            btQuaternion rot(geom->GetAbsPose().rot.x, geom->GetAbsPose().rot.y, geom->GetAbsPose().rot.z,
-                             geom->GetAbsPose().rot.u);
-            btTransform trans(rot, pos);
+              cout << "HERE2" << endl;
+              btSphereShape* bt_sphere = new btSphereShape(size.x());
+              boxes.push_back(bt_sphere);
 
-            tr.push_back(trans);
+              cout << "HERE3" << endl;
+              tr.push_back(convert_transform(geom->GetAbsPose()));
+
+              cout << "SPHERE: " << size.x() << " " << size.y() << " " << size.z() << endl;
+              break;
+            }
+            default:
+              cout << "CAN'T HANDLE SHAPE TYPE: " << geom->GetShapeType() << endl;
           }
-
-          //          ROS_ERROR_STREAM(it->first << " | " << geom->GetContactCount());
-          //          for (unsigned int i = 0; i < geom->GetContactCount(); i++)
-          //          {
-          //            ROS_ERROR_STREAM(geom->GetContact(i).geom1->GetBody()->GetModel()->GetName());
-          //            ROS_ERROR_STREAM(geom->GetContact(i).geom2->GetBody()->GetModel()->GetName());
-          //          }
-
         }
 
         // set pose
@@ -256,7 +278,7 @@ void WorldStatePublisher::UpdateChild()
         Pose3d pose;
         Quatern rot;
         Vector3 pos;
-        // Get Pose/Orientation 
+        // Get Pose/Orientation
         pose = body->GetAbsPose();
         pos = pose.pos;
         rot = pose.rot;
@@ -309,16 +331,16 @@ void WorldStatePublisher::UpdateChild()
       btVoronoiSimplexSolver sGjkSimplexSolver;
       //      btSimplexSolverInterface& gGjkSimplexSolver = sGjkSimplexSolver;
 
-      cout << "BOX 0: " << endl;
-      print_vector(boxes[0].getHalfExtentsWithoutMargin());
+      cout << "OBJECT 0: " << endl;
+      //print_vector(boxes[0].getHalfExtentsWithoutMargin());
       //      print_vector(tr[0].getOrigin());
       //      print_quat(tr[0].getRotation());
-      cout << "BOX 1: " << endl;
-      print_vector(boxes[1].getHalfExtentsWithoutMargin());
+      cout << "OBJECT 1: " << endl;
+      //print_vector(boxes[1].getHalfExtentsWithoutMargin());
       //      print_vector(tr[1].getOrigin());
       //      print_quat(tr[1].getRotation());
 
-      btGjkPairDetector gjk(&boxes[0], &boxes[1], &sGjkSimplexSolver, NULL);
+      btGjkPairDetector gjk(boxes[0], boxes[1], &sGjkSimplexSolver, NULL);
       btPointCollector gjkOutput;
       btGjkPairDetector::ClosestPointInput input;
 

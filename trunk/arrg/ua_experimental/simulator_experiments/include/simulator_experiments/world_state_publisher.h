@@ -25,6 +25,7 @@
 #ifndef WORLD_STATE_PUBLISHER_HH
 #define WORLD_STATE_PUBLISHER_HH
 
+#include <ros/ros.h>
 // Custom Callback Queue
 #include <ros/callback_queue.h>
 #include <ros/advertise_options.h>
@@ -34,10 +35,14 @@
 #include <gazebo/Model.hh>
 #include <gazebo/World.hh>
 #include <gazebo/Simulator.hh>
+#include <gazebo/Shape.hh>
+#include <gazebo/Pose3d.hh>
+
 #include <simulator_experiments/WorldState.h>
 #include <simulator_experiments/ObjectInfo.h>
 
-#include <ros/ros.h>
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btTransform.h>
 
 #include <map>
 #include <vector>
@@ -65,6 +70,9 @@ private:
   int worldStateConnectCount;
   void WorldStateConnect();
   void WorldStateDisconnect();
+
+  btVector3 extract_size(gazebo::Shape* shape);
+  btTransform convert_transform(gazebo::Pose3d pose);
 
   simulator_experiments::WorldState worldStateMsg;
 
