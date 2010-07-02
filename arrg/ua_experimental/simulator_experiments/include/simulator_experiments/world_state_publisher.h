@@ -43,6 +43,8 @@
 
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btTransform.h>
+#include <BulletCollision/CollisionShapes/btConvexShape.h>
+#include <BulletCollision/NarrowPhaseCollision/btVoronoiSimplexSolver.h>
 
 #include <map>
 #include <vector>
@@ -71,7 +73,7 @@ private:
   void WorldStateConnect();
   void WorldStateDisconnect();
 
-  btVector3 extract_size(gazebo::Shape* shape);
+  btConvexShape* extract_shape(Geom* geom);
   btTransform convert_transform(gazebo::Pose3d pose);
 
   simulator_experiments::WorldState worldStateMsg;
@@ -96,6 +98,9 @@ private:
   boost::thread* callback_queue_thread_;
 
   std::vector<std::string> blacklist_;
+
+  std::map<gazebo::Geom*,btConvexShape*> bt_shape_cache_;
+  btVoronoiSimplexSolver gjk_simplex_solver_;
 
 };
 

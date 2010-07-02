@@ -32,6 +32,12 @@
 #include <gazebo/BoxShape.hh>
 #include <gazebo/SphereShape.hh>
 #include <gazebo/CylinderShape.hh>
+#include <gazebo/PlaneShape.hh>
+#include <gazebo/TrimeshShape.hh>
+#include <gazebo/OgreVisual.hh>
+#include <gazebo/OgreCreator.hh>
+#include <gazebo/MeshManager.hh>
+#include <gazebo/Mesh.hh>
 
 #include <gazebo/Global.hh>
 #include <gazebo/XMLConfig.hh>
@@ -41,14 +47,20 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
+#include <BulletCollision/CollisionShapes/btConvexShape.h>
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include <BulletCollision/CollisionShapes/btSphereShape.h>
 #include <BulletCollision/CollisionShapes/btCylinderShape.h>
+#include <BulletCollision/CollisionShapes/btBox2dShape.h>
+#include <BulletCollision/CollisionShapes/btConvexHullShape.h>
+
 #include <BulletCollision/NarrowPhaseCollision/btGjkPairDetector.h>
 #include <BulletCollision/NarrowPhaseCollision/btPointCollector.h>
 
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btTransform.h>
+
+#include <OGRE/OgreMesh.h>
 
 using namespace std;
 using namespace gazebo;
@@ -151,12 +163,136 @@ void WorldStatePublisher::InitChild()
   this->callback_queue_thread_ = new boost::thread(boost::bind(&WorldStatePublisher::QueueThread, this));
 }
 
-btVector3 WorldStatePublisher::extract_size(Shape* shape)
+btConvexShape* WorldStatePublisher::extract_shape(Geom* geom)
 {
-  ParamT<Vector3>* size = dynamic_cast<ParamT<Vector3>*> (shape->GetParam("size"));
+  // If we have cached a shape for this Geom, just return it
+  map<Geom*, btConvexShape*>::iterator it = bt_shape_cache_.find(geom);
+  if (it != bt_shape_cache_.end())
+  {
+    //    cout << "FOUND CACHED SHAPE! SWEET!" << endl;
+    return it->second;
+  }
 
-  // FOR SOME REASON, WE ARE SOMETIMES GETTING NEGATIVE SIZES?
-  return btVector3(abs(size->GetValue().x), abs(size->GetValue().y), abs(size->GetValue().z));
+  // Otherwise, create the appropriate shape depending on the object's type
+  btConvexShape* result = NULL;
+  switch (geom->GetShapeType())
+  {
+    case Shape::BOX:
+    {
+      BoxShape* box = dynamic_cast<BoxShape*> (geom->GetShape());
+
+      ParamT<Vector3>* sizeP = dynamic_cast<ParamT<Vector3>*> (box->GetParam("size"));
+      btVector3 size(abs(sizeP->GetValue().x), abs(sizeP->GetValue().y), abs(sizeP->GetValue().z));
+      size *= 0.5;
+
+      btBoxShape* bt_box = new btBoxShape(size);
+      result = bt_box;
+
+      break;
+    }
+    case Shape::SPHERE:
+    {
+      SphereShape* sphere = dynamic_cast<SphereShape*> (geom->GetShape());
+
+      ParamT<double>* sizeP = dynamic_cast<ParamT<double>*> (sphere->GetParam("size"));
+
+      btSphereShape* bt_sphere = new btSphereShape(sizeP->GetValue());
+      result = bt_sphere;
+
+      break;
+    }
+    case Shape::CYLINDER:
+    {
+      CylinderShape* cylinder = dynamic_cast<CylinderShape*> (geom->GetShape());
+
+      ParamT<Vector2<double> >* sizeP = dynamic_cast<ParamT<Vector2<double> >*> (cylinder->GetParam("size"));
+      double radius = sizeP->GetValue().x;
+      double height = sizeP->GetValue().y;
+
+      btVector3 size(radius, radius, height);
+
+      btCylinderShapeZ* bt_cylinder = new btCylinderShapeZ(size);
+      result = bt_cylinder;
+
+      break;
+    }
+    case Shape::PLANE:
+    {
+      PlaneShape* plane = dynamic_cast<PlaneShape*> (geom->GetShape());
+
+      ParamT<Vector2<double> >* sizeP = dynamic_cast<ParamT<Vector2<double> >*> (plane->GetParam("size"));
+      double x = sizeP->GetValue().x * 0.5;
+      double y = sizeP->GetValue().y * 0.5;
+
+      btVector3 size(x, y, 0);
+
+      btBox2dShape* bt_plane = new btBox2dShape(size);
+
+      result = bt_plane;
+
+      break;
+    }
+    case Shape::TRIMESH:
+    {
+      // Tried approximating with bounding boxes, and with btConvexHull, nothing seems to work
+
+      TrimeshShape* trimesh = dynamic_cast<TrimeshShape*> (geom->GetShape());
+
+      ParamT<string>* mesh_name = dynamic_cast<ParamT<string>*> (trimesh->GetParam("mesh"));
+      const Mesh* mesh = MeshManager::Instance()->GetMesh(mesh_name->GetValue());
+      const SubMesh* sub_mesh = mesh->GetSubMesh(0); // TODO: Could be more than 1 submesh, need to loop
+
+      btConvexHullShape* convex_hull = new btConvexHullShape();
+
+      cout << geom->GetName() << endl;
+      cout << "==========================================" << endl;
+
+      double xmin = 0, ymin = 0, zmin = 0;
+      double xmax = 0, ymax = 0, zmax = 0;
+      for (uint i = 0; i < sub_mesh->GetVertexCount(); i++)
+      {
+        Vector3 point_g = sub_mesh->GetVertex(i);
+        btVector3 point_bt(point_g.x, point_g.y, point_g.z);
+
+        if (point_g.x > xmax)
+          xmax = point_g.x;
+        if (point_g.y > ymax)
+          ymax = point_g.y;
+        if (point_g.z > zmax)
+          zmax = point_g.z;
+        if (point_g.x < xmin)
+          xmin = point_g.x;
+        if (point_g.y < ymin)
+          ymin = point_g.y;
+        if (point_g.z < zmin)
+          zmin = point_g.z;
+
+        convex_hull->addPoint(point_bt);
+      }
+
+//      cout << xmin << " " << ymin << " " << zmin << endl;
+//      cout << xmax << " " << ymax << " " << zmax << endl;
+//      result = convex_hull;
+
+      btVector3 size(xmax-xmin, ymax-ymin, zmax-zmin);
+//      size *= 0.5;
+      result = new btBoxShape(size);
+
+      cout << geom->GetAbsPose() << endl;
+      print_vector(size);
+
+      bt_shape_cache_[geom] = result;
+
+      break;
+    }
+    default:
+    {
+      cerr << "CAN'T HANDLE SHAPE TYPE: " << geom->GetShapeType() << " RETURNING NULL" << endl;
+      break;
+    }
+  }
+
+  return result;
 }
 
 btTransform WorldStatePublisher::convert_transform(Pose3d pose)
@@ -169,8 +305,9 @@ btTransform WorldStatePublisher::convert_transform(Pose3d pose)
 void WorldStatePublisher::UpdateChild()
 {
   // Return if there's no one subscribing
-  if (this->worldStateConnectCount == 0)
-    return;
+  // TODO: Turn this back on
+  //  if (this->worldStateConnectCount == 0)
+  //    return;
 
   // Publish
   Time cur_time = Simulator::Instance()->GetSimTime();
@@ -210,9 +347,11 @@ void WorldStatePublisher::UpdateChild()
     // Clear out the old list of objects
     this->worldStateMsg.object_info.clear();
 
-    // This is where we store the shapes and their transforms for GJK
+    // GJK STUFF
     vector<btConvexShape*> boxes;
     vector<btTransform> tr;
+    vector<string> gjk_names;
+    vector<Model*> geom_to_model;
 
     // Iterate through all_bodies
     vector<Body*>::iterator biter;
@@ -233,44 +372,12 @@ void WorldStatePublisher::UpdateChild()
         for (map<string, Geom*>::const_iterator it = body->GetGeoms()->begin(); it != body->GetGeoms()->end(); it++)
         {
           Geom* geom = it->second;
-//          geom->SetContactsEnabled(true);
+          //          geom->SetContactsEnabled(true);
 
-          switch (geom->GetShapeType())
-          {
-            case Shape::BOX:
-            {
-              BoxShape* box = dynamic_cast<BoxShape*> (geom->GetShape());
-              btVector3 size = extract_size(box);
-              size *= 0.5;
-
-              btBoxShape* bt_box = new btBoxShape(size);
-              boxes.push_back(bt_box);
-
-              tr.push_back(convert_transform(geom->GetAbsPose()));
-              break;
-            }
-            case Shape::SPHERE:
-            {
-              cout << "HERE1" << endl;
-              SphereShape* sphere = dynamic_cast<SphereShape*> (geom->GetShape());
-              cout << "HERE1.5" << endl;
-              // TODO: This is breaking it for some reason
-              // Probably the sphere has only one dimension of size, not 3?
-              btVector3 size = extract_size(sphere);
-
-              cout << "HERE2" << endl;
-              btSphereShape* bt_sphere = new btSphereShape(size.x());
-              boxes.push_back(bt_sphere);
-
-              cout << "HERE3" << endl;
-              tr.push_back(convert_transform(geom->GetAbsPose()));
-
-              cout << "SPHERE: " << size.x() << " " << size.y() << " " << size.z() << endl;
-              break;
-            }
-            default:
-              cout << "CAN'T HANDLE SHAPE TYPE: " << geom->GetShapeType() << endl;
-          }
+          boxes.push_back(extract_shape(geom));
+          tr.push_back(convert_transform(geom->GetBody()->GetAbsPose()));
+          gjk_names.push_back(geom->GetModel()->GetName() + "::" + geom->GetName());
+          geom_to_model.push_back(geom->GetModel());
         }
 
         // set pose
@@ -326,54 +433,49 @@ void WorldStatePublisher::UpdateChild()
 
     if (boxes.size() > 1)
     {
-      cout << "ATTEMPTING GJK" << endl;
-
-      btVoronoiSimplexSolver sGjkSimplexSolver;
-      //      btSimplexSolverInterface& gGjkSimplexSolver = sGjkSimplexSolver;
-
-      cout << "OBJECT 0: " << endl;
-      //print_vector(boxes[0].getHalfExtentsWithoutMargin());
-      //      print_vector(tr[0].getOrigin());
-      //      print_quat(tr[0].getRotation());
-      cout << "OBJECT 1: " << endl;
-      //print_vector(boxes[1].getHalfExtentsWithoutMargin());
-      //      print_vector(tr[1].getOrigin());
-      //      print_quat(tr[1].getRotation());
-
-      btGjkPairDetector gjk(boxes[0], boxes[1], &sGjkSimplexSolver, NULL);
-      btPointCollector gjkOutput;
-      btGjkPairDetector::ClosestPointInput input;
-
-      input.m_transformA = tr[0];
-      input.m_transformB = tr[1];
-
-      cout << "DISTANCES:" << endl;
-
-      gjk.getClosestPoints(input, gjkOutput, 0);
-
-      if (gjkOutput.m_hasResult)
+      for (uint i = 0; i < boxes.size() - 1; i++)
       {
-        if (gjkOutput.m_distance > 0)
+        for (uint j = i + 1; j < boxes.size(); j++)
         {
-          //        btVector3 endPt = gjkOutput.m_pointInWorld + gjkOutput.m_normalOnBInWorld * gjkOutput.m_distance;
-          //        print_vector(gjkOutput.m_pointInWorld);
-          //        print_vector(endPt);
-          cout << "CoM: " << tr[0].getOrigin().distance(tr[1].getOrigin()) << endl;
-          cout << "GJK: " << gjkOutput.m_distance << endl;
+          if (geom_to_model[i] == geom_to_model[j])
+            continue;
+
+          btVoronoiSimplexSolver gjk_simplex_solver;
+
+          cout << "OBJECT " << i << ": " << gjk_names[i] << endl;
+          cout << "OBJECT " << j << ": " << gjk_names[j] << endl;
+
+          btGjkPairDetector gjk(boxes[0], boxes[1], &gjk_simplex_solver, NULL);
+          btPointCollector gjkOutput;
+          btGjkPairDetector::ClosestPointInput input;
+
+          input.m_transformA = tr[i];
+          input.m_transformB = tr[j];
+
+          cout << "DISTANCES:" << endl;
+
+          gjk.getClosestPoints(input, gjkOutput, 0);
+
+          if (gjkOutput.m_hasResult)
+          {
+            if (gjkOutput.m_distance > 0)
+            {
+              cout << "CoM: " << tr[i].getOrigin().distance(tr[j].getOrigin()) << endl;
+              cout << "GJK: " << gjkOutput.m_distance << endl;
+            }
+            else
+            {
+              cout << "SLIGHT COLLISION" << endl;
+            }
+          }
+          else
+          {
+            cout << "DEEP COLLISION" << endl;
+          }
         }
-        else
-        {
-          cout << "SLIGHT COLLISION" << endl;
-        }
-      }
-      else
-      {
-        cout << "DEEP COLLISION" << endl;
       }
     }
-
   }
-
 }
 
 void WorldStatePublisher::FiniChild()
