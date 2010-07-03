@@ -44,7 +44,7 @@ public:
     NewObjectFinder();
 
     void find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, std::vector<Object>& objects);
-    void sgd(std::vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_ratio, const cv::Mat& obj_mask, double& alpha, double& beta, int id);
+    void sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& obj_mask, std::vector<double>& mins, std::vector<double>& maxs, cv::Mat& mlr_return);
 };
 
 #endif /* OBJECTDETECTOR_H_ */

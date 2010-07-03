@@ -39,6 +39,32 @@
 #include <object_tracking/object.h>
 #include <object_tracking/new_object_finder.h>
 
+void print_mat_bzz(CvMat *mat)
+{
+    for (int i = 0; i < mat->rows; i++)
+    {
+        std::printf("\n");
+
+        switch (CV_MAT_DEPTH(mat->type))
+        {
+            case CV_32F:
+            case CV_64F:
+                for (int j = 0; j < mat->cols; j++)
+                    std::printf("%8.6f ", (float)cvGetReal2D(mat, i, j));
+                break;
+            case CV_8U:
+            case CV_16U:
+                for (int j = 0; j < mat->cols; j++)
+                    std::printf("%6d", (int)cvGetReal2D(mat, i, j));
+                break;
+            default:
+                break;
+        }
+    }
+
+    std::printf("\n");
+}
+
 NewObjectFinder::NewObjectFinder()
 {
     cv::startWindowThread();
@@ -91,6 +117,12 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     std::vector<double> alphas;
     std::vector<double> betas;
     std::vector<double> areas;
+
+    // first thing is background model
+    back_projects.push_back(bg_neg_log_lik_img.clone());
+    cv::Mat bg_mask;
+    cv::bitwise_not(bin_image, bg_mask);
+    masks.push_back(bg_mask);
 
     int h_bins = 30, s_bins = 32;
 
@@ -149,95 +181,92 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
 
             // Back project the histogram
             cv::Mat back_project;
+            hsv_img.convertTo(hsv_img, CV_32F);
             cv::calcBackProject(&hsv_img, 1, channels, hist, back_project, ranges);
 
-            // Convert the 0-255 "probabilities" to float probs (might be able to hack this away later)
-            cv::Mat bp_prob;
-            back_project.convertTo(bp_prob, CV_32FC1, 1.0/255.0);
-            cv::log(bp_prob, bp_prob);
+//             cv::log(bp_prob, bp_prob); // TODO to log or not to log?
 
-            back_projects.push_back(bp_prob);
+            back_projects.push_back(back_project);
         }
     }
 
-    for (size_t i = 0; i < histograms.size(); ++i)
+    int num_objects = back_projects.size();
+
+    if (num_objects > 1)
     {
-        cv::Mat log_lik_ratio;
-        cv::add(back_projects[i], bg_neg_log_lik_img, log_lik_ratio);
+        std::vector<double> mins;
+        std::vector<double> maxs;
+        mins.resize(num_objects);
+        maxs.resize(num_objects);
 
-        double alpha, beta;
-        sgd(back_projects, log_lik_ratio, masks[i], alpha, beta, i);
-        alphas.push_back(alpha);
-        betas.push_back(beta);
+        cv::Mat mlr_weights;
+        sgd(back_projects, masks, mins, maxs, mlr_weights);
 
-        cv::normalize(log_lik_ratio, log_lik_ratio, 0, 1, cv::NORM_MINMAX);
-        cv::namedWindow("hist " + boost::lexical_cast<std::string>(i));
-        cv::imshow("hist " + boost::lexical_cast<std::string>(i), log_lik_ratio);
+        for (uint i = 0; i < histograms.size(); ++i)
+        {
+            Object obj;
+
+            obj.area = areas[i];
+
+            cv::Point center;
+            center.x = (fg_rects[i].x + (fg_rects[i].width / 2.0));
+            center.y = (fg_rects[i].y + (fg_rects[i].height / 2.0));
+
+            obj.tracks.push_back(center);
+            obj.histogram = histograms[i];
+            obj.alpha = alphas[i];
+            obj.beta = betas[i];
+
+            objects.push_back(obj);
+        }
+
+        //  cv::namedWindow("contours");
+        //  cv::imshow("contours", original);
     }
-
-    for (uint i = 0; i < histograms.size(); ++i)
-    {
-        Object obj;
-
-        obj.area = areas[i];
-
-        cv::Point center;
-        center.x = (fg_rects[i].x + (fg_rects[i].width / 2.0));
-        center.y = (fg_rects[i].y + (fg_rects[i].height / 2.0));
-
-        obj.tracks.push_back(center);
-        obj.histogram = histograms[i];
-        obj.alpha = alphas[i];
-        obj.beta = betas[i];
-
-        objects.push_back(obj);
-    }
-
-    //  cv::namedWindow("contours");
-    //  cv::imshow("contours", original);
 }
 
-void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_ratio, const cv::Mat& obj_mask, double& alpha, double& beta, int id)
+void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& obj_mask, std::vector<double>& mins, std::vector<double>& maxs, cv::Mat& mlr_return)
 {
-    alpha = beta = 1;
+    int epochs = 5;
     double step_size = 0.01;
-    int epochs = 100;
-    int size = obj_mask.rows * obj_mask.cols;
-    int width = obj_mask.cols;
+    float momentum = 0.9;
+    float weight_decay = 0.001;
+    int size = obj_mask[0].rows * obj_mask[0].cols;
+    int width = obj_mask[0].cols;
 
-    cv::Mat log_lik_rat_norm = log_lik_ratio.clone();
-
-    double min, max;
-    cv::minMaxLoc(log_lik_rat_norm, &min, &max);
-    cv::normalize(log_lik_rat_norm, log_lik_rat_norm, 0, 1, cv::NORM_MINMAX);
-
-    int num_objects = bp_prob.size() + 1;    // TODO: change those/ num objects + background
+    int num_objects = bp_prob.size();        // num of new objects + background
     int num_features = num_objects + 1;      // 1 = bias term
-
-    std::vector<double> mins;
-    std::vector<double> maxs;
-    mins.resize(num_objects);
-    maxs.resize(num_objects);
 
     // multinomial logisitc regression weights
     cv::Mat mlr_weights(num_objects, num_features, CV_32F);
-    cv::Mat last_delta = cv::Mat::zeros(num_objects, num_features, CV_32F);
-    float momentum = 0.9;
-    float weight_decay = 0.001;
+    cv::randn(mlr_weights, cv::Scalar(0.0), cv::Scalar(0.1));
+/*
+    printf("mlr_after_init\n");
+    print_mat_bzz(&((CvMat) mlr_weights));*/
 
-    cv::Mat feature_vectors(size, num_features, CV_32F);
+
+    cv::Mat last_delta = cv::Mat::zeros(num_objects, num_features, CV_32F);
+
+    cv::Mat mask_vectors(num_objects, size, CV_32F);
+    cv::Mat feature_vectors(num_features, size, CV_32F);
     feature_vectors.row(0) = cv::Scalar(1);
 
-    for (int i = 1; i < num_objects; ++i)
+    // first thing is background model
+    for (int i = 0; i < num_objects; ++i)
     {
-        cv::Mat bp = bp_prob[i-1].clone();                  // TODO: pass in reshaped back_projects?
-        double* min = &mins[i-1];
-        double* max = &maxs[i-1];
+        cv::Mat bp = bp_prob[i].clone();                  // TODO: pass in reshaped back_projects?
+        double* min = &mins[i];
+        double* max = &maxs[i];
         cv::minMaxLoc(bp, min, max);
         cv::normalize(bp, bp, 0, 1, cv::NORM_MINMAX);
-        bp.reshape(1, 1);   // 1 channel, 1 row matrix [px_1 ... px_size]
-        cv::Mat rowi = feature_vectors.row(i);
-        bp.row(0).copyTo(rowi);
+        cv::Mat bp_vector = bp.reshape(1, 1);                                   // 1 channel, 1 row matrix [px_1 ... px_size]
+        cv::Mat rowi = feature_vectors.row(i + 1);
+        bp_vector.row(0).copyTo(rowi);
+
+        // make mask a long vector and stack them
+        cv::Mat mask_vector = obj_mask[i].reshape(1, 1);
+        rowi = mask_vectors.row(i);
+        mask_vector.row(0).copyTo(rowi);
     }
 
     for (int i = 0; i < epochs; ++i)
@@ -254,52 +283,64 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, const cv::Mat& log_lik_
         for (int j = 0; j < size; ++j)
         {
             int n = (int) idx(0, j);
-            int row = n / width;
-            int col = n % width;
 
-            int label = obj_mask.at<uchar>(row, col);
-            //float val = log_lik_rat_norm.at<float>(row, col);
-            //float p = 1.0 / (1.0 + exp(-(alpha + beta * val)));   // binary variable logisitc regression
+            cv::Mat feat_col = feature_vectors.col(n);
+            cv::Mat vals = mlr_weights * feat_col;
 
+            cv::exp(vals, vals);
+            float sum = cv::sum(vals)[0];
+            cv::Mat ps = vals * (1.0f / sum);
+
+            // debug
+//             if (std::isinf<double>(sum))
+//             {
+//                 printf("sum = %f\nps:\n", sum);
+//                 print_mat_bzz(&((CvMat) ps));
+//                 printf("vals\n");
+//                 print_mat_bzz(&((CvMat) vals));
+//                 printf("mlr_weights\n");
+//                 print_mat_bzz(&((CvMat) mlr_weights));
+//                 printf("feat_col\n");
+//                 print_mat_bzz(&((CvMat) feat_col));
+//                 exit(1);
+//             }
+//
+            for (int k = 0; k < num_objects; ++k)
+            {
+                cv::Mat rowk = last_delta.row(k);
+                float error = mask_vectors.at<float>(k, n) - ps.at<float>(0, k);
+                cv::Mat gradient = feat_col * step_size * error;
+                cv::Mat delta = rowk * momentum + gradient.t() * (1 - momentum);
+                mlr_weights.row(k) = mlr_weights.row(k) + delta - weight_decay * mlr_weights.row(k);
+                delta.copyTo(rowk);
+
+                // debug
+//                 if (std::isinf<double>(sum))
+//                 {
+//                     printf("Error = %f\ndelta\n", error);
+//                     print_mat_bzz(&((CvMat) delta));
+//                     printf("gradient");
+//                     print_mat_bzz(&((CvMat) gradient));
+//                 }
+            }
+        }
+
+        float prediction_error = 0.0f;
+
+        for (int j = 0; j < size; ++j)
+        {
             cv::Mat feat_col = feature_vectors.col(j);
-            printf("mlr (%d, %d), feat (%d, %d)\n", mlr_weights.cols, mlr_weights.rows, feat_col.cols, feat_col.rows);
             cv::Mat vals = mlr_weights * feat_col;
 
             cv::exp(vals, vals);
             double sum = cv::sum(vals)[0];
             cv::Mat ps = vals * (1.0 / sum);
 
-            for (int k = 0; k < num_objects; ++k)
-            {
-                cv::Mat gradient = feat_col * (step_size * (label - ps.at<float>(0, k)));
-                cv::Mat delta = last_delta * momentum + gradient * (1 - momentum);
-                mlr_weights.row(k) = mlr_weights.row(k) + delta - weight_decay * mlr_weights.row(k);
-                last_delta = delta;
-            }
-
-            // alpha = alpha + step_size * (label - p);
-            // beta = beta + step_size * (label - p) * val;
+            cv::Mat diff;
+            cv::absdiff(ps, mask_vectors.col(j), diff);
+            prediction_error += cv::sum(diff)[0];
         }
 
-        // printf("a = %f, b = %f\n", alpha, beta);
+        printf("Epoch [%d], error = %f\n", i, prediction_error / size);
     }
-
-    mlr_weights.col(0);
-
-    for (int i = 1; i < mlr_weights.cols; ++i)
-    {
-        mlr_weights.col(i);
-    }
-/*    alpha = alpha - beta * (min / (max - min));
-    beta = beta / (max - min);
-
-    log_lik_ratio.convertTo(log_lik_rat_norm, log_lik_ratio.type(), -beta, -alpha);
-    cv::exp(log_lik_rat_norm, log_lik_rat_norm);
-    log_lik_rat_norm.convertTo(log_lik_rat_norm, log_lik_rat_norm.type(), 1, 1);
-    cv::divide(1.0, log_lik_rat_norm, log_lik_rat_norm);
-    cv::minMaxLoc(log_lik_rat_norm, &min, &max);
-    printf("min = %f, max = %f\n", min, max);
-
-    cv::namedWindow("object after " + boost::lexical_cast<string>(id));
-    cv::imshow("object after " + boost::lexical_cast<string>(id), log_lik_rat_norm);*/
 }
