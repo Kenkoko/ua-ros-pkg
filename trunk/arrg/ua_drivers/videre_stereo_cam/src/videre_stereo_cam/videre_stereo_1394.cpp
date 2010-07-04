@@ -1,6 +1,7 @@
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
+*  Copyright (c) 2010, Antons Rebguns
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  All rights reserved.
 *
@@ -122,10 +123,6 @@ dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
     bufferSize = bsize;
     camPolicy = DC1394_CAPTURE_POLICY_POLL;
     camFrame = NULL;
-
-    imRaw = NULL;
-    imWidth = 0;
-    imHeight = 0;
 
     isSTOC = false;
     isVidereStereo = false;
@@ -304,7 +301,6 @@ dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
 dcam::Dcam::~Dcam()
 {
     if (dcCam != NULL) { cleanup(); }
-    //free(imRaw);
     delete stIm;
 }
 
@@ -314,9 +310,9 @@ void dcam::Dcam::initialize_camera(uint64_t req_guid)
 
     if (dcRef == NULL)
     {
-        throw DcamException("Could not initialize dc1394_context.\n                         \
-        Make sure /dev/raw1394 exists and you have RW permissions\n \
-        and libraw1394-dev package is installed.");
+        throw DcamException("Could not initialize dc1394_context.\n                      \
+                             Make sure /dev/raw1394 exists and you have RW permissions\n \
+                             and libraw1394-dev package is installed.");
     }
 
     dc1394camera_list_t* list;
@@ -351,8 +347,8 @@ void dcam::Dcam::initialize_camera(uint64_t req_guid)
     if (dcRef == NULL)
     {
         throw DcamException("Could not initialize dc1394_context.\n                      \
-        Make sure /dev/raw1394 exists and you have RW permissions\n \
-        and libraw1394-dev package is installed.");
+                             Make sure /dev/raw1394 exists and you have RW permissions\n \
+                             and libraw1394-dev package is installed.");
     }
 }
 
@@ -519,18 +515,17 @@ bool dcam::Dcam::getImage(int ms)
     // transfer info
     if (camFrame)
     {
-        imRaw = camFrame->image;;
-        imRawType = rawType;
-        imRawSize = camFrame->image_bytes;
+        uint8_t* imRaw = camFrame->image;
 
-        imWidth = camFrame->size[0];
-        imHeight = camFrame->size[1];
-        im_time = camFrame->timestamp;
+        // fill in timestamps
+        ros::Time stamp = ros::Time(camFrame->timestamp * 1.e-6);
+        stIm->left_info.header.stamp = stamp;
+        stIm->left_raw.header.stamp = stamp;
+        stIm->right_info.header.stamp = stamp;
+        stIm->right_raw.header.stamp = stamp;
+        stIm->img_disp.image.header.stamp = stamp;
 
-        // PRINTF("Time: %llu", camFrame->timestamp);
-
-        // image size
-        stIm->setSize(imWidth, imHeight);
+        stIm->setSize(camFrame->size[0], camFrame->size[1]);
         stIm->hasDisparity = false;
 
         stereo_msgs::DisparityImage& img_disparity = stIm->img_disp;
@@ -603,9 +598,6 @@ bool dcam::Dcam::getImage(int ms)
                 default:
                     break;
             }
-
-            stIm->left_info.header.stamp = stIm->left_raw.header.stamp;
-            stIm->right_info.header.stamp = stIm->right_raw.header.stamp;
 
             img_left_data = NULL;
             img_right_data = NULL;
@@ -798,7 +790,7 @@ bool dcam::Dcam::putParameters(char *bb)
 {
     if (stIm->params) { delete [] stIm->params; }
     int n = strlen(bb);
-    char *str = new char[n + 1];
+    char* str = new char[n + 1];
     strcpy(str, bb);
     stIm->params = str;
 
@@ -924,10 +916,6 @@ bool dcam::Dcam::setParameters()
 
 // upload the parameters and firmware to a STOC device
 // erases EEPROM first
-
-// #define VERIFY_EEPROM
-bool store_eeprom_bytes(int addr, unsigned char *buf, int count);
-
 bool dcam::Dcam::setSTOCParams(uint8_t *cbuf, int cn, uint8_t *lbuf, int ln, uint8_t *rbuf, int rn)
 {
     if (!isSTOC) { return false; }
@@ -1573,7 +1561,6 @@ void dcam::Dcam::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1, int1
 
 void dcam::Dcam::fillImageMsg(sensor_msgs::Image& img, std::string enc, uint32_t bpp)
 {
-    img.header.stamp = ros::Time(im_time * 1.e-6);
     img.width = stIm->imWidth;
     img.height = stIm->imHeight;
     img.step = img.width * bpp;
@@ -1584,8 +1571,6 @@ void dcam::Dcam::fillImageMsg(sensor_msgs::Image& img, std::string enc, uint32_t
 void dcam::Dcam::fillDisparityMsg(stereo_msgs::DisparityImage& img)
 {
     static const double inv_dpp = 1.0 / stIm->dpp;
-
-    img.header.stamp = ros::Time(im_time * 1.e-6);
 
     // stereo parameters
     img.f = stIm->stereo_model.right().fx();

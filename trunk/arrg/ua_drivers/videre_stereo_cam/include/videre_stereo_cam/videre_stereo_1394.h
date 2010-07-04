@@ -1,6 +1,7 @@
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
+*  Copyright (c) 2010, Antons Rebguns
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  All rights reserved.
 *
@@ -188,19 +189,6 @@ public:
     bool setSpeckleSize(int size);
     bool setSpeckleDiff(int diff);
 
-    // image parameters
-    int imWidth;
-    int imHeight;
-
-    // raw image
-    uint8_t *imRaw;
-    color_coding_t imRawType;
-    size_t imRawSize;
-
-    // timing
-    uint64_t im_time;   // us time when the frame finished DMA into the host
-
-
 private:
     bool started;
     size_t bufferSize;                  // number of DMA buffers
@@ -210,9 +198,8 @@ private:
 
     dc1394video_modes_t camModes;       // valid modes
     dc1394capture_policy_t camPolicy;   // current capture policy
-    dc1394video_frame_t *camFrame;      // current captured frame
+    dc1394video_frame_t* camFrame;      // current captured frame
     videre_proc_mode_t procMode;        // STOC mode, if applicable
-    dc1394color_filter_t bayerMode;     // bayer color encoding
     dc1394video_mode_t videoMode;
     color_coding_t rawType;             // what type of raw image we receive
 
