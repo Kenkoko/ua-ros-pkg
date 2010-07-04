@@ -39,27 +39,21 @@
 
 @htmlinclude manifest.html
 
-Stereodcam is a driver primarily for communicating with the Videre stereocameras.
+This is a driver for communicating with Videre Stereo cameras.
 
 <hr>
 
 @section behavior Behavior
 
-The Stereodcam node outputs a "raw_stereo" message, defined in the
-"sensor_msgs" package.  This message may either contain a left and
-right image, or, in the event of STOC processing, will contain a left
-image and disparity image.  It additionally contains the relevant
+The videre_stereo_cam node outputs a set of topics described in
+section Topics below.  This may include either a left and right
+image, or, in the event of STOC processing, will contain a left
+image and disparity image. It additionally contains the relevant
 intrinsic and extrinsic parameters for computing stereo.
 
 <hr>
 
 @section names Names
-
-The default name for the node is "stereodcam", however, this private
-namespace is not actually used internally to the node.  This node
-primarily makes use of the "stereo" namespace, which it shares with
-the "stereoproc" node.  This namespace is both where it looks for
-parameters and publishes topics.
 
 The "stereo" name can be remapped through standard topic remapping in
 the event that two cameras are sharing the same ROS system.
@@ -82,46 +76,42 @@ $ roslaunch videre_stereo_cam videre.launch
 
 @section topics Topics
 
-Subscribes to (name/type):
-- @b "stereo/check_params" : std_msgs/Empty : signal to recheck all of the stereo parameters
+The driver publishes different set of topics depending on the type of camera
+and selected "videre_mode" parameter. Only Videre STOC devices support modes
+other than "none" and can publish disparity image and point cloud topics.
+The following lists published topics depending on selected mode.
 
-The driver publishes different set of topics dependeing the "videre_mode" parameter
-
-Publishes to (name : type : description):
+Videre Mode "none":
 - @b "stereo/left/image_raw" : sensor_msgs/Image : raw image from left camera
 - @b "stereo/right/image_raw" : sensor_msgs/Image : raw image from right camera
 - @b "stereo/left/camera_info" : sensor_msgs/CameraInfo : left camera model
 - @b "stereo/right/camera_info" : sensor_msgs/CameraInfo : right camera model
 
+Videre Mode "rectified" (available only on Videre STOC devices):
+- @b "stereo/left/image_rect" : sensor_msgs/Image : rectified mono image from left camera
+- @b "stereo/right/image_rect" : sensor_msgs/Image : rectified mono image from right camera
+- @b "stereo/left/camera_info" : sensor_msgs/CameraInfo : left camera model
+- @b "stereo/right/camera_info" : sensor_msgs/CameraInfo : right camera model
+
+Videre Mode "disparity_raw" (available only on Videre STOC devices):
+- @b "stereo/left/image_raw" : sensor_msgs/Image : raw image from left camera
+- @b "stereo/left/camera_info" : sensor_msgs/CameraInfo : left camera model
+- @b "stereo/disparity" : stereo_msgs/DisparityImage : disparity image from camera
+
+Videre Mode "disparity" (available only on Videre STOC devices):
+- @b "stereo/left/image_raw" : sensor_msgs/Image : rectified mono image from left camera
+- @b "stereo/left/camera_info" : sensor_msgs/CameraInfo : left camera model
+- @b "stereo/disparity" : stereo_msgs/DisparityImage : disparity image from camera
+
 <hr>
 
 @section parameters Parameters
 
-The camera will set the following parameters after running:
-- @b stereo/exposure_max (int) : maximum value for exposure
-- @b stereo/exposure_min (int) : maximum value for exposure
-- @b stereo/brightness_max (int) : maximum value for brightness
-- @b stereo/brightness_min (int) : maximum value for brightness
-- @b stereo/gain_max (int) : maximum value for gain
-- @b stereo/gain_min (int) : maximum value for gain
+Blurb about dynamic_reconfigure.
 
-The camera will read from the following parameters:
-- @b stereo/videre_mode (string) : The processing type that a Videre
-  STOC will use.  Value can be "none", "rectified", "disparity" or
-  "disparity_raw"
-- @b stereo/fps         (double) : Target fps of the camera
-- @b stereo/speed       (string) : Firewire isospeed: S100, S200, or S400
-- @b stereo/exposure (int)
-- @b stereo/gain     (int)
-- @b stereo/brightness (int)
-- @b stereo/exposure_auto (bool)
-- @b stereo/gain_auto  (bool)
-- @b stereo/brightness_auto (bool)
-- @b stereo/companding (bool)
-- @b stereo/hdr (bool)
-- @b stereo/texture_threshold (int)
-- @b stereo/uniqueness_threshold (int)
-- @b stereo/horopter (int)
+@verbatim
+$ rosrun dynamic_reconfigure reconfigure_gui
+@endverbatim
 
 **/
 
