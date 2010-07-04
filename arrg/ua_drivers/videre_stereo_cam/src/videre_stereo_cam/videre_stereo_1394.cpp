@@ -37,6 +37,8 @@
 #include <cstdio>
 #include <errno.h>
 
+#include <dc1394/dc1394.h>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 
@@ -46,12 +48,12 @@
 
 #define PRINTF(a...) ROS_INFO(a)
 
-#define CHECK_READY()                                                                     \
-    if (!dcRef)                                                                           \
-    {                                                                                     \
-        char msg[256];                                                                    \
-        snprintf(msg, 256, "Tried to call %s before calling dcam::init()", __FUNCTION__); \
-        throw DcamException(msg);                                                         \
+#define CHECK_READY()                                                               \
+    if (!dcRef)                                                                     \
+    {                                                                               \
+        char msg[256];                                                              \
+        snprintf(msg, 256, "Tried to call %s before calling init()", __FUNCTION__); \
+        throw VidereStereoDriverException(msg);                                     \
     }
 
 #define CHECK_ERR(fnc, amsg)                                                  \
@@ -61,7 +63,7 @@
         {                                                                     \
             char msg[256];                                                    \
             snprintf(msg, 256, "%s: %s", dc1394_error_get_string(err), amsg); \
-            throw DcamException(msg);                                         \
+            throw VidereStereoDriverException(msg);                           \
         }                                                                     \
     }
 
@@ -73,7 +75,7 @@
             cleanup();                                                        \
             char msg[256];                                                    \
             snprintf(msg, 256, "%s: %s", dc1394_error_get_string(err), amsg); \
-            throw DcamException(msg);                                         \
+            throw VidereStereoDriverException(msg);                           \
         }                                                                     \
     }
 
@@ -115,7 +117,7 @@ static const char *modestrings[DC1394_VIDEO_MODE_NUM] =
 
 
 // Set up a camera object
-dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
+VidereStereoDriver::VidereStereoDriver(uint64_t guid, size_t bsize)
 {
     // Initialize the dcam system
     initialize_camera(guid);
@@ -298,19 +300,19 @@ dcam::Dcam::Dcam(uint64_t guid, size_t bsize)
 }
 
 // Tear down camera object
-dcam::Dcam::~Dcam()
+VidereStereoDriver::~VidereStereoDriver()
 {
     if (dcCam != NULL) { cleanup(); }
     delete stIm;
 }
 
-void dcam::Dcam::initialize_camera(uint64_t req_guid)
+void VidereStereoDriver::initialize_camera(uint64_t req_guid)
 {
     dcRef = dc1394_new();
 
     if (dcRef == NULL)
     {
-        throw DcamException("Could not initialize dc1394_context.\n                      \
+        throw VidereStereoDriverException("Could not initialize dc1394_context.\n                      \
                              Make sure /dev/raw1394 exists and you have RW permissions\n \
                              and libraw1394-dev package is installed.");
     }
@@ -324,7 +326,7 @@ void dcam::Dcam::initialize_camera(uint64_t req_guid)
         dc1394camera_t* camera = dc1394_camera_new((dc1394_t*) dcRef, guid);
         dc1394_camera_free_list(list);
 
-        if (!camera) { throw DcamException("Could not acquire camera to reset bus"); }
+        if (!camera) { throw VidereStereoDriverException("Could not acquire camera to reset bus"); }
 
         PRINTF("Resetting bus");
         dc1394_reset_bus(camera);
@@ -340,31 +342,31 @@ void dcam::Dcam::initialize_camera(uint64_t req_guid)
         if (req_guid != 0) { dcCam = dc1394_camera_new(dcRef, req_guid); }
         else { dcCam = dc1394_camera_new(dcRef, guid); }
 
-        if (!dcCam) { throw DcamException("Could not create camera"); }
+        if (!dcCam) { throw VidereStereoDriverException("Could not create camera"); }
         CHECK_ERR(dc1394_video_get_supported_modes(dcCam, &camModes), "Could not get supported modes");
     }
 
     if (dcRef == NULL)
     {
-        throw DcamException("Could not initialize dc1394_context.\n                      \
+        throw VidereStereoDriverException("Could not initialize dc1394_context.\n                      \
                              Make sure /dev/raw1394 exists and you have RW permissions\n \
                              and libraw1394-dev package is installed.");
     }
 }
 
-void dcam::Dcam::fini()
+void VidereStereoDriver::fini()
 {
     if (dcRef != NULL) { dc1394_free((dc1394_t*) dcRef); }
 }
 
 // mode strings from mode
-const char* dcam::Dcam::getModeString(dc1394video_mode_t mode)
+const char* VidereStereoDriver::getModeString(dc1394video_mode_t mode)
 {
     if (mode < DC1394_VIDEO_MODE_MAX) { return modestrings[mode - DC1394_VIDEO_MODE_MIN]; }
     else { return ""; }
 }
 
-void dcam::Dcam::cleanup()
+void VidereStereoDriver::cleanup()
 {
     dc1394_video_set_transmission(dcCam, DC1394_OFF);
     dc1394_capture_stop(dcCam);
@@ -373,26 +375,26 @@ void dcam::Dcam::cleanup()
 }
 
 // Return a list of modes
-dc1394video_modes_t* dcam::Dcam::getModes()
+dc1394video_modes_t* VidereStereoDriver::getModes()
 {
     CHECK_READY();
     return &camModes;
 }
 
 // Model name
-char* dcam::Dcam::Dcam::getModel()
+char* VidereStereoDriver::VidereStereoDriver::getModel()
 {
     return dcCam->model;
 }
 
 // Vendor name
-char* dcam::Dcam::getVendor()
+char* VidereStereoDriver::getVendor()
 {
     return dcCam->vendor;
 }
 
 // Set up image format
-void dcam::Dcam::setFormat(dc1394video_mode_t video, dc1394framerate_t fps, dc1394speed_t speed)
+void VidereStereoDriver::setFormat(dc1394video_mode_t video, dc1394framerate_t fps, dc1394speed_t speed)
 {
     stIm->releaseBuffers();
     videoMode = video;
@@ -412,7 +414,7 @@ void dcam::Dcam::setFormat(dc1394video_mode_t video, dc1394framerate_t fps, dc13
     {
         char msg[256];
         snprintf(msg, 256, "setFormat: not a valid mode: %s", getModeString(video));
-        throw DcamException(msg);
+        throw VidereStereoDriverException(msg);
     }
 
     CHECK_ERR_CLEAN(dc1394_video_set_mode(dcCam, video), "Could not set video mode");
@@ -424,7 +426,7 @@ void dcam::Dcam::setFormat(dc1394video_mode_t video, dc1394framerate_t fps, dc13
 }
 
 // Start and stop streaming
-void dcam::Dcam::start()
+void VidereStereoDriver::start()
 {
     CHECK_READY();
     CHECK_ERR_CLEAN(dc1394_video_set_transmission(dcCam, DC1394_ON), "Could not start camera iso transmission");
@@ -450,10 +452,10 @@ void dcam::Dcam::start()
         usleep(10000);
     }
 
-    throw DcamException("Camera iso transmission did not actually start.");
+    throw VidereStereoDriverException("Camera iso transmission did not actually start.");
 }
 
-void dcam::Dcam::stop()
+void VidereStereoDriver::stop()
 {
     if (camFrame) { CHECK_ERR_CLEAN( dc1394_capture_enqueue(dcCam, camFrame), "Could not release frame"); }
 
@@ -468,7 +470,7 @@ void dcam::Dcam::stop()
 // Waits for the next image available, up to ms for timeout
 //   Assumes capture policy of POLL
 // Stores the next available image into the class instance
-bool dcam::Dcam::getImage(int ms)
+bool VidereStereoDriver::getImage(int ms)
 {
     CHECK_READY();
 
@@ -607,13 +609,13 @@ bool dcam::Dcam::getImage(int ms)
     return (camFrame != NULL);
 }
 
-void dcam::Dcam::setCapturePolicy(dc1394capture_policy_t p)
+void VidereStereoDriver::setCapturePolicy(dc1394capture_policy_t p)
 {
     camPolicy = p;
 }
 
 // Features
-bool dcam::Dcam::hasFeature(dc1394feature_t feature)
+bool VidereStereoDriver::hasFeature(dc1394feature_t feature)
 {
     CHECK_READY();
     dc1394bool_t present;
@@ -621,7 +623,7 @@ bool dcam::Dcam::hasFeature(dc1394feature_t feature)
     return (present == DC1394_TRUE);
 }
 
-void dcam::Dcam::setFeature(dc1394feature_t feature, uint32_t value, uint32_t value2)
+void VidereStereoDriver::setFeature(dc1394feature_t feature, uint32_t value, uint32_t value2)
 {
   CHECK_READY();
 
@@ -649,7 +651,7 @@ void dcam::Dcam::setFeature(dc1394feature_t feature, uint32_t value, uint32_t va
     }
 }
 
-void dcam::Dcam::getFeatureBoundaries(dc1394feature_t feature, uint32_t& min, uint32_t& max)
+void VidereStereoDriver::getFeatureBoundaries(dc1394feature_t feature, uint32_t& min, uint32_t& max)
 {
     CHECK_READY();
     dc1394bool_t present;
@@ -661,7 +663,7 @@ void dcam::Dcam::getFeatureBoundaries(dc1394feature_t feature, uint32_t& min, ui
     }
 }
 
-void dcam::Dcam::setFeatureAbsolute(dc1394feature_t feature, float value)
+void VidereStereoDriver::setFeatureAbsolute(dc1394feature_t feature, float value)
 {
     CHECK_READY();
     dc1394bool_t present;
@@ -674,7 +676,7 @@ void dcam::Dcam::setFeatureAbsolute(dc1394feature_t feature, float value)
     }
 }
 
-void dcam::Dcam::setFeatureMode(dc1394feature_t feature, dc1394feature_mode_t mode)
+void VidereStereoDriver::setFeatureMode(dc1394feature_t feature, dc1394feature_mode_t mode)
 {
     CHECK_READY();
 
@@ -688,13 +690,13 @@ void dcam::Dcam::setFeatureMode(dc1394feature_t feature, dc1394feature_mode_t mo
     }
 }
 
-void dcam::Dcam::setRegister(uint64_t offset, uint32_t value)
+void VidereStereoDriver::setRegister(uint64_t offset, uint32_t value)
 {
     CHECK_READY();
     CHECK_ERR_CLEAN(dc1394_set_control_register(dcCam, offset, value), "Could not set control register");
 }
 
-uint32_t dcam::Dcam::getRegister(uint64_t offset)
+uint32_t VidereStereoDriver::getRegister(uint64_t offset)
 {
     CHECK_READY();
     uint32_t value;
@@ -703,7 +705,7 @@ uint32_t dcam::Dcam::getRegister(uint64_t offset)
 }
 
 // STOC modes
-bool dcam::Dcam::setProcMode(videre_proc_mode_t mode)
+bool VidereStereoDriver::setProcMode(videre_proc_mode_t mode)
 {
     CHECK_READY();
     if (!isSTOC) { return false; }
@@ -728,7 +730,7 @@ bool dcam::Dcam::setProcMode(videre_proc_mode_t mode)
 }
 
 // Raw type
-void dcam::Dcam::setRawType()
+void VidereStereoDriver::setRawType()
 {
     if (isSTOC)
     {
@@ -781,12 +783,12 @@ void dcam::Dcam::setRawType()
 }
 
 // Parameters
-char* dcam::Dcam::retParameters()
+char* VidereStereoDriver::retParameters()
 {
     return stIm->params;
 }
 
-bool dcam::Dcam::putParameters(char *bb)
+bool VidereStereoDriver::putParameters(char *bb)
 {
     if (stIm->params) { delete [] stIm->params; }
     int n = strlen(bb);
@@ -797,7 +799,7 @@ bool dcam::Dcam::putParameters(char *bb)
     return true;
 }
 
-char* dcam::Dcam::getParameters()
+char* VidereStereoDriver::getParameters()
 {
     if (stIm->params) { free(stIm->params); }
 
@@ -843,7 +845,7 @@ char* dcam::Dcam::getParameters()
 }
 
 // set the calibration and image parameters on a camera
-bool dcam::Dcam::setParameters()
+bool VidereStereoDriver::setParameters()
 {
     if (!stIm->params) { return false; }
 
@@ -916,7 +918,7 @@ bool dcam::Dcam::setParameters()
 
 // upload the parameters and firmware to a STOC device
 // erases EEPROM first
-bool dcam::Dcam::setSTOCParams(uint8_t *cbuf, int cn, uint8_t *lbuf, int ln, uint8_t *rbuf, int rn)
+bool VidereStereoDriver::setSTOCParams(uint8_t *cbuf, int cn, uint8_t *lbuf, int ln, uint8_t *rbuf, int rn)
 {
     if (!isSTOC) { return false; }
 
@@ -1008,7 +1010,7 @@ bool dcam::Dcam::setSTOCParams(uint8_t *cbuf, int cn, uint8_t *lbuf, int ln, uin
 }
 
 // companding and HDR
-bool dcam::Dcam::setCompanding(bool on)
+bool VidereStereoDriver::setCompanding(bool on)
 {
     usleep(50000);
 
@@ -1018,7 +1020,7 @@ bool dcam::Dcam::setCompanding(bool on)
     return true;
 }
 
-bool dcam::Dcam::setHDR(bool on)
+bool VidereStereoDriver::setHDR(bool on)
 {
     usleep(50000);
 
@@ -1031,7 +1033,7 @@ bool dcam::Dcam::setHDR(bool on)
 //
 // value boundaries are given by the max/min variables
 //
-void dcam::Dcam::setExposure(int val, bool isauto)
+void VidereStereoDriver::setExposure(int val, bool isauto)
 {
     usleep(50000);
 
@@ -1046,7 +1048,7 @@ void dcam::Dcam::setExposure(int val, bool isauto)
     else { setFeature(DC1394_FEATURE_EXPOSURE, v); }      // ??? do we have to set manual here ???
 }
 
-void dcam::Dcam::setGain(int val, bool isauto)
+void VidereStereoDriver::setGain(int val, bool isauto)
 {
     usleep(50000);
 
@@ -1061,7 +1063,7 @@ void dcam::Dcam::setGain(int val, bool isauto)
     else { setFeature(DC1394_FEATURE_GAIN,v); }      // ??? do we have to set manual here ???
 }
 
-bool dcam::Dcam::setMaxAutoVals(int exp, int gain)
+bool VidereStereoDriver::setMaxAutoVals(int exp, int gain)
 {
     usleep(50000);
 
@@ -1080,7 +1082,7 @@ bool dcam::Dcam::setMaxAutoVals(int exp, int gain)
 }
 
 // brightness
-void dcam::Dcam::setBrightness(int val, bool isauto)
+void VidereStereoDriver::setBrightness(int val, bool isauto)
 {
     usleep(50000);
 
@@ -1114,7 +1116,7 @@ void dcam::Dcam::setBrightness(int val, bool isauto)
     }
 }
 
-void dcam::Dcam::setWhiteBalance(int blue_val, int red_val, bool isauto)
+void VidereStereoDriver::setWhiteBalance(int blue_val, int red_val, bool isauto)
 {
     usleep(50000);
 
@@ -1149,7 +1151,7 @@ void dcam::Dcam::setWhiteBalance(int blue_val, int red_val, bool isauto)
 //
 volatile int xx = 0x1a2b3c4d;
 
-bool dcam::Dcam::store_eeprom_bytes(int addr, uint8_t *buf, int count)
+bool VidereStereoDriver::store_eeprom_bytes(int addr, uint8_t *buf, int count)
 {
     unsigned long qval;
     int addrhigh = addr & 0x00ff0000;
@@ -1335,7 +1337,7 @@ bool dcam::Dcam::store_eeprom_bytes(int addr, uint8_t *buf, int count)
 
 #define SUBPIX 64.0
 
-int dcam::Dcam::getIncRectTable(uint8_t *dest)
+int VidereStereoDriver::getIncRectTable(uint8_t *dest)
 {
 #if 0
   // pixskip is the number of bytes between pixels in the same image.
@@ -1467,7 +1469,7 @@ int dcam::Dcam::getIncRectTable(uint8_t *dest)
 }
 
 // de-interlace stereo data, reserving storage if necessary
-void dcam::Dcam::stereoDeinterlace(uint8_t *src, uint8_t **d1, size_t *s1, uint8_t **d2, size_t *s2)
+void VidereStereoDriver::stereoDeinterlace(uint8_t *src, uint8_t **d1, size_t *s1, uint8_t **d2, size_t *s2)
 {
     size_t size = stIm->imWidth * stIm->imHeight;
 
@@ -1498,7 +1500,7 @@ void dcam::Dcam::stereoDeinterlace(uint8_t *src, uint8_t **d1, size_t *s1, uint8
 
 // de-interlace stereo data, reserving storage if necessary
 // second buffer is 16-bit disparity data
-void dcam::Dcam::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1, int16_t **d2, size_t *s2)
+void VidereStereoDriver::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1, int16_t **d2, size_t *s2)
 {
     int w = stIm->imWidth;
     int h = stIm->imHeight;
@@ -1559,7 +1561,7 @@ void dcam::Dcam::stereoDeinterlace2(uint8_t *src, uint8_t **d1, size_t *s1, int1
     }
 }
 
-void dcam::Dcam::fillImageMsg(sensor_msgs::Image& img, std::string enc, uint32_t bpp)
+void VidereStereoDriver::fillImageMsg(sensor_msgs::Image& img, std::string enc, uint32_t bpp)
 {
     img.width = stIm->imWidth;
     img.height = stIm->imHeight;
@@ -1568,7 +1570,7 @@ void dcam::Dcam::fillImageMsg(sensor_msgs::Image& img, std::string enc, uint32_t
     img.data.resize(img.height * img.step);
 }
 
-void dcam::Dcam::fillDisparityMsg(stereo_msgs::DisparityImage& img)
+void VidereStereoDriver::fillDisparityMsg(stereo_msgs::DisparityImage& img)
 {
     static const double inv_dpp = 1.0 / stIm->dpp;
 
@@ -1604,7 +1606,7 @@ void dcam::Dcam::fillDisparityMsg(stereo_msgs::DisparityImage& img)
     ROS_ASSERT(dmat.data == &dimage.data[0]);
 }
 
-bool dcam::Dcam::setTextureThresh(int thresh)
+bool VidereStereoDriver::setTextureThresh(int thresh)
 {
     stIm->setTextureThresh(thresh);
 
@@ -1623,7 +1625,7 @@ bool dcam::Dcam::setTextureThresh(int thresh)
     return true;
 }
 
-bool dcam::Dcam::setUniqueThresh(int thresh)
+bool VidereStereoDriver::setUniqueThresh(int thresh)
 {
     stIm->setUniqueThresh(thresh);
 
@@ -1642,7 +1644,7 @@ bool dcam::Dcam::setUniqueThresh(int thresh)
     return true;
 }
 
-bool dcam::Dcam::setHoropter(int val)
+bool VidereStereoDriver::setHoropter(int val)
 {
     stIm->setHoropter(val);
     stIm->setDispOffsets(); // reset offsets
@@ -1662,13 +1664,13 @@ bool dcam::Dcam::setHoropter(int val)
     return true;
 }
 
-bool dcam::Dcam::setSpeckleSize(int val)
+bool VidereStereoDriver::setSpeckleSize(int val)
 {
     stIm->speckleRegionSize = val;
     return true;
 }
 
-bool dcam::Dcam::setSpeckleDiff(int val)
+bool VidereStereoDriver::setSpeckleDiff(int val)
 {
     stIm->speckleDiff = val;
     return true;

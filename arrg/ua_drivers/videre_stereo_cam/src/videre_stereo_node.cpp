@@ -199,7 +199,7 @@ private:
     Config current_config_;
 
 public:
-    dcam::Dcam* stcam_;
+    VidereStereoDriver* stcam_;
 
     VidereStereoNode() : nh_(ros::NodeHandle()), local_nh_(ros::NodeHandle("~")),
                          left_nh_(ros::NodeHandle("left")), right_nh_(ros::NodeHandle("right")),
@@ -217,11 +217,10 @@ public:
         local_nh_.param("guid", guid_str, std::string("0"));
         uint64_t guid = strtoll(guid_str.c_str(), NULL, 16);
 
-        stcam_ = new dcam::Dcam(guid);
+        stcam_ = new VidereStereoDriver(guid);
 
         diagnostic_.setHardwareID(boost::lexical_cast<std::string>(stcam_->guid));
 
-        // Create the StereoDcam
         ROS_INFO_STREAM("Connecting to camera with GUID " << stcam_->guid << " [" << stcam_->getVendor() << " " << stcam_->getModel() << "]");
         ROS_INFO("Connected camera is%s a STOC device", stcam_->isSTOC ? "" : " NOT");
 

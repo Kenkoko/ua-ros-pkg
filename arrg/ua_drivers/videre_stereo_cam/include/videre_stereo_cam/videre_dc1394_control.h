@@ -1,3 +1,6 @@
+#ifndef VIDEREDC1394CONTROL_H
+#define VIDEREDC1394CONTROL_H
+
 #include <stdexcept>
 #include <dc1394/dc1394.h>
 
@@ -86,3 +89,5 @@ dc1394_feature_set_mode_blind(dc1394camera_t *camera, dc1394feature_t feature, d
 
     return err;
 }
+
+#endif
