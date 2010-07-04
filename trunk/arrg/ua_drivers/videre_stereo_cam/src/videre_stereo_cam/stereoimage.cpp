@@ -40,8 +40,6 @@
 
 #define PRINTF(a...) printf(a)
 
-using namespace cam;
-
 StereoData::StereoData()
 {
     // disparity buffer

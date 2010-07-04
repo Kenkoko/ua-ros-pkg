@@ -99,8 +99,6 @@ typedef enum {
     COLOR_CONVERSION_EDGE
 } color_conversion_t;
 
-namespace cam
-{
 
 // stereo data structure
 class StereoData
@@ -182,7 +180,5 @@ public:
     // raw parameter string
     char *params;   // on-camera parameters
 };
-
-}
 
 #endif        // STEREOIMAGE_H

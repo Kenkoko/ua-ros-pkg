@@ -33,15 +33,14 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#ifndef DCAM_H
-#define DCAM_H
+#ifndef VIDERESTEREO1394_H
+#define VIDERESTEREO1394_H
 
 #include <stdexcept>
 #include <cstring>
 
-#include <sensor_msgs/image_encodings.h>
-
 #include <dc1394/dc1394.h>
+#include <sensor_msgs/image_encodings.h>
 #include <videre_stereo_cam/stereoimage.h>
 
 // Videre offsets
@@ -91,22 +90,19 @@ typedef enum
     PROC_MODE_DISPARITY_RAW
 } videre_proc_mode_t;
 
-using namespace cam;
 
-namespace dcam
-{
-
-class DcamException : public std::runtime_error
+class VidereStereoDriverException : public std::runtime_error
 {
 public:
-    DcamException(const char* msg) : std::runtime_error(msg) {}
+    VidereStereoDriverException(const char* msg) : std::runtime_error(msg) {}
 };
 
-class Dcam
+
+class VidereStereoDriver
 {
 public:
-    Dcam(uint64_t guid, size_t bufferSize = 8);
-    ~Dcam();
+    VidereStereoDriver(uint64_t guid, size_t bufferSize = 8);
+    ~VidereStereoDriver();
 
     char* getVendor();
     char* getModel();
@@ -206,8 +202,6 @@ private:
     void cleanup();
     void setRawType();
     bool store_eeprom_bytes(int addr, uint8_t *buf, int count);
-};
-
 };
 
 #endif
