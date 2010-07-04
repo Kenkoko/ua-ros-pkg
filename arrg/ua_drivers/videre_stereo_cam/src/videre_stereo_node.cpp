@@ -475,75 +475,6 @@ public:
         cleanup();
     }
 
-    void calculate_points()
-    {
-        cloud_.points.resize(stcam_->stIm->numPts);
-        cloud_.channels.resize(3);
-
-        cloud_.channels[0].name = "rgb";
-        cloud_.channels[0].values.resize(stcam_->stIm->numPts);
-        cloud_.channels[1].name = "u";
-        cloud_.channels[1].values.resize(stcam_->stIm->numPts);
-        cloud_.channels[2].name = "v";
-        cloud_.channels[2].values.resize(stcam_->stIm->numPts);
-
-        for (int i = 0; i < stcam_->stIm->numPts; i++)
-        {
-            cloud_.points[i].x = stcam_->stIm->imPts[3*i + 0];
-            cloud_.points[i].y = stcam_->stIm->imPts[3*i + 1];
-            cloud_.points[i].z = stcam_->stIm->imPts[3*i + 2];
-        }
-
-        for (int i = 0; i < stcam_->stIm->numPts; i++)
-        {
-            int rgb = (stcam_->stIm->imPtsColor[3*i] << 16) | (stcam_->stIm->imPtsColor[3*i + 1] << 8) | stcam_->stIm->imPtsColor[3*i + 2];
-            cloud_.channels[0].values[i] = *(float*)(&rgb);
-            cloud_.channels[1].values[i] = stcam_->stIm->imCoords[2*i+0];
-            cloud_.channels[2].values[i] = stcam_->stIm->imCoords[2*i+1];
-        }
-    }
-
-    void calculate_points2()
-    {
-        // Fill in sparse point cloud message
-        cloud2_.height = stcam_->stIm->imHeight;
-        cloud2_.width  = stcam_->stIm->imWidth;
-        cloud2_.fields.resize (4);
-        cloud2_.fields[0].name = "x";
-        cloud2_.fields[0].offset = 0;
-        cloud2_.fields[0].datatype = sensor_msgs::PointField::FLOAT32;
-        cloud2_.fields[1].name = "y";
-        cloud2_.fields[1].offset = 4;
-        cloud2_.fields[1].datatype = sensor_msgs::PointField::FLOAT32;
-        cloud2_.fields[2].name = "z";
-        cloud2_.fields[2].offset = 8;
-        cloud2_.fields[2].datatype = sensor_msgs::PointField::FLOAT32;
-        cloud2_.fields[3].name = "rgb";
-        cloud2_.fields[3].offset = 12;
-        cloud2_.fields[3].datatype = sensor_msgs::PointField::FLOAT32;
-
-        //cloud2_.is_bigendian = false; ???
-        cloud2_.point_step = 16;
-        cloud2_.row_step = cloud2_.point_step * cloud2_.width;
-        cloud2_.data.resize (cloud2_.row_step * cloud2_.height);
-        cloud2_.is_dense = true;
-
-        for (int i = 0; i < stcam_->stIm->numPts; i++)
-        {
-            // x,y,z,rgba
-            memcpy (&cloud2_.data[i * cloud2_.point_step + 0], &stcam_->stIm->imPts[3*i + 0], sizeof (float));
-            memcpy (&cloud2_.data[i * cloud2_.point_step + 4], &stcam_->stIm->imPts[3*i + 1], sizeof (float));
-            memcpy (&cloud2_.data[i * cloud2_.point_step + 8], &stcam_->stIm->imPts[3*i + 2], sizeof (float));
-        }
-
-        // Fill in color
-        for (int i = 0; i < stcam_->stIm->numPts; i++)
-        {
-            int32_t rgb_packed = (stcam_->stIm->imPtsColor[3*i] << 16) | (stcam_->stIm->imPtsColor[3*i + 1] << 8) | stcam_->stIm->imPtsColor[3*i + 2];
-            memcpy (&cloud2_.data[i * cloud2_.point_step + 12], &rgb_packed, sizeof (int32_t));
-        }
-    }
-
     void fillHeaders()
     {
         ros::Time timestamp = stcam_->stIm->left_raw.header.stamp;
@@ -638,14 +569,8 @@ public:
 
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(stcam_->stIm->img_disp); }
 
-//                 if (current_config_.calculate_points || current_config_.calculate_points2)
-//                 {
-//                     stcam_->stIm->doCalcPts(left_set_.rect_color, left_set_.color_encoding);
-//                 }
-
                 if (current_config_.calculate_points)
                 {
-//                     if (current_config_.calculate_points) { calculate_points(); }
                     stereo_processor_.processPoints(stcam_->stIm->img_disp, left_set_.rect_color,
                                                     left_set_.color_encoding, stcam_->stIm->stereo_model,
                                                     cloud_);
@@ -654,7 +579,6 @@ public:
 
                 if (current_config_.calculate_points2)
                 {
-                    // if (current_config_.calculate_points2) { calculate_points2(); }
                     stereo_processor_.processPoints2(stcam_->stIm->img_disp, left_set_.rect_color,
                                                      left_set_.color_encoding, stcam_->stIm->stereo_model,
                                                      cloud2_);
@@ -670,12 +594,10 @@ public:
                 {
                     processor_.process(boost::make_shared<const sensor_msgs::Image>(stcam_->stIm->left_raw),
                                        stcam_->stIm->stereo_model.left(), left_set_, image_proc::Processor::RECT);
-                    // stcam_->stIm->doCalcPts(left_set_.rect, sensor_msgs::image_encodings::MONO8);
                 }
 
                 if (current_config_.calculate_points)
                 {
-                    // if (current_config_.calculate_points) { calculate_points(); }
                     stereo_processor_.processPoints(stcam_->stIm->img_disp, left_set_.rect_color,
                                                     left_set_.color_encoding, stcam_->stIm->stereo_model,
                                                     cloud_);
@@ -684,7 +606,6 @@ public:
 
                 if (current_config_.calculate_points2)
                 {
-                    // if (current_config_.calculate_points2) { calculate_points2(); }
                     stereo_processor_.processPoints2(stcam_->stIm->img_disp, left_set_.rect_color,
                                                      left_set_.color_encoding, stcam_->stIm->stereo_model,
                                                      cloud2_);

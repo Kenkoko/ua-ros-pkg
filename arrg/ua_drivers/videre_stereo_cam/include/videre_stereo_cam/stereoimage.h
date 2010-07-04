@@ -1,6 +1,7 @@
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
+*  Copyright (c) 2010, Antons Rebguns
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  All rights reserved.
 *
@@ -137,23 +138,11 @@ public:
 
     bool setHoropter(int offset);   // set horopter offset
 
-    // disparity and rectification functions
-    bool doCalcPts(const cv::Mat& rect_img, const std::string& enc);   // calculate 3D points
-
     // valid stereo data rectangle
     int imDtop, imDleft;
     int imDwidth, imDheight;
     void setDispOffsets();  // reset them, based on stereo processing params
 
-    // point cloud data
-    // NOTE: imPts buffer should be 16-byte aligned
-    // imPts elements will have the form of a pt_xyza_t for a pt array
-    float *imPts;           // points, 3xN floats for vector version, 4xN for array version
-    // for isPtArray = true, these next two are not needed
-    int *imCoords;          // image coordinates of the point cloud points, 2xN ints
-    uint8_t *imPtsColor;    // color vector corresponding to points, RGB
-    size_t imPtsSize;       // size of array in bytes, for storage manipulation
-    int numPts;             // number of points in array
     cv::Mat buffer;         // buffer for speckle filtering
 
     // external parameters for undistorted images
@@ -178,7 +167,6 @@ public:
     // stereo processing params
     int corrSize;   // correlation window size, assumed square
     int filterSize; // size of prefilter window, assumed square (0 if none)
-    int horOffset;  // horopter offset
 
     // filter thresholds
     int textureThresh;      // percent
