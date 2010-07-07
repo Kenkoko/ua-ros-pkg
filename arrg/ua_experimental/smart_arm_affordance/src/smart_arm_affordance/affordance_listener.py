@@ -244,7 +244,7 @@ if __name__ == '__main__':
         temp = toList(servoData, j)
         temphisto = bucket_counter(temp, min(temp), max(temp) + 1, 10)
         matrix.append(temphisto)
-    # Graph the output
+    # Graph the output #
 #    graph_data_scatter()
     graph_data_histo(matrix, 10)
 
