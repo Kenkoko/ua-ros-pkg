@@ -37,8 +37,11 @@ class Object
 public:
     int id;
     double area;
-    double alpha;
-    double beta;
+    double min;
+    double max;
+
+    double alpha, beta; // TODO: remove those
+
     std::vector<cv::Point> tracks;
     cv::SparseMat histogram;
     ros::Time timestamp;

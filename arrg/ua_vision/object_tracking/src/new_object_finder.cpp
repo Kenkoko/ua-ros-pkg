@@ -97,7 +97,8 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     cv::imshow("binary", bin_image);
 
     std::vector<std::vector<cv::Point> > contours;
-    cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+    cv::Mat contour_bin_image = bin_image.clone();
+    cv::findContours(contour_bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
     ROS_INFO("Found %Zu contours", contours.size());
 
     // Make an HSV image
@@ -114,12 +115,11 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     std::vector<cv::MatND> histograms;
     std::vector<cv::Mat> back_projects;
     std::vector<cv::Mat> masks;
-    std::vector<double> alphas;
-    std::vector<double> betas;
     std::vector<double> areas;
 
     // first thing is background model
     back_projects.push_back(bg_neg_log_lik_img.clone());
+
     cv::Mat bg_mask;
     cv::bitwise_not(bin_image, bg_mask);
     masks.push_back(bg_mask);
@@ -175,8 +175,8 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
             cv::calcHist(&hsv_roi, 1, channels, mask, hist, 2, hist_size, ranges);
             histograms.push_back(hist);
 
-            cv::Mat obj_mask = cv::Mat::zeros(bin_image.size(), bin_image.type());
-            cv::fillConvexPoly(obj_mask, con.data(), con.size(), cv::Scalar(1));
+            cv::Mat obj_mask = cv::Mat::zeros(fg_prob_img.size(), CV_8UC1);
+            cv::fillConvexPoly(obj_mask, con.data(), con.size(), cv::Scalar(255));
             masks.push_back(obj_mask);
 
             // Back project the histogram
@@ -191,6 +191,10 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     }
 
     int num_objects = back_projects.size();
+    std::vector<double> alphas;
+    std::vector<double> betas;
+    alphas.resize(histograms.size());
+    betas.resize(histograms.size());
 
     if (num_objects > 1)
     {
@@ -214,8 +218,8 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
 
             obj.tracks.push_back(center);
             obj.histogram = histograms[i];
-            obj.alpha = alphas[i];
-            obj.beta = betas[i];
+            obj.min = mins[i];
+            obj.max = maxs[i];
 
             objects.push_back(obj);
         }
@@ -228,9 +232,9 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
 void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& obj_mask, std::vector<double>& mins, std::vector<double>& maxs, cv::Mat& mlr_return)
 {
     int epochs = 5;
-    double step_size = 0.01;
-    float momentum = 0.9;
-    float weight_decay = 0.001;
+    double step_size = 0.1;
+    float momentum = 0.;
+    float weight_decay = 0.;
     int size = obj_mask[0].rows * obj_mask[0].cols;
     int width = obj_mask[0].cols;
 
@@ -244,9 +248,7 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& o
     printf("mlr_after_init\n");
     print_mat_bzz(&((CvMat) mlr_weights));*/
 
-
     cv::Mat last_delta = cv::Mat::zeros(num_objects, num_features, CV_32F);
-
     cv::Mat mask_vectors(num_objects, size, CV_32F);
     cv::Mat feature_vectors(num_features, size, CV_32F);
     feature_vectors.row(0) = cv::Scalar(1);
@@ -265,24 +267,27 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& o
 
         // make mask a long vector and stack them
         cv::Mat mask_vector = obj_mask[i].reshape(1, 1);
+        cv::normalize(mask_vector, mask_vector, 0.0f, 1.0f, cv::NORM_MINMAX, CV_32F);
+
         rowi = mask_vectors.row(i);
         mask_vector.row(0).copyTo(rowi);
     }
 
+    // initialize indexing array to be shuffled later
+    cv::Mat_<int> idx(1, size);
+    for (int j = 0; j < size; ++j)
+    {
+        idx(0, j) = j;
+    }
+
     for (int i = 0; i < epochs; ++i)
     {
-        cv::Mat_<float> idx(1, size);
-
-        for (int j = 0; j < size; j++)
-        {
-            idx(0, j) = j;
-        }
-
+        // shuffle indexes
         cv::randShuffle(idx);
 
         for (int j = 0; j < size; ++j)
         {
-            int n = (int) idx(0, j);
+            int n = idx(0, j);
 
             cv::Mat feat_col = feature_vectors.col(n);
             cv::Mat vals = mlr_weights * feat_col;
@@ -308,20 +313,51 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& o
             for (int k = 0; k < num_objects; ++k)
             {
                 cv::Mat rowk = last_delta.row(k);
+
+/*                if (j < 100)
+                {
+                    printf("rowk before:\n");
+                    print_mat_bzz(&((CvMat) rowk));
+                }*/
+
                 float error = mask_vectors.at<float>(k, n) - ps.at<float>(0, k);
+
+//                 if (j < 100)
+//                 {
+//                     printf("%f - %f = error:%f\n", mask_vectors.at<float>(k, n), ps.at<float>(0, k), error);
+//                 }
+
                 cv::Mat gradient = feat_col * step_size * error;
+
+/*                if (j < 100)
+                {
+                    printf("gradient:\n");
+                    print_mat_bzz(&((CvMat) gradient));
+                }*/
+
                 cv::Mat delta = rowk * momentum + gradient.t() * (1 - momentum);
+
+//                 if (j < 100)
+//                 {
+//                     printf("delta:\n");
+//                     print_mat_bzz(&((CvMat) delta));
+//                 }
+
                 mlr_weights.row(k) = mlr_weights.row(k) + delta - weight_decay * mlr_weights.row(k);
+
+//                 if (j < 100)
+//                 {
+//                     printf("mlr_weights.row(k):\n");
+//                     print_mat_bzz(&((CvMat) mlr_weights.row(k)));
+//                 }
+
                 delta.copyTo(rowk);
 
-                // debug
-//                 if (std::isinf<double>(sum))
-//                 {
-//                     printf("Error = %f\ndelta\n", error);
-//                     print_mat_bzz(&((CvMat) delta));
-//                     printf("gradient");
-//                     print_mat_bzz(&((CvMat) gradient));
-//                 }
+/*                if (j < 100)
+                {
+                    printf("rowk after:\n");
+                    print_mat_bzz(&((CvMat) rowk));
+                }*/
             }
         }
 
