@@ -1,0 +1,19 @@
+<package>
+  <description brief="smart_arm_affordance">
+
+     smart_arm_affordance
+
+  </description>
+  <author>UARobots</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/smart_arm_affordance</url>
+  <depend package="rospy"/>
+  <depend package="ax12_controller_core"/>
+  <depend package="phidgets_ros"/>
+  <depend package="std_msgs"/>
+  <depend package="message_filters"/>
+  <depend package="ua_controller_msgs"/>
+</package>
+
+
