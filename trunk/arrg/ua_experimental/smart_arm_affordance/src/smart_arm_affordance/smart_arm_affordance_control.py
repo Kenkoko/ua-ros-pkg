@@ -17,20 +17,50 @@ shoulder = rospy.Publisher('/shoulder_tilt_controller/command', Float64)
 pan = rospy.Publisher('/shoulder_pan_controller/command', Float64)
 time.sleep(1)
 
+templeft = 0.0
+tempright = 0.0
+
 def squeeze(times, force, closed, opened):
-    for i in range(times):
-        time.sleep(1)
-        left_finger.publish( math.radians(opened) )
-        right_finger.publish( math.radians(-opened) )
-        print 'opened...'
-        time.sleep(1)
-        left_finger.publish( math.radians(closed) )
-        right_finger.publish( math.radians(-closed) )
-        print 'closed...'
-        print i + 1
-    time.sleep(1)
-    left_finger.publish( math.radians(30.0) )
-    right_finger.publish( math.radians(-30.0) )
+    global templeft
+    global tempright
+    while templeft == 0:
+        rospy.sleep(.1)
+
+    tries = int(opened - closed)
+    squeezeForce = 0
+    print 'Force: ' + str(force)
+    print 'Tries: ' + str(tries)
+    print 'Left temp: ' + str(templeft)
+    print 'Right temp: ' + str(tempright)
+    for j in range(tries):
+        print 'Left temp: ' + str(templeft)
+        print 'Right temp: ' + str(tempright)
+        print 'Force: ' + str(force)
+        if (templeft >= force) | (tempright >= force):
+            print 'Exceeded force threshold'
+            squeezeForce = j
+            break
+        else:
+            print j + 1
+            left_finger.publish( math.radians(opened - j) )
+            right_finger.publish( math.radians(-opened + j) )
+            rospy.sleep(.3)
+            j -= 5
+
+    print 'outside squeezeForce: ' + str(squeezeForce)
+#    for i in range(times):
+#        time.sleep(1)
+#        left_finger.publish( math.radians(opened) )
+#        right_finger.publish( math.radians(-opened) )
+#        print 'opened...'
+#        time.sleep(1)
+#        left_finger.publish( math.radians(closed) )
+#        right_finger.publish( math.radians(-closed) )
+#        print 'closed...'
+#        print i + 1
+    rospy.sleep(1)
+    left_finger.publish( math.radians(squeezeForce) )
+    right_finger.publish( math.radians(-squeezeForce) )
 
 def cobra_pose():
     wrist.publish( math.radians(0.0) )
@@ -59,21 +89,37 @@ def custom_pose(p, s, e, w, l, r):
 
 def callLeft(msg):
     print 'Left claw load: ' + str(msg.load) + '\n'
+    global templeft
+    templeft = msg.load
 
 def callRight(msg):
     print 'Right claw load: ' + str(msg.load) + '\n'
-
+    global tempright
+    tempright = msg.load
 
 if __name__ == '__main__':
+    global templeft
+    global tempright
     rospy.Subscriber("/finger_left_controller/state", JointState, callLeft)
     rospy.Subscriber("/finger_right_controller/state", JointState, callRight)
 
+#    while not rospy.is_shutdown():
+#        print 'Left: ' + str(templeft)
+#        print 'Right: ' + str(tempright)
+#        rospy.sleep(1)
+
 #    cobra_pose()
 #    time.sleep(1)
+#    relaxed_cobra_pose()
+#    time.sleep(1)
+
+#    for i in range(5):
+##        print getLeft()
+#        print templeft
+
+    squeeze(10, 250, -5.0, 5.0)
+    rospy.sleep(1)
     relaxed_cobra_pose()
-    time.sleep(1)
-    squeeze(10, 700, -5.0, 5.0)
-    time.sleep(1)
 #    custom_pose(90.0, 0.0, 0.0, 0.0, 30.0, -30.0)
 #    time.sleep(1)
     #relaxed_cobra_pose()
