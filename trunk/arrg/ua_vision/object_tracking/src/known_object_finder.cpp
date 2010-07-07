@@ -90,10 +90,25 @@ cv::Mat KnownObjectFinder::find_objects(const cv::Mat& neg_log_lik_img, const cv
         // cv::namedWindow("hsv_img");
         // cv::imshow("hsv_img", hsv_img);
 
+        BOOST_FOREACH(std::vector<cv::Point> con, contours)
+        {
+            double area = cv::contourArea(cv::Mat(con));
+
+            if (area > 40)
+            {
+                cv::Rect bounder = cv::boundingRect(cv::Mat(con));
+
+            }
+        }
+
         IplImage orig_ipl = original;
 
         BOOST_FOREACH(Object obj, objects)
         {
+            cv::SparseMat& hist = obj.histogram;
+
+
+
             obj.subtract_self(fg_prob_img, original, bin_image, hsv_img, contours, fg_loglike_img);
 
             if (obj.wasFound)
