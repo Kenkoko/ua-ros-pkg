@@ -23,9 +23,13 @@ rosbuild_add_executable(ground_filter src/ground_filter.cpp)
 rosbuild_add_executable(background_averager src/background_averager.cpp)
 
 # Background subtractor
-rosbuild_add_library(background_subtractor src/background_subtractor.cpp)
+rosbuild_add_library(background_subtractor src/background_subtractor.cpp src/lbp_background_subtractor.cpp)
+
 rosbuild_add_executable(background_subtractor_node src/background_subtractor_node.cpp)
 target_link_libraries(background_subtractor_node background_subtractor)
+
+rosbuild_add_executable(lbp_background_subtractor_node src/lbp_background_subtractor_node.cpp)
+target_link_libraries(lbp_background_subtractor_node background_subtractor)
 
 # OLD
 #rosbuild_add_executable(overhead_filter src/overhead_filter.cpp)
