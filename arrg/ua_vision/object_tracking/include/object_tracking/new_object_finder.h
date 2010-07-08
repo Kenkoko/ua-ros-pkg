@@ -43,7 +43,7 @@ class NewObjectFinder
 public:
     NewObjectFinder();
 
-    void find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, std::vector<Object>& objects);
+    void find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, std::vector<Object>& objects, cv::Mat& mlr_weights);
     void sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& obj_mask, std::vector<double>& mins, std::vector<double>& maxs, cv::Mat& mlr_return);
 };
 

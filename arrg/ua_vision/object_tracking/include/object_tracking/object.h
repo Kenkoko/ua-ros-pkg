@@ -47,6 +47,8 @@ public:
     ros::Time timestamp;
     bool wasFound;
 
+    Object() {};
+
     void subtract_self(const cv::Mat& fg_prob_img, const cv::Mat& orig_img, const cv::Mat& bin_img,
                        const cv::Mat& hsv_img, std::vector<std::vector<cv::Point> > contours, cv::Mat& fg_loglike_img);
 
