@@ -52,10 +52,13 @@ class ObjectTrackerNode
 {
 private:
     std::vector<Object> objects;
+    cv::Mat mlr_weights;
 
     BackgroundSubtractor bg_sub;
     KnownObjectFinder known_obj_finder;
     NewObjectFinder new_obj_finder;
+
+    bool init;
 
     image_transport::Subscriber image_sub;
 
@@ -66,6 +69,8 @@ public:
 
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
+
+        init = false;
 
         if (client.call(srv))
         {
@@ -119,8 +124,8 @@ public:
         }
 
         cv::Mat neg_log_lik_img = bg_sub.subtract_background(original);
-        cv::Mat pruned_neg_log_lik_img = known_obj_finder.find_objects(neg_log_lik_img, original, objects);
-        new_obj_finder.find_objects(pruned_neg_log_lik_img, original, objects);
+        std::map<int, std::vector<cv::Point> > id_to_contour = known_obj_finder.find_objects(neg_log_lik_img, original, objects, mlr_weights);
+        if (!init) { new_obj_finder.find_objects(neg_log_lik_img, original, objects, mlr_weights); init = true; }
     }
 };
 

@@ -70,7 +70,7 @@ NewObjectFinder::NewObjectFinder()
     cv::startWindowThread();
 }
 
-void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, std::vector<Object>& objects)
+void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, std::vector<Object>& objects, cv::Mat& mlr_weights)
 {
     cv::Mat fg_prob_img = bg_neg_log_lik_img.clone();
     cv::Mat original = camera_img.clone();
@@ -198,15 +198,21 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
 
     if (num_objects > 1)
     {
+        objects.clear();
         std::vector<double> mins;
         std::vector<double> maxs;
         mins.resize(num_objects);
         maxs.resize(num_objects);
 
-        cv::Mat mlr_weights;
         sgd(back_projects, masks, mins, maxs, mlr_weights);
 
-        for (uint i = 0; i < histograms.size(); ++i)
+        Object bg;
+        bg.id = objects.size();
+        bg.min = mins[0];
+        bg.max = maxs[0];
+        objects.push_back(bg);
+
+        for (uint i = 0; i < num_objects - 1; ++i)
         {
             Object obj;
 
@@ -218,9 +224,10 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
 
             obj.tracks.push_back(center);
             obj.histogram = histograms[i];
-            obj.min = mins[i];
-            obj.max = maxs[i];
+            obj.min = mins[i+1];
+            obj.max = maxs[i+1];
 
+            obj.id = objects.size();
             objects.push_back(obj);
         }
 
@@ -379,4 +386,7 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& o
 
         printf("Epoch [%d], error = %f\n", i, prediction_error / size);
     }
+
+    mlr_return = mlr_weights.clone();
+    printf("sgd mlr_weights r = %d, c = %d\n", mlr_weights.rows, mlr_weights.cols);
 }
