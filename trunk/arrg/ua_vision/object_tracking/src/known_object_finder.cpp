@@ -90,7 +90,7 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
     }
     else
     {
-        ROS_INFO_STREAM("BEGIN");
+//         ROS_INFO_STREAM("BEGIN");
         cv::Mat fg_loglike_img = neg_log_lik_img.clone();
         cv::Mat original = camera_img.clone();
 
@@ -190,10 +190,10 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                     cv::multiply(rowi, col_sums, rowi);
                     cv::Mat img = rowi.reshape(1, bounder.height);
 
-                    std::cout << ("obj" + boost::lexical_cast<std::string>(i)) << std::endl;
+//                     std::cout << ("obj" + boost::lexical_cast<std::string>(i)) << std::endl;
                     double min, max;
                     cv::minMaxLoc(img, &min, &max);
-                    printf("min = %f, max = %f\n", min, max);
+//                     printf("min = %f, max = %f\n", min, max);
 
                     cv::Mat bin_image = (img > 0.7);
 
@@ -202,7 +202,7 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
 
                     std::vector<std::vector<cv::Point> > contours;
                     cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-                    ROS_INFO("Found %Zu contours", contours.size());
+//                     ROS_INFO("Found %Zu contours", contours.size());
 
                     if (contours.empty()) { continue; }
 
@@ -250,9 +250,9 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
             {
                 std::vector<std::vector<cv::Point> >& v = obj_id_to_patches[id];
 
-                int max_index = 0;
-                double max_dist = 0;
-                cv::Point max_center;
+                int min_index = 0;
+                double min_dist = std::numeric_limits<double>::max();
+                cv::Point min_center;
 
                 for (size_t j = 0; j < v.size(); ++j)
                 {
@@ -261,17 +261,17 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                     cv::Point diff = center - objects[i].tracks.back();
                     double distance = sqrt(diff.x * diff.x + diff.y * diff.y);
 
-                    if (distance > max_dist)
+                    if (distance < min_dist)
                     {
-                        max_dist = distance;
-                        max_index = j;
-                        max_center = center;
+                        min_dist = distance;
+                        min_index = j;
+                        min_center = center;
                     }
                 }
 
-                id_to_contour[id] = v[max_index];
+                id_to_contour[id] = v[min_index];
 
-                objects[i].tracks.push_back(max_center);
+                objects[i].tracks.push_back(min_center);
             }
         }
 
@@ -320,7 +320,7 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
         cv::namedWindow("objects");
         cv::imshow("objects", original);
 
-        ROS_INFO_STREAM("END");
+//         ROS_INFO_STREAM("END");
         return id_to_contour;
     }
 }
