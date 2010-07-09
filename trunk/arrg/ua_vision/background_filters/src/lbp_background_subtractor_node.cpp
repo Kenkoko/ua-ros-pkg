@@ -44,7 +44,7 @@
 
 int num_model_frames = 150;
 int fr = 0;
-LBPModel lbp_model(num_model_frames);
+LBPModel lbp_model;
 
 void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 {
@@ -62,7 +62,7 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
 
     cv::Mat resized_frame, segmented, mask, threshMask;
 
-    lbp_model.setFrameNum( fr );
+    if (fr > num_model_frames) { lbp_model.do_updates = false; }
     lbp_model.update( tmp_frame );
 
     t = (double)cvGetTickCount() - t;

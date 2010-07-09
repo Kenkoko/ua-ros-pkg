@@ -57,12 +57,7 @@
 using namespace cv;
 using namespace std;
 
-LBPModel::LBPModel(int nframes) : frame_num(0), num_model_frames(nframes) {}
-
-void LBPModel::setFrameNum( int fr )
-{
-    frame_num = fr;
-}
+LBPModel::LBPModel() : do_updates(true) {}
 
 void LBPModel::initialize(Mat& frame )
 {
@@ -99,12 +94,6 @@ void LBPModel::regionHistogram( Mat &current_lbp )
     double Tb = 0.65; //0.4-.8 // threshold for match to background model. Lower = easier to be bg = more black
     double Tp = 0.7; //0.65 // threshold for any histogram match. Lower = more variation is ok = black.
     int region_out = 3;    // In paper R_region = region_out*2+1.  Paper was 9, so region_out = 4
-
-    // You can pass in a number to tell it to stop updating frames
-    bool do_updates = true;
-    if(num_model_frames > 0 && frame_num >= num_model_frames){
-        do_updates = false;
-    }
 
     //int region_out = 2; // 2 = (2 + 1 + 2) x (2 + 1 + 2) = 5 x 5 = 25 elements
     int region_step = region_out; // could take step sizes different from region half-size

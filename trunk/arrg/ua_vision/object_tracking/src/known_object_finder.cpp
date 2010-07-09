@@ -78,7 +78,8 @@ KnownObjectFinder::KnownObjectFinder()
     cv::startWindowThread();
 }
 
-std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& camera_img, std::vector<Object>& objects, cv::Mat& mlr_weights)
+std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img,
+                                                                       const cv::Mat& camera_img, std::vector<Object>& objects, cv::Mat& mlr_weights)
 {
     std::map<int, vector<cv::Point> > id_to_contour;
 
@@ -93,6 +94,8 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
 //         ROS_INFO_STREAM("BEGIN");
         cv::Mat fg_loglike_img = neg_log_lik_img.clone();
         cv::Mat original = camera_img.clone();
+        cv::Mat fg_lbp_img;
+        lbp_foreground_img.convertTo(fg_lbp_img, CV_32F, 1.0 / 255);
 
         // Compute the (foreground) probability image under the logistic model
         double w = -1/5.0, b = 4.0;
@@ -104,6 +107,21 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
 
         cv::namedWindow("fg_prob_img");
         cv::imshow("fg_prob_img", fg_prob_img);
+
+        cv::namedWindow("fg_lbp_img");
+        cv::imshow("fg_lbp_img", fg_lbp_img);
+
+        cv::Mat combination_product;
+        cv::multiply(fg_prob_img, fg_lbp_img, combination_product);
+
+        cv::namedWindow("product");
+        cv::imshow("product", combination_product);
+
+        cv::Mat combination_sum;
+        combination_sum = fg_prob_img * 0.5 + fg_lbp_img * 0.5;
+
+        cv::namedWindow("sum");
+        cv::imshow("sum", combination_sum);
 
         // Find contours for all the blobs found by background subtraction
         std::vector<std::vector<cv::Point> > contours;
