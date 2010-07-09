@@ -44,6 +44,7 @@
 #include <background_filters/GetBgStats.h>
 #include <background_filters/common.h>
 #include <background_filters/background_subtractor.h>
+#include <background_filters/lbp_background_subtractor.h>
 
 #include <object_tracking/known_object_finder.h>
 #include <object_tracking/new_object_finder.h>
@@ -55,10 +56,14 @@ private:
     cv::Mat mlr_weights;
 
     BackgroundSubtractor bg_sub;
+    LBPModel lbp_model;
     KnownObjectFinder known_obj_finder;
     NewObjectFinder new_obj_finder;
 
+    bool go;
+    bool lbp_init;
     bool init;
+    int counter;
 
     image_transport::Subscriber image_sub;
 
@@ -70,16 +75,19 @@ public:
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
 
+        go = false;
+        lbp_init = false;
         init = false;
+        counter = 0;
 
         if (client.call(srv))
         {
             bridge.fromImage(srv.response.average_background);
 
             bg_sub.initialize(srv.response.colorspace,
-                                cv::Mat(bridge.toIpl()).clone(),
-                                srv.response.covariance_matrix_inv,
-                                srv.response.covariance_matrix_dets);
+                              cv::Mat(bridge.toIpl()).clone(),
+                              srv.response.covariance_matrix_inv,
+                              srv.response.covariance_matrix_dets);
         }
         else
         {
@@ -124,8 +132,33 @@ public:
         }
 
         cv::Mat neg_log_lik_img = bg_sub.subtract_background(original);
-        std::map<int, std::vector<cv::Point> > id_to_contour = known_obj_finder.find_objects(neg_log_lik_img, original, objects, mlr_weights);
-        if (!init) { new_obj_finder.find_objects(neg_log_lik_img, original, objects, mlr_weights); init = true; }
+
+        if (!lbp_init)
+        {
+            cv::Mat temp = original.clone();
+            lbp_model.initialize(temp);
+            lbp_init = true;
+        }
+
+        if (counter++ > 150 && lbp_model.do_updates) { lbp_model.do_updates = false; ROS_INFO("LBP Ready."); }
+
+        cv::Mat temp = original.clone();
+        lbp_model.update(temp);
+
+        cv::Mat lbp_foreground_img = lbp_model.foreground;
+
+        if (!go)
+        {
+            cv::namedWindow("blah");
+            char k = cv::waitKey(1);
+            if( k == 27 || k == 's' || k == 'S' ) { go = true; cv::destroyWindow("blah"); }; // escape key
+        }
+
+        if (go)
+        {
+            std::map<int, std::vector<cv::Point> > id_to_contour = known_obj_finder.find_objects(neg_log_lik_img, lbp_foreground_img, original, objects, mlr_weights);
+            if (!init) { new_obj_finder.find_objects(neg_log_lik_img, original, objects, mlr_weights); init = true; }
+        }
     }
 };
 

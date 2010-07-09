@@ -98,13 +98,10 @@ uint8_t  UniformPattern59[256]={
 class LBPModel
 {
 public:
-    LBPModel(int nframes);
-
     cv::Mat foreground;
-    int frame_num;
-    int num_model_frames;
+    bool do_updates;
 
-    void setFrameNum( int fr );
+    LBPModel();
     void initialize( cv::Mat& frame );
     void update( cv::Mat& frame );
 
@@ -116,7 +113,7 @@ private:
     std::list< std::vector<double> > region_histogram_weights;
     std::list< std::set<int> > region_histogram_weight_inds;
 
-    void getGrayIntFrame( cv::Mat& mat_frame);
+    void getGrayIntFrame( cv::Mat& mat_frame );
     void regionHistogram( cv::Mat &current_lbp );
     void simpleNeighborhood( cv::Mat &current_lbp );
 
