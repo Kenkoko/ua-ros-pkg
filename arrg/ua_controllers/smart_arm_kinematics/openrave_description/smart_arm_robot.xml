@@ -39,11 +39,7 @@
     
     <Manipulator name="arm">
         <base>BaseLink</base>
-        <armjoints>ShoulderPanJoint ShoulderTiltJoint ElbowTiltJoint WristRotateJoint</armjoints>
         <effector>WristRotateLink</effector>
         <gripperjoints>FingerLeftJoint FingerRightJoint</gripperjoints>
-        <!-- joint values of the closed and opened positions -->
-        <closingdirection>1 -1</closingdirection>
-        <translation>0.145 0 -0.025</translation>
     </Manipulator>
 </Robot>

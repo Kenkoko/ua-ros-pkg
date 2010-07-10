@@ -25,14 +25,17 @@
         <rosparam command="load" file="$(find wubble_description)/params/shadow_filter.yaml" />
     </node>
 
+    <!-- Start the camera in STOC mode -->
+<!--    <include file="$(find videre_stereo_cam)/launch/videre.launch" />    -->
+
     <!-- Start SLAM mapping -->
-    <include file="$(find wubble_robot)/launch/robot_gmapping.launch" />
+<!--    <include file="$(find wubble_robot)/launch/robot_gmapping.launch" />-->
 
     <!-- Start navigation -->
-    <include file="$(find wubble_robot)/launch/robot_navigation.launch" />
+<!--    <include file="$(find wubble_robot)/launch/robot_navigation.launch" />-->
 
     <!-- Start Actions -->
-    <include file="$(find wubble_robot)/launch/robot_actions.launch" />
+<!--    <include file="$(find wubble_robot)/launch/robot_actions.launch" /> -->
 
     <!-- Start Teleop -->
 <!--    <include file="$(find wubble_teleop)/launch/wubble_logitech.launch" />-->
