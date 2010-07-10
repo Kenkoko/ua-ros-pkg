@@ -27,7 +27,7 @@
     
     <!-- HOKUYO LASER ATTACHMENT -->
     <joint name="laser_support_joint" type="fixed">
-        <origin xyz="${top_size_x/2 - 0.016} 0 -${top_size_z/2}" rpy="${M_PI} 0 0" />
+        <origin xyz="${top_size_x/2 - 0.016} 0.02 -${top_size_z/2}" rpy="${M_PI} 0 0" />
         <parent link="base_top_link"/>
         <child link="hokuyo_tilt_link"/>
     </joint>
@@ -103,7 +103,7 @@
     
     <!-- VIDERE STOC STEREO CAMERA ATTACHMENT -->
     <joint name="head_support_joint" type="fixed">
-        <origin xyz="${top_size_x/2 - 0.16} 0 ${top_size_z/2}" />
+        <origin xyz="${top_size_x/2 - 0.17} 0 ${top_size_z/2}" />
         <parent link="base_top_link" />
         <child link="head_support_link" />
     </joint>

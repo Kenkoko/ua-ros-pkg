@@ -1,5 +1,5 @@
 TrajectoryPlannerROS:
-  transform_tolerance: 0.2
+  transform_tolerance: 0.4
 
   # Robot Configuration Parameters
   acc_limit_x: 2.5

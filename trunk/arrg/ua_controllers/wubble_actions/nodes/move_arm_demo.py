@@ -80,6 +80,8 @@ if __name__ == '__main__':
     try:
         rospy.init_node(NAME, anonymous=True)
         client = SimpleActionClient("smart_arm_action", SmartArmAction)
+
+        print "Waiting for Server..."
         client.wait_for_server()
 
         print "Straighten arm"

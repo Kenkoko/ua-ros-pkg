@@ -22,7 +22,7 @@ class SimpleLaserFilter():
 
         rospy.init_node('simple_laser_filter', anonymous=True)
 
-        rospy.Subscriber('tilt_scan', LaserScan, self.filter_scan)
+        rospy.Subscriber('scan', LaserScan, self.filter_scan)
 
     def filter_scan(self, scan):
         di = DistanceInfo()
