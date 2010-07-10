@@ -105,7 +105,7 @@ DiffDrivePlugin::~DiffDrivePlugin()
 // Load the controller
 void DiffDrivePlugin::LoadChild(XMLConfigNode *node)
 {
-  pos_iface_ = dynamic_cast<PositionIface*> (GetIface("position"));
+  pos_iface_ = dynamic_cast<libgazebo::PositionIface*> (GetIface("position"));
 
   // the defaults are from pioneer2dx
   wheelSepP->Load(node);
