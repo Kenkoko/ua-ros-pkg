@@ -229,12 +229,6 @@
 - svn:
     uri: https://code.ros.org/svn/ros/stacks/ros_experimental/trunk
     local-name: ros-experimental-trunk
-
-
-
-- svn:
-    uri: https://code.ros.org/svn/wg-ros-pkg/all
-    local-name: pkgs
 - svn:
     uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
     local-name: ua-ros-pkg
