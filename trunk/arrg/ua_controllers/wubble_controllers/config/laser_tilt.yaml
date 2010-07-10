@@ -7,6 +7,6 @@ laser_tilt_controller:
     joint_speed: 1.17
     motor:
         id: 9
-        init: 817
-        min: 817
+        init: 831
+        min: 890
         max: 663
