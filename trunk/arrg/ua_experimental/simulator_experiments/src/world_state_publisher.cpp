@@ -278,7 +278,7 @@ btConvexShape* WorldStatePublisher::extract_shape(Geom* geom)
 //      size *= 0.5;
       result = new btBoxShape(size);
 
-      cout << geom->GetAbsPose() << endl;
+      cout << geom->GetWorldPose() << endl;
       print_vector(size);
 
       bt_shape_cache_[geom] = result;
@@ -375,7 +375,7 @@ void WorldStatePublisher::UpdateChild()
           //          geom->SetContactsEnabled(true);
 
           boxes.push_back(extract_shape(geom));
-          tr.push_back(convert_transform(geom->GetBody()->GetAbsPose()));
+          tr.push_back(convert_transform(geom->GetBody()->GetWorldPose()));
           gjk_names.push_back(geom->GetModel()->GetName() + "::" + geom->GetName());
           geom_to_model.push_back(geom->GetModel());
         }
@@ -386,7 +386,7 @@ void WorldStatePublisher::UpdateChild()
         Quatern rot;
         Vector3 pos;
         // Get Pose/Orientation
-        pose = body->GetAbsPose();
+        pose = body->GetWorldPose();
         pos = pose.pos;
         rot = pose.rot;
 
@@ -400,9 +400,8 @@ void WorldStatePublisher::UpdateChild()
 
         // set velocities
         // get Rates
-        Vector3 vpos = body->GetPositionRate(); // get velocity in gazebo frame
-        Quatern vrot = body->GetRotationRate(); // get velocity in gazebo frame
-        Vector3 veul = body->GetEulerRate(); // get velocity in gazebo frame
+        Vector3 vpos = body->GetWorldLinearVel(); // get velocity in gazebo frame
+        Vector3 veul = body->GetWorldAngularVel(); // get velocity in gazebo frame
 
         // pass linear rates
         info.velocity.linear.x = vpos.x;
@@ -414,8 +413,8 @@ void WorldStatePublisher::UpdateChild()
         info.velocity.angular.z = veul.z;
 
         // get forces
-        Vector3 force = body->GetForce(); // get velocity in gazebo frame
-        Vector3 torque = body->GetTorque(); // get velocity in gazebo frame
+        Vector3 force = body->GetWorldForce(); // get velocity in gazebo frame
+        Vector3 torque = body->GetWorldTorque(); // get velocity in gazebo frame
         info.force.force.x = force.x;
         info.force.force.y = force.y;
         info.force.force.z = force.z;
