@@ -93,13 +93,14 @@ class MoveSmartArm():
                     self.arm_cmd[0] = self.bound(self.arm_cmd[0], -2.0, 2.0)
                     
                 # control gripper
-                if self.gripper_open:
-                    self.arm_cmd[4] = -0.245436912
-                    self.arm_cmd[5] = 0.245436912
-                else:
-                    self.arm_cmd[4] = 0.838576116
-                    self.arm_cmd[5] = -0.838576116
-                    
+                if self.joy_data.buttons[2]:
+                    if self.gripper_open:
+                        self.arm_cmd[4] = -0.245436912
+                        self.arm_cmd[5] = 0.245436912
+                    else:
+                        self.arm_cmd[4] = 0.838576116
+                        self.arm_cmd[5] = -0.838576116
+                        
             for i in range(0, len(self.arm_pubs)):
                 self.arm_pubs[i].publish(self.arm_cmd[i])
                 
