@@ -117,11 +117,20 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
         cv::namedWindow("product");
         cv::imshow("product", combination_product);
 
+        cv::Mat bin_image_prod = (combination_product > fg_prob_threshold);
+        cv::namedWindow("binary_prod");
+        cv::imshow("binary_prod", bin_image_prod);
+
         cv::Mat combination_sum;
         combination_sum = fg_prob_img * 0.5 + fg_lbp_img * 0.5;
 
         cv::namedWindow("sum");
         cv::imshow("sum", combination_sum);
+
+        cv::Mat bin_image_sum = (combination_sum > fg_prob_threshold);
+        cv::namedWindow("binary_sum");
+        cv::imshow("binary_sum", bin_image_sum);
+
 
         // Find contours for all the blobs found by background subtraction
         std::vector<std::vector<cv::Point> > contours;
@@ -208,11 +217,6 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                     cv::multiply(rowi, col_sums, rowi);
                     cv::Mat img = rowi.reshape(1, bounder.height);
 
-//                     std::cout << ("obj" + boost::lexical_cast<std::string>(i)) << std::endl;
-                    double min, max;
-                    cv::minMaxLoc(img, &min, &max);
-//                     printf("min = %f, max = %f\n", min, max);
-
                     cv::Mat bin_image = (img > 0.7);
 
                     cv::namedWindow("obj" + boost::lexical_cast<std::string>(i));
@@ -220,7 +224,6 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
 
                     std::vector<std::vector<cv::Point> > contours;
                     cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-//                     ROS_INFO("Found %Zu contours", contours.size());
 
                     if (contours.empty()) { continue; }
 
@@ -272,12 +275,23 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                 double min_dist = std::numeric_limits<double>::max();
                 cv::Point min_center;
 
+                cv::Point last_obj_loc = objects[i].tracks.back();
+                size_t tracks_num = objects[i].tracks.size();
+
+                if (tracks_num > 1)
+                {
+                    cv::Point p = objects[i].tracks[tracks_num - 1] - objects[i].tracks[tracks_num - 2];
+                    last_obj_loc += p;
+                }
+
                 for (size_t j = 0; j < v.size(); ++j)
                 {
                     cv::Rect r = cv::boundingRect(cv::Mat(v[j]));
+                    double area = cv::contourArea(cv::Mat(v[j]));
                     cv::Point center(r.x + r.width / 2, r.y + r.height / 2);
-                    cv::Point diff = center - objects[i].tracks.back();
-                    double distance = sqrt(diff.x * diff.x + diff.y * diff.y);
+                    cv::Point dist_diff = center - last_obj_loc;
+                    double area_diff = area - objects[i].area;
+                    double distance = sqrt(dist_diff.x * dist_diff.x + dist_diff.y * dist_diff.y + area_diff * area_diff);
 
                     if (distance < min_dist)
                     {
