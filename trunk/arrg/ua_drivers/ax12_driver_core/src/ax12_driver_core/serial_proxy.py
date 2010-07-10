@@ -47,6 +47,7 @@ from ax12_driver_core.msg import MotorState
 from ax12_driver_core.msg import MotorStateList
 
 import sys
+import errno
 from threading import Lock
 from threading import Thread
 from Queue import Queue
@@ -149,6 +150,10 @@ class SerialProxy():
                     rospy.logwarn(cse)
                 except ax12_io.DroppedPacketError, dpe:
                     rospy.loginfo(dpe.message)
+                except OSError, ose:
+                    if ose.errno != errno.EAGAIN:
+                        rospy.logfatal(errno.errorcode[ose.errno])
+                        rospy.signal_shutdown(errno.errorcode[ose.errno])
             self.__state_lock.release()
                 
             if motor_states:
