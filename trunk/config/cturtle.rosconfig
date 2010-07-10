@@ -1,0 +1,249 @@
+- svn:
+    uri: https://code.ros.org/svn/ros/stacks/ros/tags/cturtle
+    local-name: ros
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/arm_navigation/tags/cturtle
+    local-name: stacks/arm_navigation
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/camera_drivers/tags/cturtle
+    local-name: stacks/camera_drivers
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/collision_environment/tags/cturtle
+    local-name: stacks/collision_environment
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/common/tags/cturtle
+    local-name: stacks/common
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/common_msgs/tags/cturtle
+    local-name: stacks/common_msgs
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/diagnostics/tags/cturtle
+    local-name: stacks/diagnostics
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/driver_common/tags/cturtle
+    local-name: stacks/driver_common
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/executive_python/tags/cturtle
+    local-name: stacks/executive_python
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/geometry/tags/cturtle
+    local-name: stacks/geometry
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/image_common/tags/cturtle
+    local-name: stacks/image_common
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/image_pipeline/tags/cturtle
+    local-name: stacks/image_pipeline
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/image_transport_plugins/tags/cturtle
+    local-name: stacks/image_transport_plugins
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/imu_drivers/tags/cturtle
+    local-name: stacks/imu_drivers
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/joystick_drivers/tags/cturtle
+    local-name: stacks/joystick_drivers
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/kinematics/tags/cturtle
+    local-name: stacks/kinematics
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/laser_drivers/tags/cturtle
+    local-name: stacks/laser_drivers
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/laser_pipeline/tags/cturtle
+    local-name: stacks/laser_pipeline
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/motion_planners/tags/cturtle
+    local-name: stacks/motion_planners
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/motion_planning_common/tags/cturtle
+    local-name: stacks/motion_planning_common
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/motion_planning_environment/tags/cturtle
+    local-name: stacks/motion_planning_environment
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/motion_planning_visualization/tags/cturtle
+    local-name: stacks/motion_planning_visualization
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/navigation/tags/cturtle
+    local-name: stacks/navigation
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/navigation_experimental/tags/cturtle
+    local-name: stacks/navigation_experimental
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/object_manipulation/tags/cturtle
+    local-name: stacks/object_manipulation
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/people/tags/cturtle
+    local-name: stacks/people
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/physics_ode/tags/cturtle
+    local-name: stacks/physics_ode
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/point_cloud_perception/tags/cturtle
+    local-name: stacks/point_cloud_perception
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_apps/tags/cturtle
+    local-name: stacks/pr2_apps
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_arm_navigation/tags/cturtle
+    local-name: stacks/pr2_arm_navigation
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_arm_navigation_apps/tags/cturtle
+    local-name: stacks/pr2_arm_navigation_apps
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_arm_navigation_tests/tags/cturtle
+    local-name: stacks/pr2_arm_navigation_tests
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_calibration/tags/cturtle
+    local-name: stacks/pr2_calibration
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_common/tags/cturtle
+    local-name: stacks/pr2_common
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_common_actions/tags/cturtle
+    local-name: stacks/pr2_common_actions
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_controllers/tags/cturtle
+    local-name: stacks/pr2_controllers
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_doors/tags/cturtle
+    local-name: stacks/pr2_doors
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_ethercat_drivers/tags/cturtle
+    local-name: stacks/pr2_ethercat_drivers
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_gui/tags/cturtle
+    local-name: stacks/pr2_gui
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_kinematics/tags/cturtle
+    local-name: stacks/pr2_kinematics
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_kinematics_with_constraints/tags/cturtle
+    local-name: stacks/pr2_kinematics_with_constraints
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_mechanism/tags/cturtle
+    local-name: stacks/pr2_mechanism
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_navigation/tags/cturtle
+    local-name: stacks/pr2_navigation
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_navigation_apps/tags/cturtle
+    local-name: stacks/pr2_navigation_apps
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_object_manipulation/tags/cturtle
+    local-name: stacks/pr2_object_manipulation
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_plugs/tags/cturtle
+    local-name: stacks/pr2_plugs
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_power_drivers/tags/cturtle
+    local-name: stacks/pr2_power_drivers
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_robot/tags/cturtle
+    local-name: stacks/pr2_robot
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_self_test/tags/cturtle
+    local-name: stacks/pr2_self_test
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_simulator/tags/cturtle
+    local-name: stacks/pr2_simulator
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_tabletop_manipulation_apps/tags/cturtle
+    local-name: stacks/pr2_tabletop_manipulation_apps
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_web_apps/tags/cturtle
+    local-name: stacks/pr2_web_apps
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/robot_calibration/tags/cturtle
+    local-name: stacks/robot_calibration
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/robot_model/tags/cturtle
+    local-name: stacks/robot_model
+- svn:
+    uri: https://code.ros.org/svn/ros/stacks/ros_realtime/tags/cturtle
+    local-name: stacks/ros_realtime
+- svn:
+    uri: https://code.ros.org/svn/ros/stacks/ros_tutorials/tags/cturtle
+    local-name: stacks/ros_tutorials
+- svn:
+    uri: https://code.ros.org/svn/ros/stacks/roslisp_support/tags/cturtle
+    local-name: stacks/roslisp_support
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/simulator_gazebo/tags/cturtle
+    local-name: stacks/simulator_gazebo
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/simulator_stage/tags/cturtle
+    local-name: stacks/simulator_stage
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/slam_gmapping/tags/cturtle
+    local-name: stacks/slam_gmapping
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/sound_drivers/tags/cturtle
+    local-name: stacks/sound_drivers
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/sql_database/tags/cturtle
+    local-name: stacks/sql_database
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/tabletop_object_perception/tags/cturtle
+    local-name: stacks/tabletop_object_perception
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/texas_drivers/tags/cturtle
+    local-name: stacks/texas_drivers
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/topological_navigation/tags/cturtle
+    local-name: stacks/topological_navigation
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/trajectory_filters/tags/cturtle
+    local-name: stacks/trajectory_filters
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/vision_opencv/tags/cturtle
+    local-name: stacks/vision_opencv
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/visualization/tags/cturtle
+    local-name: stacks/visualization
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/visualization_common/tags/cturtle
+    local-name: stacks/visualization_common
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/web_interface/tags/cturtle
+    local-name: stacks/web_interface
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/wg_common/tags/cturtle
+    local-name: stacks/wg_common
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/wg_hardware_test/tags/cturtle
+    local-name: stacks/wg_hardware_test
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/wg_pr2_apps/tags/cturtle
+    local-name: stacks/wg_pr2_apps
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/stacks/wifi_drivers/tags/cturtle
+    local-name: stacks/wifi_drivers
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/trunk
+    local-name: wg-ros-pkg-unreleased
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/trunk
+    local-name: ros-pkg-unreleased
+- svn:
+    uri: https://code.ros.org/svn/ros/stacks/ros_experimental/trunk
+    local-name: ros-experimental-trunk
+
+
+
+- svn:
+    uri: https://code.ros.org/svn/wg-ros-pkg/all
+    local-name: pkgs
+- svn:
+    uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
+    local-name: ua-ros-pkg
+- svn:
+    uri: https://ua-cs665-ros-pkg.googlecode.com/svn/trunk/
+    local-name: ua-cs665-ros-pkg
+- svn:
+    uri: http://foote-ros-pkg.googlecode.com/svn/trunk/phidgets/phidgetspp_c_api
+    local-name: foote-ros-pkg/phidgets/phidgetspp_c_api
+- svn:
+    uri: https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/trunk/bosch_drivers/
+    local-name: bosch-ros-pkg/bosch_drivers/
