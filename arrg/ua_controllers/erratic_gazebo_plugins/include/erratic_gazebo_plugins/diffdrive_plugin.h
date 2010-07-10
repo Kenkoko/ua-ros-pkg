@@ -50,7 +50,6 @@ namespace gazebo
 {
 class Joint;
 class Entity;
-class PositionIface;
 
 class DiffDrivePlugin : public Controller
 {
@@ -72,7 +71,7 @@ private:
   void publish_odometry();
   void GetPositionCmd();
 
-  PositionIface *pos_iface_;
+  libgazebo::PositionIface *pos_iface_;
   Model *parent_;
   ParamT<float> *wheelSepP;
   ParamT<float> *wheelDiamP;
