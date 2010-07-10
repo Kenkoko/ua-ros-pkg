@@ -171,9 +171,7 @@ private:
 
     image_transport::CameraPublisher right_camera_pub_;
     image_transport::Publisher right_color_image_pub_;
-    image_transport::Publisher right_color_rect_image_pub_;
     image_transport::Publisher right_mono_image_pub_;
-    image_transport::Publisher right_mono_rect_image_pub_;
 
     ros::Publisher disparity_pub_;
     ros::Publisher cloud_pub_;
@@ -308,21 +306,12 @@ public:
                 ROS_INFO("Setting mode to %s", config.videre_mode.c_str());
             }
 
-            config.calculate_points = config.calculate_points && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW);
-            config.calculate_points2 = config.calculate_points2 && (videre_mode_ == PROC_MODE_DISPARITY || videre_mode_ == PROC_MODE_DISPARITY_RAW);
             config.convert_to_color = config.convert_to_color && stcam_->isColor;
-            current_config_.calculate_points = config.calculate_points;
-            current_config_.calculate_points2 = config.calculate_points2;
             current_config_.convert_to_color = config.convert_to_color;
 
             ROS_INFO("Color conversion from Bayer pattern is %s", config.convert_to_color ? "Enabled" : "Disabled");
 
-            if (stcam_->isSTOC)
-            {
-                stcam_->setProcMode(videre_mode_);
-                ROS_INFO("STOC: Point cloud calculation is %s", config.calculate_points ? "Enabled" : "Disabled");
-                ROS_INFO("STOC: Point cloud 2 calculation is %s", config.calculate_points2 ? "Enabled" : "Disabled");
-            }
+            if (stcam_->isSTOC) { stcam_->setProcMode(videre_mode_); }
 
             shutdown_topics();
             advertise_topics();
@@ -383,9 +372,7 @@ public:
 
         right_camera_pub_.shutdown();
         right_color_image_pub_.shutdown();
-        right_color_rect_image_pub_.shutdown();
         right_mono_image_pub_.shutdown();
-        right_mono_rect_image_pub_.shutdown();
 
         disparity_pub_.shutdown();
         cloud_pub_.shutdown();
@@ -406,14 +393,10 @@ public:
                 if (current_config_.convert_to_color)
                 {
                     left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
-                    left_color_rect_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_rect_color", 1);
                     left_mono_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_mono", 1);
-                    left_mono_rect_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_rect", 1);
 
                     right_color_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_color", 1);
-                    right_color_rect_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_rect_color", 1);
                     right_mono_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_mono", 1);
-                    right_mono_rect_image_pub_ = image_transport::ImageTransport(right_nh_).advertise("image_rect", 1);
                 }
 
                 break;
@@ -426,26 +409,26 @@ public:
             // publish raw left image and disparity image from the camera
             case PROC_MODE_DISPARITY_RAW:
                 left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_raw", 1);
-                disparity_pub_ = nh_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+                left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
+                left_color_rect_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_rect_color", 1);
+                left_mono_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_mono", 1);
+                left_mono_rect_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_rect", 1);
 
-                if (current_config_.convert_to_color)
-                {
-                    left_color_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_color", 1);
-                    left_color_rect_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_rect_color", 1);
-                    left_mono_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_mono", 1);
-                    left_mono_rect_image_pub_ = image_transport::ImageTransport(left_nh_).advertise("image_rect", 1);
-                }
+                disparity_pub_ = nh_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+                cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("points", 1);
+                cloud2_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points2", 1);
 
                 break;
             // publish monochrome rectified left image and disparity image from the camera
             case PROC_MODE_DISPARITY:
                 left_camera_pub_ = image_transport::ImageTransport(left_nh_).advertiseCamera("image_rect", 1);
+
                 disparity_pub_ = nh_.advertise<stereo_msgs::DisparityImage>("disparity", 1);
+                cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("points", 1);
+                cloud2_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points2", 1);
+
                 break;
         }
-
-        if (current_config_.calculate_points) { cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud>("points", 1); }
-        if (current_config_.calculate_points2) { cloud2_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points2", 1); }
     }
 
     void cleanup()
@@ -506,7 +489,6 @@ public:
         }
 
         fillHeaders();
-
         left_camera_pub_.publish(stcam_->stIm->left_raw, stcam_->stIm->left_info);
 
         switch (videre_mode_)
@@ -515,50 +497,83 @@ public:
             case PROC_MODE_TEST:
             case PROC_MODE_OFF:
             case PROC_MODE_NONE:
+            {
                 right_camera_pub_.publish(stcam_->stIm->right_raw, stcam_->stIm->right_info);
 
                 if (current_config_.convert_to_color)
                 {
-                    processor_.process(boost::make_shared<const sensor_msgs::Image>(stcam_->stIm->left_raw),
-                                       stcam_->stIm->stereo_model.left(), left_set_, image_proc::Processor::ALL);
-                    processor_.process(boost::make_shared<const sensor_msgs::Image>(stcam_->stIm->right_raw),
-                                       stcam_->stIm->stereo_model.right(), right_set_, image_proc::Processor::ALL);
+                    int l_flags = 0;
+                    int r_flags = 0;
+
+                    typedef image_proc::Processor Proc;
+
+                    if (left_color_image_pub_ .getNumSubscribers() > 0) l_flags |= Proc::COLOR;
+                    if (left_mono_image_pub_  .getNumSubscribers() > 0) l_flags |= Proc::MONO;
+                    if (right_color_image_pub_.getNumSubscribers() > 0) r_flags |= Proc::COLOR;
+                    if (right_mono_image_pub_ .getNumSubscribers() > 0) r_flags |= Proc::MONO;
+
+                    sensor_msgs::ImageConstPtr l_img_ptr = boost::make_shared<const sensor_msgs::Image>(stcam_->stIm->left_raw);
+                    sensor_msgs::ImageConstPtr r_img_ptr = boost::make_shared<const sensor_msgs::Image>(stcam_->stIm->right_raw);
+
+                    if (l_flags) { processor_.process(l_img_ptr, stcam_->stIm->stereo_model.left(), left_set_, l_flags); }
+                    if (r_flags) { processor_.process(r_img_ptr, stcam_->stIm->stereo_model.right(), right_set_, r_flags); }
 
                     // publish all left processed images
-                    publishImage(left_color_image_pub_, left_set_.color, left_set_.color_encoding);
-                    publishImage(left_color_rect_image_pub_, left_set_.rect_color, left_set_.color_encoding);
-                    publishImage(left_mono_image_pub_, left_set_.mono, sensor_msgs::image_encodings::MONO8);
-                    publishImage(left_mono_rect_image_pub_, left_set_.rect, sensor_msgs::image_encodings::MONO8);
+                    if (l_flags & Proc::COLOR) { publishImage(left_color_image_pub_, left_set_.color, left_set_.color_encoding); }
+                    if (l_flags & Proc::MONO)  { publishImage(left_mono_image_pub_, left_set_.mono, sensor_msgs::image_encodings::MONO8); }
 
                     // publish all right processed images
-                    publishImage(right_color_image_pub_, right_set_.color, right_set_.color_encoding);
-                    publishImage(right_color_rect_image_pub_, right_set_.rect_color, right_set_.color_encoding);
-                    publishImage(right_mono_image_pub_, right_set_.mono, sensor_msgs::image_encodings::MONO8);
-                    publishImage(right_mono_rect_image_pub_, right_set_.rect, sensor_msgs::image_encodings::MONO8);
+                    if (r_flags & Proc::COLOR) { publishImage(right_color_image_pub_, right_set_.color, right_set_.color_encoding); }
+                    if (r_flags & Proc::MONO)  { publishImage(right_mono_image_pub_, right_set_.mono, sensor_msgs::image_encodings::MONO8); }
                 }
 
                 break;
+            }
             // publish left and right rectified mono images, color information is NOT available
             case PROC_MODE_RECTIFIED:
+            {
                 right_camera_pub_.publish(stcam_->stIm->right_raw, stcam_->stIm->right_info);
                 break;
+            }
             // publish left raw image and disparity image, color information is available
             case PROC_MODE_DISPARITY_RAW:
-                if (current_config_.convert_to_color)
-                {
-                    processor_.process(boost::make_shared<const sensor_msgs::Image>(stcam_->stIm->left_raw),
-                                       stcam_->stIm->stereo_model.left(), left_set_, image_proc::Processor::ALL);
-
-                    // publish all left processed images
-                    publishImage(left_color_image_pub_, left_set_.color, left_set_.color_encoding);
-                    publishImage(left_color_rect_image_pub_, left_set_.rect_color, left_set_.color_encoding);
-                    publishImage(left_mono_image_pub_, left_set_.mono, sensor_msgs::image_encodings::MONO8);
-                    publishImage(left_mono_rect_image_pub_, left_set_.rect, sensor_msgs::image_encodings::MONO8);
-                }
-
+            {
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(stcam_->stIm->img_disp); }
 
-                if (current_config_.calculate_points)
+                int l_flags = 0;
+                bool do_points = false;
+                bool do_points2 = false;
+
+                typedef image_proc::Processor Proc;
+
+                if (cloud_pub_.getNumSubscribers() > 0) { do_points = true; }
+                if (cloud2_pub_.getNumSubscribers() > 0) { do_points2 = true; }
+
+                if (do_points || do_points2)
+                {
+                    l_flags |= Proc::ALL;
+                }
+                else
+                {
+                    if (left_color_image_pub_     .getNumSubscribers() > 0) l_flags |= Proc::COLOR;
+                    if (left_color_rect_image_pub_.getNumSubscribers() > 0) l_flags |= Proc::RECT_COLOR;
+                    if (left_mono_image_pub_      .getNumSubscribers() > 0) l_flags |= Proc::MONO;
+                    if (left_mono_rect_image_pub_ .getNumSubscribers() > 0) l_flags |= Proc::RECT;
+                }
+
+                if (l_flags)
+                {
+                    processor_.process(boost::make_shared<const sensor_msgs::Image>(stcam_->stIm->left_raw),
+                                       stcam_->stIm->stereo_model.left(), left_set_, l_flags);
+                }
+
+                // publish all left processed images
+                if (l_flags & Proc::COLOR) { publishImage(left_color_image_pub_, left_set_.color, left_set_.color_encoding); }
+                if (l_flags & Proc::RECT_COLOR) { publishImage(left_color_rect_image_pub_, left_set_.rect_color, left_set_.color_encoding); }
+                if (l_flags & Proc::MONO) { publishImage(left_mono_image_pub_, left_set_.mono, sensor_msgs::image_encodings::MONO8); }
+                if (l_flags & Proc::RECT) { publishImage(left_mono_rect_image_pub_, left_set_.rect, sensor_msgs::image_encodings::MONO8); }
+
+                if (do_points)
                 {
                     stereo_processor_.processPoints(stcam_->stIm->img_disp, left_set_.rect_color,
                                                     left_set_.color_encoding, stcam_->stIm->stereo_model,
@@ -566,7 +581,7 @@ public:
                     cloud_pub_.publish(cloud_);
                 }
 
-                if (current_config_.calculate_points2)
+                if (do_points2)
                 {
                     stereo_processor_.processPoints2(stcam_->stIm->img_disp, left_set_.rect_color,
                                                      left_set_.color_encoding, stcam_->stIm->stereo_model,
@@ -575,33 +590,49 @@ public:
                 }
 
                 break;
+            }
             // publish left mono image and disparity image, color information is NOT available
             case PROC_MODE_DISPARITY:
+            {
                 if (stcam_->stIm->hasDisparity) { disparity_pub_.publish(stcam_->stIm->img_disp); }
 
-                if (current_config_.calculate_points || current_config_.calculate_points2)
+                int l_flags = 0;
+                bool do_points = false;
+                bool do_points2 = false;
+
+                typedef image_proc::Processor Proc;
+
+                if (cloud_pub_.getNumSubscribers() > 0) { do_points = true; }
+                if (cloud2_pub_.getNumSubscribers() > 0) { do_points2 = true; }
+
+                if (do_points || do_points2 || left_mono_rect_image_pub_.getNumSubscribers() > 0) { l_flags |= Proc::RECT; }
+
+                if (l_flags)
                 {
                     processor_.process(boost::make_shared<const sensor_msgs::Image>(stcam_->stIm->left_raw),
                                        stcam_->stIm->stereo_model.left(), left_set_, image_proc::Processor::RECT);
+
+                    publishImage(left_mono_rect_image_pub_, left_set_.rect, sensor_msgs::image_encodings::MONO8);
                 }
 
-                if (current_config_.calculate_points)
+                if (do_points)
                 {
-                    stereo_processor_.processPoints(stcam_->stIm->img_disp, left_set_.rect_color,
-                                                    left_set_.color_encoding, stcam_->stIm->stereo_model,
+                    stereo_processor_.processPoints(stcam_->stIm->img_disp, left_set_.rect,
+                                                    sensor_msgs::image_encodings::MONO8, stcam_->stIm->stereo_model,
                                                     cloud_);
                     cloud_pub_.publish(cloud_);
                 }
 
-                if (current_config_.calculate_points2)
+                if (do_points2)
                 {
-                    stereo_processor_.processPoints2(stcam_->stIm->img_disp, left_set_.rect_color,
-                                                     left_set_.color_encoding, stcam_->stIm->stereo_model,
+                    stereo_processor_.processPoints2(stcam_->stIm->img_disp, left_set_.rect,
+                                                     sensor_msgs::image_encodings::MONO8, stcam_->stIm->stereo_model,
                                                      cloud2_);
                     cloud2_pub_.publish(cloud2_);
                 }
 
                 break;
+            }
         }
 
         ++count_;
