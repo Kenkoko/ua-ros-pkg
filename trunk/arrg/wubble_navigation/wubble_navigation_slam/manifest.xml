@@ -1,0 +1,15 @@
+<package>
+    <description brief="XML files for running SLAM with the move_base node on a Wubble robot.">
+        This package holds launch files for running the <a href="http://www.ros.org/wiki/move_base">move_base</a> node in conjunction with [[gmapping | SLAM]] on a Wubble robot.
+    </description>
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_navigation_slam</url>
+    
+    <depend package="gmapping"/>
+    <depend package="move_base"/>
+    <depend package="wubble_navigation_config"/>
+</package>
+
+

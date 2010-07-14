@@ -1,0 +1,3 @@
+<launch>
+    <include file="$(find wubble_navigation_local)/move_base_local.launch" />
+</launch>
