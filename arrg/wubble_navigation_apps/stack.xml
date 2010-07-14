@@ -1,0 +1,13 @@
+<stack>
+    <description brief="Navigation applications for the Wubble robot">
+        This stack holds a collection of navigation applications that can be run on the Wubble robot.
+    </description>
+    
+    <author>Maintained by Antons Rebguns</author>
+    <license>BSD</license>  
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_navigation_apps</url>
+    
+    <depend stack="ros" />
+    <depend stack="wubble_navigation" />
+</stack>

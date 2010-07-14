@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find wubble_navigation_slam)/slam_gmapping.launch" />
+    <include file="$(find wubble_navigation_slam)/move_base.launch" />
+</launch>
