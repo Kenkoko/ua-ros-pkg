@@ -16,7 +16,7 @@
     <depend package="wubble_teleop"/>
     <depend package="wubble_mapping"/>
     <depend package="wubble_actions"/>
-    <depend package="wubble_navigation"/>
+    <depend package="wubble_2dnav"/>
 
 </package>
 
