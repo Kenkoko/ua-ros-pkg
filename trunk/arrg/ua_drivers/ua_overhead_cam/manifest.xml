@@ -1,15 +1,16 @@
 <package>
-  <description brief="ua_overhead_cam">
+    <description brief="ua_overhead_cam">
 
-     ua_overhead_cam
+        ua_overhead_cam
 
-  </description>
-  <author>RobotLab</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/ua_overhead_cam</url>
-  <depend package="prosilica_camera"/>
-
+    </description>
+    <author>RobotLab</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/ua_overhead_cam</url>
+    <depend package="roscpp"/>
+    <depend package="visualization_msgs"/>
+    <depend package="prosilica_camera"/>
 </package>
 
 
