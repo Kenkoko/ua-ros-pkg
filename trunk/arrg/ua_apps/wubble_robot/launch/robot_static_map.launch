@@ -1,0 +1,8 @@
+<launch>
+    <include file="$(find wubble_robot)/launch/robot_common.launch" />
+    
+    <!-- enable navigation with static map -->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find wubble_environments)/Media/materials/textures/wubble_lab_playground_0.025.yaml" respawn="true" />
+    <include file="$(find wubble_2dnav)/wubble_2dnav.launch" />
+</launch>
+

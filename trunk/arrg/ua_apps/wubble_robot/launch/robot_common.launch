@@ -21,24 +21,17 @@
         <remap from="scan" to="tilt_laser/scan" />
         <remap from="cloud_filtered" to="tilt_scan_shadow_filtered" />
         <param name="target_frame" value="base_footprint" />
-        <param name="high_fidelity" value="true" />
+        <param name="high_fidelity" value="false" />
         <rosparam command="load" file="$(find wubble_description)/params/shadow_filter.yaml" />
     </node>
-
+    
     <!-- Start the camera in STOC mode -->
-<!--    <include file="$(find videre_stereo_cam)/launch/videre.launch" />    -->
-
-    <!-- Start SLAM mapping -->
-<!--    <include file="$(find wubble_robot)/launch/robot_gmapping.launch" />-->
-
-    <!-- Start navigation -->
-<!--    <include file="$(find wubble_robot)/launch/robot_navigation.launch" />-->
-
+    <include file="$(find videre_stereo_cam)/launch/videre.launch" />
+    
     <!-- Start Actions -->
 <!--    <include file="$(find wubble_robot)/launch/robot_actions.launch" /> -->
-
+    
     <!-- Start Teleop -->
 <!--    <include file="$(find wubble_teleop)/launch/wubble_logitech.launch" />-->
-
 </launch>
 
