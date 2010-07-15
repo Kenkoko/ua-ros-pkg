@@ -5,10 +5,10 @@
         <param name="auto_exposure" type="bool" value="False"/>
         <param name="auto_gain" type="bool" value="False"/>
         <param name="auto_whitebalance" type="bool" value="False"/>
-        <param name="exposure" type="double" value="0.04"/>
+        <param name="exposure" type="double" value="0.049968"/>
         <param name="gain" type="int" value="1"/>
-        <param name="whitebalance_red" type="int" value="100"/>
-        <param name="whitebalance_blue" type="int" value="100"/>
+        <param name="whitebalance_red" type="int" value="108"/>
+        <param name="whitebalance_blue" type="int" value="156"/>
         <param name="frame_id" type="string" value="high_def_optical_frame" />
     </group>
   
@@ -16,5 +16,5 @@
     
     <node name="image_proc" pkg="image_proc" type="image_proc" ns="camera" output="screen"/>
     
-    <node name="map_to_overhead" pkg="tf" type="static_transform_publisher" args="0 0 3.2 0 0 0 map high_def_optical_frame 100" />
+    <node name="map_to_overhead" pkg="tf" type="static_transform_publisher" args="-0.348 0.2613 3.2457 0 0 0 map high_def_optical_frame 100" />
 </launch>
