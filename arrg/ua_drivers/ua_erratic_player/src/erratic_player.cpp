@@ -400,6 +400,8 @@ public:
             {
                 player_power_data_t* pdata = (player_power_data_t*) msg->GetPayload();
                 pr2_msgs::PowerState state;
+                if (pdata->percent < 25) { ROS_WARN("Battery capacity is at %f%% (%fV), please recharge", pdata->percent, pdata->volts); }
+                //ROS_INFO("charging = %d, joules = %f, percent = %f, volts = %f, watts = %f", pdata->charging, pdata->joules, pdata->percent, pdata->volts, pdata->watts);
                 state.header.stamp = ros::Time::now();
                 state.time_remaining.fromSec((pdata->volts < 11.5) ? 0 : 3600); //need to calculate the remaing runtime based on the batteries discharge curve, for now stop when voltage is below 11.5. -Curt
                 state.power_consumption = (pdata->volts > charging_threshold_) ? watts_charging_ : watts_unplugged_; //Does not work, as they don't publish this

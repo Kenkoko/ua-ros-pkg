@@ -1,6 +1,6 @@
 <launch>
     <node name="erratic_base_driver" pkg="ua_erratic_player" type="erratic_player" output="screen" >
-        <remap from="odom" to="erratic_odometry/odom"/>
+        <remap from="odom" to="odom"/>
         <remap from="battery_state" to="battery_state"/>
         <param name="port_name" type="str" value="/dev/erratic"/>
         <param name="enable_ir" type="bool" value="False"/>
