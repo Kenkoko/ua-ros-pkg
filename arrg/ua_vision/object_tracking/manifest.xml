@@ -17,6 +17,9 @@
     <depend package="sensor_msgs"/>
     <depend package="geometry_msgs"/>
     <depend package="background_filters"/>
+    <depend package="visualization_msgs"/>
+    <depend package="image_geometry"/>
+    <depend package="tf"/>
 
 </package>
 

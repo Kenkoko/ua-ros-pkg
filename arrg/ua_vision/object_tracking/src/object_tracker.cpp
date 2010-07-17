@@ -32,6 +32,8 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
+#include <cmath>
+
 #include <ros/ros.h>
 
 #include <cv_bridge/CvBridge.h>
@@ -40,6 +42,9 @@
 
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
+#include <visualization_msgs/Marker.h>
+#include <image_geometry/pinhole_camera_model.h>
+#include <tf/transform_listener.h>
 
 #include <background_filters/GetBgStats.h>
 #include <background_filters/common.h>
@@ -65,12 +70,17 @@ private:
     bool init;
     int counter;
 
+    ros::Publisher marker_pub;
     image_transport::Subscriber image_sub;
+    ros::Subscriber info_sub;
+    image_geometry::PinholeCameraModel cam_model;
+    tf::TransformListener tf_listener;
 
 public:
     ObjectTrackerNode(ros::NodeHandle& nh, const std::string& transport)
     {
         ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
+        marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 0);
 
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
@@ -95,9 +105,16 @@ public:
         }
 
         std::string topic = nh.resolveName("image");
+        std::string topic_info = nh.resolveName("camera_info");
         image_transport::ImageTransport it(nh);
 
         image_sub = it.subscribe(topic, 1, &ObjectTrackerNode::handle_image, this);
+        info_sub = nh.subscribe<sensor_msgs::CameraInfo>(topic_info, 1, &ObjectTrackerNode::handle_info, this);
+    }
+
+    void handle_info(const sensor_msgs::CameraInfoConstPtr& info_msg)
+    {
+        cam_model.fromCameraInfo(info_msg);
     }
 
     void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
@@ -151,13 +168,79 @@ public:
         {
             cv::namedWindow("blah");
             char k = cv::waitKey(1);
-            if( k == 27 || k == 's' || k == 'S' ) { go = true; cv::destroyWindow("blah"); }; // escape key
+            if( k == 27 || k == 's' || k == 'S' ) { go = true; cv::destroyWindow("blah"); };
         }
 
         if (go)
         {
-            std::map<int, std::vector<cv::Point> > id_to_contour = known_obj_finder.find_objects(neg_log_lik_img, lbp_foreground_img, original, objects, mlr_weights);
+            std::vector<cv::RotatedRect> obj_rects;
+            std::map<int, std::vector<cv::Point> > id_to_contour = known_obj_finder.find_objects(neg_log_lik_img, lbp_foreground_img, original, objects, mlr_weights, obj_rects);
             if (!init) { new_obj_finder.find_objects(neg_log_lik_img, original, objects, mlr_weights); init = true; }
+
+            for (size_t i = 0; i < obj_rects.size(); ++i)
+            {
+
+                if (cam_model.width() != 0)
+                {
+                    cv::Point2d point_img;
+                    double scale = msg_ptr->width / (double) bg_sub.avg_img.cols;
+                    point_img.x = obj_rects[i].center.x * scale;
+                    point_img.y = obj_rects[i].center.y * scale;
+
+                    cv::Point3d point_map;
+                    cam_model.projectPixelTo3dRay(point_img, point_map);
+
+                    tf::StampedTransform transform;
+                    try
+                    {
+                        ros::Time acquisition_time = ros::Time(0);
+                        ros::Duration timeout(1.0 / 30);
+                        tf_listener.waitForTransform("/map", cam_model.tfFrame(), acquisition_time, timeout);
+                        tf_listener.lookupTransform("/map", cam_model.tfFrame(), acquisition_time, transform);
+                    }
+                    catch (tf::TransformException& ex)
+                    {
+                        ROS_WARN("[object_tracker] TF exception:\n%s", ex.what());
+                        continue;
+                    }
+
+                    tf::Point tfp = transform.getOrigin();
+                    //ROS_INFO("Transform = (%f, %f, %f)", tfp.getX(), tfp.getY(), tfp.getZ());
+
+                    point_map *= tfp.getZ();
+                    //ROS_INFO("Point in image frame = (%f, %f, %f)", point_map.x, point_map.y, point_map.z);
+
+                    btQuaternion quat;
+                    quat.setRPY(0.0f, 0.0f, obj_rects[i].angle * M_PI / 180.0 - M_PI / 2.0);
+
+                    visualization_msgs::Marker marker;
+                    marker.header.frame_id = "/map";
+                    marker.header.stamp = ros::Time::now();
+                    marker.ns = "overhead_camera_objects";
+                    marker.id = objects[i].id;
+                    marker.type = visualization_msgs::Marker::CUBE;;
+                    marker.action = visualization_msgs::Marker::ADD;
+                    marker.pose.position.x = tfp.x() - point_map.x;
+                    marker.pose.position.y = tfp.y() + point_map.y;
+                    marker.pose.position.z = 0.0;
+                    marker.pose.orientation.x = quat.x();
+                    marker.pose.orientation.y = quat.y();
+                    marker.pose.orientation.z = quat.z();
+                    marker.pose.orientation.w = quat.w();
+                    marker.scale.x = obj_rects[i].size.width * scale / cam_model.fx() * tfp.getZ();
+                    marker.scale.y = obj_rects[i].size.height * scale / cam_model.fy() * tfp.getZ();
+                    marker.scale.z = 0.04;
+                    marker.color.r = 1.0f;
+                    marker.color.g = 0.0f;
+                    marker.color.b = 0.0f;
+                    marker.color.a = 0.8;
+                    marker.lifetime = ros::Duration(1.0);
+                    marker_pub.publish(marker);
+
+                    //ROS_INFO("Point in map frame = (%f, %f, %f)", marker.pose.position.x, marker.pose.position.y, marker.pose.position.z);
+                    //ROS_INFO("Object size (%f, %f) and rotation is %f degrees", marker.scale.x, marker.scale.y, obj_rects[i].angle);
+                }
+            }
         }
     }
 };
