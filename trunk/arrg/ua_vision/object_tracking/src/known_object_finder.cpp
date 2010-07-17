@@ -39,6 +39,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <visualization_msgs/Marker.h>
+
 #include <object_tracking/object.h>
 #include <object_tracking/known_object_finder.h>
 
@@ -79,7 +81,8 @@ KnownObjectFinder::KnownObjectFinder()
 }
 
 std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img,
-                                                                       const cv::Mat& camera_img, std::vector<Object>& objects, cv::Mat& mlr_weights)
+                                                                       const cv::Mat& camera_img, std::vector<Object>& objects, cv::Mat& mlr_weights,
+                                                                       std::vector<cv::RotatedRect>& obj_rects)
 {
     std::map<int, vector<cv::Point> > id_to_contour;
 
@@ -153,6 +156,8 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
 
         std::map<int, vector<vector<cv::Point> > > obj_id_to_patches;
 
+        // TODO: Initialize rectangles here
+
         BOOST_FOREACH(std::vector<cv::Point> con, contours)
         {
             double area = cv::contourArea(cv::Mat(con));
@@ -162,6 +167,8 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                 cv::Rect bounder = cv::boundingRect(cv::Mat(con));
                 cv::Mat back_projects(objects.size() + 1, bounder.area(), CV_32F);
                 back_projects.row(0) = cv::Scalar(1);
+
+                // TODO: Add each rect to list for publishing
 
                 cv::Mat bg_roi = fg_loglike_img(bounder).clone();
                 double min = objects[0].min;
@@ -323,6 +330,8 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                     cv::line(original, objects[i].tracks[j-1], objects[i].tracks[j], CV_RGB(255, 0, 0));
                 }
             }
+
+            obj_rects.push_back(cv::minAreaRect(cv::Mat(id_to_contour[id])));
         }
 
 //         IplImage orig_ipl = original;

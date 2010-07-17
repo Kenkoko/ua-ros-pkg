@@ -47,7 +47,7 @@ private:
 
 public:
     KnownObjectFinder();
-    std::map<int, std::vector<cv::Point> > find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img, const cv::Mat& camera_img, std::vector< Object >& objects, cv::Mat& mlr_weights);
+    std::map<int, std::vector<cv::Point> > find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img, const cv::Mat& camera_img, std::vector< Object >& objects, cv::Mat& mlr_weights, std::vector< cv::RotatedRect >& obj_rects);
 };
 
 #endif
