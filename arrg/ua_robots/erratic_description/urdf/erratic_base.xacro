@@ -13,9 +13,9 @@
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
     
-    <property name="base_size_x" value="0.22" />
-    <property name="base_size_y" value="0.29" />
-    <property name="base_size_z" value="0.135448" /> <!-- 0.14 -->
+    <property name="base_size_x" value="0.217" />
+    <property name="base_size_y" value="0.280" />
+    <property name="base_size_z" value="0.155" />
     
     <property name="top_size_x" value="0.3937" />
     <property name="top_size_y" value="0.3556" />
