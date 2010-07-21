@@ -1,6 +1,6 @@
 <launch>
     <node name="background_averager" pkg="background_filters" type="background_averager" output="screen" >
-        <remap from="image" to="camera/image_color" />
+        <remap from="image" to="camera/image_rect_color" />
         <param name="scale" value="4" />
         <param name="colorspace" value="rgb" />
         <param name="number_of_samples" value="100" />
