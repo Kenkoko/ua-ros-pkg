@@ -71,6 +71,7 @@ private:
     int counter;
 
     ros::Publisher marker_pub;
+    ros::Publisher object_pub;
     image_transport::Subscriber image_sub;
     ros::Subscriber info_sub;
     image_geometry::PinholeCameraModel cam_model;
@@ -80,7 +81,8 @@ public:
     ObjectTrackerNode(ros::NodeHandle& nh, const std::string& transport)
     {
         ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
-        marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 0);
+        marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+        object_pub = nh.advertise<geometry_msgs::PoseStamped>("overhead_objects", 1);
 
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
@@ -236,6 +238,12 @@ public:
                     marker.color.a = 0.8;
                     marker.lifetime = ros::Duration(1.0);
                     marker_pub.publish(marker);
+
+                    geometry_msgs::PoseStamped pose;
+                    pose.header.frame_id = "/map";
+                    pose.header.stamp = marker.header.stamp;
+                    pose.pose = marker.pose;
+                    object_pub.publish(pose);
 
                     //ROS_INFO("Point in map frame = (%f, %f, %f)", marker.pose.position.x, marker.pose.position.y, marker.pose.position.z);
                     //ROS_INFO("Object size (%f, %f) and rotation is %f degrees", marker.scale.x, marker.scale.y, obj_rects[i].angle);
