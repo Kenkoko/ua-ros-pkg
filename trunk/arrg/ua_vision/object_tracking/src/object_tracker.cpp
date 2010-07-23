@@ -197,7 +197,7 @@ public:
                     {
                         ros::Time acquisition_time = ros::Time(0);
                         ros::Duration timeout(1.0 / 30);
-                        tf_listener.waitForTransform("/map", cam_model.tfFrame(), acquisition_time, timeout);
+                        //tf_listener.waitForTransform("/map", cam_model.tfFrame(), acquisition_time, timeout);
                         tf_listener.lookupTransform("/map", cam_model.tfFrame(), acquisition_time, transform);
                     }
                     catch (tf::TransformException& ex)
