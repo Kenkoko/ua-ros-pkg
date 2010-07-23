@@ -94,7 +94,6 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
     }
     else
     {
-//         ROS_INFO_STREAM("BEGIN");
         cv::Mat fg_loglike_img = neg_log_lik_img.clone();
         cv::Mat original = camera_img.clone();
         cv::Mat fg_lbp_img;
@@ -111,6 +110,9 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
         cv::namedWindow("fg_prob_img");
         cv::imshow("fg_prob_img", fg_prob_img);
 
+        ///////////////////////////////////////////////////////////////////
+        /////  LBP integrates here (choose product or sum) ////////////////
+        ///////////////////////////////////////////////////////////////////
         cv::namedWindow("fg_lbp_img");
         cv::imshow("fg_lbp_img", fg_lbp_img);
 
@@ -133,7 +135,7 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
         cv::Mat bin_image_sum = (combination_sum > fg_prob_threshold);
         cv::namedWindow("binary_sum");
         cv::imshow("binary_sum", bin_image_sum);
-
+        ///////////////////////////////////////////////////////////////////
 
         // Find contours for all the blobs found by background subtraction
         std::vector<std::vector<cv::Point> > contours;
@@ -145,9 +147,6 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
         // Make an HSV image
         cv::Mat hsv_img = original.clone();
         cv::cvtColor(original, hsv_img, CV_BGR2HSV);
-
-        // cv::namedWindow("hsv_img");
-        // cv::imshow("hsv_img", hsv_img);
 
         float hranges[] = {0, 180};
         float sranges[] = {0, 256};
@@ -182,37 +181,20 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
 
                 for (size_t i = 1; i < objects.size(); ++i)
                 {
-                    Object obj = objects[i];
                     cv::Mat back_project;
-                    cv::calcBackProject(&hsv_roi, 1, channels, obj.histogram, back_project, ranges);
+                    cv::calcBackProject(&hsv_roi, 1, channels, objects[i].histogram, back_project, ranges);
                     back_project.convertTo(back_project, CV_32F);
 
-/*                    printf("\n\nback_projects %d\n", i);
-                    print_mat_bzz2(&((CvMat) back_project));*/
-
-                    double min = obj.min;
-                    double max = obj.max;
+                    double min = objects[i].min;
+                    double max = objects[i].max;
                     back_project.convertTo(back_project, back_project.type(), 1.0 / (max - min), -min / (max - min));
 
-//                     printf("\n\nnormalized back_projects %d\n", i);
-//                     print_mat_bzz2(&((CvMat) back_project));
-
                     cv::Mat back_project_row = back_project.reshape(1, 1);
-
-//                     printf("\n\nreshaped back_projects %d\n", i);
-//                     print_mat_bzz2(&((CvMat) back_project_row));
-
                     cv::Mat rowi = back_projects.row(i+1);
                     back_project_row.copyTo(rowi);
                 }
 
                 cv::Mat phi = mlr_weights * back_projects;
-/*                printf("mlr_weights\n");
-                print_mat_bzz2(&((CvMat) mlr_weights));
-                printf("\n\nback_projects\n");
-                print_mat_bzz2(&((CvMat) back_projects));
-                printf("\n\nphi\n");
-                print_mat_bzz2(&((CvMat) phi));*/
                 cv::exp(phi, phi);
                 cv::Mat col_sums;
                 cv::reduce(phi, col_sums, 0, 0, CV_32F);
@@ -230,19 +212,18 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                     cv::imshow("obj" + boost::lexical_cast<std::string>(i), bin_image);
 
                     std::vector<std::vector<cv::Point> > contours;
-                    cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+                    cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(bounder.x, bounder.y));
 
                     if (contours.empty()) { continue; }
 
                     int max_index = 0;
                     double max_area = 0;
 
-                    if (contours.empty()) { continue; }
-
                     for (size_t j = 0; j < contours.size(); ++j)
                     {
                         std::vector<cv::Point>& con = contours[j];
                         double area = cv::contourArea(cv::Mat(con));
+
                         if (area > max_area)
                         {
                             max_area = area;
@@ -250,22 +231,15 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                         }
                     }
 
-                    std::vector<cv::Point> max_con = contours[max_index];
-                    cv::Point upper_left(bounder.x, bounder.y);
-
-                    for (size_t j = 0; j < max_con.size(); ++j)
-                    {
-                        max_con[j] += upper_left;
-                    }
-
                     int id = objects[i].id;
+
                     if (obj_id_to_patches.find(id) == obj_id_to_patches.end())
                     {
                         std::vector<std::vector<cv::Point> > v;
                         obj_id_to_patches[id] = v;
                     }
 
-                    obj_id_to_patches[id].push_back(max_con);
+                    obj_id_to_patches[id].push_back(contours[max_index]);
                 }
             }
         }
@@ -274,6 +248,7 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
         {
             int id = objects[i].id;
 
+            // a patch matching object with certain id was found in the current frame
             if (obj_id_to_patches.find(id) != obj_id_to_patches.end())
             {
                 std::vector<std::vector<cv::Point> >& v = obj_id_to_patches[id];
@@ -308,9 +283,26 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                     }
                 }
 
-                id_to_contour[id] = v[min_index];
+                // restrict search to last known location and vicinity
+                int search_grid_size = 100; // * std::pow(2, objects[i].missed_frames); // TODO
 
-                objects[i].tracks.push_back(min_center);
+                cv::Rect ar;
+                ar.x = last_obj_loc.x - search_grid_size / 2;
+                ar.y = last_obj_loc.y - search_grid_size / 2;
+                ar.width = search_grid_size;
+                ar.height = search_grid_size;
+
+                if (!ar.contains(min_center))
+                {
+                    ++objects[i].missed_frames;
+                }
+                else
+                {
+                    id_to_contour[id] = v[min_index];
+
+                    objects[i].tracks.push_back(min_center);
+                    objects[i].missed_frames = 0;
+                }
             }
         }
 
@@ -334,34 +326,9 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
             obj_rects.push_back(cv::minAreaRect(cv::Mat(id_to_contour[id])));
         }
 
-//         IplImage orig_ipl = original;
-//
-//         BOOST_FOREACH(Object obj, objects)
-//         {
-//             cv::SparseMat& hist = obj.histogram;
-//
-//
-//
-//             obj.subtract_self(fg_prob_img, original, bin_image, hsv_img, contours, fg_loglike_img);
-//
-//             if (obj.wasFound)
-//             {
-//                 cvPutText(&orig_ipl, boost::lexical_cast<std::string>(obj.id).c_str(), cvPoint(obj.tracks.back().x, obj.tracks.back().y), &font, CV_RGB(255, 0, 0));
-//
-//                 if (obj.tracks.size() > 1)
-//                 {
-//                     for (size_t i = 1; i < obj.tracks.size(); ++i)
-//                     {
-//                         cv::line(original, obj.tracks[i-1], obj.tracks[i], CV_RGB(255, 0, 0));
-//                     }
-//                 }
-//             }
-//         }
-
         cv::namedWindow("objects");
         cv::imshow("objects", original);
 
-//         ROS_INFO_STREAM("END");
         return id_to_contour;
     }
 }
