@@ -42,7 +42,7 @@
    (next-state
     :link (world-state prev-state :singular t)
     :singular t)
-   predicates)
+   (predicates :initform nil))
   (:dimensional-values
    (time :point time)))
 

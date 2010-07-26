@@ -10,12 +10,15 @@
     <url>http://ros.org/wiki/simulation_semantics</url>
 
     <depend package="roslisp"/>
+    <depend package="gbbopen"/>
     <depend package="simulator_experiments"/>
     <depend package="gazebo_plugins"/>
 
     <depend package="geometry_msgs"/>
     <depend package="std_msgs"/>
     <depend package="std_srvs"/>    
+    <depend package="plotter"/>
+    <depend package="map_server"/>
    
 </package>
 

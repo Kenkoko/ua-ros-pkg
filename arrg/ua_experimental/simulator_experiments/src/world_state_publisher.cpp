@@ -97,8 +97,11 @@ WorldStatePublisher::WorldStatePublisher(Entity *parent) :
   Param::End();
 
   // TODO: Hardcoded for now, should probably be from a ROS param
+  this->blacklist_.push_back("clock");
   this->blacklist_.push_back("clock_body");
+  this->blacklist_.push_back("gplane");
   this->blacklist_.push_back("plane");
+  this->blacklist_.push_back("point_white");
   this->blacklist_.push_back("point_white_RenderableBody_0");
 
   this->worldStateConnectCount = 0;
@@ -270,12 +273,12 @@ btConvexShape* WorldStatePublisher::extract_shape(Geom* geom)
         convex_hull->addPoint(point_bt);
       }
 
-//      cout << xmin << " " << ymin << " " << zmin << endl;
-//      cout << xmax << " " << ymax << " " << zmax << endl;
-//      result = convex_hull;
+      //      cout << xmin << " " << ymin << " " << zmin << endl;
+      //      cout << xmax << " " << ymax << " " << zmax << endl;
+      //      result = convex_hull;
 
-      btVector3 size(xmax-xmin, ymax-ymin, zmax-zmin);
-//      size *= 0.5;
+      btVector3 size(xmax - xmin, ymax - ymin, zmax - zmin);
+      //      size *= 0.5;
       result = new btBoxShape(size);
 
       cout << geom->GetWorldPose() << endl;
@@ -298,8 +301,31 @@ btConvexShape* WorldStatePublisher::extract_shape(Geom* geom)
 btTransform WorldStatePublisher::convert_transform(Pose3d pose)
 {
   btVector3 pos(pose.pos.x, pose.pos.y, pose.pos.z);
-  btQuaternion rot(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.u);
+
+  //  cout << "POS: " << pose.pos << endl;
+
+  // This is right
+  //  btQuaternion rot(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.u);
+  btQuaternion rot(0, 0, 0, 1); // This is for AABBs
+
+  //  cout << "QUATERNIONS!" << endl;
+  //  cout << pose.rot.x << " " << pose.rot.y << " " << pose.rot.z << " " << pose.rot.u << endl;
+  //  cout << pose.rot.GetAsEuler() << endl;
+  //  cout << rot.getX() << " " << rot.getY() << " " << rot.getZ() << " " << rot.getW() << endl;
+  //  btQuaternion test;
+  //  test.setRPY(pose.rot.GetAsEuler().x, pose.rot.GetAsEuler().y, pose.rot.GetAsEuler().z);
+  //  cout << test.getX() << " " << test.getY() << " " << test.getZ() << " " << test.getW() << endl;
+
   return btTransform(rot, pos);
+}
+
+btConvexShape* WorldStatePublisher::convert_aabb(Vector3 min, Vector3 max)
+{
+  Vector3 size = max - min;
+  size /= 2;
+  btVector3 half_extents(size.x, size.y, size.z);
+  btConvexShape* box = new btBoxShape(half_extents);
+  return box;
 }
 
 void WorldStatePublisher::UpdateChild()
@@ -312,21 +338,40 @@ void WorldStatePublisher::UpdateChild()
   // Publish
   Time cur_time = Simulator::Instance()->GetSimTime();
 
-  vector<gazebo::Model*> models;
-  vector<gazebo::Model*>::iterator miter;
-  vector<gazebo::Body*> all_bodies;
+  vector<Model*> models;
+  vector<Model*>::iterator miter;
+  vector<Body*> all_bodies;
 
-  models = gazebo::World::Instance()->GetModels();
+  models = World::Instance()->GetModels();
+
+  // GJK STUFF
+  vector<btConvexShape*> boxes;
+  vector<btTransform> tr;
+  vector<string> gjk_names;
+  //  vector<Model*> geom_to_model;
 
   // aggregate all bodies into a single vector
   for (miter = models.begin(); miter != models.end(); miter++)
   {
-    const std::vector<gazebo::Entity*> entities = (*miter)->GetChildren();
+    // Let's try GJK with model bounding boxes now, at least that's something
+    Model* model = *miter;
+    string name = model->GetName();
+    vector<string>::iterator result = find(blacklist_.begin(), blacklist_.end(), name);
+    if (result == blacklist_.end())
+    {
+      Vector3 min, max;
+      model->GetBoundingBox(min, max);
+      boxes.push_back(convert_aabb(min, max));
+      tr.push_back(convert_transform(model->GetWorldPose()));
+      gjk_names.push_back(model->GetName());
+    }
+
+    const vector<Entity*> entities = (*miter)->GetChildren();
     // Iterate through all bodies
-    std::vector<Entity*>::const_iterator eiter;
+    vector<Entity*>::const_iterator eiter;
     for (eiter = entities.begin(); eiter != entities.end(); eiter++)
     {
-      gazebo::Body* body = dynamic_cast<gazebo::Body*> (*eiter);
+      Body* body = dynamic_cast<Body*> (*eiter);
       if (body)
       {
         all_bodies.push_back(body);
@@ -335,7 +380,7 @@ void WorldStatePublisher::UpdateChild()
   }
 
   // construct world state message
-  if (!all_bodies.empty())
+  if (!models.empty())
   {
     int count = 0;
     this->lock.lock();
@@ -346,38 +391,35 @@ void WorldStatePublisher::UpdateChild()
 
     // Clear out the old list of objects
     this->worldStateMsg.object_info.clear();
-
-    // GJK STUFF
-    vector<btConvexShape*> boxes;
-    vector<btTransform> tr;
-    vector<string> gjk_names;
-    vector<Model*> geom_to_model;
+    this->worldStateMsg.relations.clear();
 
     // Iterate through all_bodies
-    vector<Body*>::iterator biter;
-    for (biter = all_bodies.begin(); biter != all_bodies.end(); biter++)
+    vector<Model*>::iterator miter;
+    for (miter = models.begin(); miter != models.end(); miter++)
     {
-      Body* body = *biter; //->second;
+      Model* model = *miter;
+      Body* body = model->GetCanonicalBody();
 
-      string name = string(body->GetName());
+      string body_name = string(body->GetName());
+      string model_name = string(model->GetName());
 
-      vector<string>::iterator result = find(blacklist_.begin(), blacklist_.end(), name);
+      vector<string>::iterator result = find(blacklist_.begin(), blacklist_.end(), model_name);
       if (result == blacklist_.end())
       {
         simulator_experiments::ObjectInfo info;
 
-        info.name = body->GetModel()->GetName();
+        info.name = model_name;
 
         // Let's try to look at the geoms
         for (map<string, Geom*>::const_iterator it = body->GetGeoms()->begin(); it != body->GetGeoms()->end(); it++)
         {
           Geom* geom = it->second;
-          //          geom->SetContactsEnabled(true);
+          geom->SetContactsEnabled(true);
 
-          boxes.push_back(extract_shape(geom));
-          tr.push_back(convert_transform(geom->GetBody()->GetWorldPose()));
-          gjk_names.push_back(geom->GetModel()->GetName() + "::" + geom->GetName());
-          geom_to_model.push_back(geom->GetModel());
+          //          boxes.push_back(extract_shape(geom));
+          //          tr.push_back(convert_transform(geom->GetBody()->GetWorldPose()));
+          //          gjk_names.push_back(geom->GetModel()->GetName() + "::" + geom->GetName());
+          //          geom_to_model.push_back(geom->GetModel());
         }
 
         // set pose
@@ -427,53 +469,76 @@ void WorldStatePublisher::UpdateChild()
         this->worldStateMsg.object_info.push_back(info);
       }
     }
-    this->pub_.publish(this->worldStateMsg);
-    this->lock.unlock();
 
+    // TODO: Need to add properties now to get some predicates
+
+    // GJK Distance Calculation
     if (boxes.size() > 1)
     {
       for (uint i = 0; i < boxes.size() - 1; i++)
       {
         for (uint j = i + 1; j < boxes.size(); j++)
         {
-          if (geom_to_model[i] == geom_to_model[j])
-            continue;
+          //          cout << "OBJECT " << i << ": " << gjk_names[i] << endl;
+          //          cout << "OBJECT " << j << ": " << gjk_names[j] << endl;
 
           btVoronoiSimplexSolver gjk_simplex_solver;
-
-          cout << "OBJECT " << i << ": " << gjk_names[i] << endl;
-          cout << "OBJECT " << j << ": " << gjk_names[j] << endl;
-
-          btGjkPairDetector gjk(boxes[0], boxes[1], &gjk_simplex_solver, NULL);
+          btGjkPairDetector gjk(boxes[0], boxes[1], &gjk_simplex_solver, NULL); // TODO: Add penetration solver.
           btPointCollector gjkOutput;
           btGjkPairDetector::ClosestPointInput input;
 
           input.m_transformA = tr[i];
           input.m_transformB = tr[j];
 
-          cout << "DISTANCES:" << endl;
-
           gjk.getClosestPoints(input, gjkOutput, 0);
 
+          //          cout << "DISTANCES:" << endl;
+          double gjk_distance = 0.0;
           if (gjkOutput.m_hasResult)
           {
             if (gjkOutput.m_distance > 0)
             {
-              cout << "CoM: " << tr[i].getOrigin().distance(tr[j].getOrigin()) << endl;
-              cout << "GJK: " << gjkOutput.m_distance << endl;
+              //              cout << "CoM: " << tr[i].getOrigin().distance(tr[j].getOrigin()) << endl;
+              //              cout << "GJK: " << gjkOutput.m_distance << endl;
+              gjk_distance = gjkOutput.m_distance;
             }
             else
             {
-              cout << "SLIGHT COLLISION" << endl;
+              //cout << "SLIGHT COLLISION" << endl;
             }
           }
           else
           {
-            cout << "DEEP COLLISION" << endl;
+            //cout << "DEEP COLLISION" << endl;
           }
+
+          simulator_experiments::Relation gjk_relation;
+          gjk_relation.name = "gjk_distance";
+          gjk_relation.subject = gjk_names[i];
+          gjk_relation.object = gjk_names[j];
+          gjk_relation.is_symmetric = 1;
+          gjk_relation.is_numeric = 1;
+          gjk_relation.value = gjk_distance;
+
+          // This is really for testing, we could compute this on the other end
+          simulator_experiments::Relation contact_relation;
+          contact_relation.name = "contact";
+          contact_relation.subject = gjk_names[i];
+          contact_relation.object = gjk_names[j];
+          contact_relation.is_symmetric = 1;
+          contact_relation.is_numeric = 0;
+          contact_relation.value = (gjk_distance == 0);
+
+//          cout << gjk_relation << endl;
+
+          this->worldStateMsg.relations.push_back(gjk_relation);
+          this->worldStateMsg.relations.push_back(contact_relation);
         }
       }
     }
+
+    this->pub_.publish(this->worldStateMsg);
+    this->lock.unlock();
   }
 }
 

@@ -3,6 +3,7 @@
 ;;====================================================
 ;; Class Definition 
 
+;; TODO: Should rename this to entity
 (define-unit-class thing ()
   (gazebo-name ;; no initform so it must be bound
    (xyz  :initform (list 1.0 0 0.2))

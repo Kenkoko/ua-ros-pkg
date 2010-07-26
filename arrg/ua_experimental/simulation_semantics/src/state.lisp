@@ -52,21 +52,44 @@
 
 ;;============================================================                
 
+;; TODO: Need to handle symmetric also
+(defun translate-relation (relation-msg)
+  (let* ((name (simulator_experiments-msg:name-val relation-msg))
+         (subject (simulator_experiments-msg:subject-val relation-msg))
+         (object (simulator_experiments-msg:object-val relation-msg))
+         (value (simulator_experiments-msg:value-val relation-msg))
+         (is-numeric? (simulator_experiments-msg:is_numeric-val relation-msg))
+         (is-symmetric? (simulator_experiments-msg:is_symmetric-val relation-msg))
+         (result nil))
+    (if is-numeric?
+        (push (list name subject object value) result)
+        (push (list name subject object (not (zerop value))) result))
+    (if is-symmetric?
+        (if is-numeric?
+            (push (list name object subject value) result)
+            (push (list name object subject (not (zerop value))) result)))
+))
+        
+;;============================================================                
+
 (defun translate-world-state (msg simn)
   (print msg)
-  (loop with states = (find-instances 'world-state simn :all)
-     with last-state = (if states (first states) nil)
-     with ws = (make-instance 'world-state 
+  (let* ((states (find-instances 'world-state simn :all))
+         (last-state (if states (first states) nil))
+         (ws (make-instance 'world-state 
                                  :time (roslib-msg:stamp-val
                                         (simulator_experiments-msg:header-val msg))
                                  :space-instances (list simn)
-                                 :prev-state last-state)
-     for obj-info across (simulator_experiments-msg:object_info-val msg)
-     for object = (find-object-by-gazebo-name (simulator_experiments-msg:name-val obj-info))
-     when object 
-     do (translate-object obj-info object ws)
-       (setf *current-state* ws)
-     finally (return ws)))
+                                 :prev-state last-state)))
+    (loop for relation-msg across (simulator_experiments-msg:relations-val msg)
+       do (loop for rel in (translate-relation relation-msg)
+             do (push rel (predicates-of ws))))
+    (loop for obj-info across (simulator_experiments-msg:object_info-val msg)
+       for object = (find-object-by-gazebo-name (simulator_experiments-msg:name-val obj-info))
+       when object 
+       do (translate-object obj-info object ws)
+         (setf *current-state* ws)
+       finally (return ws))))
 
 ;;============================================================                
 

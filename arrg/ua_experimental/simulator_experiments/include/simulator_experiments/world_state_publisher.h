@@ -40,10 +40,12 @@
 
 #include <simulator_experiments/WorldState.h>
 #include <simulator_experiments/ObjectInfo.h>
+#include <simulator_experiments/Relation.h>
 
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btTransform.h>
 #include <BulletCollision/CollisionShapes/btConvexShape.h>
+#include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include <BulletCollision/NarrowPhaseCollision/btVoronoiSimplexSolver.h>
 
 #include <map>
@@ -75,6 +77,7 @@ private:
 
   btConvexShape* extract_shape(Geom* geom);
   btTransform convert_transform(gazebo::Pose3d pose);
+  btConvexShape* convert_aabb(Vector3 min, Vector3 max);
 
   simulator_experiments::WorldState worldStateMsg;
 

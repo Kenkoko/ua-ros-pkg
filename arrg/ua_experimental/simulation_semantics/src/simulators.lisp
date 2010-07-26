@@ -244,8 +244,10 @@
   (delete-blackboard-repository))
 
 (defun get-ready ()
-  (init-objects)
-  (init-simulators)
+  ;(init-objects)
+  ;(init-simulators)
+  (if (empty-blackboard-repository-p)
+      (restore))
   (subscribe-to-world-state))
 
 (defun uphill ()

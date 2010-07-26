@@ -103,7 +103,8 @@
         ':|name| (model-name obj)))
 
 (defmethod model-name ((obj physical-object))
-  (concatenate 'string (gazebo-name-of obj) "_model"))
+  ;(concatenate 'string (gazebo-name-of obj) "_model"))
+  (gazebo-name-of obj))
 
 (defmethod set-xyz ((obj physical-object) x y z)
   (setf (xyz-of obj) (list x y z)))
