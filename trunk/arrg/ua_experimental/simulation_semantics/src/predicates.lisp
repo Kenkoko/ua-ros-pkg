@@ -11,7 +11,7 @@
                                 for obj-last-state in (objects-of last-ws)
                                 append (compute-my-predicates obj-state obj-last-state))
                              (compute-binary-predicates (objects-of ws)))))
-    (setf (predicates-of ws) predicates)))
+    (setf (predicates-of ws) (append (predicates-of ws) predicates))))
 
 (defmethod print-predicates ((ws world-state))
   (format t "Predicates of ~a at time ~d:~%" (first (space-instances-of ws)) (time-of ws))

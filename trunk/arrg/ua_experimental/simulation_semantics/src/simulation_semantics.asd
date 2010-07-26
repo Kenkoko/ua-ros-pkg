@@ -15,6 +15,7 @@
                  (:file "state" :depends-on ("classes"))
                  (:file "predicates" :depends-on ("object-class" "state" "permutations"))
 
+                 (:file "data" :depends-on ("classes"))
                  (:file "simulators" :depends-on ("classes"))
                  (:file "online" :depends-on ("simulators"))
                  (:file "manipulation" :depends-on ("simulators")))
