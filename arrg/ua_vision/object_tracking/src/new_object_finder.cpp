@@ -32,38 +32,14 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
+#include <cstdio>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
 #include <object_tracking/object.h>
 #include <object_tracking/new_object_finder.h>
-
-void print_mat_bzz(CvMat *mat)
-{
-    for (int i = 0; i < mat->rows; i++)
-    {
-        std::printf("\n");
-
-        switch (CV_MAT_DEPTH(mat->type))
-        {
-            case CV_32F:
-            case CV_64F:
-                for (int j = 0; j < mat->cols; j++)
-                    std::printf("%8.6f ", (float)cvGetReal2D(mat, i, j));
-                break;
-            case CV_8U:
-            case CV_16U:
-                for (int j = 0; j < mat->cols; j++)
-                    std::printf("%6d", (int)cvGetReal2D(mat, i, j));
-                break;
-            default:
-                break;
-        }
-    }
-
-    std::printf("\n");
-}
 
 NewObjectFinder::NewObjectFinder()
 {
@@ -111,8 +87,6 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     //  cv::namedWindow("hsv_img");
     //  cv::imshow("hsv_img", hsv_img);
 
-    srand(time(NULL));
-
     // These vectors store information about the new objects
     std::vector<cv::Rect> fg_rects;
     std::vector<cv::MatND> histograms;
@@ -134,20 +108,11 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     for (uint i = 0; i < contours.size(); ++i)
     {
         std::vector<cv::Point> con = contours[i];
-
-        int r, g, b;
-        r = rand() % 255;
-        g = rand() % 255;
-        b = rand() % 255;
-
-        // If we have a reasonably large contour, we need to inform the tracker that it
-        // is missing an object
         double area = cv::contourArea(cv::Mat(con));
-        ROS_INFO("Contour %u has area %f", i, area);
 
         if (area > 40)
         {
-            ROS_INFO_STREAM("FOUND AN OBJECT");
+            ROS_INFO("Found a possible object of size %f", area);
             areas.push_back(area);
 
             cv::Rect bounder = cv::boundingRect(cv::Mat(con));
@@ -220,8 +185,8 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
             obj.area = areas[i];
 
             cv::Point center;
-            center.x = (fg_rects[i].x + (fg_rects[i].width / 2.0));
-            center.y = (fg_rects[i].y + (fg_rects[i].height / 2.0));
+            center.x = (fg_rects[i].x + (fg_rects[i].width / 2));
+            center.y = (fg_rects[i].y + (fg_rects[i].height / 2));
 
             obj.tracks.push_back(center);
             obj.histogram = histograms[i];
@@ -250,9 +215,6 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& o
     // multinomial logisitc regression weights
     cv::Mat mlr_weights(num_objects, num_features, CV_32F);
     cv::randn(mlr_weights, cv::Scalar(0.0), cv::Scalar(0.1));
-/*
-    printf("mlr_after_init\n");
-    print_mat_bzz(&((CvMat) mlr_weights));*/
 
     cv::Mat last_delta = cv::Mat::zeros(num_objects, num_features, CV_32F);
     cv::Mat mask_vectors(num_objects, size, CV_32F);
@@ -329,9 +291,9 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& o
             prediction_error += cv::sum(diff)[0];
         }
 
-        printf("Epoch [%d], error = %f\n", i, prediction_error / size);
+        ROS_DEBUG("Epoch [%d], error = %f\n", i, prediction_error / size);
     }
 
     mlr_return = mlr_weights.clone();
-    printf("sgd mlr_weights r = %d, c = %d\n", mlr_weights.rows, mlr_weights.cols);
+    ROS_DEBUG("sgd mlr_weights r = %d, c = %d\n", mlr_weights.rows, mlr_weights.cols);
 }
