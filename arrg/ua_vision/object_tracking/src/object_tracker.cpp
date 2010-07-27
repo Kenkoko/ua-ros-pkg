@@ -43,6 +43,7 @@
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
 #include <visualization_msgs/Marker.h>
+#include <geometry_msgs/PoseArray.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <tf/transform_listener.h>
 
@@ -82,7 +83,7 @@ public:
     {
         ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
         marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
-        object_pub = nh.advertise<geometry_msgs::PoseStamped>("overhead_objects", 1);
+        object_pub = nh.advertise<geometry_msgs::PoseArray>("overhead_objects", 1);
 
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
@@ -159,7 +160,7 @@ public:
             lbp_init = true;
         }
 
-        if (counter++ > 150 && lbp_model.do_updates) { lbp_model.do_updates = false; ROS_INFO("LBP Ready."); }
+        if (lbp_model.do_updates && counter++ > 150) { lbp_model.do_updates = false; ROS_INFO("LBP Ready."); }
 
         cv::Mat temp = original.clone();
         lbp_model.update(temp);
@@ -179,9 +180,12 @@ public:
             std::map<int, std::vector<cv::Point> > id_to_contour = known_obj_finder.find_objects(neg_log_lik_img, lbp_foreground_img, original, objects, mlr_weights, obj_rects);
             if (!init) { new_obj_finder.find_objects(neg_log_lik_img, original, objects, mlr_weights); init = true; }
 
+            geometry_msgs::PoseArray obj_pose_array;
+            obj_pose_array.header.stamp = msg_ptr->header.stamp;
+            obj_pose_array.header.frame_id = "/map";
+
             for (size_t i = 0; i < obj_rects.size(); ++i)
             {
-
                 if (cam_model.width() != 0)
                 {
                     cv::Point2d point_img;
@@ -217,7 +221,7 @@ public:
 
                     visualization_msgs::Marker marker;
                     marker.header.frame_id = "/map";
-                    marker.header.stamp = ros::Time::now();
+                    marker.header.stamp = msg_ptr->header.stamp;
                     marker.ns = "overhead_camera_objects";
                     marker.id = objects[i].id;
                     marker.type = visualization_msgs::Marker::CUBE;;
@@ -239,16 +243,14 @@ public:
                     marker.lifetime = ros::Duration(1.0);
                     marker_pub.publish(marker);
 
-                    geometry_msgs::PoseStamped pose;
-                    pose.header.frame_id = "/map";
-                    pose.header.stamp = marker.header.stamp;
-                    pose.pose = marker.pose;
-                    object_pub.publish(pose);
+                    obj_pose_array.poses.push_back(marker.pose);
 
                     //ROS_INFO("Point in map frame = (%f, %f, %f)", marker.pose.position.x, marker.pose.position.y, marker.pose.position.z);
                     //ROS_INFO("Object size (%f, %f) and rotation is %f degrees", marker.scale.x, marker.scale.y, obj_rects[i].angle);
                 }
             }
+
+            object_pub.publish(obj_pose_array);
         }
     }
 };

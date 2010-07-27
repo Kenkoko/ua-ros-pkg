@@ -78,6 +78,13 @@ KnownObjectFinder::KnownObjectFinder()
     fg_prob_threshold = 0.6;
     cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, .33, .33);
     cv::startWindowThread();
+
+    fd = new cv::SiftFeatureDetector(cv::SIFT::DetectorParams::GET_DEFAULT_THRESHOLD(),
+                                     cv::SIFT::DetectorParams::GET_DEFAULT_EDGE_THRESHOLD());
+
+    cv::SurfDescriptorExtractor extractor;
+    cv::BruteForceMatcher<cv::L2<float> > matcher;
+    de = new cv::VectorDescriptorMatch<cv::SurfDescriptorExtractor, cv::BruteForceMatcher<cv::L2<float> > >(extractor, matcher);
 }
 
 std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img,
@@ -137,6 +144,8 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
         cv::imshow("binary_sum", bin_image_sum);
         ///////////////////////////////////////////////////////////////////
 
+        fg_prob_img = combination_sum;
+
         // Find contours for all the blobs found by background subtraction
         std::vector<std::vector<cv::Point> > contours;
         cv::Mat bin_image = (fg_prob_img > fg_prob_threshold);
@@ -145,7 +154,7 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
         cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
         // Make an HSV image
-        cv::Mat hsv_img = original.clone();
+        cv::Mat hsv_img;
         cv::cvtColor(original, hsv_img, CV_BGR2HSV);
 
         float hranges[] = {0, 180};
@@ -281,7 +290,44 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                         min_index = j;
                         min_center = center;
                     }
+
+                    // match features
+                    cv::Mat img2_orig = original(r);
+                    cv::Mat img2;
+                    cv::cvtColor(img2_orig, img2, CV_BGR2GRAY);
+
+                    cv::namedWindow("win" + boost::lexical_cast<string>(j));
+                    cv::imshow("win" + boost::lexical_cast<string>(j), img2);
+
+                    cout << endl << "< Extracting keypoints from second image..." << endl;
+                    vector<cv::KeyPoint> keypoints2;
+                    fd->detect( img2, keypoints2 );
+                    cout << keypoints2.size() << " >" << endl;
+
+                    // draw keypoints
+                    for(vector<cv::KeyPoint>::const_iterator it = keypoints2.begin(); it < keypoints2.end(); ++it )
+                    {
+                        cv::Point p(it->pt.x + r.x, it->pt.y + r.y);
+                        cv::circle(original, p, 3, CV_RGB(0, 255, 0));
+                    }
+
+                    cout << "< Computing and matching descriptors..." << endl;
+                    vector<int> matches;
+                    if( objects[i].keypoints.size()>0 && keypoints2.size()>0 )
+                    {
+                        de->clear();
+                        de->add( img2, keypoints2 );
+                        de->match( objects[i].tr_img, objects[i].keypoints, matches );
+                    }
+                    cout << ">" << endl;
+
+                    for (uint kk = 0; kk < matches.size(); ++kk)
+                    {
+                        printf("%d ", matches[kk]);
+                    }
+                    printf("\n");
                 }
+
 
                 // restrict search to last known location and vicinity
                 int search_grid_size = 100; // * std::pow(2, objects[i].missed_frames); // TODO

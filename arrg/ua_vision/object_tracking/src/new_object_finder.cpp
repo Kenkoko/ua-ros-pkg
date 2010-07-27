@@ -67,6 +67,9 @@ void print_mat_bzz(CvMat *mat)
 
 NewObjectFinder::NewObjectFinder()
 {
+    fd = new cv::SiftFeatureDetector(cv::SIFT::DetectorParams::GET_DEFAULT_THRESHOLD(),
+                                     cv::SIFT::DetectorParams::GET_DEFAULT_EDGE_THRESHOLD());
+
     cv::startWindowThread();
 }
 
@@ -102,7 +105,7 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     ROS_INFO("Found %Zu contours", contours.size());
 
     // Make an HSV image
-    cv::Mat hsv_img = original.clone();
+    cv::Mat hsv_img;
     cv::cvtColor(original, hsv_img, CV_BGR2HSV);
 
     //  cv::namedWindow("hsv_img");
@@ -116,6 +119,8 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
     std::vector<cv::Mat> back_projects;
     std::vector<cv::Mat> masks;
     std::vector<double> areas;
+    std::vector<std::vector<cv::KeyPoint> > keypoints;
+    std::vector<cv::Mat> tr_imgs;
 
     // first thing is background model
     back_projects.push_back(bg_neg_log_lik_img.clone());
@@ -143,18 +148,9 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
         if (area > 40)
         {
             ROS_INFO_STREAM("FOUND AN OBJECT");
-
-            std::vector<std::vector<cv::Point> > one_contour;
-            one_contour.push_back(con);
-
             areas.push_back(area);
 
-            // For debugging
-            cv::drawContours(original, one_contour, -1, cv::Scalar(r, g, b));
-
             cv::Rect bounder = cv::boundingRect(cv::Mat(con));
-            cv::rectangle(original, bounder, cv::Scalar(r, g, b));
-
             fg_rects.push_back(bounder);
             cv::Mat mask = bin_image(bounder);
             cv::Mat hsv_roi = hsv_img(bounder);
@@ -162,16 +158,11 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
             cv::MatND hist;
 
             int hist_size[] = {h_bins, s_bins};
-            // hue varies from 0 to 179, see cvtColor
             float hranges[] = {0, 180};
-            // saturation varies from 0 (black-gray-white) to
-            // 255 (pure spectrum color)
             float sranges[] = {0, 256};
             const float* ranges[] = {hranges, sranges};
-            //                     int hist_size[] = {num_bins, num_bins};
             int channels[] = {0, 1};
-            //                     float range[] = {0, 256};
-            //                     const float* ranges[] = {range, range};
+
             cv::calcHist(&hsv_roi, 1, channels, mask, hist, 2, hist_size, ranges);
             histograms.push_back(hist);
 
@@ -183,10 +174,20 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
             cv::Mat back_project;
             hsv_img.convertTo(hsv_img, CV_32F);
             cv::calcBackProject(&hsv_img, 1, channels, hist, back_project, ranges);
-
-//             cv::log(bp_prob, bp_prob); // TODO to log or not to log?
-
+            //cv::log(bp_prob, bp_prob); // TODO to log or not to log?
             back_projects.push_back(back_project);
+
+            // extract features
+            cv::Mat img1_orig = original(bounder);
+            cv::Mat img1;
+            cv::cvtColor(img1_orig, img1, CV_BGR2GRAY);
+
+            std::cout << std::endl << "< Extracting keypoints from object contour..." << std::endl;
+            std::vector<cv::KeyPoint> keypoints1;
+            fd->detect( img1, keypoints1 );
+            std::cout << keypoints1.size() << " >" << std::endl;
+            keypoints.push_back(keypoints1);
+            tr_imgs.push_back(img1.clone());
         }
     }
 
@@ -212,7 +213,7 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
         bg.max = maxs[0];
         objects.push_back(bg);
 
-        for (uint i = 0; i < num_objects - 1; ++i)
+        for (int i = 0; i < num_objects - 1; ++i)
         {
             Object obj;
 
@@ -226,13 +227,12 @@ void NewObjectFinder::find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::
             obj.histogram = histograms[i];
             obj.min = mins[i+1];
             obj.max = maxs[i+1];
+            obj.keypoints = keypoints[i];
+            obj.tr_img = tr_imgs[i];
 
             obj.id = objects.size();
             objects.push_back(obj);
         }
-
-        //  cv::namedWindow("contours");
-        //  cv::imshow("contours", original);
     }
 }
 
@@ -243,7 +243,6 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& o
     float momentum = 0.;
     float weight_decay = 0.;
     int size = obj_mask[0].rows * obj_mask[0].cols;
-    int width = obj_mask[0].cols;
 
     int num_objects = bp_prob.size();        // num of new objects + background
     int num_features = num_objects + 1;      // 1 = bias term
@@ -263,12 +262,12 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& o
     // first thing is background model
     for (int i = 0; i < num_objects; ++i)
     {
-        cv::Mat bp = bp_prob[i].clone();                  // TODO: pass in reshaped back_projects?
+        cv::Mat bp = bp_prob[i].clone();                    // TODO: pass in reshaped back_projects?
         double* min = &mins[i];
         double* max = &maxs[i];
         cv::minMaxLoc(bp, min, max);
         cv::normalize(bp, bp, 0, 1, cv::NORM_MINMAX);
-        cv::Mat bp_vector = bp.reshape(1, 1);                                   // 1 channel, 1 row matrix [px_1 ... px_size]
+        cv::Mat bp_vector = bp.reshape(1, 1);               // 1 channel, 1 row matrix [px_1 ... px_size]
         cv::Mat rowi = feature_vectors.row(i + 1);
         bp_vector.row(0).copyTo(rowi);
 
@@ -303,68 +302,14 @@ void NewObjectFinder::sgd(std::vector<cv::Mat>& bp_prob, std::vector<cv::Mat>& o
             float sum = cv::sum(vals)[0];
             cv::Mat ps = vals * (1.0f / sum);
 
-            // debug
-//             if (std::isinf<double>(sum))
-//             {
-//                 printf("sum = %f\nps:\n", sum);
-//                 print_mat_bzz(&((CvMat) ps));
-//                 printf("vals\n");
-//                 print_mat_bzz(&((CvMat) vals));
-//                 printf("mlr_weights\n");
-//                 print_mat_bzz(&((CvMat) mlr_weights));
-//                 printf("feat_col\n");
-//                 print_mat_bzz(&((CvMat) feat_col));
-//                 exit(1);
-//             }
-//
             for (int k = 0; k < num_objects; ++k)
             {
                 cv::Mat rowk = last_delta.row(k);
-
-/*                if (j < 100)
-                {
-                    printf("rowk before:\n");
-                    print_mat_bzz(&((CvMat) rowk));
-                }*/
-
                 float error = mask_vectors.at<float>(k, n) - ps.at<float>(0, k);
-
-//                 if (j < 100)
-//                 {
-//                     printf("%f - %f = error:%f\n", mask_vectors.at<float>(k, n), ps.at<float>(0, k), error);
-//                 }
-
                 cv::Mat gradient = feat_col * step_size * error;
-
-/*                if (j < 100)
-                {
-                    printf("gradient:\n");
-                    print_mat_bzz(&((CvMat) gradient));
-                }*/
-
                 cv::Mat delta = rowk * momentum + gradient.t() * (1 - momentum);
-
-//                 if (j < 100)
-//                 {
-//                     printf("delta:\n");
-//                     print_mat_bzz(&((CvMat) delta));
-//                 }
-
                 mlr_weights.row(k) = mlr_weights.row(k) + delta - weight_decay * mlr_weights.row(k);
-
-//                 if (j < 100)
-//                 {
-//                     printf("mlr_weights.row(k):\n");
-//                     print_mat_bzz(&((CvMat) mlr_weights.row(k)));
-//                 }
-
                 delta.copyTo(rowk);
-
-/*                if (j < 100)
-                {
-                    printf("rowk after:\n");
-                    print_mat_bzz(&((CvMat) rowk));
-                }*/
             }
         }
 
