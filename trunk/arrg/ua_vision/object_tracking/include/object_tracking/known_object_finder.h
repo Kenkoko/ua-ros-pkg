@@ -40,18 +40,33 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <object_tracking/object.h>
 
+static cv::Scalar track_colors[5] = { CV_RGB(255,   0,   0),
+                                      CV_RGB(255, 116,   0),
+                                      CV_RGB(  0, 153, 153),
+                                      CV_RGB(255, 240,  48),
+                                      CV_RGB(160,  15,  81),
+                                    };
+
+typedef std::vector<cv::Point> Contour;
+
 class KnownObjectFinder
 {
 private:
     double fg_prob_threshold;
-    CvFont font;
 
     cv::FeatureDetector* fd;
     cv::GenericDescriptorMatch* de;
 
 public:
     KnownObjectFinder();
-    std::map<int, std::vector<cv::Point> > find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img, const cv::Mat& camera_img, std::vector< Object >& objects, cv::Mat& mlr_weights, std::vector< cv::RotatedRect >& obj_rects);
+
+    std::map<int, Contour>
+    find_objects(const cv::Mat& neg_log_lik_img,
+                 const cv::Mat& lbp_foreground_img,
+                 const cv::Mat& camera_img,
+                 std::vector<Object>& objects,
+                 cv::Mat& mlr_weights,
+                 std::vector<cv::RotatedRect>& obj_rects);
 };
 
 #endif

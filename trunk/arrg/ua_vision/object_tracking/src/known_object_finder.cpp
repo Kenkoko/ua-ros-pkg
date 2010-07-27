@@ -32,6 +32,8 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
+#include <cstdio>
+
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -44,39 +46,9 @@
 #include <object_tracking/object.h>
 #include <object_tracking/known_object_finder.h>
 
-using namespace std;
-
-void print_mat_bzz2(CvMat *mat)
-{
-    for (int i = 0; i < mat->rows; i++)
-    {
-        std::printf("\n");
-
-        switch (CV_MAT_DEPTH(mat->type))
-        {
-            case CV_32F:
-            case CV_64F:
-                for (int j = 0; j < mat->cols; j++)
-                    std::printf("%8.6f ", (float)cvGetReal2D(mat, i, j));
-                break;
-            case CV_8U:
-            case CV_16U:
-                for (int j = 0; j < mat->cols; j++)
-                    std::printf("%6d", (int)cvGetReal2D(mat, i, j));
-                break;
-            default:
-                break;
-        }
-    }
-
-    std::printf("\n");
-}
-
-
 KnownObjectFinder::KnownObjectFinder()
 {
     fg_prob_threshold = 0.6;
-    cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, .33, .33);
     cv::startWindowThread();
 
     fd = new cv::SiftFeatureDetector(cv::SIFT::DetectorParams::GET_DEFAULT_THRESHOLD(),
@@ -87,11 +59,15 @@ KnownObjectFinder::KnownObjectFinder()
     de = new cv::VectorDescriptorMatch<cv::SurfDescriptorExtractor, cv::BruteForceMatcher<cv::L2<float> > >(extractor, matcher);
 }
 
-std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img,
-                                                                       const cv::Mat& camera_img, std::vector<Object>& objects, cv::Mat& mlr_weights,
-                                                                       std::vector<cv::RotatedRect>& obj_rects)
+std::map<int, Contour>
+KnownObjectFinder::find_objects(const cv::Mat& neg_log_lik_img,
+                                const cv::Mat& lbp_foreground_img,
+                                const cv::Mat& camera_img,
+                                std::vector<Object>& objects,
+                                cv::Mat& mlr_weights,
+                                std::vector<cv::RotatedRect>& obj_rects)
 {
-    std::map<int, vector<cv::Point> > id_to_contour;
+    std::map<int, Contour> id_to_contour;
 
     // If no objects, just pass along the image unchanged - otherwise the other node has no input
     if (objects.empty())
@@ -162,11 +138,11 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
         int channels[] = {0, 1};
         const float* ranges[] = {hranges, sranges};
 
-        std::map<int, vector<vector<cv::Point> > > obj_id_to_patches;
+        std::map<int, std::vector<Contour> > object_id_to_contours;
 
         // TODO: Initialize rectangles here
 
-        BOOST_FOREACH(std::vector<cv::Point> con, contours)
+        BOOST_FOREACH(Contour con, contours)
         {
             double area = cv::contourArea(cv::Mat(con));
 
@@ -220,7 +196,7 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                     cv::namedWindow("obj" + boost::lexical_cast<std::string>(i));
                     cv::imshow("obj" + boost::lexical_cast<std::string>(i), bin_image);
 
-                    std::vector<std::vector<cv::Point> > contours;
+                    std::vector<Contour> contours;
                     cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(bounder.x, bounder.y));
 
                     if (contours.empty()) { continue; }
@@ -230,7 +206,7 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
 
                     for (size_t j = 0; j < contours.size(); ++j)
                     {
-                        std::vector<cv::Point>& con = contours[j];
+                        Contour& con = contours[j];
                         double area = cv::contourArea(cv::Mat(con));
 
                         if (area > max_area)
@@ -242,13 +218,12 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
 
                     int id = objects[i].id;
 
-                    if (obj_id_to_patches.find(id) == obj_id_to_patches.end())
+                    if (object_id_to_contours.find(id) == object_id_to_contours.end())
                     {
-                        std::vector<std::vector<cv::Point> > v;
-                        obj_id_to_patches[id] = v;
+                        object_id_to_contours[id] = std::vector<Contour>();
                     }
 
-                    obj_id_to_patches[id].push_back(contours[max_index]);
+                    object_id_to_contours[id].push_back(contours[max_index]);
                 }
             }
         }
@@ -258,9 +233,9 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
             int id = objects[i].id;
 
             // a patch matching object with certain id was found in the current frame
-            if (obj_id_to_patches.find(id) != obj_id_to_patches.end())
+            if (object_id_to_contours.find(id) != object_id_to_contours.end())
             {
-                std::vector<std::vector<cv::Point> >& v = obj_id_to_patches[id];
+                std::vector<Contour>& contours = object_id_to_contours[id];
 
                 int min_index = 0;
                 double min_dist = std::numeric_limits<double>::max();
@@ -275,10 +250,10 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                     last_obj_loc += p;
                 }
 
-                for (size_t j = 0; j < v.size(); ++j)
+                for (size_t j = 0; j < contours.size(); ++j)
                 {
-                    cv::Rect r = cv::boundingRect(cv::Mat(v[j]));
-                    double area = cv::contourArea(cv::Mat(v[j]));
+                    cv::Rect r = cv::boundingRect(cv::Mat(contours[j]));
+                    double area = cv::contourArea(cv::Mat(contours[j]));
                     cv::Point center(r.x + r.width / 2, r.y + r.height / 2);
                     cv::Point dist_diff = center - last_obj_loc;
                     double area_diff = area - objects[i].area;
@@ -296,38 +271,40 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                     cv::Mat img2;
                     cv::cvtColor(img2_orig, img2, CV_BGR2GRAY);
 
-                    cv::namedWindow("win" + boost::lexical_cast<string>(j));
-                    cv::imshow("win" + boost::lexical_cast<string>(j), img2);
+                    cv::namedWindow("win" + boost::lexical_cast<std::string>(j));
+                    cv::imshow("win" + boost::lexical_cast<std::string>(j), img2);
 
-                    cout << endl << "< Extracting keypoints from second image..." << endl;
-                    vector<cv::KeyPoint> keypoints2;
+                    std::cout << std::endl << "< Extracting keypoints from second image..." << std::endl;
+                    std::vector<cv::KeyPoint> keypoints2;
                     fd->detect( img2, keypoints2 );
-                    cout << keypoints2.size() << " >" << endl;
+                    std::cout << keypoints2.size() << " >" << std::endl;
 
                     // draw keypoints
-                    for(vector<cv::KeyPoint>::const_iterator it = keypoints2.begin(); it < keypoints2.end(); ++it )
+                    for(std::vector<cv::KeyPoint>::const_iterator it = keypoints2.begin(); it < keypoints2.end(); ++it )
                     {
                         cv::Point p(it->pt.x + r.x, it->pt.y + r.y);
                         cv::circle(original, p, 3, CV_RGB(0, 255, 0));
                     }
 
-                    cout << "< Computing and matching descriptors..." << endl;
-                    vector<int> matches;
-                    if( objects[i].keypoints.size()>0 && keypoints2.size()>0 )
+                    std::cout << "< Computing and matching descriptors..." << std::endl;
+                    std::vector<int> matches;
+
+                    if( objects[i].keypoints.size() > 0 && keypoints2.size() > 0 )
                     {
                         de->clear();
                         de->add( img2, keypoints2 );
                         de->match( objects[i].tr_img, objects[i].keypoints, matches );
                     }
-                    cout << ">" << endl;
+
+                    std::cout << ">" << std::endl;
 
                     for (uint kk = 0; kk < matches.size(); ++kk)
                     {
-                        printf("%d ", matches[kk]);
+                        std::printf("%d ", matches[kk]);
                     }
-                    printf("\n");
-                }
 
+                    std::printf("\n");
+                }
 
                 // restrict search to last known location and vicinity
                 int search_grid_size = 100; // * std::pow(2, objects[i].missed_frames); // TODO
@@ -344,7 +321,7 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
                 }
                 else
                 {
-                    id_to_contour[id] = v[min_index];
+                    id_to_contour[id] = contours[min_index];
 
                     objects[i].tracks.push_back(min_center);
                     objects[i].missed_frames = 0;
@@ -352,20 +329,21 @@ std::map<int, std::vector<cv::Point> > KnownObjectFinder::find_objects(const cv:
             }
         }
 
-        IplImage orig_ipl = original;
-
         for (size_t i = 0; i < objects.size(); ++i)
         {
             int id = objects[i].id;
             if (id_to_contour.find(id) == id_to_contour.end()) { continue; }
 
-            cvPutText(&orig_ipl, boost::lexical_cast<std::string>(id).c_str(), cvPoint(objects[i].tracks.back().x, objects[i].tracks.back().y), &font, CV_RGB(255, 0, 0));
+            cv::putText(original,
+                        boost::lexical_cast<std::string>(id),
+                        cv::Point(objects[i].tracks.back().x, objects[i].tracks.back().y),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.33, CV_RGB(255, 0, 0));
 
             if (objects[i].tracks.size() > 1)
             {
                 for (size_t j = 1; j < objects[i].tracks.size(); ++j)
                 {
-                    cv::line(original, objects[i].tracks[j-1], objects[i].tracks[j], CV_RGB(255, 0, 0));
+                    cv::line(original, objects[i].tracks[j-1], objects[i].tracks[j], track_colors[id % 5]);
                 }
             }
 
