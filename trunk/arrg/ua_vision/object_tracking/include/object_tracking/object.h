@@ -31,6 +31,7 @@
 
 #include <ros/ros.h>
 #include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
 class Object
 {
@@ -44,6 +45,8 @@ public:
     int missed_frames;
 
     std::vector<cv::Point> tracks;
+    std::vector<cv::KeyPoint> keypoints;
+    cv::Mat tr_img;
     cv::SparseMat histogram;
     ros::Time timestamp;
     bool wasFound;

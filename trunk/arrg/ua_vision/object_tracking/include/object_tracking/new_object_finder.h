@@ -41,6 +41,8 @@
 class NewObjectFinder
 {
 public:
+    cv::FeatureDetector* fd;
+
     NewObjectFinder();
 
     void find_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, std::vector<Object>& objects, cv::Mat& mlr_weights);

@@ -37,6 +37,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/features2d/features2d.hpp>
 #include <object_tracking/object.h>
 
 class KnownObjectFinder
@@ -44,6 +45,9 @@ class KnownObjectFinder
 private:
     double fg_prob_threshold;
     CvFont font;
+
+    cv::FeatureDetector* fd;
+    cv::GenericDescriptorMatch* de;
 
 public:
     KnownObjectFinder();
