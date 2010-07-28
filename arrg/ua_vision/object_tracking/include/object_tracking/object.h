@@ -41,23 +41,19 @@ public:
     double min;
     double max;
 
-    double alpha, beta; // TODO: remove those
     int missed_frames;
 
     std::vector<cv::Point> tracks;
+    std::vector<ros::Time> timestamps;
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat tr_img;
     cv::SparseMat histogram;
-    ros::Time timestamp;
     bool wasFound;
+    cv::RotatedRect tight_bounding_box;
 
     Object() : missed_frames(0)
     {
     }
-
-    void subtract_self(const cv::Mat& fg_prob_img, const cv::Mat& orig_img, const cv::Mat& bin_img,
-                       const cv::Mat& hsv_img, std::vector<std::vector<cv::Point> > contours, cv::Mat& fg_loglike_img);
-
 };
 
 #endif // OBJECT_H
