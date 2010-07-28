@@ -46,6 +46,7 @@
 #include <geometry_msgs/PoseArray.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <tf/transform_listener.h>
+#include <std_srvs/Empty.h>
 
 #include <background_filters/GetBgStats.h>
 #include <background_filters/common.h>
@@ -53,6 +54,7 @@
 #include <background_filters/lbp_background_subtractor.h>
 
 #include <object_tracking/object_tracker.h>
+#include <stddef.h>
 
 class ObjectTrackerNode
 {
@@ -73,11 +75,13 @@ private:
     ros::Subscriber info_sub;
     image_geometry::PinholeCameraModel cam_model;
     tf::TransformListener tf_listener;
+    ros::ServiceServer dump_tracks_srv;
 
 public:
     ObjectTrackerNode(ros::NodeHandle& nh, const std::string& transport)
     {
         ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
+        dump_tracks_srv = nh.advertiseService("dump_tracks_to_file", &ObjectTrackerNode::dump_object_tracks, this);
         marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
         object_pub = nh.advertise<geometry_msgs::PoseArray>("overhead_objects", 1);
 
@@ -108,6 +112,16 @@ public:
 
         image_sub = it.subscribe(topic, 1, &ObjectTrackerNode::handle_image, this);
         info_sub = nh.subscribe<sensor_msgs::CameraInfo>(topic_info, 1, &ObjectTrackerNode::handle_info, this);
+    }
+
+    bool dump_object_tracks(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+    {
+        for (size_t i = 0; i < object_tracker.objects.size(); ++i)
+        {
+            object_tracker.objects[i].dump_to_file();
+        }
+
+        return true;
     }
 
     void handle_info(const sensor_msgs::CameraInfoConstPtr& info_msg)
@@ -171,7 +185,7 @@ public:
 
         if (go)
         {
-            object_tracker.find_objects(neg_log_lik_img, lbp_foreground_img, original, msg_ptr->header.stamp);
+            std::map<int, Contour> objs = object_tracker.find_objects(neg_log_lik_img, lbp_foreground_img, original, msg_ptr->header.stamp);
 
             if (cam_model.width() == 0) { ROS_WARN("No CameraInfo message received yet or uncalibrated camera"); return; }
 
@@ -181,6 +195,8 @@ public:
 
             for (size_t i = 0; i < object_tracker.objects.size(); ++i)
             {
+                if (objs.find(object_tracker.objects[i].id) == objs.end()) { continue; }
+
                 cv::Point2d point_img;
                 double scale = msg_ptr->width / (double) bg_sub.avg_img.cols;
 
