@@ -60,10 +60,14 @@ ObjectTracker::ObjectTracker()
     de = new cv::VectorDescriptorMatch<cv::SurfDescriptorExtractor, cv::BruteForceMatcher<cv::L2<float> > >(extractor, matcher);
 }
 
-void ObjectTracker::find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img, const cv::Mat& camera_img, ros::Time stamp)
+std::map<int, Contour>
+ObjectTracker::find_objects(const cv::Mat& neg_log_lik_img,
+                            const cv::Mat& lbp_foreground_img,
+                            const cv::Mat& camera_img,
+                            ros::Time stamp)
 {
     if (!initialized) { find_new_objects(neg_log_lik_img, camera_img, stamp); initialized = true; }
-    find_known_objects(neg_log_lik_img, lbp_foreground_img, camera_img, stamp);
+    return find_known_objects(neg_log_lik_img, lbp_foreground_img, camera_img, stamp);
 }
 
 void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, ros::Time stamp)
@@ -218,10 +222,14 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
     }
 }
 
-void ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img, const cv::Mat& camera_img, ros::Time stamp)
+std::map<int, Contour>
+ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
+                                  const cv::Mat& lbp_foreground_img,
+                                  const cv::Mat& camera_img,
+                                  ros::Time stamp)
 {
-    if (objects.empty()) { ROS_INFO("No objects, doing nothing."); return; }
     std::map<int, Contour> id_to_contour;
+    if (objects.empty()) { ROS_INFO("No objects, doing nothing."); return id_to_contour; }
 
     cv::Mat fg_loglike_img = neg_log_lik_img.clone();
     cv::Mat original = camera_img.clone();
@@ -499,6 +507,8 @@ void ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img, const cv:
 
     cv::namedWindow("objects");
     cv::imshow("objects", original);
+
+    return id_to_contour;
 }
 
 void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,

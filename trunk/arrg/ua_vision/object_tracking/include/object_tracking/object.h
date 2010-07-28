@@ -29,6 +29,10 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include <iostream>
+
+#include <boost/lexical_cast.hpp>
+
 #include <ros/ros.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -53,6 +57,16 @@ public:
 
     Object() : missed_frames(0)
     {
+    }
+
+    void dump_to_file()
+    {
+//         std::ofstream File("tracks_" + boost::lexical_cast<std::string>(id) + "_" + boost::lexical_cast<std::string>(ros::Time::now()) + ".dat");
+//
+//         for (size_t i = 0; i < tracks.size(); ++i)
+//         {
+//             File << id << "," << timestamps[i] << "," << tracks[i] << std::endl;
+//         }
     }
 };
 

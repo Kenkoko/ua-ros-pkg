@@ -61,7 +61,12 @@ private:
     cv::Mat mlr_weights;
 
     void find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, ros::Time stamp);
-    void find_known_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img, const cv::Mat& camera_img, ros::Time stamp);
+
+    std::map<int, Contour>
+    find_known_objects(const cv::Mat& neg_log_lik_img,
+                       const cv::Mat& lbp_foreground_img,
+                       const cv::Mat& camera_img,
+                       ros::Time stamp);
 
     void stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
                                        std::vector<cv::Mat>& obj_mask,
@@ -73,7 +78,11 @@ public:
 
     ObjectTracker();
 
-    void find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img, const cv::Mat& camera_img, ros::Time stamp);
+    std::map<int, Contour>
+    find_objects(const cv::Mat& neg_log_lik_img,
+                 const cv::Mat& lbp_foreground_img,
+                 const cv::Mat& camera_img,
+                 ros::Time stamp);
 };
 
 #endif
