@@ -1,7 +1,0 @@
-sensor_msgs/Image original
-sensor_msgs/Image histogram
-geometry_msgs/Point center
-float64 alpha
-float64 beta
-float64 area
----

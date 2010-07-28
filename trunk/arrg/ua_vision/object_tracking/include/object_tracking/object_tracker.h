@@ -49,24 +49,31 @@ static cv::Scalar track_colors[5] = { CV_RGB(255,   0,   0),
 
 typedef std::vector<cv::Point> Contour;
 
-class KnownObjectFinder
+class ObjectTracker
 {
 private:
+    bool initialized;
     double fg_prob_threshold;
 
     cv::FeatureDetector* fd;
     cv::GenericDescriptorMatch* de;
 
-public:
-    KnownObjectFinder();
+    cv::Mat mlr_weights;
 
-    std::map<int, Contour>
-    find_objects(const cv::Mat& neg_log_lik_img,
-                 const cv::Mat& lbp_foreground_img,
-                 const cv::Mat& camera_img,
-                 std::vector<Object>& objects,
-                 cv::Mat& mlr_weights,
-                 std::vector<cv::RotatedRect>& obj_rects);
+    void find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, ros::Time stamp);
+    void find_known_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img, const cv::Mat& camera_img, ros::Time stamp);
+
+    void stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
+                                       std::vector<cv::Mat>& obj_mask,
+                                       std::vector<double>& mins,
+                                       std::vector<double>& maxs);
+
+public:
+    std::vector<Object> objects;
+
+    ObjectTracker();
+
+    void find_objects(const cv::Mat& neg_log_lik_img, const cv::Mat& lbp_foreground_img, const cv::Mat& camera_img, ros::Time stamp);
 };
 
 #endif
