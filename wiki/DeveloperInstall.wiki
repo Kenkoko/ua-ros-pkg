@@ -49,7 +49,7 @@ chmod 755 ~/rosinstall
 }}}
   # Install ROS!
 {{{
-~/rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/wubble.rosconfig
+~/rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/cturtle.rosconfig
 }}}
   # Update your .bashrc
 {{{
