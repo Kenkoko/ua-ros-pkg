@@ -17,7 +17,7 @@ rosbuild_add_library(background_filters src/floor_filter.cpp)
 rosbuild_add_executable(floor_filter_node src/floor_filter_node.cpp)
 target_link_libraries(floor_filter_node background_filters)
 
-rosbuild_add_executable(ground_filter src/ground_filter.cpp)
+#rosbuild_add_executable(ground_filter src/ground_filter.cpp)
 
 # NEW
 rosbuild_add_executable(background_averager src/background_averager.cpp)
