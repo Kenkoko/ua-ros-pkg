@@ -130,6 +130,9 @@ class ObjectSwat:
         if result.success: print "Arm ready to swat"
         else: print "Failed to position the arm for swatting"
         
+        t = rospy.Time.now()
+        print "Swatting action at " + str(t.secs) + "." + str(t.nsecs)
+        
         self.sh_pan_speed_srv(3.0);
         
         goal.target_joints = [-0.93, -0.63, 0.0, 0.0]
@@ -137,7 +140,7 @@ class ObjectSwat:
         self.arm_client.wait_for_result()
         result = self.arm_client.get_result()
         if result.success: print "Arm just swatted"
-        else: print "Failed failed to swat"
+        else: print "Arm failed to swat"
         
         self.sh_pan_speed_srv(1.17);
 
