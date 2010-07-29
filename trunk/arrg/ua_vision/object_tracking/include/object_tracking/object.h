@@ -29,7 +29,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <iostream>
+#include <fstream>
 
 #include <boost/lexical_cast.hpp>
 
@@ -49,11 +49,12 @@ public:
 
     std::vector<cv::Point> tracks;
     std::vector<ros::Time> timestamps;
-    std::vector<cv::KeyPoint> keypoints;
-    cv::Mat tr_img;
+
     cv::SparseMat histogram;
-    bool wasFound;
     cv::RotatedRect tight_bounding_box;
+
+    //cv::Mat tr_img;
+    //std::vector<cv::KeyPoint> keypoints;
 
     Object() : missed_frames(0)
     {
@@ -61,12 +62,14 @@ public:
 
     void dump_to_file()
     {
-//         std::ofstream File("tracks_" + boost::lexical_cast<std::string>(id) + "_" + boost::lexical_cast<std::string>(ros::Time::now()) + ".dat");
-//
-//         for (size_t i = 0; i < tracks.size(); ++i)
-//         {
-//             File << id << "," << timestamps[i] << "," << tracks[i] << std::endl;
-//         }
+        std::string t = boost::lexical_cast<std::string>(ros::Time::now().sec) + "." + boost::lexical_cast<std::string>(ros::Time::now().nsec);
+        std::string fname = "tracks_" + boost::lexical_cast<std::string>(id) + "_" + t + ".dat";
+        std::ofstream f(fname.c_str());
+
+        for (size_t i = 0; i < tracks.size(); ++i)
+        {
+            f << id << "," << timestamps[i] << "," << tracks[i].x << "," << tracks[i].y << std::endl;
+        }
     }
 };
 

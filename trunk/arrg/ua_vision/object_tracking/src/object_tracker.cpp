@@ -50,6 +50,7 @@ ObjectTracker::ObjectTracker()
 {
     initialized = false;
     fg_prob_threshold = 0.6;
+    con_area_threshold = 40;
     cv::startWindowThread();
 
     fd = new cv::SiftFeatureDetector(cv::SIFT::DetectorParams::GET_DEFAULT_THRESHOLD(),
@@ -82,15 +83,9 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
     fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), 1, 1);
     cv::divide(1.0, fg_prob_img, fg_prob_img);
 
-    cv::namedWindow("fg_prob_img");
-    cv::imshow("fg_prob_img", fg_prob_img);
-
     cv::Mat bin_image;
     cv::threshold(fg_prob_img, bin_image, 0.6, 255, cv::THRESH_BINARY);
     bin_image.convertTo(bin_image, CV_8UC1);
-
-    cv::namedWindow("binary");
-    cv::imshow("binary", bin_image);
 
     std::vector<std::vector<cv::Point> > contours;
     cv::Mat contour_bin_image = bin_image.clone();
@@ -100,9 +95,6 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
     cv::Mat hsv_img;
     cv::cvtColor(original, hsv_img, CV_BGR2HSV);
 
-    //  cv::namedWindow("hsv_img");
-    //  cv::imshow("hsv_img", hsv_img);
-
     // These vectors store information about the new objects
     std::vector<cv::Rect> fg_rects;
     std::vector<cv::RotatedRect> obj_rects;
@@ -110,8 +102,8 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
     std::vector<cv::Mat> back_projects;
     std::vector<cv::Mat> masks;
     std::vector<double> areas;
-    std::vector<std::vector<cv::KeyPoint> > keypoints;
-    std::vector<cv::Mat> tr_imgs;
+    //std::vector<std::vector<cv::KeyPoint> > keypoints;
+    //std::vector<cv::Mat> tr_imgs;
 
     // first thing is background model
     back_projects.push_back(bg_neg_log_lik_img.clone());
@@ -122,19 +114,19 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
 
     int h_bins = 30, s_bins = 32;
 
-    for (uint i = 0; i < contours.size(); ++i)
+    BOOST_FOREACH(Contour con, contours)
     {
-        std::vector<cv::Point> con = contours[i];
-        double area = cv::contourArea(cv::Mat(con));
+        cv::Mat con_mat(con);
+        double area = cv::contourArea(con_mat);
 
-        if (area > 40)
+        if (area > con_area_threshold)
         {
             ROS_INFO("Found a possible object of size %f", area);
             areas.push_back(area);
 
-            cv::Rect bounder = cv::boundingRect(cv::Mat(con));
+            cv::Rect bounder = cv::boundingRect(con_mat);
             fg_rects.push_back(bounder);
-            obj_rects.push_back(cv::minAreaRect(cv::Mat(con)));
+            obj_rects.push_back(cv::minAreaRect(con_mat));
 
             cv::Mat mask = bin_image(bounder);
             cv::Mat hsv_roi = hsv_img(bounder);
@@ -162,24 +154,20 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
             back_projects.push_back(back_project);
 
             // extract features
-/*            cv::Mat img1_orig = original(bounder);
-            cv::Mat img1;
-            cv::cvtColor(img1_orig, img1, CV_BGR2GRAY);
-
-            std::cout << std::endl << "< Extracting keypoints from object contour..." << std::endl;
-            std::vector<cv::KeyPoint> keypoints1;
-            fd->detect( img1, keypoints1 );
-            std::cout << keypoints1.size() << " >" << std::endl;
-            keypoints.push_back(keypoints1);
-            tr_imgs.push_back(img1.clone());*/
+//             cv::Mat img1_orig = original(bounder);
+//             cv::Mat img1;
+//             cv::cvtColor(img1_orig, img1, CV_BGR2GRAY);
+//
+//             std::cout << std::endl << "< Extracting keypoints from object contour..." << std::endl;
+//             std::vector<cv::KeyPoint> keypoints1;
+//             fd->detect( img1, keypoints1 );
+//             std::cout << keypoints1.size() << " >" << std::endl;
+//             keypoints.push_back(keypoints1);
+//             tr_imgs.push_back(img1.clone());
         }
     }
 
-    int num_objects = back_projects.size();
-    std::vector<double> alphas;
-    std::vector<double> betas;
-    alphas.resize(histograms.size());
-    betas.resize(histograms.size());
+    size_t num_objects = back_projects.size();
 
     if (num_objects > 1)
     {
@@ -192,31 +180,31 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
         stochastic_gradient_following(back_projects, masks, mins, maxs);
 
         Object bg;
-        bg.id = objects.size();
+        bg.id = 0;
         bg.min = mins[0];
         bg.max = maxs[0];
         objects.push_back(bg);
 
-        for (int i = 0; i < num_objects - 1; ++i)
+        for (size_t i = 0; i < num_objects - 1; ++i)
         {
             Object obj;
-
+            obj.id = objects.size();
             obj.area = areas[i];
+            obj.min = mins[i+1];
+            obj.max = maxs[i+1];
 
             cv::Point center;
             center.x = (fg_rects[i].x + (fg_rects[i].width / 2));
             center.y = (fg_rects[i].y + (fg_rects[i].height / 2));
-
             obj.tracks.push_back(center);
+
             obj.timestamps.push_back(stamp);
             obj.histogram = histograms[i];
-            obj.min = mins[i+1];
-            obj.max = maxs[i+1];
-            //obj.keypoints = keypoints[i];
-            //obj.tr_img = tr_imgs[i];
             obj.tight_bounding_box = obj_rects[i];
 
-            obj.id = objects.size();
+            //obj.keypoints = keypoints[i];
+            //obj.tr_img = tr_imgs[i];
+
             objects.push_back(obj);
         }
     }
@@ -274,13 +262,11 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
     cv::imshow("binary_sum", bin_image_sum);
     ///////////////////////////////////////////////////////////////////
 
-    fg_prob_img = combination_sum;
+    fg_prob_img = combination_product;
 
     // Find contours for all the blobs found by background subtraction
-    std::vector<std::vector<cv::Point> > contours;
+    std::vector<Contour> contours;
     cv::Mat bin_image = (fg_prob_img > fg_prob_threshold);
-    // cv::imshow("binary", bin_image);
-
     cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
     // Make an HSV image
@@ -298,11 +284,12 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
 
     BOOST_FOREACH(Contour con, contours)
     {
-        double area = cv::contourArea(cv::Mat(con));
+        cv::Mat con_mat(con);
+        double area = cv::contourArea(con_mat);
 
-        if (area > 40)
+        if (area > con_area_threshold)
         {
-            cv::Rect bounder = cv::boundingRect(cv::Mat(con));
+            cv::Rect bounder = cv::boundingRect(con_mat);
             cv::Mat back_projects(objects.size() + 1, bounder.area(), CV_32F);
             back_projects.row(0) = cv::Scalar(1);
 
@@ -324,31 +311,25 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
                 cv::calcBackProject(&hsv_roi, 1, channels, objects[i].histogram, back_project, ranges);
                 back_project.convertTo(back_project, CV_32F);
 
-                double min = objects[i].min;
-                double max = objects[i].max;
+                min = objects[i].min;
+                max = objects[i].max;
                 back_project.convertTo(back_project, back_project.type(), 1.0 / (max - min), -min / (max - min));
 
-                cv::Mat back_project_row = back_project.reshape(1, 1);
-                cv::Mat rowi = back_projects.row(i+1);
-                back_project_row.copyTo(rowi);
-            }
+                cv::namedWindow("BP_" + boost::lexical_cast<std::string>(i));
+                cv::imshow("BP_" + boost::lexical_cast<std::string>(i), back_project);
 
-            cv::Mat phi = mlr_weights * back_projects;
-            cv::exp(phi, phi);
-            cv::Mat col_sums;
-            cv::reduce(phi, col_sums, 0, 0, CV_32F);
-            cv::divide(1.0, col_sums, col_sums);
+/*                cv::Mat back_project_row = back_project.reshape(1, 1);
+                cv::Mat rowi = back_projects.row(i + 1);
+                back_project_row.copyTo(rowi);*/
 
-            for (int i = 0; i < phi.rows; ++i)
-            {
-                cv::Mat rowi = phi.row(i);
-                cv::multiply(rowi, col_sums, rowi);
-                cv::Mat img = rowi.reshape(1, bounder.height);
+                cv::Mat bin_image = (back_project > 0.8);
 
-                cv::Mat bin_image = (img > 0.7);
-
-                cv::namedWindow("obj" + boost::lexical_cast<std::string>(i));
-                cv::imshow("obj" + boost::lexical_cast<std::string>(i), bin_image);
+                cv::boxFilter(bin_image, bin_image, bin_image.type(), cv::Size(3,3));
+                if (i > 0) // don't show background projection
+                {
+                    cv::namedWindow("Obj_" + boost::lexical_cast<std::string>(i));
+                    cv::imshow("Obj_" + boost::lexical_cast<std::string>(i), bin_image);
+                }
 
                 std::vector<Contour> contours;
                 cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(bounder.x, bounder.y));
@@ -360,8 +341,7 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
 
                 for (size_t j = 0; j < contours.size(); ++j)
                 {
-                    Contour& con = contours[j];
-                    double area = cv::contourArea(cv::Mat(con));
+                    double area = cv::contourArea(cv::Mat(contours[j]));
 
                     if (area > max_area)
                     {
@@ -378,7 +358,62 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
                 }
 
                 object_id_to_contours[id].push_back(contours[max_index]);
+
             }
+
+//             cv::Mat phi = mlr_weights * back_projects;
+//             cv::exp(phi, phi);
+//             cv::Mat col_sums;
+//             cv::reduce(phi, col_sums, 0, 0, CV_32F);
+//             cv::divide(1.0, col_sums, col_sums);
+//
+//             for (int i = 0; i < phi.rows; ++i)
+//             {
+//                 cv::Mat rowi = phi.row(i);
+//                 cv::multiply(rowi, col_sums, rowi);
+//                 cv::Mat img = rowi.reshape(1, bounder.height);
+//                 cv::Mat bin_image = (img > 0.8);
+//
+//                 cv::boxFilter(bin_image, bin_image, bin_image.type(), cv::Size(3,3));
+//                 if (i > 0) // don't show background projection
+//                 {
+//                     cv::namedWindow("Img_" + boost::lexical_cast<std::string>(i));
+//                     cv::imshow("Img_" + boost::lexical_cast<std::string>(i), img);
+//                     cv::namedWindow("Obj_" + boost::lexical_cast<std::string>(i));
+//                     cv::imshow("Obj_" + boost::lexical_cast<std::string>(i), bin_image);
+//                 }
+//
+//                 std::vector<Contour> contours;
+//                 cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(bounder.x, bounder.y));
+//
+//                 if (contours.empty()) { continue; }
+//
+//                 int max_index = 0;
+//                 double max_area = 0;
+//
+//                 for (size_t j = 0; j < contours.size(); ++j)
+//                 {
+//                     double area = cv::contourArea(cv::Mat(contours[j]));
+//
+//                     if (area > max_area)
+//                     {
+//                         max_area = area;
+//                         max_index = j;
+//                     }
+//                 }
+//
+//                 int id = objects[i].id;
+//
+//                 if (object_id_to_contours.find(id) == object_id_to_contours.end())
+//                 {
+//                     object_id_to_contours[id] = std::vector<Contour>();
+//                 }
+//
+//                 object_id_to_contours[id].push_back(contours[max_index]);
+
+                // draw selected contour for debugging
+                // cv::drawContours(original, object_id_to_contours[id], -1, CV_RGB(255, 0, 0));
+            //}
         }
     }
 
@@ -461,7 +496,7 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
             }
 
             // restrict search to last known location and vicinity
-            int search_grid_size = 100; // * std::pow(2, objects[i].missed_frames); // TODO
+            int search_grid_size = 100 * std::pow(2, objects[i].missed_frames); // TODO
 
             cv::Rect ar;
             ar.x = last_obj_loc.x - search_grid_size / 2;
@@ -516,7 +551,7 @@ void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
                                                   std::vector<double>& mins,
                                                   std::vector<double>& maxs)
 {
-    int epochs = 5;
+    int epochs = 15;
     double step_size = 0.1;
     float momentum = 0.;
     float weight_decay = 0.;
