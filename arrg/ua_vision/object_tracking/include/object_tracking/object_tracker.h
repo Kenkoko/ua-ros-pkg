@@ -54,6 +54,7 @@ class ObjectTracker
 private:
     bool initialized;
     double fg_prob_threshold;
+    double con_area_threshold;
 
     cv::FeatureDetector* fd;
     cv::GenericDescriptorMatch* de;
