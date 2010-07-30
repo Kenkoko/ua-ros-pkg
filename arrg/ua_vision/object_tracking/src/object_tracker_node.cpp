@@ -66,8 +66,6 @@ private:
     ObjectTracker object_tracker;
 
     bool go;
-    bool lbp_init;
-    int counter;
 
     ros::Publisher marker_pub;
     ros::Publisher object_pub;
@@ -89,8 +87,6 @@ public:
         sensor_msgs::CvBridge bridge;
 
         go = false;
-        lbp_init = false;
-        counter = 0;
 
         if (client.call(srv))
         {
@@ -160,21 +156,7 @@ public:
             ROS_ERROR("CvBridgeError");
         }
 
-        cv::Mat neg_log_lik_img = bg_sub.subtract_background(original);
-
-        if (!lbp_init)
-        {
-            cv::Mat temp = original.clone();
-            lbp_model.initialize(temp);
-            lbp_init = true;
-        }
-
-        if (lbp_model.do_updates && counter++ > 150) { lbp_model.do_updates = false; ROS_INFO("LBP Ready."); }
-
-        cv::Mat temp = original.clone();
-        lbp_model.update(temp);
-
-        cv::Mat lbp_foreground_img = lbp_model.foreground;
+        lbp_model.update(original);
 
         if (!go)
         {
@@ -182,10 +164,30 @@ public:
             char k = cv::waitKey(1);
             if( k == 27 || k == 's' || k == 'S' ) { go = true; cv::destroyWindow("blah"); };
         }
-
-        if (go)
+        else
         {
-            std::map<int, Contour> objs = object_tracker.find_objects(neg_log_lik_img, lbp_foreground_img, original, msg_ptr->header.stamp);
+            // Compute the (foreground) probability image under the logistic model
+            double w = -1.0 / 5.0;
+            double b = 4.0;
+            cv::Mat bg_fg_prob_img = bg_sub.subtract_background(original);
+            bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), w, b);
+            cv::exp(bg_fg_prob_img, bg_fg_prob_img);
+            bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), 1, 1);
+            cv::divide(1.0, bg_fg_prob_img, bg_fg_prob_img);
+
+            // grab current foreground image under lbp image and normalize it
+            cv::Mat lbp_fg_prob_img;
+            lbp_model.foreground.convertTo(lbp_fg_prob_img, CV_32F, 1.0 / 255);
+
+            // combine background subtraction and lbp probability images
+            cv::Mat fg_prob_img;
+            cv::multiply(bg_fg_prob_img, lbp_fg_prob_img, fg_prob_img);
+
+            cv::namedWindow("fg_prob_img");
+            cv::imshow("fg_prob_img", fg_prob_img);
+
+            // find objects now
+            std::map<int, Contour> objs = object_tracker.find_objects(fg_prob_img, original, msg_ptr->header.stamp);
 
             if (cam_model.width() == 0) { ROS_WARN("No CameraInfo message received yet or uncalibrated camera"); return; }
 

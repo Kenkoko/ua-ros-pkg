@@ -42,8 +42,6 @@
 #include <image_transport/image_transport.h>
 #include <background_filters/lbp_background_subtractor.h>
 
-int num_model_frames = 150;
-int fr = 0;
 LBPModel lbp_model;
 
 void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
@@ -52,22 +50,9 @@ void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     cv::Mat tmp_frame;
     cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), tmp_frame, cv::Size(640, 480));
 
-    if (fr++ == 1)
-    {
-        lbp_model.initialize( tmp_frame );
-        return;
-    }
-
-    double t = (double)cvGetTickCount();
-
-    cv::Mat resized_frame, segmented, mask, threshMask;
-
-    if (fr > num_model_frames) { lbp_model.do_updates = false; }
     lbp_model.update( tmp_frame );
 
-    t = (double)cvGetTickCount() - t;
-    printf( "%d. %.1fms\n", fr, t/(cvGetTickFrequency()*1000.) );
-
+    cv::Mat resized_frame, segmented, mask, threshMask;
     cv::resize(tmp_frame, resized_frame, cv::Size( lbp_model.foreground.cols, lbp_model.foreground.rows ));
     cv::GaussianBlur(lbp_model.foreground, mask, cv::Size(5,5), .95, .95);
     cv::threshold(mask, threshMask, 160, 255, cv::THRESH_BINARY);
