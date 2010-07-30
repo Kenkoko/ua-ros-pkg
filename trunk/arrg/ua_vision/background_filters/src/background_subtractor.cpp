@@ -116,4 +116,9 @@ cv::Mat BackgroundSubtractor::subtract_background(const cv::Mat& new_img)
     {
         return difference<const float>(new_img);
     }
+    else
+    {
+        printf("[BackgroundSubtractor] Unrecognized colorspace [%s]\n", colorspace.c_str());
+        return cv::Mat();
+    }
 }

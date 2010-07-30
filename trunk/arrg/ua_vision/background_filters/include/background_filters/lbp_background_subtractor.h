@@ -76,7 +76,7 @@
 
 
 // uniform pattern for LBP for 8 neighboring points
-uint8_t  UniformPattern59[256]={
+uint8_t  UniformPattern59[256] = {
     1,   2,   3,   4,   5,   0,   6,   7,   8,   0,   0,   0,   9,   0,  10,  11,
     12,   0,   0,   0,   0,   0,   0,   0,  13,   0,   0,   0,  14,   0,  15,  16,
     17,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -99,20 +99,23 @@ class LBPModel
 {
 public:
     cv::Mat foreground;
-    bool do_updates;
+    int num_model_frames;
 
     LBPModel();
-    void initialize( cv::Mat& frame );
     void update( cv::Mat& frame );
 
 private:
+    bool initialized;
+    bool do_updates;
+    int model_frame_counter;
+
     cv::Mat int_frame;
-    cv::Mat gray_frame;
     cv::Mat last_lbp;
     std::list< std::vector<cv::Mat> > region_histogram_sets;
     std::list< std::vector<double> > region_histogram_weights;
     std::list< std::set<int> > region_histogram_weight_inds;
 
+    void initialize( cv::Mat& frame );
     void getGrayIntFrame( cv::Mat& mat_frame );
     void regionHistogram( cv::Mat &current_lbp );
     void simpleNeighborhood( cv::Mat &current_lbp );

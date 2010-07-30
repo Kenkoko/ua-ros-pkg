@@ -81,29 +81,18 @@ ObjectTracker::ObjectTracker()
 }
 
 std::map<int, Contour>
-ObjectTracker::find_objects(const cv::Mat& neg_log_lik_img,
-                            const cv::Mat& lbp_foreground_img,
+ObjectTracker::find_objects(const cv::Mat& fg_prob_img,
                             const cv::Mat& camera_img,
                             ros::Time stamp)
 {
-    if (!initialized) { find_new_objects(neg_log_lik_img, camera_img, stamp); initialized = true; }
-    return find_known_objects(neg_log_lik_img, lbp_foreground_img, camera_img, stamp);
+    if (!initialized) { train_model(fg_prob_img, camera_img, stamp); initialized = true; }
+    return find_known_objects(fg_prob_img, camera_img, stamp);
 }
 
-void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, ros::Time stamp)
+void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& original, ros::Time stamp)
 {
-    cv::Mat fg_prob_img = bg_neg_log_lik_img.clone();
-    cv::Mat original = camera_img.clone();
-
-    // Compute the (foreground) probability image under the logistic model
-    double w = -1 / 5.0, b = 4.0;
-    fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), w, b);
-    cv::exp(fg_prob_img, fg_prob_img);
-    fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), 1, 1);
-    cv::divide(1.0, fg_prob_img, fg_prob_img);
-
     cv::Mat bin_image;
-    cv::threshold(fg_prob_img, bin_image, 0.6, 255, cv::THRESH_BINARY);
+    cv::threshold(fg_prob_img, bin_image, fg_prob_threshold, 255, cv::THRESH_BINARY);
     bin_image.convertTo(bin_image, CV_8UC1);
 
     std::vector<std::vector<cv::Point> > contours;
@@ -231,64 +220,19 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
 }
 
 std::map<int, Contour>
-ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
-                                  const cv::Mat& lbp_foreground_img,
+ObjectTracker::find_known_objects(const cv::Mat& fg_prob_img,
                                   const cv::Mat& camera_img,
                                   ros::Time stamp)
 {
     std::map<int, Contour> id_to_contour;
     if (objects.empty()) { ROS_INFO("No objects, doing nothing."); return id_to_contour; }
 
-    cv::Mat fg_loglike_img = neg_log_lik_img.clone();
     cv::Mat original = camera_img.clone();
-    cv::Mat fg_lbp_img;
-    lbp_foreground_img.convertTo(fg_lbp_img, CV_32F, 1.0 / 255);
-
-    // Compute the (foreground) probability image under the logistic model
-    double w = -1/5.0, b = 4.0;
-    cv::Mat fg_prob_img = fg_loglike_img.clone();
-    fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), w, b);
-    cv::exp(fg_prob_img, fg_prob_img);
-    fg_prob_img.convertTo(fg_prob_img, fg_prob_img.type(), 1, 1);
-    cv::divide(1.0, fg_prob_img, fg_prob_img);
-
-    cv::namedWindow("fg_prob_img");
-    cv::imshow("fg_prob_img", fg_prob_img);
-
-    ///////////////////////////////////////////////////////////////////
-    /////  LBP integrates here (choose product or sum) ////////////////
-    ///////////////////////////////////////////////////////////////////
-    cv::namedWindow("fg_lbp_img");
-    cv::imshow("fg_lbp_img", fg_lbp_img);
-
-    cv::Mat combination_product;
-    cv::multiply(fg_prob_img, fg_lbp_img, combination_product);
-
-    cv::namedWindow("product");
-    cv::imshow("product", combination_product);
-
-    cv::Mat bin_image_prod = (combination_product > fg_prob_threshold);
-    cv::namedWindow("binary_prod");
-    cv::imshow("binary_prod", bin_image_prod);
-
-    cv::Mat combination_sum;
-    combination_sum = fg_prob_img * 0.5 + fg_lbp_img * 0.5;
-
-    cv::namedWindow("sum");
-    cv::imshow("sum", combination_sum);
-
-    cv::Mat bin_image_sum = (combination_sum > fg_prob_threshold);
-    cv::namedWindow("binary_sum");
-    cv::imshow("binary_sum", bin_image_sum);
-    ///////////////////////////////////////////////////////////////////
-
-    fg_prob_img = combination_product;
 
     // Find contours for all the blobs found by background subtraction
     std::vector<Contour> contours;
     cv::Mat bin_image = (fg_prob_img > fg_prob_threshold);
     cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
 
     // Make an HSV image
     cv::Mat hsv_img;
@@ -531,7 +475,6 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
 
     return id_to_contour;
 }
-
 
 void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
                                                   std::vector<cv::Mat>& obj_mask,

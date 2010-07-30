@@ -48,6 +48,8 @@
 #include <list>
 #include <set>
 
+#include <ros/ros.h>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -57,17 +59,29 @@
 using namespace cv;
 using namespace std;
 
-LBPModel::LBPModel() : do_updates(true) {}
+LBPModel::LBPModel()
+{
+    initialized = false;
+    do_updates = true;
+    num_model_frames = 150;
+    model_frame_counter = 0;
+}
 
-void LBPModel::initialize(Mat& frame )
+void LBPModel::initialize(Mat& frame)
 {
     getGrayIntFrame(frame);
     last_lbp = Mat(int_frame.rows, int_frame.cols, CV_8U);
     ComputeLBP(int_frame, last_lbp);
+
+    initialized = true;
+    ROS_INFO("LBP Background Subtraction initialized");
 }
 
 void LBPModel::update( Mat& frame )
 {
+    if (!initialized) { initialize(frame); }
+    if (do_updates && model_frame_counter++ > num_model_frames) { do_updates = false; ROS_INFO("LBP Background Subtraction model training finished"); }
+
     getGrayIntFrame(frame);
     Mat current_lbp = Mat(int_frame.rows, int_frame.cols, CV_8U);
     ComputeLBP(int_frame, current_lbp, false);
@@ -78,10 +92,10 @@ void LBPModel::update( Mat& frame )
 
 void LBPModel::getGrayIntFrame(Mat& mat_frame)
 {
-    cvtColor(mat_frame, gray_frame, CV_BGR2GRAY);
-    resize(gray_frame, mat_frame, Size(gray_frame.size().width/framescale, gray_frame.size().height/framescale));
-    GaussianBlur(mat_frame, mat_frame, Size(3,3), .95, .95);
-    mat_frame.convertTo(int_frame, CV_32S);
+    cvtColor(mat_frame, int_frame, CV_BGR2GRAY);
+    resize(int_frame, int_frame, Size(mat_frame.cols/framescale, mat_frame.rows/framescale));
+    GaussianBlur(int_frame, int_frame, Size(3,3), .95, .95);
+    int_frame.convertTo(int_frame, CV_32S);
 }
 
 void LBPModel::regionHistogram( Mat &current_lbp )
@@ -118,14 +132,14 @@ void LBPModel::regionHistogram( Mat &current_lbp )
     list< vector<Mat> >::iterator region_hists = region_histogram_sets.begin();
     list< vector<double> >::iterator region_weights = region_histogram_weights.begin();
     list< set<int> >::iterator region_weight_inds = region_histogram_weight_inds.begin();
-    for( unsigned int r = region_out; r <= current_lbp.rows-region_out; r+= region_step){
-        for( unsigned int c = region_out; c <= current_lbp.cols-region_out; c+= region_step){
+    for( int r = region_out; r <= current_lbp.rows-region_out; r+= region_step){
+        for( int c = region_out; c <= current_lbp.cols-region_out; c+= region_step){
             // Calculate the current region histogram
             Mat cur_hist = Mat::zeros(1, 256, CV_8U);
             uint8_t *h = cur_hist.ptr<uint8_t>(0);
-            for(unsigned int region_row = r-region_out; region_row < r+region_out+1; ++region_row){
+            for(int region_row = r-region_out; region_row < r+region_out+1; ++region_row){
                 uint8_t *rowptr = current_lbp.ptr<uint8_t>(region_row);
-                for(unsigned int region_col = c-region_out; region_col < c+region_out+1; ++region_col){
+                for(int region_col = c-region_out; region_col < c+region_out+1; ++region_col){
                     uint8_t val = rowptr[region_col];
                     //if(val > 0){ // 0 is magic!
                     h[val]++;
@@ -170,7 +184,7 @@ void LBPModel::regionHistogram( Mat &current_lbp )
                     (*region_hists)[maxIdx] =  (*region_hists)[maxIdx] * (1-rate_a) + cur_hist * rate_a;
 
                     // Update the weights for each histogram
-                    for(int i=0; i < region_hists->size(); ++i){
+                    for(unsigned int i=0; i < region_hists->size(); ++i){
                         (*region_weights)[i] = (*region_weights)[i] * (1-rate_b) + ((i==maxIdx) ? rate_b : 0);
                     }
                 }
@@ -253,7 +267,6 @@ void LBPModel::ComputeLBP(Mat &input, Mat &result, bool use59){
     int pred2 = predicate * 2;
     int r,c;
     unsigned int X[8], Y[8];
-    unsigned int numbits = NUMBITS;
 
     // Start from top left corner
     //cout << "predicate: " << predicate << endl;

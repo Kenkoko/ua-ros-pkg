@@ -61,11 +61,10 @@ private:
 
     cv::Mat mlr_weights;
 
-    void find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv::Mat& camera_img, ros::Time stamp);
+    void train_model(const cv::Mat& fg_prob_img, const cv::Mat& camera_img, ros::Time stamp);
 
     std::map<int, Contour>
-    find_known_objects(const cv::Mat& neg_log_lik_img,
-                       const cv::Mat& lbp_foreground_img,
+    find_known_objects(const cv::Mat& fg_prob_img,
                        const cv::Mat& camera_img,
                        ros::Time stamp);
 
@@ -80,8 +79,7 @@ public:
     ObjectTracker();
 
     std::map<int, Contour>
-    find_objects(const cv::Mat& neg_log_lik_img,
-                 const cv::Mat& lbp_foreground_img,
+    find_objects(const cv::Mat& fg_prob_img,
                  const cv::Mat& camera_img,
                  ros::Time stamp);
 };
