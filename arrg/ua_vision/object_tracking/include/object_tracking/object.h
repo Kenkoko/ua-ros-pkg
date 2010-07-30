@@ -50,7 +50,7 @@ public:
     std::vector<cv::Point> tracks;
     std::vector<ros::Time> timestamps;
 
-    cv::SparseMat histogram;
+    cv::MatND histogram;
     cv::RotatedRect tight_bounding_box;
 
     //cv::Mat tr_img;

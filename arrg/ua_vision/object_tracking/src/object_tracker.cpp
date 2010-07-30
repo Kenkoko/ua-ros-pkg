@@ -46,6 +46,25 @@
 #include <object_tracking/object.h>
 #include <object_tracking/object_tracker.h>
 
+
+#include <iomanip>
+template<class T>
+void print_matz(const cv::Mat &C)
+{
+    using namespace std;
+    cout << setprecision( 3 ) << right << fixed;
+    for ( int row = 0; row < C.rows; ++ row )
+    {
+        for ( int col = 0; col < C.cols; ++ col )
+        {
+            cout << setw( 5 ) << (double)C.at<T>(row, col) << " ";
+        }
+        cout << endl;
+    }
+
+}
+
+
 ObjectTracker::ObjectTracker()
 {
     initialized = false;
@@ -106,11 +125,11 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
     //std::vector<cv::Mat> tr_imgs;
 
     // first thing is background model
-    back_projects.push_back(bg_neg_log_lik_img.clone());
+    //back_projects.push_back(bg_neg_log_lik_img.clone());
 
-    cv::Mat bg_mask;
-    cv::bitwise_not(bin_image, bg_mask);
-    masks.push_back(bg_mask);
+    //cv::Mat bg_mask;
+    //cv::bitwise_not(bin_image, bg_mask);
+    //masks.push_back(bg_mask);
 
     int h_bins = 30, s_bins = 32;
 
@@ -140,6 +159,7 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
             int channels[] = {0, 1};
 
             cv::calcHist(&hsv_roi, 1, channels, mask, hist, 2, hist_size, ranges);
+            //cv::normalize(hist, hist, 1, 0, cv::NORM_L1);
             histograms.push_back(hist);
 
             cv::Mat obj_mask = cv::Mat::zeros(fg_prob_img.size(), CV_8UC1);
@@ -169,7 +189,7 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
 
     size_t num_objects = back_projects.size();
 
-    if (num_objects > 1)
+    if (num_objects > 0)
     {
         objects.clear();
         std::vector<double> mins;
@@ -179,19 +199,19 @@ void ObjectTracker::find_new_objects(const cv::Mat& bg_neg_log_lik_img, const cv
 
         stochastic_gradient_following(back_projects, masks, mins, maxs);
 
-        Object bg;
-        bg.id = 0;
-        bg.min = mins[0];
-        bg.max = maxs[0];
-        objects.push_back(bg);
+//         Object bg;
+//         bg.id = 0;
+//         bg.min = mins[0];
+//         bg.max = maxs[0];
+//         objects.push_back(bg);
 
-        for (size_t i = 0; i < num_objects - 1; ++i)
+        for (size_t i = 0; i < num_objects; ++i)
         {
             Object obj;
             obj.id = objects.size();
             obj.area = areas[i];
-            obj.min = mins[i+1];
-            obj.max = maxs[i+1];
+            obj.min = mins[i];
+            obj.max = maxs[i];
 
             cv::Point center;
             center.x = (fg_rects[i].x + (fg_rects[i].width / 2));
@@ -269,6 +289,7 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
     cv::Mat bin_image = (fg_prob_img > fg_prob_threshold);
     cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
+
     // Make an HSV image
     cv::Mat hsv_img;
     cv::cvtColor(original, hsv_img, CV_BGR2HSV);
@@ -281,7 +302,7 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
     std::map<int, std::vector<Contour> > object_id_to_contours;
 
     // TODO: Initialize rectangles here
-
+    ROS_INFO("Num found objects: %d", (int)contours.size());
     BOOST_FOREACH(Contour con, contours)
     {
         cv::Mat con_mat(con);
@@ -295,40 +316,57 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
 
             // TODO: Add each rect to list for publishing
 
-            cv::Mat bg_roi = fg_loglike_img(bounder).clone();
-            double min = objects[0].min;
-            double max = objects[0].max;
-            bg_roi.convertTo(bg_roi, bg_roi.type(), 1.0 / (max - min), -min / (max - min));
-            cv::Mat bg_row = bg_roi.reshape(1, 1);
-            cv::Mat row = back_projects.row(1);
-            bg_row.copyTo(row);
+//             cv::Mat bg_roi = fg_loglike_img(bounder).clone();
+//             double min = objects[0].min;
+//             double max = objects[0].max;
+//             bg_roi.convertTo(bg_roi, bg_roi.type(), 1.0 / (max - min), -min / (max - min));
+//             cv::Mat bg_row = bg_roi.reshape(1, 1);
+//             cv::Mat row = back_projects.row(1);
+//             bg_row.copyTo(row);
 
             cv::Mat hsv_roi = hsv_img(bounder);
 
-            for (size_t i = 1; i < objects.size(); ++i)
+            for (size_t i = 0; i < objects.size(); ++i)
             {
                 cv::Mat back_project;
                 cv::calcBackProject(&hsv_roi, 1, channels, objects[i].histogram, back_project, ranges);
                 back_project.convertTo(back_project, CV_32F);
 
-                min = objects[i].min;
-                max = objects[i].max;
+                double min = objects[i].min;
+                double max = objects[i].max;
                 back_project.convertTo(back_project, back_project.type(), 1.0 / (max - min), -min / (max - min));
 
                 cv::namedWindow("BP_" + boost::lexical_cast<std::string>(i));
                 cv::imshow("BP_" + boost::lexical_cast<std::string>(i), back_project);
 
-/*                cv::Mat back_project_row = back_project.reshape(1, 1);
+                cv::Mat back_project_row = back_project.reshape(1, 1);
                 cv::Mat rowi = back_projects.row(i + 1);
-                back_project_row.copyTo(rowi);*/
+                back_project_row.copyTo(rowi);
+            }
 
-                cv::Mat bin_image = (back_project > 0.8);
+            cv::Mat phi = mlr_weights * back_projects;
+            cv::exp(phi, phi);
+            cv::Mat col_sums;
+            cv::reduce(phi, col_sums, 0, 0, CV_32F);
+            cv::divide(1.0, col_sums, col_sums);
+
+            //skip last output because we don't care about the background prob
+            for (int i = 0; i < phi.rows-1; ++i)
+            {
+                cv::Mat rowi = phi.row(i);
+                cv::multiply(rowi, col_sums, rowi);
+                cv::Mat img = rowi.reshape(1, bounder.height);
+                cv::Mat bin_image = (img > fg_prob_threshold);
+                //ROS_INFO("img %d", i);
+                //print_matz<float>(img);
 
                 cv::boxFilter(bin_image, bin_image, bin_image.type(), cv::Size(3,3));
-                if (i > 0) // don't show background projection
+//                 if (i > 0) // don't show background projection
                 {
-                    cv::namedWindow("Obj_" + boost::lexical_cast<std::string>(i));
-                    cv::imshow("Obj_" + boost::lexical_cast<std::string>(i), bin_image);
+                    cv::namedWindow("objmlr_" + boost::lexical_cast<std::string>(i));
+                    cv::imshow("objmlr_" + boost::lexical_cast<std::string>(i), img);
+                    cv::namedWindow("Bin_" + boost::lexical_cast<std::string>(i));
+                    cv::imshow("Bin_" + boost::lexical_cast<std::string>(i), bin_image);
                 }
 
                 std::vector<Contour> contours;
@@ -359,65 +397,13 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
 
                 object_id_to_contours[id].push_back(contours[max_index]);
 
+                //draw selected contour for debugging
+                //cv::drawContours(original, object_id_to_contours[id], -1, CV_RGB(255, 0, 0));
             }
-
-//             cv::Mat phi = mlr_weights * back_projects;
-//             cv::exp(phi, phi);
-//             cv::Mat col_sums;
-//             cv::reduce(phi, col_sums, 0, 0, CV_32F);
-//             cv::divide(1.0, col_sums, col_sums);
-//
-//             for (int i = 0; i < phi.rows; ++i)
-//             {
-//                 cv::Mat rowi = phi.row(i);
-//                 cv::multiply(rowi, col_sums, rowi);
-//                 cv::Mat img = rowi.reshape(1, bounder.height);
-//                 cv::Mat bin_image = (img > 0.8);
-//
-//                 cv::boxFilter(bin_image, bin_image, bin_image.type(), cv::Size(3,3));
-//                 if (i > 0) // don't show background projection
-//                 {
-//                     cv::namedWindow("Img_" + boost::lexical_cast<std::string>(i));
-//                     cv::imshow("Img_" + boost::lexical_cast<std::string>(i), img);
-//                     cv::namedWindow("Obj_" + boost::lexical_cast<std::string>(i));
-//                     cv::imshow("Obj_" + boost::lexical_cast<std::string>(i), bin_image);
-//                 }
-//
-//                 std::vector<Contour> contours;
-//                 cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(bounder.x, bounder.y));
-//
-//                 if (contours.empty()) { continue; }
-//
-//                 int max_index = 0;
-//                 double max_area = 0;
-//
-//                 for (size_t j = 0; j < contours.size(); ++j)
-//                 {
-//                     double area = cv::contourArea(cv::Mat(contours[j]));
-//
-//                     if (area > max_area)
-//                     {
-//                         max_area = area;
-//                         max_index = j;
-//                     }
-//                 }
-//
-//                 int id = objects[i].id;
-//
-//                 if (object_id_to_contours.find(id) == object_id_to_contours.end())
-//                 {
-//                     object_id_to_contours[id] = std::vector<Contour>();
-//                 }
-//
-//                 object_id_to_contours[id].push_back(contours[max_index]);
-
-                // draw selected contour for debugging
-                // cv::drawContours(original, object_id_to_contours[id], -1, CV_RGB(255, 0, 0));
-            //}
         }
     }
 
-    for (size_t i = 1; i < objects.size(); ++i)
+    for (size_t i = 0; i < objects.size(); ++i)
     {
         int id = objects[i].id;
 
@@ -546,6 +532,7 @@ ObjectTracker::find_known_objects(const cv::Mat& neg_log_lik_img,
     return id_to_contour;
 }
 
+
 void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
                                                   std::vector<cv::Mat>& obj_mask,
                                                   std::vector<double>& mins,
@@ -553,28 +540,27 @@ void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
 {
     int epochs = 15;
     double step_size = 0.1;
-    float momentum = 0.;
-    float weight_decay = 0.;
     int size = obj_mask[0].rows * obj_mask[0].cols;
 
-    int num_objects = bp_prob.size();        // num of new objects + background
+    int num_objects = bp_prob.size();        // num of new objects
     int num_features = num_objects + 1;      // 1 = bias term
 
     // multinomial logisitc regression weights
-    mlr_weights.create(num_objects, num_features, CV_32F);
+    // the +1 at the end is for the "none of the above" category (i.e., background)
+    mlr_weights.create(num_objects + 1, num_features, CV_32F);
     cv::randn(mlr_weights, cv::Scalar(0.0), cv::Scalar(0.1));
 
-    cv::Mat last_delta = cv::Mat::zeros(num_objects, num_features, CV_32F);
-    cv::Mat mask_vectors(num_objects, size, CV_32F);
+    // the +1 at the end is for the "none of the above" category (i.e., background)
+    cv::Mat target_vectors = cv::Mat::zeros(num_objects + 1, size, CV_32F);
     cv::Mat feature_vectors(num_features, size, CV_32F);
-    feature_vectors.row(0) = cv::Scalar(1);
+    feature_vectors.row(0) = cv::Scalar(1); // The bias term
 
-    // first thing is background model
     for (int i = 0; i < num_objects; ++i)
     {
         cv::Mat bp = bp_prob[i].clone();                    // TODO: pass in reshaped back_projects?
         double* min = &mins[i];
         double* max = &maxs[i];
+        //*min = 0.0; *max = 1.0;
         cv::minMaxLoc(bp, min, max);
         cv::normalize(bp, bp, 0, 1, cv::NORM_MINMAX);
         cv::Mat bp_vector = bp.reshape(1, 1);               // 1 channel, 1 row matrix [px_1 ... px_size]
@@ -585,9 +571,16 @@ void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
         cv::Mat mask_vector = obj_mask[i].reshape(1, 1);
         cv::normalize(mask_vector, mask_vector, 0.0f, 1.0f, cv::NORM_MINMAX, CV_32F);
 
-        rowi = mask_vectors.row(i);
+        rowi = target_vectors.row(i);
         mask_vector.row(0).copyTo(rowi);
     }
+    // Create the "none of the above" target
+    cv::Mat st;
+    cv::reduce(target_vectors, st, 0, 0, CV_32F);
+    target_vectors.row(num_objects) = cv::Scalar(1.0);
+    target_vectors.row(num_objects) -= st;
+
+    // print_matz<float>(target_vectors);
 
     // initialize indexing array to be shuffled later
     cv::Mat_<int> idx(1, size);
@@ -612,18 +605,52 @@ void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
             float sum = cv::sum(vals)[0];
             cv::Mat ps = vals * (1.0f / sum);
 
-            for (int k = 0; k < num_objects; ++k)
+            cv::Mat error = target_vectors.col(n) - ps;
+
+            /*
+            ROS_INFO("features");
+            print_matz<float>(feat_col.t());
+
+            ROS_INFO("target");
+            print_matz<float>(target_vectors.col(n).t());
+
+            ROS_INFO("prediction before");
+            print_matz<float>(ps.t());
+
+            ROS_INFO("error");
+            print_matz<float>(error.t());
+            */
+
+            for (int k = 0; k < num_objects+1; ++k)
             {
-                cv::Mat rowk = last_delta.row(k);
-                float error = mask_vectors.at<float>(k, n) - ps.at<float>(0, k);
-                cv::Mat gradient = feat_col * step_size * error;
-                cv::Mat delta = rowk * momentum + gradient.t() * (1 - momentum);
-                mlr_weights.row(k) = mlr_weights.row(k) + delta - weight_decay * mlr_weights.row(k);
-                delta.copyTo(rowk);
+                //cv::Mat rowk = last_delta.row(k);
+                cv::Mat gradient = feat_col * step_size * error.at<float>(k,0);
+                //cv::Mat delta = rowk * momentum + gradient.t() * (1 - momentum);
+                //mlr_weights.row(k) = mlr_weights.row(k) + delta - weight_decay * mlr_weights.row(k);
+                mlr_weights.row(k) = mlr_weights.row(k) + gradient.t();
+                //delta.copyTo(rowk);
             }
+
+            vals = mlr_weights * feat_col;
+
+            cv::exp(vals, vals);
+            sum = cv::sum(vals)[0];
+            ps = vals * (1.0f / sum);
+
+            //ROS_INFO("prediction after");
+            //print_matz<float>(ps.t());
+            //if(j == 500)
+            //    exit(0);
         }
 
-        float prediction_error = 0.0f;
+/*        float prediction_error = 0.0f;
+        std::vector<cv::Mat> os;
+        os.resize(num_objects+1);
+
+        for (int j = 0; j < os.size(); ++j)
+        {
+            os[j] = cv::Mat(1, size, CV_32F);
+        }
 
         for (int j = 0; j < size; ++j)
         {
@@ -634,13 +661,32 @@ void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
             double sum = cv::sum(vals)[0];
             cv::Mat ps = vals * (1.0 / sum);
 
+            for (int k = 0; k < ps.rows; ++k)
+            {
+                os[k].at<float>(0, j) = ps.at<float>(k, 0);
+            }
+
             cv::Mat diff;
-            cv::absdiff(ps, mask_vectors.col(j), diff);
+            cv::absdiff(ps, target_vectors.col(j), diff);
             prediction_error += cv::sum(diff)[0];
         }
 
-        ROS_DEBUG("Epoch [%d], error = %f\n", i, prediction_error / size);
+        for (int j = 0; j < os.size(); ++j)
+        {
+            cv::Mat m = os[j].reshape(1, obj_mask[0].rows);
+            cv::namedWindow("mlr_" + boost::lexical_cast<std::string>(j));
+            cv::imshow("mlr_" + boost::lexical_cast<std::string>(j), m);
+
+            cv::Mat mask = target_vectors.row(j).reshape(1, obj_mask[0].rows);
+            cv::namedWindow("mlr_masks_" + boost::lexical_cast<std::string>(j));
+            cv::imshow("mlr_masks_" + boost::lexical_cast<std::string>(j), mask);
+
+            cv::waitKey(1000);
+        }
+
+        ROS_INFO("Epoch [%d], error = %f\n", i, prediction_error / size);*/
     }
 
-    ROS_DEBUG("sgd mlr_weights r = %d, c = %d\n", mlr_weights.rows, mlr_weights.cols);
+/*    ROS_INFO("sgd mlr_weights r = %d, c = %d\n", mlr_weights.rows, mlr_weights.cols);
+    print_matz<float>(mlr_weights);*/
 }
