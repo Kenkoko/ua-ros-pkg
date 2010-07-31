@@ -246,7 +246,7 @@ ObjectTracker::find_known_objects(const cv::Mat& fg_prob_img,
     std::map<int, std::vector<Contour> > object_id_to_contours;
 
     // TODO: Initialize rectangles here
-    ROS_INFO("Num found objects: %d", (int)contours.size());
+
     BOOST_FOREACH(Contour con, contours)
     {
         cv::Mat con_mat(con);
