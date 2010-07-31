@@ -127,6 +127,8 @@ public:
 
     void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     {
+        double t = (double)cv::getTickCount();
+
         sensor_msgs::CvBridge bridge;
         cv::Mat original;
 
@@ -265,6 +267,8 @@ public:
 
             object_pub.publish(obj_pose_array);
         }
+
+        ROS_INFO( "%.1fms\n", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
     }
 };
 
