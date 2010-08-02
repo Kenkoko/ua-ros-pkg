@@ -22,5 +22,6 @@
 
     <!-- Visualization -->
     <depend package="rviz"/>
+    <depend package="object_tracking"/>
 
 </package>
