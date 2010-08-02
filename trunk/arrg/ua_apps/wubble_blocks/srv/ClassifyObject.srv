@@ -1,0 +1,4 @@
+int32 id
+time swat_time
+---
+string category
