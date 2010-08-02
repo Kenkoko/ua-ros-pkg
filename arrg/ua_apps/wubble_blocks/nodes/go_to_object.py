@@ -203,7 +203,7 @@ class ObjectSwat:
         else: print 'Failed to position the arm for swatting'
         
         self.swat_time = rospy.Time.now()
-        print 'Swatting action at ' + str(swat_time.secs) + '.' + str(swat_time.nsecs)
+        print 'Swatting action at ' + str(self.swat_time.secs) + '.' + str(self.swat_time.nsecs)
         
         self.sh_pan_speed_srv(3.0)
         
