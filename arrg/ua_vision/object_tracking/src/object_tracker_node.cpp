@@ -33,13 +33,17 @@
 *********************************************************************/
 
 #include <cmath>
+#include <cstddef>
 
 #include <ros/ros.h>
+
+#include <boost/foreach.hpp>
 
 #include <cv_bridge/CvBridge.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <std_msgs/Int16.h>
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
 #include <visualization_msgs/Marker.h>
@@ -54,7 +58,8 @@
 #include <background_filters/lbp_background_subtractor.h>
 
 #include <object_tracking/object_tracker.h>
-#include <stddef.h>
+#include <object_tracking/PixelStamped.h>
+#include <object_tracking/GetTracksInterval.h>
 
 class ObjectTrackerNode
 {
@@ -74,12 +79,14 @@ private:
     image_geometry::PinholeCameraModel cam_model;
     tf::TransformListener tf_listener;
     ros::ServiceServer dump_tracks_srv;
+    ros::ServiceServer get_tracks_interval_srv;
 
 public:
     ObjectTrackerNode(ros::NodeHandle& nh, const std::string& transport)
     {
         ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
         dump_tracks_srv = nh.advertiseService("dump_tracks_to_file", &ObjectTrackerNode::dump_object_tracks, this);
+        get_tracks_interval_srv = nh.advertiseService("get_tracks_interval", &ObjectTrackerNode::get_tracks_interval, this);
         marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
         object_pub = nh.advertise<geometry_msgs::PoseArray>("overhead_objects", 1);
 
@@ -115,6 +122,50 @@ public:
         for (size_t i = 0; i < object_tracker.objects.size(); ++i)
         {
             object_tracker.objects[i].dump_to_file();
+        }
+
+        return true;
+    }
+
+    bool get_tracks_interval(object_tracking::GetTracksInterval::Request& req, object_tracking::GetTracksInterval::Response& res)
+    {
+        BOOST_FOREACH(int32_t id, req.ids)
+        {
+            BOOST_FOREACH(Object obj, object_tracker.objects)
+            {
+                if (id == obj.id)
+                {
+                    std::vector<ros::Time>::iterator low, up;
+
+                    low = std::lower_bound(obj.timestamps.begin(), obj.timestamps.end(), req.begin);
+                    up = std::upper_bound(obj.timestamps.begin(), obj.timestamps.end(), req.end);
+
+                    if (low == obj.timestamps.end() || up == obj.timestamps.end())
+                    {
+                        ROS_WARN("No tracks found for supplied interval for object with id %d", id);
+                        continue;
+                    }
+
+                    int min_idx = int(low - obj.timestamps.begin());
+                    int max_idx = int(up - obj.timestamps.begin());
+
+                    object_tracking::Track t;
+
+                    for (int i = min_idx; i <= max_idx; ++i)
+                    {
+                        object_tracking::PixelStamped px;
+                        px.header.frame_id = "/high_def_optical_frame";
+                        px.header.stamp = obj.timestamps[i];
+                        px.pixel.x = obj.tracks[i].x;
+                        px.pixel.y = obj.tracks[i].y;
+
+                        t.id = id;
+                        t.waypoints.push_back(px);
+                    }
+
+                    res.tracks.push_back(t);
+                }
+            }
         }
 
         return true;
