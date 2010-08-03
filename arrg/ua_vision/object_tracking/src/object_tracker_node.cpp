@@ -129,42 +129,40 @@ public:
 
     bool get_tracks_interval(object_tracking::GetTracksInterval::Request& req, object_tracking::GetTracksInterval::Response& res)
     {
-        BOOST_FOREACH(int32_t id, req.ids)
+        BOOST_FOREACH(Object obj, object_tracker.objects)
         {
-            BOOST_FOREACH(Object obj, object_tracker.objects)
+            if (req.id == obj.id)
             {
-                if (id == obj.id)
+                std::vector<ros::Time>::iterator low, up;
+
+                low = std::lower_bound(obj.timestamps.begin(), obj.timestamps.end(), req.begin);
+                up = std::upper_bound(obj.timestamps.begin(), obj.timestamps.end(), req.end);
+
+                if (low == obj.timestamps.end() || up == obj.timestamps.end())
                 {
-                    std::vector<ros::Time>::iterator low, up;
-
-                    low = std::lower_bound(obj.timestamps.begin(), obj.timestamps.end(), req.begin);
-                    up = std::upper_bound(obj.timestamps.begin(), obj.timestamps.end(), req.end);
-
-                    if (low == obj.timestamps.end() || up == obj.timestamps.end())
-                    {
-                        ROS_WARN("No tracks found for supplied interval for object with id %d", id);
-                        continue;
-                    }
-
-                    int min_idx = int(low - obj.timestamps.begin());
-                    int max_idx = int(up - obj.timestamps.begin());
-
-                    object_tracking::Track t;
-
-                    for (int i = min_idx; i <= max_idx; ++i)
-                    {
-                        object_tracking::PixelStamped px;
-                        px.header.frame_id = "/high_def_optical_frame";
-                        px.header.stamp = obj.timestamps[i];
-                        px.pixel.x = obj.tracks[i].x;
-                        px.pixel.y = obj.tracks[i].y;
-
-                        t.id = id;
-                        t.waypoints.push_back(px);
-                    }
-
-                    res.tracks.push_back(t);
+                    ROS_WARN("No tracks found for supplied interval for object with id %d", req.id);
+                    continue;
                 }
+
+                int min_idx = int(low - obj.timestamps.begin());
+                int max_idx = int(up - obj.timestamps.begin());
+
+                object_tracking::Track t;
+
+                for (int i = min_idx; i <= max_idx; ++i)
+                {
+                    object_tracking::PixelStamped px;
+                    px.header.frame_id = "/high_def_optical_frame";
+                    px.header.stamp = obj.timestamps[i];
+                    px.pixel.x = obj.tracks[i].x;
+                    px.pixel.y = obj.tracks[i].y;
+
+                    t.id = req.id;
+                    t.waypoints.push_back(px);
+                }
+
+                res.track = t;
+                break;
             }
         }
 
@@ -227,6 +225,7 @@ public:
             cv::exp(bg_fg_prob_img, bg_fg_prob_img);
             bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), 1, 1);
             cv::divide(1.0, bg_fg_prob_img, bg_fg_prob_img);
+            cv::GaussianBlur(bg_fg_prob_img, bg_fg_prob_img, cv::Size(7,7), .95, .95);
 
             // grab current foreground image under lbp image and normalize it
             cv::Mat lbp_fg_prob_img;
@@ -235,6 +234,12 @@ public:
             // combine background subtraction and lbp probability images
             cv::Mat fg_prob_img;
             cv::multiply(bg_fg_prob_img, lbp_fg_prob_img, fg_prob_img);
+
+            cv::namedWindow("bg_fg_prob_img");
+            cv::imshow("bg_fg_prob_img", bg_fg_prob_img);
+
+            cv::namedWindow("lbp_fg_prob_img");
+            cv::imshow("lbp_fg_prob_img", lbp_fg_prob_img);
 
             cv::namedWindow("fg_prob_img");
             cv::imshow("fg_prob_img", fg_prob_img);
@@ -319,7 +324,7 @@ public:
             object_pub.publish(obj_pose_array);
         }
 
-        ROS_INFO( "%.1fms\n", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
+        ROS_DEBUG( "%.1fms\n", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
     }
 };
 

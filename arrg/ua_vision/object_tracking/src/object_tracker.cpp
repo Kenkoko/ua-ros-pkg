@@ -68,7 +68,7 @@ void print_matz(const cv::Mat &C)
 ObjectTracker::ObjectTracker()
 {
     initialized = false;
-    fg_prob_threshold = 0.6;
+    fg_prob_threshold = 0.3;
     con_area_threshold = 40;
     cv::startWindowThread();
 
@@ -186,7 +186,9 @@ void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& origi
         mins.resize(num_objects);
         maxs.resize(num_objects);
 
+        ROS_INFO("Training...");
         stochastic_gradient_following(back_projects, masks, mins, maxs);
+        ROS_INFO("Training complete");
 
 //         Object bg;
 //         bg.id = 0;
