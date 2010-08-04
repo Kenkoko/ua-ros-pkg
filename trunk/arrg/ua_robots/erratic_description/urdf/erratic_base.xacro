@@ -21,12 +21,12 @@
     <property name="top_size_y" value="0.3556" />
     <property name="top_size_z" value="0.0020" />
     
-    <property name="wheel_radius" value="0.0625" />
+    <property name="wheel_radius" value="0.0746" />
     <property name="wheel_length" value="0.02" />
     <property name="caster_wheel_offset_y" value="0.17" />
     
     <property name="caster_support_x" value="0.086" />
-    <property name="caster_support_z" value="0.088148" />
+    <property name="caster_support_z" value="0.1095" />
 
     <macro name="erratic">
         <!-- base_footprint is a fictitious link(frame) that is on the ground right below base_link origin,
@@ -153,7 +153,7 @@
         </link>
 
         <joint name="base_caster_support_joint" type="continuous">
-            <origin xyz="${-caster_support_x/2 + 0.015} 0 ${-caster_support_z/2 - 0.03}" rpy="0 0 0" />
+            <origin xyz="${-caster_support_x/2 + 0.015} 0 ${-caster_support_z/2 - 0.0315}" rpy="0 0 0" />
             <parent link="base_caster_box_link" />
             <child link="base_caster_support_link"/>
             
@@ -181,14 +181,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <box size="0.03 0.02 0.06" />
+                    <box size="0.03 0.02 0.063" />
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <box size="0.03 0.02 0.06" />
+                    <box size="0.03 0.02 0.063" />
                 </geometry>
             </collision>
         </link>
@@ -222,7 +222,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
                 <geometry>
-                    <cylinder radius="0.0381" length="0.01" />
+                    <cylinder radius="0.035" length="0.01" />
                 </geometry>
                 <material name="Black"/>
             </visual>
@@ -230,7 +230,7 @@
             <collision>
             <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
             <geometry>
-                <cylinder radius="0.0381" length="0.01" />
+                <cylinder radius="0.035" length="0.01" />
             </geometry>
             </collision>
         </link>
