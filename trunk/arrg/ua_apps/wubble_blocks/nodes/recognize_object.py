@@ -49,6 +49,7 @@ class ObjectClassifier:
 
     def classify(self, req):
         resp = self.get_tracks_srv(req.id, req.swat_time, req.swat_time + rospy.Duration(0.5))
+        #self.dump_track_to_file(resp.track)
         return self.categorize_track(resp.track)
 
     def categorize_track(self, track):
@@ -69,11 +70,23 @@ class ObjectClassifier:
         else:
             return "Block"
 
+    def dump_track_to_file(self, track):
+        # time_string = track.waypoints[0].header.stamp.secs + '.' + track.waypoints[0].header.stamp.nsecs
+        fname = 'object_%d.tracks' % track.id
+        file = open(fname, 'a+')
+
+        for p in track.waypoints:
+            l = '%d,%d.%d,%d,%d\n' % (track.id, p.header.stamp.secs, p.header.stamp.nsecs, p.pixel.x, p.pixel.y)
+            file.write(l)
+
+        file.write('\n\n')
+        file.flush()
+        file.close()
+
 if __name__ == '__main__':
     try:
         rospy.init_node('object_classifier', anonymous=True)
         swat = ObjectClassifier()
         rospy.spin()
-
     except rospy.ROSInterruptException:
         pass
