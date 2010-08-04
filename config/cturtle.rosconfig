@@ -221,10 +221,10 @@
     uri: https://code.ros.org/svn/wg-ros-pkg/stacks/wifi_drivers/tags/cturtle
     local-name: stacks/wifi_drivers
 - svn:
-    uri: https://code.ros.org/svn/wg-ros-pkg/trunk
+    uri: https://code.ros.org/svn/wg-ros-pkg/branches/trunk_cturtle
     local-name: wg-ros-pkg-unreleased
 - svn:
-    uri: https://code.ros.org/svn/ros-pkg/trunk
+    uri: https://code.ros.org/svn/ros-pkg/branches/trunk_cturtle
     local-name: ros-pkg-unreleased
 - svn:
     uri: https://code.ros.org/svn/ros/stacks/ros_experimental/trunk
