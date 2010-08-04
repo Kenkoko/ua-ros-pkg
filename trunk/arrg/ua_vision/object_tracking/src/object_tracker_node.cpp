@@ -35,6 +35,8 @@
 #include <cmath>
 #include <cstddef>
 
+#include <omp.h>
+
 #include <ros/ros.h>
 
 #include <boost/foreach.hpp>
@@ -134,18 +136,21 @@ public:
             if (req.id == obj.id)
             {
                 std::vector<ros::Time>::iterator low, up;
+                // TODO: too much copying here
+                std::vector<ros::Time> stamps = obj.timestamps;
+                std::vector<cv::Point> points = obj.tracks;
 
-                low = std::lower_bound(obj.timestamps.begin(), obj.timestamps.end(), req.begin);
-                up = std::upper_bound(obj.timestamps.begin(), obj.timestamps.end(), req.end);
+                low = std::lower_bound(stamps.begin(), stamps.end(), req.begin);
+                up = std::upper_bound(stamps.begin(), stamps.end(), req.end);
 
-                if (low == obj.timestamps.end() || up == obj.timestamps.end())
+                if (low == stamps.end() || up == stamps.end())
                 {
                     ROS_WARN("No tracks found for supplied interval for object with id %d", req.id);
                     continue;
                 }
 
-                int min_idx = int(low - obj.timestamps.begin());
-                int max_idx = int(up - obj.timestamps.begin());
+                int min_idx = int(low - stamps.begin());
+                int max_idx = int(up - stamps.begin());
 
                 object_tracking::Track t;
 
@@ -153,9 +158,9 @@ public:
                 {
                     object_tracking::PixelStamped px;
                     px.header.frame_id = "/high_def_optical_frame";
-                    px.header.stamp = obj.timestamps[i];
-                    px.pixel.x = obj.tracks[i].x;
-                    px.pixel.y = obj.tracks[i].y;
+                    px.header.stamp = stamps[i];
+                    px.pixel.x = points[i].x;
+                    px.pixel.y = points[i].y;
 
                     t.id = req.id;
                     t.waypoints.push_back(px);
@@ -217,19 +222,30 @@ public:
         }
         else
         {
-            // Compute the (foreground) probability image under the logistic model
-            double w = -1.0 / 5.0;
-            double b = 4.0;
-            cv::Mat bg_fg_prob_img = bg_sub.subtract_background(original);
-            bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), w, b);
-            cv::exp(bg_fg_prob_img, bg_fg_prob_img);
-            bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), 1, 1);
-            cv::divide(1.0, bg_fg_prob_img, bg_fg_prob_img);
-            cv::GaussianBlur(bg_fg_prob_img, bg_fg_prob_img, cv::Size(7,7), .95, .95);
-
-            // grab current foreground image under lbp image and normalize it
+            cv::Mat bg_fg_prob_img;
             cv::Mat lbp_fg_prob_img;
-            lbp_model.foreground.convertTo(lbp_fg_prob_img, CV_32F, 1.0 / 255);
+
+            #pragma omp parallel sections
+            {
+                #pragma omp section
+                {
+                    // Compute the (foreground) probability image under the logistic model
+                    double w = -1.0 / 5.0;
+                    double b = 4.0;
+                    bg_fg_prob_img = bg_sub.subtract_background(original);
+                    bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), w, b);
+                    cv::exp(bg_fg_prob_img, bg_fg_prob_img);
+                    bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), 1, 1);
+                    cv::divide(1.0, bg_fg_prob_img, bg_fg_prob_img);
+                    cv::GaussianBlur(bg_fg_prob_img, bg_fg_prob_img, cv::Size(7,7), .95, .95);
+                }
+
+                #pragma omp section
+                {
+                    // grab current foreground image under lbp image and normalize it
+                    lbp_model.foreground.convertTo(lbp_fg_prob_img, CV_32F, 1.0 / 255);
+                }
+            }
 
             // combine background subtraction and lbp probability images
             cv::Mat fg_prob_img;
