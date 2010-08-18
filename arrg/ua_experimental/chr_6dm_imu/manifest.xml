@@ -1,0 +1,15 @@
+<package>
+    <description brief="chr_6dm_imu">
+        chr_6dm_imu
+    </description>
+    
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/chr_6dm_imu</url>
+    
+    <depend package="rospy"/>
+    <rosdep name="pyserial"/>
+</package>
+
+
