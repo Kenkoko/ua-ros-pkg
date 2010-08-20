@@ -378,17 +378,93 @@ class CHR6dmIMU(object):
             else:
                 print 'Magnetometer updates ARE NOT used for yaw angle correction'
         elif command == GYRO_ALIGNMENT_REPORT:
-            pass
+            value = struct.unpack('>f', dataStr[0:4])
+            mat00 = value[0]
+            value = struct.unpack('>f', dataStr[4:8])
+            mat01 = value[0]
+            value = struct.unpack('>f', dataStr[8:12])
+            mat02 = value[0]
+            value = struct.unpack('>f', dataStr[12:16])
+            mat10 = value[0]
+            value = struct.unpack('>f', dataStr[16:20])
+            mat11 = value[0]
+            value = struct.unpack('>f', dataStr[20:24])
+            mat12 = value[0]
+            value = struct.unpack('>f', dataStr[24:28])
+            mat20 = value[0]
+            value = struct.unpack('>f', dataStr[28:32])
+            mat21 = value[0]
+            value = struct.unpack('>f', dataStr[32:36])
+            mat22 = value[0]
+            print 'gyro alignment is [%f %f %f | %f %f %f | %f %f %f]' % (mat00, mat01, mat02, mat10, mat11, mat12, mat20, mat21, mat22)
         elif command == ACCEL_ALIGNMENT_REPORT:
-            pass
+            value = struct.unpack('>f', dataStr[0:4])
+            mat00 = value[0]
+            value = struct.unpack('>f', dataStr[4:8])
+            mat01 = value[0]
+            value = struct.unpack('>f', dataStr[8:12])
+            mat02 = value[0]
+            value = struct.unpack('>f', dataStr[12:16])
+            mat10 = value[0]
+            value = struct.unpack('>f', dataStr[16:20])
+            mat11 = value[0]
+            value = struct.unpack('>f', dataStr[20:24])
+            mat12 = value[0]
+            value = struct.unpack('>f', dataStr[24:28])
+            mat20 = value[0]
+            value = struct.unpack('>f', dataStr[28:32])
+            mat21 = value[0]
+            value = struct.unpack('>f', dataStr[32:36])
+            mat22 = value[0]
+            print 'accel alignment is [%f %f %f | %f %f %f | %f %f %f]' % (mat00, mat01, mat02, mat10, mat11, mat12, mat20, mat21, mat22)
         elif command == MAG_REF_VECTOR_REPORT:
-            pass
+            value = struct.unpack('>h', dataStr[0] + dataStr[1])
+            mag_z_ref = value[0] * SCALE_MAG_Z
+            
+            value = struct.unpack('>h', dataStr[2] + dataStr[3])
+            mag_y_ref = value[0] * SCALE_MAG_Y
+            
+            value = struct.unpack('>h', dataStr[4] + dataStr[5])
+            mag_x_ref = value[0] * SCALE_MAG_X
+            
+            print 'mag ref vector: (%f, %f, %f)' % (mag_x_ref, mag_y_ref, mag_z_ref)
         elif command == MAG_CAL_REPORT:
-            pass
+            value = struct.unpack('>f', dataStr[0:4])
+            mat00 = value[0]
+            value = struct.unpack('>f', dataStr[4:8])
+            mat01 = value[0]
+            value = struct.unpack('>f', dataStr[8:12])
+            mat02 = value[0]
+            value = struct.unpack('>f', dataStr[12:16])
+            mat10 = value[0]
+            value = struct.unpack('>f', dataStr[16:20])
+            mat11 = value[0]
+            value = struct.unpack('>f', dataStr[20:24])
+            mat12 = value[0]
+            value = struct.unpack('>f', dataStr[24:28])
+            mat20 = value[0]
+            value = struct.unpack('>f', dataStr[28:32])
+            mat21 = value[0]
+            value = struct.unpack('>f', dataStr[32:36])
+            mat22 = value[0]
+            print 'mag calibration is [%f %f %f | %f %f %f | %f %f %f]' % (mat00, mat01, mat02, mat10, mat11, mat12, mat20, mat21, mat22)
         elif command == MAG_BIAS_REPORT:
-            pass
+            value = struct.unpack('>h', dataStr[0] + dataStr[1])
+            mag_z_bias = value[0] * SCALE_MAG_Z
+            
+            value = struct.unpack('>h', dataStr[2] + dataStr[3])
+            mag_y_bias = value[0] * SCALE_MAG_Y
+            
+            value = struct.unpack('>h', dataStr[4] + dataStr[5])
+            mag_x_bias = value[0] * SCALE_MAG_X
+            
+            print 'mag bias vector: (%f, %f, %f)' % (mag_x_bias, mag_y_bias, mag_z_bias)
         elif command == BROADCAST_MODE_REPORT:
-            pass
+            if data[1] & 0x01:
+                rate = (280.0 / 255.0) * data[0] + 20.0
+                print "IMU is in BROADCAST mode, data rate is %d Hz" % rate
+            else:
+                print "IMU is in SILENT mode"
         else:
             print "Unsupported packet %d" % command
 
