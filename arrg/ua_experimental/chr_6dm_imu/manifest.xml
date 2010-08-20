@@ -9,6 +9,9 @@
     <url>http://ros.org/wiki/chr_6dm_imu</url>
     
     <depend package="rospy"/>
+    <depend package="tf"/>
+    <depend package="sensor_msgs"/>
+    
     <rosdep name="pyserial"/>
 </package>
 
