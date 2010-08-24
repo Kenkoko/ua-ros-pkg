@@ -1,0 +1,11 @@
+<package>
+    <description brief="CH Robotics CHR-6dm IMU URDF description">
+        Continas xacro macros for CHR-6dm IMU.
+    </description>
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/chr_6dm_imu_description</url>
+</package>
+
+
