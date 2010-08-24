@@ -80,7 +80,7 @@ class CHR6dmIMU(object):
         packetStr = 'snp' + chr(command) + chr(len(dataStr)) + dataStr + chr(chkSum >> 8) + chr(chkSum & 0x0FF)
         self.ser.write(packetStr)
         
-        print 'Command: %s, data packet: %s' % (hex(command).upper(), str(data))
+        print 'Command: %s (%s), data packet: %s' % (CODE_TO_STR[command], hex(command).upper(), str(data))
         
         # wait for response
         time.sleep(0.005)
@@ -104,7 +104,7 @@ class CHR6dmIMU(object):
         data = map(b2a_hex, dataStr)
         data = map(int, data, [16] * len(data))
         
-        print "Received reply: %s, data: %s" % (hex(command).upper(), str(data))
+        print "Received reply: %s (%s), data: %s" % (CODE_TO_STR[command], hex(command).upper(), str(data))
         
         chkSumStr = self.ser.read(2)
         chkSumData = map(b2a_hex, chkSumStr)
@@ -118,13 +118,13 @@ class CHR6dmIMU(object):
             return
             
         if command == COMMAND_COMPLETE:
-            print 'Command %s complete' % hex(data[0]).upper()
+            print 'Command %s (%s) complete' % (CODE_TO_STR[data[0]], hex(data[0]).upper())
         elif command == COMMAND_FAILED:
-            print 'Command %s failed' % hex(data[0]).upper()
+            print 'Command %s (%s) failed' % (CODE_TO_STR[data[0]], hex(data[0]).upper())
         elif command == BAD_CHECKSUM:
             print 'Bad checksum'
         elif command == BAD_DATA_LENGTH:
-            print 'Bad data length for command %s' % hex(data[0]).upper()
+            print 'Bad data length for command %s (%s)' % (CODE_TO_STR[data[0]], hex(data[0]).upper())
         elif command == UNRECOGNIZED_PACKET:
             print 'Unrecognized packet %s' % hex(data[0]).upper()
         elif command == BUFFER_OVERFLOW:
@@ -479,6 +479,9 @@ class CHR6dmIMU(object):
 
     def set_active_channels(self, channels):
         """
+        Specifies which channel data should be transmitted over the UART in
+        response to a GET_DATA packet, or periodically in Broadcast Mode. Any
+        combination of sensor channels can be set as active or inactive.
         channels is a dictionary
         """
         high_byte = str()
@@ -507,22 +510,346 @@ class CHR6dmIMU(object):
         self.write_to_imu(SET_ACTIVE_CHANNELS, (high_byte, low_byte))
 
     def set_silent_mode(self):
-        print "Setting silent mode"
+        """
+        Enables "Silent Mode." In Silent Mode, the AHRS only reports data when a
+        GET_DATA packet is received.
+        """
         self.write_to_imu(SET_SILENT_MODE)
 
     def set_broadcast_mode(self, hz):
+        """
+        Enables "Broadcast Mode." In Broadcast Mode, the AHRS automatically
+        transmits sensor data at regular time intervals.
+        """
+        if hz < 20: hz = 20
+        if hz > 300: hz = 300
         x = int((hz - 20) / (280.0/255.0))
         self.write_to_imu(SET_BROADCAST_MODE, (x, ))
 
+    def set_gyro_bias(self, gyro_x_bias, gyro_y_bias, gyro_z_bias):
+        """
+        Manually sets the rate gyro bias on the X, Y, and Z rate gyros. The bias
+        can be automatically set for all gyro axes by sending a ZERO_RATE_GYROS
+        packet.
+        """
+        data = struct.pack('>hhh', gyro_z_bias, gyro_y_bias, gyro_x_bias)
+        self.write_to_imu(SET_GYRO_BIAS, map(ord, data))
+
+    def set_accel_bias(self, accel_x_bias, accel_y_bias, accel_z_bias):
+        """
+        Manually sets the accelerometer biases on the X, Y, and Z accelerometers.
+        """
+        data = struct.pack('>hhh', accel_z_bias, accel_y_bias, accel_x_bias)
+        self.write_to_imu(SET_ACCEL_BIAS, map(ord, data))
+
+    def set_accel_ref_vector(self, accel_x_ref, accel_y_ref, accel_z_ref):
+        """
+        Manually sets the accelerometer reference vector. The data in the
+        SET_ACCEL_REF_VECTOR packet corresponds to the raw accelerometer
+        measurements expected when the pitch and roll angles are zero.
+        """
+        data = struct.pack('>hhh', accel_z_ref, accel_y_ref, accel_x_ref)
+        self.write_to_imu(SET_ACCEL_REF_VECTOR, map(ord, data))
+
     def auto_set_accel_ref(self):
+        """
+        Sets the accel reference vector to the most recent data acquired by the 
+        accelerometers. Returns the new reference vector in a
+        ACCEL_REF_VECTOR_REPORT packet.
+        """
         self.write_to_imu(AUTO_SET_ACCEL_REF)
 
+    def zero_rate_gyros(self):
+        """
+        Starts internal self-calibration of all three rate gyro axes. By
+        default, rate gyros are zeroed on AHRS startup, but gyro startup
+        calibration can be disabled (or re-enabled) by sending a SET_START_CAL
+        packet.
+        """
+        self.write_to_imu(ZERO_RATE_GYROS)
+
+    def self_test(self):
+        """
+        Instructs the AHRS to perform a self-test of the accelerometer and gyro
+        sensor channels. The self-test sequence takes approximately 570
+        milliseconds to complete. During this time, the AHRS should be kept
+        stationary. A STATUS_REPORT packet is transmitted after the self-test is
+        complete.
+        """
+        self.write_to_imu(SELF_TEST)
+
+    def set_start_cal(self, enable_calibration):
+        """
+        Enables or disables automatic startup calibration of rate gyros.
+        """
+        data = 0x01 if enable_calibration else 0x00
+        self.write_to_imu(SET_START_CAL, (data,))
+
+    def set_process_covariance(self, process_covariance):
+        """
+        Sets the process covariance to be used in the prediction step of the
+        EKF. The unit assumes that the process covariance will be a diagonal
+        matrix with equivalent diagonal entries. The SET_PROCESS_COVARIANCE
+        packet thus includes only one 32-bit floating point value for the
+        covariance matrix.
+        """
+        data = struct.pack('>f', process_covariance)
+        self.write_to_imu(SET_PROCESS_COVARIANCE, map(ord, data))
+
+    def set_mag_covariance(self, mag_covariance):
+        """
+        Sets the covariance to be used in the magnetometer update step of the
+        EKF. The unit assumes that the magnetometer covariance will be a 
+        diagonal matrix with equivalent diagonal entries. The SET_MAG_COVARIANCE
+        packet thus includes only one 32-bit floating point value for the
+        covariance matrix.
+        """
+        data = struct.pack('>f', mag_covariance)
+        self.write_to_imu(SET_MAG_COVARIANCE, map(ord, data))
+
+    def set_accel_covariance(self, accel_covariance):
+        """
+        Sets the covariance to be used in the accelerometer update step of the
+        EKF. The unit assumes that the accelerometer covariance will be a 
+        diagonal matrix with equivalent diagonal entries. The 
+        SET_ACCEL_COVARIANCE packet thus includes only one 32-bit floating point
+        value for the covariance matrix.
+        """
+        data = struct.pack('>f', accel_covariance)
+        self.write_to_imu(SET_ACCEL_COVARIANCE, map(ord, data))
+
+    def set_ekf_config(self, enable_accel, enable_mag):
+        """
+        Sets the EKF configuration register. This packet is used to enable/
+        disable accelerometer and magnetometer updates to the angle estimates.
+        """
+        data = 0
+        if enable_accel: data |= 0x02
+        if enable_mag: data |= 0x01
+        self.write_to_imu(SET_EKF_CONFIG, (data,))
+
+    def set_gyro_alignment(self, gyro_alignment):
+        """
+        Sets the 3x3 calibration matrix used to correct cross-axis misalignment
+        of the rate gyro outputs. Each element in the matrix is a 32-bit IEEE
+        floating point value.
+        
+        [mat00, mat01, mat02, mat10, mat11, mat12, mat20, mat21, mat22]
+        """
+        data = struct.pack('>' + 9*'f', gyro_alignment)
+        self.write_to_imu(SET_GYRO_ALIGNMENT, map(ord, data))
+
+    def set_accel_alignment(self, accel_alignment):
+        """
+        Sets the 3x3 calibration matrix used to correct cross-axis misalignment
+        of the acclerometer outputs. Each element in the matrix is a 32-bit IEEE
+        floating point value.
+        
+        [mat00, mat01, mat02, mat10, mat11, mat12, mat20, mat21, mat22]
+        """
+        data = struct.pack('>' + 9*'f', accel_alignment)
+        self.write_to_imu(SET_ACCEL_ALIGNMENT, map(ord, data))
+
+    def set_mag_ref_vector(self, mag_x_ref, mag_y_ref, mag_z_ref):
+        """
+        Manually sets the magnetometer reference vector. The data in the
+        SET_MAG_REF_VECTOR packet corresponds to the raw magnetometer
+        measurements expected when the pitch, roll, and yaw angles are zero.
+        """
+        data = struct.pack('>hhh', mag_z_ref, mag_y_ref, mag_x_ref)
+        self.write_to_imu(SET_MAG_REF_VECTOR, map(ord, data))
+
+    def auto_set_mag_ref(self):
+        """
+        Sets the magnetic field reference vector to the most recent magnetic
+        sensor measurement. Returns a MAG_REF_VECTOR_REPORT PACKET with the new
+        reference vector.
+        """
+        self.write_to_imu(AUTO_SET_MAG_REF)
+
+    def set_mag_cal(self, mag_cal):
+        """
+        Sets the 3x3 calibration matrix used for soft and hard iron calibration,
+        axis misalignment calibration, and scale calibration of the magnetometer.
+        
+        [mat00, mat01, mat02, mat10, mat11, mat12, mat20, mat21, mat22]
+        """
+        data = struct.pack('>' + 9*'f', mag_cal)
+        self.write_to_imu(SET_MAG_CAL, map(ord, data))
+
+    def set_mag_bias(self, mag_x_bias, mag_y_bias, mag_z_bias):
+        """
+        Sets the magnetic field bias term to compensate for hard-iron
+        distortions of the magnetic field.
+        """
+        data = struct.pack('>hhh', mag_z_bias, mag_y_bias, mag_x_bias)
+        self.write_to_imu(SET_MAG_BIAS, map(ord, data))
+
+    def set_gyro_scale(self, gyro_x_scale, gyro_y_scale, gyro_z_scale):
+        """
+        Sets the scale factors used to compute rates from raw gyro data on all
+        axes.
+        """
+        data = struct.pack('>fff', gyro_z_scale, gyro_y_scale, gyro_x_scale)
+        self.write_to_imu(SET_GYRO_SCALE, map(ord, data))
+
+    def ekf_reset(self):
+        """
+        Sets each term in the state covariance matrix to zero and re-initializes
+        the EKF. This command can be used for recovery if the state is corrupted
+        by passing too close to the singularity at pitch = 90 degrees.
+        """
+        self.write_to_imu(EKF_RESET)
+
+    def reset_to_factory(self):
+        """
+        Resets all AHRS configuration to the factory defaults. This includes
+        calibration parameters, biases, communication settings, etc. The factory
+        defaults are written to RAM. To make them persistent, a WRITE_TO_FLASH
+        packet must be sent following the RESET_TO_FACTORY command.
+        """
+        self.write_to_imu(RESET_TO_FACTORY)
+
+    def write_to_flash(self):
+        """
+        Writes AHRS configuration to on-board flash so that the configuration
+        persists when the power is cycled.
+        """
+        self.write_to_imu(WRITE_TO_FLASH)
+
     def get_data(self):
+        """
+        In Silent Mode, the AHRS waits to receive a GET_DATA packet before
+        transmitting sensor data. The most recent data from all active sensor
+        channels is transmitted in response to a GET_DATA packet. In Broadcast
+        Mode, a GET_DATA packet is ignored.
+        """
         self.write_to_imu(GET_DATA)
 
     def get_active_channels(self):
+        """
+        Reports which channels are "active." Active channels are sensor channels
+        that are measured and transmitted in response to a GET_DATA packet, or
+        periodically in Broadcast Mode. Active channels are reported in an
+        ACTIVE_CHANNEL_REPORT packet.
+        """
         self.write_to_imu(GET_ACTIVE_CHANNELS)
-        
+
+    def get_broadcast_mode(self):
+        """
+        Causes the AHRS to send a BROADCAST_MODE_REPORT packet, which specifies
+        whether the AHRS is in Broadcast Mode or Silent Mode.
+        """
+        self.write_to_imu(GET_BROADCAST_MODE)
+
+    def get_accel_bias(self):
+        """
+        Return the bias values for all three accel axes in an ACCEL_BIAS_REPORT
+        packet.
+        """
+        self.write_to_imu(GET_ACCEL_BIAS)
+
+    def get_accel_ref_vector(self):
+        """
+        Return the accelerometer reference vector in a ACCEL_REF_VECTOR_REPORT.
+        """
+        self.write_to_imu(GET_ACCEL_REF_VECTOR)
+
+    def get_gyro_bias(self):
+        """
+        Returns the bias values for all three rate gyros in a GYRO_BIAS_REPORT
+        packet.
+        """
+        self.write_to_imu(GET_GYRO_BIAS)
+
+    def get_gyro_scale(self):
+        """
+        Returns the scale factors used to convert raw gyro measurements to
+        angular rates. Data is returned in a GYRO_SCALE_REPORT packet.
+        """
+        self.write_to_imu(GET_GYRO_SCALE)
+
+    def get_start_cal(self):
+        """
+        Reports whether gyro startup calibration is enabled by sending a
+        START_CAL_REPORT packet.
+        """
+        self.write_to_imu(GET_START_CAL)
+
+    def get_ekf_config(self):
+        """
+        Returns the value of the EKF configuration register in a
+        EKF_CONFIG_REPORT packet.
+        """
+        self.write_to_imu(GET_EKF_CONFIG)
+
+    def get_accel_covariance(self):
+        """
+        Returns the covariance to be used in the accelerometer update step of
+        the EKF. Covariance is transmitted in a ACCEL_COVARIANCE_REPORT packet.
+        """
+        self.write_to_imu(GET_ACCEL_COVARIANCE)
+
+    def get_mag_covariance(self):
+        """
+        Returns the covariance to be used in the magnetometer update step of the
+        EKF. Covariance is transmitted in a MAG_COVARIANCE_REPORT packet.
+        """
+        self.write_to_imu(GET_MAG_COVARIANCE)
+
+    def get_process_covariance(self):
+        """
+        Returns the covariance to be used in the prediction step of the EKF.
+        Covariance is transmitted in a PROCESS_COVARIANCE_REPORT packet.
+        """
+        self.write_to_imu(GET_PROCESS_COVARIANCE)
+
+    def get_state_covariance(self):
+        """
+        Returns the 3x3 covariance matrix of the current state estimates in the
+        EKF. The covariance matrix is sent in a STATE_COVARIANCE_REPORT packet.
+        """
+        self.write_to_imu(GET_STATE_COVARIANCE)
+
+    def get_gyro_alignment(self):
+        """
+        Returns the 3x3 matrix used to correct gyro cross-axis misalignment. The
+        alignment matrix is returned in a GYRO_ALIGNMENT_REPORT packet.
+        """
+        self.write_to_imu(GET_GYRO_ALIGNMENT)
+
+    def get_accel_alignment(self):
+        """
+        Returns the 3x3 matrix used to correct accelerometer cross-axis
+        misalignment. The alignment matrix is returned in an
+        ACCEL_ALIGNMENT_REPORT packet.
+        """
+        self.write_to_imu(GET_ACCEL_ALIGNMENT)
+
+    def get_mag_ref_vector(self):
+        """
+        Returns the magnetic field reference vector in a MAG_REF_VECTOR_REPORT
+        packet.
+        """
+        self.write_to_imu(GET_MAG_REF_VECTOR)
+
+    def get_mag_cal(self):
+        """
+        Returns the 3x3 matrix used to correct magnetometer soft iron
+        distortions, axis misalignment, and scale factors. The calibration
+        matrix is returned in a MAG_CAL_REPORT packet.
+        """
+        self.write_to_imu(GET_MAG_CAL)
+
+    def get_mag_bias(self):
+        """
+        Returns the magnetometer biases used to correct hard iron distortions.
+        Biases are returned in a MAG_BIAS_REPORT packet.
+        """
+        self.write_to_imu(GET_MAG_BIAS)
+
+
+
     def enable_accel_angrate_orientation(self):
         ch = {'yaw':1, 'pitch':1, 'roll':1,
               'yaw_rate':1, 'pitch_rate':1, 'roll_rate':1,
@@ -531,7 +858,7 @@ class CHR6dmIMU(object):
               'ax':1, 'ay':1, 'az':1,}
               
         self.set_active_channels(ch)
-        
+
     def read_accel_angrate_orientation(self):
         # look for packet prefix 'snp'
         while self.ser.read() != 's':
@@ -657,6 +984,30 @@ if __name__ == "__main__":
           'ax':1, 'ay':1, 'az':1,}
     
     sio.set_active_channels(ch)
+
+    sio.get_accel_alignment()
+    sio.get_accel_bias()
+    sio.get_accel_covariance()
+    sio.get_accel_ref_vector()
+    sio.get_active_channels()
+    
+    sio.get_broadcast_mode()
+    sio.get_ekf_config()
+    sio.get_gyro_alignment()
+    sio.get_gyro_bias()
+    sio.get_gyro_scale()
+    
+    sio.get_mag_bias()
+    sio.get_mag_cal()
+    sio.get_mag_covariance()
+    sio.get_mag_ref_vector()
+    
+    sio.get_process_covariance()
+    sio.get_start_cal()
+    sio.get_state_covariance()
+    
+    sio.self_test()
+    
     #sio.get_active_channels()
     #while True:
     #    sio.get_data()
