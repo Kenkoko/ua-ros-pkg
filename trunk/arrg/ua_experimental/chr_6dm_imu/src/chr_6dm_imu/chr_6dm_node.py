@@ -96,7 +96,11 @@ class CHR6dmNode():
                 
             if not data: continue
             
-            self.imu_msg.orientation = quaternion_from_euler(data['roll'], data['pitch'], data['yaw'])
+            ori = quaternion_from_euler(data['roll'], data['pitch'], data['yaw'])
+            self.imu_msg.orientation.x = ori[0]
+            self.imu_msg.orientation.y = ori[1]
+            self.imu_msg.orientation.z = ori[2]
+            self.imu_msg.orientation.w = ori[3]
             
             self.imu_msg.angular_velocity.x = data['roll_rate']
             self.imu_msg.angular_velocity.y = data['pitch_rate']
