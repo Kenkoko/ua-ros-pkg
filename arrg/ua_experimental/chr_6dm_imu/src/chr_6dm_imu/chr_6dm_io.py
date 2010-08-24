@@ -36,14 +36,16 @@
 
 import time
 import serial
-import math
 import struct
+from math import sqrt
 from binascii import b2a_hex
 
 from chr_6dm_const import *
 
 DEG_TO_RAD = 0.017453293    # degrees to radians
 MILIG_TO_MSS = 0.00980665   # mili g to m/s^2
+
+MAX_BYTES_SKIPPED = 1000
 
 class CHR6dmIMU(object):
     """ Provides low level IO with the CHR-6dm IMU through pyserial. """
@@ -59,6 +61,45 @@ class CHR6dmIMU(object):
         self.ser.parity = serial.PARITY_NONE
         
         print "Connected to IMU on %s" % port
+        
+        # IMU state variables
+        self.yaw = 0.0
+        self.pitch = 0.0
+        self.roll = 0.0
+        self.yaw_rate = 0.0
+        self.pitch_rate = 0.0
+        self.roll_rate = 0.0
+        self.mag_x = 0.0
+        self.mag_y = 0.0
+        self.mag_z = 0.0
+        self.gyro_x = 0.0
+        self.gyro_y = 0.0
+        self.gyro_z = 0.0
+        self.accel_x = 0.0
+        self.accel_y = 0.0
+        self.accel_z = 0.0
+        
+        self.imu_data = {
+            'yaw':        0.0,
+            'pitch':      0.0,
+            'roll':       0.0,
+            'yaw_rate':   0.0,
+            'pitch_rate': 0.0,
+            'roll_rate':  0.0,
+            'mag_x':      0.0,
+            'mag_y':      0.0,
+            'mag_z':      0.0,
+            'gyro_x':     0.0,
+            'gyro_y':     0.0,
+            'gyro_z':     0.0,
+            'accel_x':    0.0,
+            'accel_y':    0.0,
+            'accel_z':    0.0,
+        }
+        
+        self.accel_covariance = 0.0
+        self.mag_covariance = 0.0
+        self.process_covariance = 0.0
 
     def __del__(self):
         """ Destructor calls self.close_serial_port() """
@@ -89,8 +130,15 @@ class CHR6dmIMU(object):
 
     def read_from_imu(self):
         # look for packet prefix 'snp'
-        while self.ser.read() != 's':
-            print "looking for packet prefix 'snp'"
+        skipped_bytes = 0
+        
+        while skipped_bytes < MAX_BYTES_SKIPPED:
+            if self.ser.read() != 's': skipped_bytes += 1
+            else: break
+        else:
+            print 'Unable to find packet prefix. Throw exception.'
+            return
+        
         packet = 's' + self.ser.read(2) # read 'n' and 'p'
         
         if packet != 'snp':
@@ -151,106 +199,106 @@ class CHR6dmIMU(object):
             # yaw angle
             if active_channels & 0x8000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                yaw = value[0] * SCALE_YAW * DEG_TO_RAD
-                print 'yaw = %f' % yaw
+                self.imu_data['yaw'] = value[0] * SCALE_YAW * DEG_TO_RAD
+                print 'yaw = %f' % self.imu_data['yaw']
                 i += 2
-            
+                
             # pitch angle
             if active_channels & 0x4000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                pitch = value[0] * SCALE_PITCH * DEG_TO_RAD
-                print 'pitch = %f' % pitch
+                self.imu_data['pitch'] = value[0] * SCALE_PITCH * DEG_TO_RAD
+                print 'pitch = %f' % self.imu_data['pitch']
                 i += 2
-            
+                
             # roll angle
             if active_channels & 0x2000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                roll = value[0] * SCALE_ROLL * DEG_TO_RAD
-                print 'roll = %f' % roll
+                self.imu_data['roll'] = value[0] * SCALE_ROLL * DEG_TO_RAD
+                print 'roll = %f' % self.imu_data['roll']
                 i += 2
-            
+                
             # yaw rate
             if active_channels & 0x1000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                yaw_rate = value[0] * SCALE_YAW_RATE * DEG_TO_RAD
-                print 'yaw_rate = %f' % yaw_rate
+                self.imu_data['yaw_rate'] = value[0] * SCALE_YAW_RATE * DEG_TO_RAD
+                print 'yaw_rate = %f' % self.imu_data['yaw_rate']
                 i += 2
-            
+                
             # pitch rate
             if active_channels & 0x0800:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                pitch_rate = value[0] * SCALE_PITCH_RATE * DEG_TO_RAD
-                print 'pitch_rate = %f' % pitch_rate
+                self.imu_data['pitch_rate'] = value[0] * SCALE_PITCH_RATE * DEG_TO_RAD
+                print 'pitch_rate = %f' % self.imu_data['pitch_rate']
                 i += 2
-            
+                
             # roll rate
             if active_channels & 0x0400:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                roll_rate = value[0] * SCALE_ROLL_RATE * DEG_TO_RAD
-                print 'roll_rate = %f' % roll_rate
+                self.imu_data['roll_rate'] = value[0] * SCALE_ROLL_RATE * DEG_TO_RAD
+                print 'roll_rate = %f' % self.imu_data['roll_rate']
                 i += 2
-            
+                
             # mag X
             if active_channels & 0x0200:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                mx = value[0] * SCALE_MAG_X
-                print 'mx = %f' % mx
+                self.imu_data['mag_x'] = value[0] * SCALE_MAG_X
+                print 'mx = %f' % self.imu_data['mag_x']
                 i += 2
-            
+                
             # mag Y
             if active_channels & 0x0100:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                my = value[0] * SCALE_MAG_Y
-                print 'my = %f' % my
+                self.imu_data['mag_y'] = value[0] * SCALE_MAG_Y
+                print 'my = %f' % self.imu_data['mag_y']
                 i += 2
-            
+                
             # mag Z
             if active_channels & 0x0080:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                mz = value[0] * SCALE_MAG_Z
-                print 'mz = %f' % mz
+                self.imu_data['mag_z'] = value[0] * SCALE_MAG_Z
+                print 'mz = %f' % self.imu_data['mag_z']
                 i += 2
-            
+                
             # gyro X
             if active_channels & 0x0040:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                gx = value[0] * SCALE_GYRO_X * DEG_TO_RAD
-                print 'gx = %f' % gx
+                self.imu_data['gyro_x'] = value[0] * SCALE_GYRO_X * DEG_TO_RAD
+                print 'gx = %f' % self.imu_data['gyro_x']
                 i += 2
-            
+                
             # gyro Y
             if active_channels & 0x0020:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                gy = value[0] * SCALE_GYRO_Y * DEG_TO_RAD
-                print 'gy = %f' % gy
+                self.imu_data['gyro_y'] = value[0] * SCALE_GYRO_Y * DEG_TO_RAD
+                print 'gy = %f' % self.imu_data['gyro_y']
                 i += 2
-            
+                
             # gyro Z
             if active_channels & 0x0010:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                gz = value[0] * SCALE_GYRO_Z * DEG_TO_RAD
-                print 'gz = %f' % gz
+                self.imu_data['gyro_z'] = value[0] * SCALE_GYRO_Z * DEG_TO_RAD
+                print 'gz = %f' % self.imu_data['gyro_z']
                 i += 2
-            
+                
             # accel X
             if active_channels & 0x0008:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                ax = value[0] * SCALE_ACCEL_X * MILIG_TO_MSS
-                print 'ax = %f' % ax
+                self.imu_data['accel_x'] = value[0] * SCALE_ACCEL_X * MILIG_TO_MSS
+                print 'ax = %f' % self.imu_data['accel_x']
                 i += 2
-            
+                
             # accel Y
             if active_channels & 0x0004:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                ay = value[0] * SCALE_ACCEL_Y * MILIG_TO_MSS
-                print 'ay = %f' % ay
+                self.imu_data['accel_y'] = value[0] * SCALE_ACCEL_Y * MILIG_TO_MSS
+                print 'ay = %f' % self.imu_data['accel_y']
                 i += 2
-            
+                
             # accel Z
             if active_channels & 0x0002:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
-                az = value[0] * SCALE_ACCEL_Z * MILIG_TO_MSS
-                print 'az = %f' % az
+                self.imu_data['accel_z'] = value[0] * SCALE_ACCEL_Z * MILIG_TO_MSS
+                print 'az = %f' % self.imu_data['accel_z']
                 i += 2
         elif command == GYRO_BIAS_REPORT:
             value = struct.unpack('>h', dataStr[0] + dataStr[1])
@@ -337,16 +385,16 @@ class CHR6dmIMU(object):
                 print 'az channel active'
         elif command == ACCEL_COVARIANCE_REPORT:
             value = struct.unpack('>f', dataStr[0:4])
-            accel_covariance = value[0]
-            print 'Accel covariance is %f' % accel_covariance
+            self.accel_covariance = pow(sqrt(value[0]) * MILIG_TO_MSS, 2.0)
+            print 'Accel covariance is %f' % self.accel_covariance
         elif command == MAG_COVARIANCE_REPORT:
             value = struct.unpack('>f', dataStr[0:4])
-            mag_covariance = value[0]
-            print 'Mag covariance is %f' % mag_covariance
+            self.mag_covariance = value[0]
+            print 'Mag covariance is %f' % self.mag_covariance
         elif command == PROCESS_COVARIANCE_REPORT:
             value = struct.unpack('>f', dataStr[0:4])
-            process_covariance = value[0]
-            print 'Process covariance is %f' % process_covariance
+            self.process_covariance = value[0]
+            print 'Process covariance is %f' % self.process_covariance
         elif command == STATE_COVARIANCE_REPORT:
             value = struct.unpack('>f', dataStr[0:4])
             mat00 = value[0]
@@ -725,6 +773,7 @@ class CHR6dmIMU(object):
         Mode, a GET_DATA packet is ignored.
         """
         self.write_to_imu(GET_DATA)
+        return self.imu_data
 
     def get_active_channels(self):
         """
@@ -789,6 +838,7 @@ class CHR6dmIMU(object):
         the EKF. Covariance is transmitted in a ACCEL_COVARIANCE_REPORT packet.
         """
         self.write_to_imu(GET_ACCEL_COVARIANCE)
+        return self.accel_covariance
 
     def get_mag_covariance(self):
         """
@@ -796,6 +846,7 @@ class CHR6dmIMU(object):
         EKF. Covariance is transmitted in a MAG_COVARIANCE_REPORT packet.
         """
         self.write_to_imu(GET_MAG_COVARIANCE)
+        return self.mag_covariance
 
     def get_process_covariance(self):
         """
@@ -803,6 +854,7 @@ class CHR6dmIMU(object):
         Covariance is transmitted in a PROCESS_COVARIANCE_REPORT packet.
         """
         self.write_to_imu(GET_PROCESS_COVARIANCE)
+        return self.process_covariance
 
     def get_state_covariance(self):
         """
@@ -870,7 +922,7 @@ class CHR6dmIMU(object):
             return
 
         command = ord(self.ser.read())
-        print "command = %s" % hex(command).upper()
+        print "packet type = %s" % hex(command).upper()
 
         n = ord(self.ser.read())
         print "data bytes = %d" % n
