@@ -10,6 +10,7 @@
     <include filename="$(find smart_arm_description)/urdf/smart_arm.xacro" />
     <include filename="$(find hokuyo_urg_description)/urdf/hokuyo_urg.xacro" />
     <include filename="$(find videre_stoc_description)/urdf/videre_stoc.xacro" />
+    <include filename="$(find chr_6dm_imu_description)/urdf/chrobotics_chr_6dm_imu.urdf.xacro" />
     
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
@@ -24,6 +25,11 @@
     <smart_arm parent="base_top_link" >
         <origin xyz="${top_size_x/2 - 0.0575} 0 ${top_size_z/2 + 0.025}" rpy="0 0 0"/>
     </smart_arm>
+    
+    <!-- CHR-6dm IMU ATTACHMENT -->
+    <chrobotics_chr_6dm_imu name="imu" parent="base_top_link" imu_topic="imu/data" update_rate="100.0" stdev="0.00017" >
+        <origin xyz="0.0 0.1 ${top_size_z/2}" rpy="0 0 0" />
+    </chrobotics_chr_6dm_imu>
     
     <!-- HOKUYO LASER ATTACHMENT -->
     <joint name="laser_support_joint" type="fixed">
