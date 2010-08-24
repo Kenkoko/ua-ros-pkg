@@ -41,58 +41,79 @@ import rospy
 
 from chr_6dm_io import CHR6dmIMU
 from sensor_msgs.msg import Imu
-from tf import transformations as tft
+from tf.transformations import quaternion_from_euler
 import tf
 
 class CHR6dmNode():
     def __init__(self):
         port_name = rospy.get_param('~port_name', '/dev/ttyUSB0')
-        mode = rospy.get_param('~mode', 'streaming')
-        data_rate = rospy.get_param('~data_rate', 100)
         frame_id = rospy.get_param('frame_id', 'imu')
+        self.mode = rospy.get_param('~mode', 'polled')
+        self.data_rate = rospy.get_param('~data_rate', 30)
         
         self.imu = CHR6dmIMU(port_name)
-        self.imu.enable_accel_angrate_orientation()
         
-        if mode == 'streaming':
+        if self.mode == 'streaming':
             self.imu.set_broadcast_mode(data_rate)
-        elif mode == 'polled':
+        elif self.mode == 'polled':
+            self.imu.set_silent_mode()
+        else:
+            rospy.logwarn('Unrecognized IMU mode, setting to polled')
             self.imu.set_silent_mode()
             
+        rospy.sleep(0.1)
+        
+        self.imu.enable_accel_angrate_orientation()
+        accel_cov = self.imu.get_accel_covariance()
+        mag_cov = self.imu.get_mag_covariance()
+        proc_cov = self.imu.get_process_covariance()
+        
         self.imu_msg = Imu()
         self.imu_msg.header.frame_id = frame_id
+        
+        self.imu_msg.linear_acceleration_covariance[0] = accel_cov
+        self.imu_msg.linear_acceleration_covariance[4] = accel_cov
+        self.imu_msg.linear_acceleration_covariance[8] = accel_cov
+        
+        self.imu_msg.angular_velocity_covariance[0] = mag_cov
+        self.imu_msg.angular_velocity_covariance[4] = mag_cov
+        self.imu_msg.angular_velocity_covariance[8] = mag_cov
+        
+        self.imu_msg.orientation_covariance[0] = proc_cov
+        self.imu_msg.orientation_covariance[4] = proc_cov
+        self.imu_msg.orientation_covariance[8] = proc_cov
+        
         self.imu_data_pub = rospy.Publisher('imu/data', Imu)
-        
+
     def publish_data(self):
-        data = self.imu.read_accel_angrate_orientation()
-        if not data: return
-        print "RECEIVED DATA"
-        print data
-        ori = tft.quaternion_from_euler(data['roll'], data['pitch'], data['yaw'])
-        print "ori = " + str(ori)
+        r = rospy.Rate(self.data_rate)
         
-        self.imu_msg.orientation.x = ori[0]
-        self.imu_msg.orientation.y = ori[1]
-        self.imu_msg.orientation.z = ori[2]
-        self.imu_msg.orientation.w = ori[3]
-        print "orientation = " + str(self.imu_msg.orientation)
-        
-        self.imu_msg.angular_velocity.x = data['roll_rate']
-        self.imu_msg.angular_velocity.y = data['pitch_rate']
-        self.imu_msg.angular_velocity.z = data['yaw_rate']
-        print "velocity = " + str(self.imu_msg.angular_velocity)
+        while not rospy.is_shutdown():
+            if self.mode == 'streaming':
+                data = self.imu.read_accel_angrate_orientation()
+            else:
+                data = self.imu.get_data()
+                
+            if not data: return
+            
+            self.imu_msg.orientation = quaternion_from_euler(data['roll'], data['pitch'], data['yaw'])
+            
+            self.imu_msg.angular_velocity.x = data['roll_rate']
+            self.imu_msg.angular_velocity.y = data['pitch_rate']
+            self.imu_msg.angular_velocity.z = data['yaw_rate']
+            
+            self.imu_msg.linear_acceleration.x = data['accel_x']
+            self.imu_msg.linear_acceleration.y = data['accel_y']
+            self.imu_msg.linear_acceleration.z = data['accel_z']
+            
+            self.imu_msg.header.stamp = rospy.Time.now()
+            self.imu_data_pub.publish(self.imu_msg)
+            
+            br = tf.TransformBroadcaster()
+            br.sendTransform((0, 0, 1), ori, self.imu_msg.header.stamp, self.imu_msg.header.frame_id, '/map')
+            
+            r.sleep()
 
-        self.imu_msg.linear_acceleration.x = data['accel_x']
-        self.imu_msg.linear_acceleration.y = data['accel_y']
-        self.imu_msg.linear_acceleration.z = data['accel_z']
-        print "accel = " + str(self.imu_msg.linear_acceleration)
-
-        self.imu_msg.header.stamp = rospy.Time.now()
-        self.imu_data_pub.publish(self.imu_msg)
-        
-        br = tf.TransformBroadcaster()
-        br.sendTransform((0, 0, 1), ori, self.imu_msg.header.stamp, self.imu_msg.header.frame_id, '/map')
-        
     def shutdown(self):
         self.imu_data_pub.shutdown()
         self.imu.close()
@@ -101,8 +122,7 @@ if __name__ == '__main__':
     try:
         rospy.init_node('imu_node', anonymous=True)
         imu_node = CHR6dmNode()
-        while not rospy.is_shutdown():
-            imu_node.publish_data()
+        imu_node.publish_data()
     except rospy.ROSInterruptException:
         imu_node.shutdown()
 
