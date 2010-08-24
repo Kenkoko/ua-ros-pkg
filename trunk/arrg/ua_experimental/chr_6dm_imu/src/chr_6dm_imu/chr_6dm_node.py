@@ -94,7 +94,7 @@ class CHR6dmNode():
             else:
                 data = self.imu.get_data()
                 
-            if not data: return
+            if not data: continue
             
             self.imu_msg.orientation = quaternion_from_euler(data['roll'], data['pitch'], data['yaw'])
             
