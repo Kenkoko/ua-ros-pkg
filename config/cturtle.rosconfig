@@ -239,7 +239,7 @@
     uri: http://foote-ros-pkg.googlecode.com/svn/trunk/phidgets/phidgetspp_c_api
     local-name: foote-ros-pkg/phidgets/phidgetspp_c_api
 - svn:
-    uri: https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/trunk/bosch_drivers/
+    uri: https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/trunk/stacks/bosch_drivers/
     local-name: bosch-ros-pkg/bosch_drivers/
 - svn:
     uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/openrave_planning/
