@@ -3,11 +3,6 @@
 ;;=====================================================
 ;; Objects
 
-(defun make-object-space ()
-  (if (null (find-space-instance-by-path '(object-library)))
-      (make-space-instance '(object-library)
-                           :dimensions (dimensions-of 'physical-object))))
-
 (defun make-self ()
   (if (null (find-instance-by-name 'self 'physical-object))
       (make-instance 'physical-object 
@@ -311,7 +306,7 @@
   (if (eq 'robot (class-name (class-of obj)))
       (move-robot obj 0.5 0.0)
       (apply-force obj '(200 0 0) 0.1)))
-
+          
 (defun seek-goal-policy (obj sim-time ws)
   (declare (ignore sim-time))
   (if ws

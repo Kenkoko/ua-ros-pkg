@@ -2,20 +2,20 @@
 
 ;;===========================================================
 
-(define-unit-class manipulable ()
-  ((manipulators :initform nil))
-)
+;(define-unit-class manipulable ()
+;  ((manipulators :initform nil))
+;)
 
-(define-unit-class manipulator ()
-  (name
-   (value-type :initform 'discrete)
-   (value-range :initform '(on off))
-   distribution))
+;(define-unit-class manipulator ()
+;  (name
+;   (value-type :initform 'discrete)
+;   (value-range :initform '(on off))
+;   distribution))
 
 ;;===========================================================
 
-(defgeneric get-manipulators (entity)
-  (:documentation "Returns the set of manipulations that can be performed on a given entity."))
+;(defgeneric get-manipulators (entity)
+;  (:documentation "Returns the set of manipulations that can be performed on a given entity."))
 
 ;(defmethod get-manipulators ((object physical-object))
 ;  '(position rotation 
@@ -63,13 +63,13 @@
   (make-xml-list object)
   (add-to-world object))
 
-(defun raise-robot ()
-  (let ((robot (find-instance-by-name 'robot)))
-    (setf (third (xyz-of robot)) 0.6)))
+;(defun raise-robot ()
+;  (let ((robot (find-instance-by-name 'robot)))
+;    (setf (third (xyz-of robot)) 0.6)))
 
-(defun lower-robot ()
-  (let ((robot (find-instance-by-name 'robot)))
-    (setf (third (xyz-of robot)) 0.1)))
+;(defun lower-robot ()
+;  (let ((robot (find-instance-by-name 'robot)))
+;    (setf (third (xyz-of robot)) 0.1)))
 
 (defun close-gap ()
   (let ((floor (find-instance-by-name 'floor2)))

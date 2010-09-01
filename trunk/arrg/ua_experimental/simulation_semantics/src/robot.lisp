@@ -4,10 +4,9 @@
 ;; This file contains code for controlling the simple robot base
 ;;======================================================================
 
-(define-unit-class robot (thing)
+(define-unit-class robot (entity)
   ((vel-pub :initform nil)
-   (intended-velocity :initform 0)
-   (xyz :initform '(0 0 0)))
+   (intended-velocity :initform 0))
   )
 
 ;;=====================================================================
@@ -22,28 +21,28 @@
   (unadvertise "cmd_vel")
   (setf (vel-pub-of r) nil))
 
-(defmethod add-to-world ((r robot))
+(defmethod add-to-world ((r robot) pose)
   (call-service "gazebo/spawn_gazebo_model" 'gazebo-srv:SpawnModel 
                 :model_name "robot_description"
                 :model_xml (xml-rep r)
-                :initial_pose (get-initial-pose r)
+                :initial_pose (make-initial-pose pose)
                 :robot_namespace "/"))
 
-;; TODO: Model name should not be hardcoded
 (defmethod remove-from-world ((r robot))
   (call-service "gazebo/delete_model" 'gazebo-srv:DeleteModel
-                :model_name "robot_description"))
+                :model_name (model-name r)))
 
-;; TODO: Need to use the robot's location not just what's in the XML
 (defmethod xml-rep ((r robot))
   (print-xml-string *robot-xml* :pretty t))
 
-(defmethod get-initial-pose ((r robot))
-  (make-message "geometry_msgs/Pose"
-                :position (make-message "geometry_msgs/Point"
-                                     :x (first (xyz-of r))
-                                     :y (second (xyz-of r))
-                                     :z (third (xyz-of r)))))
+(defmethod get-default-predicates ((r robot))
+  '(x-pos y-pos z-pos
+    moving turning-left turning-right 
+    ;x-vel y-vel z-vel 
+    vel-mag ;diff-speed
+    ;force-mag
+    yaw pitch roll))
+    ;yaw-vel pitch-vel roll-vel))
 
 ;;=====================================================================
 
@@ -58,10 +57,7 @@
                                     (x linear) forward-vel
                                     (z angular) rot-vel)))
 
-;; TODO: Move these somewhere else
-(defun within-delta? (x y delta)
-  "Returns true if x is within +/- delta of y."
-  (and (< x (+ y delta)) (> x (- y delta))))
+;;=====================================================================
 
 (defun demo-policy (r sim-time ws)
   (declare (ignore ws))

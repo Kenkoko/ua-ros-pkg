@@ -1,5 +1,8 @@
 (in-package :simulation_semantics)
 
+;;============================================================
+;; SAX Algorithm for converting a real-valued time series to sequence of symbols
+
 ;; breaks by the number of symbols
 (defparameter *breaks-ht* 
   (let ((ht (make-hash-table)))
@@ -14,7 +17,8 @@
     ht))
 
 (defparameter *alphabet* 
-  '("a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z"))
+  '("a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m"
+    "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z"))
 
 (defun sliding-average (time-series window-size)
   (loop for i from 0 to (- (length time-series) window-size)
@@ -31,7 +35,7 @@
         (loop for value in time-series
            collect (/ (- value mean) std-dev)))))
 
-(defun convert-to-symbols (time-series &key (alphabet-size 5))
+(defun convert-to-symbols (time-series &key (alphabet-size 3))
   "Input sequence should be normalized"
   (let ((breaks (gethash alphabet-size *breaks-ht*)))
     (loop for v in time-series for index = 0
@@ -45,14 +49,20 @@
     )
   )
 
-(defun sax (time-series &key (alphabet-size 5))
-  (let* ((normalized (normalize-sequence time-series)))
+(defun sax (time-series &key (alphabet-size 3))
+  (let* ((normalized (normalize-series time-series)))
     (convert-to-symbols normalized :alphabet-size alphabet-size)))
   
 (defun sax-string (sax-sequence)
   (apply 'concatenate 'string
          (loop for index in sax-sequence 
             collect (nth (- index 1) *alphabet*))))
+
+(defun low-med-high (sax-sequence)
+  (let* ((lmh '(high medium low)))
+    (loop for index in sax-sequence
+       if (eq index 'unknown) collect 'unknown
+       else collect (nth (- index 1) lmh))))
 
 (defun mean (values)
   (/ (apply '+ values) (length values)))
@@ -64,3 +74,23 @@
     (sqrt (* (/ 1 (- n 1)) 
              (loop for x in values summing (expt (- x x-bar) 2))))))
        
+;; Shape Library
+
+(defun delta-ts (column)
+  (let ((results '()))
+    (loop for i from 0 below (- (length column) 1)
+       for v1 = (nth i column) for v2 = (nth (1+ i) column)
+       if (or (equal v1 'unknown) (equal v2 'unknown))
+       do (push 'unknown results)
+       else do
+         (push (- v2 v1) results))
+    (setf results (reverse results))
+    (push 'unknown results)
+    results))
+
+(defun shape-sdl (deltas)
+  (loop for d in deltas collect
+       (cond ((equal d 'unknown) d)
+             ((< d -0.005) 'decreasing)
+             ((> d 0.005) 'increasing)
+             (t 'stable))))

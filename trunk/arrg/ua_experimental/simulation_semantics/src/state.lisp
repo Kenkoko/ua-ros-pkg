@@ -1,7 +1,7 @@
 (in-package :simulation_semantics)
 
-;; Do we still need this?
 (defparameter *current-state* nil)
+(defparameter *current-msg* nil)
 
 ;;============================================================                
 
@@ -11,10 +11,13 @@
                            (first (simulations-of (find-instance-by-name simulator-name 'simulator)))
                            :all)))
 
+(defun get-states (simulation)
+  (reverse (find-instances 'world-state simulation :all)))
+
 ;;============================================================                
 
 (defun find-object-by-gazebo-name (gazebo-name)
-  (let* ((result (find-instances '(thing :plus-subclasses)
+  (let* ((result (find-instances '(entity :plus-subclasses)
                                  '(object-library)
                                  (list 'is-equal 
                                        'gazebo-name 
@@ -64,7 +67,7 @@
     (if is-numeric?
         (push (list name subject object value) result)
         (push (list name subject object (not (zerop value))) result))
-    (if is-symmetric?
+    #+ignore(if is-symmetric?
         (if is-numeric?
             (push (list name object subject value) result)
             (push (list name object subject (not (zerop value))) result)))
@@ -73,14 +76,15 @@
 ;;============================================================                
 
 (defun translate-world-state (msg simn)
-  (print msg)
+  ;(print msg)
   (let* ((states (find-instances 'world-state simn :all))
          (last-state (if states (first states) nil))
          (ws (make-instance 'world-state 
                                  :time (roslib-msg:stamp-val
                                         (simulator_experiments-msg:header-val msg))
                                  :space-instances (list simn)
-                                 :prev-state last-state)))
+                                 :prev-state last-state
+                                 :simulation simn)))
     (loop for relation-msg across (simulator_experiments-msg:relations-val msg)
        do (loop for rel in (translate-relation relation-msg)
              do (push rel (predicates-of ws))))
@@ -94,13 +98,7 @@
 ;;============================================================                
 
 (defun world-state-handler (msg)
-  (loop for simr in (find-instances 'simulator '(running-simulators) :all)
-     for simn = (current-simulation simr) ;; This is sometimes null - possible timing issue?
-     if (null simn)
-     do (ros-error "TEST" "SIMULATION IS NULL IN WS HANDLER")
-       (format t "SIMULATION IS NULL for simulator ~a~%" simr)
-     else do (let* ((ws (translate-world-state msg simn)))
-               (annotate-with-predicates ws))))
+  (setf *current-msg* msg))
                    
 (defun subscribe-to-world-state ()
   (subscribe "gazebo_world_state" "simulator_experiments/WorldState" #'world-state-handler))

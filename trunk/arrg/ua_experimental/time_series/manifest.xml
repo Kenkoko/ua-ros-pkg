@@ -1,0 +1,18 @@
+<package>
+  <description brief="time_series">
+
+     Algorithms for analyzing multivariate time series, including CAVE (Categorizing and Visualizing Episodes).
+
+  </description>
+  <author>Wesley Kerr (packaged for ROS by Daniel Hewlett)</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/time_series</url>
+  
+  <depend package="rosjava"/>
+  <depend package="std_msgs"/>
+  <depend package="std_srvs"/>
+
+</package>
+
+
