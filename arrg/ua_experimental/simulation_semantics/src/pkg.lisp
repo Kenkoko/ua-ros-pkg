@@ -9,5 +9,6 @@
         :geometry_msgs-msg
         ;:gazebo-srv
         :simulator_experiments-srv
-        :gbbopen
-        :gbbopen-tools))
+        :time_series-msg
+        :time_series-srv
+        :gbbopen :gbbopen-tools))

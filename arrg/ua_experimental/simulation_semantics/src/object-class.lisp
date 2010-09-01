@@ -3,7 +3,7 @@
 ;;====================================================
 ;; Class Definition 
 
-(define-unit-class physical-object (thing)
+(define-unit-class physical-object (entity)
   ((shape :initform 'box)
    (color :initform "Gazebo/Blue")
    (size :initform 0.2)
@@ -16,14 +16,14 @@
 ;;====================================================
 ;; Constructor
 
-(defmethod initialize-instance :after ((obj physical-object) &key)
-  (make-xml-list obj))
+;(defmethod initialize-instance :after ((obj physical-object) &key)
+;  (make-xml-list obj))
 
-(defun make-xml-list (obj)
+(defun make-xml-list (obj pose)
   (setf (xml-string-of obj) 
         (let ((xml-list (list (gen-header obj)
-                              (xyz-xml obj)
-                              (rpy-xml obj)
+                              (xyz-xml (first pose))
+                              (rpy-xml (second pose))
                               (list :|static| (boolean-string (static?-of obj)))
                               (body-xml obj))))
           (concatenate 'string "<?xml version=\"1.0\"?>"
@@ -38,11 +38,11 @@
 (defmethod deactivate ((obj physical-object))
   "Un-registers ROS publisher for the object's relevant topics (does nothing for now)")
 
-(defmethod add-to-world ((obj physical-object))
+(defmethod add-to-world ((obj physical-object) pose)
   (call-service "gazebo/spawn_gazebo_model" 'gazebo-srv:SpawnModel 
                 :model_name (model-name obj)
-                :model_xml (xml-rep obj)
-                :initial_pose (get-initial-pose obj)
+                :model_xml (make-xml-list obj pose)
+                :initial_pose (make-initial-pose pose)
                 :robot_namespace "/"
 ))                
 
@@ -50,12 +50,19 @@
   (call-service "gazebo/delete_model" 'gazebo-srv:DeleteModel
                 :model_name (model-name obj)))
 
-(defmethod get-initial-pose ((obj physical-object))
-  (make-message "geometry_msgs/Pose"
-                :position (make-message "geometry_msgs/Point"
-                                     :x (first (xyz-of obj))
-                                     :y (second (xyz-of obj))
-                                     :z (third (xyz-of obj)))))
+(defun height-of (obj)
+  (let* ((size (size-of obj)))
+    (if (numberp size)
+        size
+        (third size))))
+
+(defmethod get-default-predicates ((obj physical-object))
+  '(x-pos y-pos z-pos
+    ;x-vel y-vel z-vel 
+    vel-mag ;diff-speed
+    ;force-mag
+    yaw pitch roll))
+    ;yaw-vel pitch-vel roll-vel))
 
 ;;======================================================
 ;; Manipulating objects
@@ -84,8 +91,8 @@
 ;;======================================================
 ;; Gazebo XML Generation
 
-(defmethod xml-rep ((obj physical-object)) 
-  (xml-string-of obj))
+;(defmethod xml-rep ((obj physical-object)) 
+;  (xml-string-of obj))
 
 (defmethod gen-header ((obj physical-object))
   (register-namespace "http://playerstage.sourceforge.net/gazebo/xmlschema/#model" "model" "model")
@@ -106,14 +113,14 @@
   ;(concatenate 'string (gazebo-name-of obj) "_model"))
   (gazebo-name-of obj))
 
-(defmethod set-xyz ((obj physical-object) x y z)
-  (setf (xyz-of obj) (list x y z)))
+;(defmethod set-xyz ((obj physical-object) x y z)
+;  (setf (xyz-of obj) (list x y z)))
 
-(defmethod xyz-xml ((obj physical-object))
-  (list :|xyz| (format nil "~{~a ~}" (xyz-of obj)))) 
+(defun xyz-xml (xyz)
+  (list :|xyz| (format nil "~{~a ~}" xyz))) 
 
-(defmethod rpy-xml ((obj physical-object))
-  (list :|rpy| (format nil "~{~a ~}" (rpy-of obj))))
+(defun rpy-xml (rpy)
+  (list :|rpy| (format nil "~{~a ~}" rpy)))
 
 (defmethod get-shape-xml ((obj physical-object))
   (cond ((eq (shape-of obj) 'sphere) 
@@ -154,7 +161,7 @@
                     (:|iyy| "0.1") (:|iyz| "0.0") 
                     (:|izz| "0.1") 
                     (:|cx| "0.0") (:|cy| "0.0") (:|cz| "0.0") 
-                    (:|xyz| "0 0 0") ,(rpy-xml obj))
+                    (:|xyz| "0 0 0") (:|rpy| "0 0 0")) ;; WHA??,(rpy-xml obj))
                   (list (append (list (list (get-geom-xml obj) 
                                             :|name| (concatenate 'string 
                                                                   (gazebo-name-of obj)

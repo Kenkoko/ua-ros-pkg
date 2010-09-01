@@ -20,6 +20,8 @@
  */
 /*
  * Desc: Publishes the world state from Gazebo in a friendly message
+ * Also computes various features such as the true distance (GJK) between objects.
+ *
  * Author: Daniel Hewlett
  */
 
@@ -513,7 +515,7 @@ void WorldStatePublisher::UpdateChild()
           }
 
           simulator_experiments::Relation gjk_relation;
-          gjk_relation.name = "gjk_distance";
+          gjk_relation.name = "GJK-Distance";
           gjk_relation.subject = gjk_names[i];
           gjk_relation.object = gjk_names[j];
           gjk_relation.is_symmetric = 1;
@@ -522,7 +524,7 @@ void WorldStatePublisher::UpdateChild()
 
           // This is really for testing, we could compute this on the other end
           simulator_experiments::Relation contact_relation;
-          contact_relation.name = "contact";
+          contact_relation.name = "Contact";
           contact_relation.subject = gjk_names[i];
           contact_relation.object = gjk_names[j];
           contact_relation.is_symmetric = 1;

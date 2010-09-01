@@ -1,6 +1,0 @@
-151a152,156
-> (in-package :asdf)
-> 
-> (defsystem :gbbopen/gbbopen
->     :depends-on (:gbbopen :gbbopen-user :agenda-shell-user))
-> 

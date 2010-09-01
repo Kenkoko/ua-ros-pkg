@@ -9,7 +9,7 @@
 
     <!-- start the map server -->
     <node name="map_node" pkg="map_server" type="map_server" 
-          args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml" respawn="false" output="screen" />
+          args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml" respawn="true" output="screen" />
 
     <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
         <param name="odom_frame_id" value="odom"/>

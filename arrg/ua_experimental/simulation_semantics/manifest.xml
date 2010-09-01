@@ -12,6 +12,7 @@
     <depend package="roslisp"/>
     <depend package="gbbopen"/>
     <depend package="simulator_experiments"/>
+    <depend package="wubble_description"/>
     <depend package="gazebo_plugins"/>
 
     <depend package="geometry_msgs"/>
@@ -19,7 +20,11 @@
     <depend package="std_srvs"/>    
     <depend package="plotter"/>
     <depend package="map_server"/>
-   
+
+    <depend package="time_series"/>
+
+    <depend package="cl_transforms"/>
+    <depend package="cl_utils"/>
 </package>
 
 
