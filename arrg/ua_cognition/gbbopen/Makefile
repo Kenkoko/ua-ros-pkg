@@ -9,8 +9,6 @@ checkout: $(SVN_DIR)
 
 build: 
 	sh compile.sh
-	rm -rf asdf
-	mkdir asdf
 	ln -s `(rospack find gbbopen)`/gbbopen/gbbopen.asd asdf/gbbopen.asd
 
 clean:
