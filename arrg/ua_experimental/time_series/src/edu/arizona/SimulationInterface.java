@@ -43,17 +43,25 @@ public class SimulationInterface {
 	}
 	
 	public static List<Interval> getIntervals(Episode episode) {
+		logger.debug("Getting intervals from episode...");
 		List<Interval> intervals = new Vector<Interval>();
 		for (int i = 0; i < episode.intervals.length; i++) {
 			ros.pkg.time_series.msg.Interval interval = episode.intervals[i];
-			intervals.add(Interval.make(interval.proposition, interval.start, interval.end));
+			logger.debug(interval.proposition);
+			intervals.add(Interval.make(interval.proposition.toString(), interval.start, interval.end));
 		}
+		logger.debug("Got em.");
 		return intervals;
 	}
 	
 	public static Instance getInstance(Episode e, String name, int id) {
 		List<Interval> intervals = getIntervals(e);		
+		logger.debug(intervals.size());
 		Collections.sort(intervals, Interval.eff);
+		for (Interval i : intervals) {
+			i.episode = id;
+			logger.debug(i);
+		}
 		Instance result = new Instance(name, id, SequenceFactory.allenSequence(intervals));
 		
 		return result;
@@ -63,7 +71,8 @@ public class SimulationInterface {
 		List<Instance> results = new ArrayList<Instance>();
 
 		for (int i = 0; i < episodes.length; i++) {
-			System.out.println("Converting episode " + i + " of " + episodes.length + " (" + episodes[i].intervals.length + " intervals)");
+			logger.debug("Converting episode " + (i+1) + " of " + episodes.length + " (" + episodes[i].intervals.length + " intervals)");
+//			System.out.println(episodes[i].intervals[0]);
 			results.add(getInstance(episodes[i], name, i));
 		}
 		

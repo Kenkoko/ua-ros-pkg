@@ -1,5 +1,5 @@
 string verb
-Episode episode
+time_series/Episode episode
 int32 min
 --- 
 float64 score
