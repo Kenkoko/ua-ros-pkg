@@ -168,7 +168,7 @@
                                                                   "_geom")))
                                 (list '(:|mu1| "1.0") 
                                       '(:|mu2| "1.0")
-                                      '(:|kp| "100000000.0") 
+                                      '(:|kp| "1000.0") 
                                       '(:|kd| "1.0") 
                                       (list :|size| (get-size-xml obj))
                                       (list :|mass| (format nil "~d" (mass-of obj)))
