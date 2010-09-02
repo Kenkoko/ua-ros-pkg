@@ -62,6 +62,7 @@ public class SimulationInterface {
 			i.episode = id;
 			logger.debug(i);
 		}
+		logger.debug("Finished with " + intervals.size() + " intervals, converting to instance...");
 		Instance result = new Instance(name, id, SequenceFactory.allenSequence(intervals));
 		
 		return result;
