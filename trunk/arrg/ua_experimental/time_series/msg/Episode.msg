@@ -1,1 +1,1 @@
-Interval[] intervals
+time_series/Interval[] intervals

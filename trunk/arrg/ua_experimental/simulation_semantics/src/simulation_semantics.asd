@@ -27,7 +27,7 @@
                  (:file "verb-learning" :depends-on ("time-series")))
 
     :depends-on ("roslisp" 
-                 "gbbopen-ros"
+                 :gbbopen-ros
                  "cl-transforms"
                  "plotter-srv"
                  "simulator_experiments-msg"
