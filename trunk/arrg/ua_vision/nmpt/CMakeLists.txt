@@ -9,21 +9,51 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 rosbuild_add_library(nmpt
     src/nmpt/BlockTimer.cpp 
+    src/nmpt/BoxFeature.cpp 
     src/nmpt/ConvolutionalLogisticPolicy.cpp 
-    src/nmpt/CVPRTrainModels.cpp 
+    src/nmpt/DetectionEvaluator.cpp 
+    src/nmpt/EstimateInternalMotion.cpp 
+    src/nmpt/FastPatchList.cpp 
     src/nmpt/FastSaliency.cpp 
+    src/nmpt/Feature.cpp 
+    src/nmpt/FeatureRegressor.cpp 
+    src/nmpt/GentleBoostCascadedClassifier.cpp 
+    src/nmpt/GentleBoostClassifier.cpp 
+    src/nmpt/HaarFeature.cpp 
     src/nmpt/ImageDataSet.cpp 
+    src/nmpt/ImageKalmanFilter.cpp 
+    src/nmpt/ImagePatch.cpp 
     src/nmpt/ImagePatchPyramid.cpp 
-    src/nmpt/MIPOMDP.cpp
+    src/nmpt/InternalMotionModel.cpp 
+    src/nmpt/KF.cpp 
+    src/nmpt/KFPointTracker.cpp 
+    src/nmpt/LQR.cpp 
+    src/nmpt/LQRPointTracker.cpp 
+    src/nmpt/MatrixKalmanFilter.cpp 
+    src/nmpt/MIPOMDP.cpp 
     src/nmpt/MultinomialObservationModel.cpp 
+    src/nmpt/MultiObjectTrackingState.cpp 
+    src/nmpt/NMPTUtils.cpp 
     src/nmpt/ObjectDetector.cpp 
     src/nmpt/OpenCVBoxFilter.cpp 
     src/nmpt/OpenCVHaarDetector.cpp 
     src/nmpt/OpenLoopPolicies.cpp 
+    src/nmpt/PatchDataset.cpp 
+    src/nmpt/PatchList.cpp 
+    src/nmpt/StructTypes.cpp 
 )
+
+rosbuild_add_executable(ChooseSaccadeTargets src/nmpt/ChooseSaccadeTargets.cpp)
+target_link_libraries(ChooseSaccadeTargets nmpt)
 
 rosbuild_add_executable(CVPRTestSpeed src/nmpt/CVPRTestSpeed.cpp)
 target_link_libraries(CVPRTestSpeed nmpt)
+
+rosbuild_add_executable(CVPRTrainModels src/nmpt/CVPRTrainModels.cpp)
+target_link_libraries(CVPRTrainModels nmpt)
+
+rosbuild_add_executable(EstimateInternalMotion src/nmpt/EstimateInternalMotion.cpp)
+target_link_libraries(EstimateInternalMotion nmpt)
 
 rosbuild_add_executable(FastSUN src/nmpt/FastSUN.cpp)
 target_link_libraries(FastSUN nmpt)
