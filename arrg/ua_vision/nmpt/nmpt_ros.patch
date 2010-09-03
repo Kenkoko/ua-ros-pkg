@@ -1,262 +1,846 @@
-diff -Nurp NMPT_orig/src/BlockTimer.cpp NMPT_mod/src/BlockTimer.cpp
---- NMPT_orig/src/BlockTimer.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/BlockTimer.cpp	2010-02-17 17:30:43.000000000 -0700
-@@ -1,6 +1,6 @@
+diff -Nurp NMPT_orig/src/BlockTimer.cpp NMPT_ros/src/BlockTimer.cpp
+--- NMPT_orig/src/BlockTimer.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/BlockTimer.cpp	2010-09-02 17:03:15.544188673 -0700
+@@ -1,4 +1,4 @@
 -#include "BlockTimer.h"
--
-+#include "nmpt/BlockTimer.h"
++#include <nmpt/BlockTimer.h>
+ 
  #include <sys/time.h>
-+#include <time.h>
- 
- 
- BlockTimer::BlockTimer(int numblocks) :
-diff -Nurp NMPT_orig/src/BlockTimer.h NMPT_mod/src/BlockTimer.h
---- NMPT_orig/src/BlockTimer.h	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/BlockTimer.h	2010-02-17 17:27:49.156531875 -0700
-@@ -4,6 +4,7 @@
- 
- #include <vector>
- 
-+
- typedef long long timertype; 
- 
- /**
-diff -Nurp NMPT_orig/src/ConvolutionalLogisticPolicy.cpp NMPT_mod/src/ConvolutionalLogisticPolicy.cpp
---- NMPT_orig/src/ConvolutionalLogisticPolicy.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/ConvolutionalLogisticPolicy.cpp	2010-02-17 17:31:00.000000000 -0700
-@@ -7,7 +7,7 @@
+ #include <time.h>
+diff -Nurp NMPT_orig/src/BoxFeature.cpp NMPT_ros/src/BoxFeature.cpp
+--- NMPT_orig/src/BoxFeature.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/BoxFeature.cpp	2010-09-02 17:03:37.684239974 -0700
+@@ -7,8 +7,8 @@
   *
   */
  
--#include "ConvolutionalLogisticPolicy.h"
-+#include "nmpt/ConvolutionalLogisticPolicy.h"
+-#include "BoxFeature.h"
+-#include "DebugGlobals.h"
++#include <nmpt/BoxFeature.h>
++#include <nmpt/DebugGlobals.h>
+ #include <assert.h>
+ #include <math.h>
+ #include <iostream>
+diff -Nurp NMPT_orig/src/BoxFeature.h NMPT_ros/src/BoxFeature.h
+--- NMPT_orig/src/BoxFeature.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/BoxFeature.h	2010-09-02 17:04:03.464184631 -0700
+@@ -12,8 +12,8 @@
  
- ConvolutionalLogisticPolicy::ConvolutionalLogisticPolicy(CvSize gridSize) {
- 	this->gridSize.width = gridSize.width; 
-@@ -130,7 +130,7 @@ double ConvolutionalLogisticPolicy::getR
- 		for (int j = 0; j < gridSize.width; j++) {
- 			double val = cvGetReal2D(currentBelief, i, j); 
- 			val = val * log(val); 
--			if isnan(val) 
-+			if (isnan(val)) 
- 				val = 0; 
- 			reward = reward + val; 
- 		}
-@@ -153,4 +153,4 @@ ostream& operator<< (ostream& ofs, Convo
- }
- istream& operator>> (istream& ifs, ConvolutionalLogisticPolicy* model) {
- 	model->readFromStream(ifs); 
+ 
+ #include <opencv2/core/core_c.h>
+-#include "Feature.h"
+-#include "PatchList.h"
++#include <nmpt/Feature.h>
++#include <nmpt/PatchList.h>
+ 
+ class ImagePatch; 
+ 
+diff -Nurp NMPT_orig/src/ChooseSaccadeTargets.cpp NMPT_ros/src/ChooseSaccadeTargets.cpp
+--- NMPT_orig/src/ChooseSaccadeTargets.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ChooseSaccadeTargets.cpp	2010-09-02 17:04:25.924195877 -0700
+@@ -17,9 +17,9 @@
+ #include <iostream>
+ #include <fstream>
+ #include <vector>
+-#include "BlockTimer.h"
+-#include "InternalMotionModel.h"
+-#include "NMPTUtils.h"
++#include <nmpt/BlockTimer.h>
++#include <nmpt/InternalMotionModel.h>
++#include <nmpt/NMPTUtils.h>
+ 
+ using namespace cv; 
+ using namespace std; 
+@@ -134,4 +134,4 @@ int main (int argc, char ** argv) 
+ 	
+ 	
+     return 0;
 -}
 \ No newline at end of file
 +}
-diff -Nurp NMPT_orig/src/CVPRTestSpeed.cpp NMPT_mod/src/CVPRTestSpeed.cpp
---- NMPT_orig/src/CVPRTestSpeed.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/CVPRTestSpeed.cpp	2010-02-17 17:31:17.000000000 -0700
-@@ -47,9 +47,9 @@
+diff -Nurp NMPT_orig/src/ConvolutionalLogisticPolicy.cpp NMPT_ros/src/ConvolutionalLogisticPolicy.cpp
+--- NMPT_orig/src/ConvolutionalLogisticPolicy.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ConvolutionalLogisticPolicy.cpp	2010-09-02 17:04:35.675434782 -0700
+@@ -9,7 +9,7 @@
+ 
+ #include <math.h>
+ #include <opencv2/imgproc/imgproc_c.h>
+-#include "ConvolutionalLogisticPolicy.h"
++#include <nmpt/ConvolutionalLogisticPolicy.h>
+ 
+ using namespace std; 
+ 
+@@ -159,4 +159,4 @@ ostream& operator<< (ostream& ofs, Convo
+ istream& operator>> (istream& ifs, ConvolutionalLogisticPolicy* model) {
+ 	model->readFromStream(ifs); 
+ 	return ifs; 
+-}
+\ No newline at end of file
++}
+diff -Nurp NMPT_orig/src/CVPRTestSpeed.cpp NMPT_ros/src/CVPRTestSpeed.cpp
+--- NMPT_orig/src/CVPRTestSpeed.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/CVPRTestSpeed.cpp	2010-09-02 17:06:09.494184828 -0700
+@@ -47,13 +47,14 @@
  
  
  using namespace std; 
 -#include "ImageDataSet.h"
 -#include "MIPOMDP.h"
 -#include "BlockTimer.h"
-+#include "nmpt/ImageDataSet.h"
-+#include "nmpt/MIPOMDP.h"
-+#include "nmpt/BlockTimer.h"
++#include <nmpt/ImageDataSet.h>
++#include <nmpt/MIPOMDP.h>
++#include <nmpt/BlockTimer.h>
  #include <stdio.h>
  #include <iostream> 
- #include <cv.h>
-@@ -164,4 +164,4 @@ int main(int argc, char** argv) {
+ 
+-#include <opencv2/opencv.hpp>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
+ 
+ 
+ int main(int argc, char** argv) {
+@@ -163,4 +164,4 @@ int main(int argc, char** argv) {
  		delete(test); 
  		delete(pomdp); 
  	}
 -}
 \ No newline at end of file
 +}
-diff -Nurp NMPT_orig/src/CVPRTrainModels.cpp NMPT_mod/src/CVPRTrainModels.cpp
---- NMPT_orig/src/CVPRTrainModels.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/CVPRTrainModels.cpp	2010-02-17 17:31:24.000000000 -0700
-@@ -46,8 +46,8 @@
+diff -Nurp NMPT_orig/src/CVPRTrainModels.cpp NMPT_ros/src/CVPRTrainModels.cpp
+--- NMPT_orig/src/CVPRTrainModels.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/CVPRTrainModels.cpp	2010-09-02 17:06:35.744461983 -0700
+@@ -46,11 +46,13 @@
   * and Movellan, 2008; Najemnik and Geisler, 2005 (see \ref bib_sec).
   **/
  using namespace std; 
 -#include "ImageDataSet.h"
 -#include "MIPOMDP.h"
-+#include "nmpt/ImageDataSet.h"
-+#include "nmpt/MIPOMDP.h"
++#include <nmpt/ImageDataSet.h>
++#include <nmpt/MIPOMDP.h>
  #include <stdio.h>
- #include <iostream> 
- #include <cv.h>
-@@ -113,4 +113,4 @@ int main(int argc, char** argv) {
+-#include <iostream> 
+-#include <opencv2/opencv.hpp>
++#include <iostream>
++
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
+ 
+ int main(int argc, char** argv) {
+ 	const char files[] = "data/GENKI-SZSL_files.txt"; 
+@@ -111,4 +113,4 @@ int main(int argc, char** argv) {
  	pomdp->saveToFile(savename); 
  	
  	
 -}
 \ No newline at end of file
 +}
-diff -Nurp NMPT_orig/src/FastSaliency.cpp NMPT_mod/src/FastSaliency.cpp
---- NMPT_orig/src/FastSaliency.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/FastSaliency.cpp	2010-02-17 17:31:32.000000000 -0700
+diff -Nurp NMPT_orig/src/DetectionEvaluator.cpp NMPT_ros/src/DetectionEvaluator.cpp
+--- NMPT_orig/src/DetectionEvaluator.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/DetectionEvaluator.cpp	2010-09-02 17:07:07.885559946 -0700
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-#include "DetectionEvaluator.h"
++#include <nmpt/DetectionEvaluator.h>
+ #include <iostream>
+ #include <sstream>
+ 
+diff -Nurp NMPT_orig/src/DetectionEvaluator.h NMPT_ros/src/DetectionEvaluator.h
+--- NMPT_orig/src/DetectionEvaluator.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/DetectionEvaluator.h	2010-09-02 17:07:20.854184714 -0700
+@@ -13,8 +13,8 @@
+ #include <opencv2/core/core_c.h>
+ #include <vector>
+ #include <string>
+-#include "PatchList.h"
+-#include "ImageDataSet.h"
++#include <nmpt/PatchList.h>
++#include <nmpt/ImageDataSet.h>
+ 
+ /**
+  *\ingroup AuxGroup
+diff -Nurp NMPT_orig/src/EstimateInternalMotion.cpp NMPT_ros/src/EstimateInternalMotion.cpp
+--- NMPT_orig/src/EstimateInternalMotion.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/EstimateInternalMotion.cpp	2010-09-02 17:07:41.154865350 -0700
+@@ -17,9 +17,9 @@
+ #include <iostream>
+ #include <fstream>
+ 
+-#include "BlockTimer.h"
+-#include "InternalMotionModel.h"
+-#include "NMPTUtils.h"
++#include <nmpt/BlockTimer.h>
++#include <nmpt/InternalMotionModel.h>
++#include <nmpt/NMPTUtils.h>
+ 
+ #include <vector>
+ #include <string>
+diff -Nurp NMPT_orig/src/FastPatchList.cpp NMPT_ros/src/FastPatchList.cpp
+--- NMPT_orig/src/FastPatchList.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FastPatchList.cpp	2010-09-02 17:07:54.185044391 -0700
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-#include "FastPatchList.h"
++#include <nmpt/FastPatchList.h>
+ #include <math.h>
+ #include <iostream>
+ using namespace std; 
+diff -Nurp NMPT_orig/src/FastPatchList.h NMPT_ros/src/FastPatchList.h
+--- NMPT_orig/src/FastPatchList.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FastPatchList.h	2010-09-02 17:08:06.934184739 -0700
+@@ -11,8 +11,8 @@
+ #define FASTPATCHLIST_H
+ 
+ #include <opencv2/core/core_c.h>
+-#include "ImagePatch.h"
+-#include "PatchList.h"
++#include <nmpt/ImagePatch.h>
++#include <nmpt/PatchList.h>
+ 
+ /**
+  *\ingroup AuxGroup
+diff -Nurp NMPT_orig/src/FastSaliency.cpp NMPT_ros/src/FastSaliency.cpp
+--- NMPT_orig/src/FastSaliency.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FastSaliency.cpp	2010-09-02 17:08:16.424183344 -0700
 @@ -1,4 +1,4 @@
 -#include "FastSaliency.h"
-+#include "nmpt/FastSaliency.h"
++#include <nmpt/FastSaliency.h>
  
  
+ #include <sys/types.h>
+diff -Nurp NMPT_orig/src/FastSaliency.h NMPT_ros/src/FastSaliency.h
+--- NMPT_orig/src/FastSaliency.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FastSaliency.h	2010-09-02 17:08:25.334184514 -0700
+@@ -4,7 +4,7 @@
  
-diff -Nurp NMPT_orig/src/FastSaliency.h NMPT_mod/src/FastSaliency.h
---- NMPT_orig/src/FastSaliency.h	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/FastSaliency.h	2010-02-17 17:31:44.000000000 -0700
-@@ -9,7 +9,7 @@
- #include <cxcore.h>
- #include <cv.h>
- #include <highgui.h>
+ #include <opencv2/core/core_c.h>
+ #include <vector>
 -#include "OpenCVBoxFilter.h"
-+#include "nmpt/OpenCVBoxFilter.h"
++#include <nmpt/OpenCVBoxFilter.h>
+ 
+ /**
+  * \ingroup MPGroup
+diff -Nurp NMPT_orig/src/FastSUN.cpp NMPT_ros/src/FastSUN.cpp
+--- NMPT_orig/src/FastSUN.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FastSUN.cpp	2010-09-02 17:48:07.154185584 -0700
+@@ -70,14 +70,17 @@
+ 
+ 
+ 
+-#include <opencv2/opencv.hpp>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
++#include <opencv2/imgproc/imgproc_c.h>
++
+ #include <cassert>
+ #include <iostream>
+ #include <fstream>
+-#include "KFPointTracker.h"
+-#include "LQRPointTracker.h"
+-#include "BlockTimer.h"
+-#include "FastSaliency.h"
++#include <nmpt/KFPointTracker.h>
++#include <nmpt/LQRPointTracker.h>
++#include <nmpt/BlockTimer.h>
++#include <nmpt/FastSaliency.h>
+ ////#include "NCvCapture.h"
+ 
+ using namespace std;
+diff -Nurp NMPT_orig/src/FastSUNImage.cpp NMPT_ros/src/FastSUNImage.cpp
+--- NMPT_orig/src/FastSUNImage.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FastSUNImage.cpp	2010-09-02 17:48:34.294183745 -0700
+@@ -64,12 +64,15 @@
+  **/ 
+ 
+ 
+-#include <opencv2/opencv.hpp>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
++#include <opencv2/imgproc/imgproc_c.h>
++
+ #include <cassert>
+ #include <iostream>
+ #include <fstream>
+-#include "BlockTimer.h"
+-#include "FastSaliency.h"
++#include <nmpt/BlockTimer.h>
++#include <nmpt/FastSaliency.h>
+ 
+ using namespace std;
+ 
+diff -Nurp NMPT_orig/src/Feature.cpp NMPT_ros/src/Feature.cpp
+--- NMPT_orig/src/Feature.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/Feature.cpp	2010-09-02 17:09:49.436108753 -0700
+@@ -7,11 +7,11 @@
+  *
+  */
+ 
+-#include "Feature.h"
+-#include "BoxFeature.h"
+-#include "HaarFeature.h"
+-#include "BlockTimer.h"
+-#include "DebugGlobals.h"
++#include <nmpt/Feature.h>
++#include <nmpt/BoxFeature.h>
++#include <nmpt/HaarFeature.h>
++#include <nmpt/BlockTimer.h>
++#include <nmpt/DebugGlobals.h>
+ 
+ #include <math.h>
+ #include <stdio.h>
+diff -Nurp NMPT_orig/src/Feature.h NMPT_ros/src/Feature.h
+--- NMPT_orig/src/Feature.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/Feature.h	2010-09-02 17:10:03.015436899 -0700
+@@ -19,8 +19,8 @@
+ #include <vector>
+ #include <string>
+ 
+-#include "ImagePatch.h"
+-#include "PatchList.h"
++#include <nmpt/ImagePatch.h>
++#include <nmpt/PatchList.h>
  
  
  /**
-diff -Nurp NMPT_orig/src/FastSUN.cpp NMPT_mod/src/FastSUN.cpp
---- NMPT_orig/src/FastSUN.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/FastSUN.cpp	2010-02-17 17:31:56.000000000 -0700
-@@ -75,8 +75,8 @@
- #include <cassert>
+diff -Nurp NMPT_orig/src/FeatureRegressor.cpp NMPT_ros/src/FeatureRegressor.cpp
+--- NMPT_orig/src/FeatureRegressor.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FeatureRegressor.cpp	2010-09-02 17:10:17.884185561 -0700
+@@ -8,8 +8,8 @@
+  */
+ 
+ #include <math.h>
+-#include "FeatureRegressor.h"
+-#include "DebugGlobals.h"
++#include <nmpt/FeatureRegressor.h>
++#include <nmpt/DebugGlobals.h>
+  
+ using namespace std; 
+ 
+diff -Nurp NMPT_orig/src/FeatureRegressor.h NMPT_ros/src/FeatureRegressor.h
+--- NMPT_orig/src/FeatureRegressor.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FeatureRegressor.h	2010-09-02 17:10:32.264806098 -0700
+@@ -14,8 +14,8 @@
+ #include <opencv2/core/core_c.h>
  #include <iostream>
- #include <fstream>
--#include "BlockTimer.h"
--#include "FastSaliency.h"
-+#include "nmpt/BlockTimer.h"
-+#include "nmpt/FastSaliency.h"
+ #include <vector>
+-#include "ImagePatch.h"
+-#include "Feature.h"
++#include <nmpt/ImagePatch.h>
++#include <nmpt/Feature.h>
  
- using namespace std;
+ class ImagePatch; 
  
-diff -Nurp NMPT_orig/src/FastSUNImage.cpp NMPT_mod/src/FastSUNImage.cpp
---- NMPT_orig/src/FastSUNImage.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/FastSUNImage.cpp	2010-02-17 17:32:03.000000000 -0700
-@@ -69,8 +69,8 @@
- #include <cassert>
- #include <iostream>
- #include <fstream>
--#include "BlockTimer.h"
--#include "FastSaliency.h"
-+#include "nmpt/BlockTimer.h"
-+#include "nmpt/FastSaliency.h"
+diff -Nurp NMPT_orig/src/FoveatedFaceTracker.cpp NMPT_ros/src/FoveatedFaceTracker.cpp
+--- NMPT_orig/src/FoveatedFaceTracker.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FoveatedFaceTracker.cpp	2010-09-02 17:49:02.484185901 -0700
+@@ -39,12 +39,15 @@
  
- using namespace std;
  
-diff -Nurp NMPT_orig/src/FoveatedFaceTracker.cpp NMPT_mod/src/FoveatedFaceTracker.cpp
---- NMPT_orig/src/FoveatedFaceTracker.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/FoveatedFaceTracker.cpp	2010-02-17 17:32:09.000000000 -0700
-@@ -44,8 +44,8 @@
- #include <cassert>
- #include <iostream>
- #include <fstream>
--#include "MIPOMDP.h"
--#include "BlockTimer.h"
-+#include "nmpt/MIPOMDP.h"
-+#include "nmpt/BlockTimer.h"
  
- using namespace std;
- 
-diff -Nurp NMPT_orig/src/FoveatedFaceTrackerImage.cpp NMPT_mod/src/FoveatedFaceTrackerImage.cpp
---- NMPT_orig/src/FoveatedFaceTrackerImage.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/FoveatedFaceTrackerImage.cpp	2010-02-17 17:32:16.000000000 -0700
-@@ -45,8 +45,8 @@
+-#include <opencv2/opencv.hpp>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
++#include <opencv2/imgproc/imgproc_c.h>
++
  #include <cassert>
  #include <iostream>
  #include <fstream>
 -#include "MIPOMDP.h"
 -#include "BlockTimer.h"
-+#include "nmpt/MIPOMDP.h"
-+#include "nmpt/BlockTimer.h"
++#include <nmpt/MIPOMDP.h>
++#include <nmpt/BlockTimer.h>
  
  using namespace std;
  
-diff -Nurp NMPT_orig/src/ImageDataSet.cpp NMPT_mod/src/ImageDataSet.cpp
---- NMPT_orig/src/ImageDataSet.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/ImageDataSet.cpp	2010-02-17 17:32:24.000000000 -0700
+diff -Nurp NMPT_orig/src/FoveatedFaceTrackerImage.cpp NMPT_ros/src/FoveatedFaceTrackerImage.cpp
+--- NMPT_orig/src/FoveatedFaceTrackerImage.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/FoveatedFaceTrackerImage.cpp	2010-09-02 17:49:31.314239940 -0700
+@@ -40,12 +40,15 @@
+ 
+ 
+ 
+-#include <opencv2/opencv.hpp>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
++#include <opencv2/imgproc/imgproc_c.h>
++
+ #include <cassert>
+ #include <iostream>
+ #include <fstream>
+-#include "MIPOMDP.h"
+-#include "BlockTimer.h"
++#include <nmpt/MIPOMDP.h>
++#include <nmpt/BlockTimer.h>
+ 
+ using namespace std;
+ 
+diff -Nurp NMPT_orig/src/GentleBoostCascadedClassifier.cpp NMPT_ros/src/GentleBoostCascadedClassifier.cpp
+--- NMPT_orig/src/GentleBoostCascadedClassifier.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/GentleBoostCascadedClassifier.cpp	2010-09-02 17:11:48.974184364 -0700
+@@ -7,12 +7,12 @@
+  *
+  */
+ 
+-#include "GentleBoostCascadedClassifier.h"
++#include <nmpt/GentleBoostCascadedClassifier.h>
+ #include <list>
+-#include "BlockTimer.h"
+-#include "DebugGlobals.h"
++#include <nmpt/BlockTimer.h>
++#include <nmpt/DebugGlobals.h>
+ #include <limits.h>
+-#include "HaarFeature.h"
++#include <nmpt/HaarFeature.h>
+ #include <opencv2/highgui/highgui_c.h>
+ 
+ using namespace std; 
+diff -Nurp NMPT_orig/src/GentleBoostCascadedClassifier.h NMPT_ros/src/GentleBoostCascadedClassifier.h
+--- NMPT_orig/src/GentleBoostCascadedClassifier.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/GentleBoostCascadedClassifier.h	2010-09-02 17:12:16.124176784 -0700
+@@ -14,13 +14,13 @@
+ #include <iostream>
+ #include <vector>
+ #include <string>
+-#include "ImagePatch.h" 
+-#include "ImageDataSet.h"
+-#include "GentleBoostClassifier.h"
+-#include "FastPatchList.h"
+-#include "PatchList.h"
+-#include "PatchDataset.h"
+-#include "StructTypes.h"
++#include <nmpt/ImagePatch.h>
++#include <nmpt/ImageDataSet.h>
++#include <nmpt/GentleBoostClassifier.h>
++#include <nmpt/FastPatchList.h>
++#include <nmpt/PatchList.h>
++#include <nmpt/PatchDataset.h>
++#include <nmpt/StructTypes.h>
+ 
+ /**
+  * \ingroup MPGroup
+diff -Nurp NMPT_orig/src/GentleBoostClassifier.cpp NMPT_ros/src/GentleBoostClassifier.cpp
+--- NMPT_orig/src/GentleBoostClassifier.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/GentleBoostClassifier.cpp	2010-09-02 17:12:28.885434875 -0700
+@@ -7,8 +7,8 @@
+  *
+  */
+ 
+-#include "GentleBoostClassifier.h"
+-#include "DebugGlobals.h" 
++#include <nmpt/GentleBoostClassifier.h>
++#include <nmpt/DebugGlobals.h>
+ 
+ using namespace std; 
+ 
+diff -Nurp NMPT_orig/src/GentleBoostClassifier.h NMPT_ros/src/GentleBoostClassifier.h
+--- NMPT_orig/src/GentleBoostClassifier.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/GentleBoostClassifier.h	2010-09-02 17:12:43.244204502 -0700
+@@ -13,9 +13,9 @@
+ #include <opencv2/core/core_c.h>
+ #include <iostream>
+ #include <vector>
+-#include "FeatureRegressor.h"
+-#include "ImagePatch.h"
+-#include "PatchList.h" 
++#include <nmpt/FeatureRegressor.h>
++#include <nmpt/ImagePatch.h>
++#include <nmpt/PatchList.h>
+ 
+ 
+ /**
+diff -Nurp NMPT_orig/src/HaarFeature.cpp NMPT_ros/src/HaarFeature.cpp
+--- NMPT_orig/src/HaarFeature.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/HaarFeature.cpp	2010-09-02 17:12:55.214185265 -0700
+@@ -7,8 +7,8 @@
+  *
+  */
+ 
+-#include "HaarFeature.h"
+-#include "DebugGlobals.h"
++#include <nmpt/HaarFeature.h>
++#include <nmpt/DebugGlobals.h>
+ #include <math.h>
+ #include <iostream>
+ 
+diff -Nurp NMPT_orig/src/HaarFeature.h NMPT_ros/src/HaarFeature.h
+--- NMPT_orig/src/HaarFeature.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/HaarFeature.h	2010-09-02 17:13:05.564185444 -0700
+@@ -11,8 +11,8 @@
+ #define HAARFEATURE_H
+ 
+ #include <opencv2/core/core_c.h>
+-#include "Feature.h"
+-#include "BoxFeature.h"
++#include <nmpt/Feature.h>
++#include <nmpt/BoxFeature.h>
+ 
+ /**
+  *\ingroup AuxGroup
+diff -Nurp NMPT_orig/src/ImageDataSet2OpenCVDescriptionFormat.cpp NMPT_ros/src/ImageDataSet2OpenCVDescriptionFormat.cpp
+--- NMPT_orig/src/ImageDataSet2OpenCVDescriptionFormat.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ImageDataSet2OpenCVDescriptionFormat.cpp	2010-09-02 17:13:41.554184270 -0700
+@@ -9,12 +9,13 @@
+ 
+ 
+ 
+-#include <opencv2/opencv.hpp>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
+ #include <string>
+ #include <iostream>
+ #include <fstream>
+-#include "DetectionEvaluator.h"
+-#include "ImageDataSet.h"
++#include <nmpt/DetectionEvaluator.h>
++#include <nmpt/ImageDataSet.h>
+ 
+ using namespace std; 
+ 
+diff -Nurp NMPT_orig/src/ImageDataSet.cpp NMPT_ros/src/ImageDataSet.cpp
+--- NMPT_orig/src/ImageDataSet.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ImageDataSet.cpp	2010-09-02 17:13:14.174185616 -0700
 @@ -7,7 +7,7 @@
   *
   */
  
 -#include "ImageDataSet.h"
-+#include "nmpt/ImageDataSet.h"
++#include <nmpt/ImageDataSet.h>
  #include <fstream>
  #include <stdlib.h>
  #include <string.h>
-diff -Nurp NMPT_orig/src/ImagePatchPyramid.cpp NMPT_mod/src/ImagePatchPyramid.cpp
---- NMPT_orig/src/ImagePatchPyramid.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/ImagePatchPyramid.cpp	2010-02-17 17:32:35.000000000 -0700
+diff -Nurp NMPT_orig/src/ImageKalmanFilter.cpp NMPT_ros/src/ImageKalmanFilter.cpp
+--- NMPT_orig/src/ImageKalmanFilter.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ImageKalmanFilter.cpp	2010-09-02 17:13:55.324215066 -0700
 @@ -7,7 +7,7 @@
   *
   */
  
--#include "ImagePatchPyramid.h"
-+#include "nmpt/ImagePatchPyramid.h"
+-#include "ImageKalmanFilter.h"
++#include <nmpt/ImageKalmanFilter.h>
+ #include <opencv2/imgproc/imgproc_c.h>
  
- ImagePatchPyramid::ImagePatchPyramid() {
- 	minw = 60; 
-@@ -691,4 +691,4 @@ ostream& operator<< (ostream& ofs, Image
- }
- istream& operator>> (istream& ifs, ImagePatchPyramid* model) {
- 	model->readFromStream(ifs); 
+ using namespace cv; 
+@@ -585,4 +585,4 @@ ostream& operator<< (ostream& ofs, const
+ istream& operator>> (istream& ifs, ImageKalmanFilter &model) {
+ 	model.readFromStream(ifs); 
+ 	return ifs; 
 -}
 \ No newline at end of file
 +}
-diff -Nurp NMPT_orig/src/ImagePatchPyramid.h NMPT_mod/src/ImagePatchPyramid.h
---- NMPT_orig/src/ImagePatchPyramid.h	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/ImagePatchPyramid.h	2010-02-17 17:32:41.000000000 -0700
-@@ -17,8 +17,8 @@
- #include <stdlib.h>
+diff -Nurp NMPT_orig/src/ImageKalmanFilter.h NMPT_ros/src/ImageKalmanFilter.h
+--- NMPT_orig/src/ImageKalmanFilter.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ImageKalmanFilter.h	2010-09-02 17:14:14.524182777 -0700
+@@ -16,8 +16,8 @@
  #include <iostream>
- #include <fstream>
--#include "ObjectDetector.h"
--#include "OpenCVHaarDetector.h"	
-+#include "nmpt/ObjectDetector.h"
-+#include "nmpt/OpenCVHaarDetector.h"	
- using namespace std; 
+ #include <vector>
+ 
+-#include "DebugGlobals.h"
+-#include "StructTypes.h"
++#include <nmpt/DebugGlobals.h>
++#include <nmpt/StructTypes.h>
+ 
  
  /**
-@@ -384,7 +384,7 @@ public: 
- protected: 	
- 	void readFromStream(istream& in); 
- 	void addToStream(ostream& out); 
--	void ImagePatchPyramid::reInitialize(); 
-+	void reInitialize();
- 	
- 	int newImage; 
- 	CvSize inputImageSize; 
-@@ -412,4 +412,4 @@ protected: 	
- ostream& operator<< (ostream& ofs, ImagePatchPyramid* a);
- istream& operator>> (istream& ifs, ImagePatchPyramid* a);
+@@ -340,4 +340,4 @@ private:
+ std::ostream& operator<< (std::ostream& ofs, const ImageKalmanFilter &model); 
+ std::istream& operator>> (std::istream& ifs, ImageKalmanFilter &model) ;
  
 -#endif
 \ No newline at end of file
 +#endif
-diff -Nurp NMPT_orig/src/MIPOMDP.cpp NMPT_mod/src/MIPOMDP.cpp
---- NMPT_orig/src/MIPOMDP.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/MIPOMDP.cpp	2010-02-17 17:32:46.000000000 -0700
+diff -Nurp NMPT_orig/src/ImagePatch.cpp NMPT_ros/src/ImagePatch.cpp
+--- NMPT_orig/src/ImagePatch.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ImagePatch.cpp	2010-09-02 17:14:31.254808675 -0700
+@@ -7,9 +7,9 @@
+  *
+  */
+ 
+-#include "ImagePatch.h"
+-#include "FeatureRegressor.h"
+-#include "BoxFeature.h"
++#include <nmpt/ImagePatch.h>
++#include <nmpt/FeatureRegressor.h>
++#include <nmpt/BoxFeature.h>
+ #include <iostream>
+ #include <math.h>
+ #include <fstream>
+diff -Nurp NMPT_orig/src/ImagePatch.h NMPT_ros/src/ImagePatch.h
+--- NMPT_orig/src/ImagePatch.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ImagePatch.h	2010-09-02 17:42:57.184808333 -0700
+@@ -12,6 +12,8 @@
+ 
+ #include <opencv2/core/core_c.h>
+ #include <vector>
++#include <istream>
++#include <ostream>
+ 
+ /**
+  * \brief Type used for storing integral data. Depending on your architecture
+diff -Nurp NMPT_orig/src/ImagePatchPyramid.cpp NMPT_ros/src/ImagePatchPyramid.cpp
+--- NMPT_orig/src/ImagePatchPyramid.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ImagePatchPyramid.cpp	2010-09-02 17:14:48.744182791 -0700
+@@ -7,8 +7,8 @@
+  *
+  */
+ 
+-#include "ImagePatchPyramid.h"
+-#include "DebugGlobals.h"
++#include <nmpt/ImagePatchPyramid.h>
++#include <nmpt/DebugGlobals.h>
+ #include <fstream>
+ #include <opencv2/imgproc/imgproc_c.h>
+ #include <opencv2/highgui/highgui_c.h>
+@@ -734,4 +734,4 @@ ostream& operator<< (ostream& ofs, Image
+ istream& operator>> (istream& ifs, ImagePatchPyramid* model) {
+ 	model->readFromStream(ifs); 
+ 	return ifs; 
+-}
+\ No newline at end of file
++}
+diff -Nurp NMPT_orig/src/ImagePatchPyramid.h NMPT_ros/src/ImagePatchPyramid.h
+--- NMPT_orig/src/ImagePatchPyramid.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ImagePatchPyramid.h	2010-09-02 17:15:01.984820136 -0700
+@@ -16,8 +16,8 @@
+ #include <iostream>
+ #include <string>
+ 
+-#include "ObjectDetector.h"
+-#include "OpenCVHaarDetector.h"	
++#include <nmpt/ObjectDetector.h>
++#include <nmpt/OpenCVHaarDetector.h>
+ 
+ /**
+  *\ingroup AuxGroup
+diff -Nurp NMPT_orig/src/InternalMotionModel.cpp NMPT_ros/src/InternalMotionModel.cpp
+--- NMPT_orig/src/InternalMotionModel.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/InternalMotionModel.cpp	2010-09-02 17:15:24.144182512 -0700
+@@ -7,10 +7,10 @@
+  *
+  */
+ 
+-#include "InternalMotionModel.h"
+-#include "MatrixKalmanFilter.h"
+-#include "ImageKalmanFilter.h"
+-#include "NMPTUtils.h"
++#include <nmpt/InternalMotionModel.h>
++#include <nmpt/MatrixKalmanFilter.h>
++#include <nmpt/ImageKalmanFilter.h>
++#include <nmpt/NMPTUtils.h>
+ 
+ using namespace NMPTUtils; 
+ using namespace std; 
+diff -Nurp NMPT_orig/src/InternalMotionModel.h NMPT_ros/src/InternalMotionModel.h
+--- NMPT_orig/src/InternalMotionModel.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/InternalMotionModel.h	2010-09-02 17:15:39.986058253 -0700
+@@ -16,10 +16,10 @@
+ #include <iostream>
+ #include <vector>
+ 
+-#include "DebugGlobals.h"
+-#include "StructTypes.h"
+-#include "MatrixKalmanFilter.h"
+-#include "ImageKalmanFilter.h"
++#include <nmpt/DebugGlobals.h>
++#include <nmpt/StructTypes.h>
++#include <nmpt/MatrixKalmanFilter.h>
++#include <nmpt/ImageKalmanFilter.h>
+ 
+ 
+ /**
+@@ -597,4 +597,4 @@ private:
+ std::ostream& operator<< (std::ostream& ofs, const InternalMotionModel &model) ;
+ std::istream& operator>> (std::istream& ifs, InternalMotionModel &model) ;
+ 
+-#endif
+\ No newline at end of file
++#endif
+diff -Nurp NMPT_orig/src/InternalMotionModel.old_gradients.cpp NMPT_ros/src/InternalMotionModel.old_gradients.cpp
+--- NMPT_orig/src/InternalMotionModel.old_gradients.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/InternalMotionModel.old_gradients.cpp	2010-09-02 17:15:48.744184729 -0700
 @@ -7,7 +7,7 @@
   *
   */
  
--#include "MIPOMDP.h"
-+#include "nmpt/MIPOMDP.h"
+-#include "InternalMotionModel.h"
++#include <nmpt/InternalMotionModel.h>
  
- using namespace std; 
- 
-@@ -495,4 +495,4 @@ void MIPOMDP::updateProbTableCounts(IplI
- 			obsmodel->updateProbTableCounts(searchPoint, ipp->objectCount, objectLocation); 
- 		}
- 	}
+ InternalMotionModel::InternalMotionModel(int numActuators, CvSize obsSize) {
+ 	
+@@ -1170,4 +1170,4 @@ vector<CvRect> InternalMotionModel::getR
+ 	retval.push_back(roi2); 
+ 	return retval; 
+ 	
 -}
 \ No newline at end of file
 +}
-diff -Nurp NMPT_orig/src/MIPOMDP.h NMPT_mod/src/MIPOMDP.h
---- NMPT_orig/src/MIPOMDP.h	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/MIPOMDP.h	2010-02-17 17:32:59.000000000 -0700
-@@ -19,13 +19,13 @@
+diff -Nurp NMPT_orig/src/KF.cpp NMPT_ros/src/KF.cpp
+--- NMPT_orig/src/KF.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/KF.cpp	2010-09-02 17:15:57.514184942 -0700
+@@ -6,7 +6,7 @@
+ //  Copyright (c) 2010 __MyCompanyName__. All rights reserved.
+ //
+ 
+-#include "KF.h"
++#include <nmpt/KF.h>
+ 
+ using namespace cv; 
+ 
+@@ -92,4 +92,4 @@ Mat KF::getStateMean() {
+ //Sigma: [nxn]
+ Mat KF::getStateVariance() {
+ 	return Sigma.clone(); 
+-}
+\ No newline at end of file
++}
+diff -Nurp NMPT_orig/src/KFPointTracker.cpp NMPT_ros/src/KFPointTracker.cpp
+--- NMPT_orig/src/KFPointTracker.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/KFPointTracker.cpp	2010-09-02 17:16:13.224185886 -0700
+@@ -7,8 +7,8 @@
+  *
+  */
+ 
+-#include "KFPointTracker.h"
+-#include "KF.h"
++#include <nmpt/KFPointTracker.h>
++#include <nmpt/KF.h>
+ 
+ using namespace cv; 
+ 
+@@ -60,4 +60,4 @@ void KFPointTracker::updateTrackerPositi
+ }
+ vector<double> KFPointTracker::getCurrentPosition(){
+ 	return currentPositions; 
+-}
+\ No newline at end of file
++}
+diff -Nurp NMPT_orig/src/KFPointTracker.h NMPT_ros/src/KFPointTracker.h
+--- NMPT_orig/src/KFPointTracker.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/KFPointTracker.h	2010-09-02 17:16:28.044183332 -0700
+@@ -14,8 +14,8 @@
+ 
+ #include <opencv2/core/core.hpp>
+ #include <vector> 
+-#include "LQRPointTracker.h"
+-#include "KF.h"
++#include <nmpt/LQRPointTracker.h>
++#include <nmpt/KF.h>
+ 
+ class KFPointTracker : PointTracker {
+ public: 
+@@ -33,4 +33,4 @@ private:
+ 	
+ };
+ 
+-#endif
+\ No newline at end of file
++#endif
+diff -Nurp NMPT_orig/src/LQR.cpp NMPT_ros/src/LQR.cpp
+--- NMPT_orig/src/LQR.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/LQR.cpp	2010-09-02 17:16:38.094248277 -0700
+@@ -6,7 +6,7 @@
+ //  Copyright (c) 2010 __MyCompanyName__. All rights reserved.
+ //
+ 
+-#include "LQR.h"
++#include <nmpt/LQR.h>
+ 
+ using namespace cv; 
+ 
+@@ -124,4 +124,4 @@ void LQR::setTimePoint(int timepoint) {
+ 
+ int LQR::getTimePoint() {
+ 	return t; 
+-}
+\ No newline at end of file
++}
+diff -Nurp NMPT_orig/src/LQRPointTracker.cpp NMPT_ros/src/LQRPointTracker.cpp
+--- NMPT_orig/src/LQRPointTracker.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/LQRPointTracker.cpp	2010-09-02 17:16:49.584182587 -0700
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-#include "LQRPointTracker.h"
++#include <nmpt/LQRPointTracker.h>
+ 
+ using namespace cv; 
+ 
+diff -Nurp NMPT_orig/src/LQRPointTracker.h NMPT_ros/src/LQRPointTracker.h
+--- NMPT_orig/src/LQRPointTracker.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/LQRPointTracker.h	2010-09-02 17:16:59.834189525 -0700
+@@ -9,7 +9,7 @@
+ 
+ #include <opencv2/core/core.hpp>
+ #include <vector> 
+-#include "LQR.h"
++#include <nmpt/LQR.h>
+ 
+ #ifndef _LQRPOINTTRACKER_H
+ #define _LQRPOINTTRACKER_H
+@@ -38,4 +38,4 @@ private:
+ 	
+ };
+ 
+-#endif
+\ No newline at end of file
++#endif
+diff -Nurp NMPT_orig/src/MatrixKalmanFilter.cpp NMPT_ros/src/MatrixKalmanFilter.cpp
+--- NMPT_orig/src/MatrixKalmanFilter.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/MatrixKalmanFilter.cpp	2010-09-02 17:17:08.244184908 -0700
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-#include "MatrixKalmanFilter.h"
++#include <nmpt/MatrixKalmanFilter.h>
+ 
+ using namespace cv; 
+ using namespace std; 
+diff -Nurp NMPT_orig/src/MatrixKalmanFilter.h NMPT_ros/src/MatrixKalmanFilter.h
+--- NMPT_orig/src/MatrixKalmanFilter.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/MatrixKalmanFilter.h	2010-09-02 17:17:19.164185424 -0700
+@@ -14,8 +14,8 @@
+ #include <opencv2/core/core.hpp>
  #include <iostream>
- #include <fstream>
+ 
+-#include "DebugGlobals.h"
+-#include "StructTypes.h"
++#include <nmpt/DebugGlobals.h>
++#include <nmpt/StructTypes.h>
+ 
+ 
+ /**
+@@ -240,4 +240,4 @@ private:
+ 
+ std::ostream& operator<< (std::ostream& ofs, const MatrixKalmanFilter &model) ;
+ std::istream& operator>> (std::istream& ifs, MatrixKalmanFilter &model) ;
+-#endif
+\ No newline at end of file
++#endif
+diff -Nurp NMPT_orig/src/MIPOMDP.cpp NMPT_ros/src/MIPOMDP.cpp
+--- NMPT_orig/src/MIPOMDP.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/MIPOMDP.cpp	2010-09-02 17:17:33.244183316 -0700
+@@ -7,8 +7,8 @@
+  *
+  */
+ 
+-#include "MIPOMDP.h"
+-#include "DebugGlobals.h"
++#include <nmpt/MIPOMDP.h>
++#include <nmpt/DebugGlobals.h>
  #include <math.h>
+ #include <stdlib.h>
+ #include <cassert>
+diff -Nurp NMPT_orig/src/MIPOMDP.h NMPT_ros/src/MIPOMDP.h
+--- NMPT_orig/src/MIPOMDP.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/MIPOMDP.h	2010-09-02 17:17:57.044231442 -0700
+@@ -13,13 +13,13 @@
+ #include <opencv2/core/core_c.h>
+ #include <iostream>
+ #include <string>
 -#include "OpenCVHaarDetector.h"
 -#include "ObjectDetector.h"
 -#include "ImagePatchPyramid.h"
@@ -264,167 +848,307 @@ diff -Nurp NMPT_orig/src/MIPOMDP.h NMPT_mod/src/MIPOMDP.h
 -#include "OpenLoopPolicies.h"
 -#include "ConvolutionalLogisticPolicy.h"
 -#include "ImageDataSet.h"
-+#include "nmpt/OpenCVHaarDetector.h"
-+#include "nmpt/ObjectDetector.h"
-+#include "nmpt/ImagePatchPyramid.h"
-+#include "nmpt/MultinomialObservationModel.h"
-+#include "nmpt/OpenLoopPolicies.h"
-+#include "nmpt/ConvolutionalLogisticPolicy.h"
-+#include "nmpt/ImageDataSet.h"
++#include <nmpt/OpenCVHaarDetector.h>
++#include <nmpt/ObjectDetector.h>
++#include <nmpt/ImagePatchPyramid.h>
++#include <nmpt/MultinomialObservationModel.h>
++#include <nmpt/OpenLoopPolicies.h>
++#include <nmpt/ConvolutionalLogisticPolicy.h>
++#include <nmpt/ImageDataSet.h>
  
  /**
   * \ingroup MPGroup
-diff -Nurp NMPT_orig/src/MultinomialObservationModel.cpp NMPT_mod/src/MultinomialObservationModel.cpp
---- NMPT_orig/src/MultinomialObservationModel.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/MultinomialObservationModel.cpp	2010-02-17 17:33:06.000000000 -0700
+diff -Nurp NMPT_orig/src/MultinomialObservationModel.cpp NMPT_ros/src/MultinomialObservationModel.cpp
+--- NMPT_orig/src/MultinomialObservationModel.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/MultinomialObservationModel.cpp	2010-09-02 17:18:08.084238338 -0700
 @@ -7,7 +7,7 @@
   *
   */
  
 -#include "MultinomialObservationModel.h"
-+#include "nmpt/MultinomialObservationModel.h"
++#include <nmpt/MultinomialObservationModel.h>
  
- MultinomialObservationModel::MultinomialObservationModel(CvSize gridSize) {
- 	observationProbability = cvCreateImage(cvSize(gridSize.width, gridSize.height), IPL_DEPTH_32F, 1);	
-diff -Nurp NMPT_orig/src/ObjectDetector.cpp NMPT_mod/src/ObjectDetector.cpp
---- NMPT_orig/src/ObjectDetector.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/ObjectDetector.cpp	2010-02-17 17:33:16.000000000 -0700
+ using namespace std; 
+ 
+diff -Nurp NMPT_orig/src/MultiObjectTrackingState.cpp NMPT_ros/src/MultiObjectTrackingState.cpp
+--- NMPT_orig/src/MultiObjectTrackingState.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/MultiObjectTrackingState.cpp	2010-09-02 17:18:27.324183695 -0700
+@@ -7,8 +7,8 @@
+  *
+  */
+ 
+-#include "MultiObjectTrackingState.h"
+-#include "DebugGlobals.h"
++#include <nmpt/MultiObjectTrackingState.h>
++#include <nmpt/DebugGlobals.h>
+ #include <iostream>
+ 
+ using namespace std; 
+diff -Nurp NMPT_orig/src/MultiObjectTrackingState.h NMPT_ros/src/MultiObjectTrackingState.h
+--- NMPT_orig/src/MultiObjectTrackingState.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/MultiObjectTrackingState.h	2010-09-02 17:18:52.874564953 -0700
+@@ -15,8 +15,8 @@
+ #include <iostream>
+ #include <vector>
+ 
+-#include "ImagePatch.h"
+-#include "PatchList.h"
++#include <nmpt/ImagePatch.h>
++#include <nmpt/PatchList.h>
+ 
+ /**
+  *\ingroup AuxGroup
+diff -Nurp NMPT_orig/src/NMPTUtils.cpp NMPT_ros/src/NMPTUtils.cpp
+--- NMPT_orig/src/NMPTUtils.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/NMPTUtils.cpp	2010-09-02 17:19:29.004335056 -0700
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-#include "NMPTUtils.h"
++#include <nmpt/NMPTUtils.h>
+ #include <iostream>
+ #include <sstream>
+ using namespace std; 
+@@ -93,4 +93,4 @@ int NMPTUtils::getVideoCaptureFromComman
+ 		return 0; 
+ 	}
+ 	return retval; 
+-}
+\ No newline at end of file
++}
+diff -Nurp NMPT_orig/src/ObjectDetector.cpp NMPT_ros/src/ObjectDetector.cpp
+--- NMPT_orig/src/ObjectDetector.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/ObjectDetector.cpp	2010-09-02 17:19:41.794185971 -0700
 @@ -7,7 +7,7 @@
   *
   */
  
 -#include "ObjectDetector.h"
-+#include "nmpt/ObjectDetector.h"
++#include <nmpt/ObjectDetector.h>
+ using namespace std; 
  
- 
- ostream& operator<< (ostream& ofs, ObjectDetector* model) {
-@@ -15,4 +15,4 @@ ostream& operator<< (ostream& ofs, Objec
- }
+ ObjectDetector::~ObjectDetector(){}
+@@ -18,4 +18,4 @@ ostream& operator<< (ostream& ofs, Objec
  istream& operator>> (istream& ifs, ObjectDetector* model) {
  	model->readFromStream(ifs); 
+ 	return ifs; 
 -}
 \ No newline at end of file
 +}
-diff -Nurp NMPT_orig/src/OpenCVBoxFilter.cpp NMPT_mod/src/OpenCVBoxFilter.cpp
---- NMPT_orig/src/OpenCVBoxFilter.cpp	2009-07-25 10:57:50.000000000 -0700
-+++ NMPT_mod/src/OpenCVBoxFilter.cpp	2010-02-17 17:33:27.000000000 -0700
-@@ -7,7 +7,7 @@
-  *
+diff -Nurp NMPT_orig/src/OpenCVBoxFilter.cpp NMPT_ros/src/OpenCVBoxFilter.cpp
+--- NMPT_orig/src/OpenCVBoxFilter.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/OpenCVBoxFilter.cpp	2010-09-02 17:19:53.374732571 -0700
+@@ -8,7 +8,7 @@
   */
  
+ #include <opencv2/imgproc/imgproc_c.h>
 -#include "OpenCVBoxFilter.h"
-+#include "nmpt/OpenCVBoxFilter.h"
++#include <nmpt/OpenCVBoxFilter.h>
  
  using namespace std; 
  
-diff -Nurp NMPT_orig/src/OpenCVHaarDetector.cpp NMPT_mod/src/OpenCVHaarDetector.cpp
---- NMPT_orig/src/OpenCVHaarDetector.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/OpenCVHaarDetector.cpp	2010-02-17 17:33:37.000000000 -0700
+diff -Nurp NMPT_orig/src/OpenCVHaarDetector.cpp NMPT_ros/src/OpenCVHaarDetector.cpp
+--- NMPT_orig/src/OpenCVHaarDetector.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/OpenCVHaarDetector.cpp	2010-09-02 17:20:07.914184064 -0700
 @@ -7,7 +7,7 @@
   *
   */
  
 -#include "OpenCVHaarDetector.h"
-+#include "nmpt/OpenCVHaarDetector.h"
++#include <nmpt/OpenCVHaarDetector.h>
  
- OpenCVHaarDetector::OpenCVHaarDetector(const char* filename) {
- 	this->filename = (char*)malloc(5000); 
-@@ -75,4 +75,4 @@ void OpenCVHaarDetector::readFromStream(
+ using namespace cv; 
+ using namespace std; 
+@@ -97,4 +97,4 @@ void OpenCVHaarDetector::readFromStream(
  
  void OpenCVHaarDetector::addToStream(ostream& out) {
  	out << filename << endl; 
 -}
 \ No newline at end of file
 +}
-diff -Nurp NMPT_orig/src/OpenCVHaarDetector.h NMPT_mod/src/OpenCVHaarDetector.h
---- NMPT_orig/src/OpenCVHaarDetector.h	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/OpenCVHaarDetector.h	2010-02-17 17:33:42.000000000 -0700
-@@ -13,7 +13,7 @@
- #include <cv.h>
- #include <cxcore.h>
- #include <highgui.h>
+diff -Nurp NMPT_orig/src/OpenCVHaarDetector.h NMPT_ros/src/OpenCVHaarDetector.h
+--- NMPT_orig/src/OpenCVHaarDetector.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/OpenCVHaarDetector.h	2010-09-02 17:20:27.124252043 -0700
+@@ -12,7 +12,7 @@
+ 
+ #include <opencv2/core/core.hpp>
+ #include <opencv2/objdetect/objdetect.hpp>
 -#include "ObjectDetector.h"
-+#include "nmpt/ObjectDetector.h"
++#include <nmpt/ObjectDetector.h>
  
  
  /**
-@@ -109,4 +109,4 @@ private: 
- 	
- };
- 
--#endif
-\ No newline at end of file
-+#endif
-diff -Nurp NMPT_orig/src/OpenLoopPolicies.cpp NMPT_mod/src/OpenLoopPolicies.cpp
---- NMPT_orig/src/OpenLoopPolicies.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/OpenLoopPolicies.cpp	2010-02-17 17:33:48.000000000 -0700
-@@ -7,7 +7,7 @@
-  *
+diff -Nurp NMPT_orig/src/OpenLoopPolicies.cpp NMPT_ros/src/OpenLoopPolicies.cpp
+--- NMPT_orig/src/OpenLoopPolicies.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/OpenLoopPolicies.cpp	2010-09-02 17:20:36.444180189 -0700
+@@ -8,7 +8,7 @@
   */
  
+ #include <iostream>
 -#include "OpenLoopPolicies.h"
-+#include "nmpt/OpenLoopPolicies.h"
++#include <nmpt/OpenLoopPolicies.h>
  
+ using namespace std; 
  
- CvPoint OpenLoopPolicies::getFixationPoint(int fixationNumber, int policyType, CvSize gridSize){
-@@ -67,4 +67,4 @@ float OpenLoopPolicies::randomFloat() {
+@@ -69,4 +69,4 @@ float OpenLoopPolicies::randomFloat() {
  		retval = retval + (1.0/(2<<(i)))*((r&(1<<i))>>i);
  	}
  	return retval;
 -}
 \ No newline at end of file
 +}
-diff -Nurp NMPT_orig/src/SimpleFaceTracker.cpp NMPT_mod/src/SimpleFaceTracker.cpp
---- NMPT_orig/src/SimpleFaceTracker.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/SimpleFaceTracker.cpp	2010-02-17 17:34:00.000000000 -0700
-@@ -71,8 +71,8 @@
+diff -Nurp NMPT_orig/src/PatchDataset.cpp NMPT_ros/src/PatchDataset.cpp
+--- NMPT_orig/src/PatchDataset.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/PatchDataset.cpp	2010-09-02 17:21:09.464182054 -0700
+@@ -9,15 +9,15 @@
+ 
+ 
+ 
+-#include "PatchDataset.h"
++#include <nmpt/PatchDataset.h>
+ 
+ #include <math.h>
+ #include <fstream>
+ #include <opencv2/imgproc/imgproc_c.h>
+ #include <opencv2/highgui/highgui_c.h>
+ 
+-#include "DetectionEvaluator.h"
+-#include "OpenLoopPolicies.h"
++#include <nmpt/DetectionEvaluator.h>
++#include <nmpt/OpenLoopPolicies.h>
+ 
+ using namespace std; 
+ 
+diff -Nurp NMPT_orig/src/PatchDataset.h NMPT_ros/src/PatchDataset.h
+--- NMPT_orig/src/PatchDataset.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/PatchDataset.h	2010-09-02 17:43:58.224297858 -0700
+@@ -18,10 +18,10 @@
+ #include <vector>
+ #include <string>
+ 
+-#include "BlockTimer.h"
+-#include "ImageDataSet.h"
+-#include "ImagePatch.h"
+-#include "PatchList.h" 
++#include <nmpt/BlockTimer.h>
++#include <nmpt/ImageDataSet.h>
++#include <nmpt/ImagePatch.h>
++#include <nmpt/PatchList.h>
+ 
+ class DetectionEvaluator; 
+ 
+diff -Nurp NMPT_orig/src/PatchList.cpp NMPT_ros/src/PatchList.cpp
+--- NMPT_orig/src/PatchList.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/PatchList.cpp	2010-09-02 17:21:38.974184074 -0700
+@@ -7,8 +7,8 @@
+  *
+  */
+ 
+-#include "PatchList.h"
+-#include "DebugGlobals.h"
++#include <nmpt/PatchList.h>
++#include <nmpt/DebugGlobals.h>
+ #include <math.h>
+ #include <iostream>
+ #include <stdlib.h>
+diff -Nurp NMPT_orig/src/PatchList.h NMPT_ros/src/PatchList.h
+--- NMPT_orig/src/PatchList.h	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/PatchList.h	2010-09-02 17:21:52.704807829 -0700
+@@ -12,8 +12,8 @@
+ 
+ #include <opencv2/core/core_c.h>
+ #include <vector>
+-#include "ImagePatch.h"
+-#include "StructTypes.h"
++#include <nmpt/ImagePatch.h>
++#include <nmpt/StructTypes.h>
+ 
+ 
+ /**
+diff -Nurp NMPT_orig/src/SimpleFaceTracker.cpp NMPT_ros/src/SimpleFaceTracker.cpp
+--- NMPT_orig/src/SimpleFaceTracker.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/SimpleFaceTracker.cpp	2010-09-02 17:50:10.744185493 -0700
+@@ -65,14 +65,15 @@
+  **/
+ 
+ 
+-#include <cv.h>
+-//#include<cxcore.h>
+-#include <highgui.h>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
++#include <opencv2/imgproc/imgproc_c.h>
++
  #include <cassert>
  #include <iostream>
  #include <fstream>
 -#include "MIPOMDP.h"
 -#include "BlockTimer.h"
-+#include "nmpt/MIPOMDP.h"
-+#include "nmpt/BlockTimer.h"
++#include <nmpt/MIPOMDP.h>
++#include <nmpt/BlockTimer.h>
  
  using namespace std;
  
-diff -Nurp NMPT_orig/src/SimpleSaliencyExample.cpp NMPT_mod/src/SimpleSaliencyExample.cpp
---- NMPT_orig/src/SimpleSaliencyExample.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/SimpleSaliencyExample.cpp	2010-02-17 17:34:06.000000000 -0700
-@@ -74,7 +74,7 @@
+diff -Nurp NMPT_orig/src/SimpleSaliencyExample.cpp NMPT_ros/src/SimpleSaliencyExample.cpp
+--- NMPT_orig/src/SimpleSaliencyExample.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/SimpleSaliencyExample.cpp	2010-09-02 17:50:34.914183469 -0700
+@@ -69,11 +69,15 @@
+ 
+ 
+ 
+-#include <opencv2/opencv.hpp>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
++#include <opencv2/imgproc/imgproc_c.h>
++
++
  #include <cassert>
  #include <iostream>
  #include <fstream>
 -#include "FastSaliency.h"
-+#include "nmpt/FastSaliency.h"
++#include <nmpt/FastSaliency.h>
  
  using namespace std;
  
-diff -Nurp NMPT_orig/src/TrainNarrowFOVModel.cpp NMPT_mod/src/TrainNarrowFOVModel.cpp
---- NMPT_orig/src/TrainNarrowFOVModel.cpp	2009-07-25 10:57:51.000000000 -0700
-+++ NMPT_mod/src/TrainNarrowFOVModel.cpp	2010-02-17 17:34:14.000000000 -0700
-@@ -47,8 +47,8 @@
+diff -Nurp NMPT_orig/src/StructTypes.cpp NMPT_ros/src/StructTypes.cpp
+--- NMPT_orig/src/StructTypes.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/StructTypes.cpp	2010-09-02 17:23:08.104242657 -0700
+@@ -1,5 +1,5 @@
+-#include "StructTypes.h"
+-#include "GentleBoostCascadedClassifier.h"
++#include <nmpt/StructTypes.h>
++#include <nmpt/GentleBoostCascadedClassifier.h>
+ 
+ 
+ bool operator<(const SearchResult& a, const SearchResult& b) {
+@@ -14,4 +14,4 @@ bool operator<(const PerformanceMetrics&
+ bool operator<(const FeaturePerformance& a, const FeaturePerformance& b){
+ 	//if (b.chisq < a.chisq) 
+ 	return a.perf < b.perf; 
+-}
+\ No newline at end of file
++}
+diff -Nurp NMPT_orig/src/TrainNarrowFOVModel.cpp NMPT_ros/src/TrainNarrowFOVModel.cpp
+--- NMPT_orig/src/TrainNarrowFOVModel.cpp	2010-08-27 10:24:05.000000000 -0700
++++ NMPT_ros/src/TrainNarrowFOVModel.cpp	2010-09-02 17:23:33.154244842 -0700
+@@ -47,11 +47,12 @@
   * and Movellan, 2008; Najemnik and Geisler, 2005 (see \ref bib_sec).
   **/
  using namespace std; 
 -#include "ImageDataSet.h"
 -#include "MIPOMDP.h"
-+#include "nmpt/ImageDataSet.h"
-+#include "nmpt/MIPOMDP.h"
++#include <nmpt/ImageDataSet.h>
++#include <nmpt/MIPOMDP.h>
  #include <stdio.h>
  #include <iostream> 
- #include <cv.h>
-@@ -71,8 +71,7 @@ int main(int argc, char** argv) {
- 		cvSetReal2D(subImageGridPoints, i, 0, 15-6*i); //15, 9, 3 
- 		cvSetReal2D(subImageGridPoints, i, 1, 15-6*i); //15, 9, 3
- 	}
--	char* haarDetectorXMLFile = "data/haarcascade_frontalface_alt2.xml";
--	
-+	const char* haarDetectorXMLFile = "data/haarcascade_frontalface_alt2.xml";
- 	
- 	
- 	MIPOMDP* pomdp = new MIPOMDP(inputImageSize, subImageSize, gridSize, 
-@@ -93,4 +92,4 @@ int main(int argc, char** argv) {
+-#include <opencv2/opencv.hpp>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
+ 
+ int main(int argc, char** argv) {
+ 	const char files[] = "data/GENKI-SZSL_files.txt"; 
+@@ -91,4 +92,4 @@ int main(int argc, char** argv) {
  	pomdp->saveToFile(savename); 
  	
  	

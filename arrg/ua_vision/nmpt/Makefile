@@ -31,7 +31,6 @@ build:
 		mv NMPT/src/*.cpp $(SRC_DIR)/nmpt; \
 		mv NMPT/doc/* $(DOC_DIR); \
 		mv NMPT/data/* $(DATA_DIR); \
-		mv NMPT/ReferenceManual.pdf $(DOC_DIR); \
 		rm $(ZIP_FILE); \
 		rm -rf NMPT; \
 	fi
