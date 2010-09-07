@@ -29,12 +29,19 @@
 (defgeneric distance-to-goal (goal world-state)
   (:documentation "Compute the distance to the goal based on the world-state and its predicates"))
 
-(defmethod distance-to-goal ((g position-goal) (ws world-state))
+#+ignore(defmethod distance-to-goal ((g position-goal) (ws world-state))
   (let* ((obj-state (get-object-state ws (find-object-by-gazebo-name (entity-name-of g))))
          (obj-position (position-of (pose-of obj-state)))
          (distance-to-goal (distance obj-position (position-of g))))
     (list (list "Distance-To-Goal" (entity-name-of g) distance-to-goal)
       (list "Goal-Reached" (entity-name-of g) (< distance-to-goal 0.2)))))
+
+(defmethod distance-to-goal ((g position-goal) (ws world-state))
+  (loop for os in (objects-of ws)
+     for obj-position = (position-of (pose-of os))
+     for distance-to-goal = (distance obj-position (position-of g))
+     append (list (list "Distance-To-Goal" (gazebo-name-of (object-of os)) distance-to-goal)
+                  (list "Goal-Reached" (gazebo-name-of (object-of os)) (< distance-to-goal 0.2)))))
 
 ;; TODO: Use nconc so we can return lists, then return a Goal-Reached predicate also
 (defmethod distance-to-goal ((g object-goal) (ws world-state))
