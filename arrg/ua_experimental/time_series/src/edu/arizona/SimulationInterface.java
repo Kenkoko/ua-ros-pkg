@@ -60,6 +60,7 @@ public class SimulationInterface {
 		Collections.sort(intervals, Interval.eff);
 		for (Interval i : intervals) {
 			i.episode = id;
+			i.file = "test";
 			logger.debug(i);
 		}
 		logger.debug("Finished with " + intervals.size() + " intervals, converting to instance...");
@@ -89,7 +90,8 @@ public class SimulationInterface {
 		ros.init("time_series_node");
 		NodeHandle nh = ros.createNodeHandle();
 
-		// FindSignature service
+		// FindSignature service which creates a signature from a set of episodes
+		// and stores it in a file (currently does not prune or otherwise alter the signature)
 		ServiceServer.Callback<FindSignature.Request, FindSignature.Response> scb = 
 		new ServiceServer.Callback<FindSignature.Request, FindSignature.Response>() {
 			public FindSignature.Response call(FindSignature.Request request) {
@@ -129,7 +131,7 @@ public class SimulationInterface {
 
 		System.out.println("Service " + findService.getService() + " advertised.");
 		
-		// TestSignature service
+		// TestSignature service which tests an episode against a signature, and returns the distance
 		ServiceServer.Callback<TestSignature.Request, TestSignature.Response> testCallback =
 		new ServiceServer.Callback<TestSignature.Request, TestSignature.Response>() {
 			@Override
@@ -167,6 +169,7 @@ public class SimulationInterface {
 			
 		System.out.println("Service " + testService.getService() + " advertised.");
 		
+		// Service "load_signatures" loads the stored signatures from file.
 		ServiceServer.Callback<Empty.Request, Empty.Response> loadCallback =
 		new ServiceServer.Callback<Empty.Request, Empty.Response>() {
 			@Override
