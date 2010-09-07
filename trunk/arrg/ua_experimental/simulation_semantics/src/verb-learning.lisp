@@ -368,16 +368,17 @@
   (if (fibn 'goal-marker)
       (remove-from-world (fibn 'goal-marker))))
 
+;;==============================================================
 
-;; TODO: list-scenarios, preview-scenario, print-scenario
+(defun clear-scenarios ()
+  (setf (scenarios-of *current-verb*) nil))
 
-;(defun test-script ()
-;  (delete-blackboard-repository)
-;  ;(init-session)
-;  (setf sim (make-instance 'simulator :instance-name 'block))
-;  (setf block (make-instance 'physical-object :gazebo-name "test_box"))
-  
-;  (setf (gethash block (objects-of sim)) (list '(0 0 1.0) '(0 0 0)))
-;  (begin-verb-lesson "stay" '("object"))
-;  (present-scenario sim '("test_box"))
-;  (simulate-scenarios *current-verb*))
+(defun preview-scenario ()
+  (clear-preview)
+  (run-simulator *current-scenario*))
+
+(defun lookup-verb (lexical-form)
+  (loop for verb in (find-instances-of-class 'verb)
+     when (string-equal (lexical-form-of verb) lexical-form)
+     do (return verb)))  
+
