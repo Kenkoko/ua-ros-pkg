@@ -31,7 +31,10 @@
 
 (defun begin-verb-lesson (verb arguments)
   (format t "Lesson begun for verb: ~a(~{~a~^,~})~%" verb arguments)
-  (setf *current-verb* (make-instance 'verb :lexical-form verb :argument-structure arguments)))
+  (setf *current-verb* (make-instance 'verb
+                                      :instance-name (format nil "~a~a" verb "-verb")
+                                      :lexical-form verb
+                                      :argument-structure arguments)))
 
 (defun present-scenario (simulator arguments)
   "Arguments is a list that has the object names in the appropriate argument order"
@@ -56,7 +59,7 @@
   (call-service "find_signature" 'time_series-srv:FindSignature
                 :episodes (get-intervention-episodes verb)
                 :verb (concatenate 'string (lexical-form-of verb) "-counterfactual")))
- 
+
 (defun test-scenario (&key (scenario *current-scenario*) (verb *current-verb*))
   ;(clear-preview)
   (format t "Simulating scenario...~%")
@@ -88,6 +91,24 @@
                                                                                     (lexical-form-of verb)
                                                                                     "-counterfactual")
                                                             :min 2)))))))
+
+(defun test-scenario-against-verb (&key (scenario *current-scenario*) (verb (lexical-form-of *current-verb*)))
+  (format t "Simulating scenario...~%")
+  (let* ((simn (run-simulator scenario))
+         (verb-arguments (argument-structure-of verb))
+         (possibles (possible-arguments))
+         (name-map (loop with result = (make-hash-table :test 'equal)
+                      for verb-arg in verb-arguments
+                      do (format t "Which is the ~a?~%" (string-capitalize (string verb-arg)))
+                        (list-possible-arguments)
+                        (let* ((index (- (read) 1))
+                               (object (nth index possibles)))
+                          (if (is-instance-of object 'entity)
+                              (setf (gethash (gazebo-name-of object) result) verb-arg)))
+                      finally (return result)))
+         (episode (simulation-to-episode simn name-map)))
+    (format t "Testing episode against canonical signature of ~a~%" (lexical-form-of verb))
+    (format t "Distance: ~a~%" (score-val (test-episode episode (lexical-form-of verb) :min 2)))))
 
 (defun test-episode (episode verb &key (min 1))
   (call-service "test_signature" 'time_series-srv:TestSignature
@@ -148,7 +169,7 @@
             (first position) (second position) orientation)))
 
 (defun add-object (&key (shape 'box) (static nil) (size 0.3) (name (gensym "OBJECT"))
-                   (mass 1.0) (x 0) (y 0) (z nil) (orientation 0))
+                   (mass 0.2) (x 0) (y 0) (z nil) (orientation 0))
   (let* ((obj (make-instance 'physical-object
                              :instance-name name
                              :gazebo-name (string name)
@@ -362,7 +383,6 @@
   (setf (objects-of scenario) (make-hash-table))
   (setf (goals-of scenario) nil))
   
-
 (defun clear-preview ()
   (destroy *current-scenario*)
   (if (fibn 'goal-marker)
@@ -373,8 +393,8 @@
 (defun clear-scenarios ()
   (setf (scenarios-of *current-verb*) nil))
 
-(defun preview-scenario ()
-  (clear-preview)
+(defun visualize-scenario ()
+  ;(clear-preview)
   (run-simulator *current-scenario*))
 
 (defun lookup-verb (lexical-form)
