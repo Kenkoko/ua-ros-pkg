@@ -1,0 +1,17 @@
+<launch>
+    <!-- load the world environment -->
+    <include file="$(find wubble_environments)/launch/one_block.launch" />
+
+    <!-- start the map server -->
+    <node name="map_node" pkg="map_server" type="map_server" args="$(find wubble_environments)/Media/materials/textures/blocks_world_map.yaml" respawn="false" output="screen" />
+
+    <!-- spawn our erratic robot -->
+    <include file="$(find wubble_description)/launch/wubble_robot.launch"/>
+
+    <!-- start actions demo script -->
+    <node name="SimCalRunner" pkg="block_swat" type="simCalRunner.py" output="screen" />
+
+    <!-- start rviz with gmapping configs -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find wubble_blocks)/rviz/blocks_stacking_actions.vcg"/>
+</launch>
+
