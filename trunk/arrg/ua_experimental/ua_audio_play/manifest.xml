@@ -8,7 +8,7 @@ A minimal node which plays an audio stream captured by the audio_capture node.
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <depend package="roscpp"/>
-  <depend package="audio_msgs"/>
+  <depend package="ua_audio_msgs"/>
   <rosdep name="portaudio"/>
 </package>
 

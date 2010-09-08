@@ -22,7 +22,7 @@ If someone is sufficiently motivated to figure it out, let me know.
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <depend package="roscpp"/>
-  <depend package="audio_msgs"/>
+  <depend package="ua_audio_msgs"/>
   <rosdep name="portaudio"/>
   <rosdep name="libsndfile"/>
 </package>
