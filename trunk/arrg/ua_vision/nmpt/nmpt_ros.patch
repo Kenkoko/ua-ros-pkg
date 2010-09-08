@@ -10,7 +10,7 @@ diff -Nurp NMPT_orig/src/BlockTimer.cpp NMPT_ros/src/BlockTimer.cpp
 diff -Nurp NMPT_orig/src/BoxFeature.cpp NMPT_ros/src/BoxFeature.cpp
 --- NMPT_orig/src/BoxFeature.cpp	2010-08-27 10:24:05.000000000 -0700
 +++ NMPT_ros/src/BoxFeature.cpp	2010-09-02 17:03:37.684239974 -0700
-@@ -7,8 +7,8 @@
+@@ -7,8 +7,9 @@
   *
   */
  
@@ -18,6 +18,7 @@ diff -Nurp NMPT_orig/src/BoxFeature.cpp NMPT_ros/src/BoxFeature.cpp
 -#include "DebugGlobals.h"
 +#include <nmpt/BoxFeature.h>
 +#include <nmpt/DebugGlobals.h>
++#include <cstdio>
  #include <assert.h>
  #include <math.h>
  #include <iostream>
@@ -454,7 +455,7 @@ diff -Nurp NMPT_orig/src/GentleBoostClassifier.h NMPT_ros/src/GentleBoostClassif
 diff -Nurp NMPT_orig/src/HaarFeature.cpp NMPT_ros/src/HaarFeature.cpp
 --- NMPT_orig/src/HaarFeature.cpp	2010-08-27 10:24:05.000000000 -0700
 +++ NMPT_ros/src/HaarFeature.cpp	2010-09-02 17:12:55.214185265 -0700
-@@ -7,8 +7,8 @@
+@@ -7,8 +7,9 @@
   *
   */
  
@@ -462,6 +463,7 @@ diff -Nurp NMPT_orig/src/HaarFeature.cpp NMPT_ros/src/HaarFeature.cpp
 -#include "DebugGlobals.h"
 +#include <nmpt/HaarFeature.h>
 +#include <nmpt/DebugGlobals.h>
++#include <cstdio>
  #include <math.h>
  #include <iostream>
  
