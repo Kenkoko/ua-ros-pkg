@@ -1,0 +1,10 @@
+portaudio:
+  ubuntu: portaudio19-dev
+  debian: portaudio19-dev
+  arch: portaudio
+  macports: portaudio
+libsndfile:
+  ubuntu: libsndfile1-dev
+  debian: libsndfile1-dev
+  arch: libsndfile
+  macports: libsndfile
