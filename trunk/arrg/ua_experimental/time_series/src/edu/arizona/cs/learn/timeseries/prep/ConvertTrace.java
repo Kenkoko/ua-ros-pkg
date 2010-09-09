@@ -3,6 +3,7 @@ package edu.arizona.cs.learn.timeseries.prep;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +129,10 @@ public class ConvertTrace {
 //			List<String> sdl = TimeSeries.sdl(delta, 0.0025);
 //			intervals.addAll(TimeSeries.toIntervals(key, sdl));
 			
-			List<String> regression = TimeSeries.regression(column);
+			List<Double> breakpoints = Arrays.asList(-2.0, -0.5, 0.5, 2.0);
+			List<String> classes = Arrays.asList("steep-down", "down", "stable", "up", "steep-up");
+
+			List<String> regression = TimeSeries.regression(column, breakpoints, classes);
 			intervals.addAll(TimeSeries.toIntervals(key, regression));
 		}
 		

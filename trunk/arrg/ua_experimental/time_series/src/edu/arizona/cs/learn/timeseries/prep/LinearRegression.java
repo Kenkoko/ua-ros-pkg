@@ -2,6 +2,7 @@ package edu.arizona.cs.learn.timeseries.prep;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -116,7 +117,10 @@ public class LinearRegression {
 		List<Edge> edges = fitRegressionLines(column);
 		write(edges);
 
-		List<String> symbols = TimeSeries.regression(column);
+		List<Double> breakpoints = Arrays.asList(-2.0, -0.5, 0.5, 2.0);
+		List<String> classes = Arrays.asList("steep-down", "down", "stable", "up", "steep-up");
+		
+		List<String> symbols = TimeSeries.regression(column, breakpoints, classes);
 		System.out.println("Size: " + column.size() + " " + symbols.size());
 		try { 
 			BufferedWriter out = new BufferedWriter(new FileWriter("/tmp/symbols.dat"));
