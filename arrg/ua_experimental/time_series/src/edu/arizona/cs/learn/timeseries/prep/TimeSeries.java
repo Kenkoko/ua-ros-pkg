@@ -257,17 +257,25 @@ public class TimeSeries {
 	
 	/**
 	 * Generate a list of symbols based on the shape of the the time series
+	 * The time series is assumed to be standardized so that we can reason
+	 * about the deltas in a uniform way
 	 * @param deltaTimeSeries
-	 * @param epsilon
+	 * @param breakpoints
+	 * @param classes
 	 * @return
 	 */
-	public static List<String> sdl(List<Double> deltaTimeSeries, double epsilon) { 
+	public static List<String> sdl(List<Double> deltaTimeSeries, List<Double> breakpoints, List<String> classes) { 
 		List<String> results = new ArrayList<String>();
 
+		List<Double> epsilonsArray = new ArrayList<Double>();
+		for (double d : epsilons) 
+			epsilonsArray.add(d);
+		
 		for (Double d : deltaTimeSeries) { 
 			if (Double.compare(d, Double.NaN) == 0) {
 				results.add("NaN");
 			} else { 
+				
 				if (d < -epsilon)
 					results.add("down");
 				else if (d > epsilon)
