@@ -140,6 +140,7 @@ public class ConvertTrace {
 	// Params filterWindow = 30 SAX = 8 SDL 0.0025   --- 48.44% correct
 	// Params filterWindow = 25 SAX = 8 SDL 0.0025   --- 52.25% correct
 	// Params filterWindow = 20 SAX = 8 SDL 0.0025   --- 45.86% correct
+	// Params filterWindow = 5  SAX = 6 SDL 0.0025   --- 59.39% correct
 	
 	// Params filterWindow 00 regression --- 47.50% correct
 	// Params filterWindow 05 regression --- 32.97% correct
