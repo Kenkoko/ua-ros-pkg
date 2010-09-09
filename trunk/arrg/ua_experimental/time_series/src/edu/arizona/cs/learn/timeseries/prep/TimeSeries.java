@@ -251,7 +251,9 @@ public class TimeSeries {
 	 * @return
 	 */
 	public static List<String> sdl(List<Double> deltaTimeSeries) { 
-		return sdl(deltaTimeSeries, 0.001);
+		List<Double> breakpoints = Arrays.asList(-0.001, 0.001);
+		List<String> classes = Arrays.asList("down", "stable", "up");
+		return sdl(deltaTimeSeries, breakpoints, classes);
 	}
 	
 	
@@ -267,21 +269,21 @@ public class TimeSeries {
 	public static List<String> sdl(List<Double> deltaTimeSeries, List<Double> breakpoints, List<String> classes) { 
 		List<String> results = new ArrayList<String>();
 
-		List<Double> epsilonsArray = new ArrayList<Double>();
-		for (double d : epsilons) 
-			epsilonsArray.add(d);
-		
 		for (Double d : deltaTimeSeries) { 
 			if (Double.compare(d, Double.NaN) == 0) {
 				results.add("NaN");
-			} else { 
+			} else {
+
+				boolean found = false;
+				for (int i = 0; i < breakpoints.size() && !found; ++i) { 
+					if (d < breakpoints.get(i)) {
+						results.add(classes.get(i));
+						found = true;
+					}
+				}
 				
-				if (d < -epsilon)
-					results.add("down");
-				else if (d > epsilon)
-					results.add("up");
-				else
-					results.add("stable");
+				if (!found)
+					results.add(classes.get(classes.size()-1));
 			}
 		}
 		return results;
