@@ -289,7 +289,25 @@ public class TimeSeries {
 		return results;
 	}
 	
+	/**
+	 * Fit regression lines to the time series.
+	 * @param timeSeries
+	 * @return
+	 */
 	public static List<String> regression(List<Double> timeSeries) { 
+		List<Double> breakpoints = Arrays.asList(-0.5, 0.5);
+		List<String> classes = Arrays.asList("down", "stable", "up");
+		return regression(timeSeries, breakpoints, classes);
+	}
+	
+	/**
+	 * Fit regression lines to the time series. 
+	 * @param timeSeries
+	 * @param breakpoints
+	 * @param classes
+	 * @return
+	 */
+	public static List<String> regression(List<Double> timeSeries, List<Double> breakpoints, List<String> classes) { 
 		List<String> results = new ArrayList<String>();
 
 		List<Edge> edges = LinearRegression.fitRegressionLines(timeSeries);
@@ -310,11 +328,16 @@ public class TimeSeries {
 			double theta = Math.atan2((y1-y0), (x1-x0));
 			double degrees = Math.toDegrees(theta);
 			
-			String symbol = "stable";
-			if (degrees <= -0.5) 
-				symbol = "down";
-			if (degrees >= 0.5)
-				symbol = "up";
+			String symbol = null;
+			for (int i = 0; i < breakpoints.size() && symbol == null; ++i) { 
+				if (degrees < breakpoints.get(i)) { 
+					symbol = classes.get(i);
+				}
+			}
+			
+			if (symbol == null)
+				symbol = classes.get(classes.size()-1);
+			
 			for (int i = 0; i < (x1-x0); ++i) { 
 				results.add(symbol);
 			}
