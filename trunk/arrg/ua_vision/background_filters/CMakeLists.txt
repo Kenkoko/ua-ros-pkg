@@ -31,6 +31,8 @@ target_link_libraries(background_subtractor_node background_subtractor)
 rosbuild_add_executable(lbp_background_subtractor_node src/lbp_background_subtractor_node.cpp)
 target_link_libraries(lbp_background_subtractor_node background_subtractor)
 
+rosbuild_add_executable(shape_finder src/shape_finder.cpp)
+
 # OLD
 #rosbuild_add_executable(overhead_filter src/overhead_filter.cpp)
 
