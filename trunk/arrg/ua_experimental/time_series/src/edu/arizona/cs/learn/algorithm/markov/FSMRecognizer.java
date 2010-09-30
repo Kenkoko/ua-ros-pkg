@@ -80,7 +80,7 @@ public class FSMRecognizer {
 
 		return false;
 	}
-
+	
 	public boolean test(List<Interval> intervals, int start, int end) {
 		List active = new ArrayList();
 		active.add(this._startNode);
@@ -100,4 +100,28 @@ public class FSMRecognizer {
 
 		return false;
 	}
+	
+	///////////////////////////////////////////////
+	// Added by Daniel
+	
+	public List<BPPNode> getActive() {
+		return _active;
+	}
+	
+	public List<BPPNode> getActiveExceptStart() {
+		List<BPPNode> result = new ArrayList<BPPNode>();
+		result.addAll(_active);
+		result.remove(_startNode);
+		return result;
+	}
+	
+	public BPPNode getStartState() {
+		return _startNode;
+	}
+	
+	public void reset() {
+		_active = new ArrayList<BPPNode>();
+		_active.add(this._startNode);
+	}
+
 }
