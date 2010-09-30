@@ -56,14 +56,6 @@
         size
         (third size))))
 
-(defmethod get-default-predicates ((obj physical-object))
-  '(x-pos y-pos z-pos
-    ;x-vel y-vel z-vel 
-    vel-mag ;diff-speed
-    ;force-mag
-    yaw pitch roll))
-    ;yaw-vel pitch-vel roll-vel))
-
 ;;======================================================
 ;; Manipulating objects
 

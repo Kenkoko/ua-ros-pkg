@@ -70,6 +70,10 @@
 (defmethod as-list ((this xyz))
   (list (x-of this) (y-of this) (z-of this)))
 
+(defun translate-pose (msg)
+  (list (translate-xyz (geometry_msgs-msg:position-val msg))
+        (translate-xyzw (geometry_msgs-msg:orientation-val msg))))
+
 ;;===========================================================
 
 (define-unit-class quaternion ()

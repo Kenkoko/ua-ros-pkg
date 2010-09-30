@@ -1,28 +1,8 @@
 (in-package :simsem)
 
-;;===========================================================
+;; TODO: All of these are out of date
 
-;(define-unit-class manipulable ()
-;  ((manipulators :initform nil))
-;)
-
-;(define-unit-class manipulator ()
-;  (name
-;   (value-type :initform 'discrete)
-;   (value-range :initform '(on off))
-;   distribution))
-
-;;===========================================================
-
-;(defgeneric get-manipulators (entity)
-;  (:documentation "Returns the set of manipulations that can be performed on a given entity."))
-
-;(defmethod get-manipulators ((object physical-object))
-;  '(position rotation 
-
-;;============================================================
-
-(defun move-object (object &key (x nil) (y nil) (z nil))
+#+ignore(defun move-object (object &key (x nil) (y nil) (z nil))
   (let ((pos (xyz-of object)))
     (if x (setf (first pos) x))
     (if y (setf (second pos) y))
@@ -35,7 +15,7 @@
                                          (z position pose) (third pos)
                                          (w orientation pose) 1.0))))
 
-(defun resize-object (object &key (scale nil) (size nil))
+#+ignore(defun resize-object (object &key (scale nil) (size nil))
   (remove-from-world object)
   (cond (scale (setf (size-of object) scale)
                (setf (third (xyz-of object)) (size-of object))
@@ -45,19 +25,19 @@
               (make-xml-list object)))
   (add-to-world object))
 
-(defun rotate-object (object rpy)
+#+ignore(defun rotate-object (object rpy)
   (remove-from-world object)
   (setf (rpy-of object) rpy)
   (make-xml-list object)
   (add-to-world object))
 
-(defun morph-object (object new-shape)
+#+ignore(defun morph-object (object new-shape)
   (remove-from-world object)
   (setf (shape-of object) new-shape)
   (make-xml-list object)
   (add-to-world object))
 
-(defun change-mass (object new-mass)
+#+ignore(defun change-mass (object new-mass)
   (remove-from-world object)
   (setf (mass-of object) new-mass)
   (make-xml-list object)
@@ -71,12 +51,12 @@
 ;  (let ((robot (find-instance-by-name 'robot)))
 ;    (setf (third (xyz-of robot)) 0.1)))
 
-(defun close-gap ()
+#+ignore(defun close-gap ()
   (let ((floor (find-instance-by-name 'floor2)))
     (setf (first (xyz-of floor)) 5.0)
     (make-xml-list floor)))
 
-(defun open-gap ()
+#+ignore(defun open-gap ()
   (let ((floor (find-instance-by-name 'floor2)))
     (setf (first (xyz-of floor)) 6.0)
     (make-xml-list floor)))
