@@ -263,37 +263,37 @@
         
         <!-- ****** TRANSMISSION DEFINITIONS ****** -->
         
-        <transmission type="SimpleTransmission" name="shoulder_pan_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_pan_trans">
             <actuator name="shoulder_pan_motor" />
             <joint name="shoulder_pan_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="shoulder_tilt_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_tilt_trans">
             <actuator name="shoulder_tilt_motor" />
             <joint name="shoulder_tilt_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="elbow_tilt_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="elbow_tilt_trans">
             <actuator name="elbow_tilt_motor" />
             <joint name="elbow_tilt_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="wrist_rotate_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wrist_rotate_trans">
             <actuator name="wrist_rotate_motor" />
             <joint name="wrist_rotate_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="finger_right_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="finger_right_trans">
             <actuator name="finger_right_motor" />
             <joint name="finger_right_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="finger_left_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="finger_left_trans">
             <actuator name="finger_left_motor" />
             <joint name="finger_left_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>

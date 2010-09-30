@@ -73,7 +73,7 @@
         <dynamics damping="50" friction="1"/>
     </joint>
     
-    <transmission type="SimpleTransmission" name="hokuyo_tilt_trans">
+    <transmission type="pr2_mechanism_model/SimpleTransmission" name="hokuyo_tilt_trans">
         <actuator name="hokuyo_tilt_motor" />
         <joint name="hokuyo_tilt_joint" />
         <mechanicalReduction>1.0</mechanicalReduction>
@@ -179,7 +179,7 @@
         <dynamics damping="50" friction="1"/>
     </joint>
     
-    <transmission type="SimpleTransmission" name="head_pan_trans">
+    <transmission type="pr2_mechanism_model/SimpleTransmission" name="head_pan_trans">
         <actuator name="head_pan_motor" />
         <joint name="head_pan_joint" />
         <mechanicalReduction>1.0</mechanicalReduction>
@@ -220,7 +220,7 @@
         <dynamics damping="50" friction="1"/>
     </joint>
     
-    <transmission type="SimpleTransmission" name="head_tilt_trans">
+    <transmission type="pr2_mechanism_model/SimpleTransmission" name="head_tilt_trans">
         <actuator name="head_tilt_motor" />
         <joint name="head_tilt_joint" />
         <mechanicalReduction>1.0</mechanicalReduction>

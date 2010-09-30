@@ -8,7 +8,7 @@
     
     <!-- an empty map so navigation will still work -->
     <node name="map_node" pkg="map_server" type="map_server" 
-          args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml" respawn="false" output="screen" />
+          args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml" respawn="true" output="screen" />
 
     <!-- since there is no way to localize, just set /map = /odom -->
 <!--    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />-->
