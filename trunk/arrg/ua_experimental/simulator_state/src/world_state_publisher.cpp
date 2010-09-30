@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <assert.h>
 
-#include <simulator_experiments/world_state_publisher.h>
+#include <simulator_state/world_state_publisher.h>
 
 #include <gazebo/Geom.hh>
 #include <gazebo/BoxShape.hh>
@@ -48,6 +48,7 @@
 #include <gazebo/ControllerFactory.hh>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/math/constants/constants.hpp>
 
 #include <BulletCollision/CollisionShapes/btConvexShape.h>
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
@@ -67,11 +68,10 @@
 using namespace std;
 using namespace gazebo;
 
+const double pi = boost::math::constants::pi<double>();
+
 GZ_REGISTER_DYNAMIC_CONTROLLER("world_state_publisher", WorldStatePublisher)
 ;
-
-//static btVoronoiSimplexSolver sGjkSimplexSolver;
-//btSimplexSolverInterface& gGjkSimplexSolver = sGjkSimplexSolver;
 
 void print_vector(btVector3 v)
 {
@@ -133,21 +133,40 @@ void WorldStatePublisher::LoadChild(XMLConfigNode *node)
   this->frameNameP->Load(node);
   this->frameName = this->frameNameP->GetValue();
 
-  // Custom Callback Queue
+  // Make publishers and services use custom callback queue
   ros::AdvertiseOptions
                         ao =
-                            ros::AdvertiseOptions::create<simulator_experiments::WorldState>(
-                                                                                             this->topicName,
-                                                                                             1,
-                                                                                             boost::bind(
-                                                                                                         &WorldStatePublisher::WorldStateConnect,
-                                                                                                         this),
-                                                                                             boost::bind(
-                                                                                                         &WorldStatePublisher::WorldStateDisconnect,
-                                                                                                         this),
-                                                                                             ros::VoidPtr(),
-                                                                                             &this->queue_);
+                            ros::AdvertiseOptions::create<simulator_state::WorldState>(
+                                                                                       this->topicName,
+                                                                                       1,
+                                                                                       boost::bind(
+                                                                                                   &WorldStatePublisher::WorldStateConnect,
+                                                                                                   this),
+                                                                                       boost::bind(
+                                                                                                   &WorldStatePublisher::WorldStateDisconnect,
+                                                                                                   this),
+                                                                                       ros::VoidPtr(), &this->queue_);
   this->pub_ = this->rosnode_->advertise(ao);
+
+  ros::AdvertiseServiceOptions aso =
+      ros::AdvertiseServiceOptions::create<simulator_state::AddPoint>("add_virtual_point",
+                                                                      boost::bind(&WorldStatePublisher::add_point,
+                                                                                  this, _1, _2), ros::VoidPtr(),
+                                                                      &this->queue_);
+  add_point_service_ = rosnode_->advertiseService(aso);
+
+  ros::AdvertiseServiceOptions
+                               daso =
+                                   ros::AdvertiseServiceOptions::create<simulator_state::DeletePoint>(
+                                                                                                      "delete_virtual_point",
+                                                                                                      boost::bind(
+                                                                                                                  &WorldStatePublisher::delete_point,
+                                                                                                                  this,
+                                                                                                                  _1,
+                                                                                                                  _2),
+                                                                                                      ros::VoidPtr(),
+                                                                                                      &this->queue_);
+  delete_point_service_ = rosnode_->advertiseService(daso);
 }
 
 // Someone subscribes to me
@@ -300,6 +319,42 @@ btConvexShape* WorldStatePublisher::extract_shape(Geom* geom)
   return result;
 }
 
+void print_point_cloud(btConvexPointCloudShape pc)
+{
+  cout << "PRINTING CLOUD\n";
+  int size = pc.getNumPoints();
+  for (int i = 0; i < size; i++)
+  {
+    cout << pc.getUnscaledPoints()[i].m_floats;
+  }
+}
+
+// Service Callbacks
+
+bool WorldStatePublisher::add_point(simulator_state::AddPointRequest& req, simulator_state::AddPointResponse& res)
+{
+  ROS_INFO_STREAM("Adding Point: ");
+  ROS_INFO_STREAM(req.point);
+  btVector3 point(req.point.x, req.point.y, req.point.z);
+  //  ROS_INFO_STREAM("btVector3: " << point.getX() << " " << point.getY() << " " << point.getZ());
+
+  points_.insert(pair<string, btVector3> (req.name, point));
+
+  return true;
+}
+
+bool WorldStatePublisher::delete_point(simulator_state::DeletePointRequest& req,
+                                       simulator_state::DeletePointResponse& res)
+{
+  ROS_INFO_STREAM("Deleting Point: " << req.name);
+
+  points_.erase(req.name);
+
+  return true;
+}
+
+// Helper functions
+
 btTransform WorldStatePublisher::convert_transform(Pose3d pose)
 {
   btVector3 pos(pose.pos.x, pose.pos.y, pose.pos.z);
@@ -333,7 +388,7 @@ btConvexShape* WorldStatePublisher::convert_aabb(Vector3 min, Vector3 max)
 void WorldStatePublisher::UpdateChild()
 {
   // Return if there's no one subscribing
-  // TODO: Turn this back on
+  // TODO: Turn this back on in general, but it is useful for testing
   //  if (this->worldStateConnectCount == 0)
   //    return;
 
@@ -347,10 +402,24 @@ void WorldStatePublisher::UpdateChild()
   models = World::Instance()->GetModels();
 
   // GJK STUFF
-  vector<btConvexShape*> boxes;
+  vector<btConvexShape*> gjk_shapes;
   vector<btTransform> tr;
   vector<string> gjk_names;
-  //  vector<Model*> geom_to_model;
+
+  // Add all of the point objects to the list of gjk_shapes
+  // TODO: Do we need to cache these? There will probably never be more than one
+  for (map<string, btVector3>::iterator it = points_.begin(); it != points_.end(); ++it)
+  {
+    gjk_names.push_back(it->first);
+
+    // Approximating points with tiny spheres since there seems to be a problem with PointClouds
+    btSphereShape* proxy_sphere = new btSphereShape(0.001);
+    gjk_shapes.push_back(proxy_sphere);
+
+    btTransform point_trans;
+    point_trans.setOrigin(it->second);
+    tr.push_back(point_trans);
+  }
 
   // aggregate all bodies into a single vector
   for (miter = models.begin(); miter != models.end(); miter++)
@@ -363,7 +432,7 @@ void WorldStatePublisher::UpdateChild()
     {
       Vector3 min, max;
       model->GetBoundingBox(min, max);
-      boxes.push_back(convert_aabb(min, max));
+      gjk_shapes.push_back(convert_aabb(min, max));
       tr.push_back(convert_transform(model->GetWorldPose()));
       gjk_names.push_back(model->GetName());
     }
@@ -394,6 +463,25 @@ void WorldStatePublisher::UpdateChild()
     // Clear out the old list of objects
     this->worldStateMsg.object_info.clear();
     this->worldStateMsg.relations.clear();
+    this->worldStateMsg.simple_relations.clear();
+
+    // First, add all the points as virtual "objects"
+    for (map<string, btVector3>::iterator it = points_.begin(); it != points_.end(); ++it)
+    {
+      simulator_state::ObjectInfo info;
+      info.name = it->first;
+
+      info.pose.position.x = it->second.getX();
+      info.pose.position.y = it->second.getY();
+      info.pose.position.z = it->second.getZ();
+      info.pose.orientation.x = 0;
+      info.pose.orientation.y = 0;
+      info.pose.orientation.z = 0;
+      info.pose.orientation.w = 1;
+
+      // No force info, or velocity (always 0)
+      this->worldStateMsg.object_info.push_back(info);
+    }
 
     // Iterate through all_bodies
     vector<Model*>::iterator miter;
@@ -408,7 +496,7 @@ void WorldStatePublisher::UpdateChild()
       vector<string>::iterator result = find(blacklist_.begin(), blacklist_.end(), model_name);
       if (result == blacklist_.end())
       {
-        simulator_experiments::ObjectInfo info;
+        simulator_state::ObjectInfo info;
 
         info.name = model_name;
 
@@ -442,10 +530,43 @@ void WorldStatePublisher::UpdateChild()
         info.pose.orientation.z = rot.z;
         info.pose.orientation.w = rot.u;
 
+        double yaw = rot.GetYaw();
+        double yaw_deg = yaw * (180 / pi);
+        // TODO: Need to convert to orientation - NW, N, SE, etc.
+
         // set velocities
         // get Rates
         Vector3 vpos = body->GetWorldLinearVel(); // get velocity in gazebo frame
         Vector3 veul = body->GetWorldAngularVel(); // get velocity in gazebo frame
+
+        //        double yaw_vel = veul.z;
+        //        simulator_state::SimpleRelation turning;
+        //        turning.rel_name = "Turning";
+        //        turning.obj_names.push_back(info.name);
+        //        simulator_state::SimpleRelation left;
+        //        left.rel_name = "Left";
+        //        left.obj_names.push_back(info.name);
+        //        simulator_state::SimpleRelation right;
+        //        right.rel_name = "Right";
+        //        right.obj_names.push_back(info.name);
+        //        if (yaw_vel > 0.1)
+        //        {
+        //          turning.value = true;
+        //          left.value = true;
+        //          right.value = false;
+        //        }
+        //        else if (yaw_vel < -0.1)
+        //        {
+        //          turning.value = true;
+        //          left.value = false;
+        //          right.value = true;
+        //        }
+        //        else
+        //        {
+        //          turning.value = false;
+        //          left.value = false;
+        //          right.value = false;
+        //        }
 
         // pass linear rates
         info.velocity.linear.x = vpos.x;
@@ -455,6 +576,13 @@ void WorldStatePublisher::UpdateChild()
         info.velocity.angular.x = veul.x;
         info.velocity.angular.y = veul.y;
         info.velocity.angular.z = veul.z;
+
+        //        double vel_mag = vpos.GetLength();
+        //        simulator_state::SimpleRelation vel_mag_rel;
+        //        vel_mag_rel.rel_name = "Moving";
+        //        vel_mag_rel.obj_names.push_back(info.name);
+        //        vel_mag_rel.value = (vel_mag > 0.5); // Threshold?
+        //        this->worldStateMsg.simple_relations.push_back(vel_mag_rel);
 
         // get forces
         Vector3 force = body->GetWorldForce(); // get velocity in gazebo frame
@@ -472,20 +600,18 @@ void WorldStatePublisher::UpdateChild()
       }
     }
 
-    // TODO: Need to add properties now to get some predicates
-
     // GJK Distance Calculation
-    if (boxes.size() > 1)
+    if (gjk_shapes.size() > 1)
     {
-      for (uint i = 0; i < boxes.size() - 1; i++)
+      for (uint i = 0; i < gjk_shapes.size() - 1; i++)
       {
-        for (uint j = i + 1; j < boxes.size(); j++)
+        for (uint j = i + 1; j < gjk_shapes.size(); j++)
         {
           //          cout << "OBJECT " << i << ": " << gjk_names[i] << endl;
           //          cout << "OBJECT " << j << ": " << gjk_names[j] << endl;
 
           btVoronoiSimplexSolver gjk_simplex_solver;
-          btGjkPairDetector gjk(boxes[0], boxes[1], &gjk_simplex_solver, NULL); // TODO: Add penetration solver.
+          btGjkPairDetector gjk(gjk_shapes[0], gjk_shapes[1], &gjk_simplex_solver, NULL); // TODO: Add penetration solver.
           btPointCollector gjkOutput;
           btGjkPairDetector::ClosestPointInput input;
 
@@ -514,7 +640,7 @@ void WorldStatePublisher::UpdateChild()
             //cout << "DEEP COLLISION" << endl;
           }
 
-          simulator_experiments::Relation gjk_relation;
+          simulator_state::Relation gjk_relation;
           gjk_relation.name = "GJK-Distance";
           gjk_relation.subject = gjk_names[i];
           gjk_relation.object = gjk_names[j];
@@ -523,18 +649,38 @@ void WorldStatePublisher::UpdateChild()
           gjk_relation.value = gjk_distance;
 
           // This is really for testing, we could compute this on the other end
-          simulator_experiments::Relation contact_relation;
-          contact_relation.name = "Contact";
-          contact_relation.subject = gjk_names[i];
-          contact_relation.object = gjk_names[j];
-          contact_relation.is_symmetric = 1;
-          contact_relation.is_numeric = 0;
-          contact_relation.value = (gjk_distance == 0);
+          //          simulator_state::Relation contact_relation;
+          //          contact_relation.name = "Contact";
+          //          contact_relation.subject = gjk_names[i];
+          //          contact_relation.object = gjk_names[j];
+          //          contact_relation.is_symmetric = 1;
+          //          contact_relation.is_numeric = 0;
+          //          contact_relation.value = (gjk_distance == 0);
 
-//          cout << gjk_relation << endl;
+          vector<string> obj_pair;
+          obj_pair.push_back(gjk_names[i]);
+          obj_pair.push_back(gjk_names[j]);
+
+          bool is_near = (gjk_distance < 0.5);
+
+          //          simulator_state::SimpleRelation near;
+          //          near.rel_name = "Near";
+          //          near.obj_names = obj_pair;
+          //          near.value = is_near;
+          //          simulator_state::SimpleRelation far;
+          //          far.rel_name = "Far";
+          //          far.obj_names = obj_pair;
+          //          far.value = !is_near;
+          //          this->worldStateMsg.simple_relations.push_back(near);
+          //          this->worldStateMsg.simple_relations.push_back(far);
+
+          simulator_state::SimpleRelation simple_contact;
+          simple_contact.rel_name = "Contact";
+          simple_contact.obj_names = obj_pair;
+          simple_contact.value = (gjk_distance == 0);
 
           this->worldStateMsg.relations.push_back(gjk_relation);
-          this->worldStateMsg.relations.push_back(contact_relation);
+          this->worldStateMsg.simple_relations.push_back(simple_contact);
         }
       }
     }

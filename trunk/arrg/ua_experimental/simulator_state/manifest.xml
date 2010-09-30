@@ -1,18 +1,17 @@
 <package>
 
-    <description brief="simulator_experiments">
+    <description brief="simulator_state">
 
-     simulator_experiments
+     Gazebo plugins for publishing the simulation state with relations.
 
     </description>
 
     <author>Daniel Hewlett</author>
     <license>BSD</license>
     <review status="unreviewed" notes=""/>
-    <url>http://ros.org/wiki/simulator_experiments</url>
+    <url>http://ros.org/wiki/simulator_state</url>
 
     <depend package="roscpp"/>
-    <depend package="rospy"/>
 
     <depend package="std_msgs"/>
     <depend package="geometry_msgs"/>

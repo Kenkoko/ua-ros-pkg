@@ -1,4 +1,0 @@
-string world_file
-bool start_paused
----
-int64 world_id
