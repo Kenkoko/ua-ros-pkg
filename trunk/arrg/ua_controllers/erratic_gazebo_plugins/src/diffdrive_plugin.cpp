@@ -307,7 +307,7 @@ void DiffDrivePlugin::QueueThread()
 void DiffDrivePlugin::publish_odometry()
 {
   // get current time
-  ros::Time current_time_ = ros::Time::now();
+  ros::Time current_time_((Simulator::Instance()->GetSimTime()).sec, (Simulator::Instance()->GetSimTime()).nsec); 
 
   // getting data for base_footprint to odom transform
   btQuaternion qt;
@@ -338,7 +338,11 @@ void DiffDrivePlugin::publish_odometry()
   odom_.twist.twist.angular.z = pos_iface_->data->velocity.yaw;
 
   odom_.header.frame_id = tf::resolve(tf_prefix_, "odom");
-  odom_.header.stamp = current_time_;
+  odom_.child_frame_id = "base_footprint";
+
+  //odom_.header.stamp = current_time_;
+  odom_.header.stamp.sec = (Simulator::Instance()->GetSimTime()).sec;
+  odom_.header.stamp.nsec = (Simulator::Instance()->GetSimTime()).nsec;
 
   pub_.publish(odom_);
 }
