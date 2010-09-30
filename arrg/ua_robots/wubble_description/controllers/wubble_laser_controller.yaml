@@ -1,5 +1,5 @@
 laser_tilt_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: hokuyo_tilt_joint
   pid:
     p: 120

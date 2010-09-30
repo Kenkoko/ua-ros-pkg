@@ -88,7 +88,7 @@
             <material>Erratic/White</material>
         </gazebo>
 
-        <transmission type="SimpleTransmission" name="${parent}_${suffix}_wheel_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="${parent}_${suffix}_wheel_trans">
             <actuator name="${parent}_${suffix}_wheel_motor" />
             <joint name="${parent}_${suffix}_wheel_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>

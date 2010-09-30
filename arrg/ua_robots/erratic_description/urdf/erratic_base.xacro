@@ -163,7 +163,7 @@
             <joint_properties damping="0.0" friction="0.0" />
         </joint>
 
-        <transmission type="SimpleTransmission" name="base_caster_support_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="base_caster_support_trans">
             <actuator name="base_caster_support_motor" />
             <joint name="base_caster_support_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
@@ -204,7 +204,7 @@
             <joint_properties damping="0.0" friction="0.0" />
         </joint>
 
-        <transmission type="SimpleTransmission" name="caster_wheel_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="caster_wheel_trans">
             <actuator name="caster_wheel_motor" />
             <joint name="caster_wheel_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>

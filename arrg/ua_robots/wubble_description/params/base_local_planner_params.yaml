@@ -2,9 +2,9 @@ TrajectoryPlannerROS:
   transform_tolerance: 0.4
 
   # Robot Configuration Parameters
-  acc_limit_x: 2.5
-  acc_limit_y: 2.5
-  acc_limit_th: 3.2
+  acc_lim_x: 2.5
+  acc_lim_y: 2.5
+  acc_lim_th: 3.2
   max_vel_x: 0.65
   min_vel_x: 0.1
   max_rotational_vel: 1.0
