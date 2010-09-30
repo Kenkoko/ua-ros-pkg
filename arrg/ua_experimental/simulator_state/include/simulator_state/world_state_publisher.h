@@ -38,14 +38,17 @@
 #include <gazebo/Shape.hh>
 #include <gazebo/Pose3d.hh>
 
-#include <simulator_experiments/WorldState.h>
-#include <simulator_experiments/ObjectInfo.h>
-#include <simulator_experiments/Relation.h>
+#include <simulator_state/WorldState.h>
+#include <simulator_state/ObjectInfo.h>
+#include <simulator_state/Relation.h>
+#include <simulator_state/AddPoint.h>
+#include <simulator_state/DeletePoint.h>
 
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btTransform.h>
 #include <BulletCollision/CollisionShapes/btConvexShape.h>
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
+#include <BulletCollision/CollisionShapes/btConvexPointCloudShape.h>
 #include <BulletCollision/NarrowPhaseCollision/btVoronoiSimplexSolver.h>
 
 #include <map>
@@ -79,12 +82,18 @@ private:
   btTransform convert_transform(gazebo::Pose3d pose);
   btConvexShape* convert_aabb(Vector3 min, Vector3 max);
 
-  simulator_experiments::WorldState worldStateMsg;
+  bool add_point(simulator_state::AddPointRequest& req, simulator_state::AddPointResponse& res);
+  bool delete_point(simulator_state::DeletePointRequest& req, simulator_state::DeletePointResponse& res);
+
+  simulator_state::WorldState worldStateMsg;
 
   gazebo::Model* parent_model_;
 
   ros::NodeHandle* rosnode_;
   ros::Publisher pub_;
+
+  ros::ServiceServer add_point_service_;
+  ros::ServiceServer delete_point_service_;
 
   boost::mutex lock;
 
@@ -103,6 +112,7 @@ private:
   std::vector<std::string> blacklist_;
 
   std::map<gazebo::Geom*,btConvexShape*> bt_shape_cache_;
+  std::map<std::string, btVector3> points_;
   btVoronoiSimplexSolver gjk_simplex_solver_;
 
 };
