@@ -8,7 +8,8 @@
         :std_msgs-msg
         :geometry_msgs-msg
         ;:gazebo-srv
-        :simulator_experiments-srv
+        :simulator_state-srv
         :time_series-msg
         :time_series-srv
-        :gbbopen :gbbopen-tools))
+        :gbbopen :gbbopen-tools)
+  (:shadowing-import-from :geometry_msgs-msg :point-val))

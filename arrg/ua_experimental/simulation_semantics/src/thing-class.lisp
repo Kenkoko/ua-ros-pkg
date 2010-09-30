@@ -42,7 +42,7 @@
 (defgeneric xml-rep (entity)
   (:documentation "Generate an XML representation for this entity."))
 
-(defgeneric get-default-predicates (entity)
+#+ignore(defgeneric get-default-predicates (entity)
   (:documentation "Returns the appropriate default set of predicates for the entity type."))
 
 (defun make-initial-pose (pose)

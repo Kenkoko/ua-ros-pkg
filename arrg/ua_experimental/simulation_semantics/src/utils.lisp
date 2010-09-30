@@ -58,3 +58,30 @@ copy is returned by default."
 
 (defun is-instance-of (object class-name)
   (find (find-unit-class class-name) (class-precedence-list (class-of object))))
+
+;;===========================================================
+
+(defun radians-to-degrees (rad)
+  (* rad (/ 180 pi)))
+
+;;===========================================================
+
+(defun vec-to-list (vec)
+  (loop for x across vec collect x))
+
+;;===========================================================
+
+;; This is taken from the web: http://cl-cookbook.sourceforge.net/strings.html
+(defun replace-all (string part replacement &key (test #'char=))
+  "Returns a new string in which all the occurences of the part is replaced with replacement."
+    (with-output-to-string (out)
+      (loop with part-length = (length part)
+            for old-pos = 0 then (+ pos part-length)
+            for pos = (search part string
+                              :start2 old-pos
+                              :test test)
+            do (write-string string out
+                             :start old-pos
+                             :end (or pos (length string)))
+            when pos do (write-string replacement out)
+            while pos))) 

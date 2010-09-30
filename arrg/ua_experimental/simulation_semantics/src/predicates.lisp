@@ -1,17 +1,9 @@
 (in-package :simulation_semantics)
 
-;; Don't think we need this anymore
-;(defparameter *self-predicate-list* 
-;  '(x-pos y-pos z-pos
-;    x-vel y-vel z-vel 
-;    int-vel int-yaw-vel vel-mag ;diff-speed
-;    force-mag
-;    yaw pitch roll
-;    yaw-vel pitch-vel roll-vel
-;    dist-to-goal))
-
 (defparameter *binary-predicate-list* 
   '(dist-between rel-angle))
+
+;; TODO: This whole file is obselete now, sigh.
 
 ;;=================================================================
 ;; Predicate-related methods of world-state class

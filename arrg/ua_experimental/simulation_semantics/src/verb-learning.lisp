@@ -22,6 +22,7 @@
    original-scenario))
    
 ;;=====================================================================
+;; Verbs
 
 (defparameter *current-verb* nil)
 (defparameter *world-state-subscriber* nil)
@@ -46,19 +47,64 @@
     (setf *world-state-subscriber* (subscribe-to-world-state)))
   (loop for scenario in (scenarios-of verb)
      do (run-simulator (simulator-of scenario))))
-                        
+        
+(defun find-verb (word)
+  (loop for verb in (find-instances-of-class 'verb)
+     if (string-equal (lexical-form-of verb) word)
+     do (return verb)))
+       
+(defun blast ()
+  (delete-all-instances 'verb 'simulator 'scenario))
+         
 ;;======================================================================
 ;; Signatures
 
 (defun learn-canonical-signature (&key (verb *current-verb*))
-  (call-service "find_signature" 'time_series-srv:FindSignature
+  (call-service "time_series/find_signature" 'time_series-srv:FindSignature
                 :episodes (get-episodes verb)
                 :verb (lexical-form-of verb)))
 
 (defun learn-counterfactual-signature (&key (verb *current-verb*))
-  (call-service "find_signature" 'time_series-srv:FindSignature
+  (call-service "time_series/find_signature" 'time_series-srv:FindSignature
                 :episodes (get-intervention-episodes verb)
                 :verb (concatenate 'string (lexical-form-of verb) "-counterfactual")))
+
+;;=====================================================================
+;; State Machines
+
+(defun fsm-test (&key (scenario *current-scenario*) (verb *current-verb*))
+  (let* ((arg-list (get-arguments scenario :verb verb))
+         (name-map (loop with result = (make-hash-table :test 'equal)
+                      for general in (argument-structure-of verb)
+                      for specific in arg-list
+                      do (setf (gethash (gazebo-name-of specific) result) (string-downcase (string general)))
+                      finally (return result)))
+         (callback (lambda (state)
+                     (let* ((result (call-service "time_series/fsm_update" 'time_series-srv:FSMUpdate
+                                                  :verb (lexical-form-of verb)
+                                                  :relations (loop for relation in (convert-relations state name-map)
+                                                                when (second relation)
+                                                                collect (first relation)))))
+                       (format t "RESULT:~%~a~%" result)))))
+    (run-simulator scenario :state-callback callback)))
+
+;;=====================================================================
+;; Episodes
+
+;; NEW
+
+(defun get-episodes (verb)
+  (loop for scenario in (scenarios-of verb)
+     append (loop for trace in (traces-of (simulator-of scenario))
+               for episode = (intervals-to-episode 
+                              (pmts-to-intervals 
+                               (convert-trace-to-pmts trace (name-map-of scenario verb))))
+               collect episode)))
+
+
+
+
+;; OLD
 
 (defun test-scenario (&key (scenario *current-scenario*) (verb *current-verb*))
   ;(clear-preview)
@@ -77,9 +123,9 @@
                       finally (return result)))
          (episode (simulation-to-episode simn name-map)))
     (format t "Testing episode against canonical signature of ~a~%" (lexical-form-of verb))
-    (format t "Distance: ~a~%" (score-val (test-episode episode (lexical-form-of verb) :min 2)))
-    (format t "Testing episode against intervention signature of ~a~%" (lexical-form-of verb))
-    (let* ((cf (duplicate scenario (gensym "CFS")))
+    (format t "Distance: ~a~%" (score-val (test-episode episode (lexical-form-of verb) :min 1)))
+    #+ingore(format t "Testing episode against intervention signature of ~a~%" (lexical-form-of verb))
+    #+ignore(let* ((cf (duplicate scenario (gensym "CFS")))
            (fake-map (make-hash-table :test 'equal)))
       (setf (objects-of cf) (make-hash-table :test 'equal))
       (setf (gethash (fibn 'robot) (objects-of cf)) (gethash (fibn 'robot) (objects-of scenario)))
@@ -116,7 +162,7 @@
                 :verb verb
                 :min min))
                 
-(defun get-episodes (verb)
+#+ignore(defun get-episodes (verb)
   (loop for scenario in (scenarios-of verb)
      append (loop for simulation in (simulations-of (simulator-of scenario))
                for episode = (simulation-to-episode simulation (name-map-of scenario verb))
@@ -146,6 +192,10 @@
      (symbolize-mts 
       (world-states-to-mts 
        (get-states simulation) :name-map name-map))))))
+
+
+
+
 
 ;;======================================================================
 ;; Scenario Configuration
@@ -204,6 +254,7 @@
                        :color "Gazebo/Green"
                        :size 0.1))
     (add-to-world (fibn 'goal-marker) pose)
+    (add-to-world goal nil)
     (format t "Robot will try to achieve position (~a,~a).~%" (first target-xy) (second target-xy))))
 
 ;; Return the strings or print them?
@@ -214,115 +265,27 @@
   (format t "Position Goal Removed"))
 
 (defun finish-scenario ()
-  (let* ((verb-arguments (argument-structure-of *current-verb*))
-         (possibles (possible-arguments))
-         (argument-list (loop for verb-arg in verb-arguments
-                           do (format t "Which is the ~a?~%" (string-capitalize (string verb-arg)))
-                             (list-possible-arguments)
-                           collect (nth (- (read) 1) possibles))))
-    ;(print argument-list)))
+  (let* ((argument-list (get-arguments *current-scenario*)))
     (setf *current-arguments* argument-list)
     (present-scenario *current-scenario* *current-arguments*)
     (destroy *current-scenario*)
     (remove-from-world (fibn 'goal-marker))
     (format t "This scenario described as: ~a(~{~a~^,~})~%" (lexical-form-of *current-verb*) *current-arguments*)))
 
+;; TODO: Need to consolidate the argument code
+(defun get-arguments (sim &key (verb *current-verb*))
+  (loop with verb-arguments = (argument-structure-of verb)
+     with possibles = (possible-arguments :scenario sim)
+     for verb-arg in verb-arguments
+     do (format t "Which is the ~a?~%" (string-capitalize (string verb-arg)))
+       (list-possible-arguments :scenario sim)
+     collect (nth (- (read) 1) possibles)))
+
 ;; TODO: Print something informative here
 (defun scenario-complete ()
   (if *current-arguments*
       (present-scenario *current-scenario* *current-arguments*)
       (format t "Please specify the argument mapping!~%")))
-
-;;======================================================================
-;; Interventions
-
-(defun new-global-intervention ()
-  (let* ((interventions '(move-object delete-object)))
-    (format t "Select an intervention:~%")
-    (loop for int in interventions
-       for i from 1
-       do (format t "~a: ~a~%" i int))
-    (let* ((index (read))
-           (intervention (nth (- index 1) interventions)))
-      (format t "Select the object:~%")
-      (loop for arg in (argument-structure-of *current-verb*)
-         for i from 1
-         do (format t "~a: ~a~%" i arg))
-      (let* ((object-index (- (read) 1))
-             (cf-scenarios (loop for scenario in (scenarios-of *current-verb*)
-                              for base-simulator = (simulator-of scenario)
-                              collect (duplicate base-simulator (gensym "CFS")))))
-        (loop for cf in cf-scenarios 
-           for robot-pos = (gethash (fibn 'robot) (objects-of cf))
-           do (setf (objects-of cf) (make-hash-table :test 'equal))
-             (setf (gethash (fibn 'robot) (objects-of cf)) robot-pos)) ; SUPER HACK BAD BAD BAD
-        (setf (interventions-of *current-verb*) 
-              (loop for cf in cf-scenarios 
-                 for i from 0
-                 collect (make-instance 'counterfactual-scenario
-                                        :original-scenario (nth i (scenarios-of *current-verb*))
-                                        :intervention intervention
-                                        :scenario (make-instance 'scenario
-                                                                 :simulator cf
-                                                                 :argument-list (list "robot_description"))))))
-  (format t "Intervention has been applied to all scenarios, resulting in ~a counterfactual scenarios.~%"
-          (length (interventions-of *current-verb*))))))
-
-(defun new-intervention ()
-  (format t "Select the base scenario:~%")
-  (loop for scenario in (scenarios-of *current-verb*)
-     for i from 1
-     do (format t "~a: ~a~%" i scenario))
-  (let* ((base-scenario (nth (- (read) 1) (scenarios-of *current-verb*)))
-         (base-simulator (simulator-of base-scenario))
-         (interventions '(move-object change-goal)))
-    (preview-scenario :scenario base-simulator)
-    (format t "Select an intervention:~%")
-    (loop for int in interventions
-       for i from 1
-       do (format t "~a: ~a~%" i int))
-    (let* ((index (read))
-           (intervention (nth (- index 1) interventions)))
-      (cond ((eq intervention 'move-object)
-             (format t "Select the object:~%")
-             (let* ((object-list (loop for obj being the hash-keys of (objects-of base-simulator)
-                                    for i from 1 
-                                    do (format t "~a: ~a~%" i obj)
-                                    collect obj))
-                    (object (nth (- (read) 1) object-list)))
-               (format t "Where? (x y z)~%")
-               (let* ((position (read))
-                      (new-simulator (duplicate base-simulator (gensym "CFS"))))
-                 (setf (gethash object (objects-of new-simulator)) (list position '(0 0 0)))
-                 (push (make-instance 'counterfactual-scenario
-                                      :original-scenario base-scenario
-                                      :intervention (list intervention position)
-                                      :scenario (make-instance 'scenario
-                                                               :argument-list (argument-list-of base-scenario)
-                                                               :simulator new-simulator))
-                       (interventions-of *current-verb*)))))
-            ((eq intervention 'change-goal)
-             (format t "Where? (x y)~%")
-             (let* ((position (read))
-                    (new-simulator (duplicate base-simulator (gensym "CFS"))))
-               (setf (goals-of new-simulator) 
-                     (list (make-instance 'position-goal 
-                                          :entity_name "robot_description"
-                                          :position (make-instance 'xyz
-                                                                   :x (first position)
-                                                                   :y (second position)))))
-               (push (make-instance 'counterfactual-scenario
-                                    :original-scenario base-scenario
-                                    :intervention (list intervention position)
-                                    :scenario (make-instance 'scenario
-                                                             :argument-list (argument-list-of base-scenario)
-                                                             :simulator new-simulator))
-                     (interventions-of *current-verb*))))
-            (t (format t "WTF~%"))))))
-          
-(defun simulate-counterfactual-scenarios ()
-  (loop for cfs in (interventions-of *current-verb*)
-     do (run-simulator (simulator-of (scenario-of cfs)))))
 
 ;; TODO: Make a function for select from list by ID
 
@@ -337,8 +300,13 @@
      do (setf (gethash (gazebo-name-of obj) map) arg)
      finally (return map)))
 
-(defun forget-simulations ()
+#+ignore(defun forget-simulations ()
   (delete-all-instances 'simulation))
+
+(defun forget-simulations ()
+  (loop for verb in (find-instances-of-class 'verb)
+     do (loop for scenario in (scenarios-of verb)
+           do (setf (traces-of (simulator-of scenario)) nil))))
 
 (defun preview-all-scenarios (&key (verb *current-verb*))
   (loop for scenario in (scenarios-of verb)
@@ -368,12 +336,12 @@
     (destroy scenario)
     (if marker-added (remove-from-world (fibn 'goal-marker)))))
 
-(defun possible-arguments ()
-  (append (loop for object being the hash-keys of (objects-of *current-scenario*) collect object)
-          (goals-of *current-scenario*)))
+(defun possible-arguments (&key (scenario *current-scenario*))
+  (append (loop for object being the hash-keys of (objects-of scenario) collect object)
+          (goals-of scenario)))
 
-(defun list-possible-arguments ()
-  (loop for arg in (possible-arguments)
+(defun list-possible-arguments (&key (scenario *current-scenario*))
+  (loop for arg in (possible-arguments :scenario scenario)
      for i from 1
      do (format t "~a: ~a~%" i arg)))
 
@@ -401,4 +369,3 @@
   (loop for verb in (find-instances-of-class 'verb)
      when (string-equal (lexical-form-of verb) lexical-form)
      do (return verb)))  
-

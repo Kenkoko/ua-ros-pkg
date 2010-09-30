@@ -5,13 +5,17 @@
 
 (define-unit-class simulator ()
   ((objects :initform (make-hash-table :test 'eq)) ;; Map from object to it's pose (xyz rpy)
-   (goal-map :initform (make-hash-table :test 'eq))
+   (goal-map :initform (make-hash-table :test 'eq)) ;; TODO: Get rid of this?
    (goals :initform nil) ;; This is a list of goal objects
    (policy-map :initform (make-hash-table :test 'eq))
-   (termination-time :initform 10)
+   (termination-time :initform 20)
 
    (current-time :initform 0)
-   (simulations :initform nil))
+   (current-step :initform 0)
+   (start-time :initform 0)
+
+   (simulations :initform nil)
+   (traces :initform nil))
 )
 
 (defmethod duplicate ((this simulator) duplicate-name)
@@ -35,53 +39,58 @@
 ;;=========================================================
 ;; Simulator Class Methods
 
-(defmethod run-simulator ((sim simulator))
+(defgeneric run-simulator (sim &key state-callback)
+  (:documentation "Please work."))
+
+(defmethod run-simulator ((sim simulator) &key (state-callback nil))
   ;; Create the simulator and prepare for execution
   (set-active sim)
-  (construct sim)
-  (create-simulation sim)
+
+  ;; TODO: Spawning the robot is freezing because gazebo is paused the simulator,
+  ;; so moved this here for now. What's a better fix?
   (start-simulation)
+  (construct sim)
+  ;(create-simulation sim)
+  ;(start-simulation)
   (loop for obj being the hash-keys of (objects-of sim)
      do (activate obj))
 
   ;; Main loop of the simulator
-  (loop with step = 0.1
-     until (should-terminate? sim)
-     for last-state = (first (find-instances 'world-state (current-simulation sim) :all))
-       ;; why do we need this when we have *current-state* ?
-     do (format t "~%~%Time Step ~,3f:~%" (current-time-of sim)) 
-       ;(loop for obj being the hash-keys of (policy-map-of sim) using (hash-value policy)
-       ;   if policy do 
-       ;     (funcall policy obj (current-time-of sim) *current-state*)
-       ;   else do 
-       ;     (format t "~a is doing nothing.~%" obj))
-       (loop for goal in (goals-of sim)
-          do (new-seek-goal-policy goal last-state))
-       (if last-state 
-           (loop for p in (predicates-of last-state) 
-              do (format t "~a~%" p))
-           (print "NO LAST STATE"))
-       ;(if last-state
-       ;    (loop for p in (predicates-of last-state)
-       ;       when (and (eq (first p) 'dist-to-goal) (< (first (last p)) 0.5))
-       ;       do (setf (success-of (current-simulation sim)) t)))
-       ;(print *current-msg*)
-        (if *current-msg*
-           (let* ((ws (translate-world-state *current-msg* (current-simulation sim))))
-             (annotate-with-predicates ws)))
-       (incf (current-time-of sim) step)
+  (setf (start-time-of sim) (ros-time))
+  (setf (current-time-of sim) (start-time-of sim))
+  (setf (current-step-of sim) 0)
 
-       (format t "Simulator Loop Complete~%~%")
-       (sleep step))
+  ;; TODO: Need to look at new signature
+  (loop with delay = 0.1
+     with curr-state = (wubble_mdp-srv:state-val (call-service "environment/get_state" 'wubble_mdp-srv:GetState))
+     with state-history = (list curr-state)
+     until (should-terminate? sim curr-state)
+     do (format t "~%~%Sim Time ~,3f:~%" (- (current-time-of sim) (start-time-of sim))) 
+       (format t  "Step     ~,d:~%" (current-step-of sim)) 
+       (format t "State (before action): ~%~a~%" curr-state)
+
+       (setf curr-state (forward-policy))
+       (push curr-state state-history)
+
+       (if state-callback
+           (funcall state-callback curr-state))
+
+       (setf (current-time-of sim) (ros-time))
+       (format t "Simulator Step Complete~%")
+       (incf (current-step-of sim))
+
+       (sleep delay)
+     finally (setf (traces-of sim) (append (traces-of sim) (list (nreverse state-history)))))
+
+  (format t "~%Simulator Loop Complete~%")
 
   ;; Tear down the simulator
   (loop for obj being the hash-keys of (objects-of sim)
      do (deactivate obj))
-  (pause-simulation)
   (destroy sim)
-  (setf (current-time-of sim) 0)
-
-  (current-simulation sim) ;; TODO: Would be more useful to return the simulation object for the run
+  (pause-simulation)
+  
+  (first (last (traces-of sim)))
 )
 
 (defmethod set-active ((sim simulator))
@@ -89,9 +98,16 @@
       (make-space-instance '(running-simulators)))
   (add-instance-to-space-instance sim (find-space-instance-by-path '(running-simulators))))
 
-(defmethod should-terminate? ((sim simulator))
-  (or (>= (current-time-of sim) (termination-time-of sim))
-      (success-of (current-simulation sim))))
+(defun goal-reached? (sim state)
+  (every #'identity (loop for goal in (goals-of sim)
+                       collect (at-goal? goal state))))
+
+(defun timed-out? (sim)
+  (>= (current-step-of sim) (termination-time-of sim)))
+
+(defun should-terminate? (sim state)
+  (or (goal-reached? sim state)
+      (timed-out? sim)))
 
 (defmethod goal-satisfied ((sim simulator))
   (loop for obj being the hash-keys of (goal-map-of sim) using (hash-value goal)
@@ -101,13 +117,16 @@
 (defmethod construct ((sim simulator))
   "Adds the objects to the simulator, unless they are suppressed."
   (loop for obj being the hash-keys of (objects-of sim) using (hash-value pose)
-     do (add-to-world obj pose)
-       (sleep 0.5)))
+     do (add-to-world obj pose))
+  (loop for goal in (goals-of sim) 
+     do (add-to-world goal nil))
+  (sleep 0.5))
 
 (defmethod destroy ((sim simulator))
   (loop for obj being the hash-keys of (objects-of sim)
-     do (remove-from-world obj)
-       (sleep 0.5)))
+     do (remove-from-world obj))
+  (loop for goal in (goals-of sim)
+     do (remove-from-world goal)))
 
 (defmethod create-simulation ((sim simulator))
   (let* ((simulation-count (length (simulations-of sim))))
@@ -137,6 +156,14 @@
 ;; Note: Gazebo does not publish a time when paused
 (defun pause-simulation ()
   (call-service "gazebo/pause_physics" 'std_srvs-srv:Empty))
+
+;;===========================================================================
+
+;; Always moves forward, returns the resulting state
+;; TODO: Probably should make a policies file
+(defun forward-policy ()
+  (wubble_mdp-srv:state-val (call-service "environment/perform_action" 'wubble_mdp-srv:PerformAction
+                           :action "forward")))
 
 
 

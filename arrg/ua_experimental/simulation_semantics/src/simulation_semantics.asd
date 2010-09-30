@@ -18,20 +18,21 @@
                  (:file "predicates" :depends-on ("object-class" "state" "permutations"))
 
                  (:file "data" :depends-on ("classes"))
-                 (:file "simulators" :depends-on ("classes"))
-                 (:file "online" :depends-on ("simulators"))
-                 (:file "manipulation" :depends-on ("simulators"))
+                 (:file "manipulation" :depends-on ("data"))
 
-                 (:file "analysis" :depends-on ("simulators"))
+                 (:file "analysis" :depends-on ("data"))
                  (:file "time-series" :depends-on ("analysis"))
                  (:file "verb-learning" :depends-on ("time-series")))
 
     :depends-on ("roslisp" 
-                 :gbbopen-ros
+                 "actionlib"
                  "cl-transforms"
+
+                 :gbbopen-ros
+
                  "plotter-srv"
-                 "simulator_experiments-msg"
-                 "simulator_experiments-srv"
+                 "simulator_state-msg"
+                 "simulator_state-srv"
                  "gazebo-msg"
                  "gazebo-srv" 
                  "gazebo_plugins-msg"
@@ -40,4 +41,8 @@
                  "std_srvs-srv"
                  "std_msgs-msg"
                  "time_series-msg"
-                 "time_series-srv"))
+                 "time_series-srv"
+                 "wubble_description-srv"
+                 "wubble_mdp-srv"
+                 "wubble_mdp-msg"
+                 "move_base_msgs-msg"))
