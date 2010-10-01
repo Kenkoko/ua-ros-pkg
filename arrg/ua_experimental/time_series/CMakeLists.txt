@@ -36,4 +36,3 @@ message("Java JNI path is ${_jniexe_path}")
 
 # Add source & executables
 add_java_source_dir(${PROJECT_SOURCE_DIR}/src)
-rospack_add_java_executable(SimulationInterface edu.arizona.verbs.SimulationInterface)
