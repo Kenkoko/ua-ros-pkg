@@ -161,6 +161,9 @@
     uri: https://code.ros.org/svn/ros-pkg/stacks/robot_model/tags/cturtle
     local-name: stacks/robot_model
 - svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/roslisp_common/tags/cturtle
+    local-name: stacks/roslisp_common
+- svn:
     uri: https://code.ros.org/svn/ros/stacks/ros_realtime/tags/cturtle
     local-name: stacks/ros_realtime
 - svn:
