@@ -1,0 +1,18 @@
+<package>
+  <description brief="ultraspeech">
+
+     ultraspeech
+
+  </description>
+  <author>Arizona Robotics Research Group</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ultraspeech</url>
+  <depend package="opencv2"/>
+  <depend package="image_proc"/>
+  <depend package="roscpp"/>
+  <depend package="camera1394"/>
+
+</package>
+
+
