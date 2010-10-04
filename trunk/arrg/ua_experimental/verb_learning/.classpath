@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="simulator_state.msg"/>
+	<classpathentry kind="src" path="wubble_mdp.srv"/>
+	<classpathentry kind="src" path="wubble_mdp.msg"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/time_series"/>
+	<classpathentry kind="lib" path="/time_series/lib/collections-generic-4.01.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/colt-1.2.0.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/commons-math-2.0.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/concurrent-1.3.4.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/dom4j-2.0.0-ALPHA-2.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/j3d-core-1.3.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/JSAP-2.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-3d-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-3d-demos-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-algorithms-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-api-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-graph-impl-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-io-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-jai-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-jai-samples-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-samples-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/jung-visualization-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/log4j-1.2.15.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/rosjava_msgs.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/stax-api-1.0.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/vecmath-1.3.1.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/wstx-asl-3.2.6.jar"/>
+	<classpathentry kind="lib" path="eclipse_lib/rosjava.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.5.jar"/>
+	<classpathentry kind="lib" path="/time_series/lib/time-series.jar"/>
+	<classpathentry kind="output" path="eclipse_bin"/>
+</classpath>

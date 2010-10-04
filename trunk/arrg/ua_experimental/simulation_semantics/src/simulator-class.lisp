@@ -8,7 +8,7 @@
    (goal-map :initform (make-hash-table :test 'eq)) ;; TODO: Get rid of this?
    (goals :initform nil) ;; This is a list of goal objects
    (policy-map :initform (make-hash-table :test 'eq))
-   (termination-time :initform 20)
+   (termination-time :initform 40)
 
    (current-time :initform 0)
    (current-step :initform 0)

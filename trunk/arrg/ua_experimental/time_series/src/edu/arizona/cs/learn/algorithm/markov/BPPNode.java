@@ -125,4 +125,8 @@ public class BPPNode {
 		}
 		return id.toString();
 	}
+	
+	public Set<String> getProps() {
+		return _props;
+	}
 }

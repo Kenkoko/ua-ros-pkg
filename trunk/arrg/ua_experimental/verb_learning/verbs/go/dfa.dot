@@ -1,0 +1,13 @@
+digraph G { 
+	graph [ rankdir=LR ]; 
+	"1" [label="1START",style="filled",color="blue",fontcolor="black"];
+	"1" -> "0" [label="InFrontOf(thing,place)"] ;
+	"3" [label="3GOOD",style="filled",color="white",fontcolor="black"];
+	"3" -> "3" [label="DistanceDecreased(place,thing)\nForward(thing)\nInFrontOf(thing,place)\nMoved(thing)"] ;
+	"3" -> "2" [label="Contact(thing,place)\nDistanceDecreased(place,thing)\nForward(thing)\nMoved(thing)"] ;
+	"0" [label="0GOOD",style="filled",color="white",fontcolor="black"];
+	"0" -> "3" [label="DistanceDecreased(place,thing)\nForward(thing)\nInFrontOf(thing,place)\nMoved(thing)"] ;
+	"0" -> "0" [label="InFrontOf(thing,place)"] ;
+	"2" [label="2GOAL",style="filled",color="green",fontcolor="black"];
+	"2" -> "2" [label="Contact(thing,place)\nDistanceDecreased(place,thing)\nForward(thing)\nMoved(thing)"] ;
+}
