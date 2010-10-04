@@ -97,7 +97,7 @@
      do (setf interval-start i)
      else if (and (not value) interval-start)
      collect (list (first pair) interval-start i) into interval-list
-     and do (setf interval-start 0)
+     and do (setf interval-start nil)
      finally (return (if interval-start 
                          (append interval-list 
                                  (list (list (first pair) interval-start i)))

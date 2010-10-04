@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry excluding="time_series/" kind="src" path="src"/>
 	<classpathentry kind="src" path="srv/java"/>
 	<classpathentry kind="src" path="msg/java"/>
 	<classpathentry kind="lib" path="lib/time-series.jar"/>
