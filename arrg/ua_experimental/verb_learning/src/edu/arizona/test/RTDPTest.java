@@ -21,8 +21,6 @@ public class RTDPTest {
 		String signatureFile = "verbs/go/signature.xml";
         Verb go = new Verb("go", Signature.fromXML(signatureFile));
         
-        if (true) { return; }
-        
         Environment env = new Environment();
         
         Vector<MDPObjectState> objectStartStates = new Vector<MDPObjectState>();
