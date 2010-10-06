@@ -31,5 +31,6 @@
 	<classpathentry kind="lib" path="eclipse_lib/rosjava.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang-2.5.jar"/>
 	<classpathentry kind="lib" path="/time_series/lib/time-series.jar"/>
+	<classpathentry kind="lib" path="lib/guava-r07.jar"/>
 	<classpathentry kind="output" path="eclipse_bin"/>
 </classpath>

@@ -4,7 +4,9 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
@@ -12,6 +14,7 @@ import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.util.graph.Edge;
 import edu.arizona.planning.fsm.FSMState.StateType;
 import edu.arizona.util.GraphUtils;
+import edu.uci.ics.jung.algorithms.shortestpath.UnweightedShortestPath;
 import edu.uci.ics.jung.graph.DirectedGraph;
 
 public class VerbDFA {
@@ -21,36 +24,49 @@ public class VerbDFA {
 	}
 	
 	private FSMState activeState_;
-	private DirectedGraph<FSMState, Edge> dfa_;
+	private DirectedGraph<FSMState, FSMTransition> dfa_;
 	private FSMState startState_;
 	
+	private Set<FSMState> goodTerminals_;
+	private int startDist_;
+	
 	public VerbDFA(DirectedGraph<BPPNode, Edge> graph) {
-		if (!GraphUtils.isDFA(graph)) {
-			throw new RuntimeException("GRAPH IS NOT A DFA");
-			// TODO: In future, obviously this should just convert it to a DFA
-		}
-		dfa_ = GraphUtils.convertToFSM(graph);
+		dfa_ = GraphUtils.convertToDFA(graph);
+
+		// TODO: NOW ADD THE SELF LOOPS
+		
+		populateGoodTerminals();
 		
 		for (FSMState state : dfa_.getVertices()) {
 			if (state.getType().equals(StateType.START)) {
 				startState_ = state;
 			}
 		}
+		startDist_ = getMinDistToGoodTerminal(startState_);
+		// TODO: Sanity check this
 		activeState_ = startState_;
 	}
 
+	private void populateGoodTerminals() {
+		goodTerminals_ = new HashSet<FSMState>();
+		for (FSMState state : dfa_.getVertices()) {
+			if (state.getType().equals(StateType.GOOD_TERMINAL)) {
+				goodTerminals_.add(state);
+			}
+		}
+	}
+	
 	// The cycles that are implicit should have been made explicit, so this will all be very clean
 	// REWARD IS BEING USED AS COST FOR NOW IT'S ALL FUCKED UP
 	public SimulationResult simulate(FSMState state, Set<String> activeProps) {
-//		FSMState oldState = state;
 		SimulationResult result = new SimulationResult();
 		
 		// One edge's active set could be a subset of another's.
 		// That would essentially create nondeterminism whenever the superset is present. 
 		// To ensure determinism, we can take the most specific transition that matches.
 		// That is, simply, the one with the most propositions.
-		List<Edge> possibleTransitions = new Vector<Edge>();
-		for (Edge e : dfa_.getOutEdges(state)) {
+		List<FSMTransition> possibleTransitions = new Vector<FSMTransition>();
+		for (FSMTransition e : dfa_.getOutEdges(state)) {
 //			System.out.println("PART 1: " + activeProps);
 //			System.out.println("PART 2: " + e.props());
 //			System.out.println("PART 3: " + e.satisfied(activeProps));
@@ -59,51 +75,27 @@ public class VerbDFA {
 			}
 		}
 		
-//		System.out.println(possibleTransitions);
-		
 		switch (possibleTransitions.size()) {
 		case 0:
 			// We have gone off the graph, go back to start
 			result.newState = startState_;
-			result.cost = 2.0;
-			return result;
+			break;
 		case 1:
 			// Simple transition
 			result.newState = dfa_.getDest(possibleTransitions.get(0));
 			break;
 		default:
-			Collections.sort(possibleTransitions, new Comparator<Edge>() {
+			// Descending order by size since we want the most specific first
+			Collections.sort(possibleTransitions, new Comparator<FSMTransition>() {
 				@Override
-				public int compare(Edge arg0, Edge arg1) {
-					return arg1.props().size() - arg0.props().size(); // Descending order by size since we want the most specific first
+				public int compare(FSMTransition arg0, FSMTransition arg1) {
+					return arg1.props().size() - arg0.props().size(); 
 				}
 			});
 			result.newState = dfa_.getDest(possibleTransitions.get(0));
 		}
 
-		switch (result.newState.getType()) {
-		case GOAL:
-			result.cost = 0.0; //1.0;
-			break;
-		case GOOD:
-			if (result.newState.equals(state)) { // We stayed in the same state
-				result.cost = 0.3; // -0.1;
-			} else if (dfa_.isSuccessor(state, result.newState)) { // We moved forward
-				result.cost = 0.01;
-			} else {
-				throw new RuntimeException("THERE IS NO WAY BACK");
-			}
-			break;
-		case BAD:
-			result.cost = 4; // -1.0;
-			break;
-		case BAD_TERMINAL:
-			result.cost = 10; //-2.0;
-			break;
-		case START:
-		default:
-			throw new RuntimeException("IMPOSSIBLE");
-		}
+		result.cost = getCost(state, result.newState);
 		
 		return result;
 	}
@@ -115,13 +107,28 @@ public class VerbDFA {
 		return result.cost;
 	}
 	
+	public double getCost(FSMState oldState, FSMState newState) {
+		switch (newState.getType()) {
+		case GOOD_TERMINAL: // No cost
+			return 0.0; 
+		case START: // Start state cost is already computed
+			return startDist_;
+		case BAD_TERMINAL: // YOU BE DEAD!
+			return Double.POSITIVE_INFINITY; // startDist_ * 10;
+		case GOOD: // For all other states 
+			return getMinDistToGoodTerminal(newState);
+		default:
+			throw new RuntimeException("IMPOSSIBLE");
+		}
+	}
+	
 	public void addConstraintState(Set<String> bannedProps) {
 		FSMState deadState = new FSMState(StateType.BAD_TERMINAL);
 		
 		dfa_.addVertex(deadState);
 		for (FSMState state : dfa_.getVertices()) {
 			if (state.getType().equals(StateType.GOOD) || state.getType().equals(StateType.START)) {
-				Edge e = new Edge(bannedProps);
+				FSMTransition e = new FSMTransition(bannedProps);
 				dfa_.addEdge(e, state, deadState);
 			}
 		}
@@ -141,6 +148,27 @@ public class VerbDFA {
 		activeState_ = startState_;
 	}
 	
+	public int getMinDistToGoodTerminal(FSMState state) {
+		UnweightedShortestPath<FSMState, FSMTransition> pathFinder = new UnweightedShortestPath<FSMState, FSMTransition>(dfa_);
+		// TODO: Probably should cache these in the states
+		Map<FSMState, Number> distanceMap = pathFinder.getDistanceMap(state); 
+		
+		int minDist = Integer.MAX_VALUE;
+		
+		for (FSMState gt : goodTerminals_) {
+			if (distanceMap.containsKey(gt)) {
+				int distance = (Integer) distanceMap.get(gt);
+				minDist = Math.min(distance, minDist);
+			}
+		}
+		
+		if (minDist == Integer.MAX_VALUE) {
+			minDist = startDist_ + 1; // 1 for going back to the start state, then the start state's cost
+		}
+		
+		return minDist;
+	}
+	
 	public void toDot(String file, boolean edgeProb) {
 		try {
 			BufferedWriter out = new BufferedWriter(new FileWriter(file));
@@ -151,11 +179,11 @@ public class VerbDFA {
 				out.write(vertex.toDot());
 
 				double total = 0.0D;
-				for (Edge e : dfa_.getOutEdges(vertex)) {
+				for (FSMTransition e : dfa_.getOutEdges(vertex)) {
 					total += e.count();
 				}
 
-				for (Edge e : dfa_.getOutEdges(vertex)) {
+				for (FSMTransition e : dfa_.getOutEdges(vertex)) {
 					FSMState end = (FSMState) dfa_.getDest(e);
 					double prob = e.count() / total;
 

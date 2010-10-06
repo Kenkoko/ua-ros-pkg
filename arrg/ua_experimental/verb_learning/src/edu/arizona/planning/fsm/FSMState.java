@@ -1,38 +1,18 @@
 package edu.arizona.planning.fsm;
 
-import java.util.Collection;
-
-import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 
 public class FSMState {
 	private static int counter = 0; 
 	
-	public enum StateType { START, GOOD, GOAL, BAD, BAD_TERMINAL }; // Is this how these should be named in Java
+	public enum StateType { START, GOOD, GOOD_TERMINAL, BAD_TERMINAL }; 
 	
-	private BPPNode node_;
 	private StateType type_;
 	private int id_;
 	
-	public FSMState(StateType type) { // This one has no BPPNode, let's see how this works
-		node_ = null;
-		type_ = type; // Why do we even need the props?
-//		deadState.color("red");
-//		deadState.fontColor("white"); // TODO: Need to bring this back somehow.
-		
+	public FSMState(StateType type) { 
+		type_ = type; 
 		id_ = counter++;
 	}
-	
-	public FSMState(BPPNode node, StateType type) {
-		node_ = node;
-		type_ = type;
-		
-		id_ = counter++;
-	}
-	
-	// TODO: Let's hide this since we want to phase it out anyway
-//	public BPPNode getBPPNode() {
-//		return node_;
-//	}
 	
 	private String getColor() {
 		switch (type_) {
@@ -40,11 +20,9 @@ public class FSMState {
 			return "blue";
 		case GOOD:
 			return "white";
-		case BAD:
-			return "yellow";
 		case BAD_TERMINAL:
 			return "red";
-		case GOAL:
+		case GOOD_TERMINAL:
 			return "green";
 		default:
 			return "magenta"; // Because magenta is never the right color
@@ -55,6 +33,10 @@ public class FSMState {
 		return type_;
 	}
 
+	public void setType(StateType type) {
+		type_ = type;
+	}
+	
 	public int getID() {
 		return id_;
 	}
@@ -70,17 +52,17 @@ public class FSMState {
 				+ "\",fontcolor=\"" + "black" + "\"];\n";
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof FSMState) {
-			return this.toString().equals(obj.toString());
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		return this.toString().hashCode();
-	}
+//	@Override
+//	public boolean equals(Object obj) {
+//		if (obj instanceof FSMState) {
+//			return this.toString().equals(obj.toString());
+//		} else {
+//			return false;
+//		}
+//	}
+//
+//	@Override
+//	public int hashCode() {
+//		return this.toString().hashCode();
+//	}
 }

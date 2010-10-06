@@ -81,10 +81,8 @@ public class Verb {
 
 		fsm_ = FSMFactory.makeGraph(props, all, false); // TODO: This shouldn't really be stored anymore, it's only temporary
 		FSMFactory.toDot(fsm_, getVerbFolder() + "raw_fsm.dot");
-		StateMachineUtils.convertToDFA(fsm_); // TODO: Move this inside the VerbDFA
-//		FSMFactory.toDot(fsm_, getVerbFolder() + "fsm.dot");
+	
 		dfa_ = new VerbDFA(fsm_);
-		
 		dfa_.toDot(getVerbFolder() + "dfa.dot", false);
 	}
 	
