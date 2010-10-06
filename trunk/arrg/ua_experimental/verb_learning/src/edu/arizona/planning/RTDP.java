@@ -56,12 +56,14 @@ public class RTDP {
 		public State(MDPState mdpState, FSMState fsmState) {
 			mdpState_ = mdpState;
 			fsmState_ = fsmState;
-			solved = isGoal(); 			 // GOal state are automatically solved
-//			if (solved) {
-				value_ = 0.0; // TODO: Technically, this is the initialization of the value function, what should it be?
-//			} else {
-//				value_ = 100.0;
-//			}
+			solved = isGoal(); // Goal state are automatically solved
+			// This is the initialization of the value function from the heuristic
+			if (solved) {
+				value_ = 0.0; 
+			} else {
+				// TODO: Need to check error conditions
+				value_ = RTDP.this.verb_.getDFA().getMinDistToGoodTerminal(fsmState);
+			}
 		}
 		
 		public MDPState getMdpState() {
@@ -73,7 +75,7 @@ public class RTDP {
 		}
 		
 		public boolean isGoal() { // TODO: What about bad goals?
-			return fsmState_.getType().equals(StateType.GOAL);
+			return fsmState_.getType().equals(StateType.GOOD_TERMINAL);
 		}
 		
 		public Action greedyAction() { // Done.
@@ -94,10 +96,10 @@ public class RTDP {
 			}
 			
 			if (result.size() > 1) {
-				Random generator = new Random();
-				int index = generator.nextInt(result.size());
-				return result.get(index);
-//				return result.firstElement();
+//				Random generator = new Random();
+//				int index = generator.nextInt(result.size());
+//				return result.get(index);
+				return result.firstElement();
 			} else {
 				return result.firstElement();
 			}
