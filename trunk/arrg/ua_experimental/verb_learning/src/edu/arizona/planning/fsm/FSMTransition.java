@@ -30,19 +30,19 @@ private Set<String> _props;
 		_count = 0.0D;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof FSMTransition) {
-			return this.props().equals(((FSMTransition) obj).props());
-		} else {
-			return false;
-		}
-	}
+//	@Override
+//	public boolean equals(Object obj) {
+//		if (obj instanceof FSMTransition) {
+//			return this.props().equals(((FSMTransition) obj).props());
+//		} else {
+//			return false;
+//		}
+//	}
 
-	@Override
-	public int hashCode() {
-		return _props.hashCode();
-	}
+//	@Override
+//	public int hashCode() {
+//		return _props.hashCode();
+//	}
 
 	@Override
 	public String toString() {

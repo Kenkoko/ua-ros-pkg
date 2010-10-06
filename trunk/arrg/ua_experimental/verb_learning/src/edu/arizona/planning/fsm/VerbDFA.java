@@ -2,6 +2,7 @@ package edu.arizona.planning.fsm;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -32,9 +33,7 @@ public class VerbDFA {
 	
 	public VerbDFA(DirectedGraph<BPPNode, Edge> graph) {
 		dfa_ = GraphUtils.convertToDFA(graph);
-
-		// TODO: NOW ADD THE SELF LOOPS
-		
+		addSelfLoops();
 		populateGoodTerminals();
 		
 		for (FSMState state : dfa_.getVertices()) {
@@ -142,6 +141,16 @@ public class VerbDFA {
 	
 	public FSMState getStartState() {
 		return startState_;
+	}
+	
+	private void addSelfLoops() {
+		for (FSMState state : dfa_.getVertices()) {
+			if (state.getType().equals(StateType.GOOD)) {
+				for (FSMTransition inEdge : dfa_.getInEdges(state)) {
+					dfa_.addEdge(new FSMTransition(inEdge.props()), state, state);
+				}
+			}
+		}
 	}
 	
 	public void reset() {
