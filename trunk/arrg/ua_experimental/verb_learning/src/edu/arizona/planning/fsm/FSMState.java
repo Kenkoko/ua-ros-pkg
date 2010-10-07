@@ -1,8 +1,18 @@
 package edu.arizona.planning.fsm;
 
+import edu.arizona.util.Predicate;
 
 public class FSMState {
 	private static int counter = 0; 
+	
+	// Predicates
+	public static Predicate<FSMState> isTerminal = new Predicate<FSMState>() {
+		@Override
+		public boolean value(FSMState state) {
+			return state.isTerminal();
+		};
+	};
+	
 	
 	public enum StateType { START, GOOD, GOOD_TERMINAL, BAD_TERMINAL }; 
 	
@@ -35,6 +45,10 @@ public class FSMState {
 
 	public void setType(StateType type) {
 		type_ = type;
+	}
+	
+	public boolean isTerminal() {
+		return (getType().equals(StateType.GOOD_TERMINAL) || getType().equals(StateType.BAD_TERMINAL));
 	}
 	
 	public int getID() {

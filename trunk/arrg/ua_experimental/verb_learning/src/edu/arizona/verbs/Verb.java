@@ -21,8 +21,6 @@ import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.util.graph.Edge;
 import edu.arizona.planning.fsm.VerbDFA;
-import edu.arizona.util.GraphUtils;
-import edu.arizona.util.StateMachineUtils;
 import edu.uci.ics.jung.graph.DirectedGraph;
 
 public class Verb {
@@ -30,7 +28,6 @@ public class Verb {
 	
 	private String lexicalForm_;
 	private Signature signature_ = null;
-	private DirectedGraph<BPPNode,Edge> fsm_ = null; // TODO: Phase this variable out
 	private VerbDFA dfa_ = null;
 	
 	public Verb(String word) {
@@ -42,7 +39,7 @@ public class Verb {
 		lexicalForm_ = word;
 		makeVerbFolder();
 		signature_ = signature;
-		makeRecognizer();
+		makeDFA();
 	}
 	
 	public void generalizeInstances(List<Instance> instances) {
@@ -51,8 +48,18 @@ public class Verb {
 			signature_.update(instance.sequence());
 		}
 
+		postInstance();
+	}
+	
+	public void addNewInstance(Instance instance) {
+		signature_.update(instance.sequence());
+		
+		postInstance();
+	}
+	
+	private void postInstance() {
 		// Let's only print the relations that are in all the episodes
-		Signature consensus = signature_.prune(instances.size() - 1);
+		Signature consensus = signature_.prune(signature_.trainingSize() - 1);
 		
 		for (WeightedObject obj : consensus.signature()) {
 			logger.debug("\t" + obj.key().getKey() + " - " + obj.weight());
@@ -63,10 +70,10 @@ public class Verb {
 		signature_.toXML(filename);
 		logger.debug("Signature saved to file: " + filename);
 		
-		makeRecognizer();
+		makeDFA();
 	}
 	
-	private void makeRecognizer() {
+	private void makeDFA() {
 		if (!hasSignature()) {
 			logger.error("WTF are you doing? There is no signature for " + lexicalForm_);
 			return;
@@ -79,23 +86,15 @@ public class Verb {
 		List<String> props = new ArrayList<String>(propSet);
 		List<List<Interval>> all = BitPatternGeneration.getBPPs(lexicalForm_, signature_.table(), propSet);
 
-		fsm_ = FSMFactory.makeGraph(props, all, false); // TODO: This shouldn't really be stored anymore, it's only temporary
-		FSMFactory.toDot(fsm_, getVerbFolder() + "raw_fsm.dot");
+		DirectedGraph<BPPNode, Edge> chains = FSMFactory.makeGraph(props, all, false); 
+		FSMFactory.toDot(chains, getVerbFolder() + "chain_nfa.dot");
 	
-		dfa_ = new VerbDFA(fsm_);
+		dfa_ = new VerbDFA(chains);
 		dfa_.toDot(getVerbFolder() + "dfa.dot", false);
 	}
 	
 	public void addConstraint(Collection<String> bannedProps) {
 		dfa_.addConstraintState(new HashSet<String>(bannedProps));
-		
-//		StringBuffer fluentStates = new StringBuffer();
-//		for (@SuppressWarnings("unused") String prop : bannedProps) { 
-//			fluentStates.append("1"); 
-//		}
-//		BPPNode node = new BPPNode(new Vector<String>(bannedProps), fluentStates, recognizer_.getStartState());
-//		FSMFactory.toDot(fsm_, getVerbFolder() + "fsm-constrained.dot");
-//		recognizer_ = new VerbDFA(fsm_); // Have to update the recognizer since the FSM changed
 	}
 	
 	public double testInstance(Instance instance, int min) {
@@ -113,53 +112,7 @@ public class Verb {
 	
 	public double updateFSM(Set<String> activeProps) {
 		logger.debug("Updating FSM State...");
-		
 		return dfa_.update(activeProps);
-		
-//		List<BPPNode> oldActives = recognizer_.getActiveExceptStart();
-//		
-//		boolean updateResult = recognizer_.update(activeProps);
-//		
-////		for (String prop : activeProps) {
-////			logger.debug("\t[" + prop + "]");
-////		}
-//		
-//		if (updateResult) {
-//			logger.debug("Goal State Reached! FSM accepted sequence.");
-//			return 1.0; 
-//		} 
-//		
-//		List<BPPNode> newActives = recognizer_.getActiveExceptStart();
-//		if (newActives.isEmpty()) {
-//			logger.debug("In start state");
-//			return -2.0;
-//			
-//		} else {
-//			logger.debug("Active States (except start state):");
-//			
-//			for (BPPNode newState : newActives) {
-//				logger.debug("\t" + newState.label());
-//			}
-//			
-//			if (oldActives.isEmpty()) { // Must have moved out of start state
-//				return 0.5;
-//			}
-//			
-//			for (BPPNode newState : newActives) {
-//				for (BPPNode oldState : oldActives) { // TODO: If any new state is a successor to any old state, return 0.5
-//					if (fsm_.isSuccessor(newState, oldState)) {
-//						return 0.5; // Progress
-//					} else if (fsm_.isPredecessor(newState, oldState)) {
-//						return -1.0; // Moving backwards
-//					} else { 
-//						return 0; // Nothing has changed
-//					}
-//				}
-//			}
-//		}
-//		
-//		// Should not happen
-//		return 0.0;
 	}
 	
 	public void resetRecognizer() {
@@ -182,10 +135,6 @@ public class Verb {
 	
 	public boolean hasSignature() {
 		return signature_ != null;
-	}
-	
-	public boolean hasFSM() {
-		return fsm_ != null;
 	}
 	
 	public boolean hasRecognizer() {

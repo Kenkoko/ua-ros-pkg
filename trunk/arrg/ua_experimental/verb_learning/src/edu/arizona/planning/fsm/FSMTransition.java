@@ -30,27 +30,9 @@ private Set<String> _props;
 		_count = 0.0D;
 	}
 
-//	@Override
-//	public boolean equals(Object obj) {
-//		if (obj instanceof FSMTransition) {
-//			return this.props().equals(((FSMTransition) obj).props());
-//		} else {
-//			return false;
-//		}
-//	}
-
-//	@Override
-//	public int hashCode() {
-//		return _props.hashCode();
-//	}
-
 	@Override
 	public String toString() {
 		return _props.toString();
-	}
-
-	public Set<String> props() {
-		return _props;
 	}
 
 	public void increment() {
@@ -65,14 +47,18 @@ private Set<String> _props;
 		return _count;
 	}
 
-	public boolean satisfied(Set<String> props) {
-		return props.containsAll(_props);
-	}
-
 	public String toDot(boolean edgeProb, double prob) {
 		if (!edgeProb) {
 			return " [label=\"" + this._label + "\"] ";
 		}
 		return " [label=\"" + this._label + "\\n" + Utils.nf.format(prob) + "\"] ";
+	}
+
+	public Set<String> getSymbol() {
+		return _props;
+	}
+
+	public boolean accept(Set<String> props) {
+		return props.containsAll(_props);
 	}
 }
