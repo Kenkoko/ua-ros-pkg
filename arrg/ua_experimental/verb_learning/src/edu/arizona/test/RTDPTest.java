@@ -21,12 +21,15 @@ public class RTDPTest {
 		String signatureFile = "verbs/go/signature.xml";
         Verb go = new Verb("go", Signature.fromXML(signatureFile));
         
+//        if (true) return;
+        
         Environment env = new Environment();
         
         Vector<MDPObjectState> objectStartStates = new Vector<MDPObjectState>();
         MDPObjectState robot = new RobotState("thing", 0, 0, "E", 0, 0, "E");
         objectStartStates.add(robot);
-        MDPObjectState goal = new LocationState("place", 3.0, 2.0);
+//        MDPObjectState goal = new LocationState("place", 3.0, 2.0);
+        MDPObjectState goal = new LocationState("place", -3.0, 0.0);
         objectStartStates.add(goal);
         
         Vector<SimpleRelation> relations = new Vector<SimpleRelation>();
