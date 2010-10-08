@@ -1,5 +1,8 @@
 # Goal - Number of tilt cycles to perform
 int32 tilt_cycles
+float64 amplitude
+float64 offset
+float64 duration
 ---
 # Result - Success result & final tilt position
 bool success

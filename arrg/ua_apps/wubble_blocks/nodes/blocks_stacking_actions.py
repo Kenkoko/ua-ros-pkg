@@ -123,6 +123,9 @@ def move_gripper(left_finger, right_finger):
 def tilt_laser(n=1):
     goal = HokuyoLaserTiltGoal()
     goal.tilt_cycles = n
+    goal.amplitude = 0.685
+    goal.offset = 0.0
+    goal.duration = 1.0
 
     laser_client.send_goal(goal)
     laser_client.wait_for_result()

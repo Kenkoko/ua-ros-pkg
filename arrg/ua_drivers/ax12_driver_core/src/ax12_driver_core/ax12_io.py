@@ -33,6 +33,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Cody Jorgensen
+# Author: Antons Rebguns
 #
 
 import time
@@ -41,7 +42,7 @@ import math
 from binascii import b2a_hex
 
 from ax12_const import *
-from ax12_user_commands import AX_GOAL_POSITION, AX_GOAL_SPEED, AX_TORQUE_ENABLE as AX_TORQUE_EN
+from ax12_user_commands import *
 
 exception = None
 
@@ -92,8 +93,9 @@ class SerialIO(object):
                     chr(checksum)
         self.ser.write(packetStr)
         
-        # wait for response packet from AX-12+
-        time.sleep(0.0005)
+        # wait for response packet from the motor
+        timestamp = time.time()
+        time.sleep(0.0013)
         
         # read response
         data = []
@@ -117,6 +119,8 @@ class SerialIO(object):
         checksum = 255 - reduce(int.__add__, data[2:-1]) % 256
         if not checksum == data[-1]:
             raise ChecksumError(data, checksum)
+            
+        data.append(timestamp)
         return data
 
     def write_to_servo(self, servoId, address, data):
@@ -149,8 +153,8 @@ class SerialIO(object):
             self.ser.write(chr(d))
         self.ser.write(chr(checksum))
         
-        # wait for response packet from AX-12+
-        time.sleep(0.0005)
+        # wait for response packet from the motor
+        time.sleep(0.0013)
         
         # read response
         data = []
@@ -200,8 +204,8 @@ class SerialIO(object):
                        chr(AX_PING) + chr(checksum)
         self.ser.write(packetStr)
         
-        # wait for response packet from AX-12+
-        time.sleep(0.0005)
+        # wait for response packet from the motor
+        time.sleep(0.0013)
         
         # read response
         data = []
@@ -245,7 +249,7 @@ class SerialIO(object):
         # for the checksum
         valsum = 0
         for d in data:
-            length += len(d)    
+            length += len(d)
             valsum += sum(d)
         
         checksum = 255 - ((AX_BROADCAST + length + \
@@ -274,9 +278,12 @@ class SerialIO(object):
 class AX12_IO(object):
     def __init__(self, port, baudrate):
         try:
+            self.port = port
+            self.baud = baudrate
             self.__sio = SerialIO(port, baudrate)
         except SerialOpenError, e:
             raise(e)
+            
         # Avoid writing facade code
         self.close_serial_port = self.__sio.close_serial_port
         self.read_from_servo = self.__sio.read_from_servo
@@ -289,7 +296,7 @@ class AX12_IO(object):
     def ping(self, servoId):
         response = self.__sio.ping_servo(servoId)
         if response:
-            self.exception_on_error(response[4], 'when pinging servo with id %d' %(servoId))
+            self.exception_on_error(response[4], servoId, 'ping')
         return response
 
     def write_packet(self, packet):
@@ -297,21 +304,41 @@ class AX12_IO(object):
         
         register = 0
         values = []
+        two_byte_cmd = False
         
-        if command == AX_GOAL_POSITION:
-            parse2 = True
-            register = AX_GOAL_POSITION_L
-        elif command == AX_GOAL_SPEED:
-            parse2 = True
-            register = AX_GOAL_SPEED_L
-        elif command == AX_TORQUE_EN:
-            parse2 = False
+        if command == DMXL_SET_TORQUE_ENABLE:
             register = AX_TORQUE_ENABLE
-
+        elif command == DMXL_SET_CW_COMPLIANCE_MARGIN:
+            register = AX_CW_COMPLIANCE_MARGIN
+        elif command == DMXL_SET_CCW_COMPLIANCE_MARGIN:
+            register = AX_CCW_COMPLIANCE_MARGIN
+        elif command == DMXL_SET_COMPLIANCE_MARGINS:
+            two_byte_cmd = True
+            register = AX_CW_COMPLIANCE_MARGIN
+        elif command == DMXL_SET_CW_COMPLIANCE_SLOPE:
+            register = AX_CW_COMPLIANCE_SLOPE
+        elif command == DMXL_SET_CCW_COMPLIANCE_SLOPE:
+            register = AX_CCW_COMPLIANCE_SLOPE
+        elif command == DMXL_SET_COMPLIANCE_SLOPES:
+            two_byte_cmd = True
+            register = AX_CW_COMPLIANCE_SLOPE
+        elif command == DMXL_SET_GOAL_POSITION:
+            two_byte_cmd = True
+            register = AX_GOAL_POSITION_L
+        elif command == DMXL_SET_GOAL_SPEED:
+            two_byte_cmd = True
+            register = AX_GOAL_SPEED_L
+        elif command == DMXL_SET_TORQUE_LIMIT:
+            two_byte_cmd = True
+            register = AX_TORQUE_LIMIT_L
+        elif command == DMXL_SET_PUNCH:
+            two_byte_cmd = True
+            register = AX_PUNCH_L
+            
         for val in packet[1]:
             motor_id = val[0]
             value = val[1]
-            if parse2:
+            if two_byte_cmd:
                 if value >= 0:
                     loByte = int(value % 256)
                     hiByte = int(value >> 8)
@@ -322,7 +349,173 @@ class AX12_IO(object):
             else:
                 values.append((motor_id, value))
         self.__sio.sync_write_to_servos(register, tuple(values))
-            
+
+    ######################################################################
+    # These function modify EEPROM data which persists after power cycle #
+    ######################################################################
+
+    def set_servo_id(self, old_id, new_id):
+        """
+        Sets a new unique number to identify a motor. The range from 1 to 253
+        (0xFD) can be used.
+        """
+        response = self.__sio.write_to_servo(old_id, AX_ID, [new_id])
+        if response:
+            self.exception_on_error(response[4], old_id, 'setting id to %d' % new_id)
+        return response
+
+    def set_servo_return_delay_time(self, servoId, delay):
+        """
+        Sets the delay time from the transmission of Instruction Packet until
+        the return of Status Packet. 0 to 254 (0xFE) can be used, and the delay
+        time per data value is 2 usec.
+        """
+        response = self.__sio.write_to_servo(servoId, AX_RETURN_DELAY_TIME, [delay])
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting return delay time to %d' % delay)
+        return response
+
+    def set_min_max_angle_limits(self, servoId, minAngle, maxAngle):
+        """
+        Set the min (CW) and max (CCW) angle of rotation limits.
+        """
+        loMinVal = int(minAngle % 256)
+        hiMinVal = int(minAngle >> 8)
+        loMaxVal = int(maxAngle % 256)
+        hiMaxVal = int(maxAngle >> 8)
+        # set 4 register values with low and high bytes for min and max angles
+        response = self.__sio.write_to_servo(servoId, AX_CW_ANGLE_LIMIT_L,
+                                      (loMinVal, hiMinVal, loMaxVal, hiMaxVal))
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting CW and CCW angle limits to %d and %d' %(minAngle, maxAngle))
+        return response
+
+    def set_min_max_voltage_limits(self, servoId, minVoltage, maxVoltage):
+        """
+        Set the min and max voltage limits.
+        NOTE: the absolute min is 5v and the absolute max is 25v
+        """
+        
+        if minVoltage < 5: minVoltage = 5
+        if maxVoltage > 25: maxVoltage = 25
+        
+        minVal = int(minVoltage * 10)
+        maxVal = int(maxVoltage * 10)
+        
+        # set 4 register values with low and high bytes for min and max angles
+        response = self.__sio.write_to_servo(servoId, AX_DOWN_LIMIT_VOLTAGE, (minVal, maxVal))
+        
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting min and max voltage levels to %d and %d' %(minVoltage, maxVoltage))
+        return response
+
+    ###############################################################
+    # These functions can send a single command to a single servo #
+    ###############################################################
+
+    def set_torque_enabled(self, servoId, enabled):
+        """
+        Sets the value of the torque enabled register to 1 or 0. When the
+        torque is disabled the servo can be moved manually while the motor is
+        still powered.
+        """
+        response = self.__sio.write_to_servo(servoId, AX_TORQUE_ENABLE, [enabled])
+        if response:
+            self.exception_on_error(response[4], servoId, '%sabling torque' % 'en' if enabled else 'dis')
+        return response
+
+    def set_servo_compliance_margin_cw(self, servoId, margin):
+        """
+        The error between goal position and present position in CW direction.
+        The range of the value is 0 to 255, and the unit is the same as Goal Position.
+        The greater the value, the more difference occurs.
+        """
+        response = self.__sio.write_to_servo(servoId, AX_CW_COMPLIANCE_MARGIN, [margin])
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting CW compliance margin to %d' % margin)
+        return response
+
+    def set_servo_compliance_margin_ccw(self, servoId, margin):
+        """
+        The error between goal position and present position in CCW direction.
+        The range of the value is 0 to 255, and the unit is the same as Goal Position.
+        The greater the value, the more difference occurs.
+        """
+        response = self.__sio.write_to_servo(servoId, AX_CCW_COMPLIANCE_MARGIN, [margin])
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting CCW compliance margin to %d' % margin)
+        return response
+
+    def set_servo_compliance_margins(self, servoId, margin_cw, margin_ccw):
+        """
+        The error between goal position and present position in CCW direction.
+        The range of the value is 0 to 255, and the unit is the same as Goal Position.
+        The greater the value, the more difference occurs.
+        """
+        response = self.__sio.write_to_servo(servoId, AX_CW_COMPLIANCE_MARGIN, (margin_cw, margin_ccw))
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting CW and CCW compliance margins to values %d and %d' %(margin_cw, margin_ccw))
+        return response
+
+    def set_servo_compliance_slope_cw(self, servoId, slope):
+        """
+        Sets the level of Torque near the goal position in CW direction.
+        Compliance Slope is set in 7 steps, the higher the value, the more flexibility is obtained.
+        """
+        response = self.__sio.write_to_servo(servoId, AX_CW_COMPLIANCE_SLOPE, [slope])
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting CW compliance slope to %d' %  slope)
+        return response
+
+    def set_servo_compliance_slope_ccw(self, servoId, slope):
+        """
+        Sets the level of Torque near the goal position in CCW direction.
+        Compliance Slope is set in 7 steps, the higher the value, the more flexibility is obtained.
+        """
+        response = self.__sio.write_to_servo(servoId, AX_CCW_COMPLIANCE_SLOPE, [slope])
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting CCW compliance slope to %d' % slope)
+        return response
+
+    def set_servo_compliance_slopes(self, servoId, slope_cw, slope_ccw):
+        """
+        Sets the level of Torque near the goal position in CW/CCW direction.
+        Compliance Slope is set in 7 steps, the higher the value, the more flexibility is obtained.
+        """
+        response = self.__sio.write_to_servo(servoId, AX_CW_COMPLIANCE_SLOPE, (slope_cw, slope_ccw))
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting CW and CCW compliance slopes to %d and %d' %(slope_cw, slope_ccw))
+        return response
+
+    def set_servo_punch(self, servoId, punch):
+        """
+        Sets the limit value of torque being reduced when the output torque is
+        decreased in the Compliance Slope area. In other words, it is the mimimum
+        torque. The initial value is 32 (0x20) and can be extended up to 1023
+        (0x3FF). (Refer to Compliance margin & Slope)
+        """
+        loVal = int(punch % 256)
+        hiVal = int(punch >> 8)
+        response = self.__sio.write_to_servo(servoId, AX_PUNCH_L, (loVal, hiVal))
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting punch to %d' % punch)
+        return response
+
+    def set_servo_position(self, servoId, position):
+        """
+        Set the servo with servoId to the specified goal position.
+        Position value must be positive.
+        """
+        # split position into 2 bytes
+        loVal = int(position % 256)
+        hiVal = int(position >> 8)
+        # set two register values with low and high byte for the position
+        response = self.__sio.write_to_servo(servoId, AX_GOAL_POSITION_L,
+                                             (loVal, hiVal))
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting goal position to %d' % position)
+        return response
+
     def set_servo_speed(self, servoId, speed):
         """
         Set the servo with servoId to the specified goal speed.
@@ -339,23 +532,26 @@ class AX12_IO(object):
         response = self.__sio.write_to_servo(servoId, AX_GOAL_SPEED_L,
                                              (loVal, hiVal))
         if response:
-            self.exception_on_error(response[4], 'when setting servo with id %d to speed %d' %(servoId, speed))
+            self.exception_on_error(response[4], servoId, 'setting moving speed to %d' % speed)
         return response
 
-    def set_servo_position(self, servoId, position):
+    def set_servo_torque_limit(self, servoId, torque):
         """
-        Set the servo with servoId to the specified goal position.
-        Position value must be positive.
+        Sets the value of the maximum torque limit for servo with id servoID.
+        Valid values are 0 to 1023 (0x3FF), and the unit is about 0.1%.
+        For example, if the value is 512 only 50% of the maximum torque will be used.
+        If the power is turned on, the value of Max Torque (Address 14, 15) is used as the initial value.
         """
-        # split position into 2 bytes
-        loVal = int(position % 256)
-        hiVal = int(position >> 8)
-        # set two register values with low and high byte for the position
-        response = self.__sio.write_to_servo(servoId, AX_GOAL_POSITION_L,
-                                             (loVal, hiVal))
+        loVal = int(torque % 256)
+        hiVal = int(torque >> 8)
+        response = self.__sio.write_to_servo(servoId, AX_TORQUE_LIMIT_L, (loVal, hiVal))
         if response:
-            self.exception_on_error(response[4], 'when setting servo with id %d to position %d' %(servoId, position))
+            self.exception_on_error(response[4], servoId, 'setting torque limit to %d' % torque)
         return response
+
+    #################################################################
+    # These functions can send multiple commands to multiple servos #
+    #################################################################
 
     def set_servo_position_and_speed(self, servoId, position, speed):
         """
@@ -376,7 +572,7 @@ class AX12_IO(object):
                                              (loPositionVal, hiPositionVal,
                                               loSpeedVal, hiSpeedVal))
         if response:
-            self.exception_on_error(response[4], 'when setting servo with id %d to position %d and speed %d' %(servoId, position, speed))
+            self.exception_on_error(response[4], servoId, 'setting goal position to %d and moving speed to %d' %(position, speed))
         return response
 
     def set_multi_servo_speeds(self, valueTuples):
@@ -445,56 +641,6 @@ class AX12_IO(object):
         # use sync write to broadcast multi servo message
         self.__sio.sync_write_to_servos(AX_GOAL_POSITION_L, tuple(writeableVals))
 
-    def set_min_max_voltage_limits(self, servoId, minVoltage, maxVoltage):
-        """
-        Set the min and max voltage limits.
-        NOTE: the absolute min is 6v and the absolute max is 19v
-        """
-        
-        if minVoltage < 6: minVoltage = 6
-        if maxVoltage > 19: maxVoltage = 19
-        
-        minVal = int(minVoltage * 10)
-        maxVal = int(maxVoltage * 10)
-        
-        # set 4 register values with low and high bytes for min and max angles
-        response = self.__sio.write_to_servo(servoId, AX_DOWN_LIMIT_VOLTAGE, (minVal, maxVal))
-        
-        if response:
-            self.exception_on_error(response[4], 'when setting servo with id %d to min angle %d and max angle %d' %(servoId, minVoltage, maxVoltage))
-        return response
-
-    def set_min_max_angle_limits(self, servoId, minAngle, maxAngle):
-        """
-        Set the min and max angle of rotation limits.
-        NOTE: the absolute min is 0 and the absolute max is 300
-        """
-        loMinVal = int(minAngle % 256)
-        hiMinVal = int(minAngle >> 8)
-        loMaxVal = int(maxAngle % 256)
-        hiMaxVal = int(maxAngle >> 8)
-        # set 4 register values with low and high bytes for min and max angles
-        response = self.__sio.write_to_servo(servoId, AX_CW_ANGLE_LIMIT_L,
-                                      (loMinVal, hiMinVal, loMaxVal, hiMaxVal))
-        if response:
-            self.exception_on_error(response[4], 'when setting servo with id %d to min angle %d and max angle %d' %(servoId, minAngle, maxAngle))
-        return response
-
-    def set_torque_enabled(self, servoId, enabled):
-        """ Sets the value of the torque enabled register to 1 or 0. When the
-        torque is disabled the servo can be moved manually while the motor is
-        still powered.
-        """
-        if enabled:
-            value = (1,)
-        else:
-            value = (0,)
-        response = self.__sio.write_to_servo(servoId, AX_TORQUE_ENABLE,
-                                             value)
-        if response:
-            self.exception_on_error(response[4], 'when setting servo with id %d to torque_enabled ' + str(enabled))
-        return response
-
     def set_multi_servos_to_torque_enabled(self, servoIds, enabled):
         """
         Method to set multiple servos torque enabled.
@@ -513,38 +659,63 @@ class AX12_IO(object):
         # use sync write to broadcast multi servo message
         self.__sio.sync_write_to_servos(AX_TORQUE_ENABLE, tuple(writeableVals))
 
-    def get_servo_speed(self, servoId):
-        """ Reads the servo's speed value from its registers. """
-        response = self.__sio.read_from_servo(servoId, AX_PRESENT_SPEED_L, 2)
-        if response:
-            self.exception_on_error(response[4], 'when getting speed of servo with id %d' %(servoId))
-        speed = response[5] + (response[6] << 8)
-        if speed > 1023:
-            return 1023 - speed
-        return speed
-    
-    def get_servo_position(self, servoId):
-        """ Reads the servo's position value from its registers. """
-        response = self.__sio.read_from_servo(servoId, AX_PRESENT_POSITION_L, 2)
-        if response:
-            self.exception_on_error(response[4], 'when getting position of servo with id %d' %(servoId))
-        position = response[5] + (response[6] << 8)
-        return position
+    #################################
+    # Servo status access functions #
+    #################################
 
-    def get_min_max_angle_limits(self, servoId):
+    def get_servo_model_number(self, servoId):
+        """ Reads the servo's model number (e.g. 12 for AX-12+). """
+        response = self.__sio.read_from_servo(servoId, AX_MODEL_NUMBER_L, 2)
+        if response:
+            self.exception_on_error(response[4], servoId, 'fetching model number')
+        return response[5] + (response[6] << 8)
+
+    def get_servo_firmware_version(self, servoId):
+        """ Reads the servo's firmware version. """
+        response = self.__sio.read_from_servo(servoId, AX_VERSION, 1)
+        if response:
+            self.exception_on_error(response[4], servoId, 'fetching firmware version')
+        return response[5]
+
+    def get_servo_return_delay_time(self, servoId):
+        """ Reads the servo's return delay time. """
+        response = self.__sio.read_from_servo(servoId, AX_RETURN_DELAY_TIME, 1)
+        if response:
+            self.exception_on_error(response[4], servoId, 'fetching return delay time')
+        return response[5]
+
+    def get_servo_min_max_angle_limits(self, servoId):
         """
         Returns the min and max angle limits from the specified servo.
         """
         # read in 4 consecutive bytes starting with low value of clockwise angle limit
         response = self.__sio.read_from_servo(servoId, AX_CW_ANGLE_LIMIT_L, 4)
         if response:
-            self.exception_on_error(response[4], 'when getting min/max angle limits of servo with id %d' %(servoId))
+            self.exception_on_error(response[4], servoId, 'fetching CW/CCW angle limits')
         # extract data valus from the raw data
         cwLimit = response[5] + (response[6] << 8)
         ccwLimit = response[7] + (response[8] << 8)
         
         # return the data in a dictionary
         return {'min':cwLimit, 'max':ccwLimit}
+
+    def get_servo_position(self, servoId):
+        """ Reads the servo's position value from its registers. """
+        response = self.__sio.read_from_servo(servoId, AX_PRESENT_POSITION_L, 2)
+        if response:
+            self.exception_on_error(response[4], servoId, 'fetching present position')
+        position = response[5] + (response[6] << 8)
+        return position
+
+    def get_servo_speed(self, servoId):
+        """ Reads the servo's speed value from its registers. """
+        response = self.__sio.read_from_servo(servoId, AX_PRESENT_SPEED_L, 2)
+        if response:
+            self.exception_on_error(response[4], servoId, 'fetching present speed')
+        speed = response[5] + (response[6] << 8)
+        if speed > 1023:
+            return 1023 - speed
+        return speed
 
     def get_servo_feedback(self, servoId):
         """
@@ -555,31 +726,39 @@ class AX12_IO(object):
         response = self.__sio.read_from_servo(servoId, AX_GOAL_POSITION_L, 17)
         
         if response:
-            self.exception_on_error(response[4], 'when getting feedback from servo with id %d' %(servoId))
-        if len(response) == 23:
+            self.exception_on_error(response[4], servoId, 'fetching full servo status')
+        if len(response) == 24:
             # extract data values from the raw data
             goal = response[5] + (response[6] << 8)
             position = response[11] + (response[12] << 8)
             error = position - goal
             speed = response[13] + ( response[14] << 8)
+            if speed > 1023: speed = 1023 - speed
             load_raw = response[15] + (response[16] << 8)
             load_direction = 1 if self.test_bit(load_raw, 10) else 0
-            load = load_raw & int('1111111111', 2)
-            if load_direction == 1:
-                load = -load
+            load = (load_raw & int('1111111111', 2)) / 1024.0
+            if load_direction == 1: load = -load
             voltage = response[17] / 10.0
             temperature = response[18]
             moving = response[21]
-            
-            if speed > 1023:
-                speed = 1023 - speed
+            timestamp = response[-1]
             
             # return the data in a dictionary
-            return {'id':servoId, 'goal':goal, 'position':position, 'error':error, 'speed':speed, 'load':load, 'voltage':voltage, 'temperature':temperature, 'moving':bool(moving)}
+            return { 'timestamp': timestamp,
+                     'id': servoId,
+                     'goal': goal,
+                     'position': position,
+                     'error': error,
+                     'speed': speed,
+                     'load': load,
+                     'voltage': voltage,
+                     'temperature': temperature,
+                     'moving': bool(moving) }
 
-    def exception_on_error(self, error_code, ex_message):
+    def exception_on_error(self, error_code, servo_id, command_failed):
         global exception
         exception = None
+        ex_message = '[servo #%d on %s@%sbps]: %s failed' % (servo_id, self.port, self.baud, command_failed)
         if not error_code & AX_OVERHEATING_ERROR == 0:
             msg = 'Overheating Error ' + ex_message
             exception = FatalErrorCodeError(msg, error_code)

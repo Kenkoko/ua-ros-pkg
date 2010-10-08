@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Anh Tran
+#
 
 PKG = 'wubble_actions'
 NAME = 'tilt_laser_demo'
@@ -38,36 +39,38 @@ import rospy
 from actionlib import SimpleActionClient
 from wubble_actions.msg import *
 
-
 def tilt(n=1):
-
     # Creates a goal to send to the action server.
     goal = HokuyoLaserTiltGoal()
     goal.tilt_cycles = n
-
+    goal.amplitude = 1.5
+    goal.offset = 0.0
+    goal.duration = 1.0
+    
+    print 'Cycles: %d, amplitude: %f, offset: %f, duration: %f' % (goal.tilt_cycles, goal.amplitude, goal.offset, goal.duration)
+    
     # Sends the goal to the action server.
     client.send_goal(goal)
-
+    
     # Waits for the server to finish performing the action.
     client.wait_for_result()
-
+    
     # Return result
     return client.get_result()
-
 
 if __name__ == '__main__':
     try:
         rospy.init_node(NAME, anonymous=True)
         client = SimpleActionClient('hokuyo_laser_tilt_action', HokuyoLaserTiltAction)
         client.wait_for_server()
-
+        
         print "Tilt 10 cycles"
         result = tilt(10);
         if result.success == False:
             print "Action failed"
         else:
             print "Result: " + str(result.tilt_position)
-
+            
     except rospy.ROSInterruptException:
         pass
 

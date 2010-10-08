@@ -4,8 +4,6 @@
 
     <!-- Start the laser tilt controller -->
     <node name="wubble_laser_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="start laser_tilt_controller"
+          args="--port /dev/ax12 --command start laser_tilt_controller"
           output="screen"/>
 </launch>
-
-

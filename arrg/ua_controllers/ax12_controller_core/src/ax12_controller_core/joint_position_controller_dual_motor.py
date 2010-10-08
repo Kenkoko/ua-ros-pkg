@@ -60,16 +60,9 @@ class JointPositionControllerDualAX12(JointControllerAX12):
         
         self.flipped = self.master_min_angle_raw > self.master_max_angle_raw
         
-        if self.flipped:
-            self.master_min_angle = (self.master_initial_position_raw - self.master_min_angle_raw) * AX_RAD_RAW_RATIO
-            self.master_max_angle = (self.master_initial_position_raw - self.master_max_angle_raw) * AX_RAD_RAW_RATIO
-        else:
-            self.master_min_angle = (self.master_min_angle_raw - self.master_initial_position_raw) * AX_RAD_RAW_RATIO
-            self.master_max_angle = (self.master_max_angle_raw - self.master_initial_position_raw) * AX_RAD_RAW_RATIO
-            
     def initialize(self):
         # verify that the expected motor is connected and responding
-        available_ids = rospy.get_param('ax12/connected_ids', [])
+        available_ids = rospy.get_param('dynamixel/%s/connected_ids' % self.port_namespace, [])
         if not (self.master_id in available_ids and
                 self.slave_id in available_ids):
             rospy.logwarn('The specified motor id is not connected and responding.')
@@ -77,16 +70,37 @@ class JointPositionControllerDualAX12(JointControllerAX12):
             rospy.logwarn('Specified ids: %d %d' % (self.master_id, self.slave_id))
             return False
             
+        self.radians_per_encoder_tick = rospy.get_param('dynamixel/%s/%d/radians_per_encoder_tick' % (self.port_namespace, self.motor_id))
+        self.encoder_ticks_per_radian = rospy.get_param('dynamixel/%s/%d/encoder_ticks_per_radian' % (self.port_namespace, self.motor_id))
+        
+        if self.flipped:
+            self.master_min_angle = (self.master_initial_position_raw - self.master_min_angle_raw) * self.radians_per_encoder_tick
+            self.master_max_angle = (self.master_initial_position_raw - self.master_max_angle_raw) * self.radians_per_encoder_tick
+        else:
+            self.master_min_angle = (self.master_min_angle_raw - self.master_initial_position_raw) * self.radians_per_encoder_tick
+            self.master_max_angle = (self.master_max_angle_raw - self.master_initial_position_raw) * self.radians_per_encoder_tick
+            
+        self.encoder_resolution = rospy.get_param('dynamixel/%s/%d/encoder_resolution' % (self.port_namespace, self.motor_id))
+        self.max_position = self.encoder_resolution - 1
         self.set_speed(self.joint_speed)
+        self.set_compliance_slope(self.compliance_slope)
         return True
         
     def set_speed(self, speed):
-        if speed < 0: speed = 0
-        elif speed > AX_MAX_SPEED_RAD: speed = AX_MAX_SPEED_RAD
-        speed_raw = int(round((speed / AX_MAX_SPEED_RAD) * AX_MAX_POSITION))
+        if speed < DMXL_MIN_SPEED_RAD: speed = DMXL_MIN_SPEED_RAD
+        elif speed > DMXL_MAX_SPEED_RAD: speed = DMXL_MAX_SPEED_RAD
+        speed_raw = int(round(speed / DMXL_SPEED_RAD_SEC_PER_TICK))
         mcv_master = (self.master_id, speed_raw if speed_raw > 0 else 1)
         mcv_slave = (self.slave_id, mcv_master[1])
-        self.send_packet_callback((AX_GOAL_SPEED, [mcv_master, mcv_slave]))
+        self.send_packet_callback((DMXL_SET_GOAL_SPEED, [mcv_master, mcv_slave]))
+        
+    def set_compliance_slope(self, slope):
+        if slope < 2: slope = 2
+        elif slope > 128: slope = 128
+        slope2 = (slope << 8) + slope
+        mcv_master = (self.master_id, slope2)
+        mcv_slave = (self.slave_id, slope2)
+        self.send_packet_callback((DMXL_SET_COMPLIANCE_SLOPE, [mcv_master, mcv_slave]))
         
     def process_set_speed(self, req):
         self.set_speed(req.speed)
@@ -95,7 +109,11 @@ class JointPositionControllerDualAX12(JointControllerAX12):
     def process_torque_enable(self, req):
         mcv_master = (self.master_id, req.torque_enable)
         mcv_slave = (self.slave_id, req.torque_enable)
-        self.send_packet_callback((AX_TORQUE_ENABLE, [mcv_master, mcv_slave]))
+        self.send_packet_callback((DMXL_SET_TORQUE_ENABLE, [mcv_master, mcv_slave]))
+        return []
+        
+    def process_set_compliance_slope(self, req):
+        self.set_compliance_slope(req.slope)
         return []
         
     def process_motor_states(self, state_list):
@@ -105,20 +123,20 @@ class JointPositionControllerDualAX12(JointControllerAX12):
                 state = state[0]
                 joint_state = JointState(name=self.joint_name,
                                          motor_ids=[self.master_id],
-                                         goal_pos=self.raw_to_rad(state.goal, self.master_initial_position_raw, self.flipped),
-                                         current_pos=self.raw_to_rad(state.position, self.master_initial_position_raw, self.flipped),
-                                         error=state.error * AX_RAD_RAW_RATIO,
-                                         velocity=(state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
+                                         goal_pos=self.raw_to_rad(state.goal, self.master_initial_position_raw, self.flipped, self.radians_per_encoder_tick),
+                                         current_pos=self.raw_to_rad(state.position, self.master_initial_position_raw, self.flipped, self.radians_per_encoder_tick),
+                                         error=state.error * self.radians_per_encoder_tick,
+                                         velocity=(state.speed / self.encoder_resolution) * DMXL_MAX_SPEED_RAD,
                                          load=state.load,
                                          is_moving=state.moving)
-                joint_state.header.stamp = state_list.header.stamp
+                joint_state.header.stamp = rospy.Time.from_sec(state.timestamp)
                 self.joint_state_pub.publish(joint_state)
                 
     def process_command(self, msg):
         angle = msg.data
         if angle < self.master_min_angle: angle = self.master_min_angle
         elif angle > self.master_max_angle: angle = self.master_max_angle
-        mcv_master = (self.master_id, self.rad_to_raw(angle, self.master_initial_position_raw, self.flipped))
-        mcv_slave = (self.slave_id, AX_MAX_POSITION - mcv_master[1])
-        self.send_packet_callback((AX_GOAL_POSITION, [mcv_master, mcv_slave]))
+        mcv_master = (self.master_id, self.rad_to_raw(angle, self.master_initial_position_raw, self.flipped, self.encoder_ticks_per_radian))
+        mcv_slave = (self.slave_id, self.max_position - mcv_master[1])
+        self.send_packet_callback((DMXL_SET_GOAL_POSITION, [mcv_master, mcv_slave]))
 

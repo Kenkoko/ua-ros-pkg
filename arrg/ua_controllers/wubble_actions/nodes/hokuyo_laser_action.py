@@ -28,73 +28,68 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Anh Tran
+# Author: Antons Rebguns
+#
 
-PKG = 'wubble_actions'
 NAME = 'hokuyo_laser_action'
 
-import roslib; roslib.load_manifest(PKG)
+import roslib; roslib.load_manifest('wubble_actions')
 import rospy
 
 from actionlib import SimpleActionServer
 
 from wubble_actions.msg import *
+from ax12_controller_core.srv import SetSpeed
 from std_msgs.msg import Float64
 from pr2_controllers_msgs.msg import JointControllerState
-
-import math
-
+from pr2_msgs.msg import LaserScannerSignal
 
 class HokuyoLaserActionServer():
-
     def __init__(self):
-
         # Initialize constants
-        self.JOINTS_COUNT = 1                           # Number of joints to manage
-        self.ERROR_THRESHOLD = 0.01                     # Report success if error reaches below threshold
-        self.TIMEOUT_THRESHOLD = rospy.Duration(7.0)    # Report failure if action does not succeed within timeout threshold
-
+        self.error_threshold = 0.0175 # Report success if error reaches below threshold
+        self.signal = 1
+        
         # Initialize new node
         rospy.init_node(NAME, anonymous=True)
-
+        
+        controller_name = rospy.get_param('~controller')
+        
         # Initialize publisher & subscriber for tilt
-        self.laser_tilt_frame = 'hokuyo_tilt_link'
-        self.laser_tilt = JointControllerState(set_point=0.0, process_value=0.0, error=1.0)
-        self.laser_tilt_pub = rospy.Publisher('laser_tilt_controller/command', Float64)
-        rospy.Subscriber('laser_tilt_controller/state', JointControllerState, self.read_current_tilt)
-        rospy.wait_for_message('laser_tilt_controller/state', JointControllerState)
-
+        self.laser_tilt = JointControllerState()
+        self.laser_tilt_pub = rospy.Publisher(controller_name + '/command', Float64)
+        self.laser_signal_pub = rospy.Publisher('laser_scanner_signal', LaserScannerSignal)
+        self.joint_speed_srv = rospy.ServiceProxy(controller_name + '/set_speed', SetSpeed, persistent=True)
+        
+        rospy.Subscriber(controller_name + '/state', JointControllerState, self.process_tilt_state)
+        rospy.wait_for_message(controller_name + '/state', JointControllerState)
+        
         # Initialize tilt action server
         self.result = HokuyoLaserTiltResult()
         self.feedback = HokuyoLaserTiltFeedback()
         self.feedback.tilt_position = self.laser_tilt.process_value
         self.server = SimpleActionServer('hokuyo_laser_tilt_action', HokuyoLaserTiltAction, self.execute_callback)
-
-        # Reset laser position
-        rospy.sleep(1)
-        self.reset_tilt_position()
+        
         rospy.loginfo("%s: Ready to accept goals", NAME)
 
-
-    def read_current_tilt(self, tilt_data):
+    def process_tilt_state(self, tilt_data):
         self.laser_tilt = tilt_data
-        self.has_latest_tilt = True
 
-
-    def reset_tilt_position(self):
-        self.laser_tilt_pub.publish(0.0)
-        rospy.sleep(5)
-
-
-    def wait_for_latest_controller_states(self, timeout):
-        self.has_latest_tilt = False
-        r = rospy.Rate(100)
-        start = rospy.Time.now()
-        while (self.has_latest_tilt == False and rospy.Time.now() - start < timeout):
-            r.sleep()
-
+    def reset_tilt_position(self, offset=0.0):
+        self.laser_tilt_pub.publish(offset)
+        rospy.sleep(0.5)
 
     def execute_callback(self, goal):
         r = rospy.Rate(100)
+        self.joint_speed_srv(2.0)
+        self.reset_tilt_position(goal.offset)
+        delta = goal.amplitude - goal.offset
+        target_speed = delta / goal.duration
+        timeout_threshold = rospy.Duration(5.0) + rospy.Duration.from_sec(goal.duration)
+        self.joint_speed_srv(target_speed)
+        
+        print "delta = %f, target_speed = %f" % (delta, target_speed)
+        
         self.result.success = True
         self.result.tilt_position = self.laser_tilt.process_value
         rospy.loginfo("%s: Executing laser tilt %s time(s)", NAME, goal.tilt_cycles)
@@ -106,44 +101,55 @@ class HokuyoLaserActionServer():
             # Issue 2 commands for each cycle
             for j in range(2):
                 if j % 2 == 0:
-                    target_tilt = 0.685     # Upper tilt limit
+                    target_tilt = goal.offset + goal.amplitude     # Upper tilt limit
+                    self.signal = 0
                 else:
-                    target_tilt = 0.000     # Lower tilt limit
-
+                    target_tilt = goal.offset     # Lower tilt limit
+                    self.signal = 1
+                    
                 # Publish target command to controller
                 self.laser_tilt_pub.publish(target_tilt)
-
                 start_time = rospy.Time.now()
-                while (math.fabs(target_tilt - self.laser_tilt.process_value) > self.ERROR_THRESHOLD):
-		
-	                # Cancel exe if another goal was received (i.e. preempt requested)
+                current_time = start_time
+                
+                while abs(target_tilt - self.laser_tilt.process_value) > self.error_threshold:
+                    delta = abs(target_tilt - self.laser_tilt.process_value)
+                    time_left = goal.duration - (rospy.Time.now() - start_time).to_sec()
+                    target_speed = delta / time_left
+                    self.joint_speed_srv(target_speed)
+                    
+                    # Cancel exe if another goal was received (i.e. preempt requested)
                     if self.server.is_preempt_requested():
                         rospy.loginfo("%s: Aborted: Action Preempted", NAME)
                         self.result.success = False
                         self.server.set_preempted()
                         return
-
+                        
                     # Publish current head position as feedback
                     self.feedback.tilt_position = self.laser_tilt.process_value
                     self.server.publish_feedback(self.feedback)
                     
                     # Abort if timeout
                     current_time = rospy.Time.now()
-                    if (current_time - start_time > self.TIMEOUT_THRESHOLD):
+                    
+                    if (current_time - start_time > timeout_threshold):
                         rospy.loginfo("%s: Aborted: Action Timeout", NAME)
                         self.result.success = False
                         self.server.set_aborted()
                         return
-
+                        
                     r.sleep()
-        
-        if (self.result.success):
+                    
+                signal = LaserScannerSignal()
+                signal.header.stamp = current_time
+                signal.signal = self.signal
+                self.laser_signal_pub.publish(signal)
+                #rospy.sleep(0.5)
+                
+        if self.result.success:
             rospy.loginfo("%s: Goal Completed", NAME)
-            self.wait_for_latest_controller_states(rospy.Duration(2.0))
             self.result.tilt_position = self.laser_tilt.process_value
             self.server.set_succeeded(self.result)
-
-
 
 if __name__ == '__main__':
     try:

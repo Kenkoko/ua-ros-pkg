@@ -45,35 +45,34 @@ from ax12_controller_core.srv import *
 
 import os
 import sys
+from optparse import OptionParser
 
-def print_usage():
-    print 'Usage: python controller_spawner.py (start|stop|restart) controller_name...'
-    sys.exit(1)
-
-def manage_controller(command, package_path, module_name, class_name, controller_name):
+def manage_controller(port, command, package_path, module_name, class_name, controller_name):
+    namespace = port[port.rfind('/') + 1:]
+    
     if command.lower() == 'start':
-        rospy.wait_for_service('start_controller')
+        rospy.wait_for_service('start_controller/%s' % namespace)
         try:
-            start_controller = rospy.ServiceProxy('start_controller', StartController)
-            response = start_controller(package_path, module_name, class_name, controller_name)
+            start_controller = rospy.ServiceProxy('start_controller/%s' % namespace, StartController)
+            response = start_controller(port, package_path, module_name, class_name, controller_name)
             if response.success: rospy.loginfo(response.reason)
             else: rospy.logerr(response.reason)
         except rospy.ServiceException, e:
             rospy.logerr('Service call failed: %s' % e)
     elif command.lower() == 'stop':
-        rospy.wait_for_service('stop_controller')
+        rospy.wait_for_service('stop_controller/%s' % namespace)
         try:
-            stop_controller = rospy.ServiceProxy('stop_controller', StopController)
+            stop_controller = rospy.ServiceProxy('stop_controller/%s' % namespace, StopController)
             response = stop_controller(controller_name)
             if response.success: rospy.loginfo(response.reason)
             else: rospy.logerr(response.reason)
         except rospy.ServiceException, e:
             rospy.logerr('Service call failed: %s' % e)
     elif command.lower() == 'restart':
-        rospy.wait_for_service('restart_controller')
+        rospy.wait_for_service('restart_controller/%s' % namespace)
         try:
-            restart_controller = rospy.ServiceProxy('restart_controller', RestartController)
-            response = restart_controller(package_path, module_name, class_name, controller_name)
+            restart_controller = rospy.ServiceProxy('restart_controller/%s' % namespace, RestartController)
+            response = restart_controller(port, package_path, module_name, class_name, controller_name)
             if response.success: rospy.loginfo(response.reason)
             else: rospy.logerr(response.reason)
         except rospy.ServiceException, e:
@@ -83,12 +82,20 @@ def manage_controller(command, package_path, module_name, class_name, controller
         print_usage()
 
 if __name__ == '__main__':
-    args = rospy.myargv()[1:]
-    if len(args) < 2:
-        print_usage()
+    parser = OptionParser()
+    parser.add_option('-p', '--port', metavar='PORT', default='/dev/ttyUSB0',
+                      help='motors of specified controllers are connected to PORT [default: %default]')
+    parser.add_option('-c', '--command', metavar='COMMAND', default='start',
+                      help='command to perform on specified controllers: start, stop or restart [default: %default]')
+                      
+    (options, args) = parser.parse_args(rospy.myargv()[1:])
+    
+    if len(args) < 1:
+        print 'Specify at least one controller name to manage'
         
-    command = args[0]
-    joint_controllers = args[1:]
+    port = options.port
+    command = options.command
+    joint_controllers = args
     
     for controller_name in joint_controllers:
         try:
@@ -107,5 +114,5 @@ if __name__ == '__main__':
             rospy.logerr('Controller\'s [%s] configuration specified package that does not exist' % controller_name)
             sys.exit(1)
             
-        manage_controller(command, package_path, module_name, class_name, controller_name)
+        manage_controller(port, command, package_path, module_name, class_name, controller_name)
 

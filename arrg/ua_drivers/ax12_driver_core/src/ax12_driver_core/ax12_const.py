@@ -33,7 +33,7 @@
 #
 
 """
-AX-12+ Constants
+Dynamixel Constants
 """
 # Control Table Constants
 AX_MODEL_NUMBER_L = 0
@@ -46,7 +46,7 @@ AX_CW_ANGLE_LIMIT_L = 6
 AX_CW_ANGLE_LIMIT_H = 7
 AX_CCW_ANGLE_LIMIT_L = 8
 AX_CCW_ANGLE_LIMIT_H = 9
-AX_SYSTEM_DATA2 = 10
+DMXL_DRIVE_MODE = 10
 AX_LIMIT_TEMPERATURE = 11
 AX_DOWN_LIMIT_VOLTAGE = 12
 AX_UP_LIMIT_VOLTAGE = 13
@@ -86,6 +86,8 @@ AX_MOVING = 46
 AX_LOCK = 47
 AX_PUNCH_L = 48
 AX_PUNCH_H = 49
+DMXL_SENSED_CURRENT_L = 56
+DMXL_SENSED_CURRENT_H = 57
 
 # Status Return Levels
 AX_RETURN_NONE = 0
@@ -115,16 +117,21 @@ AX_INPUT_VOLTAGE_ERROR = 1
 AX_NO_ERROR = 0
 
 # Static parameters
-AX_TICKS = 1024
-AX_MAX_POSITION = 1023
+DMXL_SPEED_RAD_SEC_PER_TICK = 0.011652344   # radians per second in one encoder unit
+DMXL_MIN_SPEED_RAD = DMXL_SPEED_RAD_SEC_PER_TICK
+DMXL_MAX_SPEED_RAD = 11.920347912           # maximum speed in radians per second
 
-AX_RANGE_DEG = 300
-AX_RAW_DEG_RATIO = 3.41333333333333333333     # how many ticks in degree
-AX_DEG_RAW_RATIO = 0.29296875                 # how many degrees in a tick
-AX_MAX_SPEED_DEG = 684.0                      # degrees per second
-
-AX_RANGE_RAD = 5.235987756
-AX_RAW_RAD_RATIO = 195.569594071              # how many ticks in radian
-AX_RAD_RAW_RATIO = 0.005113269                # how many radians in a tick
-AX_MAX_SPEED_RAD = 11.938052084               # radians per second
+DMXL_MODEL_TO_NAME = \
+{
+    113: 'DX-113',
+    116: 'DX-116',
+    117: 'DX-117',
+     12: 'AX-12+',
+     18: 'AX-18F',
+     10: 'RX-10',
+     24: 'RX-24F',
+     28: 'RX-28',
+     64: 'RX-64',
+    107: 'EX-106+',
+}
 
