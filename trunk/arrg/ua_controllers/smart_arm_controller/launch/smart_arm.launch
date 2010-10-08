@@ -1,14 +1,15 @@
 <launch>
-    <!-- Load smart_arm parameters from YAML file -->
+    <!-- Load joint controller configuration from YAML file to parameter server -->
     <rosparam file="$(find smart_arm_controller)/config/smart_arm.yaml" command="load"/>
-    
-    <!-- Start the smart_arm controller -->
+
+    <!-- Start all SmartArm joint controllers -->
     <node name="smart_arm_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="start shoulder_pan_controller
-                      shoulder_tilt_controller
-                      elbow_tilt_controller
-                      wrist_rotate_controller
-                      finger_right_controller
-                      finger_left_controller"
+          args="--port /dev/ttyUSB0
+                shoulder_pan_controller
+                shoulder_tilt_controller
+                elbow_tilt_controller
+                wrist_rotate_controller
+                finger_right_controller
+                finger_left_controller"
           output="screen"/>
 </launch>

@@ -49,13 +49,14 @@ import sys
 class AX12ControllerManager:
     def __init__(self):
         rospy.init_node('ax12_controller_manager', anonymous=False)
-
+        
         port_name = rospy.get_param('~port_name', '/dev/ttyUSB0')
         baud_rate = rospy.get_param('~baud_rate', 1000000)
         min_motor_id = rospy.get_param('~min_motor_id', 1)
         max_motor_id = rospy.get_param('~max_motor_id', 25)
         update_rate = rospy.get_param("~update_rate", 5)
-
+        namespace = port_name[port_name.rfind('/') + 1:]
+        
         self.serial_proxy = SerialProxy(port_name, baud_rate, min_motor_id, max_motor_id, update_rate)
         self.serial_proxy.connect()
         
@@ -63,23 +64,24 @@ class AX12ControllerManager:
         
         self.controllers = {}
         
-        rospy.Service('start_controller', StartController, self.start_controller)
-        rospy.Service('stop_controller', StopController, self.stop_controller)
-        rospy.Service('restart_controller', RestartController, self.restart_controller)
+        rospy.Service('start_controller/%s' % namespace, StartController, self.start_controller)
+        rospy.Service('stop_controller/%s' % namespace, StopController, self.stop_controller)
+        rospy.Service('restart_controller/%s' % namespace, RestartController, self.restart_controller)
 
     def start_controller(self, req):
+        port_name = req.port_name
         package_path = req.package_path
         module_name = req.module_name
         class_name = req.class_name
         controller_name = req.controller_name
-
+        
         if controller_name in self.controllers:
             return StartControllerResponse(False, 'Controller [%s] already started. If you want to restart it, call restart.' % controller_name)
-
+            
         # make sure the package_path is in PYTHONPATH
         if not package_path in sys.path:
             sys.path.append(package_path)
-
+            
         try:
             if module_name not in sys.modules:
                 # import if module not previously imported
@@ -95,8 +97,8 @@ class AX12ControllerManager:
             return StartControllerResponse(False, 'Unknown error has occured. Unable to start controller %s\n%s' % (module_name, str(e)))
         
         kls = getattr(controller_module, class_name)
-        controller = kls(self.serial_proxy.queue_new_packet, controller_name)
-
+        controller = kls(self.serial_proxy.queue_new_packet, controller_name, port_name)
+        
         if controller.initialize():
             controller.start()
             self.controllers[controller_name] = controller

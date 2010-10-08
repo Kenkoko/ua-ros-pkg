@@ -49,25 +49,27 @@ from ua_controller_msgs.msg import JointState
 from std_msgs.msg import Float64
 
 class JointFreespinControllerAX12(JointControllerAX12):
-    def __init__(self, out_cb, param_path):
-        JointControllerAX12.__init__(self, out_cb, param_path)
+    def __init__(self, out_cb, param_path, port_name):
+        JointControllerAX12.__init__(self, out_cb, param_path, port_name)
         self.motor_id = rospy.get_param(self.topic_name + '/motor/id')
         
     def initialize(self):
         # verify that the expected motor is connected and responding
-        available_ids = rospy.get_param('ax12/connected_ids', [])
+        available_ids = rospy.get_param('dynamixel/%s/connected_ids' % self.port_namespace, [])
         if not self.motor_id in available_ids:
             rospy.logwarn('The specified motor id is not connected and responding.')
             rospy.logwarn('Available ids: %s' % str(available_ids))
             rospy.logwarn('Specified id: %d' % self.motor_id)
             return False
             
+        self.encoder_resolution = rospy.get_param('dynamixel/%s/%d/encoder_resolution' % (self.port_namespace, self.motor_id))
+        self.max_position = self.encoder_resolution - 1
         self.process_command(Float64(0.0))
         return True
         
     def set_speed(self, speed):
-        if speed < -AX_MAX_SPEED_RAD: speed = -AX_MAX_SPEED_RAD
-        elif speed > AX_MAX_SPEED_RAD: speed = AX_MAX_SPEED_RAD
+        if speed < -DMXL_MAX_SPEED_RAD: speed = -DMXL_MAX_SPEED_RAD
+        elif speed > DMXL_MAX_SPEED_RAD: speed = DMXL_MAX_SPEED_RAD
         self.joint_speed = speed
         
     def process_set_speed(self, req):
@@ -76,7 +78,15 @@ class JointFreespinControllerAX12(JointControllerAX12):
         
     def process_torque_enable(self, req):
         mcv = (self.motor_id, req.torque_enable)
-        self.send_packet_callback((AX_TORQUE_ENABLE, [mcv]))
+        self.send_packet_callback((DMXL_SET_TORQUE_ENABLE, [mcv]))
+        return []
+        
+    def process_set_compliance_slope(self, slope):
+        if slope < 2: slope = 2
+        elif slope > 128: slope = 128
+        slope2 = (slope << 8) + slope
+        mcv = (self.motor_id, slope2)
+        self.send_packet_callback((DMXL_SET_COMPLIANCE_SLOPE, [mcv]))
         return []
         
     def process_motor_states(self, state_list):
@@ -89,17 +99,17 @@ class JointFreespinControllerAX12(JointControllerAX12):
                                          goal_pos=0.0,
                                          current_pos=0.0,
                                          error=0.0,
-                                         velocity=(state.speed / AX_TICKS) * AX_MAX_SPEED_RAD,
+                                         velocity=(state.speed / self.encoder_resolution) * DMXL_MAX_SPEED_RAD,
                                          load=state.load,
                                          is_moving=state.moving)
-                joint_state.header.stamp = state_list.header.stamp
+                joint_state.header.stamp = rospy.Time.from_sec(state.timestamp)
                 self.joint_state_pub.publish(joint_state)
                 
     def process_command(self, msg):
         speed = msg.data
         if speed < -self.joint_speed: speed = -self.joint_speed
         elif speed > self.joint_speed: speed = self.joint_speed
-        speed_raw = int(round((speed / AX_MAX_SPEED_RAD) * AX_MAX_POSITION))
+        speed_raw = int(round((speed / DMXL_MAX_SPEED_RAD) * self.max_position))
         mcv = (self.motor_id, speed_raw)
-        self.send_packet_callback((AX_GOAL_SPEED, [mcv]))
+        self.send_packet_callback((DMXL_SET_GOAL_SPEED, [mcv]))
 

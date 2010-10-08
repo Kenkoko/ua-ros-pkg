@@ -16,6 +16,8 @@
     <depend package="std_msgs"/>
     <depend package="geometry_msgs"/>
     <depend package="sensor_msgs"/>
+    <depend package="phidgets_ros"/>
+    <depend package="ua_controller_msgs"/>
 
     <!-- Controllers & actions -->
     <depend package="wubble_actions"/>

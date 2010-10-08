@@ -45,6 +45,7 @@ import rospy
 import ax12_io
 from ax12_driver_core.msg import MotorState
 from ax12_driver_core.msg import MotorStateList
+from ax12_driver_core.ax12_const import DMXL_MODEL_TO_NAME
 
 import sys
 import errno
@@ -55,6 +56,7 @@ from Queue import Queue
 class SerialProxy():
     def __init__(self, port_name='/dev/ttyUSB0', baud_rate='1000000', min_motor_id=1, max_motor_id=25, update_rate=5):
         self.port_name = port_name
+        self.port_namespace = port_name[port_name.rfind('/') + 1:]
         self.baud_rate = baud_rate
         self.min_motor_id = min_motor_id
         self.max_motor_id = max_motor_id
@@ -63,7 +65,7 @@ class SerialProxy():
         self.__packet_queue = Queue()
         self.__state_lock = Lock()
         
-        self.motor_states_pub = rospy.Publisher('motor_states', MotorStateList)
+        self.motor_states_pub = rospy.Publisher('motor_states/%s' % self.port_namespace, MotorStateList)
 
     def connect(self):
         try:
@@ -87,8 +89,8 @@ class SerialProxy():
 
     def __find_motors(self):
         rospy.loginfo('Pinging motor IDs %d through %d...' % (self.min_motor_id, self.max_motor_id))
-        
         self.motors = []
+        
         for i in xrange(self.min_motor_id, self.max_motor_id):
             result = self.__serial_bus.ping(i)
             if result: self.motors.append(i)
@@ -99,15 +101,45 @@ class SerialProxy():
             rospy.logfatal('No motors found, aborting.')
             sys.exit(1)
             
-        rospy.set_param('ax12/connected_ids', self.motors)
-        rospy.loginfo('Publishing motor angle limits to param server...')
+        rospy.set_param('dynamixel/%s/connected_ids' % self.port_namespace, self.motors)
+        
+        counts = {10: 0, 12: 0, 18: 0, 24: 0, 28: 0, 64: 0, 107: 0, 113: 0, 116: 0, 117: 0}
         
         for i in self.motors:
-            angles = self.__serial_bus.get_min_max_angle_limits(i)
-            rospy.set_param('ax12/%d/minAngle' %i, angles['min'])
-            rospy.set_param('ax12/%d/maxAngle' %i, angles['max'])
+            model_number = self.__serial_bus.get_servo_model_number(i)
+            counts[model_number] += 1
+            angles = self.__serial_bus.get_servo_min_max_angle_limits(i)
             
-        rospy.loginfo('System initialized.')
+            rospy.set_param('dynamixel/%s/%d/model' %(self.port_namespace, i), DMXL_MODEL_TO_NAME[model_number])
+            rospy.set_param('dynamixel/%s/%d/model_number' %(self.port_namespace, i), model_number)
+            
+            if model_number == 107: # tested with EX-106+
+                rospy.set_param('dynamixel/%s/%d/encoder_resolution' %(self.port_namespace, i), 4096)
+                rospy.set_param('dynamixel/%s/%d/range_degrees' %(self.port_namespace, i), 250.92)
+                rospy.set_param('dynamixel/%s/%d/range_radians' %(self.port_namespace, i), 4.379380160)
+                rospy.set_param('dynamixel/%s/%d/encoder_ticks_per_degree' %(self.port_namespace, i), 16.323927945)
+                rospy.set_param('dynamixel/%s/%d/encoder_ticks_per_radian' %(self.port_namespace, i), 935.292176142)
+                rospy.set_param('dynamixel/%s/%d/degrees_per_encoder_tick' %(self.port_namespace, i), 0.061259766)
+                rospy.set_param('dynamixel/%s/%d/radians_per_encoder_tick' %(self.port_namespace, i), 0.001069185)
+            else: # tested with AX-12+, RX-28, RX-64
+                rospy.set_param('dynamixel/%s/%d/encoder_resolution' %(self.port_namespace, i), 1024)
+                rospy.set_param('dynamixel/%s/%d/range_degrees' %(self.port_namespace, i), 300.00)
+                rospy.set_param('dynamixel/%s/%d/range_radians' %(self.port_namespace, i), 5.235987757)
+                rospy.set_param('dynamixel/%s/%d/encoder_ticks_per_degree' %(self.port_namespace, i), 3.413333333)
+                rospy.set_param('dynamixel/%s/%d/encoder_ticks_per_radian' %(self.port_namespace, i), 195.569594071)
+                rospy.set_param('dynamixel/%s/%d/degrees_per_encoder_tick' %(self.port_namespace, i), 0.292968750)
+                rospy.set_param('dynamixel/%s/%d/radians_per_encoder_tick' %(self.port_namespace, i), 0.005113269)
+                
+            rospy.set_param('dynamixel/%s/%d/model_number' %(self.port_namespace, i), model_number)
+            rospy.set_param('dynamixel/%s/%d/min_angle' %(self.port_namespace, i), angles['min'])
+            rospy.set_param('dynamixel/%s/%d/max_angle' %(self.port_namespace, i), angles['max'])
+            
+        status_str = 'There are '
+        for (k, v) in counts.items():
+            if v: status_str += '%d %s, ' % (v, DMXL_MODEL_TO_NAME[k])
+            
+        rospy.loginfo('%s servos connected' % status_str[:-2])
+        rospy.loginfo('Dynamixel Manager on port %s initialized' % self.port_name)
 
     def __process_packet_queue(self):
         while self.running:
@@ -155,10 +187,9 @@ class SerialProxy():
                         rospy.logfatal(errno.errorcode[ose.errno])
                         rospy.signal_shutdown(errno.errorcode[ose.errno])
             self.__state_lock.release()
-                
+            
             if motor_states:
                 msl = MotorStateList()
-                msl.header.stamp = rospy.Time.now()
                 msl.motor_states = motor_states
                 self.motor_states_pub.publish(msl)
                 

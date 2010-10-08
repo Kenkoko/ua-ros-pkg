@@ -33,83 +33,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Cody Jorgensen
+# Author: Antons Rebguns
 #
 
 import roslib
 roslib.load_manifest('ax12_driver_core')
 
 import sys
+from optparse import OptionParser
 from ax12_driver_core import ax12_io
-
-USAGE = """\
-Usage: %(executable)s <motor_id>
-Usage: %(executable)s <list_of_motor_ids>
-    - list_of_motor_ids is of the form [id1, id2, ...]
-    Examples:
-    - %(executable)s
-    - %(executable)s [1,2,3]
-""" % { 'executable' : sys.argv[0], }
-
-def usage(msg=None):
-    """ If msg is provided, print to stderr. Then print USAGE and exit.
-    """
-    if msg:
-        print >> sys.stderr, 'ERROR: %s' %msg
-    print USAGE
-    sys.exit(1)
-
-def parseIntegerList(listStr):
-    """ Takes a string representation of a list of integers and converts it
-    into a list of ints. Returns an empty list if parsing fails.
-    """
-    listStr = listStr.strip()
-    if listStr[0] != '[' or listStr[-1] != ']':
-        return []
-    strIntList = listStr[1:-1].strip(',').split(',')
-    try:
-        return map(int, strIntList)
-    except:
-        return []
-
-def parseArguments():
-    """ Called to parse arguments. Returns a 3-tuple containing values, port, baudrate.
-    Calls usage() whenever an error is encountered.
-    """
-    if len(sys.argv) < 2:
-        usage('Not enough arguments.')
-
-    if len(sys.argv) > 4:
-        usage('Too many arguments.')
-        
-    try:
-        motor_id = int(sys.argv[1])
-    except ValueError:
-        motor_id = None
-    motor_ids = None
-    if not motor_id:
-        motor_ids = parseIntegerList(sys.argv[1])
-
-    if not motor_id and not motor_ids:
-        usage('Invalid argument for motor_id(s): %s' %sys.argv[1])
-
-    # default values
-    baud = 1000000
-    port = '/dev/ttyUSB0'
-
-    if len(sys.argv) > 2:
-        arg2 = sys.argv[2]
-        try:
-            baud = int(arg2)
-        except ValueError:
-            port = arg2    
-        if len(sys.argv) == 4:
-            arg3 = sys.argv[3]
-            try:
-                baud = int(arg3)
-            except:
-                usage('Invalid baudrate "%s"' %sys.argv[3])
-
-    return ([motor_id], port, baud) if motor_id else (motor_ids, port, baud)
+from ax12_driver_core.ax12_const import DMXL_MODEL_TO_NAME
 
 def print_data(values):
     ''' Takes a dictionary with all the motor values and does a formatted print.
@@ -118,6 +51,7 @@ def print_data(values):
         print '''\
     Motor %(id)d is connected:
         Freespin: True
+        Model ------------------- %(model)s
         Current Speed ----------- %(speed)d
         Current Temperature ----- %(temperature)d%(degree_symbol)sC
         Current Voltage --------- %(voltage).1fv
@@ -128,6 +62,7 @@ def print_data(values):
         print '''\
     Motor %(id)d is connected:
         Freespin: False
+        Model ------------------- %(model)s
         Min Angle --------------- %(min)d
         Max Angle --------------- %(max)d
         Current Position -------- %(position)d
@@ -137,10 +72,28 @@ def print_data(values):
         Current Load ------------ %(load)d
         Moving ------------------ %(moving)s
 ''' %values
-    
 
 if __name__ == '__main__':
-    motor_ids, port, baudrate  = parseArguments()
+    usage_msg = 'Usage: %prog [options] IDs'
+    desc_msg = 'Prints the current status of specified Dynamixel servo motors.'
+    epi_msg = 'Example: %s --port=/dev/ttyUSB1 --baud=57600 1 2 3 4 5' % sys.argv[0]
+    
+    parser = OptionParser(usage=usage_msg, description=desc_msg, epilog=epi_msg)
+    parser.add_option('-p', '--port', metavar='PORT', default='/dev/ttyUSB0',
+                      help='motors of specified controllers are connected to PORT [default: %default]')
+    parser.add_option('-b', '--baud', metavar='BAUD', type="int", default=1000000,
+                      help='connection to serial port will be established at BAUD bps [default: %default]')
+                      
+    (options, args) = parser.parse_args(sys.argv)
+    
+    if len(args) < 2:
+        parser.print_help()
+        exit(1)
+        
+    port = options.port
+    baudrate = options.baud
+    motor_ids = args[1:]
+    
     try:
         aio = ax12_io.AX12_IO(port, baudrate)
     except ax12_io.SerialOpenError, soe:
@@ -149,16 +102,20 @@ if __name__ == '__main__':
         responses = 0
         print 'Pinging motors:'
         for motor_id in motor_ids:
-            print '%d ...' %motor_id ,
+            motor_id = int(motor_id)
+            print '%d ...' % motor_id,
             p = aio.ping(motor_id)
             if p:
                 responses += 1
                 values = aio.get_servo_feedback(motor_id)
-                angles = aio.get_min_max_angle_limits(motor_id) 
+                angles = aio.get_servo_min_max_angle_limits(motor_id)
+                model = aio.get_servo_model_number(motor_id)
+                firmware = aio.get_servo_firmware_version(motor_id)
+                values['model'] = '%s (firmware version: %d)' % (DMXL_MODEL_TO_NAME[model], firmware)
                 values['degree_symbol'] = u"\u00B0"
                 values['min'] = angles['min']
                 values['max'] = angles['max']
-                values['voltage'] = values['voltage'] / 10.0
+                values['voltage'] = values['voltage']
                 values['moving'] = str(values['moving'])
                 print 'done'
                 if angles['max'] == 0 and angles['min'] == 0:
@@ -170,3 +127,4 @@ if __name__ == '__main__':
                 print 'error'
         if responses == 0:
             print 'ERROR: None of the specified motors responded. Make sure to specify the correct baudrate.'
+

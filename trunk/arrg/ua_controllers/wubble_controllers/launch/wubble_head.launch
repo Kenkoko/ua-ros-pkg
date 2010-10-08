@@ -4,7 +4,8 @@
 
     <!-- Start the head pan/tilt controllers -->
     <node name="wubble_head_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="start head_pan_controller
-                      head_tilt_controller"
+          args="--port /dev/ax12 --command start
+                head_pan_controller
+                head_tilt_controller"
           output="screen"/>
 </launch>

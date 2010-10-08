@@ -1,10 +1,15 @@
 <launch>
     <!-- Load laser tilt controller parameters from YAML file -->
-	
+
     <rosparam file="$(find charlie_controllers)/config/arm_claw.yaml" command="load"/>
 
     <!-- Start the laser tilt controller -->
     <node name="charlie_clawarm_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="start claw_shoulder_pan_controller claw_elbow_tilt_controller claw_wrist_rotate_controller claw_finger_right_controller claw_finger_left_controller"
+          args="--port /dev/ttyUSB0 --command start
+		claw_shoulder_pan_controller
+		claw_elbow_tilt_controller
+		claw_wrist_rotate_controller
+		claw_finger_right_controller
+		claw_finger_left_controller"
           output="screen"/>
 </launch>
