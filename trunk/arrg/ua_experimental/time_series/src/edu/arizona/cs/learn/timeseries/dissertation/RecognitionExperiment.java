@@ -27,41 +27,68 @@ import edu.uci.ics.jung.graph.DirectedGraph;
 
 public class RecognitionExperiment {
 	public static void main(String[] args) {
-		List<String> classes = new ArrayList<String>();
-		classes.add("jump-on");
-		classes.add("jump-over");
-		classes.add("left");
-		classes.add("right");
-		classes.add("push");
-		classes.add("approach");
-
-		int[] folds = { 2, 6, 10 };
-		int[] pcts = { 80 };
-		for (SequenceType type : SequenceType.get("all")) {
-			String prefix = "ww2d";
-			try {
-				BufferedWriter out = new BufferedWriter(new FileWriter(
-						"data/recognizer-" + prefix + "-" + type + "-all.csv"));
-				out.write("className,type,fold,recognizer,minPct,precision,recall,f\n");
-				for (int i : pcts) {
-					for (int fold : folds) {
-						Experiments cv = new Experiments(fold);
-
-						Map<String, RecognizerStatistics> map = 
-							cv.recognition(prefix, Recognizer.cave, type, i, true, false);
-						for (String className : map.keySet()) {
-							RecognizerStatistics rs = map.get(className);
-							out.write(className + "," + type + "," + fold
-									+ ",cave," + i + "," + rs.precision() + ","
-									+ rs.recall() + "," + rs.fscore() + "\n");
-						}
-					}
-				}
-				out.close();
-			} catch (Exception e) {
-				e.printStackTrace();
+		Signature s = new Signature("jump-over");
+		Map<Integer,List<Interval>> episodes = Utils.load(new File("data/input/ww3d-jump-over.lisp"));
+		
+		int i = 1;
+		for (Integer eid : episodes.keySet()) { 
+			
+			s.update(SequenceType.allen.getSequence(episodes.get(eid)));
+			if (i % 10 == 0){
+				s = s.prune(3);
+				System.out.println("Pruning");
 			}
+			++i;
 		}
+		
+		s.toXML("data/signatures/jump-over.xml");
+		s = s.prune(25);
+		Set<String> propSet = new TreeSet<String>();
+		for (WeightedObject obj : s.signature()) {
+			propSet.addAll(obj.key().getProps());
+		}
+		List<String> props = new ArrayList<String>(propSet);
+		List<List<Interval>> all = BitPatternGeneration.getBPPs(null, s.table(), propSet);
+
+		DirectedGraph<BPPNode, Edge> graph = FSMFactory.makeGraph(props, all, false);
+		FSMFactory.toDot(graph, "data/graph/tmp.dot");
+		
+		
+//		List<String> classes = new ArrayList<String>();
+//		classes.add("jump-on");
+//		classes.add("jump-over");
+//		classes.add("left");
+//		classes.add("right");
+//		classes.add("push");
+//		classes.add("approach");
+//
+//		int[] folds = { 2, 6, 10 };
+//		int[] pcts = { 80 };
+//		for (SequenceType type : SequenceType.get("all")) {
+//			String prefix = "ww2d";
+//			try {
+//				BufferedWriter out = new BufferedWriter(new FileWriter(
+//						"data/recognizer-" + prefix + "-" + type + "-all.csv"));
+//				out.write("className,type,fold,recognizer,minPct,precision,recall,f\n");
+//				for (int i : pcts) {
+//					for (int fold : folds) {
+//						Experiments cv = new Experiments(fold);
+//
+//						Map<String, RecognizerStatistics> map = 
+//							cv.recognition(prefix, Recognizer.cave, type, i, true, false);
+//						for (String className : map.keySet()) {
+//							RecognizerStatistics rs = map.get(className);
+//							out.write(className + "," + type + "," + fold
+//									+ ",cave," + i + "," + rs.precision() + ","
+//									+ rs.recall() + "," + rs.fscore() + "\n");
+//						}
+//					}
+//				}
+//				out.close();
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//		}
 	}
 
 	/**

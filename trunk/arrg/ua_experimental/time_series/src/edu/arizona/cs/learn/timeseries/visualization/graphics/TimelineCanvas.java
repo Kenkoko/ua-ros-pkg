@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +19,7 @@ import org.apache.log4j.Logger;
 
 import edu.arizona.cs.learn.algorithm.render.Paint;
 import edu.arizona.cs.learn.timeseries.model.Interval;
-import edu.arizona.cs.learn.timeseries.visualization.DataController;
+import edu.arizona.cs.learn.timeseries.visualization.Controller;
 import edu.arizona.cs.learn.timeseries.visualization.graphics.color.TimelineColor;
 import edu.arizona.cs.learn.timeseries.visualization.model.DataModel;
 
@@ -49,8 +50,9 @@ public class TimelineCanvas extends JPanel implements DataComponent, ScrollableP
 	private Stroke   _highlightStroke = null;
 	private Interval _selected = null;
 
-	public TimelineCanvas(DataController dc, String name, TimelineColor tc, boolean compressed) {
-		dc.add(name, this);
+	public TimelineCanvas(Controller dc, TimelineColor tc, boolean compressed) {
+		if (dc != null)
+			dc.add(this);
 		_colorModel = tc;
 		_compressed = compressed;
 		
@@ -272,6 +274,12 @@ public class TimelineCanvas extends JPanel implements DataComponent, ScrollableP
 	}
 
 	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void modelSelected(File file) {
 		// TODO Auto-generated method stub
 		
 	}

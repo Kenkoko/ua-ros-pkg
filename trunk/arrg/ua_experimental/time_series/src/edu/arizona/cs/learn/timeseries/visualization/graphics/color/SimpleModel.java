@@ -1,6 +1,7 @@
 package edu.arizona.cs.learn.timeseries.visualization.graphics.color;
 
 import java.awt.Color;
+import java.io.File;
 
 import edu.arizona.cs.learn.timeseries.visualization.model.DataModel;
 
@@ -32,6 +33,12 @@ public class SimpleModel implements TimelineColor {
 	}
 
 	public void repaint() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void modelSelected(File file) {
 		// TODO Auto-generated method stub
 		
 	}

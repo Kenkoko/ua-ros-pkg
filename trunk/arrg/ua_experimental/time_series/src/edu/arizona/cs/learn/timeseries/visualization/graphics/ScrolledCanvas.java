@@ -3,6 +3,7 @@ package edu.arizona.cs.learn.timeseries.visualization.graphics;
 import java.awt.BorderLayout;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,7 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 
 import edu.arizona.cs.learn.timeseries.model.Interval;
-import edu.arizona.cs.learn.timeseries.visualization.DataController;
+import edu.arizona.cs.learn.timeseries.visualization.Controller;
 import edu.arizona.cs.learn.timeseries.visualization.model.DataModel;
 
 public class ScrolledCanvas extends JPanel implements DataComponent {
@@ -31,8 +32,9 @@ public class ScrolledCanvas extends JPanel implements DataComponent {
 	private DataModel _model;
 	private boolean _compressed;
 	
-	public ScrolledCanvas(DataController dc, String name, JPanel panel, boolean compressed) { 
-		dc.add(name, this);
+	public ScrolledCanvas(Controller dc, JPanel panel, boolean compressed) { 
+		if (dc != null)
+			dc.add(this);
 		_panel = panel;
 		_compressed = compressed;
 		_panels = new ArrayList<ScrollablePanel>();
@@ -113,6 +115,12 @@ public class ScrolledCanvas extends JPanel implements DataComponent {
 	}
 
 	public void receiveMessage(String message) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void modelSelected(File file) {
 		// TODO Auto-generated method stub
 		
 	}

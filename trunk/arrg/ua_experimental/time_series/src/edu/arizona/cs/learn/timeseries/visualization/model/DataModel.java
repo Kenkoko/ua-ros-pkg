@@ -75,6 +75,15 @@ public class DataModel {
 	}
 	
 	/**
+	 * Retrieve the episode with the given id
+	 * @param id
+	 * @return
+	 */
+	public Episode getEpisode(int id) { 
+		return _episodes.get(id);
+	}
+	
+	/**
 	 * Get the episodes found inside of this
 	 * world.
 	 * @return

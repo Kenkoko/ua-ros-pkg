@@ -1,6 +1,7 @@
 package edu.arizona.cs.learn.timeseries.visualization.graphics.color;
 
 import java.awt.Color;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,6 +48,9 @@ public class HeatModel implements TimelineColor {
 		if (_model == null)
 			return Color.lightGray;
 		
+		if (_model.signature() == null)
+			return Color.red;
+		
 		logger.debug("Model: " + _model);
 		logger.debug(" Episode: " + _model.episode() + " index: " + i);
 		String name = _model.episode().get(i).toString();
@@ -69,6 +73,12 @@ public class HeatModel implements TimelineColor {
 	}
 
 	public void repaint() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void modelSelected(File file) {
 		// TODO Auto-generated method stub
 		
 	}
