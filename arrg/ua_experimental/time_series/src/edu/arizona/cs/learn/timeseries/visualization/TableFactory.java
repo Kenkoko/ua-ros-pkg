@@ -173,7 +173,7 @@ public class TableFactory {
 				if (row[j] == null) {
 					buf.append(" &  ");
 				} else {
-					buf.append(" & " + row[j].getKey() + " ");
+					buf.append(" & " + row[j].latex() + " ");
 
 					totals[j] += 1;
 				}

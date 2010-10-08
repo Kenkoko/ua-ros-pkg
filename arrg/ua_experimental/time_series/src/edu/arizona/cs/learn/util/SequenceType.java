@@ -106,7 +106,7 @@ public enum SequenceType {
 					Interval i2 = intervals.get(j);
 					
 					if (!Utils.LIMIT_RELATIONS || i2.start - i1.end < Utils.WINDOW) { // or 5 for most things....
-						String relation = AllenRelation.forward(i1, i2);
+						String relation = AllenRelation.get(i1, i2);
 						AllenRelation allen = new AllenRelation(relation, i1, i2);
 						WeightedObject obj = new WeightedObject(allen, 1);
 						

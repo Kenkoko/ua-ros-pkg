@@ -14,13 +14,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -50,62 +43,17 @@ import edu.arizona.cs.learn.timeseries.visualization.graphics.color.SimpleModel;
 import edu.arizona.cs.learn.timeseries.visualization.model.DataModel;
 import edu.arizona.cs.learn.util.graphics.GBC;
 
-public class DataController {
+public class DataController extends Controller {
     private static Logger logger = Logger.getLogger(DataController.class);
-	protected String fileName = ".msa.properties";
-	protected Properties _properties;
-
-	protected DataModel _dataModel;
 	protected JFrame    _dataFrame;
 	
-	private boolean _loadingModel = false;
+	boolean _loadingModel = false;
 	
 	protected DefaultComboBoxModel _episodes;
 	protected JTextArea            _sequenceText;
 		
-	protected Map<String,DataComponent> _listeners;
-	
 	public DataController() {
-		_listeners = new TreeMap<String,DataComponent>();
-		
 		loadProperties();
-	}
-	
-	/**
-	 * Load the properties into our properties object.
-	 */
-	protected void loadProperties() {
-        FileInputStream fin = null;
-    	_properties = new Properties();
-        try {
-            fin = new FileInputStream(fileName);
-            _properties.load(fin);
-            fin.close();
-        } catch (Exception e) {
-        	System.out.println("Properties don't exist, will create after first save");
-        }
-	}
-	
-	/**
-	 * Save the properties with the new path.
-	 * @param newPath
-	 */
-	public void saveProps() {
-        FileOutputStream fout;
-        try {
-            fout = new FileOutputStream(fileName);
-            _properties.store(fout, "Properties");
-            fout.close();
-        } catch (IOException e) {
-            System.out.println("Could not save properties: " + e.toString());
-        }
-	}	
-	
-	public void saveDirectory(String name, String path) {
-		int fileStart = path.lastIndexOf(File.separator);
-		String directory = path .substring(0, fileStart);
-		_properties.setProperty(name, directory);
-		saveProps();
 	}
 	
 	/**
@@ -115,20 +63,20 @@ public class DataController {
 	public void setModel(DataModel model) { 
 		_loadingModel = true;
 		_dataModel = model;
-
+	
 		_episodes.removeAllElements();
 		for (Episode e : _dataModel.episodes()) { 
 			_episodes.addElement(e.id());
 		}
 		
-		for (DataComponent dc : _listeners.values()) { 
+		for (DataComponent dc : _listeners) { 
 			dc.modelChanged(_dataModel);
 		}
 		_loadingModel = false;
 	}
 	
 	public void sendEpisodeChanged() { 
-		for (DataComponent dc : _listeners.values()) { 
+		for (DataComponent dc : _listeners) { 
 			dc.episodeChanged();
 		}
 	}
@@ -145,14 +93,8 @@ public class DataController {
 		_sequenceText.setText(buf.toString());
 	}
 	
-	public void sendMessage(String message) { 
-		for (DataComponent dc : _listeners.values()) { 
-			dc.receiveMessage(message);
-		}
-	}
-	
 	public void redraw() { 
-		for (DataComponent dc : _listeners.values()) { 
+		for (DataComponent dc : _listeners) { 
 			dc.repaint();
 		}
 	}
@@ -213,13 +155,13 @@ public class DataController {
 
 		splitTop.add(topPanel, GBC.makeGBC(0, 0, BOTH, 1, 0));
 		
-		TimelineCanvas bpCanvas = new TimelineCanvas(this, "bp", new SimpleModel(), true);
-		TimelineCanvas canvas = new TimelineCanvas(this, "canvas", new SimpleModel(), false);
+		TimelineCanvas bpCanvas = new TimelineCanvas(this, new SimpleModel(), true);
+		TimelineCanvas canvas = new TimelineCanvas(this, new SimpleModel(), false);
 
-		ScrolledCanvas sc1 = new ScrolledCanvas(this, "sc1", canvas, false);
+		ScrolledCanvas sc1 = new ScrolledCanvas(this, canvas, false);
 		sc1.addPanel(canvas);
 
-		ScrolledCanvas sc2 = new ScrolledCanvas(this, "sc2", bpCanvas, false);
+		ScrolledCanvas sc2 = new ScrolledCanvas(this, bpCanvas, false);
 		sc2.addPanel(bpCanvas);
 		
 		_sequenceText = new JTextArea();
@@ -392,8 +334,8 @@ public class DataController {
 		
 		content.add(splitPane, GBC.makeGBC(0, 0, BOTH, 1, 1));
 		
-		TimelineCanvas heat1Canvas = new TimelineCanvas(this, "heat1", new HeatModel(), true);
-		TimelineCanvas heat2Canvas = new TimelineCanvas(this, "heat2", new HeatRelativeModel(), true);
+		TimelineCanvas heat1Canvas = new TimelineCanvas(this, new HeatModel(), true);
+		TimelineCanvas heat2Canvas = new TimelineCanvas(this, new HeatRelativeModel(), true);
 		
 		heat2Canvas.setHighlightSelected(true);
 
@@ -403,7 +345,7 @@ public class DataController {
 		panel.add(heat1Canvas, GBC.makeGBC(0, 0, BOTH, insets, 1, 1));
 		panel.add(heat2Canvas, GBC.makeGBC(0, 1, BOTH, insets, 1, 1));
 		
-		ScrolledCanvas sc3 = new ScrolledCanvas(this, "sc3", panel, true);
+		ScrolledCanvas sc3 = new ScrolledCanvas(this, panel, true);
 		sc3.addPanel(heat1Canvas);
 		sc3.addPanel(heat2Canvas);
 		
@@ -416,23 +358,6 @@ public class DataController {
 		});
 		
 		_dataFrame.setVisible(true);
-	}
-	
-	public void add(DataComponent component) {
-		_listeners.put(component.getClass().getName(), component);
-	}
-	
-	public void add(String name, DataComponent component) {
-		//System.out.println("Adding: " + name + " " + component);
-		_listeners.put(name, component);
-	}
-	
-	public DataComponent get(String name) {
-		DataComponent dc = _listeners.get(name);
-		if (dc == null) {
-			System.err.println("[getComponent] unknown component: " + name);
-		}
-		return dc;
 	}
 	
 	public static void main(String[] args) {

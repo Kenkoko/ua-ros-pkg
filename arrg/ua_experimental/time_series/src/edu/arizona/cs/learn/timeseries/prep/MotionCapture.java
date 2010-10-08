@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.util.Utils;
@@ -72,23 +75,23 @@ public class MotionCapture {
 			future.add(execute.submit(mc));
 		}
 		
-		classMap = new HashMap<String,List<Integer>>();
-		classMap.put("jump", new ArrayList<Integer>());
-		classMap.put("walk", new ArrayList<Integer>());
-		
-		for (int i = 1; i <= 36; ++i) 
-			classMap.get("walk").add(i);
-		classMap.get("walk").add(57);
-		classMap.get("walk").add(62);
-		for (int i = 37; i <= 57; ++i) 
-			classMap.get("jump").add(i);
-		for (int i = 58; i <= 61; ++i) 
-			classMap.get("jump").add(i);
-		
-		for (String className : classMap.keySet()) {
-			MultiCallable mc = new MultiCallable(91, className, classMap.get(className));
-			future.add(execute.submit(mc));
-		}
+//		classMap = new HashMap<String,List<Integer>>();
+//		classMap.put("jump", new ArrayList<Integer>());
+//		classMap.put("walk", new ArrayList<Integer>());
+//		
+//		for (int i = 1; i <= 36; ++i) 
+//			classMap.get("walk").add(i);
+//		classMap.get("walk").add(57);
+//		classMap.get("walk").add(62);
+//		for (int i = 37; i <= 57; ++i) 
+//			classMap.get("jump").add(i);
+//		for (int i = 58; i <= 61; ++i) 
+//			classMap.get("jump").add(i);
+//		
+//		for (String className : classMap.keySet()) {
+//			MultiCallable mc = new MultiCallable(91, className, classMap.get(className));
+//			future.add(execute.submit(mc));
+//		}
 
 		for (Future<Object> results : future) {
 			try {
@@ -107,6 +110,7 @@ public class MotionCapture {
 	
 	public static void doit(int subjectId, String className, List<Integer> ids) {
 		List<List<Interval>> episodes = new ArrayList<List<Interval>>();
+		SummaryStatistics ss = new SummaryStatistics();
 		for (Integer id : ids) { 
 			Map<String,List<Double>> map = loadEpisode(subjectId, className, id);
 
@@ -115,22 +119,31 @@ public class MotionCapture {
 				String key = entry.getKey();
 				List<Double> column = entry.getValue();
 
+				List<Double> column2 = TimeSeries.standardize(column);
+				List<Double> breakpoints = Arrays.asList(-2.0, -0.5, 0.5, 2.0);
+				List<String> classes = Arrays.asList("steep-down", "down", "stable", "up", "steep-up");
+
+				List<String> regression = TimeSeries.regression(column2, breakpoints, classes);
+				intervals.addAll(TimeSeries.toIntervals(key, regression));
+
 				// Now for each variable, we first smooth it.  
 				column = TimeSeries.linearFilter(column, 10);
 				column = TimeSeries.standardize(column);
 
-//				List<String> sax = TimeSeries.sax(column, 6);
-//				intervals.addAll(TimeSeries.toIntervals(key, sax));
-//
+				List<String> sax = TimeSeries.sax(column, 5);
+				intervals.addAll(TimeSeries.toIntervals(key, sax));
+
+//				List<Double> breakpoints = Arrays.asList(-0.0025, 0.0025);
+//				List<String> classes = Arrays.asList("down", "stable", "up");
 //				List<Double> delta = TimeSeries.diff(column);
-//				List<String> sdl = TimeSeries.sdl(delta, 0.0025);
+//				List<String> sdl = TimeSeries.sdl(delta, breakpoints, classes);
 //				intervals.addAll(TimeSeries.toIntervals(key, sdl));
 
-				List<String> regression = TimeSeries.regression(column);
-				intervals.addAll(TimeSeries.toIntervals(key, regression));
 			}
 			episodes.add(intervals);
+			ss.addValue(intervals.size());
 		}
+		System.out.println("Average size: " + ss.getMean() + " " + ss.getStandardDeviation());
 		Utils.writeEpsiodes("data/input/mocap-" + subjectId + "-" + className + ".lisp", episodes);
 	}
 	

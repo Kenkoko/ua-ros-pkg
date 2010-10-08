@@ -8,6 +8,7 @@ import edu.arizona.cs.learn.algorithm.alignment.Report;
 import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
+import edu.arizona.cs.learn.timeseries.model.AllenRelation;
 import edu.arizona.cs.learn.timeseries.model.Event;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
@@ -30,12 +31,71 @@ public class SignatureExample {
 
 	public static void main(String[] args) {
 		init();
-
-		printSignature();
+//		makeMultipleSequenceAlignmentTable();
+//		if (true) return;
+		
+		AllenRelation.text = AllenRelation.fullText;
+		Map<String,List<Instance>> map = Utils.load("chpt1", SequenceType.allen);
+		List<Instance> list = map.get("chpt1-approach");
+		Signature s = new Signature("chpt1-approach");
+		for (int i = 1; i < list.size(); i++) {
+			
+			
+			s.update(list.get(i).sequence());
+		}
+		s = s.prune(2);
+		s.toXML("data/signatures/chpt1-approach.xml");
+		latexPrintSignature("data/signatures/chpt1-approach.xml");
+		
+		Params params = new Params();
+		params.seq1 = s.signature();
+		params.seq2 = list.get(0).sequence();
+		params.setMin(0, 0);
+		params.setBonus(1.0D, 0.0D);
+		params.setPenalty(-1.0D, 0.0D);
+		Report report = SequenceAlignment.align(params);
+		List<WeightedObject> results = SequenceAlignment.combineAlignments(report.results1, report.results2);
+		for (int i = 0; i < report.results1.size(); ++i) { 
+			StringBuffer buf = new StringBuffer();
+			WeightedObject obj1 = report.results1.get(i);
+			WeightedObject obj2 = report.results2.get(i);
+			if (obj1 == null)  
+				buf.append("$-$");
+			else {
+				AllenRelation ar = (AllenRelation) obj1.key();
+				buf.append("\\ar{" + ar.prop1() + "}{" + ar.relation() + "}{" + ar.prop2() + "}");
+			}
+			buf.append(" & ");
+			
+			if (obj2 == null)
+				buf.append("$-$");
+			else {
+				AllenRelation ar = (AllenRelation) obj2.key();
+				buf.append("\\ar{" + ar.prop1() + "}{" + ar.relation() + "}{" + ar.prop2() + "}");
+			}
+			buf.append(" & ");
+			
+			WeightedObject result = results.get(i);
+			AllenRelation ar = (AllenRelation) result.key();
+			buf.append("\\ar{" + ar.prop1() + "}{" + ar.relation() + "}{" + ar.prop2() + "} & " + (int) result.weight());
+			System.out.println(buf.toString() + " \\\\");
+		}
+		
+//		printSignature("data/cross-validation/k6/fold-0/allen/ww2d-ball-prune.xml");
+	}
+	
+	public static void latexPrintSignature(String xml) { 
+		Signature s = Signature.fromXML(xml);
+		for (WeightedObject obj : s.signature()) { 
+			// Assumption is the WeightedObject symbol is an
+			// Allen relation
+			AllenRelation ar = (AllenRelation) obj.key();
+			System.out.println("\\ar{" + ar.prop1() + "}{" + ar.relation() + "}{" + ar.prop2() + "} & " + ((int) obj.weight()) + "\\\\");
+		}
 	}
 
-	public static void printSignature() {
-		Signature s1 = Signature.fromXML("data/cross-validation/k6/fold-0/allen/ww2d-ball-prune.xml");
+	public static void printSignature(String xml) {
+		Signature s1 = Signature.fromXML(xml);
 		int minSeen = (int) Math.round(s1.trainingSize() * 0.8D);
 		s1 = s1.prune(minSeen);
 
@@ -109,7 +169,7 @@ public class SignatureExample {
 	}
 
 	public static void makeMultipleSequenceAlignmentTable() {
-		Map<String,List<Instance>> map = Utils.load("chpt1-", SequenceType.starts);
+		Map<String,List<Instance>> map = Utils.load("chpt1-", SequenceType.allen);
 
 		for (String key : map.keySet()) {
 			List<Instance> list = map.get(key);
@@ -118,6 +178,7 @@ public class SignatureExample {
 			for (int i = 0; i < list.size(); i++) {
 				s.update(((Instance) list.get(i)).sequence());
 			}
+			s = s.prune(2);
 			System.out.println(TableFactory.toLatex(s.table()));
 		}
 	}

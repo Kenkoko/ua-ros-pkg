@@ -55,8 +55,16 @@ public class AllenRelation extends Symbol {
 		return _prop2;
 	}
 	
+	public String relation() { 
+		return _relation;
+	}
+	
 	public String toString() { 
 		return _key;
+	}
+	
+	public String latex() { 
+		return "\\ar{" + _prop1 + "}{" + _relation + "}{" + _prop2 + "} [$\\cdot$]";
 	}
 	
 	public Interval interval1() { 
@@ -79,6 +87,12 @@ public class AllenRelation extends Symbol {
 		return _key.equals(r._key);
 	}
 	
+	/**
+	 * Called when Interval i1 finishes 
+	 * @param i1
+	 * @param i2
+	 * @return
+	 */
 	public static String forward(Interval i1, Interval i2) { 
 		if (i1.start == i2.start && i1.end == i2.end)
 			return text[0];
@@ -104,6 +118,13 @@ public class AllenRelation extends Symbol {
 				i1.toString() + "\n  " + i2.toString());	
 	}
 	
+	/**
+	 * Assumptions made when calling this function....
+	 *   Interval i1 ends before or at the same time as Interval i2.
+	 * @param i1
+	 * @param i2
+	 * @return
+	 */
 	public static String get(Interval i1, Interval i2) {
 		if (i1.start == i2.start && i1.end == i2.end)
 			return text[0];

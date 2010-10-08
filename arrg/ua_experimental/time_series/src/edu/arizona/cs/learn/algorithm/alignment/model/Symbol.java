@@ -32,6 +32,10 @@ public class Symbol {
 	public String toString() { 
 		return _name;
 	}
+	
+	public String latex() { 
+		throw new RuntimeException("Latex is not defined for base class Symbol");
+	}
 
 	public List<String> getProps() {
 		throw new RuntimeException("No propositions associated with a base class Symbol");

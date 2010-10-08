@@ -14,9 +14,43 @@ import edu.arizona.cs.learn.util.Utils;
 
 public class DatasetsInfo {
 	public static void main(String[] args) {
-		makeLatexTable3("vowel");
+//		makeLatexTable3("vowel");
+		getStats("niall");
 	}
 
+	public static void getStats(String prefix) { 
+		for (File f : new File("data/input/").listFiles())
+			if ((f.getName().startsWith(prefix))
+					&& (f.getName().endsWith("lisp"))) {
+				String name = f.getName();
+				String className = name.substring(0, name.indexOf(".lisp"));
+				Map<Integer,List<Interval>> map = Utils.load(f);
+
+				System.out.println("[" + prefix + "] " + className + " " + map.size());
+
+				SummaryStatistics numSteps = new SummaryStatistics();
+				SummaryStatistics intervalSize = new SummaryStatistics();
+				SummaryStatistics sequenceSize = new SummaryStatistics();
+				
+				for (List<Interval> list : map.values()) {
+					int minStart = Integer.MAX_VALUE;
+					int maxEnd = 0;
+
+					for (Interval interval : list) {
+						minStart = Math.min(minStart, interval.start);
+						maxEnd = Math.max(maxEnd, interval.end);
+					}
+					numSteps.addValue(maxEnd - minStart);
+					intervalSize.addValue(list.size());
+					sequenceSize.addValue(SequenceType.allen.getSequenceSize(list));
+					System.gc();
+				}
+				System.out.println(" Steps: " + numSteps.getMean());
+				System.out.println(" Intervals: " + intervalSize.getMean());
+				System.out.println(" Sequence: " + sequenceSize.getMean());
+			}
+	}
+	
 	public static void datasetsInfo() {
 		String[] prefixes = { "ww3d", "wes", "nicole", "derek", "vowel",
 				"auslan", "wafer", "ecg", "ww2d" };
