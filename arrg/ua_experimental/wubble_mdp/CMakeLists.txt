@@ -16,5 +16,21 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_genmsg()
-rosbuild_gensrv()
+#rosbuild_genmsg()
+#rosbuild_gensrv()
+
+rosbuild_add_boost_directories()
+include_directories(src)
+
+rosbuild_add_library (wubble_mdp
+					  src/wubble_mdp/entity.cpp
+                      src/wubble_mdp/robot.cpp
+                      src/wubble_mdp/location.cpp
+                      src/wubble_mdp/object.cpp
+                      src/wubble_mdp/relations.cpp
+                      src/wubble_mdp/environment.cpp
+                     )
+
+rosbuild_add_executable(environment_node src/environment_node.cpp)
+target_link_libraries(environment_node wubble_mdp)
+
