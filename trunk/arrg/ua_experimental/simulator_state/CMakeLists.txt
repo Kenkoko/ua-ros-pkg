@@ -11,5 +11,6 @@ rosbuild_gensrv()
 
 rosbuild_add_boost_directories()
 
-rosbuild_add_library(world_state_publisher src/world_state_publisher.cpp)
+rosbuild_add_library(world_state_publisher src/world_state_publisher.cpp
+										   src/state_utils.cpp)
 rosbuild_link_boost(world_state_publisher thread)

@@ -2,7 +2,7 @@
 
     <description brief="simulator_state">
 
-     Gazebo plugins for publishing the simulation state with relations.
+    Gazebo plugins for publishing the simulation state with relations.
 
     </description>
 
@@ -14,8 +14,9 @@
     <depend package="roscpp"/>
 
     <depend package="std_msgs"/>
-    <depend package="geometry_msgs"/>
     <depend package="std_srvs"/>
+    <depend package="geometry_msgs"/>
+    <depend package="oomdp_msgs"/>
     
     <depend package="gazebo"/>
     <depend package="gazebo_tools"/>
@@ -24,9 +25,8 @@
     <depend package="bullet"/>
 
     <export>
+        <cpp cflags="-I${prefix}/msg/cpp"/>
         <gazebo plugin_path="${prefix}/lib" />
     </export>
 
 </package>
-
-
