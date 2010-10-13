@@ -1,4 +1,0 @@
-string verb
-string[] relations
----
-float64 reward
