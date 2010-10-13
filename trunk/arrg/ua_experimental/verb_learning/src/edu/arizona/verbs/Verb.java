@@ -2,13 +2,20 @@ package edu.arizona.verbs;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
+
+import ros.pkg.oomdp_msgs.msg.MDPState;
+import ros.pkg.verb_learning.msg.Policy;
+
+import com.google.common.collect.HashBiMap;
 
 import edu.arizona.cs.learn.algorithm.alignment.Params;
 import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
@@ -20,18 +27,28 @@ import edu.arizona.cs.learn.timeseries.experiment.BitPatternGeneration;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.util.graph.Edge;
+import edu.arizona.environment.Environment;
+import edu.arizona.planning.RTDP;
 import edu.arizona.planning.fsm.VerbDFA;
+import edu.arizona.planning.mdp.OOMDPState;
 import edu.uci.ics.jung.graph.DirectedGraph;
 
 public class Verb {
 	private static Logger logger = Logger.getLogger(Verb.class);
 	
 	private String lexicalForm_;
+	private List<String> arguments_; // TODO: Get these from the teaching code
 	private Signature signature_ = null;
 	private VerbDFA dfa_ = null;
 	
 	public Verb(String word) {
 		lexicalForm_ = word;
+		makeVerbFolder();
+	}
+	
+	public Verb(String word, String[] arguments) {
+		lexicalForm_ = word;
+		arguments_ = Arrays.asList(arguments);
 		makeVerbFolder();
 	}
 	
@@ -113,6 +130,19 @@ public class Verb {
 	public double updateFSM(Set<String> activeProps) {
 		logger.debug("Updating FSM State...");
 		return dfa_.update(activeProps);
+	}
+	
+	// argumentMap maps the concrete names to the specific ones
+	public Policy planVerb(MDPState startState, Map<String, String> argumentMap) {
+		OOMDPState properStart = new OOMDPState(startState);
+		// We will plan with the general names since that's what our verb FSM contains
+		OOMDPState remappedStart = OOMDPState.remapState(properStart, argumentMap);
+		
+		RTDP planner = new RTDP(this, Environment.getInstance(), remappedStart);
+		planner.runAlgorithm();
+		
+		HashBiMap<String,String> biMap = HashBiMap.create(argumentMap); // Fingers crossed
+		return planner.recoverPolicy(biMap.inverse());
 	}
 	
 	public void resetRecognizer() {
