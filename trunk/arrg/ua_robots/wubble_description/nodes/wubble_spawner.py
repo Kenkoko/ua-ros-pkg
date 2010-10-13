@@ -41,6 +41,7 @@ from geometry_msgs.msg import Quaternion
 from wubble_description.srv import *
 from gazebo.srv import *
 from pr2_mechanism_msgs.srv import *
+from std_srvs.srv import *
 
 class WubbleSpawner():
 
@@ -48,6 +49,9 @@ class WubbleSpawner():
         rospy.init_node(NAME, anonymous=True)
 
         self.controllers = ['laser_tilt_controller']
+
+        self.pause = switch_controller = rospy.ServiceProxy('gazebo/pause_physics', Empty)
+        self.unpause = switch_controller = rospy.ServiceProxy('gazebo/unpause_physics', Empty)
 
         # Spawn the wubble base model and start all of its controllers
         rospy.Service('spawn_wubble_base', SpawnWubbleBase, self.spawn_wubble_base)
@@ -82,15 +86,21 @@ class WubbleSpawner():
         rospy.wait_for_service('pr2_controller_manager/switch_controller')
         switch_controller = rospy.ServiceProxy('pr2_controller_manager/switch_controller', SwitchController)
     
+        self.unpause()
+
         # For now, just hard-coding the controller names
         # For this to work, the yaml files for the controller have to already be uploaded
         for controller in self.controllers:        
             load_controller(controller)
         switch_controller(self.controllers, [], 2)
 
+        self.pause()
+
         return SpawnWubbleBaseResponse()
 
     def delete_wubble_base(self, request):
+        self.unpause()
+
         # First, stop and then unload the controllers
         rospy.wait_for_service('pr2_controller_manager/unload_controller')
         unload_controller = rospy.ServiceProxy('pr2_controller_manager/unload_controller', LoadController)
@@ -101,6 +111,8 @@ class WubbleSpawner():
         for controller in self.controllers:
             unload_controller(controller)
 
+        self.pause()
+    
         # Now, delete the model
         rospy.wait_for_service('/gazebo/delete_model')
         delete_model = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)

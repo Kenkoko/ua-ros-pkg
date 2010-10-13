@@ -94,3 +94,64 @@
              ((< d -0.005) 'decreasing)
              ((> d 0.005) 'increasing)
              (t 'stable))))
+
+;;================================================================
+;; These were taken from time-series.lisp
+
+#+ignore(defun symbolize-mts (mts)
+  "Converts a multivariate time series into a propositional MTS with SAX"
+  ;(loop for pair in mts do (print pair))
+  (loop for pair in mts
+     for predicate = (first pair)
+     for ts = (second pair)
+     if (numberp (first ts))
+     append (list (list predicate (low-med-high (sax ts)))
+                  (list (format nil "Shape(~a)" predicate) (shape-sdl (delta-ts ts))))
+     else 
+     append (list (list predicate ts))))
+
+#+ignore(defun symbolic-mts-to-pmts (mts)
+  ;(loop for pair in mts do (print pair))
+  (let* ((propositions (loop for pair in mts append (make-propositions (first pair) (second pair))))
+         (series-length (length (second (first mts))))
+         (pmts nil))
+    (loop for p in propositions do (setf pmts (append pmts (list (list p nil)))))
+    (loop for i below series-length
+       for true-props = (loop with true-set = (make-hash-table :test 'equal)
+                           for pair in mts
+                           for pred = (first pair)
+                           for value = (nth i (second pair))
+                           do (setf (gethash (make-proposition pred value) true-set) t)
+                           finally (return true-set))
+       do (loop for j below (length propositions)
+             do (push (gethash (nth j propositions) true-props) (second (nth j pmts)))))
+    (loop for pair in pmts do (setf (second pair) (reverse (second pair))))
+    pmts))
+       
+#+ignore(defun make-proposition (predicate-name value)
+  (format nil "~a=~a" predicate-name value))
+
+#+ignore(defun make-propositions (predicate-name ts)
+  (let* ((value-set (loop with values = (make-hash-table :test 'eq)
+                       for value in ts
+                       unless (or (eq value 'unknown) ;; Effectively treating unknown as negation
+                                  #+ignore(null value))
+                       do (setf (gethash value values) t)
+                       finally (return values))))
+    (loop for value being the hash-keys of value-set 
+       collect (make-proposition predicate-name value))))
+
+#+ignore(defun convert-predicate-to-key-value (predicate &key (name-map nil))
+  (let* ((entities (subseq predicate 1 (- (length predicate) 1)))
+         (value (first (last predicate))))
+    (if name-map
+        (list (format nil "~a(~{~a~^,~})"(first predicate) 
+                      (loop for name in entities 
+                         for new-name = (gethash name name-map)
+                         if new-name collect new-name
+                         else collect name))
+              value)
+        (list (format nil "~a(~{~a~^,~})"(first predicate) entities)
+              value))))
+
+

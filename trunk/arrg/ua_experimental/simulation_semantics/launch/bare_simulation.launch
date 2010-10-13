@@ -7,7 +7,7 @@
 
     <!-- spawn stock gazebo with a slightly customized empty world -->
     <node name="gazebo" pkg="gazebo" type="gazebo" 
-          args="$(find simulation_semantics)/worlds/empty.world" 
+          args="-u $(find simulation_semantics)/worlds/empty.world" 
           respawn="false" output="screen" />
 
     <!-- node with services to spawn the wubble robot base -->

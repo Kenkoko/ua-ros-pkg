@@ -69,6 +69,9 @@ copy is returned by default."
 (defun vec-to-list (vec)
   (loop for x across vec collect x))
 
+(defun boolean-string (value)
+  (if value "true" "false"))
+
 ;;===========================================================
 
 ;; This is taken from the web: http://cl-cookbook.sourceforge.net/strings.html

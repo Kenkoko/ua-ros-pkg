@@ -11,6 +11,9 @@
    (interventions :initform nil))
 )
 
+(defun argument-strings (verb)
+  (mapcar 'string-downcase (argument-structure-of verb)))
+
 (define-unit-class scenario ()
   ((argument-list :initform nil)
    (simulator :initform nil))
@@ -43,8 +46,6 @@
         (scenarios-of *current-verb*)))
   
 (defun simulate-scenarios (&key (verb *current-verb*))
-  (unless *world-state-subscriber*
-    (setf *world-state-subscriber* (subscribe-to-world-state)))
   (loop for scenario in (scenarios-of verb)
      do (run-simulator (simulator-of scenario))))
         
@@ -56,18 +57,36 @@
 (defun blast ()
   (delete-all-instances 'verb 'simulator 'scenario))
          
+
 ;;======================================================================
 ;; Signatures
 
 (defun learn-canonical-signature (&key (verb *current-verb*))
-  (call-service "time_series/find_signature" 'time_series-srv:FindSignature
+  (call-service "verb_learning/find_signature" 'verb_learning-srv:FindSignature
                 :episodes (get-episodes verb)
-                :verb (lexical-form-of verb)))
+                :verb (make-message "verb_learning/VerbDescription"
+                                    :verb (lexical-form-of verb)
+                                    :arguments (ros-list (argument-strings verb)))))
 
-(defun learn-counterfactual-signature (&key (verb *current-verb*))
-  (call-service "time_series/find_signature" 'time_series-srv:FindSignature
-                :episodes (get-intervention-episodes verb)
+(defun update-canonical-signature (episode &key (verb *current-verb*))
+  (call-service "verb_learning/update_signature" 'verb_learning-srv:FindSignature
+                :episodes (list episode)
+                :verb (make-message "verb_learning/VerbDescription"
+                                    :verb (lexical-form-of verb)
+                                    :arguments (ros-list (argument-strings verb)))))
+
+
+
+;; TODO: Fix this function
+#+ignore(defun learn-counterfactual-signature (&key (verb *current-verb*))
+  (call-service "verb_learning/find_signature" 'time_series-srv:FindSignature
+                :episodes (get-intervention-episodes verb) 
                 :verb (concatenate 'string (lexical-form-of verb) "-counterfactual")))
+
+(defun load-verbs ()
+  ;; TODO: This will return the verbs themselves, then we need to create instances for them
+  (call-service "verb_learning/load_verbs" 'verb_learning-srv:LoadVerbs))
+
 
 ;;=====================================================================
 ;; State Machines
@@ -80,7 +99,7 @@
                       do (setf (gethash (gazebo-name-of specific) result) (string-downcase (string general)))
                       finally (return result)))
          (callback (lambda (state)
-                     (let* ((result (call-service "time_series/fsm_update" 'time_series-srv:FSMUpdate
+                     (let* ((result (call-service "verb_learning/fsm_update" 'verb_learning-srv:FSMUpdate
                                                   :verb (lexical-form-of verb)
                                                   :relations (loop for relation in (convert-relations state name-map)
                                                                 when (second relation)
@@ -100,102 +119,6 @@
                               (pmts-to-intervals 
                                (convert-trace-to-pmts trace (name-map-of scenario verb))))
                collect episode)))
-
-
-
-
-;; OLD
-
-(defun test-scenario (&key (scenario *current-scenario*) (verb *current-verb*))
-  ;(clear-preview)
-  (format t "Simulating scenario...~%")
-  (let* ((simn (run-simulator scenario))
-         (verb-arguments (argument-structure-of verb))
-         (possibles (possible-arguments))
-         (name-map (loop with result = (make-hash-table :test 'equal)
-                      for verb-arg in verb-arguments
-                      do (format t "Which is the ~a?~%" (string-capitalize (string verb-arg)))
-                        (list-possible-arguments)
-                        (let* ((index (- (read) 1))
-                               (object (nth index possibles)))
-                          (if (is-instance-of object 'entity)
-                              (setf (gethash (gazebo-name-of object) result) verb-arg)))
-                      finally (return result)))
-         (episode (simulation-to-episode simn name-map)))
-    (format t "Testing episode against canonical signature of ~a~%" (lexical-form-of verb))
-    (format t "Distance: ~a~%" (score-val (test-episode episode (lexical-form-of verb) :min 1)))
-    #+ingore(format t "Testing episode against intervention signature of ~a~%" (lexical-form-of verb))
-    #+ignore(let* ((cf (duplicate scenario (gensym "CFS")))
-           (fake-map (make-hash-table :test 'equal)))
-      (setf (objects-of cf) (make-hash-table :test 'equal))
-      (setf (gethash (fibn 'robot) (objects-of cf)) (gethash (fibn 'robot) (objects-of scenario)))
-      (setf (gethash "robot_description" fake-map) "robot_description")
-      (let* ((cf-simn (run-simulator cf))
-             (cf-episode (other-simulation-to-episode cf-simn)))
-        ;(print cf-episode)
-        (format t "Distance: ~a~%" (score-val (test-episode cf-episode (concatenate 'string
-                                                                                    (lexical-form-of verb)
-                                                                                    "-counterfactual")
-                                                            :min 2)))))))
-
-(defun test-scenario-against-verb (&key (scenario *current-scenario*) (verb (lexical-form-of *current-verb*)))
-  (format t "Simulating scenario...~%")
-  (let* ((simn (run-simulator scenario))
-         (verb-arguments (argument-structure-of verb))
-         (possibles (possible-arguments))
-         (name-map (loop with result = (make-hash-table :test 'equal)
-                      for verb-arg in verb-arguments
-                      do (format t "Which is the ~a?~%" (string-capitalize (string verb-arg)))
-                        (list-possible-arguments)
-                        (let* ((index (- (read) 1))
-                               (object (nth index possibles)))
-                          (if (is-instance-of object 'entity)
-                              (setf (gethash (gazebo-name-of object) result) verb-arg)))
-                      finally (return result)))
-         (episode (simulation-to-episode simn name-map)))
-    (format t "Testing episode against canonical signature of ~a~%" (lexical-form-of verb))
-    (format t "Distance: ~a~%" (score-val (test-episode episode (lexical-form-of verb) :min 2)))))
-
-(defun test-episode (episode verb &key (min 1))
-  (call-service "test_signature" 'time_series-srv:TestSignature
-                :episode episode
-                :verb verb
-                :min min))
-                
-#+ignore(defun get-episodes (verb)
-  (loop for scenario in (scenarios-of verb)
-     append (loop for simulation in (simulations-of (simulator-of scenario))
-               for episode = (simulation-to-episode simulation (name-map-of scenario verb))
-               unless (instance-deleted-p simulation) ;; Hacky
-               collect episode)))
-
-(defun get-intervention-episodes (verb)
-  (loop for intervention in (interventions-of verb)
-     for scenario = (scenario-of intervention)
-     append (loop for simulation in (simulations-of (simulator-of scenario))
-               for episode = (simulation-to-episode simulation (name-map-of scenario verb))
-               unless (instance-deleted-p simulation) ;; Hacky
-               collect episode)))
-
-(defun other-simulation-to-episode (simulation)
-  (intervals-to-episode 
-   (pmts-to-intervals 
-    (symbolic-mts-to-pmts 
-     (symbolize-mts 
-      (world-states-to-mts 
-       (get-states simulation)))))))
-
-(defun simulation-to-episode (simulation name-map)
-  (intervals-to-episode 
-   (pmts-to-intervals 
-    (symbolic-mts-to-pmts 
-     (symbolize-mts 
-      (world-states-to-mts 
-       (get-states simulation) :name-map name-map))))))
-
-
-
-
 
 ;;======================================================================
 ;; Scenario Configuration
@@ -272,6 +195,66 @@
     (remove-from-world (fibn 'goal-marker))
     (format t "This scenario described as: ~a(~{~a~^,~})~%" (lexical-form-of *current-verb*) *current-arguments*)))
 
+
+
+;; TODO: This is for the environment file
+(defun killall () 
+  (loop for model-name across (gazebo-srv:model_names-val 
+                               (call-service "gazebo/get_world_properties" 'gazebo-srv:GetWorldProperties))
+     unless (member model-name '("clock" "gplane" "point_white") :test 'string-equal)
+     do (call-service "gazebo/delete_model" 'gazebo-srv:DeleteModel
+                      :model_name model-name)))
+
+
+
+;; WHOOMP THERE IT IS!
+(defun perform-verb (&key (verb *current-verb*))
+  (loop for scenario in (scenarios-of verb)
+     for i from 1
+     do (format t "Scenario ~d:~%" i)
+       (loop for object in (argument-list-of scenario)
+          for arg in (argument-structure-of verb)
+          do (format t "~a => ~a at ~a~%" 
+                     arg 
+                     (class-name (class-of object))
+                     (if (gethash object (objects-of (simulator-of scenario)))
+                         (gethash object (objects-of (simulator-of scenario)))
+                         (position-of (first (goals-of (simulator-of scenario))))))))
+  (let* ((scenario (nth (- (read) 1) (scenarios-of verb))))
+    (killall)
+    (construct (simulator-of scenario))
+    (let* ((start-state (oomdp_msgs-srv:start_state-val 
+                         (call-service "environment/initialize" 'oomdp_msgs-srv:InitializeEnvironment
+                                       :object_states #())))
+           (plan (verb_learning-srv:plan-val 
+                  (call-service "verb_learning/plan_verb" 'verb_learning-srv:PlanVerb
+                                :verb (make-message "verb_learning/VerbInstance"
+                                                    :verb (lexical-form-of verb)
+                                                    :arguments (ros-list (argument-strings verb))
+                                                    :bindings (ros-list (loop for object in (argument-list-of scenario)
+                                                                           collect (gazebo-name-of object))))
+                                :start_state start-state)))
+           ;(states (verb_learning-msg:states-val plan))
+           (actions (verb_learning-msg:actions-val plan))
+           (new-trace (loop for action across actions 
+                         do (format t "Performing action: ~a~%" action)
+                         collect (oomdp_msgs-srv:new_state-val 
+                                  (call-service "environment/perform_action" 'oomdp_msgs-srv:PerformAction
+                                                :action action)) into trace
+                         finally (return (push start-state trace))))
+           (new-pmts (convert-trace-to-pmts new-trace (name-map-of scenario verb)))
+           (new-episode (intervals-to-episode (pmts-to-intervals new-pmts))))
+      (update-canonical-signature new-episode :verb verb))))
+           
+;; TODO: Need to check states and replan if necessary
+
+  
+
+
+
+
+
+
 ;; TODO: Need to consolidate the argument code
 (defun get-arguments (sim &key (verb *current-verb*))
   (loop with verb-arguments = (argument-structure-of verb)
@@ -299,9 +282,6 @@
      if (is-instance-of obj 'entity) ;; For now, we are just ignoring the goals since their names don't matter
      do (setf (gethash (gazebo-name-of obj) map) arg)
      finally (return map)))
-
-#+ignore(defun forget-simulations ()
-  (delete-all-instances 'simulation))
 
 (defun forget-simulations ()
   (loop for verb in (find-instances-of-class 'verb)

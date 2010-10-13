@@ -28,14 +28,6 @@
                  :termination-time (termination-time-of this)
                  :current-time 0))
 
-;;===========================================================
-;; Simulation class (actually a space class)
-
-(define-space-class simulation ()
-  ((simulator :initform nil)
-   (success :initform nil))
-)
-
 ;;=========================================================
 ;; Simulator Class Methods
 
@@ -62,7 +54,10 @@
 
   ;; TODO: Need to look at new signature
   (loop with delay = 0.1
-     with curr-state = (wubble_mdp-srv:state-val (call-service "environment/get_state" 'wubble_mdp-srv:GetState))
+     with curr-state = (oomdp_msgs-srv:start_state-val 
+                        (call-service "environment/initialize" 'oomdp_msgs-srv:InitializeEnvironment
+                                      :object_states #()))
+                                     ;; TODO: Later will need to specify the args
      with state-history = (list curr-state)
      until (should-terminate? sim curr-state)
      do (format t "~%~%Sim Time ~,3f:~%" (- (current-time-of sim) (start-time-of sim))) 
@@ -162,8 +157,9 @@
 ;; Always moves forward, returns the resulting state
 ;; TODO: Probably should make a policies file
 (defun forward-policy ()
-  (wubble_mdp-srv:state-val (call-service "environment/perform_action" 'wubble_mdp-srv:PerformAction
-                           :action "forward")))
+  (oomdp_msgs-srv:new_state-val (call-service "environment/perform_action" 
+                                          'oomdp_msgs-srv:PerformAction
+                                          :action "forward")))
 
 
 

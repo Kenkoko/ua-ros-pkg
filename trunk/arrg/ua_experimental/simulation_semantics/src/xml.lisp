@@ -11,6 +11,7 @@
 (parse-xml-file 
  (concatenate 'string (get-object-path) "blue_box.xml"))
 
+;; But do we really need this?
 (parse-xml-file 
  (concatenate 'string (get-object-path) "blue_sphere.xml"))
 
@@ -18,7 +19,3 @@
   (print-xml-string (parse-xml-file
                      (concatenate 'string (get-object-path) "point.xml"))
                     :pretty t))
-
-;(defparameter *robot-xml* 
-;  (parse-xml-file 
-;   (concatenate 'string (get-object-path) "robot.xml")))

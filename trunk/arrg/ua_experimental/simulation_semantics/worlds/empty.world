@@ -97,7 +97,7 @@
     <controller:world_state_publisher name="world_state_publisher" plugin="libworld_state_publisher.so">
         <alwaysOn>true</alwaysOn>
         <topicName>gazebo_world_state</topicName>
-        <updateRate>10.0</updateRate>
+        <updateRate>100.0</updateRate> <!-- No reason to limit this anymore -->
         <interface:audio name="world_state_dummy_iface" />
     </controller:world_state_publisher>
   </model:physical>

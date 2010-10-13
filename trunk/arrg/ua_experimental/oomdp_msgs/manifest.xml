@@ -1,0 +1,16 @@
+<package>
+  <description brief="oomdp_msgs">
+
+     Standard messages for communication with OO-MDP enviroments. 
+
+  </description>
+  <author>Daniel Hewlett</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/oomdp_msgs</url>
+
+  <depend package="std_msgs"/>
+
+</package>
+
+
