@@ -37,7 +37,7 @@ public class Verb {
 	private static Logger logger = Logger.getLogger(Verb.class);
 	
 	private String lexicalForm_;
-	private List<String> arguments_; // TODO: Get these from the teaching code
+	private List<String> arguments_;
 	private Signature signature_ = null;
 	private VerbDFA dfa_ = null;
 	
