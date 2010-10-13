@@ -18,14 +18,13 @@ import ros.Ros;
 import ros.RosException;
 import ros.ServiceServer;
 import ros.pkg.time_series.msg.Episode;
-import ros.pkg.time_series.srv.ConstrainVerb;
 import ros.pkg.time_series.srv.Empty;
-import ros.pkg.time_series.srv.FSMReset;
-import ros.pkg.time_series.srv.FSMUpdate;
-import ros.pkg.time_series.srv.FindSignature;
-import ros.pkg.time_series.srv.TestSignature;
 import ros.pkg.time_series.srv.Empty.Request;
 import ros.pkg.time_series.srv.Empty.Response;
+import ros.pkg.verb_learning.srv.ConstrainVerb;
+import ros.pkg.verb_learning.srv.FSMUpdate;
+import ros.pkg.verb_learning.srv.FindSignature;
+import ros.pkg.verb_learning.srv.PlanVerb;
 import edu.arizona.cs.learn.algorithm.alignment.factory.SequenceFactory;
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.algorithm.heatmap.HeatmapImage;
@@ -94,9 +93,10 @@ public class SimulationInterface {
 	 */
 	public static void main(String[] args) throws RosException {
 		final Ros ros = Ros.getInstance();
-		ros.init("time_series_node");
+		ros.init("verb_learning");
 		NodeHandle nh = ros.createNodeHandle();
 
+		
 		// FindSignature service which creates a signature from a set of episodes
 		// and stores it in a file (currently does not prune or otherwise alter the signature)
 		ServiceServer.Callback<FindSignature.Request, FindSignature.Response> scb = 
@@ -106,45 +106,75 @@ public class SimulationInterface {
 				logger.debug("BEGIN find_signature callback...");
 
 				logger.debug("Received " + request.episodes.length + " episodes for <" + request.verb + ">");
-				List<Instance> instances = getSequences(request.episodes, request.verb);
-				if (verbs.containsKey(request.verb)) {
-					logger.info("Overwriting old data for verb: " + request.verb);
+				List<Instance> instances = getSequences(request.episodes, request.verb.verb);
+				if (verbs.containsKey(request.verb.verb)) {
+					logger.info("Overwriting old data for verb: " + request.verb.verb);
 				} 
-				Verb verb = new Verb(request.verb);
+				Verb verb = new Verb(request.verb.verb, request.verb.arguments);
 				verb.generalizeInstances(instances);
-				verbs.put(request.verb, verb);
+				verbs.put(request.verb.verb, verb);
 				
 				logger.debug("... END find_signature callback.");
 				return res;
 			}
 		};
 		ServiceServer<FindSignature.Request, FindSignature.Response, FindSignature> findService = 
-			nh.advertiseService("time_series/find_signature", new FindSignature(), scb);
+			nh.advertiseService("verb_learning/find_signature", new FindSignature(), scb);
 		logger.info("Advertised service: " + findService.getService());
 		
-		// TestSignature service which tests an episode against a signature, and returns the distance
-		ServiceServer.Callback<TestSignature.Request, TestSignature.Response> testCallback =
-		new ServiceServer.Callback<TestSignature.Request, TestSignature.Response>() {
-			@Override
-			public TestSignature.Response call(TestSignature.Request request) {
-				TestSignature.Response response = new TestSignature.Response();
+		
+		/* UPDATE SIGNATURE */
+		ServiceServer.Callback<FindSignature.Request, FindSignature.Response> updateSigCallback = 
+			new ServiceServer.Callback<FindSignature.Request, FindSignature.Response>() {
+				public FindSignature.Response call(FindSignature.Request request) {
+					FindSignature.Response res = new FindSignature.Response();
+					logger.debug("BEGIN update_signature callback...");
 
-				Verb verb = verbs.get(request.verb);
-				List<Interval> intervals = getIntervals(request.episode);
-				
-				logger.debug("Generating Heatmap...");
-				makeHeatmap(verb, intervals, request.min);
-				
-				Instance inst = getInstance(request.episode, "test", 0);
-				double alignmentScore = verb.testInstance(inst, request.min);
-				logger.debug("Alignment Score: " + alignmentScore);
-				
-				return response;
-			}
-		};
-		ServiceServer<TestSignature.Request, TestSignature.Response, TestSignature> testService = 
-			nh.advertiseService("time_series/test_signature", new TestSignature(), testCallback);
-		logger.info("Advertised service: " + testService.getService());
+					logger.debug("Received " + request.episodes.length + " episodes for <" + request.verb + ">");
+
+					if (verbs.containsKey(request.verb.verb)) {
+						List<Instance> instances = getSequences(request.episodes, request.verb.verb);
+
+						Verb verb = verbs.get(request.verb.verb); // VERB VERB VERB!
+						for (Instance instance : instances) {
+							verb.addNewInstance(instance);
+						}
+					} else {
+						logger.error("VERB NOT FOUND: " + request.verb);
+					}
+					
+					logger.debug("... END update_signature callback.");
+					return res;
+				}
+			};
+			ServiceServer<FindSignature.Request, FindSignature.Response, FindSignature> updateSigService = 
+				nh.advertiseService("verb_learning/update_signature", new FindSignature(), updateSigCallback);
+			logger.info("Advertised service: " + updateSigService.getService());
+		
+		// TestSignature service which tests an episode against a signature, and returns the distance
+//		ServiceServer.Callback<TestSignature.Request, TestSignature.Response> testCallback =
+//		new ServiceServer.Callback<TestSignature.Request, TestSignature.Response>() {
+//			@Override
+//			public TestSignature.Response call(TestSignature.Request request) {
+//				TestSignature.Response response = new TestSignature.Response();
+//
+//				Verb verb = verbs.get(request.verb);
+//				List<Interval> intervals = getIntervals(request.episode);
+//				
+//				logger.debug("Generating Heatmap...");
+//				makeHeatmap(verb, intervals, request.min);
+//				
+//				Instance inst = getInstance(request.episode, "test", 0);
+//				double alignmentScore = verb.testInstance(inst, request.min);
+//				logger.debug("Alignment Score: " + alignmentScore);
+//				
+//				return response;
+//			}
+//		};
+//		ServiceServer<TestSignature.Request, TestSignature.Response, TestSignature> testService = 
+//			nh.advertiseService("verb_learning/test_signature", new TestSignature(), testCallback);
+//		logger.info("Advertised service: " + testService.getService());
+		
 		
 		// Service "load_verbs" loads the stored verbs from file
 		ServiceServer.Callback<Empty.Request, Empty.Response> loadCallback =
@@ -154,11 +184,9 @@ public class SimulationInterface {
 				Response resp = new Response();
 				
 				File verbDirectory = new File("verbs");
-
 				FilenameFilter filter = new FilenameFilter() {
 				    public boolean accept(File dir, String name) {
-//				        return name.endsWith(".signature");
-				    	return dir.isDirectory();
+				    	return dir.isDirectory() && !name.startsWith(".");
 				    }
 				};
 				
@@ -181,9 +209,10 @@ public class SimulationInterface {
 			}
 		};
 		ServiceServer<Empty.Request, Empty.Response, Empty> loadService = 
-			nh.advertiseService("time_series/load_verbs", new Empty(), loadCallback);
+			nh.advertiseService("verb_learning/load_verbs", new Empty(), loadCallback);
 		logger.info("Advertised service: " + loadService.getService());
 				
+		
 		// "update_state" checks the current set of true propositions against the FSM recognizer
 		ServiceServer.Callback<FSMUpdate.Request, FSMUpdate.Response> updateCallback = 
 		new ServiceServer.Callback<FSMUpdate.Request, FSMUpdate.Response>() {
@@ -199,26 +228,29 @@ public class SimulationInterface {
 			}
 		};
 		ServiceServer<FSMUpdate.Request, FSMUpdate.Response, FSMUpdate> updateService = 
-			nh.advertiseService("time_series/fsm_update", new FSMUpdate(), updateCallback);
+			nh.advertiseService("verb_learning/fsm_update", new FSMUpdate(), updateCallback);
 		logger.info("Advertised service: " + updateService.getService());
 		
-		// "fsm_reset" resets the current FSM recognizer (may not be strictly necessary)
-		ServiceServer.Callback<FSMReset.Request, FSMReset.Response> resetCallback = 
-		new ServiceServer.Callback<FSMReset.Request, FSMReset.Response>() {
-			@Override
-			public FSMReset.Response call(FSMReset.Request request) {
-				FSMReset.Response resp = new FSMReset.Response();
-				
-				Verb verb = verbs.get(request.verb);
-				verb.resetRecognizer();
-				return resp;
-			}
-		};
-		ServiceServer<FSMReset.Request, FSMReset.Response, FSMReset> resetService = 
-			nh.advertiseService("time_series/fsm_reset", new FSMReset(), resetCallback);
-		logger.info("Advertised service: " + resetService.getService());
 		
 		// "fsm_reset" resets the current FSM recognizer (may not be strictly necessary)
+//		ServiceServer.Callback<FSMReset.Request, FSMReset.Response> resetCallback = 
+//		new ServiceServer.Callback<FSMReset.Request, FSMReset.Response>() {
+//			@Override
+//			public FSMReset.Response call(FSMReset.Request request) {
+//				FSMReset.Response resp = new FSMReset.Response();
+//				
+//				Verb verb = verbs.get(request.verb);
+//				verb.resetRecognizer();
+//				return resp;
+//			}
+//		};
+//		ServiceServer<FSMReset.Request, FSMReset.Response, FSMReset> resetService = 
+//			nh.advertiseService("verb_learning/fsm_reset", new FSMReset(), resetCallback);
+//		logger.info("Advertised service: " + resetService.getService());
+		
+		
+		/* CONSTRAIN VERB */
+		
 		ServiceServer.Callback<ConstrainVerb.Request, ConstrainVerb.Response> constraintCallback = 
 		new ServiceServer.Callback<ConstrainVerb.Request, ConstrainVerb.Response>() {
 			@Override
@@ -232,8 +264,30 @@ public class SimulationInterface {
 			}
 		};
 		ServiceServer<ConstrainVerb.Request, ConstrainVerb.Response, ConstrainVerb> constraintService = 
-			nh.advertiseService("time_series/constrain_verb", new ConstrainVerb(), constraintCallback);
+			nh.advertiseService("verb_learning/constrain_verb", new ConstrainVerb(), constraintCallback);
 		logger.info("Advertised service: " + constraintService.getService());
+		
+		
+		// "plan_verb" is where the magic happens
+		ServiceServer.Callback<PlanVerb.Request, PlanVerb.Response> planCallback = 
+		new ServiceServer.Callback<PlanVerb.Request, PlanVerb.Response>() {
+			@Override
+			public PlanVerb.Response call(PlanVerb.Request request) {
+				PlanVerb.Response resp = new PlanVerb.Response();
+				
+				Verb verb = verbs.get(request.verb.verb);
+				HashMap<String,String> argumentMap = new HashMap<String, String>();
+				for (int i = 0; i < request.verb.arguments.length; i++) {
+					argumentMap.put(request.verb.bindings[i], request.verb.arguments[i]);
+				}
+				resp.plan = verb.planVerb(request.start_state, argumentMap);
+				
+				return resp;
+			}
+		};
+		ServiceServer<PlanVerb.Request, PlanVerb.Response, PlanVerb> planService = 
+			nh.advertiseService("verb_learning/plan_verb", new PlanVerb(), planCallback);
+		logger.info("Advertised service: " + planService.getService());
 		
 		logger.info("Initialization Complete.");
 		

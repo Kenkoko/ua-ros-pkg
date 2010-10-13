@@ -214,7 +214,9 @@ public class VerbDFA {
 	private void addSelfLoops() {
 		for (FSMState state : dfa_.getVertices()) {
 			if (state.getType().equals(StateType.GOOD)) {
-				for (FSMTransition inEdge : dfa_.getInEdges(state)) {
+				// TRICKY: Be careful of concurrent modification when adding edges
+				Vector<FSMTransition> inEdges = new Vector<FSMTransition>(dfa_.getInEdges(state));
+				for (FSMTransition inEdge : inEdges) {
 					dfa_.addEdge(new FSMTransition(inEdge.getSymbol()), state, state);
 				}
 			}

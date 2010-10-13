@@ -16,19 +16,14 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>simulator_state.msg</name>
+			<name>oomdp_msgs.msg</name>
 			<type>2</type>
-			<location>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/simulator_state/msg/java</location>
+			<location>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/oomdp_msgs/msg/java</location>
 		</link>
 		<link>
-			<name>wubble_mdp.msg</name>
+			<name>oomdp_msgs.srv</name>
 			<type>2</type>
-			<location>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/wubble_mdp/msg/java</location>
-		</link>
-		<link>
-			<name>wubble_mdp.srv</name>
-			<type>2</type>
-			<location>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/wubble_mdp/srv/java</location>
+			<location>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/oomdp_msgs/srv/java</location>
 		</link>
 	</linkedResources>
 </projectDescription>

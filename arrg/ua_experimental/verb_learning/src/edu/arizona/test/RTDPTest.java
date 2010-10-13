@@ -1,16 +1,15 @@
 package edu.arizona.test;
 
+import java.util.HashMap;
 import java.util.Vector;
 
-import ros.pkg.simulator_state.msg.SimpleRelation;
+import ros.pkg.oomdp_msgs.msg.Relation;
 
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.environment.Environment;
 import edu.arizona.planning.RTDP;
-import edu.arizona.planning.mdp.LocationState;
-import edu.arizona.planning.mdp.MDPObjectState;
-import edu.arizona.planning.mdp.MDPState;
-import edu.arizona.planning.mdp.RobotState;
+import edu.arizona.planning.mdp.OOMDPObjectState;
+import edu.arizona.planning.mdp.OOMDPState;
 import edu.arizona.verbs.Verb;
 
 public class RTDPTest {
@@ -25,20 +24,28 @@ public class RTDPTest {
         
         Environment env = new Environment();
         
-        Vector<MDPObjectState> objectStartStates = new Vector<MDPObjectState>();
-        MDPObjectState robot = new RobotState("thing", 0, 0, "E", 0, 0, "E");
+        Vector<OOMDPObjectState> objectStartStates = new Vector<OOMDPObjectState>();
+        OOMDPObjectState robot = new OOMDPObjectState("thing", "Robot");
+        robot.setAttribute("x", "0.0");
+        robot.setAttribute("y", "0.0");
+        robot.setAttribute("orientation", "E");
+        robot.setAttribute("last_x", "0.0");
+        robot.setAttribute("last_y", "0.0");
+        robot.setAttribute("last_orientation", "E");
         objectStartStates.add(robot);
-//        MDPObjectState goal = new LocationState("place", 3.0, 2.0);
-        MDPObjectState goal = new LocationState("place", -3.0, 0.0);
+        
+        OOMDPObjectState goal = new OOMDPObjectState("place", "Location");
+        goal.setAttribute("x", "-3.0"); // -3.0
+        goal.setAttribute("y", "0.0");
         objectStartStates.add(goal);
         
-        Vector<SimpleRelation> relations = new Vector<SimpleRelation>();
-        SimpleRelation rel = new SimpleRelation();
-        rel.rel_name = "InFrontOf";
+        Vector<Relation> relations = new Vector<Relation>();
+        Relation rel = new Relation();
+        rel.relation = "InFrontOf";
         rel.obj_names = new String[] {"thing", "place"};
         rel.value = 1;
         relations.add(rel);
-        MDPState start = new MDPState(objectStartStates, relations);
+        OOMDPState start = new OOMDPState(objectStartStates, relations);
         
         System.out.println(start);
         
@@ -46,6 +53,6 @@ public class RTDPTest {
         RTDP rtdp = new RTDP(go, env, start);
         rtdp.runAlgorithm();
         System.out.println("DURATION: " + ((System.currentTimeMillis() - startTime)/1000) + " seconds");
-        rtdp.recoverPolicy();
+        rtdp.recoverPolicy(new HashMap<String,String>());
 	}
 }

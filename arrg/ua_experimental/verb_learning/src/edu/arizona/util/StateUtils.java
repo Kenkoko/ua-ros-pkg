@@ -4,7 +4,8 @@ import java.text.NumberFormat;
 
 import org.apache.commons.lang.StringUtils;
 
-import ros.pkg.simulator_state.msg.SimpleRelation;
+import ros.pkg.oomdp_msgs.msg.Relation;
+
 
 public class StateUtils {
 	public static String formatNumber(double number) {
@@ -14,7 +15,7 @@ public class StateUtils {
 		return nf.format(number);
 	}
 	
-	public static String formatRelation(SimpleRelation rel) {
-		return rel.rel_name + "(" + StringUtils.join(rel.obj_names, ",") + ")";
+	public static String formatRelation(Relation rel) {
+		return rel.relation + "(" + StringUtils.join(rel.obj_names, ",") + ")";
 	}
 }

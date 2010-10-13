@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="simulator_state.msg"/>
-	<classpathentry kind="src" path="wubble_mdp.srv"/>
-	<classpathentry kind="src" path="wubble_mdp.msg"/>
+	<classpathentry excluding="verb_learning/" kind="src" path="src"/>
+	<classpathentry kind="src" path="oomdp_msgs.srv"/>
+	<classpathentry kind="src" path="oomdp_msgs.msg"/>
+	<classpathentry kind="src" path="msg/java"/>
+	<classpathentry kind="src" path="srv/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/time_series"/>
 	<classpathentry kind="lib" path="/time_series/lib/collections-generic-4.01.jar"/>
