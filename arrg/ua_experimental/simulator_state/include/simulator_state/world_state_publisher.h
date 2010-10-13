@@ -40,9 +40,8 @@
 
 #include <simulator_state/WorldState.h>
 #include <simulator_state/ObjectInfo.h>
-#include <simulator_state/Relation.h>
-#include <simulator_state/AddPoint.h>
-#include <simulator_state/DeletePoint.h>
+#include <simulator_state/GetState.h>
+#include <oomdp_msgs/Relation.h>
 
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btTransform.h>
@@ -74,47 +73,29 @@ protected:
   virtual void FiniChild();
 
 private:
-  int worldStateConnectCount;
-  void WorldStateConnect();
-  void WorldStateDisconnect();
+  btConvexShape* extractShape(Geom* geom);
 
-  btConvexShape* extract_shape(Geom* geom);
-  btTransform convert_transform(gazebo::Pose3d pose);
-  btConvexShape* convert_aabb(Vector3 min, Vector3 max);
-
-  bool add_point(simulator_state::AddPointRequest& req, simulator_state::AddPointResponse& res);
-  bool delete_point(simulator_state::DeletePointRequest& req, simulator_state::DeletePointResponse& res);
-
-  simulator_state::WorldState worldStateMsg;
+  bool getState(simulator_state::GetStateRequest& req, simulator_state::GetStateResponse& res);
 
   gazebo::Model* parent_model_;
-
-  ros::NodeHandle* rosnode_;
-  ros::Publisher pub_;
-
-  ros::ServiceServer add_point_service_;
-  ros::ServiceServer delete_point_service_;
+  ParamT<std::string> *robot_namespace_param_;
+  std::string robot_namespace_;
+  ParamT<std::string> *frame_name_param_;
+  std::string frame_name_;
+  std::vector<std::string> blacklist_;
 
   boost::mutex lock;
 
-  ParamT<std::string> *robotNamespaceP;
-  std::string robotNamespace;
-  ParamT<std::string> *topicNameP;
-  std::string topicName;
-  ParamT<std::string> *frameNameP;
-  std::string frameName;
+  ros::NodeHandle* rosnode_;
+  ros::ServiceServer get_state_service_;
 
   // Custom Callback Queue
   ros::CallbackQueue queue_;
   void QueueThread();
   boost::thread* callback_queue_thread_;
 
-  std::vector<std::string> blacklist_;
-
-  std::map<gazebo::Geom*,btConvexShape*> bt_shape_cache_;
-  std::map<std::string, btVector3> points_;
+  std::map<gazebo::Geom*, btConvexShape*> bt_shape_cache_;
   btVoronoiSimplexSolver gjk_simplex_solver_;
-
 };
 
 }

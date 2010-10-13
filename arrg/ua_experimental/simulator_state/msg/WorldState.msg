@@ -1,4 +1,4 @@
 Header header
 ObjectInfo[] object_info
-Relation[] relations
-SimpleRelation[] simple_relations
+NumericRelation[] relations
+oomdp_msgs/Relation[] mdp_relations
