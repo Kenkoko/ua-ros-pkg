@@ -11,25 +11,26 @@
 
     <depend package="roslisp"/>
     <depend package="roslisp_runtime"/>
-    
     <depend package="gbbopen"/>
-    <depend package="simulator_state"/>
+    <depend package="cl_transforms"/>
+    <depend package="cl_utils"/>
+    <depend package="actionlib_lisp"/>    
+
     <depend package="wubble_description"/>
     <depend package="gazebo_plugins"/>
 
+    <depend package="simulator_state"/>
+    <depend package="wubble_mdp"/>
+    <depend package="verb_learning"/>
+    <depend package="time_series"/>
+
+    <depend package="oomdp_msgs"/>
     <depend package="geometry_msgs"/>
     <depend package="std_msgs"/>
     <depend package="std_srvs"/>    
 
-    <depend package="time_series"/>
-
-    <depend package="cl_transforms"/>
-    <depend package="cl_utils"/>
-    <depend package="actionlib_lisp"/>
-
     <depend package="plotter"/>
     <depend package="map_server"/>
-    
 </package>
 
 

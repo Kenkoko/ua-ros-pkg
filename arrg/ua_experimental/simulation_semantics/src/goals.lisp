@@ -33,15 +33,15 @@
 
 ;;==========================================================
 
-(defgeneric get-target-position (goal world-state)
-  (:documentation "Get the position the goal currently corresponds to"))
+;(defgeneric get-target-position (goal world-state)
+;  (:documentation "Get the position the goal currently corresponds to"))
 
-(defmethod get-target-position ((g position-goal) (ws world-state))
-  (declare (ignore ws))
-  (position-of g))
+;(defmethod get-target-position ((g position-goal) (ws world-state))
+;  (declare (ignore ws))
+;  (position-of g))
 
-(defmethod get-target-position ((g object-goal) (ws world-state))
-  (position-of (pose-of (get-object-state ws (find-object-by-gazebo-name (object-name-of g))))))
+;(defmethod get-target-position ((g object-goal) (ws world-state))
+;  (position-of (pose-of (get-object-state ws (find-object-by-gazebo-name (object-name-of g))))))
 
 ;;==========================================================
 
@@ -50,7 +50,7 @@
 
 (defmethod at-goal? ((goal position-goal) state)
   (let* ((rel (get-relation state "Contact" (entity-name-of goal) (gazebo-name-of goal))))
-    (if rel (simulator_state-msg:value-val rel) nil)))
+    (if rel (oomdp_msgs-msg:value-val rel) nil)))
 
 ;;==========================================================
 

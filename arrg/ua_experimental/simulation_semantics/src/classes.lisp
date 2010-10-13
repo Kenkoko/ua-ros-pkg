@@ -2,47 +2,6 @@
 
 ;;===========================================================
 
-(define-unit-class world-state ()
-  (time
-   (objects
-    :link (object-state world :singular t))
-   (prev-state 
-    :link (world-state next-state :singular t)
-    :singular t)
-   (next-state
-    :link (world-state prev-state :singular t)
-    :singular t)
-   (predicates :initform nil)
-   (simulation :initform nil))
-  (:dimensional-values
-   (time :point time)))
-
-;(defmethod initialize-instance :after ((ws world-state) &key)
-;  (annotate-with-predicates ws))
-
-(defmethod get-object-state ((ws world-state) (obj entity))
-  (loop with result = nil
-     for candidate in (objects-of ws)
-     when (eq (object-of candidate) obj)
-     do (setf result candidate)
-     finally (return result)))
-
-;(defmethod simulation-of ((ws world-state))
-;  (first (space-instances-of ws)))
-
-;;===========================================================
-
-(define-unit-class object-state ()
-  ((world
-    :link (world-state objects)
-    :singular t)
-   object
-   pose
-   force
-   velocity))
-
-;;===========================================================
-
 (define-unit-class xyz ()
   ((x :initform 0.0)
    (y :initform 0.0)

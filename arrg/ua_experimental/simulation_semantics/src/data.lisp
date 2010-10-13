@@ -8,6 +8,7 @@
          do (loop for inst in (find-instances-of-class class)
                do (print-object-for-saving/sending inst stream))))))
 
+;; TODO: Probably move to utils
 (defun fibn (name)
   "shortcut for (find-instance-by-name name)"
   (find-instance-by-name name)) 
@@ -20,7 +21,7 @@
 
 (defun delete-simulation-data ()
   (setf *current-state* nil)
-  (delete-all-instances 'simulation 'force 'object-state 'pose 'quaternion 'velocity 'world-state 'xyz)
+  (delete-all-instances 'force 'object-state 'pose 'quaternion 'velocity  'xyz)
   (loop for sim in (find-instances-of-class 'simulator)
      for si = (find-space-instance-by-path (list (instance-name-of sim)))
      when si do (delete-space-instance si)))

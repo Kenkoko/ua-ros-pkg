@@ -171,8 +171,3 @@
                                             (list :|mesh| (get-mesh-xml obj)) 
                                             (list :|material| (color-of obj)))))))))
 
-;;=====================================================
-;; Helpers
-
-(defun boolean-string (value)
-  (if value "true" "false"))
