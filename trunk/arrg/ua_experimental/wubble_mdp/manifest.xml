@@ -1,9 +1,7 @@
 <package>
   <description brief="wubble_mdp">
 
-    An OO-MDP Environment for the Wubble Robot. Also includes a java implementation
-    of the RTDP (Real-Time Dynamic Programming) algorithm for planning with 
-    this OO-MDP.
+    An OO-MDP Environment for the Wubble Robot in simulation. 
 
   </description>
   <author>Daniel Hewlett</author>
@@ -11,16 +9,15 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/wubble_mdp</url>
 
-  <depend package="rospy"/>
+  <depend package="roscpp"/>
   <depend package="actionlib"/>
   <depend package="tf"/>
+  <depend package="bullet"/>
 
   <depend package="geometry_msgs"/>
   <depend package="move_base_msgs"/>
+  <depend package="oomdp_msgs"/>
   <depend package="simulator_state"/>
-
-  <depend package="rosjava"/>
-  <depend package="time_series"/>
 </package>
 
 

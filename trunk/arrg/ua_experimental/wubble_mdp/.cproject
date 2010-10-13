@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?>
+
+<cproject>
+<storageModule moduleId="org.eclipse.cdt.core.settings">
+<cconfiguration id="org.eclipse.cdt.core.default.config.1">
+<storageModule buildSystemId="org.eclipse.cdt.core.defaultConfigDataProvider" id="org.eclipse.cdt.core.default.config.1" moduleId="org.eclipse.cdt.core.settings" name="Configuration">
+<externalSettings/>
+<extensions>
+<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser">
+<attribute key="addr2line" value="addr2line"/>
+<attribute key="c++filt" value="c++filt"/>
+</extension>
+</extensions>
+</storageModule>
+<storageModule moduleId="org.eclipse.cdt.core.language.mapping">
+<project-mappings/>
+</storageModule>
+<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+<storageModule moduleId="org.eclipse.cdt.core.pathentry">
+<pathentry excluding="**/CMakeFiles/" kind="out" path=""/>
+<pathentry kind="mac" name="BOOST_CB_DISABLE_DEBUG" path="" value=""/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/wubble_mdp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/actionlib/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/actionlib/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/actionlib/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/move_base_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/move_base_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/actionlib_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/actionlib_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/geometry_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/geometry_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/simulator_state/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/simulator_state/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/simulator_state/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/oomdp_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/oomdp_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo_plugins/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo_plugins/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo_plugins/srv/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo_plugins/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo_plugins/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo_tools/include" kind="inc" path="" system="true"/>
+<pathentry include="/usr/include/libxml2" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo/gazebo/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/visualization_common/ogre/ogre/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/visualization_common/ogre/ogre/include/OGRE" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/visualization_common/ogre/ogre/include/OGRE/RTShaderSystem" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/physics_ode/opende/opende/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/physics_ode/opende/threadpool" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/robot_model/assimp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/std_srvs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/srv/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/robot_model/urdf/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/robot_model/urdf/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/robot_model/urdf/srv/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/tinyxml/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/geometry/tf/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/geometry/tf/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/geometry/tf/srv/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/geometry/tf/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/geometry/tf/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/srv/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/geometry/bullet/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/geometry/angles/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/core/message_filters/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/driver_common/driver_base/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/driver_common/driver_base/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/driver_common/driver_base/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/diagnostics/self_test/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/diagnostics/self_test/srv/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/diagnostics/diagnostic_updater/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/diagnostic_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/diagnostic_msgs/srv/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/diagnostic_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/diagnostic_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/tools/rosrecord/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/srv/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/tools/rosbag/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/tools/topic_tools/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/tools/topic_tools/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/std_msgs/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/std_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/test/rostest/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/core/roscpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/core/roscpp/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/core/roscpp/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/3rdparty/xmlrpcpp/src" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/core/rosconsole/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/core/roslib/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/core/roslib/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/tools/rospack" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/tools/rospack/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/3rdparty/gtest/gtest/include" kind="inc" path="" system="true"/>
+<pathentry include="/usr/local/include" kind="inc" path="" system="true"/>
+<pathentry include="/usr/lib/gcc/x86_64-linux-gnu/4.3.4/include" kind="inc" path="" system="true"/>
+<pathentry include="/usr/lib/gcc/x86_64-linux-gnu/4.3.4/include-fixed" kind="inc" path="" system="true"/>
+<pathentry include="/usr/include" kind="inc" path="" system="true"/>
+<pathentry include="/usr/include/c++/4.3" kind="inc" path="" system="true"/>
+<pathentry include="/usr/include/c++/4.3/x86_64-linux-gnu" kind="inc" path="" system="true"/>
+<pathentry include="/usr/include/c++/4.3/backward" kind="inc" path="" system="true"/>
+</storageModule>
+<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
+<buildTargets>
+<target name=": ROSBUILD_genmsg_cpp" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>ROSBUILD_genmsg_cpp</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": ROSBUILD_genmsg_java" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>ROSBUILD_genmsg_java</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": ROSBUILD_genmsg_lisp" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>ROSBUILD_genmsg_lisp</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": ROSBUILD_genmsg_oct" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>ROSBUILD_genmsg_oct</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": ROSBUILD_gensrv_cpp" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>ROSBUILD_gensrv_cpp</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": ROSBUILD_gensrv_java" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>ROSBUILD_gensrv_java</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": ROSBUILD_gensrv_lisp" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>ROSBUILD_gensrv_lisp</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": ROSBUILD_gensrv_oct" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>ROSBUILD_gensrv_oct</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": clean-test-results" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>clean-test-results</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name="[exe] environment" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>environment</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name="[exe] environment/fast" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>environment/fast</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": rebuild_cache" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>rebuild_cache</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": rosbuild_precompile" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>rosbuild_precompile</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": rosbuild_premsgsrvgen" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>rosbuild_premsgsrvgen</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": rospack_genmsg" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>rospack_genmsg</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": rospack_genmsg_libexe" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>rospack_genmsg_libexe</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": rospack_gensrv" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>rospack_gensrv</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": test" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>test</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": test-future" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>test-future</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": test-results" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>test-results</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": test-results-run" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>test-results-run</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": tests" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>tests</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": all" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>all</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name=": clean" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>clean</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name="[obj] src/environment.o" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>src/environment.o</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name="[pre] src/environment.i" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>src/environment.i</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name="[to asm] src/environment.s" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>src/environment.s</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+</buildTargets>
+</storageModule>
+<storageModule moduleId="scannerConfiguration">
+<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
+<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
+<buildOutputProvider>
+<openAction enabled="true" filePath=""/>
+<parser enabled="true"/>
+</buildOutputProvider>
+<scannerInfoProvider id="specsFile">
+<runAction arguments="-E -P -v -dD ${plugin_state_location}/${specs_file}" command="/usr/bin/gcc" useDefault="true"/>
+<parser enabled="true"/>
+</scannerInfoProvider>
+</profile>
+<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
+<buildOutputProvider>
+<openAction enabled="true" filePath=""/>
+<parser enabled="true"/>
+</buildOutputProvider>
+<scannerInfoProvider id="makefileGenerator">
+<runAction arguments="-f ${project_name}_scd.mk" command="/usr/bin/make" useDefault="true"/>
+<parser enabled="true"/>
+</scannerInfoProvider>
+</profile>
+</storageModule>
+</cconfiguration>
+</storageModule>
+<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+<project id="wubble_mdp.null.1" name="wubble_mdp"/>
+</storageModule>
+</cproject>
