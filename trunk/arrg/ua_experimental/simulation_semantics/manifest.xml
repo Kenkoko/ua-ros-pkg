@@ -11,10 +11,10 @@
 
     <depend package="roslisp"/>
     <depend package="roslisp_runtime"/>
-    <depend package="gbbopen"/>
     <depend package="cl_transforms"/>
     <depend package="cl_utils"/>
     <depend package="actionlib_lisp"/>    
+    <depend package="gbbopen"/>
 
     <depend package="wubble_description"/>
     <depend package="gazebo_plugins"/>
