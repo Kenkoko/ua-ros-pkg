@@ -180,9 +180,16 @@ void Robot::simulateAction(string action)
   last_y_ = y_;
   last_orientation_ = orientation_;
 
+  // This gives him virtual "walls" when planning
   btVector3 new_pose = computeNewPose(action);
-  x_ = new_pose.x();
-  y_ = new_pose.y();
+  if (-10 < new_pose.x() && new_pose.x() < 10)
+  {
+	  x_ = new_pose.x();
+  }
+  if (-10 < new_pose.y() && new_pose.y() < 10)
+  {
+	  y_ = new_pose.y();
+  }
   orientation_ = new_pose.z();
 }
 
