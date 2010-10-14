@@ -8,6 +8,8 @@ import java.util.Stack;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
+
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 
@@ -20,9 +22,11 @@ import edu.arizona.planning.fsm.FSMState.StateType;
 import edu.arizona.planning.fsm.VerbDFA.SimulationResult;
 import edu.arizona.planning.mdp.OOMDPState;
 import edu.arizona.util.ProbUtils;
+import edu.arizona.verbs.SimulationInterface;
 import edu.arizona.verbs.Verb;
 
 public class RTDP {
+	private static Logger logger = Logger.getLogger(RTDP.class);
 	
 	// TODO: Maybe this is overkill
 	public class Action implements Comparable<Action> {
@@ -88,10 +92,10 @@ public class RTDP {
 			List<Action> result = getGreedyActions();
 			
 			if (result.size() > 1) { // TODO: This random element messes things up, environment should be able to send over invalid states
-				Random generator = new Random();
-				int index = generator.nextInt(result.size());
-				return result.get(index);
-//				return result.firstElement();
+//				Random generator = new Random();
+//				int index = generator.nextInt(result.size());
+//				return result.get(index);
+				return result.iterator().next();
 			} else {
 				return result.iterator().next();
 			}
@@ -212,13 +216,22 @@ public class RTDP {
 	}
 	
 	public void runAlgorithm() {
+		logger.info("======================================\nBEGIN RTDP");
+		logger.info("Start state is: " + start_);
+		
+		long start = System.currentTimeMillis();
+		
 		int i = 0;
 		while (!start_.solved) {
-			System.out.println(">>>>>>>>>> BEGIN TRIAL " + i + ":");
+			long trialStart = System.currentTimeMillis();
+			logger.info(">>>>>>>>>> BEGIN TRIAL " + i + ":");
 			runLrtdpTrial(start_, 0.4);
-			System.out.println(">>>>>>>>>> END TRIAL " + i + ":");
+			logger.info(">>>>>>>>>> END TRIAL " + i + ". Trial took " + 
+						((System.currentTimeMillis() - trialStart)/1000) + " seconds.");  
 			i++;
 		}
+		
+		logger.info("END RTDP. TOTAL TIME: " + ((System.currentTimeMillis() - start)/1000));
 	}
 	
 	public Policy recoverPolicy(final Map<String, String> argumentMap) { // TODO: Return this as a plan

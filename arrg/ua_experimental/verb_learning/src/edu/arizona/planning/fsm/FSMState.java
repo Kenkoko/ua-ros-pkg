@@ -2,7 +2,7 @@ package edu.arizona.planning.fsm;
 
 import edu.arizona.util.Predicate;
 
-public class FSMState {
+public class FSMState implements Comparable<FSMState> {
 	private static int counter = 0; 
 	
 	// Predicates
@@ -66,17 +66,8 @@ public class FSMState {
 				+ "\",fontcolor=\"" + "black" + "\"];\n";
 	}
 
-//	@Override
-//	public boolean equals(Object obj) {
-//		if (obj instanceof FSMState) {
-//			return this.toString().equals(obj.toString());
-//		} else {
-//			return false;
-//		}
-//	}
-//
-//	@Override
-//	public int hashCode() {
-//		return this.toString().hashCode();
-//	}
+	@Override
+	public int compareTo(FSMState other) {
+		return toString().compareTo(other.toString());
+	}
 }

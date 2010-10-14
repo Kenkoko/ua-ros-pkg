@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.Vector;
 
 import org.apache.log4j.Logger;
 
 import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.msg.Policy;
+import ros.pkg.verb_learning.msg.VerbDescription;
 
 import com.google.common.collect.HashBiMap;
 
@@ -56,7 +58,15 @@ public class Verb {
 		lexicalForm_ = word;
 		makeVerbFolder();
 		signature_ = signature;
+		arguments_ = new Vector<String>(); // TODO: Need to store the arguments somewhere - in a file maybe?
 		makeDFA();
+	}
+	
+	public VerbDescription makeVerbDescription() {
+		VerbDescription desc = new VerbDescription();
+		desc.verb = lexicalForm_;
+		desc.arguments = arguments_.toArray(new String[0]);
+		return desc;
 	}
 	
 	public void generalizeInstances(List<Instance> instances) {
@@ -96,12 +106,14 @@ public class Verb {
 			return;
 		}
 		
+//		Signature pruned = signature_.prune(signature_.trainingSize() - 1);
+		Signature pruned = signature_.prune(signature_.trainingSize() / 2);
 		Set<String> propSet = new TreeSet<String>();
-		for (WeightedObject obj : signature_.signature()) {
+		for (WeightedObject obj : pruned.signature()) {
 			propSet.addAll(obj.key().getProps());
 		}
 		List<String> props = new ArrayList<String>(propSet);
-		List<List<Interval>> all = BitPatternGeneration.getBPPs(lexicalForm_, signature_.table(), propSet);
+		List<List<Interval>> all = BitPatternGeneration.getBPPs(lexicalForm_, pruned.table(), propSet);
 
 		DirectedGraph<BPPNode, Edge> chains = FSMFactory.makeGraph(props, all, false); 
 		FSMFactory.toDot(chains, getVerbFolder() + "chain_nfa.dot");
