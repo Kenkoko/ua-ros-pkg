@@ -21,9 +21,10 @@
 
                  (:file "verb-learning" :depends-on ("time-series")))
 
-    :depends-on ("roslisp" 
-                 "actionlib"
-                 "cl-transforms"
+    :depends-on (roslisp
+                 cl-transforms
+                 
+                 "actionlib" ;; Don't think we need this anymore?
                  "gbbopen-ros"
                  ;; Messages and services
                  "simulation_semantics-srv"

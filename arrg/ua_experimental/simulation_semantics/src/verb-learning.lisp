@@ -124,6 +124,7 @@
 ;; Scenario Configuration
 
 (defun new-scenario ()
+  (killall)
   (setf *current-scenario* (make-instance 'simulator 
                                           :instance-name (gensym (lexical-form-of *current-verb*))))
   (format t "Empty scenario created.~%"))
@@ -244,7 +245,9 @@
                          finally (return (push start-state trace))))
            (new-pmts (convert-trace-to-pmts new-trace (name-map-of scenario verb)))
            (new-episode (intervals-to-episode (pmts-to-intervals new-pmts))))
-      (update-canonical-signature new-episode :verb verb))))
+      (format t "Add episode to verb signature?~%")
+      (if (read)
+          (update-canonical-signature new-episode :verb verb)))))
            
 ;; TODO: Need to check states and replan if necessary
 
