@@ -40,8 +40,11 @@ public class VerbDFA {
 	public VerbDFA(DirectedGraph<BPPNode, Edge> graph) {
 		// Preparing the DFA
 		dfa_ = StateMachines.convertToDFA(graph);
+		toDot("1.dot", false);
 		minimizeSlow();
+		toDot("2.dot", false);
 		addSelfLoops();
+		toDot("3.dot", false);
 		populateGoodTerminals();
 		
 		for (FSMState state : dfa_.getVertices()) {
@@ -290,27 +293,49 @@ public class VerbDFA {
 			}
 		}
 		
-		System.out.println(distinct);
+		Set<Pair<FSMState>> terminalPairs = new HashSet<Pair<FSMState>>();
+		for (int i = 0; i < states.size(); i++) {
+			for (int j = i+1; j < states.size(); j++) {
+				FSMState p = states.get(i);
+				FSMState q = states.get(j);
+				Pair<FSMState> pair = new Pair<FSMState>(p, q);
+				if (p.isTerminal() && q.isTerminal()) { // If one is accepting and the other is not, must be distinct
+					terminalPairs.add(pair);
+				}
+			}
+		}
+		
+		System.out.println("TERMINAL CHECK: " + Sets.difference(allPairs, distinct).containsAll(terminalPairs));
+		
+//		System.out.println(distinct);
 		
 		// Now that we know which are distinguishable, we need to delete the unnecessary states
-		for (Pair<FSMState> same : Sets.difference(allPairs, distinct)) {
-			FSMState saved = same.getFirst();
-			FSMState dead = same.getSecond();
-			
-			for (FSMTransition t : dfa_.getInEdges(dead)) {
-				FSMState p = dfa_.getOpposite(dead, t);
-				safeAddTransition(p, t.getSymbol(), saved);
+		boolean gotOne = true;
+		while (gotOne) {
+			gotOne = false;
+			for (Pair<FSMState> same : Sets.difference(allPairs, distinct)) {
+				FSMState saved = same.getFirst();
+				FSMState dead = same.getSecond();
+				
+				if (dfa_.containsVertex(dead)) {
+					System.out.println("DELETING STATE: " + dead);
+					for (FSMTransition t : dfa_.getInEdges(dead)) {
+						FSMState p = dfa_.getOpposite(dead, t);
+						safeAddTransition(p, t.getSymbol(), saved);
+					}
+					for (FSMTransition t : dfa_.getOutEdges(dead)) {
+						FSMState p = dfa_.getOpposite(dead, t);
+						safeAddTransition(saved, t.getSymbol(), p);
+					}
+					
+					// It's all over for him
+					for (FSMTransition t : dfa_.getIncidentEdges(dead)) {
+						dfa_.removeEdge(t);
+					}
+					dfa_.removeVertex(dead);
+					gotOne = true;
+				}
 			}
-			for (FSMTransition t : dfa_.getOutEdges(dead)) {
-				FSMState p = dfa_.getOpposite(dead, t);
-				safeAddTransition(saved, t.getSymbol(), p);
-			}
-			
-			// It's all over for him
-			for (FSMTransition t : dfa_.getIncidentEdges(dead)) {
-				dfa_.removeEdge(t);
-			}
-			dfa_.removeVertex(dead);
 		}
 	}
 	

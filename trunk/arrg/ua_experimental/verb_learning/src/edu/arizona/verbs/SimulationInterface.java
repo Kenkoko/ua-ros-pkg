@@ -24,6 +24,7 @@ import ros.pkg.time_series.srv.Empty.Response;
 import ros.pkg.verb_learning.srv.ConstrainVerb;
 import ros.pkg.verb_learning.srv.FSMUpdate;
 import ros.pkg.verb_learning.srv.FindSignature;
+import ros.pkg.verb_learning.srv.LoadVerbs;
 import ros.pkg.verb_learning.srv.PlanVerb;
 import edu.arizona.cs.learn.algorithm.alignment.factory.SequenceFactory;
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
@@ -177,11 +178,11 @@ public class SimulationInterface {
 		
 		
 		// Service "load_verbs" loads the stored verbs from file
-		ServiceServer.Callback<Empty.Request, Empty.Response> loadCallback =
-		new ServiceServer.Callback<Empty.Request, Empty.Response>() {
+		ServiceServer.Callback<LoadVerbs.Request, LoadVerbs.Response> loadCallback =
+		new ServiceServer.Callback<LoadVerbs.Request, LoadVerbs.Response>() {
 			@Override
-			public Response call(Request request) {
-				Response resp = new Response();
+			public LoadVerbs.Response call(LoadVerbs.Request request) {
+				LoadVerbs.Response resp = new LoadVerbs.Response();
 				
 				File verbDirectory = new File("verbs");
 				FilenameFilter filter = new FilenameFilter() {
@@ -208,8 +209,8 @@ public class SimulationInterface {
 				return resp;
 			}
 		};
-		ServiceServer<Empty.Request, Empty.Response, Empty> loadService = 
-			nh.advertiseService("verb_learning/load_verbs", new Empty(), loadCallback);
+		ServiceServer<LoadVerbs.Request, LoadVerbs.Response, LoadVerbs> loadService = 
+			nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadCallback);
 		logger.info("Advertised service: " + loadService.getService());
 				
 		
