@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -13,14 +14,15 @@ import java.util.Vector;
 
 import org.apache.log4j.Logger;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+
 import ros.NodeHandle;
 import ros.Ros;
 import ros.RosException;
 import ros.ServiceServer;
 import ros.pkg.time_series.msg.Episode;
-import ros.pkg.time_series.srv.Empty;
-import ros.pkg.time_series.srv.Empty.Request;
-import ros.pkg.time_series.srv.Empty.Response;
+import ros.pkg.verb_learning.msg.VerbDescription;
 import ros.pkg.verb_learning.srv.ConstrainVerb;
 import ros.pkg.verb_learning.srv.FSMUpdate;
 import ros.pkg.verb_learning.srv.FindSignature;
@@ -191,6 +193,7 @@ public class SimulationInterface {
 				    }
 				};
 				
+				Vector<VerbDescription> verbDescriptions = new Vector<VerbDescription>();
 				String[] verbDirs = verbDirectory.list(filter);
 				if (verbDirs == null) {
 					logger.error("PROBLEM LOADING VERBS");
@@ -199,10 +202,22 @@ public class SimulationInterface {
 				    for (String dir : verbDirs) {
 				    	String signatureFile = "verbs/" + dir + "/signature.xml";
 				    	logger.debug("\t" + signatureFile);
-				        Verb verb = new Verb(dir, Signature.fromXML(signatureFile));
+				    	
+				    	Vector<String> strings = new Vector<String>();
+				    	Iterables.addAll(strings, Splitter.on(",").split(dir));
+				        Verb verb = new Verb(strings.firstElement(),
+				        				     strings.subList(1, strings.size()).toArray(new String[0]),
+				        				     Signature.fromXML(signatureFile));
 				        verbs.put(verb.getLexicalForm(), verb);
+				        
+				        VerbDescription desc = new VerbDescription();
+				        desc.verb = verb.getLexicalForm();
+				        desc.arguments = verb.getArgumentArray();
+				        verbDescriptions.add(desc);
 				    }
 				}
+				
+				resp.verbs = verbDescriptions.toArray(new VerbDescription[0]);
 				
 				logger.debug("VERBS LOADED");
 				

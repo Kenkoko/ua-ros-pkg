@@ -17,6 +17,7 @@ import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.msg.Policy;
 import ros.pkg.verb_learning.msg.VerbDescription;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.HashBiMap;
 
 import edu.arizona.cs.learn.algorithm.alignment.Params;
@@ -54,11 +55,12 @@ public class Verb {
 		makeVerbFolder();
 	}
 	
-	public Verb(String word, Signature signature) {
+	public Verb(String word, String[] arguments, Signature signature) {
 		lexicalForm_ = word;
+		arguments_ = Arrays.asList(arguments);
 		makeVerbFolder();
+
 		signature_ = signature;
-		arguments_ = new Vector<String>(); // TODO: Need to store the arguments somewhere - in a file maybe?
 		makeDFA();
 	}
 	
@@ -124,6 +126,7 @@ public class Verb {
 	
 	public void addConstraint(Collection<String> bannedProps) {
 		dfa_.addConstraintState(new HashSet<String>(bannedProps));
+		dfa_.toDot(getVerbFolder() + "constrained.dot", false);
 	}
 	
 	public double testInstance(Instance instance, int min) {
@@ -183,14 +186,23 @@ public class Verb {
 		return dfa_ != null;
 	}
 	
+	public String[] getArgumentArray() {
+		return arguments_.toArray(new String[0]);
+	}
+	
 	private void makeVerbFolder() {
-		File verbFolder = new File("verbs/" + lexicalForm_);
+//		File verbFolder = new File("verbs/" + lexicalForm_);
+		File verbFolder = new File(getVerbFolder());
 		if (!verbFolder.exists()) {
 			verbFolder.mkdirs();
 		}
 	}
 	
 	public String getVerbFolder() {
-		return "verbs/" + lexicalForm_ + "/";
+		Vector<String> parts = new Vector<String>();
+		parts.add(lexicalForm_);
+		parts.addAll(arguments_);
+		return "verbs/" + Joiner.on(",").join(parts) + "/";
+//		return "verbs/" + lexicalForm_ + "/";
 	}
 }

@@ -178,6 +178,8 @@ public class VerbDFA {
 			minDist = startDist_ + 1; // 1 for going back to the start state, then the start state's cost
 		}
 		
+		// TODO: Why are we getting infinite costs?
+		
 		return minDist;
 	}
 	
