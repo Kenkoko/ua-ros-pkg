@@ -9,6 +9,7 @@
 #include <boost/assign/std/vector.hpp>
 
 #include <wubble_mdp/object.h>
+#include <wubble_mdp/relations.h>
 
 using namespace std;
 using namespace boost::assign;
@@ -18,9 +19,14 @@ using boost::lexical_cast;
 Object::Object(simulator_state::ObjectInfo obj_info)
 {
   name_ = obj_info.name;
-  x_ = obj_info.pose.position.x;
-  y_ = obj_info.pose.position.y;
-  orientation_ = extractYaw(obj_info);
+  x_ = roundToDelta(obj_info.pose.position.x, delta_);
+  y_ = roundToDelta(obj_info.pose.position.y, delta_);
+  orientation_ = roundYaw(wubble_mdp::extractYaw(obj_info));
+
+  // This is what will happen the first time an object is created, so there is no "last state"
+  last_x_ = x_;
+  last_y_ = y_;
+  last_orientation_ = orientation_;
 }
 
 Object::Object(oomdp_msgs::MDPObjectState state)
@@ -31,13 +37,9 @@ Object::Object(oomdp_msgs::MDPObjectState state)
   y_ = lexical_cast<double> (attr_map["y"]);
   orientation_ = wubble_mdp::convertOrientationString(attr_map["orientation"]);
 
-  has_last_state_ = (attr_map["last_x"] == "None");
-  if (has_last_state_)
-  {
-    last_x_ = lexical_cast<double> (attr_map["last_x"]);
-    last_y_ = lexical_cast<double> (attr_map["last_y"]);
-    last_orientation_ = wubble_mdp::convertOrientationString(attr_map["last_orientation"]);
-  }
+  last_x_ = lexical_cast<double> (attr_map["last_x"]);
+  last_y_ = lexical_cast<double> (attr_map["last_y"]);
+  last_orientation_ = wubble_mdp::convertOrientationString(attr_map["last_orientation"]);
 }
 
 Object::~Object()
@@ -52,9 +54,9 @@ void Object::update(simulator_state::ObjectInfo new_info)
   last_orientation_ = orientation_;
 
   // Update the state
-  x_ = new_info.pose.position.x;
-  y_ = new_info.pose.position.y;
-  orientation_ = extractYaw(new_info);
+  x_ = roundToDelta(new_info.pose.position.x, delta_);
+  y_ = roundToDelta(new_info.pose.position.y, delta_);
+  orientation_ = roundYaw(wubble_mdp::extractYaw(new_info));
 }
 
 std::string Object::getClassString()
@@ -83,17 +85,10 @@ oomdp_msgs::MDPObjectState Object::makeObjectState()
   state.class_name = this->getClassString();
   state.name = name_;
   state.attributes += "x", "y", "orientation", "last_x", "last_y", "last_orientation";
-  state.values += doubleToString(x_), doubleToString(y_), makeOrientationString(orientation_);
-
-  if (has_last_state_)
-  {
-    state .values += doubleToString(last_x_), doubleToString(last_y_), makeOrientationString(last_orientation_);
-  }
-  else
-  {
-    state.values += "None", "None", "None";
-  }
-
+  state.values += wubble_mdp::doubleToString(x_), wubble_mdp::doubleToString(y_);
+  state.values += wubble_mdp::makeOrientationString(orientation_);
+  state.values += wubble_mdp::doubleToString(last_x_), wubble_mdp::doubleToString(last_y_);
+  state.values += wubble_mdp::makeOrientationString(last_orientation_);
   return state;
 }
 
