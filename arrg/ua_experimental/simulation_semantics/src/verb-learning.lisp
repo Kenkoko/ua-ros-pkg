@@ -40,6 +40,24 @@
                                       :lexical-form verb
                                       :argument-structure arguments)))
 
+#+ignore(defun specialize-verb (verb parent new-arguments)
+  (let* ((parent-verb (find-verb parent)))
+    (if (not parent-verb)
+        (format "PARENT DOES NOT EXIST~%"))
+    (setf *current-verb* (make-instance 'verb
+                                        :instance-name (format nil "~a~a" verb "-verb")
+                                        :lexical-form verb
+                                        :argument-structure new-arguments))
+    (call-service "verb_learning/specialize_verb" 'verb_learning-srv:SpecializeVerb
+                  :parent (make-verb-description parent-verb)
+                  :new_verb (make-verb-description *current-verb*))))
+;; TODO: Implement specialize on the other end.
+
+(defun make-verb-description (verb)
+  (make-message "verb_learning/VerbDescription"
+                :verb (lexical-form-of verb)
+                :arguments (ros-list (argument-strings verb))))
+                
 (defun present-scenario (simulator arguments)
   "Arguments is a list that has the object names in the appropriate argument order"
   (push (make-instance 'scenario :argument-list arguments :simulator simulator)
@@ -58,6 +76,11 @@
   (delete-all-instances 'verb 'simulator 'scenario))
          
 
+(defun constrain-verb ()
+  (call-service "verb_learning/constrain_verb" 'verb_learning-srv:ConstrainVerb
+                :verb "go-around"
+                :banned_props (list "Contact(thing,obstacle)")))
+
 ;;======================================================================
 ;; Signatures
 
@@ -75,8 +98,6 @@
                                     :verb (lexical-form-of verb)
                                     :arguments (ros-list (argument-strings verb)))))
 
-
-
 ;; TODO: Fix this function
 #+ignore(defun learn-counterfactual-signature (&key (verb *current-verb*))
   (call-service "verb_learning/find_signature" 'time_series-srv:FindSignature
@@ -84,7 +105,7 @@
                 :verb (concatenate 'string (lexical-form-of verb) "-counterfactual")))
 
 (defun load-verbs ()
-  ;; TODO: This will return the verbs themselves, then we need to create instances for them
+  ;; TODO: Why does this crash?
   (call-service "verb_learning/load_verbs" 'verb_learning-srv:LoadVerbs))
 
 
