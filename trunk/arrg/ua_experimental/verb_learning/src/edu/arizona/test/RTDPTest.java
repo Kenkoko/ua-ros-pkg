@@ -18,7 +18,7 @@ public class RTDPTest {
 	 */
 	public static void main(String[] args) {
 		String signatureFile = "verbs/go/signature.xml";
-        Verb go = new Verb("go", Signature.fromXML(signatureFile));
+        Verb go = new Verb("go", new String[]{"thing", "place"}, Signature.fromXML(signatureFile));
         
 //        if (true) return;
         

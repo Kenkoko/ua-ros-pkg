@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Signature  key="go" count="7">
-  <WeightedObject weight="1.0">
+<Signature  key="go" count="8">
+  <WeightedObject weight="2.0">
     <Symbol type="AllenRelation" key="(LeftOf(thing,place) s DistanceConstant(place,thing))" relation="s">
       <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="1.0">
+  <WeightedObject weight="2.0">
     <Symbol type="AllenRelation" key="(LeftOf(thing,place) s DistanceConstant(thing,place))" relation="s">
       <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="1.0">
+  <WeightedObject weight="2.0">
     <Symbol type="AllenRelation" key="(LeftOf(thing,place) m Left(thing))" relation="m">
       <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="1.0">
+  <WeightedObject weight="2.0">
     <Symbol type="AllenRelation" key="(LeftOf(thing,place) m Turned(thing))" relation="m">
       <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
@@ -109,13 +109,13 @@
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="5"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(LeftOf(thing,place) m InFrontOf(thing,place))" relation="m">
       <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="1.0">
+  <WeightedObject weight="2.0">
     <Symbol type="AllenRelation" key="(LeftOf(thing,place) m Moved(thing))" relation="m">
       <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
@@ -127,19 +127,19 @@
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="11"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(LeftOf(thing,place) b DistanceDecreased(place,thing))" relation="b">
       <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(LeftOf(thing,place) b DistanceDecreased(thing,place))" relation="b">
       <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(LeftOf(thing,place) b Forward(thing))" relation="b">
       <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
@@ -217,7 +217,7 @@
       <Interval file="test" episode="0" name="Forward(thing)" start="3" end="9"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) eq DistanceConstant(thing,place))" relation="eq">
       <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="1"/>
       <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="1"/>
@@ -229,7 +229,7 @@
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="0" end="6"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) f Left(thing))" relation="f">
       <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
       <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
@@ -241,37 +241,37 @@
       <Interval file="test" episode="0" name="Right(thing)" start="1" end="3"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) f Turned(thing))" relation="f">
       <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) o InFrontOf(thing,place))" relation="o">
       <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) o Moved(thing))" relation="o">
       <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) m DistanceDecreased(place,thing))" relation="m">
       <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="1"/>
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) m DistanceDecreased(thing,place))" relation="m">
       <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="1"/>
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) m Forward(thing))" relation="m">
       <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="1"/>
       <Interval file="test" episode="0" name="Forward(thing)" start="1" end="7"/>
@@ -289,7 +289,7 @@
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="0" end="6"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) f Left(thing))" relation="f">
       <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
       <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
@@ -301,37 +301,37 @@
       <Interval file="test" episode="0" name="Right(thing)" start="1" end="3"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) f Turned(thing))" relation="f">
       <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) o InFrontOf(thing,place))" relation="o">
       <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) o Moved(thing))" relation="o">
       <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) m DistanceDecreased(place,thing))" relation="m">
       <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) m DistanceDecreased(thing,place))" relation="m">
       <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) m Forward(thing))" relation="m">
       <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="1"/>
       <Interval file="test" episode="0" name="Forward(thing)" start="1" end="7"/>
@@ -343,13 +343,13 @@
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(Left(thing) eq Turned(thing))" relation="eq">
       <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="1.0">
+  <WeightedObject weight="2.0">
     <Symbol type="AllenRelation" key="(Left(thing) s InFrontOf(thing,place))" relation="s">
       <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
@@ -361,25 +361,25 @@
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="4" end="10"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(Left(thing) s Moved(thing))" relation="s">
       <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(Left(thing) m DistanceDecreased(place,thing))" relation="m">
       <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(Left(thing) m DistanceDecreased(thing,place))" relation="m">
       <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(Left(thing) m Forward(thing))" relation="m">
       <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
@@ -439,37 +439,37 @@
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="1.0">
+  <WeightedObject weight="2.0">
     <Symbol type="AllenRelation" key="(Turned(thing) s InFrontOf(thing,place))" relation="s">
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(Turned(thing) s Moved(thing))" relation="s">
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(Turned(thing) m DistanceDecreased(place,thing))" relation="m">
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(Turned(thing) m DistanceDecreased(thing,place))" relation="m">
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(Turned(thing) m Forward(thing))" relation="m">
       <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
       <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="2.0">
+  <WeightedObject weight="3.0">
     <Symbol type="AllenRelation" key="(InFrontOf(thing,place) s Moved(thing))" relation="s">
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
@@ -481,19 +481,19 @@
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="9"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(InFrontOf(thing,place) o DistanceDecreased(place,thing))" relation="o">
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="0" end="6"/>
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(InFrontOf(thing,place) o DistanceDecreased(thing,place))" relation="o">
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="0" end="6"/>
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(InFrontOf(thing,place) o Forward(thing))" relation="o">
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="0" end="6"/>
       <Interval file="test" episode="0" name="Forward(thing)" start="1" end="7"/>
@@ -505,55 +505,55 @@
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(InFrontOf(thing,place) m Contact(place,thing))" relation="m">
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="0" end="6"/>
       <Interval file="test" episode="0" name="Contact(place,thing)" start="6" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(InFrontOf(thing,place) m Contact(thing,place))" relation="m">
       <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="0" end="6"/>
       <Interval file="test" episode="0" name="Contact(thing,place)" start="6" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(Moved(thing) f DistanceDecreased(place,thing))" relation="f">
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(Moved(thing) f DistanceDecreased(thing,place))" relation="f">
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(Moved(thing) f Forward(thing))" relation="f">
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
       <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(Moved(thing) f Contact(place,thing))" relation="f">
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
       <Interval file="test" episode="0" name="Contact(place,thing)" start="7" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="4.0">
+  <WeightedObject weight="5.0">
     <Symbol type="AllenRelation" key="(Moved(thing) f Contact(thing,place))" relation="f">
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
       <Interval file="test" episode="0" name="Contact(thing,place)" start="7" end="8"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceDecreased(place,thing) eq DistanceDecreased(thing,place))" relation="eq">
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="1" end="7"/>
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceDecreased(place,thing) eq Forward(thing))" relation="eq">
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="1" end="7"/>
       <Interval file="test" episode="0" name="Forward(thing)" start="1" end="7"/>
@@ -565,19 +565,19 @@
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceDecreased(place,thing) f Contact(place,thing))" relation="f">
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="1" end="7"/>
       <Interval file="test" episode="0" name="Contact(place,thing)" start="6" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceDecreased(place,thing) f Contact(thing,place))" relation="f">
       <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="1" end="7"/>
       <Interval file="test" episode="0" name="Contact(thing,place)" start="6" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceDecreased(thing,place) eq Forward(thing))" relation="eq">
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="1" end="7"/>
       <Interval file="test" episode="0" name="Forward(thing)" start="1" end="7"/>
@@ -589,13 +589,13 @@
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceDecreased(thing,place) f Contact(place,thing))" relation="f">
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="1" end="7"/>
       <Interval file="test" episode="0" name="Contact(place,thing)" start="6" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(DistanceDecreased(thing,place) f Contact(thing,place))" relation="f">
       <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="1" end="7"/>
       <Interval file="test" episode="0" name="Contact(thing,place)" start="6" end="7"/>
@@ -607,13 +607,13 @@
       <Interval file="test" episode="0" name="Moved(thing)" start="1" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(Forward(thing) f Contact(place,thing))" relation="f">
       <Interval file="test" episode="0" name="Forward(thing)" start="1" end="7"/>
       <Interval file="test" episode="0" name="Contact(place,thing)" start="6" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(Forward(thing) f Contact(thing,place))" relation="f">
       <Interval file="test" episode="0" name="Forward(thing)" start="1" end="7"/>
       <Interval file="test" episode="0" name="Contact(thing,place)" start="6" end="7"/>
@@ -631,13 +631,13 @@
       <Interval file="test" episode="0" name="Contact(thing,place)" start="6" end="7"/>
     </Symbol>
   </WeightedObject>
-  <WeightedObject weight="7.0">
+  <WeightedObject weight="8.0">
     <Symbol type="AllenRelation" key="(Contact(place,thing) eq Contact(thing,place))" relation="eq">
       <Interval file="test" episode="0" name="Contact(place,thing)" start="6" end="7"/>
       <Interval file="test" episode="0" name="Contact(thing,place)" start="6" end="7"/>
     </Symbol>
   </WeightedObject>
-  <Table rows="7" cols="106">
+  <Table rows="8" cols="106">
     <Row id="0">
       <Cell id="36">
         <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) eq DistanceConstant(thing,place))" relation="eq">
@@ -2472,6 +2472,344 @@
       <Cell id="71">
         <Symbol type="AllenRelation" key="(Right(thing) m Forward(thing))" relation="m">
           <Interval file="test" episode="0" name="Right(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="73">
+        <Symbol type="AllenRelation" key="(Turned(thing) s InFrontOf(thing,place))" relation="s">
+          <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+        </Symbol>
+      </Cell>
+      <Cell id="74">
+        <Symbol type="AllenRelation" key="(Turned(thing) s Moved(thing))" relation="s">
+          <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="75">
+        <Symbol type="AllenRelation" key="(Turned(thing) m DistanceDecreased(place,thing))" relation="m">
+          <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="76">
+        <Symbol type="AllenRelation" key="(Turned(thing) m DistanceDecreased(thing,place))" relation="m">
+          <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="77">
+        <Symbol type="AllenRelation" key="(Turned(thing) m Forward(thing))" relation="m">
+          <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="78">
+        <Symbol type="AllenRelation" key="(InFrontOf(thing,place) s Moved(thing))" relation="s">
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="80">
+        <Symbol type="AllenRelation" key="(InFrontOf(thing,place) o DistanceDecreased(place,thing))" relation="o">
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="81">
+        <Symbol type="AllenRelation" key="(InFrontOf(thing,place) o DistanceDecreased(thing,place))" relation="o">
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="82">
+        <Symbol type="AllenRelation" key="(InFrontOf(thing,place) o Forward(thing))" relation="o">
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="84">
+        <Symbol type="AllenRelation" key="(InFrontOf(thing,place) m Contact(place,thing))" relation="m">
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+          <Interval file="test" episode="0" name="Contact(place,thing)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="85">
+        <Symbol type="AllenRelation" key="(InFrontOf(thing,place) m Contact(thing,place))" relation="m">
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+          <Interval file="test" episode="0" name="Contact(thing,place)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="86">
+        <Symbol type="AllenRelation" key="(Moved(thing) f DistanceDecreased(place,thing))" relation="f">
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="87">
+        <Symbol type="AllenRelation" key="(Moved(thing) f DistanceDecreased(thing,place))" relation="f">
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="88">
+        <Symbol type="AllenRelation" key="(Moved(thing) f Forward(thing))" relation="f">
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="89">
+        <Symbol type="AllenRelation" key="(Moved(thing) f Contact(place,thing))" relation="f">
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+          <Interval file="test" episode="0" name="Contact(place,thing)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="90">
+        <Symbol type="AllenRelation" key="(Moved(thing) f Contact(thing,place))" relation="f">
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+          <Interval file="test" episode="0" name="Contact(thing,place)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="91">
+        <Symbol type="AllenRelation" key="(DistanceDecreased(place,thing) eq DistanceDecreased(thing,place))" relation="eq">
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="92">
+        <Symbol type="AllenRelation" key="(DistanceDecreased(place,thing) eq Forward(thing))" relation="eq">
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="94">
+        <Symbol type="AllenRelation" key="(DistanceDecreased(place,thing) f Contact(place,thing))" relation="f">
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+          <Interval file="test" episode="0" name="Contact(place,thing)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="95">
+        <Symbol type="AllenRelation" key="(DistanceDecreased(place,thing) f Contact(thing,place))" relation="f">
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+          <Interval file="test" episode="0" name="Contact(thing,place)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="96">
+        <Symbol type="AllenRelation" key="(DistanceDecreased(thing,place) eq Forward(thing))" relation="eq">
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="98">
+        <Symbol type="AllenRelation" key="(DistanceDecreased(thing,place) f Contact(place,thing))" relation="f">
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+          <Interval file="test" episode="0" name="Contact(place,thing)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="99">
+        <Symbol type="AllenRelation" key="(DistanceDecreased(thing,place) f Contact(thing,place))" relation="f">
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+          <Interval file="test" episode="0" name="Contact(thing,place)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="101">
+        <Symbol type="AllenRelation" key="(Forward(thing) f Contact(place,thing))" relation="f">
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+          <Interval file="test" episode="0" name="Contact(place,thing)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="102">
+        <Symbol type="AllenRelation" key="(Forward(thing) f Contact(thing,place))" relation="f">
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+          <Interval file="test" episode="0" name="Contact(thing,place)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="105">
+        <Symbol type="AllenRelation" key="(Contact(place,thing) eq Contact(thing,place))" relation="eq">
+          <Interval file="test" episode="0" name="Contact(place,thing)" start="7" end="8"/>
+          <Interval file="test" episode="0" name="Contact(thing,place)" start="7" end="8"/>
+        </Symbol>
+      </Cell>
+    </Row>
+    <Row id="7">
+      <Cell id="0">
+        <Symbol type="AllenRelation" key="(LeftOf(thing,place) s DistanceConstant(place,thing))" relation="s">
+          <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
+          <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="1">
+        <Symbol type="AllenRelation" key="(LeftOf(thing,place) s DistanceConstant(thing,place))" relation="s">
+          <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
+          <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="2">
+        <Symbol type="AllenRelation" key="(LeftOf(thing,place) m Left(thing))" relation="m">
+          <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
+          <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="3">
+        <Symbol type="AllenRelation" key="(LeftOf(thing,place) m Turned(thing))" relation="m">
+          <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
+          <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="18">
+        <Symbol type="AllenRelation" key="(LeftOf(thing,place) m InFrontOf(thing,place))" relation="m">
+          <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+        </Symbol>
+      </Cell>
+      <Cell id="19">
+        <Symbol type="AllenRelation" key="(LeftOf(thing,place) m Moved(thing))" relation="m">
+          <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="21">
+        <Symbol type="AllenRelation" key="(LeftOf(thing,place) b DistanceDecreased(place,thing))" relation="b">
+          <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="22">
+        <Symbol type="AllenRelation" key="(LeftOf(thing,place) b DistanceDecreased(thing,place))" relation="b">
+          <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="23">
+        <Symbol type="AllenRelation" key="(LeftOf(thing,place) b Forward(thing))" relation="b">
+          <Interval file="test" episode="0" name="LeftOf(thing,place)" start="0" end="1"/>
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="36">
+        <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) eq DistanceConstant(thing,place))" relation="eq">
+          <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="38">
+        <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) f Left(thing))" relation="f">
+          <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="40">
+        <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) f Turned(thing))" relation="f">
+          <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="41">
+        <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) o InFrontOf(thing,place))" relation="o">
+          <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+        </Symbol>
+      </Cell>
+      <Cell id="42">
+        <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) o Moved(thing))" relation="o">
+          <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="43">
+        <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) m DistanceDecreased(place,thing))" relation="m">
+          <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="44">
+        <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) m DistanceDecreased(thing,place))" relation="m">
+          <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="45">
+        <Symbol type="AllenRelation" key="(DistanceConstant(place,thing) m Forward(thing))" relation="m">
+          <Interval file="test" episode="0" name="DistanceConstant(place,thing)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="48">
+        <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) f Left(thing))" relation="f">
+          <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="50">
+        <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) f Turned(thing))" relation="f">
+          <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="51">
+        <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) o InFrontOf(thing,place))" relation="o">
+          <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+        </Symbol>
+      </Cell>
+      <Cell id="52">
+        <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) o Moved(thing))" relation="o">
+          <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="53">
+        <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) m DistanceDecreased(place,thing))" relation="m">
+          <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="54">
+        <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) m DistanceDecreased(thing,place))" relation="m">
+          <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="55">
+        <Symbol type="AllenRelation" key="(DistanceConstant(thing,place) m Forward(thing))" relation="m">
+          <Interval file="test" episode="0" name="DistanceConstant(thing,place)" start="0" end="2"/>
+          <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="57">
+        <Symbol type="AllenRelation" key="(Left(thing) eq Turned(thing))" relation="eq">
+          <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="Turned(thing)" start="1" end="2"/>
+        </Symbol>
+      </Cell>
+      <Cell id="58">
+        <Symbol type="AllenRelation" key="(Left(thing) s InFrontOf(thing,place))" relation="s">
+          <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="InFrontOf(thing,place)" start="1" end="7"/>
+        </Symbol>
+      </Cell>
+      <Cell id="60">
+        <Symbol type="AllenRelation" key="(Left(thing) s Moved(thing))" relation="s">
+          <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="Moved(thing)" start="1" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="61">
+        <Symbol type="AllenRelation" key="(Left(thing) m DistanceDecreased(place,thing))" relation="m">
+          <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(place,thing)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="62">
+        <Symbol type="AllenRelation" key="(Left(thing) m DistanceDecreased(thing,place))" relation="m">
+          <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
+          <Interval file="test" episode="0" name="DistanceDecreased(thing,place)" start="2" end="8"/>
+        </Symbol>
+      </Cell>
+      <Cell id="63">
+        <Symbol type="AllenRelation" key="(Left(thing) m Forward(thing))" relation="m">
+          <Interval file="test" episode="0" name="Left(thing)" start="1" end="2"/>
           <Interval file="test" episode="0" name="Forward(thing)" start="2" end="8"/>
         </Symbol>
       </Cell>

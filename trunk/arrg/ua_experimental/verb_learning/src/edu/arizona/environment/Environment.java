@@ -52,7 +52,8 @@ public class Environment {
 		
 		try {
 			Response response = simulateService_.call(request);
-			return new OOMDPState(response.new_state);
+			OOMDPState oomdpState = new OOMDPState(response.new_state);
+			return oomdpState;
 		} catch (RosException e) {
 			e.printStackTrace();
 		}

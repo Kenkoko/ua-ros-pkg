@@ -1,0 +1,26 @@
+digraph G { 
+	graph [ rankdir=LR ]; 
+	"11" [label="11GOOD",style="filled",color="white",fontcolor="black"];
+	"11" -> "11" [label="DistanceDecreased(place,thing)\nDistanceDecreased(thing,place)\nForward(thing)\nInFrontOf(thing,place)"] ;
+	"11" -> "7" [label="Contact(place,thing)\nContact(thing,place)\nDistanceDecreased(place,thing)\nDistanceDecreased(thing,place)\nForward(thing)"] ;
+	"7" [label="7GOOD_TERMINAL",style="filled",color="green",fontcolor="black"];
+	"6" [label="6GOOD",style="filled",color="white",fontcolor="black"];
+	"6" -> "6" [label="DistanceConstant(place,thing)\nDistanceConstant(thing,place)\nMoved(thing)\nTurned(thing)"] ;
+	"6" -> "10" [label="DistanceConstant(place,thing)\nDistanceConstant(thing,place)\nInFrontOf(thing,place)\nMoved(thing)\nTurned(thing)"] ;
+	"5" [label="5GOOD",style="filled",color="white",fontcolor="black"];
+	"5" -> "11" [label="DistanceDecreased(place,thing)\nDistanceDecreased(thing,place)\nForward(thing)\nInFrontOf(thing,place)"] ;
+	"5" -> "5" [label="DistanceConstant(place,thing)\nDistanceConstant(thing,place)\nInFrontOf(thing,place)"] ;
+	"10" [label="10GOOD",style="filled",color="white",fontcolor="black"];
+	"10" -> "10" [label="DistanceConstant(place,thing)\nDistanceConstant(thing,place)\nInFrontOf(thing,place)\nMoved(thing)\nTurned(thing)"] ;
+	"10" -> "3" [label="DistanceDecreased(place,thing)\nDistanceDecreased(thing,place)\nForward(thing)\nInFrontOf(thing,place)\nMoved(thing)"] ;
+	"3" [label="3GOOD",style="filled",color="white",fontcolor="black"];
+	"3" -> "7" [label="Contact(place,thing)\nContact(thing,place)\nDistanceDecreased(place,thing)\nDistanceDecreased(thing,place)\nForward(thing)\nMoved(thing)"] ;
+	"3" -> "3" [label="DistanceDecreased(place,thing)\nDistanceDecreased(thing,place)\nForward(thing)\nInFrontOf(thing,place)\nMoved(thing)"] ;
+	"2" [label="2GOOD",style="filled",color="white",fontcolor="black"];
+	"2" -> "6" [label="DistanceConstant(place,thing)\nDistanceConstant(thing,place)\nMoved(thing)\nTurned(thing)"] ;
+	"2" -> "10" [label="DistanceConstant(place,thing)\nDistanceConstant(thing,place)\nInFrontOf(thing,place)\nMoved(thing)\nTurned(thing)"] ;
+	"2" -> "2" [label="DistanceConstant(place,thing)\nDistanceConstant(thing,place)"] ;
+	"0" [label="0START",style="filled",color="blue",fontcolor="black"];
+	"0" -> "5" [label="DistanceConstant(place,thing)\nDistanceConstant(thing,place)\nInFrontOf(thing,place)"] ;
+	"0" -> "2" [label="DistanceConstant(place,thing)\nDistanceConstant(thing,place)"] ;
+}
