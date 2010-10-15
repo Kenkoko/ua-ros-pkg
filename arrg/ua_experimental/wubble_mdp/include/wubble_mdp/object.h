@@ -30,9 +30,9 @@ public:
   virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* other);
 
   double orientation_;
-  bool has_last_state_;
   double last_x_, last_y_;
   double last_orientation_;
+  static const double delta_ = 0.5;
 };
 
 #endif /* OBJECT_H_ */

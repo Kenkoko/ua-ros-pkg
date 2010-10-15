@@ -61,8 +61,6 @@ void Robot::update(simulator_state::ObjectInfo new_info)
   x_ = roundToDelta(new_info.pose.position.x, delta_);
   y_ = roundToDelta(new_info.pose.position.y, delta_);
   orientation_ = roundYaw(wubble_mdp::extractYaw(new_info));
-
-  //  has_last_state_ = true;
 }
 
 std::string Robot::getClassString()
