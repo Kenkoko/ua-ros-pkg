@@ -31,9 +31,27 @@ copy is returned by default."
      do (format t "~a => ~a~%" k v)))
 
 ;;===========================================================
+;; Useful for dealing with ROS messages
 
 (defun ros-list (seq)
   (make-array (length seq) :initial-contents seq))
+
+(defun msg-equal (a-msg b-msg)
+  "Like equal, but applies to ROS messages."
+  (if (eq (class-of a-msg) (class-of b-msg))
+      (cond ((is-instance-of a-msg 'ros-message)
+             (loop for slot in (class-slots (class-of a-msg))
+                when (not (msg-equal (slot-value a-msg (slot-definition-name slot))
+                                     (slot-value b-msg (slot-definition-name slot))))
+                do (return nil)
+                finally (return t)))
+             ((vectorp a-msg)
+              (cl-utils:is-permutation (vec-to-list a-msg) (vec-to-list b-msg) :test 'msg-equal))
+             (t
+              (equal a-msg b-msg)))))
+      
+(defun vec-to-list (vec)
+  (loop for x across vec collect x))
 
 ;;===========================================================
 ;; Utility method for printing simple objects
@@ -57,7 +75,7 @@ copy is returned by default."
 ;;===========================================================
 
 (defun is-instance-of (object class-name)
-  (find (find-unit-class class-name) (class-precedence-list (class-of object))))
+  (find (find-class class-name) (class-precedence-list (class-of object))))
 
 ;;===========================================================
 
@@ -65,9 +83,6 @@ copy is returned by default."
   (* rad (/ 180 pi)))
 
 ;;===========================================================
-
-(defun vec-to-list (vec)
-  (loop for x across vec collect x))
 
 (defun boolean-string (value)
   (if value "true" "false"))

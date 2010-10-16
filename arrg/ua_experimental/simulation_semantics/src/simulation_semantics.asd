@@ -19,19 +19,22 @@
                  (:file "time-series" :depends-on ("data"))
                  (:file "trace-to-intervals" :depends-on ("time-series"))
 
-                 (:file "verb-learning" :depends-on ("time-series")))
+                 ;; TODO: Rename verb-learning
+                 (:file "environment" :depends-on ("utils"))
+                 (:file "verb-learning" :depends-on ("time-series" "environment"))
+                 (:file "scenarios" :depends-on ("verb-learning"))
+                 (:file "teaching" :depends-on ("verb-learning")))
 
     :depends-on (roslisp
                  cl-transforms
-                 
-                 "actionlib" ;; Don't think we need this anymore?
+                 ;"actionlib" ;; Don't think we need this anymore?
                  "gbbopen-ros"
                  ;; Messages and services
                  "simulation_semantics-srv"
                  "oomdp_msgs-msg"
                  "oomdp_msgs-srv"
-                 "verb_learning-srv"
                  "verb_learning-msg"
+                 "verb_learning-srv"
                  "time_series-msg"
                  "time_series-srv"
                  "gazebo-msg"
