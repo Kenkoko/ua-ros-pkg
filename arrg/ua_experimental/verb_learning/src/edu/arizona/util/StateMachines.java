@@ -70,7 +70,7 @@ public class StateMachines {
 		
 		DirectedGraph<FSMState, FSMTransition> dfa = new DirectedSparseGraph<FSMState, FSMTransition>();
 		for (FSMState state : subsetToState.values()) {
-			System.out.println("ADDING VERTEX: " + state);
+//			System.out.println("ADDING VERTEX: " + state);
 			dfa.addVertex(state);
 		}
 		for (Set<BPPNode> subset : transitions.keySet()) {
@@ -80,7 +80,7 @@ public class StateMachines {
 				FSMState dest = subsetToState.get(edgeMap.get(edgeProps));
 				FSMTransition edge = new FSMTransition(edgeProps);
 				
-				System.out.println("ADDING EDGE: " + source + "," + edge + "," + dest);
+//				System.out.println("ADDING EDGE: " + source + "," + edge + "," + dest);
 				
 				Preconditions.checkNotNull(source, "source IS NULL");
 				Preconditions.checkNotNull(dest, "dest IS NULL");

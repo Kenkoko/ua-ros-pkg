@@ -3,18 +3,17 @@ package edu.arizona.planning;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Stack;
 import java.util.TreeMap;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
-
 import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.msg.Policy;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 
 import edu.arizona.environment.Environment;
 import edu.arizona.planning.fsm.FSMState;
@@ -22,7 +21,6 @@ import edu.arizona.planning.fsm.FSMState.StateType;
 import edu.arizona.planning.fsm.VerbDFA.SimulationResult;
 import edu.arizona.planning.mdp.OOMDPState;
 import edu.arizona.util.ProbUtils;
-import edu.arizona.verbs.SimulationInterface;
 import edu.arizona.verbs.Verb;
 
 public class RTDP {
@@ -71,8 +69,8 @@ public class RTDP {
 			if (solved) {
 				value_ = 0.0; 
 			} else {
-				// TODO: Need to check error conditions
-				value_ = RTDP.this.verb_.getDFA().getMinDistToGoodTerminal(fsmState);
+				// Initializing the value to the heuristic
+				value_ = RTDP.this.verb_.getDFA().getHeuristic(fsmState);
 			}
 		}
 		
@@ -108,7 +106,7 @@ public class RTDP {
 			for (Action a : RTDP.this.actions_) {
 //				System.out.println("TESTING ACTION: " + a);
 				double qValue = this.qValue(a);
-				System.out.println("Action " + a + " has Q-value " + qValue);
+//				System.out.println("Action " + a + " has Q-value " + qValue);
 				if (qValue < minValue) {
 					minValue = qValue;
 					result = new Vector<RTDP.Action>();
@@ -122,11 +120,12 @@ public class RTDP {
 			return result;
 		}
 		
+		// c(s,a) + sum_{s'} P(s'|s)*s'.value 
 		public double qValue(Action a) { 
-			double q = RTDP.this.getExpectedCost(this, a);
-			
+			double q = RTDP.this.getExpectedCost(this, a); // c(s,a)
+
+			// sum_{s'} P(s'|s)*s'.value
 			Map<State, Double> nextStateDist = getNextStateDist(this, a);
-//			ProbUtils.printDist(nextStateDist);
 			for (State next : nextStateDist.keySet()) {
 				q += nextStateDist.get(next) * next.value_;
 			}
@@ -148,7 +147,7 @@ public class RTDP {
 		public double residual() {
 			Action a = this.greedyAction();
 			double res = Math.abs(this.value() - this.qValue(a));
-			System.out.println("RESIDUAL: " + res + " for state " + toString());
+//			System.out.println("RESIDUAL: " + res + " for state " + toString());
 			return res;
 		}
 		
@@ -215,7 +214,7 @@ public class RTDP {
 		}
 	}
 	
-	public void runAlgorithm() {
+	public boolean runAlgorithm() {
 		logger.info("======================================\nBEGIN RTDP");
 		logger.info("Start state is: " + start_);
 		
@@ -225,44 +224,60 @@ public class RTDP {
 		while (!start_.solved) {
 			long trialStart = System.currentTimeMillis();
 			logger.info(">>>>>>>>>> BEGIN TRIAL " + i + ":");
-			runLrtdpTrial(start_, 0.4);
+			boolean success = runLrtdpTrial(start_, 0.1);
 			logger.info(">>>>>>>>>> END TRIAL " + i + ". Trial took " + 
-						((System.currentTimeMillis() - trialStart)/1000) + " seconds.");  
+						((System.currentTimeMillis() - trialStart)/1000.0) + " seconds.");  
 			i++;
+			
+			if (!success) {
+				return false;
+			}
 		}
 		
-		logger.info("END RTDP. TOTAL TIME: " + ((System.currentTimeMillis() - start)/1000));
+		logger.info("END RTDP. TOTAL TIME: " + ((System.currentTimeMillis() - start)/1000.0));
+		return true;
 	}
 	
-	public Policy recoverPolicy(final Map<String, String> argumentMap) { // TODO: Return this as a plan
+	public Policy recoverPolicy(final Map<String, String> argumentMap) { 
 		Policy plan = new Policy();
 		
 		List<OOMDPState> states = new Vector<OOMDPState>();
 		List<String> actions = new Vector<String>();
-		System.out.println(">>>>>>>>>> POLICY <<<<<<<<<<<<<<");
+		logger.info(">>>>>>>>>> POLICY <<<<<<<<<<<<<<");
 		State s = start_;
 		
-		while (!s.isGoal()) {
-			System.out.println("STATE:  " + s);
+		int i = 0;
+		while (!s.isGoal() ) {
+			if (i > 50) {
+				logger.error("POLICY RETRIEVAL FAILED: Too many states!");
+				return plan;
+			}
+			
+			logger.info("STATE:  " + s);
 			states.add(s.getMdpState());
 			
 			Action a = s.getGreedyActions().iterator().next(); // Always the first
-			System.out.println("ACTION: " + a);
+			logger.info("ACTION: " + a);
 			actions.add(a.name_);
 			
 			s = getNextStateDist(s, a).keySet().iterator().next();
+			
+			i++;
 		}
-		System.out.println("FINAL STATE:  " + s);
+		
+		logger.info("FINAL STATE:  " + s); 
+		states.add(s.getMdpState()); // Add the final state
+		actions.add("TERMINATE"); // TODO: Should make a constant in the msg file
 		
 		// Populate the object
-		// Functional programming in Java is so ugly
+		// Functional programming in Java is so ugly!
 		plan.states = Collections2.transform(states, new Function<OOMDPState, MDPState>() 
 						{ public MDPState apply(OOMDPState state) { return OOMDPState.remapState(state, argumentMap).convertToROS(); } } ).toArray(new MDPState[0]);
 		plan.actions = actions.toArray(new String[0]);
 		return plan;
 	}
 	
-	public void runLrtdpTrial(State state, double epsilon) {
+	public boolean runLrtdpTrial(State state, double epsilon) {
 		State s = state;
 		
 		Stack<State> visited = new Stack<RTDP.State>();
@@ -276,14 +291,18 @@ public class RTDP {
 				break;
 			}
 			
+			if (visited.size() > 500) { // To prevent infinite planning
+				return false;
+			}
+			
 			// pick best action and update hash
 			Action a = s.greedyAction();
-			System.out.println("ACTION: " + a);
+//			System.out.println("ACTION: " + a);
 			s.update();
 			
 			// stochastically simulate next state
 			s = s.pickNextState(a);
-			System.out.println(s);
+//			System.out.println(s);
 		}
 		
 		// try labeling visited states in reverse order
@@ -293,6 +312,8 @@ public class RTDP {
 				break;
 			}
 		}
+		
+		return true;
 	}
 	
 	public boolean checkSolved(State s, double epsilon) {
@@ -326,7 +347,7 @@ public class RTDP {
 			if (rv) {
 				// label relevant states
 				for (State nextState : closed) {
-					System.out.println("CLOSING STATE: " + nextState);
+					logger.info("CLOSING STATE: " + nextState);
 					nextState.solved = true;
 				}
 			} else {
@@ -341,33 +362,15 @@ public class RTDP {
 		return rv;
 	}
 	
-	public void runRtdpTrial(State state) {
-		State s = state;
-		while (!s.isGoal()) {
-			System.out.println("STATE IS: " + s);
-			// pick best action and update hash
-			Action a = s.greedyAction();
-			System.out.println("GREEDY ACTION IS: " + a);
-			s.update();
-			System.out.println("NEW VALUE IS: " + s.value_);
-			// stochastically simulate next state
-			s = s.pickNextState(a);
-			System.out.println("NEXT STATE IS: " + s);
-			System.out.println("==========================================");
-		}
-	}
-	
 	public double getExpectedCost(State s, Action a) {
 //		System.out.println("GETTING REWARD FOR " + s);
 		if (!costTotals_.get(a).containsKey(s)) {
 			getNextStateDist(s, a);
 		}
 		
-		double expectedReward = costTotals_.get(a).get(s) / costCounts_.get(a).get(s);
+		double expectedCost = costTotals_.get(a).get(s) / costCounts_.get(a).get(s);
 		
-//		System.out.println("Reward is " + expectedReward);
-		
-		return expectedReward;
+		return expectedCost;
 	}
 	
 	public Map<State, Double> getNextStateDist(State s, Action a) {
@@ -376,11 +379,6 @@ public class RTDP {
 		
 		SimulationResult dfaResult = verb_.getDFA().simulate(s.fsmState_, nextMdpState.getActiveRelations());
 		State nextState = new State(nextMdpState, dfaResult.newState);
-		
-		// TODO: Add this functionality in the right place, the environment
-//		if (nextMdpState.isOutOfBounds()) {
-//			dfaResult.cost = 1000;
-//		}
 		
 		HashMap<State, HashMap<State, Integer>> stateStateProb = transitionCounts_.get(a);
 		

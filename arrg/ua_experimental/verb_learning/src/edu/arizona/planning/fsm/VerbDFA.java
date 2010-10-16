@@ -13,11 +13,15 @@ import java.util.Vector;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.util.graph.Edge;
 import edu.arizona.planning.fsm.FSMState.StateType;
+import edu.arizona.util.Graphs;
 import edu.arizona.util.Predicate;
 import edu.arizona.util.StateMachines;
 import edu.uci.ics.jung.algorithms.shortestpath.UnweightedShortestPath;
@@ -28,6 +32,7 @@ public class VerbDFA {
 	public class SimulationResult {
 		public FSMState newState = null;
 		public double cost = 0.0;
+		public double heuristic = 0.0;
 	}
 	
 	private FSMState activeState_;
@@ -38,14 +43,22 @@ public class VerbDFA {
 	private int startDist_;
 	
 	public VerbDFA(DirectedGraph<BPPNode, Edge> graph) {
-		// Preparing the DFA
+		// Convert NFA to DFA
 		dfa_ = StateMachines.convertToDFA(graph);
+		if (!Graphs.isDFA(dfa_)) { throw new RuntimeException("SUBSET CONSTRUCTION FAILED"); }
 		toDot("1.dot", false);
-		minimizeSlow();
-		toDot("2.dot", false);
+		
+		// Minimize the DFA
+//		minimizeSlow();
+//		if (!Graphs.isDFA(dfa_)) { throw new RuntimeException("MINIMIZATION FAILED"); }
+//		toDot("2.dot", false);
+
+		// Add self loops
 		addSelfLoops();
+		if (!Graphs.isDFA(dfa_)) { throw new RuntimeException("SELF LOOPS FAILED"); }
 		toDot("3.dot", false);
-		populateGoodTerminals();
+
+		populateGoodTerminals(); // This doesn't change the graph structure
 		
 		for (FSMState state : dfa_.getVertices()) {
 			if (state.getType().equals(StateType.START)) {
@@ -55,6 +68,8 @@ public class VerbDFA {
 		startDist_ = getMinDistToGoodTerminal(startState_);
 
 		activeState_ = startState_;
+		
+		printStateValues();
 	}
 
 	private void populateGoodTerminals() {
@@ -106,6 +121,7 @@ public class VerbDFA {
 		}
 
 		result.cost = getCost(state, result.newState);
+		result.heuristic = getHeuristic(result.newState);
 		
 		return result;
 	}
@@ -117,7 +133,8 @@ public class VerbDFA {
 		return result.cost;
 	}
 	
-	public double getCost(FSMState oldState, FSMState newState) {
+	// This is the value of the heuristic function h(s)
+	public double getHeuristic(FSMState newState) {
 		switch (newState.getType()) {
 		case GOOD_TERMINAL: // No cost
 			return 0.0; 
@@ -125,11 +142,21 @@ public class VerbDFA {
 			return startDist_;
 		case BAD_TERMINAL: // YOU BE DEAD!
 			return Double.POSITIVE_INFINITY; // startDist_ * 10;
-		case GOOD: // For all other states 
+		case GOOD: // For all other states // TODO: Cache these
 			return getMinDistToGoodTerminal(newState);
 		default:
 			throw new RuntimeException("IMPOSSIBLE");
 		}
+	}
+	
+	// This is the value of the cost function c(s,a,s')
+	// TODO: What about bad terminals? Need to move the infinity in here?
+	public double getCost(FSMState oldState, FSMState newState) {
+//		switch (newState.getType()) {
+//		default:
+//			return 1.0;
+//		}
+		return getHeuristic(newState);
 	}
 	
 	public void addConstraintState(Set<String> bannedProps) {
@@ -243,6 +270,8 @@ public class VerbDFA {
 	 * Minimize DFA using simpler O(n^2) algorithm. 
 	 */
 	private void minimizeSlow() {
+		System.out.println("========= BEGIN DFA MINIMIZATION");
+		
 		Vector<FSMState> states = new Vector<FSMState>(dfa_.getVertices());
 		
 		Set<Pair<FSMState>> allPairs = new HashSet<Pair<FSMState>>(); 
@@ -277,7 +306,9 @@ public class VerbDFA {
 					if (pSymbols.equals(qSymbols)) {
 						for (FSMTransition t : pEdges) {
 							FSMState pPrime = dfa_.getOpposite(p, t);
-							FSMState qPrime = dfa_.getOpposite(q, matchTransition(dfa_, q, t.getSymbol()));
+							Collection<FSMTransition> matches = matchTransition(dfa_, q, t.getSymbol());
+							if (matches.size() != 1) { throw new RuntimeException("NOT A DFA"); }
+							FSMState qPrime = dfa_.getOpposite(q, matches.iterator().next());
 							Pair<FSMState> newPair;
 							if (states.indexOf(pPrime) < states.indexOf(qPrime)) {
 								newPair = new Pair<FSMState>(pPrime, qPrime);
@@ -295,69 +326,110 @@ public class VerbDFA {
 			}
 		}
 		
-		Set<Pair<FSMState>> terminalPairs = new HashSet<Pair<FSMState>>();
-		for (int i = 0; i < states.size(); i++) {
-			for (int j = i+1; j < states.size(); j++) {
-				FSMState p = states.get(i);
-				FSMState q = states.get(j);
-				Pair<FSMState> pair = new Pair<FSMState>(p, q);
-				if (p.isTerminal() && q.isTerminal()) { // If one is accepting and the other is not, must be distinct
-					terminalPairs.add(pair);
-				}
-			}
-		}
-		
-		System.out.println("TERMINAL CHECK: " + Sets.difference(allPairs, distinct).containsAll(terminalPairs));
-		
-//		System.out.println(distinct);
-		
 		// Now that we know which are distinguishable, we need to delete the unnecessary states
-		boolean gotOne = true;
-		while (gotOne) {
-			gotOne = false;
-			for (Pair<FSMState> same : Sets.difference(allPairs, distinct)) {
-				FSMState saved = same.getFirst();
-				FSMState dead = same.getSecond();
-				
-				if (dfa_.containsVertex(dead)) {
-					System.out.println("DELETING STATE: " + dead);
-					for (FSMTransition t : dfa_.getInEdges(dead)) {
-						FSMState p = dfa_.getOpposite(dead, t);
-						safeAddTransition(p, t.getSymbol(), saved);
-					}
-					for (FSMTransition t : dfa_.getOutEdges(dead)) {
-						FSMState p = dfa_.getOpposite(dead, t);
-						safeAddTransition(saved, t.getSymbol(), p);
-					}
-					
-					// It's all over for him
-					for (FSMTransition t : dfa_.getIncidentEdges(dead)) {
-						dfa_.removeEdge(t);
-					}
-					dfa_.removeVertex(dead);
-					gotOne = true;
+		SetView<Pair<FSMState>> equivalentPairs = Sets.difference(allPairs, distinct);
+		Set<Set<FSMState>> subsets = new HashSet<Set<FSMState>>();
+		
+		for (Pair<FSMState> same : equivalentPairs) {
+			Set<Set<FSMState>> toMerge = new HashSet<Set<FSMState>>();
+			for (Set<FSMState> set : subsets) {
+				if (set.contains(same.getFirst()) || set.contains(same.getSecond())) {
+					toMerge.add(set);
 				}
 			}
+			
+			Set<FSMState> newSubset = new HashSet<FSMState>();
+			newSubset.add(same.getFirst());
+			newSubset.add(same.getSecond());
+			for (Set<FSMState> oldSubset : toMerge) {
+				newSubset.addAll(oldSubset);
+				subsets.remove(oldSubset);
+			}
+			subsets.add(newSubset);
 		}
+		
+		for (Set<FSMState> subset : subsets) {
+			System.out.println(subset);
+			
+			FSMState representative = subset.iterator().next();
+			subset.remove(representative);
+			
+			for (FSMState dead : subset) {
+				System.out.println("deleting state: " + dead + ", merging into: " + representative);
+				for (FSMTransition t : dfa_.getInEdges(dead)) {
+					FSMState p = dfa_.getOpposite(dead, t);
+					safeAddTransition(p, t.getSymbol(), representative);
+				}
+				for (FSMTransition t : dfa_.getOutEdges(dead)) {
+					FSMState p = dfa_.getOpposite(dead, t);
+					safeAddTransition(representative, t.getSymbol(), p);
+				}
+				
+				// It's all over for him
+				for (FSMTransition t : dfa_.getIncidentEdges(dead)) {
+					dfa_.removeEdge(t);
+				}
+				dfa_.removeVertex(dead);
+				toDot("min.dot", false);
+			}
+		}
+		
+//		boolean gotOne = true;
+//		while (gotOne) {
+//			gotOne = false;
+//			for (Pair<FSMState> same : equivalentPairs) {
+//				FSMState saved = same.getFirst();
+//				FSMState dead = same.getSecond();
+//				
+//				if (dfa_.containsVertex(dead)) {
+//					System.out.println("deleting state: " + dead + ", merging into: " + saved);
+//					for (FSMTransition t : dfa_.getInEdges(dead)) {
+//						FSMState p = dfa_.getOpposite(dead, t);
+//						safeAddTransition(p, t.getSymbol(), saved);
+//					}
+//					for (FSMTransition t : dfa_.getOutEdges(dead)) {
+//						FSMState p = dfa_.getOpposite(dead, t);
+//						safeAddTransition(saved, t.getSymbol(), p);
+//					}
+//					
+//					// It's all over for him
+//					for (FSMTransition t : dfa_.getIncidentEdges(dead)) {
+//						dfa_.removeEdge(t);
+//					}
+//					dfa_.removeVertex(dead);
+//					toDot("min.dot", false);
+//					gotOne = true;
+//				}
+//			}
+//		}
+		
+		System.out.println("========= END DFA MINIMIZATION");
 	}
 	
 	private boolean hasTransition(DirectedGraph<FSMState, FSMTransition> dfa, FSMState source, Set<String> symbol, FSMState dest) {
-		FSMTransition t = matchTransition(dfa, source, symbol);
-		if (t == null) {
+		Collection<FSMTransition> set = matchTransition(dfa, source, symbol);
+		if (set.isEmpty()) {
 			return false;
 		} else {
-			return dfa.getOpposite(source, t).equals(dest);
+			for (FSMTransition t : set) {
+				if (dfa.getOpposite(source, t).equals(dest)){
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 	
-	private FSMTransition matchTransition(DirectedGraph<FSMState, FSMTransition> dfa, FSMState state, final Set<String> symbol) {
+	private Collection<FSMTransition> matchTransition(DirectedGraph<FSMState, FSMTransition> dfa, FSMState state, final Set<String> symbol) {
 		Collection<FSMTransition> matchingTransitions = Collections2.filter(dfa.getOutEdges(state), new Predicate<FSMTransition>() {
-			public boolean value(FSMTransition arg) { return arg.getSymbol().equals(symbol); }
-		});
-		if (matchingTransitions.isEmpty()) {
-			return null;
-		} else {
-			return matchingTransitions.iterator().next();
+			public boolean value(FSMTransition arg) { return arg.getSymbol().equals(symbol); }});
+		
+		return matchingTransitions;
+	}
+	
+	private void printStateValues() {
+		for (FSMState s : dfa_.getVertices()) {
+			System.out.println(s + ": " + getMinDistToGoodTerminal(s));
 		}
 	}
 }

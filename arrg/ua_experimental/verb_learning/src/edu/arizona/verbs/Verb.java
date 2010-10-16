@@ -109,7 +109,8 @@ public class Verb {
 		}
 		
 //		Signature pruned = signature_.prune(signature_.trainingSize() - 1);
-		Signature pruned = signature_.prune(signature_.trainingSize() / 2);
+//		Signature pruned = signature_.prune(signature_.trainingSize() / 2);
+		Signature pruned = signature_;
 		Set<String> propSet = new TreeSet<String>();
 		for (WeightedObject obj : pruned.signature()) {
 			propSet.addAll(obj.key().getProps());
@@ -154,10 +155,15 @@ public class Verb {
 		OOMDPState remappedStart = OOMDPState.remapState(properStart, argumentMap);
 		
 		RTDP planner = new RTDP(this, Environment.getInstance(), remappedStart);
-		planner.runAlgorithm();
+		boolean success = planner.runAlgorithm();
 		
-		HashBiMap<String,String> biMap = HashBiMap.create(argumentMap); // Fingers crossed
-		return planner.recoverPolicy(biMap.inverse());
+		if (success) {
+			HashBiMap<String,String> biMap = HashBiMap.create(argumentMap); // Fingers crossed
+			return planner.recoverPolicy(biMap.inverse());
+		} else {
+			Policy failure = new Policy();
+			return failure;
+		}
 	}
 	
 	public void resetRecognizer() {
