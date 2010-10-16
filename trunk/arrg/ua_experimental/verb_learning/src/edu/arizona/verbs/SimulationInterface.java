@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -13,9 +12,6 @@ import java.util.TreeSet;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
-
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 
 import ros.NodeHandle;
 import ros.Ros;
@@ -28,6 +24,10 @@ import ros.pkg.verb_learning.srv.FSMUpdate;
 import ros.pkg.verb_learning.srv.FindSignature;
 import ros.pkg.verb_learning.srv.LoadVerbs;
 import ros.pkg.verb_learning.srv.PlanVerb;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+
 import edu.arizona.cs.learn.algorithm.alignment.factory.SequenceFactory;
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.algorithm.heatmap.HeatmapImage;
@@ -143,7 +143,14 @@ public class SimulationInterface {
 							verb.addNewInstance(instance);
 						}
 					} else {
-						logger.error("VERB NOT FOUND: " + request.verb);
+						logger.info("VERB NOT FOUND: " + request.verb + ", creating it");
+						List<Instance> instances = getSequences(request.episodes, request.verb.verb);
+						if (verbs.containsKey(request.verb.verb)) {
+							logger.info("Overwriting old data for verb: " + request.verb.verb);
+						} 
+						Verb verb = new Verb(request.verb.verb, request.verb.arguments);
+						verb.generalizeInstances(instances);
+						verbs.put(request.verb.verb, verb);
 					}
 					
 					logger.debug("... END update_signature callback.");
@@ -289,14 +296,30 @@ public class SimulationInterface {
 		new ServiceServer.Callback<PlanVerb.Request, PlanVerb.Response>() {
 			@Override
 			public PlanVerb.Response call(PlanVerb.Request request) {
+				
+				System.out.println("BEGIN plan_verb callback");
+				
 				PlanVerb.Response resp = new PlanVerb.Response();
 				
-				Verb verb = verbs.get(request.verb.verb);
-				HashMap<String,String> argumentMap = new HashMap<String, String>();
-				for (int i = 0; i < request.verb.arguments.length; i++) {
-					argumentMap.put(request.verb.bindings[i], request.verb.arguments[i]);
+				if (verbs.containsKey(request.verb.verb)) {
+					Verb verb = verbs.get(request.verb.verb);
+					HashMap<String,String> argumentMap = new HashMap<String, String>();
+					for (int i = 0; i < request.verb.arguments.length; i++) {
+						argumentMap.put(request.verb.bindings[i], request.verb.arguments[i]);
+					}
+					resp.plan = verb.planVerb(request.start_state, argumentMap);
+					
+					if (resp.plan.actions.length == 0) {
+						resp.success = 0;
+					} else {
+						resp.success = 1;
+					}
+				} else {
+					System.err.println("Verb not found: " + request.verb.verb);
+					resp.success = 0;
 				}
-				resp.plan = verb.planVerb(request.start_state, argumentMap);
+				
+				System.out.println("END plan_verb callback");
 				
 				return resp;
 			}

@@ -12,7 +12,6 @@ public class Graphs {
 	public static<V, E> boolean isDFA(DirectedGraph<V, E> fsm) {
 		for (V vertex : fsm.getVertices()) {
 			Set<E> edgeSet = new HashSet<E>(); // This assumes the hash function valid
-			
 			for (E edge : fsm.getOutEdges(vertex)) {
 				if (edgeSet.contains(edge)) {
 					return false;
