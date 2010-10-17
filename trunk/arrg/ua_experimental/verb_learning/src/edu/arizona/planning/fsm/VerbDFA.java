@@ -147,16 +147,17 @@ public class VerbDFA {
 		default:
 			throw new RuntimeException("IMPOSSIBLE");
 		}
+//		return 0.0;
 	}
 	
 	// This is the value of the cost function c(s,a,s')
 	// TODO: What about bad terminals? Need to move the infinity in here?
 	public double getCost(FSMState oldState, FSMState newState) {
-//		switch (newState.getType()) {
-//		default:
-//			return 1.0;
-//		}
-		return getHeuristic(newState);
+		switch (newState.getType()) {
+		default:
+			return 1.0;
+		}
+//		return getHeuristic(newState);
 	}
 	
 	public void addConstraintState(Set<String> bannedProps) {

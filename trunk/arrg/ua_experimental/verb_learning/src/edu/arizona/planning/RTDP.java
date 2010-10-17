@@ -106,7 +106,6 @@ public class RTDP {
 			for (Action a : RTDP.this.actions_) {
 //				System.out.println("TESTING ACTION: " + a);
 				double qValue = this.qValue(a);
-//				System.out.println("Action " + a + " has Q-value " + qValue);
 				if (qValue < minValue) {
 					minValue = qValue;
 					result = new Vector<RTDP.Action>();
@@ -118,6 +117,12 @@ public class RTDP {
 			}
 			
 			return result;
+		}
+		
+		public void printQValues() {
+			for (Action a : RTDP.this.actions_) {
+				logger.info("Action " + a + " has Q-value " + this.qValue(a));
+			}
 		}
 		
 		// c(s,a) + sum_{s'} P(s'|s)*s'.value 
@@ -134,6 +139,8 @@ public class RTDP {
 		}
 		
 		public void update() { 
+			if (isGoal()) { System.err.println("WHY ARE YOU UPDATING A TERMINAL STATE!"); return; }
+			
 			Action a = this.greedyAction();
 			this.value_ = this.qValue(a);
 		}
@@ -255,12 +262,14 @@ public class RTDP {
 			
 			logger.info("STATE:  " + s);
 			states.add(s.getMdpState());
+			logger.info("IS CURRENT STATE SOLVED? " + s.solved);
 			
 			Action a = s.getGreedyActions().iterator().next(); // Always the first
 			logger.info("ACTION: " + a);
 			actions.add(a.name_);
 			
 			s = getNextStateDist(s, a).keySet().iterator().next();
+			logger.info("IS NEXT STATE SOLVED? " + s.solved);
 			
 			i++;
 		}
@@ -291,7 +300,7 @@ public class RTDP {
 				break;
 			}
 			
-			if (visited.size() > 500) { // To prevent infinite planning
+			if (visited.size() > 10000) { // To prevent infinite planning
 				return false;
 			}
 			
@@ -343,19 +352,22 @@ public class RTDP {
 					open.push(nextState);
 				}
 			}
+		}
 			
-			if (rv) {
-				// label relevant states
-				for (State nextState : closed) {
-					logger.info("CLOSING STATE: " + nextState);
-					nextState.solved = true;
-				}
-			} else {
-				// update states with residuals and ancestors
-				while (!closed.isEmpty()) {
-					s = closed.pop();
-					s.update();
-				}
+		// NOTE: Did they really mean next state?
+		if (rv) {
+			// label relevant states
+			for (State nextState : closed) {
+				logger.info("CLOSING STATE: " + nextState);
+				logger.info("CLOSED STATE HAS VALUE: " + nextState.value_);
+				nextState.printQValues();
+				nextState.solved = true;
+			}
+		} else {
+			// update states with residuals and ancestors
+			while (!closed.isEmpty()) {
+				s = closed.pop();
+				s.update();
 			}
 		}
 		

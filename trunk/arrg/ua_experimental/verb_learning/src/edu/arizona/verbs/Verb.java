@@ -109,8 +109,8 @@ public class Verb {
 		}
 		
 //		Signature pruned = signature_.prune(signature_.trainingSize() - 1);
-//		Signature pruned = signature_.prune(signature_.trainingSize() / 2);
-		Signature pruned = signature_;
+		Signature pruned = signature_.prune(signature_.trainingSize() / 2);
+//		Signature pruned = signature_;
 		Set<String> propSet = new TreeSet<String>();
 		for (WeightedObject obj : pruned.signature()) {
 			propSet.addAll(obj.key().getProps());
