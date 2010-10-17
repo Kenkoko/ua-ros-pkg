@@ -23,6 +23,7 @@
                  (:file "environment" :depends-on ("utils"))
                  (:file "verb-learning" :depends-on ("time-series" "environment"))
                  (:file "scenarios" :depends-on ("verb-learning"))
+                 (:file "evaluation" :depends-on ("scenarios"))
                  (:file "teaching" :depends-on ("verb-learning")))
 
     :depends-on (roslisp
