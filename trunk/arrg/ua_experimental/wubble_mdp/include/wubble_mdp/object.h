@@ -22,6 +22,8 @@ public:
   virtual oomdp_msgs::MDPObjectState makeObjectState();
   virtual void update(simulator_state::ObjectInfo new_info);
 
+  virtual bool addToWorld();
+
   virtual std::string getClassString();
   virtual btVector3 getPosition();
   virtual btVector3 getLastPosition();
@@ -32,6 +34,12 @@ public:
   double orientation_;
   double last_x_, last_y_;
   double last_orientation_;
+
+  double size_x_, size_y_, size_z_;
+  double mass_;
+  bool static_;
+  std::string shape_, color_;
+
   static const double delta_ = 0.5;
 };
 

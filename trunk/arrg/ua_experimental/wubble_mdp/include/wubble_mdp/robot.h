@@ -26,6 +26,8 @@ public:
   virtual oomdp_msgs::MDPObjectState makeObjectState();
   virtual void update(simulator_state::ObjectInfo new_info);
 
+  virtual bool addToWorld();
+
   virtual std::string getClassString();
   virtual btVector3 getPosition();
   virtual btVector3 getLastPosition();

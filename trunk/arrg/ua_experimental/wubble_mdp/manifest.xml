@@ -18,6 +18,7 @@
   <depend package="move_base_msgs"/>
   <depend package="oomdp_msgs"/>
   <depend package="simulator_state"/>
+  <depend package="wubble_description"/>
 </package>
 
 

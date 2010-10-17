@@ -31,6 +31,8 @@ public:
   virtual std::vector<oomdp_msgs::Relation> computePredicates() = 0;
   virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* other) = 0;
 
+  virtual bool addToWorld() = 0;
+
   std::string name_;
   double x_, y_;
 };

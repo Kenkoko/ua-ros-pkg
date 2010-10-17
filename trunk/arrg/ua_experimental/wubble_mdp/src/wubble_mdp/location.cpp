@@ -5,8 +5,14 @@
  *      Author: dhewlett
  */
 
+#include <iostream>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/assign/std/vector.hpp>
+
+#include <ros/ros.h>
+#include <ros/package.h>
+#include <gazebo/SpawnModel.h>
 
 #include <wubble_mdp/location.h>
 
@@ -42,6 +48,47 @@ oomdp_msgs::MDPObjectState Location::makeObjectState()
   state.values += wubble_mdp::doubleToString(x_), wubble_mdp::doubleToString(y_);
 
   return state;
+}
+
+bool Location::addToWorld()
+{
+  gazebo::SpawnModel spawn_model;
+  spawn_model.request.model_name = name_;
+  spawn_model.request.initial_pose.position.x = x_;
+  spawn_model.request.initial_pose.position.y = y_;
+
+  string simsem_path = ros::package::getPath("simulation_semantics") + "/objects/point.xml";
+  string file_contents;
+  ifstream point_file(simsem_path.c_str());
+  string line;
+  if (point_file.is_open())
+  {
+    while (point_file.good())
+    {
+      getline(point_file, line);
+      file_contents += line;
+    }
+    point_file.close();
+  }
+  spawn_model.request.model_xml = file_contents;
+
+  bool service_called = ros::service::call("gazebo/spawn_gazebo_model", spawn_model);
+  if (service_called)
+  {
+    if (spawn_model.response.success)
+    {
+      return true;
+    }
+    else
+    {
+      ROS_ERROR_STREAM(spawn_model.response.status_message);
+      return false;
+    }
+  }
+  else
+  {
+    return false;
+  }
 }
 
 string Location::getClassString()
