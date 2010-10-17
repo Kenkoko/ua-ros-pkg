@@ -154,17 +154,19 @@ bool Environment::describeMDP(oomdp_msgs::DescribeMDP::Request& req, oomdp_msgs:
 bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
                              oomdp_msgs::InitializeEnvironment::Response& res)
 {
-  entities_.clear(); // TODO: Does this deallocate the old entities, or do I have to manually delete them?
+  // TODO: Does this deallocate the old entities, or do I have to manually delete them?
+  entities_.clear();
 
-  // TODO: Need to actually set up the simulator to match the state! For now, just reads whatever is there
-
-//  vector<Entity*> entity_list = Environment::makeEntityList(req.object_states);
-//  for (vector<Entity*>::const_iterator ent_it = entity_list.begin(); ent_it != entity_list.end(); ++ent_it)
-//  {
-//    entities_[(*ent_it)->name_] = *ent_it;
-//  }
-//  res.start_state.object_states = req.object_states;
-//  res.start_state.relations = Environment::computeRelationsFromEntities(entity_list);
+  vector<Entity*> entity_list = Environment::makeEntityList(req.object_states);
+  for (vector<Entity*>::iterator ent_it = entity_list.begin(); ent_it != entity_list.end(); ++ent_it)
+  {
+    entities_[(*ent_it)->name_] = *ent_it;
+    bool added = (*ent_it)->addToWorld();
+    if (!added)
+    {
+      ROS_INFO_STREAM("Failed to add entity: " << (*ent_it)->name_ << " to simulator!");
+    }
+  }
 
   res.start_state = updateState();
 
@@ -178,7 +180,7 @@ bool Environment::performAction(oomdp_msgs::PerformAction::Request& req, oomdp_m
 
   if (entities_.empty())
   {
-    updateState(); // TODO: For now this is OK. Should really call initialize first
+    updateState(); // TODO: For now this is OK. Should really always call initialize first
   }
 
   Robot* robot = findRobot(getEntityList());
@@ -272,20 +274,8 @@ bool Environment::computeRelations(oomdp_msgs::ComputeRelations::Request& req,
 
 oomdp_msgs::MDPState Environment::updateState()
 {
-  //  ROS_INFO_STREAM("EXISTS? " << get_state_client_.exists());
-  //
-  //  simulator_state::GetStateRequest get_state_req;
-  //  simulator_state::GetStateResponse get_state_res;
-  ////  get_state_client_.waitForExistence();
-  //  bool result = get_state_client_.call(get_state_req, get_state_res);
-  //
-  //  ROS_INFO_STREAM("SUCCESS? " << result);
-  //  ROS_INFO_STREAM(get_state_res.state);
-  // TODO: WHY DOESN'T THIS WORK??? WTF???
-
   simulator_state::GetState get_state;
   ros::service::call("/gazebo/get_state", get_state);
-  //  ROS_INFO_STREAM("BARE SERVICE CALL: " << );
   simulator_state::WorldState world_state = get_state.response.state;
 
   vector<ObjectInfo>::const_iterator obj_it;
@@ -294,14 +284,14 @@ oomdp_msgs::MDPState Environment::updateState()
     ObjectInfo info = (*obj_it);
     string name = obj_it->name;
 
-    ROS_INFO_STREAM(name << endl);
-    ROS_INFO_STREAM(info);
+//    ROS_INFO_STREAM(name << endl);
+//    ROS_INFO_STREAM(info);
 
     bool exists = (entities_.find(name) != entities_.end());
 
     if (exists)
     {
-      ROS_INFO("EXISTS");
+//      ROS_INFO("EXISTS");
       entities_[name]->update(info);
     }
     else
@@ -309,17 +299,17 @@ oomdp_msgs::MDPState Environment::updateState()
       Entity *entity = NULL;
       if (name.find("robot") == 0)
       {
-        ROS_INFO("ROBOT");
+//        ROS_INFO("ROBOT");
         entity = new Robot(info);
       }
       else if (name.find("goal") == 0)
       {
-        ROS_INFO("LOCATION");
+//        ROS_INFO("LOCATION");
         entity = new Location(info);
       }
       else
       {
-        ROS_INFO("OBJECT");
+//        ROS_INFO("OBJECT");
         entity = new Object(info);
       }
       entities_[name] = entity;

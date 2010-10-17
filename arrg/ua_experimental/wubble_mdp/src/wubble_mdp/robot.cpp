@@ -10,6 +10,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/assign/std/vector.hpp>
 
+#include <ros/ros.h>
+#include <wubble_description/SpawnWubbleBase.h>
+
 #include <wubble_mdp/robot.h>
 
 using namespace std;
@@ -61,6 +64,23 @@ void Robot::update(simulator_state::ObjectInfo new_info)
   x_ = roundToDelta(new_info.pose.position.x, delta_);
   y_ = roundToDelta(new_info.pose.position.y, delta_);
   orientation_ = roundYaw(wubble_mdp::extractYaw(new_info));
+}
+
+bool Robot::addToWorld()
+{
+  wubble_description::SpawnWubbleBase swb;
+  swb.request.name = name_;
+  btVector3 pose = getPosition();
+  swb.request.initial_pose.position.x = pose.x();
+  swb.request.initial_pose.position.y = pose.y();
+  btQuaternion q;
+  q.setRPY(0, 0, pose.z());
+  swb.request.initial_pose.orientation.x = q.x();
+  swb.request.initial_pose.orientation.y = q.y();
+  swb.request.initial_pose.orientation.z = q.z();
+  swb.request.initial_pose.orientation.w = q.w();
+
+  return ros::service::call("spawn_wubble_base", swb);
 }
 
 std::string Robot::getClassString()
@@ -182,11 +202,11 @@ void Robot::simulateAction(string action)
   btVector3 new_pose = computeNewPose(action);
   if (-10 < new_pose.x() && new_pose.x() < 10)
   {
-	  x_ = new_pose.x();
+    x_ = new_pose.x();
   }
   if (-10 < new_pose.y() && new_pose.y() < 10)
   {
-	  y_ = new_pose.y();
+    y_ = new_pose.y();
   }
   orientation_ = new_pose.z();
 }
@@ -196,7 +216,7 @@ Pose Robot::computeTargetPose(string action)
   Pose pose;
 
   btVector3 new_pose = computeNewPose(action);
-//  cout << new_pose.getX() << "," << new_pose.getY() << "," << new_pose.getZ() << endl;
+  //  cout << new_pose.getX() << "," << new_pose.getY() << "," << new_pose.getZ() << endl;
   pose.position.x = new_pose.x();
   pose.position.y = new_pose.y();
   btQuaternion q;
@@ -212,7 +232,7 @@ Pose Robot::computeTargetPose(string action)
 // Return (x, y, orientation)
 btVector3 Robot::computeNewPose(string action)
 {
-//  cout << "OLD " << x_ << " " << y_ << " " << orientation_ << endl;
+  //  cout << "OLD " << x_ << " " << y_ << " " << orientation_ << endl;
 
   btVector3 new_pose(x_, y_, orientation_);
 
@@ -256,7 +276,7 @@ btVector3 Robot::computeNewPose(string action)
     cerr << action << " is not a valid action!\n";
   }
 
-//  cout << "NEW " << new_pose.getX() << "," << new_pose.getY() << "," << new_pose.getZ() << endl;
+  //  cout << "NEW " << new_pose.getX() << "," << new_pose.getY() << "," << new_pose.getZ() << endl;
 
   return new_pose;
 }
