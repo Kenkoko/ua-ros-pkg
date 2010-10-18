@@ -47,6 +47,8 @@ private:
 
   oomdp_msgs::MDPState updateState();
 
+  bool clearSimulation();
+
   ros::NodeHandle nh_;
   ros::ServiceServer describe_;
   ros::ServiceServer initialize_;

@@ -80,13 +80,11 @@ void Object::update(simulator_state::ObjectInfo new_info)
 }
 
 // TODO: Only compute the XML if necessary
-// TODO: This spawns the object in the ground, also clean up the xml file
 bool Object::addToWorld()
 {
   gazebo::SpawnModel spawn_model;
   spawn_model.request.model_name = name_;
-  spawn_model.request.initial_pose.position.x = x_;
-  spawn_model.request.initial_pose.position.y = y_;
+  spawn_model.request.initial_pose = getPose();
 
   string simsem_path = ros::package::getPath("simulation_semantics") + "/objects/generic_object.xml";
   string file_contents;
@@ -105,7 +103,7 @@ bool Object::addToWorld()
   // Gazebo Attributes
   // XYZ RPY NAME SHAPE STATIC SIZE MASS COLOR
   file_contents = regex_replace(file_contents, regex("NAME"), name_);
-  file_contents = regex_replace(file_contents, regex("XYZ"), "0.0 0.0 0.0");
+  file_contents = regex_replace(file_contents, regex("XYZ"), "0.0 0.0 " + doubleToString(size_z_ / 2));
   file_contents = regex_replace(file_contents, regex("RPY"), "0.0 0.0 0.0");
   file_contents = regex_replace(file_contents, regex("SHAPE"), shape_);
   file_contents = regex_replace(file_contents, regex("STATIC"), (static_ ? "true" : "false"));
@@ -114,18 +112,8 @@ bool Object::addToWorld()
   file_contents = regex_replace(file_contents, regex("MASS"), doubleToString(mass_));
   file_contents = regex_replace(file_contents, regex("COLOR"), color_);
 
-  ROS_INFO_STREAM(file_contents);
+  //  ROS_INFO_STREAM(file_contents);
   spawn_model.request.model_xml = file_contents;
-
-  btVector3 pose = getPosition();
-  spawn_model.request.initial_pose.position.x = pose.x();
-  spawn_model.request.initial_pose.position.y = pose.y();
-  btQuaternion q;
-  q.setRPY(0, 0, pose.z());
-  spawn_model.request.initial_pose.orientation.x = q.x();
-  spawn_model.request.initial_pose.orientation.y = q.y();
-  spawn_model.request.initial_pose.orientation.z = q.z();
-  spawn_model.request.initial_pose.orientation.w = q.w();
 
   bool service_called = ros::service::call("gazebo/spawn_gazebo_model", spawn_model);
   if (service_called)
@@ -187,5 +175,19 @@ btVector3 Object::getPosition()
 btVector3 Object::getLastPosition()
 {
   return btVector3(last_x_, last_y_, 0.0);
+}
+
+geometry_msgs::Pose Object::getPose()
+{
+  geometry_msgs::Pose pose;
+  pose.position.x = x_;
+  pose.position.y = y_;
+  btQuaternion q;
+  q.setRPY(0, 0, orientation_);
+  pose.orientation.x = q.x();
+  pose.orientation.y = q.y();
+  pose.orientation.z = q.z();
+  pose.orientation.w = q.w();
+  return pose;
 }
 

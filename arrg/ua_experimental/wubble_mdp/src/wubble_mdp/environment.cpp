@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <algorithm>
 #include <boost/foreach.hpp>
 #include <boost/assign/std/vector.hpp>
 
@@ -16,6 +17,8 @@
 #include <actionlib/client/terminal_state.h>
 
 #include <std_srvs/Empty.h>
+#include <gazebo/GetWorldProperties.h>
+#include <gazebo/DeleteModel.h>
 #include <simulator_state/GetState.h>
 #include <simulator_state/ObjectInfo.h>
 #include <oomdp_msgs/MDPClassDescription.h>
@@ -156,6 +159,7 @@ bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
 {
   // TODO: Does this deallocate the old entities, or do I have to manually delete them?
   entities_.clear();
+  clearSimulation();
 
   vector<Entity*> entity_list = Environment::makeEntityList(req.object_states);
   for (vector<Entity*>::iterator ent_it = entity_list.begin(); ent_it != entity_list.end(); ++ent_it)
@@ -173,6 +177,38 @@ bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
   return true;
 }
 
+bool Environment::clearSimulation()
+{
+  gazebo::GetWorldProperties gwp;
+  bool result = ros::service::call("gazebo/get_world_properties", gwp);
+  if (result)
+  {
+    vector<string> safe;
+    safe += "clock", "gplane", "point_white";
+    vector<string>::iterator mit;
+    for (mit = gwp.response.model_names.begin(); mit != gwp.response.model_names.end(); ++mit)
+    {
+      if (find(safe.begin(), safe.end(), *mit) == safe.end())
+      {
+        gazebo::DeleteModel delete_model;
+        delete_model.request.model_name = *mit;
+        bool call_success = ros::service::call("gazebo/delete_model", delete_model);
+        if (!call_success)
+        {
+          return false;
+        }
+      }
+    }
+    // TODO: Probably should re-verify with another get_world_properties call
+  }
+  else
+  {
+    return false;
+  }
+
+  return true;
+}
+
 bool Environment::performAction(oomdp_msgs::PerformAction::Request& req, oomdp_msgs::PerformAction::Response& res)
 {
   std_srvs::Empty empty;
@@ -180,7 +216,7 @@ bool Environment::performAction(oomdp_msgs::PerformAction::Request& req, oomdp_m
 
   if (entities_.empty())
   {
-    updateState(); // TODO: For now this is OK. Should really always call initialize first
+    updateState(); // TODO: Remove this, since initialize is working now
   }
 
   Robot* robot = findRobot(getEntityList());
@@ -284,14 +320,14 @@ oomdp_msgs::MDPState Environment::updateState()
     ObjectInfo info = (*obj_it);
     string name = obj_it->name;
 
-//    ROS_INFO_STREAM(name << endl);
-//    ROS_INFO_STREAM(info);
+    //    ROS_INFO_STREAM(name << endl);
+    //    ROS_INFO_STREAM(info);
 
     bool exists = (entities_.find(name) != entities_.end());
 
     if (exists)
     {
-//      ROS_INFO("EXISTS");
+      //      ROS_INFO("EXISTS");
       entities_[name]->update(info);
     }
     else
@@ -299,17 +335,17 @@ oomdp_msgs::MDPState Environment::updateState()
       Entity *entity = NULL;
       if (name.find("robot") == 0)
       {
-//        ROS_INFO("ROBOT");
+        //        ROS_INFO("ROBOT");
         entity = new Robot(info);
       }
       else if (name.find("goal") == 0)
       {
-//        ROS_INFO("LOCATION");
+        //        ROS_INFO("LOCATION");
         entity = new Location(info);
       }
       else
       {
-//        ROS_INFO("OBJECT");
+        //        ROS_INFO("OBJECT");
         entity = new Object(info);
       }
       entities_[name] = entity;

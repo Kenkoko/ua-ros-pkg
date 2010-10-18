@@ -137,9 +137,6 @@ bool WorldStatePublisher::getState(GetStateRequest& req, GetStateResponse& res)
   Time curr_time = Simulator::Instance()->GetSimTime();
 
   vector<Model*> models;
-  vector<Model*>::iterator miter;
-  vector<Body*> all_bodies;
-
   models = World::Instance()->GetModels();
 
   // GJK STUFF
@@ -147,8 +144,7 @@ bool WorldStatePublisher::getState(GetStateRequest& req, GetStateResponse& res)
   vector<btTransform> tr;
   vector<string> gjk_names;
 
-  // aggregate all bodies into a single vector
-  for (miter = models.begin(); miter != models.end(); miter++)
+  for (vector<Model*>::iterator miter = models.begin(); miter != models.end(); miter++)
   {
     // Let's try GJK with model bounding boxes now, at least that's something
     Model* model = *miter;
@@ -161,18 +157,6 @@ bool WorldStatePublisher::getState(GetStateRequest& req, GetStateResponse& res)
       gjk_shapes.push_back(simulator_state::convertAABB(min, max));
       tr.push_back(simulator_state::convertTransform(model->GetWorldPose()));
       gjk_names.push_back(model->GetName());
-    }
-
-    const vector<Entity*> entities = (*miter)->GetChildren();
-    // Iterate through all bodies
-    vector<Entity*>::const_iterator eiter;
-    for (eiter = entities.begin(); eiter != entities.end(); eiter++)
-    {
-      Body* body = dynamic_cast<Body*> (*eiter);
-      if (body)
-      {
-        all_bodies.push_back(body);
-      }
     }
   }
 
@@ -206,12 +190,10 @@ bool WorldStatePublisher::getState(GetStateRequest& req, GetStateResponse& res)
         for (map<string, Geom*>::const_iterator it = body->GetGeoms()->begin(); it != body->GetGeoms()->end(); it++)
         {
           Geom* geom = it->second;
-          geom->SetContactsEnabled(true);
-
-          //          boxes.push_back(extract_shape(geom));
-          //          tr.push_back(convert_transform(geom->GetBody()->GetWorldPose()));
-          //          gjk_names.push_back(geom->GetModel()->GetName() + "::" + geom->GetName());
-          //          geom_to_model.push_back(geom->GetModel());
+          if (!geom->GetContactsEnabled())
+          {
+            geom->SetContactsEnabled(true);
+          }
         }
 
         // set pose

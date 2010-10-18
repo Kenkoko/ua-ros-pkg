@@ -14,6 +14,7 @@
 #include <LinearMath/btVector3.h>
 #include <LinearMath/btMatrix3x3.h>
 
+#include <geometry_msgs/Pose.h>
 #include <simulator_state/ObjectInfo.h>
 #include <oomdp_msgs/MDPObjectState.h>
 #include <oomdp_msgs/Relation.h>
@@ -27,6 +28,7 @@ public:
   virtual std::string getClassString() = 0;
   virtual btVector3 getPosition() = 0;
   virtual btVector3 getLastPosition() = 0;
+  virtual geometry_msgs::Pose getPose() = 0;
 
   virtual std::vector<oomdp_msgs::Relation> computePredicates() = 0;
   virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* other) = 0;

@@ -28,7 +28,7 @@ Robot::Robot(simulator_state::ObjectInfo obj_info)
   name_ = obj_info.name;
   x_ = roundToDelta(obj_info.pose.position.x, delta_);
   y_ = roundToDelta(obj_info.pose.position.y, delta_);
-  orientation_ = roundYaw(wubble_mdp::extractYaw(obj_info));
+  orientation_ = wubble_mdp::convertOrientationString(wubble_mdp::extractOrientationString(obj_info));
 
   // This is what will happen the first time an object is created, so there is no "last state"
   last_x_ = x_;
@@ -63,22 +63,14 @@ void Robot::update(simulator_state::ObjectInfo new_info)
   // Update the state
   x_ = roundToDelta(new_info.pose.position.x, delta_);
   y_ = roundToDelta(new_info.pose.position.y, delta_);
-  orientation_ = roundYaw(wubble_mdp::extractYaw(new_info));
+  orientation_ = wubble_mdp::convertOrientationString(wubble_mdp::extractOrientationString(new_info));
 }
 
 bool Robot::addToWorld()
 {
   wubble_description::SpawnWubbleBase swb;
   swb.request.name = name_;
-  btVector3 pose = getPosition();
-  swb.request.initial_pose.position.x = pose.x();
-  swb.request.initial_pose.position.y = pose.y();
-  btQuaternion q;
-  q.setRPY(0, 0, pose.z());
-  swb.request.initial_pose.orientation.x = q.x();
-  swb.request.initial_pose.orientation.y = q.y();
-  swb.request.initial_pose.orientation.z = q.z();
-  swb.request.initial_pose.orientation.w = q.w();
+  swb.request.initial_pose = getPose();
 
   return ros::service::call("spawn_wubble_base", swb);
 }
@@ -126,6 +118,14 @@ vector<Relation> Robot::computePredicates()
     result.push_back(wubble_mdp::makeRelation("Right", names, false));
   }
 
+  vector<string> directions;
+  directions += "N", "NE", "E", "SE", "S", "SW", "W", "NW";
+  string orientation_string = wubble_mdp::makeOrientationString(orientation_);
+  for (vector<string>::iterator dit = directions.begin(); dit != directions.end(); ++dit)
+  {
+    result.push_back(wubble_mdp::makeRelation("Orientation" + orientation_string, names, (*dit == orientation_string)));
+  }
+
   return result;
 }
 
@@ -148,11 +148,11 @@ vector<Relation> Robot::computeBinaryRelations(Entity* other)
       rel_angle = abs(rel_angle);
     }
 
-    if (rel_angle < (pi / 4))
+    if (rel_angle < (pi / 4) - 0.1)
     {
       true_index = 2;
     }
-    else if (rel_angle > (3 * pi / 4))
+    else if (rel_angle > (3 * pi / 4) + 0.1)
     {
       true_index = 3;
     }
@@ -279,4 +279,18 @@ btVector3 Robot::computeNewPose(string action)
   //  cout << "NEW " << new_pose.getX() << "," << new_pose.getY() << "," << new_pose.getZ() << endl;
 
   return new_pose;
+}
+
+geometry_msgs::Pose Robot::getPose()
+{
+  geometry_msgs::Pose pose;
+  pose.position.x = x_;
+  pose.position.y = y_;
+  btQuaternion q;
+  q.setRPY(0, 0, orientation_);
+  pose.orientation.x = q.x();
+  pose.orientation.y = q.y();
+  pose.orientation.z = q.z();
+  pose.orientation.w = q.w();
+  return pose;
 }

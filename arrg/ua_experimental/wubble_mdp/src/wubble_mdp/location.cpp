@@ -15,6 +15,7 @@
 #include <gazebo/SpawnModel.h>
 
 #include <wubble_mdp/location.h>
+#include <wubble_mdp/robot.h>
 
 using namespace std;
 using namespace boost::assign;
@@ -23,8 +24,8 @@ using boost::lexical_cast;
 Location::Location(simulator_state::ObjectInfo obj_info)
 {
   name_ = obj_info.name;
-  x_ = obj_info.pose.position.x;
-  y_ = obj_info.pose.position.y;
+  x_ = wubble_mdp::roundToDelta(obj_info.pose.position.x, Robot::delta_);
+  y_ = wubble_mdp::roundToDelta(obj_info.pose.position.y, Robot::delta_);
 }
 
 Location::Location(oomdp_msgs::MDPObjectState state)
@@ -54,8 +55,7 @@ bool Location::addToWorld()
 {
   gazebo::SpawnModel spawn_model;
   spawn_model.request.model_name = name_;
-  spawn_model.request.initial_pose.position.x = x_;
-  spawn_model.request.initial_pose.position.y = y_;
+  spawn_model.request.initial_pose = getPose();
 
   string simsem_path = ros::package::getPath("simulation_semantics") + "/objects/point.xml";
   string file_contents;
@@ -124,4 +124,12 @@ btVector3 Location::getPosition()
 btVector3 Location::getLastPosition()
 {
   return btVector3(x_, y_, 0.0);
+}
+
+geometry_msgs::Pose Location::getPose()
+{
+  geometry_msgs::Pose pose;
+  pose.position.x = x_;
+  pose.position.y = y_;
+  return pose;
 }
