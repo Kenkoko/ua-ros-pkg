@@ -2,4 +2,6 @@ VerbInstance verb
 oomdp_msgs/MDPState start_state
 ---
 Policy plan
+int64 time_millis
 bool success
+

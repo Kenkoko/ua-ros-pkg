@@ -108,15 +108,20 @@ public class SimulationInterface {
 				FindSignature.Response res = new FindSignature.Response();
 				logger.debug("BEGIN find_signature callback...");
 
-				logger.debug("Received " + request.episodes.length + " episodes for <" + request.verb + ">");
-				List<Instance> instances = getSequences(request.episodes, request.verb.verb);
 				if (verbs.containsKey(request.verb.verb)) {
 					logger.info("Overwriting old data for verb: " + request.verb.verb);
 				} 
 				Verb verb = new Verb(request.verb.verb, request.verb.arguments);
-				verb.generalizeInstances(instances);
-				verbs.put(request.verb.verb, verb);
 				
+				// This allows a request with 0 episodes to effectively delete the verb
+				if (request.episodes.length != 0) {
+					logger.debug("Received " + request.episodes.length + " episodes for <" + request.verb + ">");
+					List<Instance> instances = getSequences(request.episodes, request.verb.verb);
+					verb.generalizeInstances(instances);
+				}
+				
+				verbs.put(request.verb.verb, verb);
+			
 				logger.debug("... END find_signature callback.");
 				return res;
 			}
@@ -296,32 +301,17 @@ public class SimulationInterface {
 		new ServiceServer.Callback<PlanVerb.Request, PlanVerb.Response>() {
 			@Override
 			public PlanVerb.Response call(PlanVerb.Request request) {
-				
-				System.out.println("BEGIN plan_verb callback");
-				
-				PlanVerb.Response resp = new PlanVerb.Response();
-				
 				if (verbs.containsKey(request.verb.verb)) {
 					Verb verb = verbs.get(request.verb.verb);
 					HashMap<String,String> argumentMap = new HashMap<String, String>();
 					for (int i = 0; i < request.verb.arguments.length; i++) {
 						argumentMap.put(request.verb.bindings[i], request.verb.arguments[i]);
 					}
-					resp.plan = verb.planVerb(request.start_state, argumentMap);
-					
-					if (resp.plan.actions.length == 0) {
-						resp.success = 0;
-					} else {
-						resp.success = 1;
-					}
+					return verb.planVerb(request.start_state, argumentMap);
 				} else {
 					System.err.println("Verb not found: " + request.verb.verb);
-					resp.success = 0;
+					return new PlanVerb.Response();
 				}
-				
-				System.out.println("END plan_verb callback");
-				
-				return resp;
 			}
 		};
 		ServiceServer<PlanVerb.Request, PlanVerb.Response, PlanVerb> planService = 

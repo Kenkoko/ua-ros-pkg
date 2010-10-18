@@ -16,6 +16,8 @@ import org.apache.log4j.Logger;
 import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.msg.Policy;
 import ros.pkg.verb_learning.msg.VerbDescription;
+import ros.pkg.verb_learning.srv.PlanVerb;
+import ros.pkg.verb_learning.srv.PlanVerb.Response;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashBiMap;
@@ -81,9 +83,16 @@ public class Verb {
 	}
 	
 	public void addNewInstance(Instance instance) {
+		if (signature_ == null) { // Safety
+			signature_ = new Signature(lexicalForm_);
+		}
 		signature_.update(instance.sequence());
 		
 		postInstance();
+	}
+	
+	public void addNegativeInstance() {
+		
 	}
 	
 	private void postInstance() {
@@ -100,6 +109,10 @@ public class Verb {
 		logger.debug("Signature saved to file: " + filename);
 		
 		makeDFA();
+	}
+	
+	public void forgetInstances() {
+		
 	}
 	
 	private void makeDFA() {
@@ -149,21 +162,35 @@ public class Verb {
 	}
 	
 	// argumentMap maps the concrete names to the specific ones
-	public Policy planVerb(MDPState startState, Map<String, String> argumentMap) {
+	// success in the response is only false if the runTrial call runs "forever"
+	public Response planVerb(MDPState startState, Map<String, String> argumentMap) {
+		Response result = new Response();
+		if (!hasDFA()) {
+			result.success = 0; // Automatic failure
+			return result;
+		}
+		
 		OOMDPState properStart = new OOMDPState(startState);
 		// We will plan with the general names since that's what our verb FSM contains
 		OOMDPState remappedStart = OOMDPState.remapState(properStart, argumentMap);
 		
 		RTDP planner = new RTDP(this, Environment.getInstance(), remappedStart);
+		long startTime = System.currentTimeMillis();
 		boolean success = planner.runAlgorithm();
+		long elapsedTime = System.currentTimeMillis() - startTime;
 		
 		if (success) {
-			HashBiMap<String,String> biMap = HashBiMap.create(argumentMap); // Fingers crossed
-			return planner.recoverPolicy(biMap.inverse());
+			HashBiMap<String,String> biMap = HashBiMap.create(argumentMap); 
+			result.plan = planner.recoverPolicy(biMap.inverse());
+			result.success = 1;	
+			result.time_millis = elapsedTime;
 		} else {
-			Policy failure = new Policy();
-			return failure;
+			result.success = 0;
+			result.time_millis = elapsedTime;
+			// No plan
 		}
+		
+		return result;
 	}
 	
 	public void resetRecognizer() {
@@ -188,7 +215,7 @@ public class Verb {
 		return signature_ != null;
 	}
 	
-	public boolean hasRecognizer() {
+	public boolean hasDFA() {
 		return dfa_ != null;
 	}
 	

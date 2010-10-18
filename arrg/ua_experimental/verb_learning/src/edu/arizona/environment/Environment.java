@@ -36,7 +36,8 @@ public class Environment {
 		}
 		nodeHandle_ = Ros.getInstance().createNodeHandle();
 		
-		simulateService_ = nodeHandle_.serviceClient("environment/simulate_action", new SimulateAction());
+		// Let's try this for now
+		simulateService_ = nodeHandle_.serviceClient("environment/simulate_action", new SimulateAction(), true);
 	}
 
 	// TODO: Seems like this is being called to often
