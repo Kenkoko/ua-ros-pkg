@@ -1,5 +1,7 @@
 (in-package :simulation_semantics)
 
+;; TODO: Archive this file, except for fibn
+
 (defun save-all-instances (&rest classes)
   (with-open-file (stream "test.bb" :direction :output :if-exists :supersede)
     (with-saving/sending-block (stream)
@@ -8,10 +10,7 @@
          do (loop for inst in (find-instances-of-class class)
                do (print-object-for-saving/sending inst stream))))))
 
-;; TODO: Probably move to utils
-(defun fibn (name)
-  "shortcut for (find-instance-by-name name)"
-  (find-instance-by-name name)) 
+;; TODO: Probably move to util 
 
 (defun delete-all-instances (&rest classes)
   (loop for class in classes 

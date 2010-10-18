@@ -42,6 +42,22 @@
                                     :verb (lexical-form-of verb)
                                     :arguments (ros-list (argument-strings verb)))))
 
+(defun clear-verb-meaning (verb)
+  (call-service "verb_learning/find_signature" 'verb_learning-srv:FindSignature
+                :verb (make-message "verb_learning/VerbDescription"
+                                    :verb (lexical-form-of verb)
+                                    :arguments (ros-list (argument-strings verb)))))
+
+(defun update-verb-with-trace (verb trace)
+  (let* ((episode (trace-to-episode trace (instance-name-map 
+                                           (oomdp_msgs-msg:object_states-val (first trace))
+                                           verb))))
+    (call-service "verb_learning/update_signature" 'verb_learning-srv:FindSignature
+                  :episodes (list episode)
+                  :verb (make-message "verb_learning/VerbDescription"
+                                      :verb (lexical-form-of verb)
+                                      :arguments (ros-list (argument-strings verb))))))
+
 ;; TODO: Fix this function
 #+ignore(defun learn-counterfactual-signature (&key (verb *current-verb*))
   (call-service "verb_learning/find_signature" 'time_series-srv:FindSignature
@@ -103,29 +119,6 @@
                 (format t "Plan execution failed.~%")))
             ;; TODO: Allow for demonstration here
           (format t "Planning failed.~%")))))
-
-;; TODO: Need to replan if necessary
-(defun execute-plan (plan start-state)
-  "Executes the plan and returns an episode, or nil if the plan did not succeed"
-  (let* ((states (verb_learning-msg:states-val plan))
-         (actions (verb_learning-msg:actions-val plan)))
-    ;(format t "PLAN:~%~a~%" plan)
-    (loop with true-state = start-state
-       for state across states
-       for action across actions 
-       for step from 1
-       if (msg-equal state true-state)
-       do (format t "State matched for Step ~d, proceeding with plan!~%" step)
-         (cond ((string-equal action "TERMINATE")
-                (format t "Action is TERMINATE, plan execution is complete!~%"))
-               (t 
-                (format t "Performing action: ~a~%" action)
-                (setf true-state (perform-action action))))
-       and collect true-state into trace
-       else 
-       do (format t "State did at Step ~d not match, terminating plan!~%~a~%~a~%" step state true-state)
-       and return nil
-       finally (return (push start-state trace)))))
 
 ;; Some help from teacher
 

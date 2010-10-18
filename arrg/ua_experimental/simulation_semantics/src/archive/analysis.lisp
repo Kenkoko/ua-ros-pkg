@@ -64,15 +64,7 @@
        if (eq index 'unknown) collect 'unknown
        else collect (nth (- index 1) lmh))))
 
-(defun mean (values)
-  (/ (apply '+ values) (length values)))
 
-(defun standard-deviation (values)
-  (if (< (length values) 2) (return-from standard-deviation 0))
-  (let* ((x-bar (mean values))
-         (n (length values)))
-    (sqrt (* (/ 1 (- n 1)) 
-             (loop for x in values summing (expt (- x x-bar) 2))))))
        
 ;; Shape Library
 

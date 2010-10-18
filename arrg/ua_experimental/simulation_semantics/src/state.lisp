@@ -29,3 +29,17 @@
     (if result (first result) nil)))
 
 ;;============================================================                
+
+(defun print-relation (rel-msg)
+  (let* ((rel-name (oomdp_msgs-msg:relation-val rel-msg))
+         (obj-names (vec-to-list (oomdp_msgs-msg:obj_names-val rel-msg)))
+         (value (oomdp_msgs-msg:value-val rel-msg)))
+    (format t "~a(~{~a~^,~})=~a~%" rel-name obj-names (if value "true" "false"))))
+
+(defun print-mdp-state (state)
+  ;; TODO: Print object states
+  (format t "~%MDP STATE:~%")
+  (loop for obj-state across (oomdp_msgs-msg:object_states-val state)
+     do (format t "~a~%" obj-state))
+  (loop for relation across (oomdp_msgs-msg:relations-val state)
+     do (print-relation relation)))

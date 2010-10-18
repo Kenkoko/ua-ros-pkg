@@ -3,7 +3,7 @@
 (defsystem "simulation_semantics"
     :components ((:file "pkg")
 
-                 (:file "xml" :depends-on ("pkg"))
+                 (:file "xml" :depends-on ("pkg")) ;; TODO: Remove
                  (:file "utils" :depends-on ("pkg"))
                  (:file "classes" :depends-on ("pkg"))
 
@@ -14,16 +14,17 @@
 
                  (:file "simulator-class" :depends-on ("object-class"))                 
 
-                 (:file "state" :depends-on ("classes"))                 
-                 (:file "data" :depends-on ("classes"))
-                 (:file "time-series" :depends-on ("data"))
+                 (:file "state" :depends-on ("classes"))   ;; TODO: Remove              
+                 ;(:file "data" :depends-on ("classes"))
+                 (:file "time-series" :depends-on ("classes"))
                  (:file "trace-to-intervals" :depends-on ("time-series"))
 
                  ;; TODO: Rename verb-learning
                  (:file "environment" :depends-on ("utils"))
                  (:file "verb-learning" :depends-on ("time-series" "environment"))
                  (:file "scenarios" :depends-on ("verb-learning"))
-                 (:file "evaluation" :depends-on ("scenarios"))
+                 (:file "evaluation-data" :depends-on ("scenarios"))
+                 (:file "evaluation" :depends-on ("evaluation-data"))
                  (:file "teaching" :depends-on ("verb-learning")))
 
     :depends-on (roslisp
