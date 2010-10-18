@@ -77,6 +77,7 @@ private:
 
   bool getState(simulator_state::GetStateRequest& req, simulator_state::GetStateResponse& res);
 
+  // These fields only get set once, so they are safe
   gazebo::Model* parent_model_;
   ParamT<std::string> *robot_namespace_param_;
   std::string robot_namespace_;
@@ -94,6 +95,7 @@ private:
   void QueueThread();
   boost::thread* callback_queue_thread_;
 
+  // This can't be the culprit since it is not currently being used
   std::map<gazebo::Geom*, btConvexShape*> bt_shape_cache_;
   btVoronoiSimplexSolver gjk_simplex_solver_;
 };

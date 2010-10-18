@@ -27,6 +27,7 @@ public:
   virtual std::string getClassString();
   virtual btVector3 getPosition();
   virtual btVector3 getLastPosition();
+  virtual geometry_msgs::Pose getPose();
 
   virtual std::vector<oomdp_msgs::Relation> computePredicates();
   virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* other);
