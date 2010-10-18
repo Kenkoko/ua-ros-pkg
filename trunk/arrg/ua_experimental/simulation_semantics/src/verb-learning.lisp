@@ -50,8 +50,6 @@
   (push (make-instance 'scenario :argument-list arguments :simulator simulator)
         (scenarios-of *current-verb*)))
   
-
-        
 (defun find-verb (word)
   (loop for verb in (find-instances-of-class 'verb)
      if (string-equal (lexical-form-of verb) word)
@@ -60,22 +58,6 @@
 (defun blast ()
   (delete-all-instances 'verb 'simulator 'scenario))
          
-#+ignore(defun fsm-test (&key (scenario *current-scenario*) (verb *current-verb*))
-  (let* ((arg-list (get-arguments scenario :verb verb))
-         (name-map (loop with result = (make-hash-table :test 'equal)
-                      for general in (argument-structure-of verb)
-                      for specific in arg-list
-                      do (setf (gethash (gazebo-name-of specific) result) (string-downcase (string general)))
-                      finally (return result)))
-         (callback (lambda (state)
-                     (let* ((result (call-service "verb_learning/fsm_update" 'verb_learning-srv:FSMUpdate
-                                                  :verb (lexical-form-of verb)
-                                                  :relations (loop for relation in (convert-relations state name-map)
-                                                                when (second relation)
-                                                                collect (first relation)))))
-                       (format t "RESULT:~%~a~%" result)))))
-    (run-simulator scenario :state-callback callback)))
-
 ;;=====================================================================
 ;; Episodes
 
@@ -144,6 +126,13 @@
      for arg in (argument-structure-of v)
      if (is-instance-of obj 'entity) ;; For now, we are just ignoring the goals since their names don't matter
      do (setf (gethash (gazebo-name-of obj) map) arg)
+     finally (return map)))
+
+(defun instance-name-map (object-states verb)
+  (loop with map = (make-hash-table :test 'equal)
+     for name in (argument-names object-states)
+     for arg in (argument-structure-of verb)
+     do (setf (gethash name map) arg)
      finally (return map)))
 
 (defun forget-simulations ()

@@ -37,4 +37,7 @@
     <!-- Actions for Base and Laser -->
 <!--    <node name="laser_action" pkg="wubble_actions" type="hokuyo_laser_action.py" output="screen" />-->
 <!--    <node name="erratic_base_action" pkg="wubble_actions" type="erratic_base_action.py" output="screen" />-->
+
+    <!-- Start the environment interface -->
+    <node pkg="wubble_mdp" type="environment_node" name="environment_node" output="screen"/>
 </launch>

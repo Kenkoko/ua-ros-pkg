@@ -12,9 +12,6 @@
                 xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics" 
         name="NAME">
 
-    <xyz>XYZ</xyz>
-    <rpy>RPY</rpy>
-
     <static>STATIC</static>
 
     <body:SHAPE name="NAME_body">
@@ -29,15 +26,15 @@
         <cx>0.0</cx>
         <cy>0.0</cy>
         <cz>0.0</cz>
-        <xyz>0 0 0</xyz>
-        <rpy>0 0 0</rpy>
+        <xyz>XYZ</xyz>
+        <rpy>RPY</rpy>
         <geom:SHAPE name="NAME_geom">
             <mu1>1.0</mu1>
             <mu2>1.0</mu2>
             <kp>10000.0</kp>
             <kd>1.0</kd>
-            <size>SIZE</size>
             <mass>MASS</mass>
+            <size>SIZE</size>
             <visual>
                 <xyz>0 0 0</xyz>
                 <rpy>0 0 0</rpy>

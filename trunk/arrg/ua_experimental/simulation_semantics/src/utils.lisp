@@ -24,12 +24,6 @@ copy is returned by default."
              table)
     copy))
 
-;;==========================================================================
-
-(defun print-hash (hash)
-  (loop for k being the hash-keys of hash using (hash-value v)
-     do (format t "~a => ~a~%" k v)))
-
 ;;===========================================================
 ;; Useful for dealing with ROS messages
 
@@ -54,7 +48,7 @@ copy is returned by default."
   (loop for x across vec collect x))
 
 ;;===========================================================
-;; Utility method for printing simple objects
+;; Printing
 
 (defun default-print-slots (obj stream)
   (format stream " ~{~a~^, ~}"
@@ -66,21 +60,55 @@ copy is returned by default."
                                  (slot-value obj slot-name) 
                                  "<UNBOUND>")))))
 
-;;===========================================================
-
-(defun within-delta? (x y delta)
-  "Returns true if x is within +/- delta of y."
-  (and (< x (+ y delta)) (> x (- y delta))))
+(defun print-hash (hash)
+  (loop for k being the hash-keys of hash using (hash-value v)
+     do (format t "~a => ~a~%" k v)))
 
 ;;===========================================================
+;; Classes and instances
 
 (defun is-instance-of (object class-name)
   (find (find-class class-name) (class-precedence-list (class-of object))))
 
+(defun fibn (name)
+  "shortcut for (find-instance-by-name name)"
+  (find-instance-by-name name))
+
 ;;===========================================================
+;; Math
 
 (defun radians-to-degrees (rad)
   (* rad (/ 180 pi)))
+
+(defun mean (values)
+  (/ (apply '+ values) (length values)))
+
+(defun standard-deviation (values)
+  (if (< (length values) 2) (return-from standard-deviation 0))
+  (let* ((x-bar (mean values))
+         (n (length values)))
+    (sqrt (* (/ 1 (- n 1)) 
+             (loop for x in values summing (expt (- x x-bar) 2))))))
+
+(defun factorial (n &optional (acc 1))
+  (if (<= n 1)
+      acc
+      (factorial (- n 1) (* acc n))))
+
+;; n is the sequence length, k is the subsequence length
+(defun permutations (n k)
+  (/ (factorial n)
+     (factorial (- n k))))
+
+(defun unordered-permutations (n k)
+  (if (= k 1)
+      k
+      (/ (permutations n k) 2)))
+
+;; cl-utils has a version of this
+(defun within-delta? (x y delta)
+  "Returns true if x is within +/- delta of y."
+  (and (< x (+ y delta)) (> x (- y delta))))
 
 ;;===========================================================
 
