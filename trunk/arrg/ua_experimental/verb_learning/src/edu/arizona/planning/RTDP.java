@@ -61,6 +61,8 @@ public class RTDP {
 		double value_;
 		boolean solved;
 		
+		Map<Action, Map<State, Double>> transitions_ = new HashMap<RTDP.Action, Map<State,Double>>();
+		
 		public State(OOMDPState mdpState, FSMState fsmState) {
 			mdpState_ = mdpState;
 			fsmState_ = fsmState;
@@ -130,7 +132,7 @@ public class RTDP {
 			double q = RTDP.this.getExpectedCost(this, a); // c(s,a)
 
 			// sum_{s'} P(s'|s)*s'.value
-			Map<State, Double> nextStateDist = getNextStateDist(this, a);
+			Map<State, Double> nextStateDist = getNextStateDist(a);
 			for (State next : nextStateDist.keySet()) {
 				q += nextStateDist.get(next) * next.value_;
 			}
@@ -146,7 +148,7 @@ public class RTDP {
 		}
 		
 		public State pickNextState(Action a) { 
-			Map<State, Double> nextStateDist = getNextStateDist(this, a);
+			Map<State, Double> nextStateDist = getNextStateDist(a);
 			State nextState = ProbUtils.sample(nextStateDist);
 			return nextState;
 		}
@@ -154,12 +156,20 @@ public class RTDP {
 		public double residual() {
 			Action a = this.greedyAction();
 			double res = Math.abs(this.value() - this.qValue(a));
-//			System.out.println("RESIDUAL: " + res + " for state " + toString());
 			return res;
 		}
 		
 		public double value() {
 			return value_;
+		}
+		
+		public Map<State,Double> getNextStateDist(Action a) {
+			// NOTE: This is only for deterministic environments
+			if (!transitions_.containsKey(a)) {
+				transitions_.put(a, simulateNextState(this, a));
+			}
+			
+			return transitions_.get(a);
 		}
 
 		@Override
@@ -180,8 +190,6 @@ public class RTDP {
 		public int hashCode() {
 			return toString().hashCode();
 		}
-		
-		
 	}
 	
 	// BEGIN RTDP CLASS
@@ -233,12 +241,16 @@ public class RTDP {
 			logger.info(">>>>>>>>>> BEGIN TRIAL " + i + ":");
 			boolean success = runLrtdpTrial(start_, 0.1);
 			logger.info(">>>>>>>>>> END TRIAL " + i + ". Trial took " + 
-						((System.currentTimeMillis() - trialStart)/1000.0) + " seconds.");  
+						((System.currentTimeMillis() - trialStart)/1000.0) + " seconds.");
 			i++;
 			
 			if (!success) {
 				return false;
 			}
+			
+//			if (((System.currentTimeMillis() - start) / 1000.0) > 60.0) {
+//				return true;
+//			}
 		}
 		
 		logger.info("END RTDP. TOTAL TIME: " + ((System.currentTimeMillis() - start)/1000.0));
@@ -255,9 +267,9 @@ public class RTDP {
 		
 		int i = 0;
 		while (!s.isGoal() ) {
-			if (i > 50) {
-				logger.error("POLICY RETRIEVAL FAILED: Too many states!");
-				return plan;
+			if (i >= 20) {
+				logger.error("POLICY RETRIEVAL FAILED: Returning partial plan");
+				break;
 			}
 			
 			logger.info("STATE:  " + s);
@@ -268,7 +280,7 @@ public class RTDP {
 			logger.info("ACTION: " + a);
 			actions.add(a.name_);
 			
-			s = getNextStateDist(s, a).keySet().iterator().next();
+			s = s.getNextStateDist(a).keySet().iterator().next();
 			logger.info("IS NEXT STATE SOLVED? " + s.solved);
 			
 			i++;
@@ -300,7 +312,7 @@ public class RTDP {
 				break;
 			}
 			
-			if (visited.size() > 10000) { // To prevent infinite planning
+			if (visited.size() > 5000) { // To prevent infinite planning
 				return false;
 			}
 			
@@ -346,7 +358,7 @@ public class RTDP {
 			
 			// expand state
 			Action a = s.greedyAction();
-			Map<State, Double> nextStateDist = getNextStateDist(s, a);
+			Map<State, Double> nextStateDist = s.getNextStateDist(a);
 			for (State nextState : nextStateDist.keySet()) {
 				if (!nextState.solved && !(open.contains(nextState) || closed.contains(nextState))) {
 					open.push(nextState);
@@ -377,7 +389,7 @@ public class RTDP {
 	public double getExpectedCost(State s, Action a) {
 //		System.out.println("GETTING REWARD FOR " + s);
 		if (!costTotals_.get(a).containsKey(s)) {
-			getNextStateDist(s, a);
+			s.getNextStateDist(a);
 		}
 		
 		double expectedCost = costTotals_.get(a).get(s) / costCounts_.get(a).get(s);
@@ -385,7 +397,7 @@ public class RTDP {
 		return expectedCost;
 	}
 	
-	public Map<State, Double> getNextStateDist(State s, Action a) {
+	public Map<State, Double> simulateNextState(State s, Action a) {
 		// Simulate to get the next state: This is where T and R get updated
 		OOMDPState nextMdpState = environment_.simulateAction(s.mdpState_, a.name_);
 		
