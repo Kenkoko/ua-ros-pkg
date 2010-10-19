@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
+import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
 import edu.arizona.cs.learn.timeseries.model.AllenRelation;
 import edu.arizona.cs.learn.timeseries.model.CBA;
 import edu.arizona.cs.learn.timeseries.model.Event;
@@ -251,6 +252,28 @@ public enum SequenceType {
 			}
 			return count;
 		}
+	},
+	fullCBA {
+		@Override
+		public List<WeightedObject> getSequence(List<Interval> intervals) {
+			List<Interval> list = BPPFactory.compress(intervals, Interval.eff);
+			int maxTime = 0;
+			for (Interval i : list) 
+				maxTime = Math.max(maxTime, i.end);
+				
+			for (int i = 0; i < maxTime; ++i) { 
+				
+			}
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public int getSequenceSize(List<Interval> intervals) {
+			// TODO Auto-generated method stub
+			return 0;
+		} 
+		
 	};
 
 	public abstract List<WeightedObject> getSequence(List<Interval> intervals);

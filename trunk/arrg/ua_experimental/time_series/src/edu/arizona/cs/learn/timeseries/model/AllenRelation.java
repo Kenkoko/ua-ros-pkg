@@ -63,6 +63,14 @@ public class AllenRelation extends Symbol {
 		return _key;
 	}
 	
+	/**
+	 * The hash code for this object is just the hash code of
+	 * the key itself...
+	 */
+	public int hashCode() { 
+		return _key.hashCode();
+	}
+	
 	public String latex() { 
 		return "\\ar{" + _prop1 + "}{" + _relation + "}{" + _prop2 + "} [$\\cdot$]";
 	}

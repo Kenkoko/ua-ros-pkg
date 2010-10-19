@@ -47,7 +47,7 @@ public class SymbolicData {
 		try { 
 			BufferedWriter out = new BufferedWriter(new FileWriter("data/input/niall-a.lisp"));
 			for (int i = 1; i <= 30; ++i) { 
-				List<Interval> intervals = toEpisode("data/raw-data/wes/approach-3/f" + i);
+				List<Interval> intervals = toEpisode("data/raw-data/wes/engine-2/f" + i);
 				out.write("(" + i + "\n");
 				out.write(" (\n");
 				for (Interval interval : intervals) { 
@@ -66,7 +66,7 @@ public class SymbolicData {
 		try { 
 			BufferedWriter out = new BufferedWriter(new FileWriter("data/input/niall-b.lisp"));
 			for (int i = 1; i <= 30; ++i) { 
-				List<Interval> intervals = toEpisode("data/raw-data/wes/approach-3/g" + i);
+				List<Interval> intervals = toEpisode("data/raw-data/wes/engine-2/g" + i);
 				out.write("(" + i + "\n");
 				out.write(" (\n");
 				for (Interval interval : intervals) { 

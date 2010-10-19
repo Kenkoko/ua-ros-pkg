@@ -17,17 +17,22 @@ import edu.arizona.cs.learn.util.SequenceType;
 
 public class HeatmapImage {
     private static Logger logger = Logger.getLogger(HeatmapImage.class);
-	
+
+    /**
+     * build the intensity map for the episode.
+     * @param signature
+     * @param min
+     * @param episode
+     * @param type
+     * @return
+     */
     public static Map<String,Double> intensityMap(List<WeightedObject> signature, int min, List<Interval> episode, SequenceType type) { 
 		List<WeightedObject> sequence = type.getSequence(episode);
-		logger.debug("Episode: " + episode);
-		logger.debug("Sequence: " + sequence);
 		
 		Map<String,Double> map = new HashMap<String,Double>();
-		Map<String,Double> maxWeightMap = new HashMap<String,Double>();
-		for (Interval i : episode) { 
+		for (Interval i : episode)  
 			map.put(i.toString(), new Double(0.0));
-		}
+
 
 		Params params = new Params(signature, sequence);
 		params.setMin(min, 0);
@@ -37,15 +42,42 @@ public class HeatmapImage {
 		Report report = SequenceAlignment.align(params);
 		logger.debug("Matches: " + report.numMatches + " Score: " + report.score);
 		
-		double maxWeight = 0;
+		for (int i = 0; i < report.results1.size(); ++i) { 
+			WeightedObject obj1 = report.results1.get(i);
+			WeightedObject obj2 = report.results2.get(i);
+			
+			if (obj1 == null || obj2 == null)
+				continue;
+			
+			for (Interval interval : obj2.key().getIntervals()) { 
+				Double d1 = map.get(interval.toString());
+				double d = d1 + obj1.weight();
+
+				map.put(interval.toString(), d);
+			}
+		}
+		return map;
+    }
+    
+    /**
+     * Determine the best possible score and then scale the intensity map by
+     * that value.
+     * @param map
+     * @param signature
+     * @param min
+     * @return
+     */
+    public static Map<String,Double> scale(Map<String,Double> map, List<WeightedObject> signature, int min) { 
+		Map<String,Double> maxWeightMap = new HashMap<String,Double>();
 		for (WeightedObject obj : signature) { 
+			if (obj.weight() < min)
+				continue;
+			
 			Symbol s = obj.key();
-			logger.debug(" --- signature: " + s.getKey());
 			for (String prop : s.getProps()) { 
 				Double d = maxWeightMap.get(prop);
 				if (d == null) 
 					d = 0.0;
-				logger.debug(" ---- prop: " + prop + " --- " + (d+obj.weight()));
 				maxWeightMap.put(prop, d+obj.weight());
 			}
 		}
@@ -54,39 +86,37 @@ public class HeatmapImage {
 		for (Double d : maxWeightMap.values())
 			maxPossible = Math.max(maxPossible, d);
 		
-		logger.debug("Max Weight: " + maxWeight + " Max Possible: " + maxPossible);
-		
-		double maxSeen = 0;
-		double pctCovered = 0;
-		for (int i = 0; i < report.results1.size(); ++i) { 
-			WeightedObject obj1 = report.results1.get(i);
-			WeightedObject obj2 = report.results2.get(i);
-			
-			if (obj1 == null || obj2 == null)
-				continue;
-			
-			pctCovered += obj1.weight();
-			
-			for (Interval interval : obj2.key().getIntervals()) { 
-				Double d1 = map.get(interval.toString());
-				double d = d1 + obj1.weight();
-
-				maxSeen = Math.max(maxSeen, d);
-				map.put(interval.toString(), d);
-			}
-		}
-		pctCovered /= maxWeight;
-		
-		Map<String,Double> tmp = new HashMap<String,Double>();
-		for (Map.Entry<String,Double> entry : map.entrySet()) { 
-			tmp.put(entry.getKey(), entry.getValue() / maxPossible);
-		}
-		map = tmp;
-		return map;
+		return scale(map, maxPossible);
     }
+    
+    /**
+     * Scale the intensity map by a known value.
+     * @param map
+     * @param value
+     * @return
+     */
+    public static Map<String,Double> scale(Map<String,Double> map, double value) { 
+		Map<String,Double> scaledMap = new HashMap<String,Double>();
+		for (String key : map.keySet()) 
+			scaledMap.put(key, map.get(key) / value);
 
+		return scaledMap;
+    }
+    
+    
+    /**
+     * Determine the intensity map, scale it by the best possible score and then
+     * render the results to file.
+     * @param imageFile
+     * @param signature
+     * @param min
+     * @param episode
+     * @param type
+     */
     public static void makeHeatmap(String imageFile, List<WeightedObject> signature, int min, List<Interval> episode, SequenceType type) { 
     	Map<String,Double> map = intensityMap(signature, min, episode, type);
-		Paint.render(episode, map, imageFile);
+    	map = scale(map, signature, min);
+
+    	Paint.render(episode, map, imageFile);
 	}
 }

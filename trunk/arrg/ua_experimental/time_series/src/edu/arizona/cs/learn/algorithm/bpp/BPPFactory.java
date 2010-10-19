@@ -174,7 +174,7 @@ public class BPPFactory {
 		}
 		return true;
 	}	
-
+	
 	/**
 	 * Take the intervals and convert them into the minimum timeline
 	 * @param props

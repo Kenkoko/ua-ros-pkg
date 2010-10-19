@@ -10,10 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
@@ -651,47 +653,72 @@ public class Experiments {
 			}
 	}
 
-	public static void signatures(String prefix, SequenceType type, int folds, boolean prune) {
-		for (int fold = 0; fold < folds; fold++) {
-			System.out.println("Fold " + (fold+1));
-			List<String> activityNames = Utils.getActivityNames(prefix);
-			Map<String,List<Integer>> testMap = Utils.getTestSet(prefix, folds, fold);
+	public static void signatures(final String prefix, final SequenceType type, final int folds, final boolean prune) {
+		// We should be able to multithread across each of the folds since they are independent
+		// of each other.  The only challenge will be get the test set, but I think that it
+		// should work.
+		class SignatureCallable implements Callable<Object> { 
+			private int _fold;
 			
-			for (String activity : activityNames) { 
-				System.out.println("..Building signature for " + activity);
-				File dataFile = new File("data/input/" + activity + ".lisp");
-				List<Instance> instances = Utils.sequences(activity, dataFile.getAbsolutePath(), type);
-				
-				String f = "data/cross-validation/k" + folds + "/fold-" + fold + "/" + type + "/";
-				File file = new File(f);
-				if (!file.exists()) {
-					file.mkdir();
-				}
-
-				Signature s = new Signature(activity);
-
-				List<Integer> testSet = testMap.get(activity);
-				for (int i = 1; i <= instances.size(); i++) {
-					Instance instance = instances.get(i - 1);
-					if (testSet.contains(instance.id()))  
-						continue;
-
-					s.update(instance.sequence());
-					if (prune && (i % 10 == 0)) 
-						s = s.prune(3);
-				}
-
-				// remove all of the excess and make sure that what
-				// we write out could be as small as possible.
-				int half = s.trainingSize() / 2;
-				s = s.prune(half);
-
-				if (prune)
-					s.toXML(f + activity + "-prune.xml");
-				else
-					s.toXML(f + activity + ".xml");
-
+			public SignatureCallable(int fold) { 
+				_fold = fold;
 			}
+
+			@Override
+			public Object call() throws Exception {
+				System.out.println("Fold " + (_fold+1));
+				List<String> activityNames = Utils.getActivityNames(prefix);
+				Map<String,List<Integer>> testMap = Utils.getTestSet(prefix, folds, _fold);
+				
+				for (String activity : activityNames) { 
+					System.out.println("..Building signature for " + activity);
+					File dataFile = new File("data/input/" + activity + ".lisp");
+					List<Instance> instances = Utils.sequences(activity, dataFile.getAbsolutePath(), type);
+					
+					String f = "data/cross-validation/k" + folds + "/fold-" + _fold + "/" + type + "/";
+					File file = new File(f);
+					if (!file.exists()) {
+						file.mkdir();
+					}
+
+					Signature s = new Signature(activity);
+
+					List<Integer> testSet = testMap.get(activity);
+					for (int i = 1; i <= instances.size(); i++) {
+						Instance instance = instances.get(i - 1);
+						if (testSet.contains(instance.id()))  
+							continue;
+
+						s.update(instance.sequence());
+						if (prune && (i % 10 == 0)) 
+							s = s.prune(3);
+					}
+
+					// remove all of the excess and make sure that what
+					// we write out could be as small as possible.
+					int half = s.trainingSize() / 2;
+					s = s.prune(half);
+
+					if (prune)
+						s.toXML(f + activity + "-prune.xml");
+					else
+						s.toXML(f + activity + ".xml");
+
+				}
+				return new Object();
+			}
+			
+		}
+		
+		ExecutorService execute = Executors.newFixedThreadPool(Utils.numThreads);
+		for (int  fold = 0; fold < folds; ++fold) { 			
+			execute.submit(new SignatureCallable(fold));
+		}
+		
+		try {
+			execute.awaitTermination(20, TimeUnit.DAYS);
+		} catch (Exception e) { 
+			e.printStackTrace();
 		}
 	}
 
