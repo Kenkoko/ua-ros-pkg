@@ -325,7 +325,7 @@ public class SequenceAlignment {
 		sc.s1Size = m;
 		sc.s2Size = n;
 
-		// now we need to normalize based on what is given in the parameeters
+		// now we need to normalize based on what is given in the parameters
 		switch (params.normalize) { 
 		case knn:
 			sc.score = normalizeKNN(params, seq1, seq2, best.score);

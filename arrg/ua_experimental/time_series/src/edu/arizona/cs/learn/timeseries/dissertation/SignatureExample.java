@@ -31,8 +31,8 @@ public class SignatureExample {
 
 	public static void main(String[] args) {
 		init();
-//		makeMultipleSequenceAlignmentTable();
-//		if (true) return;
+		makeMultipleSequenceAlignmentTable();
+		if (true) return;
 		
 		AllenRelation.text = AllenRelation.fullText;
 		Map<String,List<Instance>> map = Utils.load("chpt1", SequenceType.allen);

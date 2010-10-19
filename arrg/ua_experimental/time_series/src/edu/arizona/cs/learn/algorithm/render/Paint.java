@@ -120,18 +120,16 @@ public class Paint {
 		g.setColor(Color.white);
 		g.fillRect(0, 0, width, height);
 
-		if (false) {
-			// fill in a darker gray area for the propositions
-			g.setColor(Color.lightGray);
-			g.fillRect(0, 0, propArea, height);
+		// fill in a darker gray area for the propositions
+		g.setColor(Color.lightGray);
+		g.fillRect(0, 0, propArea, height);
 
-			// Draw the grid underneath us.
-			g.setColor(_gridColor);
-			for (int i = 0; i <= propSet.size(); ++i) 
-				g.drawLine(0, i*_rowHeight, width, i*_rowHeight);
-			for (int i = 0; i <= (endTime-startTime); ++i) {
-				g.drawLine(i*_timeWidth+propArea, 0, i*_timeWidth+propArea, height);
-			}
+		// Draw the grid underneath us.
+		g.setColor(_gridColor);
+		for (int i = 0; i <= propSet.size(); ++i) 
+			g.drawLine(0, i*_rowHeight, width, i*_rowHeight);
+		for (int i = 0; i <= (endTime-startTime); ++i) {
+			g.drawLine(i*_timeWidth+propArea, 0, i*_timeWidth+propArea, height);
 		}
 		
 		Font font = g.getFont();
@@ -148,6 +146,10 @@ public class Paint {
 			int end = interval.end - startTime;			
 			
 			if (end == start) 
+				continue;
+			
+			// Some process earlier decided to ignore rendering this interval....
+			if (intensityMap != null && intensityMap.get(interval.toString()) == null)
 				continue;
 			
 			int index = props.indexOf(interval.name);

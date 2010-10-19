@@ -196,7 +196,7 @@ public class Interval {
 
 	/**
 	 * A generic comparator that will compare two temporal objects in a sortable
-	 * fashion. eff --> earliest starting first.
+	 * fashion. esf --> earliest starting first.
 	 */
 	public static Comparator<Interval> esf = new Comparator<Interval>() {
 		public int compare(Interval o1, Interval o2) {

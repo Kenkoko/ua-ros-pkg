@@ -3,13 +3,16 @@ package edu.arizona.cs.learn.timeseries.dissertation;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
 import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
 import edu.arizona.cs.learn.algorithm.heatmap.HeatmapImage;
+import edu.arizona.cs.learn.algorithm.render.Paint;
 import edu.arizona.cs.learn.timeseries.model.AllenRelation;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
@@ -25,7 +28,8 @@ public class Heatmaps {
 		edu.arizona.cs.learn.algorithm.render.Paint._timeWidth = 7;
 		edu.arizona.cs.learn.algorithm.render.Paint._fontSize = 12.0F;
 
-		heatmap(SequenceType.allen, 2);
+		niallHeatmap();
+//		heatmap(SequenceType.allen, 2);
 	}
 
 	public static void ww3d() {
@@ -108,6 +112,53 @@ public class Heatmaps {
 				min, c1, type);
 	}
 
+	/**
+	 * SequenceType will always be AllenRelations and the minimum will be
+	 * 10 since we are 20 examples in each signature.
+	 */
+	public static void niallHeatmap() { 
+		Signature sA = Signature.fromXML("data/cross-validation/k3/fold-0/allen/niall-a-prune.xml");
+		Signature sB = Signature.fromXML("data/cross-validation/k3/fold-0/allen/niall-b-prune.xml");
+
+		Map<Integer, List<Interval>> map = Utils.load(new File("data/input/niall-a.lisp"));
+
+		String prefix = "/tmp/heatmap-";
+		String suffix = ".png";
+		for (int key : map.keySet()) { 
+			Map<String,Double> mapA = HeatmapImage.intensityMap(sA.signature(), 10, map.get(key), SequenceType.allen);
+			// remove all of the zero intensity intervals from the map
+			Set<String> keySet = new HashSet<String>(mapA.keySet());
+			for (String s : keySet) { 
+				if (Double.compare(0.0, mapA.get(s)) == 0)
+					mapA.remove(s);
+			}
+			
+			Map<String,Double> mapB = HeatmapImage.intensityMap(sB.signature(), 10, map.get(key), SequenceType.allen);
+			keySet = new HashSet<String>(mapB.keySet());
+			for (String s : keySet) { 
+				if (Double.compare(0.0, mapB.get(s)) == 0)
+					mapB.remove(s);
+			}
+			
+			double maxValue = 0;
+			for (Double d : mapA.values()) 
+				maxValue = Math.max(maxValue, d);
+			for (Double d : mapB.values())
+				maxValue = Math.max(maxValue, d);
+			
+			mapA = HeatmapImage.scale(mapA, maxValue);
+			mapB = HeatmapImage.scale(mapB, maxValue);
+			
+			Paint.render(map.get(key), mapA, prefix + key + "-A" + suffix);
+			Paint.render(map.get(key), mapB, prefix + key + "-B" + suffix);
+			
+//			HeatmapImage.makeHeatmap(prefix + "A-" + key + suffix,
+//					sA.signature(), 10, map.get(key), SequenceType.allen);
+//			HeatmapImage.makeHeatmap(prefix + "B-" + key + suffix,
+//					sB.signature(), 10, map.get(key), SequenceType.allen);
+		}
+	}
+	
 	public static void heatmap(SequenceType type, int min) {
 		Map<String, List<Instance>> map = Utils.load("chpt1-",
 				type);
