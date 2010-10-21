@@ -5,8 +5,12 @@ from game_faces.msg import TwoPersonGame
 import rospy
 import numpy
 from game_faces.msg import GamePlay
+import sys
+from logger import logger
 
-
+# Start a logger to record events and timestamps
+log = logger()
+        
 # The round robin code below is from
 ## {{{ http://code.activestate.com/recipes/65200/ (r1)
 def roundRobin(units, sets=None):
@@ -41,6 +45,7 @@ class game_observer:
         else:
             print "Callback: the_topic: " + str(self.the_topic)
             print msg
+            log.log(msg)
         
             if msg.play_number not in self.turns:
                 self.turns.add(msg.play_number)
@@ -96,6 +101,7 @@ class game_master:
         Monitor and log each game.
         """
         print "welcome to the game master"
+                
         # We temporarily become a service that hands out ids to clients
         gameTopic = rospy.Publisher('game_master',TwoPersonGame)
         rospy.init_node('game_master')
@@ -141,12 +147,12 @@ class game_master:
                     for ob in game_observers:
                         print "Which game: " + str(ob.twopersongame)
                         print "Playing? " + str(ob.still_playing)
-                    rospy.sleep(1)
+                    rospy.sleep(.5)
         msg = TwoPersonGame('', -1, -1, 'NO_MORE_GAMES')
         gameTopic.publish(msg)
 
-        
-import sys
+
+
 if __name__ == '__main__':
     try:
         if len(sys.argv) < 2:

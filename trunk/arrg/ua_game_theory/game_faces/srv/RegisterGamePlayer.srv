@@ -1,4 +1,5 @@
 string IP
+int32 isperson
 ---
 int32 player_id
 
