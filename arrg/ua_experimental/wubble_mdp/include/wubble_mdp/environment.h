@@ -60,6 +60,7 @@ private:
   ros::ServiceClient unpause_physics_client_;
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>* move_base_client_;
 
+  std::vector<Entity*> entity_list_;
   std::map<std::string, Entity*> entities_;
   std::map<std::string, Entity*> last_entities_;
 };

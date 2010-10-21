@@ -41,6 +41,7 @@ public class OOMDPState {
 	
 	private List<OOMDPObjectState> objectStates_;
 	private List<Relation> relations_;
+	private String hashString_ = null;
 	
 	public OOMDPState(MDPState stateMessage) {
 		objectStates_ = new Vector<OOMDPObjectState>();
@@ -93,29 +94,20 @@ public class OOMDPState {
 	
 	@Override
 	public String toString() {
-		String result = new String();
-		
-		for (OOMDPObjectState os : objectStates_) {
-			result += os.toString();
-		}
-		
-		for (Relation rel : relations_) {
-			if (rel.value > 0) {
-				result += StateUtils.formatRelation(rel);
+		if (hashString_ == null) {
+			hashString_ = new String();
+			
+			for (OOMDPObjectState os : objectStates_) {
+				hashString_ += os.toString();
 			}
-		}
+			
+			for (Relation rel : relations_) {
+				if (rel.value > 0) {
+					hashString_ += StateUtils.formatRelation(rel);
+				}
+			}
+		} 
 		
-		return result;
+		return hashString_;
 	}
-	
-	// This belongs in environment, if anywhere
-//	public boolean isOutOfBounds() {
-//		for (MDPObjectState obj : objectStates_) {
-//			if (Math.abs(obj.x) > 10 || Math.abs(obj.y) > 10) {
-//				return true;
-//			}
-//		}
-//		
-//		return false;
-//	}
 }

@@ -55,8 +55,8 @@
      if (string-equal (lexical-form-of verb) word)
      do (return verb)))
        
-(defun blast ()
-  (delete-all-instances 'verb 'simulator 'scenario))
+;(defun blast ()
+;  (delete-all-instances 'verb 'simulator 'scenario))
          
 ;;=====================================================================
 ;; Episodes

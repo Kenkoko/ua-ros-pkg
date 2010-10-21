@@ -5,12 +5,15 @@
  *      Author: dhewlett
  */
 
+#include <algorithm>
 #include <math.h>
 #include <boost/math/constants/constants.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/assign/std/vector.hpp>
 
 #include <ros/ros.h>
+#include <gazebo/GetWorldProperties.h>
+#include <gazebo/SetModelState.h>
 #include <wubble_description/SpawnWubbleBase.h>
 
 #include <wubble_mdp/robot.h>
@@ -68,11 +71,21 @@ void Robot::update(simulator_state::ObjectInfo new_info)
 
 bool Robot::addToWorld()
 {
-  wubble_description::SpawnWubbleBase swb;
-  swb.request.name = name_;
-  swb.request.initial_pose = getPose();
-
-  return ros::service::call("spawn_wubble_base", swb);
+  // If the robot is missing, spawn him
+  if (wubble_mdp::existsInWorld(name_))
+  {
+    gazebo::SetModelState set_model_state;
+    set_model_state.request.model_state.model_name = name_;
+    set_model_state.request.model_state.pose = getPose();
+    return ros::service::call("gazebo/set_model_state", set_model_state);
+  }
+  else // Otherwise, just move him
+  {
+    wubble_description::SpawnWubbleBase swb;
+    swb.request.name = name_;
+    swb.request.initial_pose = getPose();
+    return ros::service::call("spawn_wubble_base", swb);
+  }
 }
 
 std::string Robot::getClassString()
@@ -118,13 +131,14 @@ vector<Relation> Robot::computePredicates()
     result.push_back(wubble_mdp::makeRelation("Right", names, false));
   }
 
-  vector<string> directions;
-  directions += "N", "NE", "E", "SE", "S", "SW", "W", "NW";
-  string orientation_string = wubble_mdp::makeOrientationString(orientation_);
-  for (vector<string>::iterator dit = directions.begin(); dit != directions.end(); ++dit)
-  {
-    result.push_back(wubble_mdp::makeRelation("Orientation" + orientation_string, names, (*dit == orientation_string)));
-  }
+  // TEMPORARILY DISABLED
+  //  vector<string> directions;
+  //  directions += "N", "NE", "E", "SE", "S", "SW", "W", "NW";
+  //  string orientation_string = wubble_mdp::makeOrientationString(orientation_);
+  //  for (vector<string>::iterator dit = directions.begin(); dit != directions.end(); ++dit)
+  //  {
+  //    result.push_back(wubble_mdp::makeRelation("Orientation" + orientation_string, names, (*dit == orientation_string)));
+  //  }
 
   return result;
 }
@@ -191,21 +205,40 @@ btVector3 Robot::getLastPosition()
   return btVector3(last_x_, last_y_, 0.0);
 }
 
-void Robot::simulateAction(string action)
+void Robot::simulateAction(string action, vector<Object*> objects)
 {
   // Copy the old state
   last_x_ = x_;
   last_y_ = y_;
   last_orientation_ = orientation_;
 
-  // This gives him virtual "walls" when planning
   btVector3 new_pose = computeNewPose(action);
-  if (-10 < new_pose.x() && new_pose.x() < 10)
+
+  // This gives him virtual "walls" when planning
+  bool is_valid = true;
+
+  if (-5 > new_pose.x() || new_pose.x() > 5)
+  {
+    is_valid = false;
+  }
+  if (-5 > new_pose.y() || new_pose.y() > 5)
+  {
+    is_valid = false;
+  }
+
+  for (vector<Object*>::iterator obj_it = objects.begin(); obj_it != objects.end(); ++obj_it)
+  {
+    if (wubble_mdp::chessDistance(new_pose, (*obj_it)->getPosition()) == 0)
+    {
+      // Freeze if you're trying to go into an object (TODO: Later will need more sophisticated checks)
+      is_valid = false;
+      is_valid = false;
+    }
+  }
+
+  if (is_valid)
   {
     x_ = new_pose.x();
-  }
-  if (-10 < new_pose.y() && new_pose.y() < 10)
-  {
     y_ = new_pose.y();
   }
   orientation_ = new_pose.z();

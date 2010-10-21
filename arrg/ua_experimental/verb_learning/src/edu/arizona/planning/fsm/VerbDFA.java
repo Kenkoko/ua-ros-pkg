@@ -12,9 +12,8 @@ import java.util.Set;
 import java.util.Vector;
 
 import com.google.common.base.Function;
+import com.google.common.base.Service.State;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 
@@ -42,21 +41,24 @@ public class VerbDFA {
 	private Set<FSMState> goodTerminals_;
 	private int startDist_;
 	
-	public VerbDFA(DirectedGraph<BPPNode, Edge> graph) {
+	public VerbDFA(DirectedGraph<BPPNode, Edge> positiveChains, DirectedGraph<BPPNode, Edge> negativeChains) {
 		// Convert NFA to DFA
-		dfa_ = StateMachines.convertToDFA(graph);
+		DirectedGraph<FSMState, FSMTransition> positiveDFA = StateMachines.convertToDFA(positiveChains, true);
+		DirectedGraph<FSMState, FSMTransition> negativeDFA = StateMachines.convertToDFA(negativeChains, false);
+		dfa_ = StateMachines.combineDFAs(positiveDFA, negativeDFA);
+		
 		if (!Graphs.isDFA(dfa_)) { throw new RuntimeException("SUBSET CONSTRUCTION FAILED"); }
 		toDot("1.dot", false);
 		
-		// Minimize the DFA
-//		minimizeSlow();
-//		if (!Graphs.isDFA(dfa_)) { throw new RuntimeException("MINIMIZATION FAILED"); }
-//		toDot("2.dot", false);
-
 		// Add self loops
 		addSelfLoops();
 		if (!Graphs.isDFA(dfa_)) { throw new RuntimeException("SELF LOOPS FAILED"); }
 		toDot("3.dot", false);
+
+		// Minimize the DFA - let's see what happens now
+		minimizeSlow();
+		if (!Graphs.isDFA(dfa_)) { throw new RuntimeException("MINIMIZATION FAILED"); }
+		toDot("2.dot", false);
 
 		populateGoodTerminals(); // This doesn't change the graph structure
 		
@@ -82,44 +84,44 @@ public class VerbDFA {
 	}
 	
 	// The cycles that are implicit should have been made explicit, so this will all be very clean
-	// REWARD IS BEING USED AS COST FOR NOW IT'S ALL FUCKED UP
 	public SimulationResult simulate(FSMState state, Set<String> activeProps) {
 		SimulationResult result = new SimulationResult();
 		
-		// One edge's active set could be a subset of another's.
-		// That would essentially create nondeterminism whenever the superset is present. 
-		// To ensure determinism, we can take the most specific transition that matches.
-		// That is, simply, the one with the most propositions.
-		List<FSMTransition> possibleTransitions = new Vector<FSMTransition>();
-		for (FSMTransition e : dfa_.getOutEdges(state)) {
-//			System.out.println("PART 1: " + activeProps);
-//			System.out.println("PART 2: " + e.props());
-//			System.out.println("PART 3: " + e.satisfied(activeProps));
-			if (e.accept(activeProps)) {
-				possibleTransitions.add(e); 
+		if (state.getType().equals(StateType.BAD_TERMINAL)) {
+			result.newState = state; // BAD_TERMINAL cannot be escaped
+		} else {
+			// One edge's active set could be a subset of another's.
+			// That would essentially create nondeterminism whenever the superset is present. 
+			// To ensure determinism, we can take the most specific transition that matches.
+			// That is, simply, the one with the most propositions.
+			List<FSMTransition> possibleTransitions = new Vector<FSMTransition>();
+			for (FSMTransition e : dfa_.getOutEdges(state)) {
+				if (e.accept(activeProps)) {
+					possibleTransitions.add(e); 
+				}
+			}
+			
+			switch (possibleTransitions.size()) {
+			case 0:
+				// We have gone off the graph, go back to start
+				result.newState = startState_;
+				break;
+			case 1:
+				// Simple transition
+				result.newState = dfa_.getDest(possibleTransitions.get(0));
+				break;
+			default:
+				// Descending order by size since we want the most specific first
+				Collections.sort(possibleTransitions, new Comparator<FSMTransition>() {
+					@Override
+					public int compare(FSMTransition arg0, FSMTransition arg1) {
+						return arg1.getSymbol().size() - arg0.getSymbol().size(); 
+					}
+				});
+				result.newState = dfa_.getDest(possibleTransitions.get(0));
 			}
 		}
 		
-		switch (possibleTransitions.size()) {
-		case 0:
-			// We have gone off the graph, go back to start
-			result.newState = startState_;
-			break;
-		case 1:
-			// Simple transition
-			result.newState = dfa_.getDest(possibleTransitions.get(0));
-			break;
-		default:
-			// Descending order by size since we want the most specific first
-			Collections.sort(possibleTransitions, new Comparator<FSMTransition>() {
-				@Override
-				public int compare(FSMTransition arg0, FSMTransition arg1) {
-					return arg1.getSymbol().size() - arg0.getSymbol().size(); 
-				}
-			});
-			result.newState = dfa_.getDest(possibleTransitions.get(0));
-		}
-
 		result.cost = getCost(state, result.newState);
 		result.heuristic = getHeuristic(result.newState);
 		
@@ -141,13 +143,12 @@ public class VerbDFA {
 		case START: // Start state cost is already computed
 			return startDist_;
 		case BAD_TERMINAL: // YOU BE DEAD!
-			return Double.POSITIVE_INFINITY; // startDist_ * 10;
+			return 1000; //Double.POSITIVE_INFINITY; // startDist_ * 10;
 		case GOOD: // For all other states // TODO: Cache these
 			return getMinDistToGoodTerminal(newState);
 		default:
 			throw new RuntimeException("IMPOSSIBLE");
 		}
-//		return 0.0;
 	}
 	
 	// This is the value of the cost function c(s,a,s')
@@ -157,7 +158,46 @@ public class VerbDFA {
 		default:
 			return 1.0;
 		}
-//		return getHeuristic(newState);
+	}
+	
+	public void concatenate(VerbDFA other) {
+		minimizeSlow(); // This has to work.
+		populateGoodTerminals();
+		
+		other.minimizeSlow(); 
+		
+		if (goodTerminals_.size() > 1) {
+			throw new RuntimeException("MINIMIZATION FAILED.");
+		}
+			
+		FSMState bridge = goodTerminals_.iterator().next();
+		
+		for (FSMState s : other.dfa_.getVertices()) {
+			if (!s.getType().equals(StateType.START)) {
+				dfa_.addVertex(s);
+			}
+		}
+		
+		for (FSMTransition t : other.dfa_.getEdges()) {
+			Pair<FSMState> endpoints = other.dfa_.getEndpoints(t);
+			if (endpoints.getFirst().getType().equals(StateType.START)) {
+				dfa_.addEdge(t, bridge, endpoints.getSecond());
+			} else {
+				dfa_.addEdge(t, endpoints);
+			}
+		}
+		
+		bridge.setType(StateType.GOOD);
+		
+		// Add self-loop to bridge
+		Vector<FSMTransition> inEdges = new Vector<FSMTransition>(dfa_.getInEdges(bridge));
+		for (FSMTransition inEdge : inEdges) {
+			dfa_.addEdge(new FSMTransition(inEdge.getSymbol()), bridge, bridge);
+		}
+		
+		populateGoodTerminals();
+		
+		toDot("fusion.dot", false);
 	}
 	
 	public void addConstraintState(Set<String> bannedProps) {
@@ -182,8 +222,6 @@ public class VerbDFA {
 		return startState_;
 	}
 	
-	
-	
 	public void reset() {
 		activeState_ = startState_;
 	}
@@ -205,8 +243,6 @@ public class VerbDFA {
 		if (minDist == Integer.MAX_VALUE) {
 			minDist = startDist_ + 1; // 1 for going back to the start state, then the start state's cost
 		}
-		
-		// TODO: Why are we getting infinite costs?
 		
 		return minDist;
 	}
@@ -286,6 +322,10 @@ public class VerbDFA {
 				allPairs.add(pair);
 				if (p.isTerminal() != q.isTerminal()) { // If one is accepting and the other is not, must be distinct
 					distinct.add(pair);
+				} else if (p.isTerminal() && q.isTerminal()) {
+					if (!p.getType().equals(q.getType())) {
+						distinct.add(pair);
+					}
 				}
 			}
 		}

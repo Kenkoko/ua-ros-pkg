@@ -14,6 +14,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <gazebo/SpawnModel.h>
+#include <gazebo/SetModelState.h>
 
 #include <wubble_mdp/object.h>
 #include <wubble_mdp/relations.h>
@@ -37,11 +38,15 @@ Object::Object(simulator_state::ObjectInfo obj_info)
   last_y_ = y_;
   last_orientation_ = orientation_;
 
+  ROS_INFO("HERE");
+
   // TODO: This method won't work for spawning unless we change a lot of things
 }
 
 Object::Object(oomdp_msgs::MDPObjectState state)
 {
+  ROS_INFO_STREAM(state);
+
   name_ = state.name;
   map<string, string> attr_map = wubble_mdp::extractAttributeValues(state);
   x_ = lexical_cast<double> (attr_map["x"]);
@@ -80,57 +85,68 @@ void Object::update(simulator_state::ObjectInfo new_info)
 }
 
 // TODO: Only compute the XML if necessary
+// TODO: Some of this is not necessary any more
 bool Object::addToWorld()
 {
-  gazebo::SpawnModel spawn_model;
-  spawn_model.request.model_name = name_;
-  spawn_model.request.initial_pose = getPose();
-
-  string simsem_path = ros::package::getPath("simulation_semantics") + "/objects/generic_object.xml";
-  string file_contents;
-  ifstream object_file(simsem_path.c_str());
-  string line;
-  if (object_file.is_open())
+  if (wubble_mdp::existsInWorld(name_))
   {
-    while (object_file.good())
-    {
-      getline(object_file, line);
-      file_contents += line;
-    }
-    object_file.close();
-  }
-
-  // Gazebo Attributes
-  // XYZ RPY NAME SHAPE STATIC SIZE MASS COLOR
-  file_contents = regex_replace(file_contents, regex("NAME"), name_);
-  file_contents = regex_replace(file_contents, regex("XYZ"), "0.0 0.0 " + doubleToString(size_z_ / 2));
-  file_contents = regex_replace(file_contents, regex("RPY"), "0.0 0.0 0.0");
-  file_contents = regex_replace(file_contents, regex("SHAPE"), shape_);
-  file_contents = regex_replace(file_contents, regex("STATIC"), (static_ ? "true" : "false"));
-  file_contents = regex_replace(file_contents, regex("SIZE"), doubleToString(size_x_) + " " + doubleToString(size_y_)
-      + " " + doubleToString(size_z_));
-  file_contents = regex_replace(file_contents, regex("MASS"), doubleToString(mass_));
-  file_contents = regex_replace(file_contents, regex("COLOR"), color_);
-
-  //  ROS_INFO_STREAM(file_contents);
-  spawn_model.request.model_xml = file_contents;
-
-  bool service_called = ros::service::call("gazebo/spawn_gazebo_model", spawn_model);
-  if (service_called)
-  {
-    if (spawn_model.response.success)
-    {
-      return true;
-    }
-    else
-    {
-      ROS_ERROR_STREAM(spawn_model.response.status_message);
-      return false;
-    }
+    gazebo::SetModelState set_model_state;
+    set_model_state.request.model_state.model_name = name_;
+    set_model_state.request.model_state.pose = getPose();
+    return ros::service::call("gazebo/set_model_state", set_model_state);
   }
   else
   {
-    return false;
+    gazebo::SpawnModel spawn_model;
+    spawn_model.request.model_name = name_;
+    spawn_model.request.initial_pose = getPose();
+
+    string simsem_path = ros::package::getPath("simulation_semantics") + "/objects/generic_object.xml";
+    string file_contents;
+    ifstream object_file(simsem_path.c_str());
+    string line;
+    if (object_file.is_open())
+    {
+      while (object_file.good())
+      {
+        getline(object_file, line);
+        file_contents += line;
+      }
+      object_file.close();
+    }
+
+    // Gazebo Attributes
+    // XYZ RPY NAME SHAPE STATIC SIZE MASS COLOR
+    file_contents = regex_replace(file_contents, regex("NAME"), name_);
+    file_contents = regex_replace(file_contents, regex("XYZ"), "0.0 0.0 " + doubleToString(size_z_ / 2));
+    file_contents = regex_replace(file_contents, regex("RPY"), "0.0 0.0 0.0");
+    file_contents = regex_replace(file_contents, regex("SHAPE"), shape_);
+    file_contents = regex_replace(file_contents, regex("STATIC"), (static_ ? "true" : "false"));
+    file_contents = regex_replace(file_contents, regex("SIZE"), doubleToString(size_x_) + " " + doubleToString(size_y_)
+        + " " + doubleToString(size_z_));
+    file_contents = regex_replace(file_contents, regex("MASS"), doubleToString(mass_));
+    file_contents = regex_replace(file_contents, regex("COLOR"), color_);
+
+    //  ROS_INFO_STREAM(file_contents);
+    spawn_model.request.model_xml = file_contents;
+
+    bool service_called = ros::service::call("gazebo/spawn_gazebo_model", spawn_model);
+    if (service_called)
+    {
+      if (spawn_model.response.success)
+      {
+        return true;
+      }
+      else
+      {
+        ROS_ERROR_STREAM(spawn_model.response.status_message);
+        return false;
+      }
+    }
+    else
+    {
+      return false;
+    }
   }
 }
 
@@ -159,11 +175,17 @@ oomdp_msgs::MDPObjectState Object::makeObjectState()
   oomdp_msgs::MDPObjectState state;
   state.class_name = this->getClassString();
   state.name = name_;
-  state.attributes += "x", "y", "orientation", "last_x", "last_y", "last_orientation";
-  state.values += doubleToString(x_), doubleToString(y_);
-  state.values += makeOrientationString(orientation_);
-  state.values += doubleToString(last_x_), doubleToString(last_y_);
-  state.values += makeOrientationString(last_orientation_);
+  state.attributes += "x", "y", "orientation",
+                      "last_x", "last_y", "last_orientation",
+                      "size_x", "size_y", "size_z",
+                      "mass", "static", "shape", "color";
+  state.values += doubleToString(x_), doubleToString(y_), makeOrientationString(orientation_);
+  state.values += doubleToString(last_x_), doubleToString(last_y_), makeOrientationString(last_orientation_);
+  state.values += doubleToString(size_x_), doubleToString(size_y_), doubleToString(size_z_);
+  state.values += doubleToString(mass_);
+  state.values += (static_ ? "1" : "0");
+  state.values += shape_;
+  state.values += color_;
   return state;
 }
 

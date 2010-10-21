@@ -23,8 +23,8 @@ import edu.arizona.planning.mdp.OOMDPState;
 import edu.arizona.util.ProbUtils;
 import edu.arizona.verbs.Verb;
 
-public class RTDP {
-	private static Logger logger = Logger.getLogger(RTDP.class);
+public class LRTDP {
+	private static Logger logger = Logger.getLogger(LRTDP.class);
 	
 	// TODO: Maybe this is overkill
 	public class Action implements Comparable<Action> {
@@ -60,20 +60,30 @@ public class RTDP {
 		public FSMState fsmState_;
 		double value_;
 		boolean solved;
+		private String hashString_;
 		
-		Map<Action, Map<State, Double>> transitions_ = new HashMap<RTDP.Action, Map<State,Double>>();
+		Map<Action, Map<State, Double>> transitions_ = new HashMap<LRTDP.Action, Map<State,Double>>();
 		
 		public State(OOMDPState mdpState, FSMState fsmState) {
 			mdpState_ = mdpState;
 			fsmState_ = fsmState;
-			solved = isGoal(); // Goal state are automatically solved
+			solved = (isGoal() || isBadTerminal()); // Goal state are automatically solved
 			// This is the initialization of the value function from the heuristic
-			if (solved) {
-				value_ = 0.0; 
+			if (isGoal()) {
+				solved = true;
+				value_ = 0.0;
+			} else if (isBadTerminal()) {
+				solved = true;
+				value_ = 1000; // BAD
 			} else {
+				solved = false;
 				// Initializing the value to the heuristic
-				value_ = RTDP.this.verb_.getDFA().getHeuristic(fsmState);
+				value_ = LRTDP.this.verb_.getDFA().getHeuristic(fsmState);
 			}
+			
+			// Actually, the value is always the same as the heuristic function
+			
+			hashString_ = fsmState_.toString() + "|" + mdpState_.toString();
 		}
 		
 		public OOMDPState getMdpState() {
@@ -84,8 +94,12 @@ public class RTDP {
 			return fsmState_;
 		}
 		
-		public boolean isGoal() { // TODO: What about bad goals?
+		public boolean isGoal() { 
 			return fsmState_.getType().equals(StateType.GOOD_TERMINAL);
+		}
+		
+		public boolean isBadTerminal() {
+			return fsmState_.getType().equals(StateType.BAD_TERMINAL);
 		}
 		
 		public Action greedyAction() { 
@@ -105,12 +119,12 @@ public class RTDP {
 		public List<Action> getGreedyActions() { 
 			double minValue = Double.POSITIVE_INFINITY;
 			Vector<Action> result = new Vector<Action>();
-			for (Action a : RTDP.this.actions_) {
+			for (Action a : LRTDP.this.actions_) {
 //				System.out.println("TESTING ACTION: " + a);
 				double qValue = this.qValue(a);
 				if (qValue < minValue) {
 					minValue = qValue;
-					result = new Vector<RTDP.Action>();
+					result = new Vector<LRTDP.Action>();
 					result.add(a);
 				} else if (qValue == minValue) {
 					result.add(a);
@@ -122,14 +136,14 @@ public class RTDP {
 		}
 		
 		public void printQValues() {
-			for (Action a : RTDP.this.actions_) {
+			for (Action a : LRTDP.this.actions_) {
 				logger.info("Action " + a + " has Q-value " + this.qValue(a));
 			}
 		}
 		
 		// c(s,a) + sum_{s'} P(s'|s)*s'.value 
 		public double qValue(Action a) { 
-			double q = RTDP.this.getExpectedCost(this, a); // c(s,a)
+			double q = LRTDP.this.getExpectedCost(this, a); // c(s,a)
 
 			// sum_{s'} P(s'|s)*s'.value
 			Map<State, Double> nextStateDist = getNextStateDist(a);
@@ -174,7 +188,7 @@ public class RTDP {
 
 		@Override
 		public String toString() {
-			return fsmState_.toString() + "|" + mdpState_.toString();
+			return hashString_;
 		}
 
 		@Override
@@ -204,7 +218,7 @@ public class RTDP {
 	public TreeMap<Action,HashMap<State,Double>> costTotals_;
 	public TreeMap<Action,HashMap<State,Integer>> costCounts_;
 	
-	public RTDP(Verb verb, Environment environment, OOMDPState startState) {
+	public LRTDP(Verb verb, Environment environment, OOMDPState startState) {
 		verb_ = verb;
 		environment_ = environment;
 		
@@ -214,18 +228,18 @@ public class RTDP {
 		
 		System.out.println("START STATE is " + start_);
 		
-		actions_ = new Vector<RTDP.Action>();
+		actions_ = new Vector<LRTDP.Action>();
 		for (String action : environment_.getActions()) {
 			actions_.add(new Action(action));
 		}
 		
-		transitionCounts_ = new TreeMap<RTDP.Action, HashMap<State,HashMap<State,Integer>>>();
-		costTotals_ = new TreeMap<RTDP.Action, HashMap<State,Double>>();
-		costCounts_ = new TreeMap<RTDP.Action, HashMap<State,Integer>>();
+		transitionCounts_ = new TreeMap<LRTDP.Action, HashMap<State,HashMap<State,Integer>>>();
+		costTotals_ = new TreeMap<LRTDP.Action, HashMap<State,Double>>();
+		costCounts_ = new TreeMap<LRTDP.Action, HashMap<State,Integer>>();
 		for (Action action : actions_) { 
-			transitionCounts_.put(action, new HashMap<RTDP.State, HashMap<State,Integer>>());
-			costTotals_.put(action, new HashMap<RTDP.State, Double>());
-			costCounts_.put(action, new HashMap<RTDP.State, Integer>());
+			transitionCounts_.put(action, new HashMap<LRTDP.State, HashMap<State,Integer>>());
+			costTotals_.put(action, new HashMap<LRTDP.State, Double>());
+			costCounts_.put(action, new HashMap<LRTDP.State, Integer>());
 		}
 	}
 	
@@ -267,7 +281,7 @@ public class RTDP {
 		
 		int i = 0;
 		while (!s.isGoal() ) {
-			if (i >= 20) {
+			if (i >= 25) {
 				logger.error("POLICY RETRIEVAL FAILED: Returning partial plan");
 				break;
 			}
@@ -276,12 +290,25 @@ public class RTDP {
 			states.add(s.getMdpState());
 			logger.info("IS CURRENT STATE SOLVED? " + s.solved);
 			
-			Action a = s.getGreedyActions().iterator().next(); // Always the first
-			logger.info("ACTION: " + a);
+			List<Action> greedyActions = s.getGreedyActions();
+			Action a = null;
+			for (Action candidate : greedyActions) {
+				State sPrime = s.getNextStateDist(candidate).keySet().iterator().next();
+				if (sPrime.solved) { // Take the first action that leads to a solved state
+					a = candidate;
+					break;
+				}
+			}
+
+			if (a == null) {
+				logger.error("NO ACTION LEADS TO A SOLVED STATE, choosing stupid action");
+				a = greedyActions.iterator().next();
+			} 
+			
 			actions.add(a.name_);
 			
 			s = s.getNextStateDist(a).keySet().iterator().next();
-			logger.info("IS NEXT STATE SOLVED? " + s.solved);
+//			logger.info("IS NEXT STATE SOLVED? " + s.solved);
 			
 			i++;
 		}
@@ -301,7 +328,7 @@ public class RTDP {
 	public boolean runLrtdpTrial(State state, double epsilon) {
 		State s = state;
 		
-		Stack<State> visited = new Stack<RTDP.State>();
+		Stack<State> visited = new Stack<LRTDP.State>();
 		
 		while (!s.solved) {
 			// insert into visited
@@ -312,7 +339,7 @@ public class RTDP {
 				break;
 			}
 			
-			if (visited.size() > 5000) { // To prevent infinite planning
+			if (visited.size() > 1000000) { // To prevent infinite planning
 				return false;
 			}
 			
@@ -339,8 +366,8 @@ public class RTDP {
 	
 	public boolean checkSolved(State s, double epsilon) {
 		boolean rv = true;
-		Stack<State> open = new Stack<RTDP.State>();
-		Stack<State> closed = new Stack<RTDP.State>();
+		Stack<State> open = new Stack<LRTDP.State>();
+		Stack<State> closed = new Stack<LRTDP.State>();
 		
 		if (!s.solved) {
 			open.push(s);
@@ -424,7 +451,7 @@ public class RTDP {
 			return ProbUtils.computeProbDist(nextStateDist);
 			
 		} else {
-			HashMap<State, Integer> nextStateDist = new HashMap<RTDP.State, Integer>();
+			HashMap<State, Integer> nextStateDist = new HashMap<LRTDP.State, Integer>();
 			nextStateDist.put(nextState, 1);
 			stateStateProb.put(s, nextStateDist);
 			return ProbUtils.computeProbDist(nextStateDist);

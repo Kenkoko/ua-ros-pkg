@@ -13,6 +13,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <gazebo/SpawnModel.h>
+#include <gazebo/SetModelState.h>
 
 #include <wubble_mdp/location.h>
 #include <wubble_mdp/robot.h>
@@ -53,41 +54,51 @@ oomdp_msgs::MDPObjectState Location::makeObjectState()
 
 bool Location::addToWorld()
 {
-  gazebo::SpawnModel spawn_model;
-  spawn_model.request.model_name = name_;
-  spawn_model.request.initial_pose = getPose();
-
-  string simsem_path = ros::package::getPath("simulation_semantics") + "/objects/point.xml";
-  string file_contents;
-  ifstream point_file(simsem_path.c_str());
-  string line;
-  if (point_file.is_open())
+  if (wubble_mdp::existsInWorld(name_))
   {
-    while (point_file.good())
-    {
-      getline(point_file, line);
-      file_contents += line;
-    }
-    point_file.close();
-  }
-  spawn_model.request.model_xml = file_contents;
-
-  bool service_called = ros::service::call("gazebo/spawn_gazebo_model", spawn_model);
-  if (service_called)
-  {
-    if (spawn_model.response.success)
-    {
-      return true;
-    }
-    else
-    {
-      ROS_ERROR_STREAM(spawn_model.response.status_message);
-      return false;
-    }
+    gazebo::SetModelState set_model_state;
+    set_model_state.request.model_state.model_name = name_;
+    set_model_state.request.model_state.pose = getPose();
+    return ros::service::call("gazebo/set_model_state", set_model_state);
   }
   else
   {
-    return false;
+    gazebo::SpawnModel spawn_model;
+    spawn_model.request.model_name = name_;
+    spawn_model.request.initial_pose = getPose();
+
+    string simsem_path = ros::package::getPath("simulation_semantics") + "/objects/point.xml";
+    string file_contents;
+    ifstream point_file(simsem_path.c_str());
+    string line;
+    if (point_file.is_open())
+    {
+      while (point_file.good())
+      {
+        getline(point_file, line);
+        file_contents += line;
+      }
+      point_file.close();
+    }
+    spawn_model.request.model_xml = file_contents;
+
+    bool service_called = ros::service::call("gazebo/spawn_gazebo_model", spawn_model);
+    if (service_called)
+    {
+      if (spawn_model.response.success)
+      {
+        return true;
+      }
+      else
+      {
+        ROS_ERROR_STREAM(spawn_model.response.status_message);
+        return false;
+      }
+    }
+    else
+    {
+      return false;
+    }
   }
 }
 

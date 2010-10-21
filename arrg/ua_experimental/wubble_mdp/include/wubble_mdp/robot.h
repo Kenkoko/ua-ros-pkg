@@ -10,8 +10,10 @@
 
 #include <geometry_msgs/Pose.h>
 #include <simulator_state/ObjectInfo.h>
-#include <wubble_mdp/entity.h>
 #include <oomdp_msgs/MDPObjectState.h>
+
+#include <wubble_mdp/entity.h>
+#include <wubble_mdp/object.h>
 
 class Robot : public Entity
 {
@@ -36,7 +38,7 @@ public:
   virtual std::vector<oomdp_msgs::Relation> computePredicates();
   virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* other);
 
-  void simulateAction(std::string action);
+  void simulateAction(std::string action, std::vector<Object*> objects);
   double computeRelativeAngle(btVector3 other_pos);
   geometry_msgs::Pose computeTargetPose(std::string action);
 

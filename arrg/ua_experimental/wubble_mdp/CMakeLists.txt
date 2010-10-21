@@ -31,6 +31,6 @@ rosbuild_add_library (wubble_mdp
                       src/wubble_mdp/environment.cpp
                      )
 
-rosbuild_add_executable(environment_node src/environment_node.cpp)
-target_link_libraries(environment_node wubble_mdp)
+rosbuild_add_executable(environment src/environment_node.cpp)
+target_link_libraries(environment wubble_mdp)
 

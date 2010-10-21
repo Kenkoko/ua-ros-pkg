@@ -16,28 +16,31 @@
           (planning-time-of result)
           (plan-length-of result)
           (not (null (trace-of result)))))
-                    
-
+                 
 ;;===================================================================
 
-(defun make-learning-curve (verb-word)
-  (loop with training = (make-training verb-word)
-     with verb = (find-verb verb-word)
-     for i from 1 upto 3 ;(length training)
-     for num-trials = (min 3 (unordered-permutations (length training) i))
-     do (format t "Begin Testing...~%") 
-     collect (loop for j from 1 upto num-trials
-                do (clear-verb-meaning verb) ;; Reset the signature, FSM 
-                  (format t "Begin Trial ~d with training size ~d~%" j i)
-                  (loop for instance in (sample-random-subset training i)
-                     for student-result = (run-test verb (first instance))
-                     if (accepted-of student-result) do (update-verb-with-trace 
-                                                         verb 
-                                                         (trace-of student-result))
-                     do (format t "Presenting teacher's demonstration~%") 
-                       (present-training-instance verb-word instance))
-                  (format t "Testing robot performance...~%")
-                collect (run-tests verb-word (make-tests verb-word)))))
+(defun make-learning-curve (verb-word num-trials &key (min-training-size 1) (max-training-size nil))
+  (let* ((training (make-training verb-word)))
+    (loop for i from min-training-size upto (if max-training-size max-training-size (length training))
+       collect (make-learning-point verb-word i num-trials))))
+
+(defun make-learning-point (verb-word training-size num-trials)
+  (let* ((training (make-training verb-word))
+         (verb (find-verb verb-word)))
+    (format t "Begin Testing for trainging size ~d...~%"  training-size) 
+    (loop for j from 1 upto num-trials
+       do (clear-verb-meaning verb) ;; Reset the signature, FSM 
+         (format t "Begin Trial ~d with training size ~d~%" j training-size)
+         (loop for instance in (sample-random-subset training training-size)
+            for student-result = (run-test verb (first instance))
+            if (accepted-of student-result) 
+            do (update-verb-with-trace verb (trace-of student-result))
+            else if (trace-of student-result) 
+            do (update-verb-with-negative-trace verb (trace-of student-result))
+            do (format t "Presenting teacher's demonstration~%") 
+              (present-training-instance verb-word instance))
+         (format t "Testing robot performance...~%")
+       collect (run-tests verb-word (make-tests verb-word)))))
                        
 (defun process-learning-curve (lc-result)
   (loop for training-size from 1 upto (length lc-result)
@@ -113,10 +116,10 @@
                      (sb-ext:run-program "/usr/bin/notify-send" '("Robot needs feedback"))
                      (format t ">>> Accept student's performance? (t or nil)~%") 
                      (setf (accepted-of result) (read)))
-                   (format t "Plan execution failed.~%"))
-               (progn
-                 (format t "Planning failed.~%")
-                 (setf (plan-length-of result) 20))))
+                   (format t "Plan execution failed.~%")))
+        (progn
+          (format t "Planning failed.~%")
+          (setf (plan-length-of result) 20)))
     result))
 
 ;; How to measure time for future reference
@@ -148,6 +151,7 @@
        do (format t "State did at Step ~d not match, terminating plan!~%" step)
          (print-mdp-state state)
          (print-mdp-state true-state)
+         (loop for state1 across states do (print-mdp-state state1))
        and return nil
        finally (return (push start-state trace)))))
 
