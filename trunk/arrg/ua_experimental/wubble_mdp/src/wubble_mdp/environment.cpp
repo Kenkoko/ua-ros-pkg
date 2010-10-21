@@ -159,10 +159,10 @@ bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
 {
   // TODO: Does this deallocate the old entities, or do I have to manually delete them?
   entities_.clear();
-  clearSimulation();
+  entity_list_.clear();
 
-  vector<Entity*> entity_list = Environment::makeEntityList(req.object_states);
-  for (vector<Entity*>::iterator ent_it = entity_list.begin(); ent_it != entity_list.end(); ++ent_it)
+  entity_list_ = Environment::makeEntityList(req.object_states);
+  for (vector<Entity*>::iterator ent_it = entity_list_.begin(); ent_it != entity_list_.end(); ++ent_it)
   {
     entities_[(*ent_it)->name_] = *ent_it;
     bool added = (*ent_it)->addToWorld();
@@ -172,11 +172,14 @@ bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
     }
   }
 
+  clearSimulation();
+
   res.start_state = updateState();
 
   return true;
 }
 
+// Now this only clears the entities we don't want
 bool Environment::clearSimulation()
 {
   gazebo::GetWorldProperties gwp;
@@ -185,6 +188,13 @@ bool Environment::clearSimulation()
   {
     vector<string> safe;
     safe += "clock", "gplane", "point_white";
+
+    vector<Entity*> entities = getEntityList();
+    for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+    {
+      safe += (*ent_it)->name_;
+    }
+
     vector<string>::iterator mit;
     for (mit = gwp.response.model_names.begin(); mit != gwp.response.model_names.end(); ++mit)
     {
@@ -268,7 +278,16 @@ bool Environment::simulateAction(oomdp_msgs::SimulateAction::Request& req, oomdp
   }
   else
   {
-    robot->simulateAction(req.action);
+    vector<Object*> objects;
+    for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+    {
+      if ((*ent_it)->getClassString() == "Object")
+      {
+        objects.push_back(dynamic_cast<Object*>(*ent_it));
+      }
+    }
+
+    robot->simulateAction(req.action, objects);
   }
 
   res.new_state = Environment::makeState(entities);
@@ -291,12 +310,7 @@ Robot* Environment::findRobot(vector<Entity*> entities)
 
 vector<Entity*> Environment::getEntityList()
 {
-  vector<Entity*> entity_list;
-  for (map<string, Entity*>::iterator ent_it = entities_.begin(); ent_it != entities_.end(); ++ent_it)
-  {
-    entity_list.push_back(ent_it->second);
-  }
-  return entity_list;
+  return entity_list_;
 }
 
 bool Environment::computeRelations(oomdp_msgs::ComputeRelations::Request& req,

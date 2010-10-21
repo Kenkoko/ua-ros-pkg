@@ -11,14 +11,14 @@
 (defun make-training (verb)
   (cond ((string-equal verb "go")
          (make-go-training))
-        ;((string-equal verb "go-around")
-        ; (make-go-around-training)
+        ((string-equal verb "go-around")
+         (make-go-around-training))
         ((string-equal verb "go-through")
          (make-go-through-training))))
 
 (defun make-go-training ()
   (list 
-   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
+   #+ignore(list (vector (make-msg "oomdp_msgs/MDPObjectState"
                            :name "robot_description"
                            :class_name "Robot"
                            :attributes *robot-attributes*
@@ -40,7 +40,7 @@
                            :attributes *location-attributes*
                            :values #("-1.5" "0.0")))
          '("forward" "forward" "forward"))
-   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
+   #+ignore(list (vector (make-msg "oomdp_msgs/MDPObjectState"
                            :name "robot_description"
                            :class_name "Robot"
                            :attributes *robot-attributes*
@@ -52,6 +52,17 @@
                            :values #("0.5" "0.0")))
          '("left" "forward"))
    (list (vector (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "robot_description"
+                           :class_name "Robot"
+                           :attributes *robot-attributes*
+                           :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "goal"
+                           :class_name "Location"
+                           :attributes *location-attributes*
+                           :values #("0.5" "0.0")))
+         '("forward"))
+   #+ignore(list (vector (make-msg "oomdp_msgs/MDPObjectState"
                            :name "robot_description"
                            :class_name "Robot"
                            :attributes *robot-attributes*
@@ -86,17 +97,17 @@
                            :name "robot_description"
                            :class_name "Robot"
                            :attributes *robot-attributes*
-                           :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+                           :values #("0.0" "0.0" "N" "0.0" "0.0" "N"))
                  (make-msg "oomdp_msgs/MDPObjectState"
                            :name "waypoint"
                            :class_name "Location"
                            :attributes *location-attributes*
-                           :values #("1.0" "0.0"))
+                           :values #("0.0" "1.0"))
                  (make-msg "oomdp_msgs/MDPObjectState"
                            :name "goal"
                            :class_name "Location"
                            :attributes *location-attributes*
-                           :values #("2.0" "0.0")))
+                           :values #("0.0" "2.0")))
          '("forward" "forward" "forward" "forward"))
    (list (vector (make-msg "oomdp_msgs/MDPObjectState"
                            :name "robot_description"
@@ -118,18 +129,45 @@
                            :name "robot_description"
                            :class_name "Robot"
                            :attributes *robot-attributes*
-                           :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+                           :values #("0.0" "0.0" "W" "0.0" "0.0" "W"))
                  (make-msg "oomdp_msgs/MDPObjectState"
                            :name "waypoint"
                            :class_name "Location"
                            :attributes *location-attributes*
-                           :values #("1.0" "0.0"))
+                           :values #("-1.0" "0.0"))
                  (make-msg "oomdp_msgs/MDPObjectState"
                            :name "goal"
                            :class_name "Location"
                            :attributes *location-attributes*
-                           :values #("1.5" "0.0")))
+                           :values #("-1.5" "0.0")))
          '("forward" "forward" "forward"))))
+
+(defun make-go-around-training ()
+  (list
+   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "robot_description"
+                           :class_name "Robot"
+                           :attributes *robot-attributes*
+                           :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "object"
+                           :class_name "Object"
+                           :attributes *object-attributes*
+                           :values #("1.0" "0.0" "E" "1.0" "0.0" "E" 
+                                     "0.2" "0.2" "0.2" "0.5" "0" "box" "Gazebo/Blue")))
+         '("left" "forward" "right" "forward" "forward" "right" "forward" "left"))
+   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "robot_description"
+                           :class_name "Robot"
+                           :attributes *robot-attributes*
+                           :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "object"
+                           :class_name "Object"
+                           :attributes *object-attributes*
+                           :values #("1.0" "0.0" "E" "1.0" "0.0" "E" 
+                                     "0.2" "0.2" "0.2" "0.5" "0" "box" "Gazebo/Blue")))
+         '("right" "forward" "left" "forward" "forward" "left" "forward" "right"))))
 
 ;;=============================================================================
 ;; Testing
@@ -137,8 +175,8 @@
 (defun make-tests (verb)
   (cond ((string-equal verb "go")
          (make-go-tests))
-        ;((string-equal verb "go-around")
-        ; (make-go-around-training)
+        ((string-equal verb "go-around")
+         (make-go-around-tests))
         ((string-equal verb "go-through")
          (make-go-through-tests))))
 
@@ -209,7 +247,7 @@
                      :name "robot_description"
                      :class_name "Robot"
                      :attributes *robot-attributes*
-                     :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+                     :values #("0.0" "0.0" "N" "0.0" "0.0" "N"))
            (make-msg "oomdp_msgs/MDPObjectState"
                      :name "waypoint"
                      :class_name "Location"
@@ -220,14 +258,60 @@
                      :class_name "Location"
                      :attributes *location-attributes*
                      :values #("1.0" "1.0")))
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "robot_description"
+                     :class_name "Robot"
+                     :attributes *robot-attributes*
+                     :values #("0.0" "0.0" "SW" "0.0" "0.0" "SW"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "waypoint"
+                     :class_name "Location"
+                     :attributes *location-attributes*
+                     :values #("-0.5" "-0.5"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "goal"
+                     :class_name "Location"
+                     :attributes *location-attributes*
+                     :values #("0.5" "0.5")))
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "robot_description"
+                     :class_name "Robot"
+                     :attributes *robot-attributes*
+                     :values #("0.0" "0.0" "W" "0.0" "0.0" "W"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "waypoint"
+                     :class_name "Location"
+                     :attributes *location-attributes*
+                     :values #("-0.5" "0.0"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "goal"
+                     :class_name "Location"
+                     :attributes *location-attributes*
+                     :values #("-1.0" "0.0")))
    ))
 
 (defun make-go-around-tests ()
   (list
    (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "robot_description"
+                     :class_name "Robot"
+                     :attributes *robot-attributes*
+                     :values #("5.0" "1.0" "S" "5.0" "1.0" "S"))
+           (make-msg "oomdp_msgs/MDPObjectState"
                      :name "object"
                      :class_name "Object"
                      :attributes *object-attributes*
-                     :values #("0.0" "0.0" "E" "0.0" "0.0" "E" 
-                               "0.2" "0.2" "0.2" "0.5" "1" "sphere" "Gazebo/Blue")))
+                     :values #("5.0" "0.0" "S" "5.0" "0.0" "S" 
+                               "0.2" "0.2" "0.2" "0.5" "0" "box" "Gazebo/Blue")))
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "robot_description"
+                     :class_name "Robot"
+                     :attributes *robot-attributes*
+                     :values #("-5.0" "1.0" "S" "-5.0" "1.0" "S"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "object"
+                     :class_name "Object"
+                     :attributes *object-attributes*
+                     :values #("-5.0" "0.0" "S" "-5.0" "0.0" "S" 
+                               "0.2" "0.2" "0.2" "0.5" "0" "box" "Gazebo/Blue")))
    ))

@@ -26,6 +26,7 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState> {
 	private String name_;
 	private Map<String,String> attributeMap_; 
 	private List<String> attributeList_;
+	private String hashString_ = null;
 	
 	public OOMDPObjectState(MDPObjectState state) {
 		className_ = state.class_name;
@@ -71,6 +72,7 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState> {
 		attributeMap_.put(attribute, value);
 		attributeList_ = new Vector<String>(attributeMap_.keySet());
 		Collections.sort(attributeList_);
+		hashString_ = null; // To regenerate it
 	}
 	
 	public String getName() {
@@ -88,10 +90,12 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState> {
 	
 	@Override
 	public String toString() {
-		String result = className_ + "<" + name_ + ">";
-		for (String attribute : attributeList_) {
-			result += attribute + "={" + attributeMap_.get(attribute) + "}";
+		if (hashString_ == null) {
+			hashString_ = className_ + "<" + name_ + ">";
+			for (String attribute : attributeList_) {
+				hashString_ += attribute + "={" + attributeMap_.get(attribute) + "}";
+			}
 		}
-		return result;
+		return hashString_;
 	}
 }

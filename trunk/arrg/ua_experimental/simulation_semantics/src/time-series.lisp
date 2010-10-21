@@ -49,12 +49,17 @@
 ;;================================================================
 ;; New System
 
-(defun convert-relation (rel-msg name-map)
+(defun convert-relation (rel-msg name-map &key (debug nil))
   (let* ((rel-name (oomdp_msgs-msg:relation-val rel-msg))
          (obj-names (vec-to-list (oomdp_msgs-msg:obj_names-val rel-msg)))
-         (value (oomdp_msgs-msg:value-val rel-msg)))
-    (setf obj-names (loop for name in obj-names collect (remap-name name name-map)))
-    (list (format nil "~a(~{~a~^,~})" rel-name obj-names) value)))
+         (value (oomdp_msgs-msg:value-val rel-msg))
+         (remapped-names (loop for name in obj-names collect (remap-name name name-map))))
+    (cond (debug
+           (format t "~a~%" rel-msg)
+           (format t "~a ~a ~a~%" rel-name obj-names value)
+           (print-hash name-map)
+           (format t "~a~%" remapped-names)))
+    (list (format nil "~a(~{~a~^,~})" rel-name remapped-names) value)))
 
 (defun convert-relations (state name-map)
   (loop for rel across (oomdp_msgs-msg:relations-val state)
@@ -73,7 +78,12 @@
 
 (defun get-relation-set (trace name-map)
   (loop with state = (first trace)
+     for real-relation across (oomdp_msgs-msg:relations-val state)
      for relation in (convert-relations state name-map)
+     if (equal (first relation) "InFrontOf(place,thing)") 
+     do (format t "IT WAS YOU!!!!~%")
+       (convert-relation real-relation name-map :debug t)
+       (format t "~a~%" state)
      collect (first relation)))
 
 ;; NB: This will not work if relation set is changing, but that should never happen

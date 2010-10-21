@@ -28,22 +28,22 @@
                             :lexical-form word
                             :argument-structure (vec-to-list (verb_learning-msg:arguments-val verb-desc)))))
 
-(defun learn-canonical-signature (&key (verb *current-verb*))
-  (call-service "verb_learning/find_signature" 'verb_learning-srv:FindSignature
-                :episodes (get-episodes verb)
+(defun clear-verb-meaning (verb)
+  (call-service "verb_learning/forget_verb" 'verb_learning-srv:ForgetVerb
                 :verb (make-message "verb_learning/VerbDescription"
                                     :verb (lexical-form-of verb)
                                     :arguments (ros-list (argument-strings verb)))))
+
+;(defun learn-canonical-signature (&key (verb *current-verb*))
+;  (call-service "verb_learning/find_signature" 'verb_learning-srv:FindSignature
+;                :episodes (get-episodes verb)
+;                :verb (make-message "verb_learning/VerbDescription"
+;                                    :verb (lexical-form-of verb)
+;                                    :arguments (ros-list (argument-strings verb)))))
 
 (defun update-canonical-signature (episode &key (verb *current-verb*))
-  (call-service "verb_learning/update_signature" 'verb_learning-srv:FindSignature
+  (call-service "verb_learning/positive_update" 'verb_learning-srv:FindSignature
                 :episodes (list episode)
-                :verb (make-message "verb_learning/VerbDescription"
-                                    :verb (lexical-form-of verb)
-                                    :arguments (ros-list (argument-strings verb)))))
-
-(defun clear-verb-meaning (verb)
-  (call-service "verb_learning/find_signature" 'verb_learning-srv:FindSignature
                 :verb (make-message "verb_learning/VerbDescription"
                                     :verb (lexical-form-of verb)
                                     :arguments (ros-list (argument-strings verb)))))
@@ -52,17 +52,21 @@
   (let* ((episode (trace-to-episode trace (instance-name-map 
                                            (oomdp_msgs-msg:object_states-val (first trace))
                                            verb))))
-    (call-service "verb_learning/update_signature" 'verb_learning-srv:FindSignature
+    (call-service "verb_learning/positive_update" 'verb_learning-srv:FindSignature
                   :episodes (list episode)
                   :verb (make-message "verb_learning/VerbDescription"
                                       :verb (lexical-form-of verb)
                                       :arguments (ros-list (argument-strings verb))))))
 
-;; TODO: Fix this function
-#+ignore(defun learn-counterfactual-signature (&key (verb *current-verb*))
-  (call-service "verb_learning/find_signature" 'time_series-srv:FindSignature
-                :episodes (get-intervention-episodes verb) 
-                :verb (concatenate 'string (lexical-form-of verb) "-counterfactual")))
+(defun update-verb-with-negative-trace (verb trace)
+  (let* ((episode (trace-to-episode trace (instance-name-map 
+                                           (oomdp_msgs-msg:object_states-val (first trace))
+                                           verb))))
+    (call-service "verb_learning/negative_update" 'verb_learning-srv:FindSignature
+                  :episodes (list episode)
+                  :verb (make-message "verb_learning/VerbDescription"
+                                      :verb (lexical-form-of verb)
+                                      :arguments (ros-list (argument-strings verb))))))
 
 ;;=====================================================================
 ;; Modifying verbs

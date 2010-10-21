@@ -10,14 +10,19 @@
 #include <math.h>
 #include <boost/math/constants/constants.hpp>
 
+#include <ros/ros.h>
+#include <gazebo/GetWorldProperties.h>
+
 #include <wubble_mdp/entity.h>
 #include <wubble_mdp/robot.h>
 #include <wubble_mdp/object.h>
 #include <wubble_mdp/location.h>
 
+using namespace std;
+
 namespace wubble_mdp
 {
-std::string makeOrientationString(double yaw)
+string makeOrientationString(double yaw)
 {
   const double pi = boost::math::constants::pi<double>();
   if (yaw >= 0)
@@ -76,16 +81,16 @@ double extractYaw(simulator_state::ObjectInfo info)
   return yaw;
 }
 
-std::string extractOrientationString(simulator_state::ObjectInfo info)
+string extractOrientationString(simulator_state::ObjectInfo info)
 {
   double yaw = extractYaw(info);
   return makeOrientationString(yaw);
 }
 
-double convertOrientationString(std::string orientation)
+double convertOrientationString(string orientation)
 {
   const double pi = boost::math::constants::pi<double>();
-  std::map<std::string, double> omap;
+  map<string, double> omap;
   omap["E"] = 0.0;
   omap["NE"] = pi / 4;
   omap["N"] = pi / 2;
@@ -101,28 +106,28 @@ double convertOrientationString(std::string orientation)
   }
   else
   {
-    std::cerr << "INVALID ORIENTATION STRING " << orientation << std::endl;
+    cerr << "INVALID ORIENTATION STRING " << orientation << endl;
     return 0;
   }
 }
 
-std::string doubleToString(double d)
+string doubleToString(double d)
 {
   double rounded = roundToDelta(d, 0.1);
-  std::ostringstream s;
+  ostringstream s;
   s.precision(1);
   //    cout.setf(ios::fixed,ios::floatfield);
-  s << std::fixed << rounded;
+  s << fixed << rounded;
   return s.str();
 }
 
-std::map<std::string, std::string> extractAttributeValues(oomdp_msgs::MDPObjectState state)
+map<string, string> extractAttributeValues(oomdp_msgs::MDPObjectState state)
 {
-  std::map<std::string, std::string> result;
+  map<string, string> result;
   if (state.attributes.size() != state.values.size())
   {
     // Freak Out!
-    std::cerr << "DIFFERENT NUMBER OF ATTRIBUTES AND VALUES\n";
+    cerr << "DIFFERENT NUMBER OF ATTRIBUTES AND VALUES\n";
   }
   else
   {
@@ -150,12 +155,12 @@ Entity* makeEntity(oomdp_msgs::MDPObjectState state)
   }
   else
   {
-    std::cerr << "INVALID CLASS NAME" << state << std::endl;
+    cerr << "INVALID CLASS NAME" << state << endl;
     return NULL;
   }
 }
 
-oomdp_msgs::Relation makeRelation(std::string relation, std::vector<std::string> names, bool value)
+oomdp_msgs::Relation makeRelation(string relation, vector<string> names, bool value)
 {
   oomdp_msgs::Relation result;
   result.relation = relation;
@@ -175,11 +180,11 @@ int chessDistance(btVector3 first_pos, btVector3 second_pos)
 {
   double x_diff = fabs(first_pos.x() - second_pos.x());
   double y_diff = fabs(first_pos.y() - second_pos.y());
-  double max = std::max(x_diff, y_diff); // Remember that the regular max returns an integer!
-  double in_steps = max / 0.5;
+  double max_diff = max(x_diff, y_diff); // Remember that the regular max returns an integer!
+  double in_steps = max_diff / 0.5;
   int result = round(in_steps);
 
-  //  std::cout << x_diff << " " << y_diff << " " << max << " " << in_steps << " " << result << std::endl;
+  //  cout << x_diff << " " << y_diff << " " << max << " " << in_steps << " " << result << endl;
 
   return result;
 }
@@ -187,7 +192,7 @@ int chessDistance(btVector3 first_pos, btVector3 second_pos)
 double roundToDelta(double number, double delta)
 {
   int multiplier = round(number / delta);
-  //  std::cout << "ROUNDING: " << number << " " << delta << " " << multiplier << std::endl;
+  //  cout << "ROUNDING: " << number << " " << delta << " " << multiplier << endl;
   return delta * multiplier;
 }
 
@@ -201,6 +206,19 @@ double roundYaw(double yaw)
     multiplier = 8;
   }
   return (pi / 8) * multiplier;
+}
+
+bool existsInWorld(string entity_name)
+{
+  gazebo::GetWorldProperties gwp;
+  if (ros::service::call("gazebo/get_world_properties", gwp))
+  {
+    return find(gwp.response.model_names.begin(), gwp.response.model_names.end(), entity_name) != gwp.response.model_names.end();
+  }
+  else
+  {
+    return false; // This is kind of the wrong semantics
+  }
 }
 
 } // End namespace
