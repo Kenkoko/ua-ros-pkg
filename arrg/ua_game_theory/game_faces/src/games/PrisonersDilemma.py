@@ -10,7 +10,7 @@ class Prisoners(Game):
         self.choice_column = -1
     
     def take_first_turn(self):
-        if self.player.is_first_player:
+        if not self.player.is_first_player:
             gp = GamePlay(play_number=0,amount=0, player_id=self.player_id)
             gp.header.stamp = rospy.Time.now()
             self.play_pub.publish(gp)

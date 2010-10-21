@@ -17,6 +17,7 @@ from game_faces.srv import *
 from game_faces.msg import TwoPersonGame, GamePlay
 
 TIME_BETWEEN_GAMES = 0.5 #seconds
+capture_video = 1   # Set to 1 to capture video
 
 gtk.gdk.threads_init()
 
@@ -66,7 +67,7 @@ class UltimatumGameController:
         
         self.box_control.add(gtk.Label('Amount to give'))
         
-        self.spin_bid = gtk.SpinButton(adjustment=gtk.Adjustment(lower=1, upper=10, step_incr=1))
+        self.spin_bid = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=10, step_incr=1))
         self.box_control.add(self.spin_bid)
         
         self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
@@ -94,15 +95,21 @@ class UltimatumGameController:
         self.box_control.set_sensitive(self.enabled)
     
     def take_first_turn(self):
+        print "I am taking first turn"
+# Was is not here before
         if not self.player.is_first:
             gp = GamePlay(play_number=0,amount=0, player_id=self.player.player_id)
             gp.header.stamp = rospy.Time.now()
             self.play_pub.publish(gp)
-        
+            print gp
+
     def take_turn(self, game_play):
-        gts = GtkThreadSafe()
+        print "I am takin the turn"
         play_number = game_play.play_number
+        gts = GtkThreadSafe()
+        print "play_number is"+str(play_number)
         if play_number == 0:
+            #self.shared_console.append_text("In this game, the first player receives 10 and chooses an amount to offer to the second. The second player can accept or reject this offer. If the second player rejects the offer, the first player loses the original 10.")
             if self.player.is_first:
                 with gts:
                     self.set_balance(10)
@@ -137,6 +144,7 @@ class UltimatumGameController:
                     gp.header.stamp = rospy.Time.now()
                     self.play_pub.publish(gp)
         elif play_number == 2:
+            print " see 2"
             if self.player.is_first:
                 with gts:
                     self.shared_console.append_text('Your offer was ')
@@ -155,6 +163,7 @@ class UltimatumGameController:
                 pass
             with gts:
                 self.shared_console.append_text("\n\nPlease wait for the next game to start.\n")
+            print "unregistering"
             self.unregister_game()
     
     def unregister_game(self):
@@ -195,7 +204,7 @@ class TrustGameController:
         
         self.box_control.add(gtk.Label('Amount to give'))
         
-        self.spin_bid = gtk.SpinButton(adjustment=gtk.Adjustment(lower=1, upper=10, step_incr=1))
+        self.spin_bid = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=10, step_incr=1))
         self.box_control.add(self.spin_bid)
         
         self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
@@ -239,6 +248,7 @@ class TrustGameController:
         gts = GtkThreadSafe()
         play_number = game_play.play_number
         if play_number == 0:
+            #self.shared_console.append_text("In this game, the first player receives 10 and chooses an amount to offer to the second. The second player receives triple that amount, and then has the opportunity to give any part of that back to the first player.")
             if self.player.is_first:
                 with gts:
                     self.set_balance(10)
@@ -529,12 +539,27 @@ class GameFacesUI:
             print "Could not get a player_id from master"
             sys.exit(1)
         
+        # Set up video capture
+        video_topic = "Video" + str(self.player.player_id)
+        self.video_pub = rospy.Publisher(video_topic, TwoPersonGame)
+        
+        # Using rosrun spawns two processes, and the 
+        #run_video_command = 'rosrun game_faces game_video_capture ' + str(self.player.player_id)
+        
+        run_video_command = '../bin/game_video_capture ' + str(self.player.player_id)
+        print run_video_command
+        if capture_video:
+            args = shlex.split(run_video_command)
+            self.video = subprocess.Popen(args)
+        
         self.console.append_text("Ready to play.\nWaiting for your opponent...\n")
 
     def play_game(self, gamedata):
         gts = GtkThreadSafe()
         if gamedata.game_type == 'NO_MORE_GAMES':
             self.console.append_text('\n\nNo more games!\n')
+            if capture_video:
+                self.video.terminate()  # is this the correct way to terminate video?
             return
         self.player.game_topic_lock.acquire()
         if self.player.game_topic is '':
@@ -566,6 +591,10 @@ class GameFacesUI:
                     with gts:
                         print "Didnt match game_type: %s" %game_type
                         sys.exit(1)
+                        
+                if capture_video:
+                    self.video_pub.publish(gamedata)
+                        
                 self.the_game_controller.take_first_turn()
         else:
             with gts:

@@ -34,7 +34,7 @@ class game_player:
         print "Training Material Here"
 
         self.connect_to_master()
-        print "PLayer id: " + str(self.player_id)
+        print "Player id: " + str(self.player_id)
 
         print "We would startup the video capture node and create topic here"
         video_topic = "Video" + str(self.player_id)
