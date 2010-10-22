@@ -364,6 +364,15 @@ class AX12_IO(object):
             self.exception_on_error(response[4], old_id, 'setting id to %d' % new_id)
         return response
 
+    def set_servo_baud_rate(self, servoId, baud_rate):
+        """
+        Sets servo communication speed. The range from 0 to 254.
+        """
+        response = self.__sio.write_to_servo(servoId, AX_BAUD_RATE, [baud_rate])
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting baud rate to %d' % baud_rate)
+        return response
+
     def set_servo_return_delay_time(self, servoId, delay):
         """
         Sets the delay time from the transmission of Instruction Packet until
@@ -373,6 +382,30 @@ class AX12_IO(object):
         response = self.__sio.write_to_servo(servoId, AX_RETURN_DELAY_TIME, [delay])
         if response:
             self.exception_on_error(response[4], servoId, 'setting return delay time to %d' % delay)
+        return response
+
+    def set_servo_angle_limit_cw(self, servoId, angle_cw):
+        """
+        Set the min (CW) angle of rotation limit.
+        """
+        loVal = int(angle_cw % 256)
+        hiVal = int(angle_cw >> 8)
+        # set 4 register values with low and high bytes for min and max angles
+        response = self.__sio.write_to_servo(servoId, AX_CW_ANGLE_LIMIT_L, (loVal, hiVal))
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting CW angle limits to %d' % angle_cw)
+        return response
+
+    def set_servo_angle_limit_ccw(self, servoId, angle_ccw):
+        """
+        Set the max (CCW) angle of rotation limit.
+        """
+        loVal = int(angle_ccw % 256)
+        hiVal = int(angle_ccw >> 8)
+        # set 4 register values with low and high bytes for min and max angles
+        response = self.__sio.write_to_servo(servoId, AX_CCW_ANGLE_LIMIT_L, (loVal, hiVal))
+        if response:
+            self.exception_on_error(response[4], servoId, 'setting CCW angle limits to %d' % angle_ccw)
         return response
 
     def set_min_max_angle_limits(self, servoId, minAngle, maxAngle):
