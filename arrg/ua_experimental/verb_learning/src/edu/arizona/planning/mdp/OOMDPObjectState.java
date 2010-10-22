@@ -69,6 +69,15 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState> {
 		return attributeList_;
 	}
 	
+	/**
+	 * Get a single value from the attribute map
+	 * @param key
+	 * @return
+	 */
+	public String getValue(String key) { 
+		return attributeMap_.get(key);
+	}
+	
 	public List<String> getValues() {
 		List<String> result = new Vector<String>();
 		for (String a : attributeList_) {
