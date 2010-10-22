@@ -20,6 +20,7 @@ import edu.arizona.planning.fsm.FSMState;
 import edu.arizona.planning.fsm.FSMState.StateType;
 import edu.arizona.planning.fsm.VerbDFA.SimulationResult;
 import edu.arizona.planning.mdp.OOMDPState;
+import edu.arizona.planning.mdp.StateConverter;
 import edu.arizona.util.ProbUtils;
 import edu.arizona.verbs.Verb;
 
@@ -320,7 +321,7 @@ public class LRTDP {
 		// Populate the object
 		// Functional programming in Java is so ugly!
 		plan.states = Collections2.transform(states, new Function<OOMDPState, MDPState>() 
-						{ public MDPState apply(OOMDPState state) { return OOMDPState.remapState(state, argumentMap).convertToROS(); } } ).toArray(new MDPState[0]);
+						{ public MDPState apply(OOMDPState state) { return StateConverter.stateToMsg(state.remapState(argumentMap)); } } ).toArray(new MDPState[0]);
 		plan.actions = actions.toArray(new String[0]);
 		return plan;
 	}

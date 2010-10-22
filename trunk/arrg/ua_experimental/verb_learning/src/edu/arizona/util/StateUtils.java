@@ -6,7 +6,6 @@ import org.apache.commons.lang.StringUtils;
 
 import ros.pkg.oomdp_msgs.msg.Relation;
 
-
 public class StateUtils {
 	public static String formatNumber(double number) {
 		NumberFormat nf = NumberFormat.getInstance();
@@ -15,7 +14,7 @@ public class StateUtils {
 		return nf.format(number);
 	}
 	
-	public static String formatRelation(Relation rel) {
+	public String formatRelation(Relation rel) {
 		return rel.relation + "(" + StringUtils.join(rel.obj_names, ",") + ")";
 	}
 }
