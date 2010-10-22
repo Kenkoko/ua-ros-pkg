@@ -33,6 +33,8 @@ import edu.arizona.cs.learn.algorithm.heatmap.HeatmapImage;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.environment.Environment;
+import edu.arizona.environment.GazeboEnvironment;
 
 public class Interface {
 	private static Logger logger = Logger.getLogger(Interface.class);
@@ -42,6 +44,9 @@ public class Interface {
 	
 	// These are the verbs that we have learned!
 	private static HashMap<String, Verb> verbs = new HashMap<String, Verb>();
+	
+	private static Environment currentEnvironment = null;
+	public static Environment getCurrentEnvironment() { return currentEnvironment; }
 	
 	// Saves a heatmap to file. For reference, see Heatmaps.java
 	// TODO: This should probably be somewhere else
@@ -277,6 +282,8 @@ public class Interface {
 		ros.init("verb_learning");
 		NodeHandle nh = ros.createNodeHandle();
 
+		currentEnvironment = new GazeboEnvironment();
+		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
 		nh.advertiseService("verb_learning/forget_verb", new ForgetVerb(), forgetVerb);
 		

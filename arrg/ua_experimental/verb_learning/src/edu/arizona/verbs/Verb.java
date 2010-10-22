@@ -30,10 +30,10 @@ import edu.arizona.cs.learn.timeseries.experiment.BitPatternGeneration;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.util.graph.Edge;
-import edu.arizona.environment.Environment;
 import edu.arizona.planning.LRTDP;
 import edu.arizona.planning.fsm.VerbDFA;
 import edu.arizona.planning.mdp.OOMDPState;
+import edu.arizona.planning.mdp.StateConverter;
 import edu.uci.ics.jung.graph.DirectedGraph;
 
 public class Verb {
@@ -219,11 +219,11 @@ public class Verb {
 			return result;
 		}
 		
-		OOMDPState properStart = new OOMDPState(startState);
+		OOMDPState properStart = StateConverter.msgToState(startState);
 		// We will plan with the general names since that's what our verb FSM contains
-		OOMDPState remappedStart = OOMDPState.remapState(properStart, argumentMap);
+		OOMDPState remappedStart = properStart.remapState(argumentMap);
 		
-		LRTDP planner = new LRTDP(this, Environment.getInstance(), remappedStart);
+		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment(), remappedStart);
 		long startTime = System.currentTimeMillis();
 		boolean success = planner.runAlgorithm();
 		long elapsedTime = System.currentTimeMillis() - startTime;
