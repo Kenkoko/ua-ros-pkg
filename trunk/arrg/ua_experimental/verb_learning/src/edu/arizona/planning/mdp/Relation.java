@@ -28,7 +28,7 @@ public class Relation {
 	
 	@Override
 	public String toString() {
-		StringBuffer result = new StringBuffer();
+		StringBuffer result = new StringBuffer(relation);
 		result.append("(");
 		for (int i = 0; i < objectNames.size(); i++) {
 			result.append(objectNames.get(i));
