@@ -1,0 +1,21 @@
+<package>
+    <description brief="wubble_arm_kinematics">
+
+     wubble_arm_kinematics
+
+    </description>
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_arm_kinematics</url>
+    <depend package="roscpp"/>
+    <depend package="openrave"/>
+    <depend package="geometry_msgs"/>
+    <depend package="tf"/>
+    <depend package="urdf"/>
+
+    <depend package="kinematics_msgs" />
+
+</package>
+
+
