@@ -94,7 +94,7 @@
         <dynamics damping="50" friction="1"/>
     </joint>
     
-    <transmission type="SimpleTransmission" name="hokuyo_tilt_trans">
+    <transmission type="pr2_mechanism_model/SimpleTransmission" name="hokuyo_tilt_trans">
         <actuator name="hokuyo_tilt_motor" />
         <joint name="hokuyo_tilt_joint" />
         <mechanicalReduction>1.0</mechanicalReduction>

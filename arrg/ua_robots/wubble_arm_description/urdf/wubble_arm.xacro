@@ -402,55 +402,55 @@
         
         <!-- ****** TRANSMISSION DEFINITIONS ****** -->
         
-        <transmission type="SimpleTransmission" name="shoulder_pitch_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_pitch_trans">
             <actuator name="shoulder_pitch_motor" />
             <joint name="shoulder_pitch_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="shoulder_yaw_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_yaw_trans">
             <actuator name="shoulder_yaw_motor" />
             <joint name="shoulder_yaw_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="shoulder_roll_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_roll_trans">
             <actuator name="shoulder_roll_motor" />
             <joint name="shoulder_roll_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="elbow_pitch_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="elbow_pitch_trans">
             <actuator name="elbow_pitch_motor" />
             <joint name="elbow_pitch_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="wrist_roll_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wrist_roll_trans">
             <actuator name="wrist_roll_motor" />
             <joint name="wrist_roll_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="wrist_pitch_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wrist_pitch_trans">
             <actuator name="wrist_pitch_motor" />
             <joint name="wrist_pitch_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="wrist_yaw_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wrist_yaw_trans">
             <actuator name="wrist_yaw_motor" />
             <joint name="wrist_yaw_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="left_finger_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="left_finger_trans">
             <actuator name="left_finger_motor" />
             <joint name="left_finger_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="SimpleTransmission" name="right_finger_trans">
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="right_finger_trans">
             <actuator name="right_finger_motor" />
             <joint name="right_finger_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>

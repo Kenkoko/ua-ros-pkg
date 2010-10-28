@@ -1,5 +1,5 @@
 shoulder_pitch_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: shoulder_pitch_joint
   pid:
     p: 80.0
@@ -7,7 +7,7 @@ shoulder_pitch_controller:
     d: 50.0
 
 shoulder_yaw_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: shoulder_yaw_joint
   pid:
     p: 80.0
@@ -15,7 +15,7 @@ shoulder_yaw_controller:
     d: 50.0
 
 shoulder_roll_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: shoulder_roll_joint
   pid:
     p: 80.0
@@ -23,7 +23,7 @@ shoulder_roll_controller:
     d: 50.0
 
 elbow_pitch_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: elbow_pitch_joint
   pid:
     p: 80.0
@@ -31,7 +31,7 @@ elbow_pitch_controller:
     d: 50.0
 
 wrist_roll_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: wrist_roll_joint
   pid:
     p: 80.0
@@ -39,7 +39,7 @@ wrist_roll_controller:
     d: 50.0
 
 wrist_pitch_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: wrist_pitch_joint
   pid:
     p: 80.0
@@ -47,7 +47,7 @@ wrist_pitch_controller:
     d: 50.0
 
 wrist_yaw_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: wrist_yaw_joint
   pid:
     p: 80.0
@@ -55,7 +55,7 @@ wrist_yaw_controller:
     d: 50.0
 
 gripper_left_finger_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: left_finger_joint
   pid:
     p: 80.0
@@ -63,7 +63,7 @@ gripper_left_finger_controller:
     d: 50.0
 
 gripper_right_finger_controller:
-  type: JointPositionController
+  type: robot_mechanism_controllers/JointPositionController
   joint: right_finger_joint
   pid:
     p: 80.0

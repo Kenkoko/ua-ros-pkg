@@ -1,14 +1,20 @@
 <launch>
     <!-- start gazebo with an empty plane -->
     <node name="gazebo" pkg="gazebo" type="gazebo" 
-          args="$(find gazebo_worlds)/worlds/empty.world" respawn="false" />
-    
+          args="$(find gazebo_worlds)/worlds/empty.world"
+          respawn="false" output="screen" />
+          
     <!-- send wubble robot XML to param server -->
     <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble2.urdf.xacro'" />
     
     <!-- push robot_description to factory and spawn robot in gazebo -->
-    <node name="spawn_robot" pkg="gazebo" type="spawn_model" args="-param robot_description -urdf -z 0.01 -model wubble2" respawn="false" output="screen" />
-    
+    <node name="spawn_robot" pkg="gazebo" type="spawn_model"
+          args="-param robot_description
+                -urdf
+                -z 0.01
+                -model wubble2"
+          respawn="false" output="screen" />
+          
     <!-- WubbleArm Controllers -->
     <rosparam file="$(find wubble_arm_description)/controllers/wubble_arm_controllers.yaml" command="load" />
     <node name="wubble_arm_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
@@ -21,15 +27,16 @@
                 wrist_yaw_controller
                 gripper_left_finger_controller
                 gripper_right_finger_controller"
-          output="screen" />
-    
+          respawn="false" output="screen" />
+          
     <!-- start robot state publisher -->
-    <node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher" output="screen" >
+    <node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher" respawn="true" output="screen" >
         <param name="publish_frequency" type="double" value="50.0" />
         <param name="tf_prefix" type="string" value="" />
     </node>
-
-    <node pkg="arm_kinematics" type="arm_kinematics" name="arm_kinematics" output="screen" >
+    
+    <!-- start arm kinematics services (IK and FK) -->
+    <node pkg="arm_kinematics" type="arm_kinematics" name="arm_kinematics" respawn="true" output="screen" >
         <param name="root_name" value="L0_base_link" />
         <param name="tip_name" value="L7_wrist_yaw_link" />
     </node>
