@@ -1,0 +1,233 @@
+<!--
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2009, 2010, Arizona Robotics Research Group,
+* University of Arizona. All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions
+* are met:
+*
+*  * Redistributions of source code must retain the above copyright
+*    notice, this list of conditions and the following disclaimer.
+*  * Redistributions in binary form must reproduce the above
+*    copyright notice, this list of conditions and the following
+*    disclaimer in the documentation and/or other materials provided
+*    with the distribution.
+*  * Neither the name of University of Arizona nor the names of its
+*    contributors may be used to endorse or promote products derived
+*    from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+* COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+* LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+* POSSIBILITY OF SUCH DAMAGE.
+
+* Author: Antons Rebguns
+-->
+
+<!-- just the kinematic body of the SmartArmAX12 -->
+<KinBody name="WubbleArm">
+    <Body name="ArmBaseLink" type="dynamic">
+        <Geom type="trimesh">
+            <data>L0_base_link.iv</data>
+            <diffuseColor>0.36 0.36 0.36</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Body name="ShoulderPitchLink" type="dynamic">
+        <offsetfrom>ArmBaseLink</offsetfrom>
+        <translation>0.029 0.029 0</translation>
+        <Geom type="trimesh">
+            <data>L1_shoulder_pitch_link.iv</data>
+            <diffuseColor>0.46 0.36 0.36</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Joint name="ShoulderPitchJoint" type="hinge">
+        <Body>ArmBaseLink</Body>
+        <Body>ShoulderPitchLink</Body>
+        <offsetfrom>ShoulderPitchLink</offsetfrom>
+        <weight>1</weight>
+        <limitsdeg>-93 93</limitsdeg>
+        <axis>0 1 0</axis>
+        <maxvel>1</maxvel>
+        <resolution>1</resolution>
+    </Joint>
+    
+    <Body name="ShoulderYawLink" type="dynamic">
+        <offsetfrom>ShoulderPitchLink</offsetfrom>
+        <translation>0 0.1185 0</translation>
+        <Geom type="trimesh">
+            <data>L2_shoulder_yaw_link.iv</data>
+            <diffuseColor>0.36 0.46 0.36</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Joint name="ShoulderYawJoint" type="hinge">
+        <Body>ShoulderPitchLink</Body>
+        <Body>ShoulderYawLink</Body>
+        <offsetfrom>ShoulderYawLink</offsetfrom>
+        <anchor>0 -0.0545 0</anchor>
+        <weight>1</weight>
+        <limitsdeg>-113 113</limitsdeg>
+        <axis>0 0 1</axis>
+        <maxvel>1</maxvel>
+        <resolution>1</resolution>
+    </Joint>
+    
+    <Body name="ShoulderRollLink" type="dynamic">
+        <offsetfrom>ShoulderYawLink</offsetfrom>
+        <translation>0 0.05132 0</translation>
+        <Geom type="trimesh">
+            <data>L3_shoulder_roll_link.iv</data>
+            <diffuseColor>0.36 0.36 0.46</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Joint name="ShoulderRollJoint" type="hinge">
+        <Body>ShoulderYawLink</Body>
+        <Body>ShoulderRollLink</Body>
+        <offsetfrom>ShoulderRollLink</offsetfrom>
+        <weight>1</weight>
+        <limitsdeg>-125 125</limitsdeg>
+        <axis>0 1 0</axis>
+        <maxvel>1</maxvel>
+        <resolution>1</resolution>
+    </Joint>
+    
+    <Body name="ElbowPitchLink" type="dynamic">
+        <offsetfrom>ShoulderRollLink</offsetfrom>
+        <translation>0.06358 0.22799 0.026</translation>
+        <Geom type="trimesh">
+            <data>L4_elbow_pitch_link.iv</data>
+            <diffuseColor>0.56 0.36 0.36</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Joint name="ElbowPitchJoint" type="hinge">
+        <Body>ShoulderRollLink</Body>
+        <Body>ElbowPitchLink</Body>
+        <offsetfrom>ElbowPitchLink</offsetfrom>
+        <anchor>-0.03458 -0.04399 0.005</anchor>
+        <weight>1</weight>
+        <limitsdeg>-85 110</limitsdeg>
+        <axis>0 0 1</axis>
+        <maxvel>1</maxvel>
+        <resolution>1</resolution>
+    </Joint>
+    
+    <Body name="WristRollLink" type="dynamic">
+        <offsetfrom>ElbowPitchLink</offsetfrom>
+        <translation>0.0235 -0.015 -0.026</translation>
+        <Geom type="trimesh">
+            <data>L5_wrist_roll_link.iv</data>
+            <diffuseColor>0.36 0.56 0.36</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Joint name="WristRollJoint" type="hinge">
+        <Body>ElbowPitchLink</Body>
+        <Body>WristRollLink</Body>
+        <offsetfrom>WristRollLink</offsetfrom>
+        <anchor>-0.025 0 0</anchor>
+        <weight>1</weight>
+        <limitsdeg>-150 150</limitsdeg>
+        <axis>1 0 0</axis>
+        <maxvel>1</maxvel>
+        <resolution>1</resolution>
+    </Joint>
+    
+    <Body name="WristPitchLink" type="dynamic">
+        <offsetfrom>WristRollLink</offsetfrom>
+        <translation>0.255 0 0</translation>
+        <Geom type="trimesh">
+            <data>L6_wrist_pitch_link.iv</data>
+            <diffuseColor>0.36 0.36 0.56</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Joint name="WristPitchJoint" type="hinge">
+        <Body>WristRollLink</Body>
+        <Body>WristPitchLink</Body>
+        <offsetfrom>WristPitchLink</offsetfrom>
+        <anchor>0 0.028 0</anchor>
+        <weight>1</weight>
+        <limitsdeg>-30 125</limitsdeg>
+        <axis>0 1 0</axis>
+        <maxvel>1</maxvel>
+        <resolution>1</resolution>
+    </Joint>
+    
+    <Body name="WristYawLink" type="dynamic">
+        <offsetfrom>WristPitchLink</offsetfrom>
+        <translation>0.0751 0 0.001</translation>
+        <Geom type="trimesh">
+            <data>L7_wrist_yaw_link.iv</data>
+            <diffuseColor>0.66 0.36 0.36</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Joint name="WristYawJoint" type="hinge">
+        <Body>WristPitchLink</Body>
+        <Body>WristYawLink</Body>
+        <offsetfrom>WristYawLink</offsetfrom>
+        <anchor>-0.0751 0 0.07</anchor>
+        <weight>1</weight>
+        <limitsdeg>-90 90</limitsdeg>
+        <axis>0 0 1</axis>
+        <maxvel>1</maxvel>
+        <resolution>1</resolution>
+    </Joint>
+    
+    <Body name="LeftFingerLink" type="dynamic">
+        <offsetfrom>WristYawLink</offsetfrom>
+        <rotationaxis>0 0 1 -90</rotationaxis>
+        <translation>0.004 0.021 -0.0225</translation>
+        <Geom type="trimesh">
+            <data>L8_L9_gripper_finger.iv</data>
+            <diffuseColor>0.36 0.66 0.36</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Joint name="LeftFingerJoint" type="hinge">
+        <Body>WristYawLink</Body>
+        <Body>LeftFingerLink</Body>
+        <offsetfrom>LeftFingerLink</offsetfrom>
+        <weight>1</weight>
+        <limitsdeg>0 45</limitsdeg>
+        <axis>0 0 1</axis>
+        <maxvel>1</maxvel>
+        <resolution>1</resolution>
+    </Joint>
+    
+    <Body name="RightFingerLink" type="dynamic">
+        <offsetfrom>WristYawLink</offsetfrom>
+        <rotationaxis>0 0 1 90</rotationaxis>
+        <rotationaxis>0 1 0 180</rotationaxis>
+        <translation>0.004 -0.021 0.0225</translation>
+        <Geom type="trimesh">
+            <data>L8_L9_gripper_finger.iv</data>
+            <diffuseColor>0.36 0.36 0.66</diffuseColor>
+        </Geom>
+    </Body>
+    
+    <Joint name="RightFingerJoint" type="hinge">
+        <Body>WristYawLink</Body>
+        <Body>RightFingerLink</Body>
+        <offsetfrom>RightFingerLink</offsetfrom>
+        <weight>1</weight>
+        <limitsdeg>0 45</limitsdeg>
+        <axis>0 0 1</axis>
+        <maxvel>1</maxvel>
+        <resolution>1</resolution>
+    </Joint>
+</KinBody>
