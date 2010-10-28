@@ -1,0 +1,20 @@
+<package>
+    <description brief="3D Meshes and URDF for the Wubble Arm">
+        3D model of a Wubble Arm (Dynamixel-based 7 DOF robotic arm with 2 DOF gripper).
+    </description>
+
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_arm_description</url>
+
+    <depend package="convex_decomposition"/>
+    <depend package="ivcon"/>
+
+    <export>
+        <gazebo gazebo_media_path="${prefix}" />
+    </export>
+
+</package>
+
+

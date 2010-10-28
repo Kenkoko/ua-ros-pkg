@@ -1,0 +1,565 @@
+<?xml version="1.0"?>
+
+<!--
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2010, Antons Rebguns. All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions
+* are met:
+*
+*  * Redistributions of source code must retain the above copyright
+*    notice, this list of conditions and the following disclaimer.
+*  * Redistributions in binary form must reproduce the above
+*    copyright notice, this list of conditions and the following
+*    disclaimer in the documentation and/or other materials provided
+*    with the distribution.
+*  * Neither the name of University of Arizona nor the names of its
+*    contributors may be used to endorse or promote products derived
+*    from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+* COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+* LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+* POSSIBILITY OF SUCH DAMAGE.
+
+* Author: Antons Rebguns
+-->
+
+<robot
+    xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+    xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+    xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
+    
+    <macro name="wubble_arm" params="parent *origin">
+        <!-- ****** JOINT DEFINITIONS ****** -->
+        
+        <!-- Arm's base joint -->
+        <joint name="arm_base_joint" type="fixed">
+            <insert_block name="origin" /> 
+            <parent link="${parent}"/>
+            <child link="L0_base_link"/>
+        </joint>
+        
+        <!-- Shoulder pitch joint -->
+        <joint name="shoulder_pitch_joint" type="revolute" >
+            <origin xyz="0.029 0.029 0" rpy="0 0 0" />
+            <parent link="L0_base_link" />
+            <child link="L1_shoulder_pitch_link"/>
+            
+            <axis xyz="0 1 0"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Shoulder yaw joint -->
+        <joint name="shoulder_yaw_joint" type="revolute" >
+            <origin xyz="0 0.064 0" rpy="0 0 0" />
+            <parent link="L1_shoulder_pitch_link" />
+            <child link="L2_shoulder_yaw_link"/>
+            
+            <axis xyz="0 0 1"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Shoulder roll joint -->
+        <joint name="shoulder_roll_joint" type="revolute" >
+            <origin xyz="0 0.10582 0" rpy="0 0 0" />
+            <parent link="L2_shoulder_yaw_link" />
+            <child link="L3_shoulder_roll_link"/>
+            
+            <axis xyz="0 1 0"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Elbow pitch joint -->
+        <joint name="elbow_pitch_joint" type="revolute" >
+            <origin xyz="0.029 0.184 0" rpy="0 0 0" />
+            <parent link="L3_shoulder_roll_link" />
+            <child link="L4_elbow_pitch_link"/>
+            
+            <axis xyz="0 0 1"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Wrist roll joint -->
+        <joint name="wrist_roll_joint" type="revolute" >
+            <origin xyz="0.03308 0.02899 0" rpy="0 0 0" />
+            <parent link="L4_elbow_pitch_link" />
+            <child link="L5_wrist_roll_link"/>
+            
+            <axis xyz="1 0 0"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Wrist pitch joint -->
+        <joint name="wrist_pitch_joint" type="revolute" >
+            <origin xyz="0.228 0 0" rpy="0 0 0" />
+            <parent link="L5_wrist_roll_link" />
+            <child link="L6_wrist_pitch_link"/>
+            
+            <axis xyz="0 1 0"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Wrist yaw joint -->
+        <joint name="wrist_yaw_joint" type="revolute" >
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <parent link="L6_wrist_pitch_link" />
+            <child link="L7_wrist_yaw_link"/>
+            
+            <axis xyz="0 0 1"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Left finger joint -->
+        <joint name="left_finger_joint" type="revolute" >
+            <origin xyz="0.0791 0.021 -0.002" rpy="0 0 0" />
+            <parent link="L7_wrist_yaw_link" />
+            <child link="L8_left_finger_link"/>
+            
+            <axis xyz="0 0 1"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- Right finger joint -->
+        <joint name="right_finger_joint" type="revolute" >
+            <origin xyz="0.0791 -0.021 -0.002" rpy="0 0 0" />
+            <parent link="L7_wrist_yaw_link" />
+            <child link="L9_right_finger_link"/>
+            
+            <axis xyz="0 0 1"/>
+            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <dynamics damping="50" friction="1"/>
+        </joint>
+        
+        <!-- ****** LINK DEFINITIONS ****** -->
+        
+        <link name="L0_base_link">
+            <inertial>
+                <mass value="0.325" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L0_base_link.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L0_base_link_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="L1_shoulder_pitch_link">
+            <inertial>
+                <mass value="0.030" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L1_shoulder_pitch_link.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L1_shoulder_pitch_link_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="L2_shoulder_yaw_link">
+            <inertial>
+                <mass value="0.030" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0545 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_yaw_link.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0545 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L2_shoulder_yaw_link_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="L3_shoulder_roll_link">
+            <inertial>
+                <mass value="0.030" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L3_shoulder_roll_link.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L3_shoulder_roll_link_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="L4_elbow_pitch_link">
+            <inertial>
+                <mass value="0.030" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.03458 0.04399 0.026" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L4_elbow_pitch_link.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.03458 0.04399 0.026" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L4_elbow_pitch_link_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="L5_wrist_roll_link">
+            <inertial>
+                <mass value="0.030" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.025 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L5_wrist_roll_link.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.025 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L5_wrist_roll_link_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="L6_wrist_pitch_link">
+            <inertial>
+                <mass value="0.030" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L6_wrist_pitch_link.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L6_wrist_pitch_link_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="L7_wrist_yaw_link">
+            <inertial>
+                <mass value="0.030" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0.0751 0 -0.002" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L7_wrist_yaw_link.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0.0751 0 -0.002" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L7_wrist_yaw_link_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="L8_left_finger_link">
+            <inertial>
+                <mass value="0.030" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L8_gripper_left_finger.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L8_gripper_left_finger_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="L9_right_finger_link">
+            <inertial>
+                <mass value="0.030" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/L9_gripper_right_finger.stl"/>
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="package://wubble_arm_description/meshes/convex/L9_gripper_right_finger_convex.stlb"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <!-- ****** TRANSMISSION DEFINITIONS ****** -->
+        
+        <transmission type="SimpleTransmission" name="shoulder_pitch_trans">
+            <actuator name="shoulder_pitch_motor" />
+            <joint name="shoulder_pitch_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <transmission type="SimpleTransmission" name="shoulder_yaw_trans">
+            <actuator name="shoulder_yaw_motor" />
+            <joint name="shoulder_yaw_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <transmission type="SimpleTransmission" name="shoulder_roll_trans">
+            <actuator name="shoulder_roll_motor" />
+            <joint name="shoulder_roll_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <transmission type="SimpleTransmission" name="elbow_pitch_trans">
+            <actuator name="elbow_pitch_motor" />
+            <joint name="elbow_pitch_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <transmission type="SimpleTransmission" name="wrist_roll_trans">
+            <actuator name="wrist_roll_motor" />
+            <joint name="wrist_roll_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <transmission type="SimpleTransmission" name="wrist_pitch_trans">
+            <actuator name="wrist_pitch_motor" />
+            <joint name="wrist_pitch_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <transmission type="SimpleTransmission" name="wrist_yaw_trans">
+            <actuator name="wrist_yaw_motor" />
+            <joint name="wrist_yaw_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <transmission type="SimpleTransmission" name="left_finger_trans">
+            <actuator name="left_finger_motor" />
+            <joint name="left_finger_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <transmission type="SimpleTransmission" name="right_finger_trans">
+            <actuator name="right_finger_motor" />
+            <joint name="right_finger_joint" />
+            <mechanicalReduction>1.0</mechanicalReduction>
+        </transmission>
+        
+        <!-- ****** MATERIAL DEFINITIONS ****** -->
+        
+        <gazebo reference="L0_base_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="L1_shoulder_pitch_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="L2_shoulder_yaw_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="L3_shoulder_roll_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="L4_elbow_pitch_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="L5_wrist_roll_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="L6_wrist_pitch_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="L7_wrist_yaw_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="L8_left_finger_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="L9_right_finger_link">
+            <material>SmartArm/GunMetalBrushedAluminum</material>
+            <turnGravityOff>true</turnGravityOff>
+        </gazebo>
+        
+        <gazebo reference="shoulder_pitch_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="shoulder_yaw_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="shoulder_roll_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="elbow_pitch_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="wrist_roll_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="wrist_pitch_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="wrist_yaw_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="left_finger_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+        
+        <gazebo reference="right_finger_joint">
+            <stopKd value="1.0" />
+            <stopKp value="1000000.0" />
+            <fudgeFactor value="0.5" />
+        </gazebo>
+    </macro>
+</robot>
