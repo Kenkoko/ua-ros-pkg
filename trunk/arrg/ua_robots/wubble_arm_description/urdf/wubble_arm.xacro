@@ -57,8 +57,8 @@
             <child link="L1_shoulder_pitch_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <limit  lower="-2.13" upper="1.39" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.13}" soft_upper_limit="${1.39}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -69,8 +69,8 @@
             <child link="L2_shoulder_yaw_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <limit  lower="-1.90" upper="1.90" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.90}" soft_upper_limit="${1.90}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -81,8 +81,8 @@
             <child link="L3_shoulder_roll_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <limit  lower="-2.18" upper="2.18" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.18}" soft_upper_limit="${2.18}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -93,8 +93,8 @@
             <child link="L4_elbow_pitch_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <limit  lower="-1.53" upper="1.80" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.53}" soft_upper_limit="${1.80}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -105,8 +105,8 @@
             <child link="L5_wrist_roll_link"/>
             
             <axis xyz="1 0 0"/>
-            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <limit  lower="-2.61" upper="2.61" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.61}" soft_upper_limit="${2.61}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -117,8 +117,8 @@
             <child link="L6_wrist_pitch_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <limit  lower="-0.61" upper="2.27" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.61}" soft_upper_limit="${2.27}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -129,8 +129,8 @@
             <child link="L7_wrist_yaw_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <limit  lower="-1.66" upper="1.62" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.66}" soft_upper_limit="${1.62}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -141,8 +141,8 @@
             <child link="L8_left_finger_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <limit  lower="-0.28" upper="0.785" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.28}" soft_upper_limit="${0.785}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -153,8 +153,8 @@
             <child link="L9_right_finger_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-1.22" upper="1.22" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.22+0.1}" soft_upper_limit="${1.22-0.1}" />
+            <limit  lower="-0.785" upper="0.28" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.785}" soft_upper_limit="${0.28}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
