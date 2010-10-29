@@ -1,4 +1,6 @@
 <launch>
+    <param name="/use_sim_time" value="true" />
+    
     <!-- start gazebo with an empty plane -->
     <node name="gazebo" pkg="gazebo" type="gazebo" 
           args="$(find gazebo_worlds)/worlds/empty.world"
@@ -17,7 +19,7 @@
           
     <!-- WubbleArm Controllers -->
     <rosparam file="$(find wubble_arm_description)/controllers/wubble_arm_controllers.yaml" command="load" />
-    <node name="wubble_arm_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
+    <node name="wubble_arm_controller_spawner" pkg="pr2_controller_manager" type="spawner"
           args="shoulder_pitch_controller
                 shoulder_yaw_controller
                 shoulder_roll_controller
@@ -27,6 +29,20 @@
                 wrist_yaw_controller
                 gripper_left_finger_controller
                 gripper_right_finger_controller"
+          respawn="false" output="screen" />
+          
+    <!-- Laser Controllers -->
+    <rosparam file="$(find wubble_description)/controllers/wubble2_laser_controllers.yaml" command="load" />
+    <node name="laser_controllers_spawner" pkg="pr2_controller_manager" type="spawner"
+          args="base_laser_tilt_controller
+                neck_laser_tilt_controller"
+          respawn="false" output="screen" />
+          
+    <!-- Head Controllers -->
+    <rosparam file="$(find wubble_description)/controllers/wubble2_head_controllers.yaml" command="load" />
+    <node name="head_controllers_spawner" pkg="pr2_controller_manager" type="spawner"
+          args="head_pan_controller
+                head_tilt_controller"
           respawn="false" output="screen" />
           
     <!-- start robot state publisher -->

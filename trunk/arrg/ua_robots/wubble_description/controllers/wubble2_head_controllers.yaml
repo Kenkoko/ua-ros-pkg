@@ -1,0 +1,16 @@
+head_pan_controller:
+  type: robot_mechanism_controllers/JointPositionController
+  joint: head_pan_joint 
+  pid:
+    p: 100.0
+    i: 10.0
+    d: 50.0
+
+head_tilt_controller:
+  type: robot_mechanism_controllers/JointPositionController
+  joint: head_tilt_joint
+  pid:
+    p: 80.0
+    i: 10.0
+    d: 50.0
+

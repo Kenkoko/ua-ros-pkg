@@ -1,0 +1,12 @@
+base_laser_tilt_controller:
+  type: robot_mechanism_controllers/JointPositionController
+  joint: hokuyo_tilt_joint
+  pid:
+    p: 120
+
+neck_laser_tilt_controller:
+  type: robot_mechanism_controllers/JointPositionController
+  joint: neck_tilt_joint
+  pid:
+    p: 120
+
