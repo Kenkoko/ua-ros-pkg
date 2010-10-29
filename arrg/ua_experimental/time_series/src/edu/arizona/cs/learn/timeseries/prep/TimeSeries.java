@@ -369,6 +369,29 @@ public class TimeSeries {
 		return results;
 	}
 	
+	public static List<Interval> booleanToIntervals(String key, List<Boolean> values) { 
+		List<Interval> results = new ArrayList<Interval>();
+		
+		boolean expected = values.get(0);
+		int idx = 0;
+		
+		for (int i = 1; i < values.size(); ++i) { 
+			if (expected == values.get(i)) 
+				continue;
+
+			if (expected != false) 
+				results.add(Interval.make(key, idx, i));
+			
+			idx = i;
+			expected = values.get(i);
+		}
+		
+		if (expected != false) 
+			results.add(Interval.make(key, idx, values.size()));
+		
+		return results;
+	}
+	
 	public static void main(String[] args) { 
 		// test the filtering....
 		List<Double> ts = Arrays.asList(

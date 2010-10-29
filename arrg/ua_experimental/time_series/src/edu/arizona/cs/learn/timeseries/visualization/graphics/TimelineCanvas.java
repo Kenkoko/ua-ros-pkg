@@ -195,6 +195,10 @@ public class TimelineCanvas extends JPanel implements DataComponent, ScrollableP
 	
 	public void episodeChanged() {
 		// Need to recalculate the X_OFFSET
+	    Paint._timeWidth = TICK_WIDTH;
+	    Paint._rowHeight = ROW_HEIGHT;
+	    Paint._fontSize = 9;
+
 		_xOffset = Paint.determinePropArea(_model.propSet());
 		
 		_selected = null;

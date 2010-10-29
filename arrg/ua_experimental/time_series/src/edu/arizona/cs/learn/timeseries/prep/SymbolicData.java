@@ -11,7 +11,7 @@ import edu.arizona.cs.learn.timeseries.model.Interval;
 
 public class SymbolicData {
 
-	public static int numEpisodes = 30;
+	public static int numEpisodes = 60;
 	public static int numVars = 6;
 	
 	public static List<Interval> toEpisode(String file) { 
@@ -46,8 +46,8 @@ public class SymbolicData {
 
 		try { 
 			BufferedWriter out = new BufferedWriter(new FileWriter("data/input/niall-a.lisp"));
-			for (int i = 1; i <= 30; ++i) { 
-				List<Interval> intervals = toEpisode("data/raw-data/wes/engine-2/f" + i);
+			for (int i = 1; i <= numEpisodes; ++i) { 
+				List<Interval> intervals = toEpisode("data/raw-data/wes/round-3/f" + i);
 				out.write("(" + i + "\n");
 				out.write(" (\n");
 				for (Interval interval : intervals) { 
@@ -65,8 +65,8 @@ public class SymbolicData {
 
 		try { 
 			BufferedWriter out = new BufferedWriter(new FileWriter("data/input/niall-b.lisp"));
-			for (int i = 1; i <= 30; ++i) { 
-				List<Interval> intervals = toEpisode("data/raw-data/wes/engine-2/g" + i);
+			for (int i = 1; i <= numEpisodes; ++i) { 
+				List<Interval> intervals = toEpisode("data/raw-data/wes/round-3/g" + i);
 				out.write("(" + i + "\n");
 				out.write(" (\n");
 				for (Interval interval : intervals) { 

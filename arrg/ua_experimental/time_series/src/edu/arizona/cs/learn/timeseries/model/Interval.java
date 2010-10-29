@@ -40,16 +40,25 @@ public class Interval {
 
 		return true;
 	}
+	
+	public boolean overlaps(int s, int e, int window) { 
+		if (end + window <= s)
+			return false;
+		if (e + window <= start)
+			return false;
+
+		return true;
+	}
 
 	public String toString() {
 		return file + " " + episode + " " + name + " " + start + " " + end;
 	}
 
-	public boolean equals(Object o) {
-		if (!(o instanceof Interval))
-			return false;
-		return name.equals(((Interval) o).name);
-	}
+//	public boolean equals(Object o) {
+//		if (!(o instanceof Interval))
+//			return false;
+//		return name.equals(((Interval) o).name);
+//	}
 
 	public void toXML(Element e) {
 		e.addElement("Interval").addAttribute("file", this.file)
@@ -290,5 +299,15 @@ public class Interval {
 			return true;
 
 		return false;
+	}
+	
+	public static boolean overlaps(int s1, int e1, int s2, int e2, int window) { 
+		if (e2 + window <= s1)
+			return false;
+		if (e1 + window <= s2)
+			return false;
+
+		return true;
+		
 	}
 }
