@@ -86,7 +86,7 @@
         </gazebo>
     </macro>
     
-    <macro name="stoc_camera" params="name parent *origin">
+    <macro name="videre_stereo_9cm" params="name parent *origin">
         <joint name="camera_mount_joint" type="fixed">
             <insert_block name="origin" /> 
             <parent link="${parent}"/>
@@ -151,11 +151,12 @@
         <stoc_eye name="left" parent="stoc_camera_link" reflect="1"/>
         <stoc_eye name="right" parent="stoc_camera_link" reflect="-1"/>
         
-        <stereo_camera_9cm_baseline parent="left_stoc_eye_link" name="stereo"
-                                    focal_length="698.94" hfov="49.2" image_format="BAYER_BGGR8"
-                                    image_width="640" image_height="480" >
+        <!-- stereo_dy parameter is the stereo camera baseline -->
+        <stereo_camera parent="left_stoc_eye_link" name="stereo"
+                       stereo_dy="${eye_offset*2}" focal_length="698.94" hfov="49.2"
+                       image_format="BAYER_BGGR8" image_width="640" image_height="480" >
             <origin xyz="0 0 -0.0058" rpy="0 -${M_PI/2} 0" />
-        </stereo_camera_9cm_baseline>
+        </stereo_camera>
         
         <gazebo reference="stoc_camera_link" >
             <material>Erratic/Red</material>

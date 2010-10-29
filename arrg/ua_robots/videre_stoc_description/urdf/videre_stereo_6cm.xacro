@@ -1,0 +1,168 @@
+<?xml version="1.0"?>
+
+<robot
+    xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+    xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+    xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
+    
+    <include filename="$(find videre_stoc_description)/urdf/stereo_camera.urdf.xacro" />
+    
+    <property name="M_PI" value="3.14159"/>
+    
+    <property name="stoc_depth"  value="0.019" />
+    <property name="stoc_width"  value="0.081" />
+    <property name="stoc_height" value="0.043" />
+    
+    <property name="back_depth"  value="0.022" />
+    <property name="back_width"  value="0.069" />
+    <property name="back_height" value="0.043" />
+    
+    <property name="eye_radius" value="0.006" />
+    <property name="eye_length" value="0.010" />
+    <property name="eye_offset" value="0.030" />    <!-- 6cm baseline -->
+    
+    <macro name="stoc_eye" params="name parent reflect">
+        <joint name="${name}_stoc_eye_joint" type="fixed">
+            <origin xyz="${stoc_depth/2} ${reflect*eye_offset} ${stoc_height/2}" rpy="0 ${M_PI/2} 0" />  
+            <parent link="${parent}" />
+            <child link="${name}_stoc_eye_link"/>
+        </joint>
+        
+        <link name="${name}_stoc_eye_link">
+            <inertial>
+                <mass value="0.004" />
+                <origin xyz="0 0 ${eye_length/2}" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0"
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0 0 ${eye_length/2}" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="${eye_radius}" length="${eye_length}" />
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0 0 ${eye_length/2}" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="${eye_radius}" length="${eye_length}" />
+                </geometry>
+            </collision>
+        </link>
+        
+        <joint name="${name}_stoc_eye_frame_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 ${-M_PI/2} 0" />  
+            <parent link="${name}_stoc_eye_link" />
+            <child link="${name}_stoc_eye_frame"/>
+        </joint>
+        
+        <link name="${name}_stoc_eye_frame">
+            <inertial>
+                <mass value="0.0001" />
+                <origin xyz="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <sphere radius="0.001" />
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <sphere radius="0.001" />
+                </geometry>
+            </collision>
+        </link>
+        
+        <gazebo reference="${name}_stoc_eye_link">
+            <material>Gazebo/Black</material>
+        </gazebo>
+    </macro>
+    
+    <macro name="videre_stereo_6cm" params="name parent *origin">
+        <joint name="camera_mount_joint" type="fixed">
+            <insert_block name="origin" /> 
+            <parent link="${parent}"/>
+            <child link="stoc_camera_link"/>
+        </joint>
+        
+        <link name="stoc_camera_link">
+            <inertial>
+                <mass value="0.1" />
+                <origin xyz="0 0 ${stoc_height/2}" rpy="0 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0"
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0 0 ${stoc_height/2}" rpy="0 0 0" />
+                <geometry>
+                    <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0 0 ${stoc_height/2}" rpy="0 0 0" />
+                <geometry>
+                    <box size="${stoc_depth} ${stoc_width} ${stoc_height}" />
+                </geometry>
+            </collision>
+        </link>
+        
+        <joint name="stoc_back_joint" type="fixed">
+            <origin xyz="-${stoc_depth/2} 0 ${stoc_height/2}" rpy="0 0 0" />  
+            <parent link="stoc_camera_link" />
+            <child link="stoc_back_link"/>
+        </joint>
+        
+        <link name="stoc_back_link">
+            <inertial>
+                <mass value="0.1" />
+                <origin xyz="-${back_depth/2} 0 0" />
+                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                         iyy="1.0" iyz="0.0" 
+                         izz="1.0" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="-${back_depth/2} 0 0" />
+                <geometry>
+                    <box size="${back_depth} ${back_width} ${back_height}" />
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="-${back_depth/2} 0 0" />
+                <geometry>
+                    <box size="${back_depth} ${back_width} ${back_height}" />
+                </geometry>
+            </collision>
+        </link>
+        
+        <!-- MACRO INSTANTIATION -->
+        <stoc_eye name="left" parent="stoc_camera_link" reflect="1"/>
+        <stoc_eye name="right" parent="stoc_camera_link" reflect="-1"/>
+        
+        <!-- stereo_dy parameter is the stereo camera baseline -->
+        <stereo_camera parent="left_stoc_eye_link" name="stereo"
+                       stereo_dy="${eye_offset*2}" focal_length="698.94" hfov="49.2"
+                       image_format="BAYER_BGGR8" image_width="640" image_height="480" >
+            <origin xyz="0 0 -0.0058" rpy="0 -${M_PI/2} 0" />
+        </stereo_camera>
+        
+        <gazebo reference="stoc_camera_link" >
+            <material>Erratic/Red</material>
+        </gazebo>
+        <gazebo reference="stoc_back_link" >
+            <material>Erratic/Red</material>
+        </gazebo>
+    </macro>
+</robot>
