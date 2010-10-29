@@ -4,14 +4,14 @@
        xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
        xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
 
-    <macro name="hokuyo_urg" params="parent *origin" >
-        <joint name="hokuyo_mount_joint" type="fixed">
+    <macro name="hokuyo_urg" params="name parent *origin" >
+        <joint name="${name}_mount_joint" type="fixed">
             <insert_block name="origin" /> 
             <parent link="${parent}"/>
-            <child link="hokuyo_link"/>
+            <child link="${name}_mount_link"/>
         </joint>
         
-        <link name="hokuyo_link">
+        <link name="${name}_mount_link">
             <inertial>
                 <mass value="0.160" />
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
@@ -35,13 +35,13 @@
             </collision>
         </link>
         
-        <joint name="laser_joint" type="fixed">
+        <joint name="${name}_joint" type="fixed">
             <origin xyz="0 0 0.06" rpy="0 0 0" />
-            <parent link="hokuyo_link" />
-            <child link="laser_link" />
+            <parent link="${name}_mount_link" />
+            <child link="${name}_link" />
         </joint>
         
-        <link name="laser_link" type="laser">
+        <link name="${name}_link" type="laser">
             <inertial>
                 <mass value="0.001" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
@@ -66,11 +66,15 @@
             </collision>
         </link>
         
-        <gazebo reference="hokuyo_link">
+        <gazebo reference="${name}_mount_link">
             <material value="Erratic/Black" />
         </gazebo>
         
-        <gazebo reference="hokuyo_link">
+        <gazebo reference="${name}_link">
+            <material value="Erratic/Black" />
+        </gazebo>
+        
+        <gazebo reference="${name}_link">
             <sensor:ray name="laser">
                 <rayCount>683</rayCount>
                 <rangeCount>683</rangeCount>
@@ -87,14 +91,14 @@
                 <resRange>0.001</resRange>
                 <updateRate>10.0</updateRate>
                 
-                <controller:gazebo_ros_laser name="gazebo_ros_laser_controller" plugin="libgazebo_ros_laser.so">
+                <controller:gazebo_ros_laser name="gazebo_ros_${name}_laser_controller" plugin="libgazebo_ros_laser.so">
                     <gaussianNoise>0.005</gaussianNoise>
                     <alwaysOn>true</alwaysOn>
                     <updateRate>10.0</updateRate>
-                    <topicName>tilt_laser/scan</topicName>
-                    <deprecatedTopicName>tilt_scan</deprecatedTopicName>
-                    <frameName>laser_link</frameName>
-                    <interface:laser name="gazebo_ros_laser_iface" />
+                    <topicName>${name}/scan</topicName>
+                    <deprecatedTopicName>${name}_scan</deprecatedTopicName>
+                    <frameName>${name}_link</frameName>
+                    <interface:laser name="gazebo_ros_${name}_laser_iface" />
                 </controller:gazebo_ros_laser>
             </sensor:ray>
         </gazebo>

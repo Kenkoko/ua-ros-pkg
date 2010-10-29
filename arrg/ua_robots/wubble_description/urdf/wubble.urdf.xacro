@@ -103,7 +103,7 @@
         </collision>
     </link>
     
-    <hokuyo_urg parent="hokuyo_mount_link">
+    <hokuyo_urg name="tilt_laser" parent="hokuyo_mount_link">
         <origin xyz="0 0 0.023" rpy="0 0 0" />
     </hokuyo_urg>
     
