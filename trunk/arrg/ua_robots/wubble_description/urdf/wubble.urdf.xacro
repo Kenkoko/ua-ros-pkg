@@ -9,7 +9,7 @@
     <include filename="$(find erratic_description)/urdf/erratic_base.xacro" />
     <include filename="$(find smart_arm_description)/urdf/smart_arm.xacro" />
     <include filename="$(find hokuyo_urg_description)/urdf/hokuyo_urg.xacro" />
-    <include filename="$(find videre_stoc_description)/urdf/videre_stereo_6cm.xacro" />
+    <include filename="$(find videre_stoc_description)/urdf/videre_stereo_9cm.xacro" />
     <include filename="$(find chr_6dm_imu_description)/urdf/chrobotics_chr_6dm_imu.urdf.xacro" />
     
     <!-- Properties (Constants) -->
@@ -250,9 +250,9 @@
         </collision>
     </link>
     
-    <videre_stereo_6cm name="stoc" parent="head_mount_link" >
+    <videre_stereo_9cm name="stoc" parent="head_mount_link" >
         <origin xyz="0 0 0.023" rpy="0 0 0" />
-    </videre_stereo_6cm>
+    </videre_stereo_9cm>
     
     <!-- GAZEBO MATERIALS -->
     <gazebo reference="head_support_link">
