@@ -104,6 +104,13 @@ public class SignatureExample {
 			System.out.println("\t" + obj.key().getKey() + " - " + obj.weight());
 	}
 
+	/**
+	 * Construct a set of signatures from the prefix...
+	 *   -- example: makeSignature("ww3d-jump-over", SequenceType.allen, 3);
+	 * @param prefix
+	 * @param type
+	 * @param min
+	 */
 	public static void makeSignature(String prefix, SequenceType type, int min) {
 		Map<String,List<Instance>> map = Utils.load(prefix, type);
 
@@ -112,7 +119,7 @@ public class SignatureExample {
 			Signature s = new Signature(key);
 
 			for (int i = 0; i < list.size(); i++) {
-				s.update(((Instance) list.get(i)).sequence());
+				s.update(list.get(i).sequence());
 			}
 
 			s = s.prune(min);

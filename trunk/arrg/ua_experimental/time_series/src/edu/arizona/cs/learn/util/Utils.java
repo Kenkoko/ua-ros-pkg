@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.PushbackReader;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -303,5 +304,86 @@ public class Utils {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Test to see if the two lists of intervals can interact with each other
+	 * TODO: clean up this ugly code.
+	 * @param list1
+	 * @param list2
+	 * @return
+	 */
+	public static boolean interact(List<Interval> list1, List<Interval> list2, int window) {
+		class Duration { 
+			public int start;
+			public int end;
+			
+			public Duration(int start, int end) { 
+				this.start = start;
+				this.end = end;
+			}
+		}
+		
+		List<Duration> list = new ArrayList<Duration>();
+		for (Interval i1 : list1) { 
+			boolean added = false;
+			
+			for (int i = 0; i < list.size() && !added; ++i) { 
+				Duration d = list.get(i);
+				if (i1.overlaps(d.start, d.end, window)) { 
+					d.start = Math.min(d.start, i1.start);
+					d.end = Math.min(d.end, i1.end);
+					added = true;
+				}
+			}
+			
+			if (!added) 
+				list.add(new Duration(i1.start, i1.end));
+		}
+		
+		for (Interval i1 : list2) { 
+			boolean added = false;
+			
+			for (int i = 0; i < list.size() && !added; ++i) { 
+				Duration d = list.get(i);
+				if (i1.overlaps(d.start, d.end, window)) { 
+					d.start = Math.min(d.start, i1.start);
+					d.end = Math.min(d.end, i1.end);
+					added = true;
+				}
+			}
+			
+			if (!added) 
+				list.add(new Duration(i1.start, i1.end));
+		}
+		
+		
+		int lastSize = 0;
+		while (list.size() > 1 || list.size() == lastSize) {
+			lastSize = list.size();
+			
+			List<Duration> newList = new ArrayList<Duration>();
+			for (Duration d1 : list) { 
+				boolean added = false;
+				
+				for (int i = 0; i < newList.size() && !added; ++i) { 
+					Duration d2 = newList.get(i);
+					if (Interval.overlaps(d1.start, d1.end, d2.start, d2.end, window)) {
+						d2.start = Math.min(d2.start, d1.start);
+						d2.end = Math.min(d2.end, d1.end);
+						added = true;
+					}
+				}
+				
+				if (!added) 
+					list.add(new Duration(d1.start, d1.end));
+			}
+			
+			list = newList;
+		}
+		
+		if (list.size() == 1)
+			return true;
+		return false;
 	}
 }
