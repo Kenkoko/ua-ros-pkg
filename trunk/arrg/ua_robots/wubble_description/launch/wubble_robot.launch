@@ -9,8 +9,14 @@
           
     <!-- SmartArm Controllers -->
     <rosparam file="$(find smart_arm_description)/controllers/smart_arm_controllers.yaml" command="load" />
-    <node name="smart_arm_controller_spawner" pkg="pr2_controller_manager" type="spawner" 
-          args="shoulder_pan_controller shoulder_tilt_controller elbow_tilt_controller wrist_rotate_controller finger_left_controller finger_right_controller" output="screen" />
+    <node name="smart_arm_controller_spawner" pkg="pr2_controller_manager" type="spawner"
+          args="shoulder_pan_controller
+                shoulder_tilt_controller
+                elbow_tilt_controller
+                wrist_rotate_controller
+                finger_left_controller
+                finger_right_controller"
+          output="screen" />
           
     <!-- SmartArm Inverse Kinematics -->
     <node name="smart_arm_ik_service" pkg="smart_arm_kinematics" type="smart_arm_ik_service" output="screen" />
@@ -23,7 +29,7 @@
     <!-- enable stereo vision -->
     <group ns="stereo">
         <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc">
-            <param name="num_disp" type="int" value="128"/>
+            <param name="num_disp" type="int" value="64"/>
         </node>
     </group>
     
