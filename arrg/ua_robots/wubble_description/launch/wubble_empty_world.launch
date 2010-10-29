@@ -1,8 +1,9 @@
 <launch>
     <!-- start gazebo with an empty plane -->
     <node name="gazebo" pkg="gazebo" type="gazebo" 
-          args="$(find gazebo_worlds)/worlds/empty.world" respawn="false" />
-    
+          args="$(find gazebo_worlds)/worlds/empty.world"
+          respawn="false" output="screen" />
+          
     <!-- Load the robot with controllers -->
     <include file="$(find wubble_description)/launch/wubble_robot.launch" />
     
