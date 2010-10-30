@@ -1,5 +1,6 @@
-package edu.arizona.util;
+package edu.arizona.verbs.util;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -7,14 +8,15 @@ import java.util.Set;
 import java.util.Stack;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.util.graph.Edge;
-import edu.arizona.planning.fsm.FSMState;
-import edu.arizona.planning.fsm.FSMState.StateType;
-import edu.arizona.planning.fsm.FSMTransition;
+import edu.arizona.verbs.fsm.FSMState;
+import edu.arizona.verbs.fsm.FSMTransition;
+import edu.arizona.verbs.fsm.FSMState.StateType;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 
@@ -258,6 +260,25 @@ public class StateMachines {
 //	}
 	
 	
+	public static boolean hasTransition(DirectedGraph<FSMState, FSMTransition> dfa, FSMState source, Set<String> symbol, FSMState dest) {
+		Collection<FSMTransition> set = matchTransition(dfa, source, symbol);
+		if (set.isEmpty()) {
+			return false;
+		} else {
+			for (FSMTransition t : set) {
+				if (dfa.getOpposite(source, t).equals(dest)){
+					return true;
+				}
+			}
+			return false;
+		}
+	}
 	
+	public static Collection<FSMTransition> matchTransition(DirectedGraph<FSMState, FSMTransition> dfa, FSMState state, final Set<String> symbol) {
+		Collection<FSMTransition> matchingTransitions = Collections2.filter(dfa.getOutEdges(state), new Predicate<FSMTransition>() {
+			public boolean value(FSMTransition arg) { return arg.getSymbol().equals(symbol); }});
+		
+		return matchingTransitions;
+	}
 	
 }

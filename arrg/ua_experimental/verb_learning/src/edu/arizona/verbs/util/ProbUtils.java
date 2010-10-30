@@ -1,4 +1,4 @@
-package edu.arizona.util;
+package edu.arizona.verbs.util;
 
 import java.util.HashMap;
 import java.util.Map;

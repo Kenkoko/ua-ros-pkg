@@ -1,5 +1,6 @@
-package edu.arizona.planning.mdp;
+package edu.arizona.verbs.mdp;
 
+import java.util.List;
 import java.util.Vector;
 
 import ros.pkg.oomdp_msgs.msg.MDPObjectState;
@@ -9,6 +10,15 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 
 public class StateConverter {
+	
+	/* Arrays */
+	
+	public static MDPObjectState[] objectsToMsgArray(List<OOMDPObjectState> objectList) {
+		return Collections2.transform(objectList, new Function<OOMDPObjectState, MDPObjectState>() {
+					public MDPObjectState apply(OOMDPObjectState state) { return objStateToMsg(state); }})
+			  .toArray(new MDPObjectState[0]);
+	}
+	
 	
 	/* OOMDPObjectState */ 
 	
@@ -28,6 +38,8 @@ public class StateConverter {
 		
 		return message;
 	}
+	
+	/* OOMDPState */
 	
 	public static OOMDPState msgToState(MDPState stateMessage) {
 		Vector<OOMDPObjectState> objectStates = new Vector<OOMDPObjectState>();

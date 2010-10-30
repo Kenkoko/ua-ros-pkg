@@ -1,4 +1,4 @@
-package edu.arizona.util;
+package edu.arizona.verbs.util;
 
 public abstract class Predicate<T> implements com.google.common.base.Predicate<T>, org.apache.commons.collections15.Predicate<T> {
 
