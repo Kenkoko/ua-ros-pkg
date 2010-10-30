@@ -15,6 +15,9 @@ import ros.NodeHandle;
 import ros.Ros;
 import ros.RosException;
 import ros.ServiceServer;
+import ros.pkg.oomdp_msgs.msg.MDPObjectState;
+import ros.pkg.oomdp_msgs.srv.InitializeEnvironment;
+import ros.pkg.oomdp_msgs.srv.PerformAction;
 import ros.pkg.time_series.msg.Episode;
 import ros.pkg.verb_learning.msg.VerbDescription;
 import ros.pkg.verb_learning.srv.ConstrainVerb;
@@ -33,8 +36,12 @@ import edu.arizona.cs.learn.algorithm.heatmap.HeatmapImage;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.util.SequenceType;
-import edu.arizona.environment.Environment;
-import edu.arizona.environment.GazeboEnvironment;
+import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
+import edu.arizona.verbs.environment.Environment;
+import edu.arizona.verbs.environment.GazeboEnvironment;
+import edu.arizona.verbs.mdp.OOMDPObjectState;
+import edu.arizona.verbs.mdp.OOMDPState;
+import edu.arizona.verbs.mdp.StateConverter;
 
 public class Interface {
 	private static Logger logger = Logger.getLogger(Interface.class);
@@ -255,7 +262,8 @@ public class Interface {
 			}
 		};
 		
-	static ServiceServer.Callback<PlanVerb.Request, PlanVerb.Response> planVerbs = 
+	// TODO: Rename to planVerb
+	static ServiceServer.Callback<PlanVerb.Request, PlanVerb.Response> planVerb = 
 		new ServiceServer.Callback<PlanVerb.Request, PlanVerb.Response>() {
 		@Override
 		public PlanVerb.Response call(PlanVerb.Request request) {
@@ -273,16 +281,81 @@ public class Interface {
 		}
 	};
 	
+	static ServiceServer.Callback<PerformAction.Request, PerformAction.Response> performAction = 
+		new ServiceServer.Callback<PerformAction.Request, PerformAction.Response>() {
+			@Override
+			public PerformAction.Response call(PerformAction.Request request) {
+				PerformAction.Response resp = new PerformAction.Response();
+				
+				OOMDPState performResult = currentEnvironment.performAction(request.action);
+				resp.new_state = StateConverter.stateToMsg(performResult);
+				
+				return resp;
+			}
+		};
+		
+	static ServiceServer.Callback<InitializeEnvironment.Request, InitializeEnvironment.Response> initializeEnvironment = 
+		new ServiceServer.Callback<InitializeEnvironment.Request, InitializeEnvironment.Response>() {
+			@Override
+			public InitializeEnvironment.Response call(InitializeEnvironment.Request request) {
+				InitializeEnvironment.Response resp = new InitializeEnvironment.Response();
+				
+				Vector<OOMDPObjectState> states = new Vector<OOMDPObjectState>();
+				for (MDPObjectState stateMsg : request.object_states) {
+					states.add(StateConverter.msgToObjState(stateMsg));
+				}
+				OOMDPState initializeResult = currentEnvironment.initializeEnvironment(states);
+				resp.start_state = StateConverter.stateToMsg(initializeResult);
+				return resp;
+			}
+		};
+
+	public static void testWW2D() {
+		OOMDPObjectState obj1 = new OOMDPObjectState("agent1", "agent");
+		obj1.setAttribute("x", "10");
+		obj1.setAttribute("y", "10");
+		obj1.setAttribute("angle", "0.00");
+		obj1.setAttribute("shape-type", "circle");
+		obj1.setAttribute("radius", "0.25");
+
+		OOMDPObjectState obj2 = new OOMDPObjectState("agent2", "agent");
+		obj2.setAttribute("x", "15");
+		obj2.setAttribute("y", "15");
+		obj2.setAttribute("angle", "0.00");
+		obj2.setAttribute("shape-type", "circle");
+		obj2.setAttribute("radius", "0.25");
+		
+		List<OOMDPObjectState> objects = new ArrayList<OOMDPObjectState>();
+		objects.add(obj1);
+		objects.add(obj2);
+		
+		OOMDPState state = currentEnvironment.initializeEnvironment(objects);
+
+		System.out.println("Initialization complete...");
+		System.out.println(state.toString());
+		
+		System.out.println("Printing actions...");
+		System.out.println(currentEnvironment.getActions());
+	}
+		
 	/**
 	 * @param args
 	 * @throws RosException
 	 */
 	public static void main(String[] args) throws RosException {
+		// TODO: Should take the environment as an argument
+		
 		final Ros ros = Ros.getInstance();
 		ros.init("verb_learning");
 		NodeHandle nh = ros.createNodeHandle();
 
-		currentEnvironment = new GazeboEnvironment();
+		// Gazebo
+//		currentEnvironment = new GazeboEnvironment();
+		
+		// Wubble World 2D
+		currentEnvironment = new WW2DEnvironment(true);
+		
+//		testWW2D();
 		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
 		nh.advertiseService("verb_learning/forget_verb", new ForgetVerb(), forgetVerb);
@@ -291,8 +364,12 @@ public class Interface {
 		nh.advertiseService("verb_learning/positive_update", new FindSignature(), positiveUpdate);
 		nh.advertiseService("verb_learning/negative_update", new FindSignature(), negativeUpdate);
 		
-		nh.advertiseService("verb_learning/plan_verb", new PlanVerb(), planVerbs);
+		nh.advertiseService("verb_learning/plan_verb", new PlanVerb(), planVerb);
 
+		// These are for the teacher to use, since we will now be embedding some of the environments
+		nh.advertiseService("verb_learning/initialize_environment", new InitializeEnvironment(), initializeEnvironment);
+		nh.advertiseService("verb_learning/perform_action", new PerformAction(), performAction);
+		
 		// This is old, should be removed
 		nh.advertiseService("verb_learning/constrain_verb", new ConstrainVerb(), constrainVerb);
 		
