@@ -96,7 +96,6 @@
                     <alwaysOn>true</alwaysOn>
                     <updateRate>10.0</updateRate>
                     <topicName>${name}/scan</topicName>
-                    <deprecatedTopicName>${name}_scan</deprecatedTopicName>
                     <frameName>${name}_link</frameName>
                     <interface:laser name="gazebo_ros_${name}_laser_iface" />
                 </controller:gazebo_ros_laser>
