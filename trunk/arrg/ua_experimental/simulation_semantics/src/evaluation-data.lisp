@@ -4,17 +4,38 @@
 (defparameter *location-attributes* #("x" "y"))
 (defparameter *object-attributes* #("x" "y" "orientation" "last_x" "last_y" "last_orientation"
                                     "size_x" "size_y" "size_z" "mass" "static" "shape" "color"))
+(defparameter *agent-attributes* #("x" "y" "heading" 
+                                   "vx" "vy" "vtheta"
+                                   "shape-type" "radius"))
 
 ;;=============================================================================
 ;; Training
 
+;; TODO: Need a way to distinguish domains
 (defun make-training (verb)
   (cond ((string-equal verb "go")
          (make-go-training))
         ((string-equal verb "go-around")
          (make-go-around-training))
         ((string-equal verb "go-through")
-         (make-go-through-training))))
+         (make-go-through-training))
+        ((string-equal verb "approach")
+         (make-approach-training))))
+
+(defun make-approach-training ()
+  (list 
+   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "mover"
+                           :class_name "agent"
+                           :attributes *agent-attributes*
+                           :values #("5" "5" "0" "0" "0" "0" "circle" "0.25"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "stander"
+                           :class_name "agent"
+                           :attributes *agent-attributes*
+                           :values #("10" "5" "0" "0" "0" "0" "circle" "0.25")))
+         (loop for i below 10 collect "mover 1000;stander 0000"))
+   ))
 
 (defun make-go-training ()
   (list 
@@ -178,7 +199,22 @@
         ((string-equal verb "go-around")
          (make-go-around-tests))
         ((string-equal verb "go-through")
-         (make-go-through-tests))))
+         (make-go-through-tests))
+        ((string-equal verb "approach")
+         (make-approach-tests))))
+
+(defun make-approach-tests ()
+  (list
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "mover"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("5" "5" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "stander"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("10" "5" "0" "0" "0" "0" "circle" "0.25")))))
 
 (defun make-go-tests ()
   "Returns a list of vectors of MDPObjectStates, the start states for each test episode."
