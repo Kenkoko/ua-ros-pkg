@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="verb_learning/" kind="src" path="src"/>
+	<classpathentry excluding="verb_learning/" kind="src" path="src">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/home/dhewlett/ros/ros_experimental/rosjava/bin"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="src" path="oomdp_msgs.srv"/>
 	<classpathentry kind="src" path="oomdp_msgs.msg"/>
 	<classpathentry kind="src" path="msg/java"/>
@@ -33,5 +37,10 @@
 	<classpathentry kind="lib" path="lib/commons-lang-2.5.jar"/>
 	<classpathentry kind="lib" path="/time_series/lib/time-series.jar"/>
 	<classpathentry kind="lib" path="lib/guava-r07.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/wubble_world_2d">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="wubble_world_2d/natives/linux"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="eclipse_bin"/>
 </classpath>
