@@ -56,5 +56,51 @@
         <param name="root_name" value="L0_base_link" />
         <param name="tip_name" value="L7_wrist_yaw_link" />
     </node>
+    
+    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
+        <param name="odom_frame_id" value="odom"/>
+    </node>
+    
+    <!-- an empty map so navigation will still work -->
+    <node name="map_node" pkg="map_server" type="map_server" 
+          args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml"
+          respawn="true" output="screen" />
+          
+    <!-- Throttle the voxel grid that is being published for rviz -->
+    <node ns="move_base_node/local_costmap" 
+          name="voxel_grid_throttle" pkg="topic_tools" type="throttle" 
+          args="messages voxel_grid 3.0 voxel_grid_throttled" />
+    
+    <!-- for moving -->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen">
+        <rosparam file="$(find wubble_description)/params/move_base_params.yaml" command="load" />
+        <rosparam file="$(find wubble_description)/params/w2_costmap_common_params.yaml" command="load" ns="global_costmap" />
+        <rosparam file="$(find wubble_description)/params/w2_costmap_common_params.yaml" command="load" ns="local_costmap" />
+        
+        <rosparam file="$(find wubble_description)/params/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find wubble_description)/params/global_costmap_params.yaml" command="load" />
+        <rosparam file="$(find wubble_description)/params/base_local_planner_params.yaml" command="load" />
+    </node>
+    
+    <!-- Laser Filters -->
+    <node pkg="laser_filters" type="scan_to_cloud_filter_chain" respawn="true" name="laser_shadow_filter">
+        <remap from="scan" to="neck_scan/scan" />
+        <remap from="cloud_filtered" to="tilt_scan_shadow_filtered" /> <!-- Probably want to rename this to use namespaces -->
+        <param name="target_frame" value="base_footprint" />
+        <param name="high_fidelity" value="false" /> <!-- Turning this on slows down the laser a lot -->
+        <rosparam command="load" file="$(find wubble_description)/params/shadow_filter.yaml" />
+    </node>
+    
+    <node pkg="robot_self_filter" type="self_filter" name="laser_self_filter" respawn="true" output="screen">
+        <!-- The topic for the input cloud -->
+        <remap from="cloud_in" to="tilt_scan_shadow_filtered" />
+        <!-- The topic for the output cloud -->
+        <remap from="cloud_out" to="tilt_scan_self_filtered" />
+        <!-- The frame of the sensor used to obtain the data to be
+        filtered; This parameter is optional. If it is not specified,
+        shadow points will be considered outside -->
+        <param name="sensor_frame" type="string" value="neck_scan_link" />
+        <rosparam file="$(find wubble_description)/params/self_filter.yaml" command="load" />
+    </node>
 </launch>
 
