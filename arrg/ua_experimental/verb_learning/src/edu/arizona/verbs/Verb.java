@@ -30,10 +30,10 @@ import edu.arizona.cs.learn.timeseries.experiment.BitPatternGeneration;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.util.graph.Edge;
-import edu.arizona.planning.LRTDP;
-import edu.arizona.planning.fsm.VerbDFA;
-import edu.arizona.planning.mdp.OOMDPState;
-import edu.arizona.planning.mdp.StateConverter;
+import edu.arizona.verbs.fsm.VerbFSM;
+import edu.arizona.verbs.mdp.OOMDPState;
+import edu.arizona.verbs.mdp.StateConverter;
+import edu.arizona.verbs.planning.LRTDP;
 import edu.uci.ics.jung.graph.DirectedGraph;
 
 public class Verb {
@@ -43,7 +43,7 @@ public class Verb {
 	private List<String> arguments_;
 	private Signature signature_ = null;
 	private Signature negativeSignature_; // This is not really used for pruning, just fits better
-	private VerbDFA dfa_ = null;
+	private VerbFSM fsm_ = null;
 	
 	private boolean frozen = false;
 	
@@ -133,7 +133,7 @@ public class Verb {
 			logger.debug("Negative signature saved to file: " + negFilename);
 		}
 		
-		makeDFA();
+		makeFSM();
 	}
 	
 	public void forgetInstances() {
@@ -142,7 +142,7 @@ public class Verb {
 		negativeSignature_ = new Signature("non-" + lexicalForm_);
 	}
 	
-	private void makeDFA() {
+	private void makeFSM() {
 		if (!hasSignature()) {
 			logger.error("WTF are you doing? There is no signature for " + lexicalForm_);
 			return;
@@ -173,18 +173,18 @@ public class Verb {
 		DirectedGraph<BPPNode, Edge> negChains = FSMFactory.makeGraph(negProps, allNeg, false); 
 		FSMFactory.toDot(negChains, getVerbFolder() + "neg_chain_nfa.dot");
 		
-		dfa_ = new VerbDFA(chains, negChains);
-		dfa_.toDot(getVerbFolder() + "dfa.dot", false);
+		fsm_ = new VerbFSM(chains, negChains);
+		fsm_.toDot(getVerbFolder() + "dfa.dot", false);
 	}
 	
 	public void addConstraint(Collection<String> bannedProps) {
-		dfa_.addConstraintState(new HashSet<String>(bannedProps));
-		dfa_.toDot(getVerbFolder() + "constrained.dot", false);
+		fsm_.addConstraintState(new HashSet<String>(bannedProps));
+		fsm_.toDot(getVerbFolder() + "constrained.dot", false);
 	}
 	
 	// TODO: Really should return a new verb, but then we need to make a new DFA
 	public void concatenate(Verb other, String newName, String[] newArguments) {
-		dfa_.concatenate(other.dfa_);
+		fsm_.concatenate(other.fsm_);
 		lexicalForm_ = newName;
 		arguments_ = Arrays.asList(newArguments);
 		frozen = true;
@@ -207,14 +207,14 @@ public class Verb {
 	
 	public double updateFSM(Set<String> activeProps) {
 		logger.debug("Updating FSM State...");
-		return dfa_.update(activeProps);
+		return fsm_.transitionDFA(activeProps);
 	}
 	
 	// argumentMap maps the concrete names to the specific ones
 	// success in the response is only false if the runTrial call runs "forever"
 	public Response planVerb(MDPState startState, Map<String, String> argumentMap) {
 		Response result = new Response();
-		if (!hasDFA()) {
+		if (!hasFSM()) {
 			result.success = 0; // Automatic failure
 			return result;
 		}
@@ -243,7 +243,7 @@ public class Verb {
 	}
 	
 	public void resetRecognizer() {
-		dfa_.reset();
+		fsm_.reset();
 	}
 	
 	// Getters, etc.
@@ -256,16 +256,16 @@ public class Verb {
 		return signature_;
 	}
 
-	public VerbDFA getDFA() {
-		return dfa_;
+	public VerbFSM getFSM() {
+		return fsm_;
 	}
 	
 	public boolean hasSignature() {
 		return signature_ != null;
 	}
 	
-	public boolean hasDFA() {
-		return dfa_ != null;
+	public boolean hasFSM() {
+		return fsm_ != null;
 	}
 	
 	public String[] getArgumentArray() {
