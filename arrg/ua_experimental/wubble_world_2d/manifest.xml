@@ -1,0 +1,15 @@
+<package>
+    <description brief="wubble_world_2d">
+
+     wubble_world_2d
+
+    </description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_world_2d</url>
+
+    <depend package="rosjava"/>
+</package>
+
+
