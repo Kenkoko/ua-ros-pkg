@@ -1,4 +1,4 @@
-package edu.arizona.planning.mdp;
+package edu.arizona.verbs.mdp;
 
 import java.util.Collections;
 import java.util.HashMap;

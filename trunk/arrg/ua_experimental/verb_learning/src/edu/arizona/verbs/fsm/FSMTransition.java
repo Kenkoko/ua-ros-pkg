@@ -1,4 +1,4 @@
-package edu.arizona.planning.fsm;
+package edu.arizona.verbs.fsm;
 
 import java.util.Set;
 import java.util.TreeSet;
