@@ -29,7 +29,7 @@
     </node>
 
     <!-- enable navigation -->
-    <include file="$(find wubble_description)/launch/wubble_move_base.launch" />
+    <include file="$(find wubble_description)/launch/wubble_move_base_blind.launch" />
 
     <!-- This is the parameter file for the laser controller -->
     <rosparam file="$(find wubble_description)/controllers/wubble_laser_controller.yaml" command="load" />
@@ -39,5 +39,5 @@
 <!--    <node name="erratic_base_action" pkg="wubble_actions" type="erratic_base_action.py" output="screen" />-->
 
     <!-- Start the environment interface -->
-<!--    <node pkg="wubble_mdp" type="environment_node" name="environment_node" output="screen"/> -->
+    <node pkg="wubble_mdp" type="environment" name="environment" output="screen"/> 
 </launch>
