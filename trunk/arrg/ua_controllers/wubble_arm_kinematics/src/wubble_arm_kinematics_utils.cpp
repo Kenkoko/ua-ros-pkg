@@ -99,21 +99,6 @@ namespace wubble_arm_kinematics
     return true;
   }
 
-
-  Eigen::Matrix4f KDLToEigenMatrix(const KDL::Frame &p)
-  {
-    Eigen::Matrix4f b = Eigen::Matrix4f::Identity();
-    for(int i=0; i < 3; i++)
-    {
-      for(int j=0; j<3; j++)
-      {
-        b(i,j) = p.M(i,j);
-      }
-      b(i,3) = p.p(i);
-    }
-    return b;
-  }
-
   double computeEuclideanDistance(const std::vector<double> &array_1, const KDL::JntArray &array_2)
   {
     double distance = 0.0;
@@ -161,54 +146,6 @@ namespace wubble_arm_kinematics
     }
   }
 
-  Eigen::Matrix4f matrixInverse(const Eigen::Matrix4f &g)
-  {
-    Eigen::Matrix4f result = g;
-    Eigen::Matrix3f Rt = Eigen::Matrix3f::Identity();
-
-    Eigen::Vector3f p = Eigen::Vector3f::Zero(3);
-    Eigen::Vector3f pinv = Eigen::Vector3f::Zero(3);
-
-    Rt(0,0) = g(0,0);
-    Rt(1,1) = g(1,1);
-    Rt(2,2) = g(2,2);
-
-    Rt(0,1) = g(1,0);
-    Rt(1,0) = g(0,1);
-
-    Rt(0,2) = g(2,0);
-    Rt(2,0) = g(0,2);
-
-    Rt(1,2) = g(2,1);
-    Rt(2,1) = g(1,2);
-
-    p(0) = g(0,3);
-    p(1) = g(1,3);
-    p(2) = g(2,3);
-
-    pinv = -Rt*p;
-
-    result(0,0) = g(0,0);
-    result(1,1) = g(1,1);
-    result(2,2) = g(2,2);
-
-    result(0,1) = g(1,0);
-    result(1,0) = g(0,1);
-
-    result(0,2) = g(2,0);
-    result(2,0) = g(0,2);
-
-    result(1,2) = g(2,1);
-    result(2,1) = g(1,2);
-
-    result(0,3) = pinv(0);
-    result(1,3) = pinv(1);
-    result(2,3) = pinv(2);
-
-    return result;
-  }
-
-
   bool solveCosineEqn(const double &a, const double &b, const double &c, double &soln1, double &soln2)
   {
     double theta1 = atan2(b,a);
@@ -235,7 +172,6 @@ namespace wubble_arm_kinematics
 
     return true;
   }
-
 
   bool checkJointNames(const std::vector<std::string> &joint_names,
                        const kinematics_msgs::KinematicSolverInfo &chain_info)

@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="wubble_arm_kinematics" type="wubble_arm_kinematics_node" name="wubble_arm_kinematics" respawn="true" output="screen" >
+    <node pkg="wubble_arm_kinematics" type="wubble_arm_kinematics_node" name="arm_kinematics" respawn="true" output="screen" >
         <param name="root_name" value="L0_base_link" />
         <param name="tip_name" value="L7_wrist_yaw_link" />
         <param name="free_angle" value="0" />
