@@ -1,21 +1,31 @@
 <package>
     <description brief="wubble_arm_kinematics">
-
-     wubble_arm_kinematics
-
+        This package provides a kinematics implementation for the Wubble robot arm. It can be used to compute forward and inverse kinematics.
     </description>
-    <author>Antons Rebguns</author>
+
+    <author>Antons Rebguns, with most of the code borrowed from pr2_arm_kinematics</author>
     <license>BSD</license>
+
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/wubble_arm_kinematics</url>
+
     <depend package="roscpp"/>
     <depend package="openrave"/>
     <depend package="geometry_msgs"/>
+    <depend package="angles"/>
     <depend package="tf"/>
+    <depend package="tf_conversions"/>
     <depend package="urdf"/>
 
+    <depend package="kinematics_base"/>
     <depend package="kinematics_msgs" />
 
+    <depend package="kdl"/>
+    <depend package="kdl_parser"/>
+
+    <export>
+        <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lwubble_arm_kinematics_lib"/>
+    </export>
 </package>
 
 

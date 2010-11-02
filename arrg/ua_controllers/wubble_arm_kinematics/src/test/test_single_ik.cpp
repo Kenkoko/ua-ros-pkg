@@ -42,8 +42,8 @@ int main(int argc, char **argv){
   gpik_req.timeout = ros::Duration(5.0);
   gpik_req.ik_request.ik_link_name = "L7_wrist_yaw_link";
 
-  gpik_req.ik_request.pose_stamped.header.frame_id = "base_footprint";
-  gpik_req.ik_request.pose_stamped.pose.position.x = 0.40;
+  gpik_req.ik_request.pose_stamped.header.frame_id = "L0_base_link";
+  gpik_req.ik_request.pose_stamped.pose.position.x = 0.60;
   gpik_req.ik_request.pose_stamped.pose.position.y = 0.10;
   gpik_req.ik_request.pose_stamped.pose.position.z = 0.20;
 

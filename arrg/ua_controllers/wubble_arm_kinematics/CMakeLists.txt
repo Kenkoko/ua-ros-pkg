@@ -27,8 +27,19 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
-rosbuild_add_executable(wubble_arm_ik src/wubble_arm_ik.cpp)
-#rosbuild_add_executable(wubble_arm_ik_service src/wubble_arm_node.cpp)
+rosbuild_add_library(wubble_arm_kinematics_lib
+  src/wubble_arm_ik.cpp
+  src/wubble_arm_kinematics_utils.cpp
+  src/wubble_arm_ik_solver.cpp
+  src/wubble_arm_kinematics.cpp
+)
+
+rosbuild_add_executable(wubble_arm_kinematics_node src/main.cpp)
+target_link_libraries(wubble_arm_kinematics_node wubble_arm_kinematics_lib)
+
+rosbuild_add_executable(wubble_arm_ik_gen_f0 include/wubble_arm_kinematics/wubble_arm_ik_gen_f0.cpp)
+rosbuild_add_executable(wubble_arm_ik_gen_f2 include/wubble_arm_kinematics/wubble_arm_ik_gen_f2.cpp)
+
 rosbuild_add_executable(wubble_ik_single_test src/test/test_single_ik.cpp)
 
 #target_link_libraries(example ${PROJECT_NAME})
