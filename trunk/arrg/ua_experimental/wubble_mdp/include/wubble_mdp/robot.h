@@ -29,6 +29,7 @@ public:
   virtual void update(simulator_state::ObjectInfo new_info);
 
   virtual bool addToWorld();
+  bool removeFromWorld();
 
   virtual std::string getClassString();
   virtual btVector3 getPosition();
