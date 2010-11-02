@@ -32,7 +32,6 @@
 
 #include <wubble_arm_kinematics/wubble_arm_ik_solver.h>
 
-using namespace Eigen;
 using namespace wubble_arm_kinematics;
 
 WubbleArmIKSolver::WubbleArmIKSolver(const urdf::Model &robot_model,
@@ -196,7 +195,7 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
 
   int num_positive_increments = (int) ((wubble_arm_ik_.solver_info_.limits[free_angle_].max_position-initial_guess) / search_discretization_angle_);
   int num_negative_increments = (int) ((initial_guess-wubble_arm_ik_.solver_info_.limits[free_angle_].min_position) / search_discretization_angle_);
-  ROS_DEBUG("%f %f %f %d %d \n\n", initial_guess,wubble_arm_ik_.solver_info_.limits[free_angle_].max_position, wubble_arm_ik_.solver_info_.limits[free_angle_].min_position, num_positive_increments, num_negative_increments);
+  ROS_DEBUG("%f %f %f %d %d \n\n", initial_guess, wubble_arm_ik_.solver_info_.limits[free_angle_].max_position, wubble_arm_ik_.solver_info_.limits[free_angle_].min_position, num_positive_increments, num_negative_increments);
 
   while (loop_time < timeout)
   {

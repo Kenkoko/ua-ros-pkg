@@ -37,7 +37,6 @@
 #include <ros/ros.h>
 #include <vector>
 #include <angles/angles.h>
-#include <Eigen/Array>
 #include <kdl/frames.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl/tree.hpp>
@@ -57,8 +56,6 @@ using namespace angles;
 
 namespace wubble_arm_kinematics
 {
-  Eigen::Matrix4f KDLToEigenMatrix(const KDL::Frame &p);
-
   double computeEuclideanDistance(const std::vector<double> &array_1,
                                   const KDL::JntArray &array_2);
 
@@ -69,8 +66,6 @@ namespace wubble_arm_kinematics
                       const double &c,
                       double *x1,
                       double *x2);
-
-  Eigen::Matrix4f matrixInverse(const Eigen::Matrix4f &g);
 
   bool solveCosineEqn(const double &a,
                       const double &b,
