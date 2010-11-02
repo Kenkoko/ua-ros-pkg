@@ -1,0 +1,17 @@
+<launch>
+    <!-- Throttle the voxel grid that is being published for rviz -->
+    <node ns="move_base_node/local_costmap" 
+          name="voxel_grid_throttle" pkg="topic_tools" type="throttle" 
+          args="messages voxel_grid 3.0 voxel_grid_throttled" />
+    
+    <!-- for moving -->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen">
+        <rosparam file="$(find wubble_description)/params/move_base_params.yaml" command="load" />
+        <rosparam file="$(find wubble_description)/params/blind_params.yaml" command="load" ns="global_costmap" />
+        <rosparam file="$(find wubble_description)/params/blind_params.yaml" command="load" ns="local_costmap" />
+        
+        <rosparam file="$(find wubble_description)/params/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find wubble_description)/params/global_costmap_params.yaml" command="load" />
+        <rosparam file="$(find wubble_description)/params/base_local_planner_params.yaml" command="load" />
+    </node>
+</launch>
