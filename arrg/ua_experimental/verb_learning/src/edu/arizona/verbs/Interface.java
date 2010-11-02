@@ -36,7 +36,6 @@ import edu.arizona.cs.learn.algorithm.heatmap.HeatmapImage;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.util.SequenceType;
-import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.environment.Environment;
 import edu.arizona.verbs.environment.GazeboEnvironment;
 import edu.arizona.verbs.mdp.OOMDPObjectState;
@@ -350,10 +349,10 @@ public class Interface {
 		NodeHandle nh = ros.createNodeHandle();
 
 		// Gazebo
-//		currentEnvironment = new GazeboEnvironment();
+		currentEnvironment = new GazeboEnvironment();
 		
 		// Wubble World 2D
-		currentEnvironment = new WW2DEnvironment(true);
+//		currentEnvironment = new WW2DEnvironment(true);
 		
 //		testWW2D();
 		
