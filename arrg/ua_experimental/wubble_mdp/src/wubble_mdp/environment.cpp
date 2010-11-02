@@ -157,11 +157,33 @@ bool Environment::describeMDP(oomdp_msgs::DescribeMDP::Request& req, oomdp_msgs:
 bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
                              oomdp_msgs::InitializeEnvironment::Response& res)
 {
-  // TODO: Does this deallocate the old entities, or do I have to manually delete them?
+  // Annoying special case for the robot
+  vector<Entity*> new_entities = Environment::makeEntityList(req.object_states);
+  string new_robot_name = "";
+  for (vector<Entity*>::iterator ent_it = new_entities.begin(); ent_it != new_entities.end(); ++ent_it)
+  {
+    if ((*ent_it)->getClassString() == "Robot")
+    {
+      new_robot_name = (*ent_it)->name_;
+    }
+  }
+
+  if (new_robot_name != "")
+  {
+    for (vector<Entity*>::iterator ent_it = entity_list_.begin(); ent_it != entity_list_.end(); ++ent_it)
+    {
+      if ((*ent_it)->getClassString() == "Robot" && (*ent_it)->name_ != new_robot_name)
+      {
+        dynamic_cast<Robot*> (*ent_it)->removeFromWorld();
+      }
+    }
+  }
+
+  // TODO: Need to delete these properly
   entities_.clear();
   entity_list_.clear();
 
-  entity_list_ = Environment::makeEntityList(req.object_states);
+  entity_list_ = new_entities;
   for (vector<Entity*>::iterator ent_it = entity_list_.begin(); ent_it != entity_list_.end(); ++ent_it)
   {
     entities_[(*ent_it)->name_] = *ent_it;
@@ -283,7 +305,7 @@ bool Environment::simulateAction(oomdp_msgs::SimulateAction::Request& req, oomdp
     {
       if ((*ent_it)->getClassString() == "Object")
       {
-        objects.push_back(dynamic_cast<Object*>(*ent_it));
+        objects.push_back(dynamic_cast<Object*> (*ent_it));
       }
     }
 

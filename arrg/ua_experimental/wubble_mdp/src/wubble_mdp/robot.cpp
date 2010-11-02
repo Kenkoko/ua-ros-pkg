@@ -15,6 +15,7 @@
 #include <gazebo/GetWorldProperties.h>
 #include <gazebo/SetModelState.h>
 #include <wubble_description/SpawnWubbleBase.h>
+#include <wubble_description/DeleteWubbleBase.h>
 
 #include <wubble_mdp/robot.h>
 
@@ -86,6 +87,13 @@ bool Robot::addToWorld()
     swb.request.initial_pose = getPose();
     return ros::service::call("spawn_wubble_base", swb);
   }
+}
+
+bool Robot::removeFromWorld()
+{
+  wubble_description::DeleteWubbleBase dwb;
+  dwb.request.name = name_;
+  return ros::service::call("delete_wubble_base", dwb);
 }
 
 std::string Robot::getClassString()
