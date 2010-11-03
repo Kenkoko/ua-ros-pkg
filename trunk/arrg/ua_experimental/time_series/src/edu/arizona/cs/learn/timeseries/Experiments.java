@@ -720,6 +720,8 @@ public class Experiments {
 		} catch (Exception e) { 
 			e.printStackTrace();
 		}
+		
+		execute.shutdown();
 	}
 
 	public static void signatureTiming(String prefix, SequenceType type, int folds, boolean prune) {
