@@ -1,0 +1,22 @@
+<package>
+    <description brief="wubble_arm_kinematics_constraint_aware">
+        wubble_arm_kinematics_constraint_aware
+    </description>
+
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_arm_kinematics_constraint_aware</url>
+
+    <depend package="wubble_arm_kinematics"/>
+    <depend package="collision_space"/>
+    <depend package="planning_models"/>
+    <depend package="planning_environment"/>
+    <depend package="mapping_msgs"/>
+
+    <export>
+        <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lwubble_arm_kinematics_constraint_aware_lib"/>
+    </export>
+</package>
+
+
