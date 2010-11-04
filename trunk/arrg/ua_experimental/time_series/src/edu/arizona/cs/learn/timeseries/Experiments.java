@@ -711,16 +711,24 @@ public class Experiments {
 		}
 		
 		ExecutorService execute = Executors.newFixedThreadPool(Utils.numThreads);
+		List<Future<Object>> list = new ArrayList<Future<Object>>();
 		for (int  fold = 0; fold < folds; ++fold) { 			
-			execute.submit(new SignatureCallable(fold));
+			list.add(execute.submit(new SignatureCallable(fold)));
 		}
 		
-		try {
-			execute.awaitTermination(20, TimeUnit.DAYS);
-		} catch (Exception e) { 
-			e.printStackTrace();
+		for (Future<Object> results : list) {
+			// do nothing
+			try {
+				results.get();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		
+
 		execute.shutdown();
 	}
 
