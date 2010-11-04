@@ -670,6 +670,7 @@ public class Experiments {
 				List<String> activityNames = Utils.getActivityNames(prefix);
 				Map<String,List<Integer>> testMap = Utils.getTestSet(prefix, folds, _fold);
 				
+				System.out.println("  activityNames: " + activityNames);
 				for (String activity : activityNames) { 
 					System.out.println("..Building signature for " + activity);
 					File dataFile = new File("data/input/" + activity + ".lisp");
@@ -717,14 +718,9 @@ public class Experiments {
 		}
 		
 		for (Future<Object> results : list) {
-			// do nothing
 			try {
 				results.get();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
+			} catch (Exception e) { 
 				e.printStackTrace();
 			}
 		}
