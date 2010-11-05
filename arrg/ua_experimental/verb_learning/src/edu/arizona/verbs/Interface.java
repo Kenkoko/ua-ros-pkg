@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
@@ -18,29 +18,27 @@ import ros.ServiceServer;
 import ros.pkg.oomdp_msgs.msg.MDPObjectState;
 import ros.pkg.oomdp_msgs.srv.InitializeEnvironment;
 import ros.pkg.oomdp_msgs.srv.PerformAction;
-import ros.pkg.time_series.msg.Episode;
 import ros.pkg.verb_learning.msg.VerbDescription;
+import ros.pkg.verb_learning.msg.VerbInstance;
 import ros.pkg.verb_learning.srv.ConstrainVerb;
-import ros.pkg.verb_learning.srv.FindSignature;
 import ros.pkg.verb_learning.srv.ForgetVerb;
 import ros.pkg.verb_learning.srv.LoadVerbs;
+import ros.pkg.verb_learning.srv.PerformVerb;
 import ros.pkg.verb_learning.srv.LoadVerbs.Request;
 import ros.pkg.verb_learning.srv.PlanVerb;
+import ros.pkg.verb_learning.srv.UpdateVerb;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
-import edu.arizona.cs.learn.algorithm.alignment.factory.SequenceFactory;
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.algorithm.heatmap.HeatmapImage;
-import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.verbs.environment.Environment;
 import edu.arizona.verbs.environment.GazeboEnvironment;
 import edu.arizona.verbs.mdp.OOMDPObjectState;
 import edu.arizona.verbs.mdp.OOMDPState;
 import edu.arizona.verbs.mdp.StateConverter;
+import edu.arizona.verbs.util.TraceConverter;
 
 public class Interface {
 	private static Logger logger = Logger.getLogger(Interface.class);
@@ -56,123 +54,55 @@ public class Interface {
 	
 	// Saves a heatmap to file. For reference, see Heatmaps.java
 	// TODO: This should probably be somewhere else
-	public static void makeHeatmap(Verb verb, List<Interval> episode, int min) {
-		String f = verb.getVerbFolder() + "heatmap.png"; // Will overwrite earlier heatmaps, that's OK
-		HeatmapImage.makeHeatmap(f, verb.getSignature().signature(), min, episode, SequenceType.allen);
-	}
-	
-	// Utility functions for converting ROS message types to the appropriate Java classes
-	public static List<Interval> getIntervals(Episode episode) {
-		logger.debug("Getting intervals from episode...");
-		List<Interval> intervals = new Vector<Interval>();
-		for (int i = 0; i < episode.intervals.length; i++) {
-			ros.pkg.time_series.msg.Interval interval = episode.intervals[i];
-			logger.debug(interval.proposition);
-			intervals.add(Interval.make(interval.proposition.toString(), interval.start, interval.end));
-		}
-		logger.debug("Got em.");
-		return intervals;
-	}
-	
-	public static Instance getInstance(Episode e, String name, int id) {
-		List<Interval> intervals = getIntervals(e);		
-		logger.debug(intervals.size());
-		Collections.sort(intervals, Interval.eff);
-		for (Interval i : intervals) {
-			i.episode = id;
-			i.file = "test";
-			logger.debug(i);
-		}
-		logger.debug("Finished with " + intervals.size() + " intervals, converting to instance...");
-		Instance result = new Instance(name, id, SequenceFactory.allenSequence(intervals));
-		
-		// TODO: SequenceFactory is in the time_series JAR! Not the src, which is probably a problem
-		
-		return result;
-	}
-	
-	public static List<Instance> getSequences(Episode[] episodes, String name) {
-		List<Instance> results = new ArrayList<Instance>();
+//	public static void makeHeatmap(Verb verb, List<Interval> episode, int min) {
+//		String f = verb.getVerbFolder() + "heatmap.png"; // Will overwrite earlier heatmaps, that's OK
+//		HeatmapImage.makeHeatmap(f, verb.getSignature().signature(), min, episode, SequenceType.allen);
+//	}
 
-		for (int i = 0; i < episodes.length; i++) {
-			logger.debug("Converting episode " + (i+1) + " of " + episodes.length + " (" + episodes[i].intervals.length + " intervals)");
-//			System.out.println(episodes[i].intervals[0]);
-			results.add(getInstance(episodes[i], name, i));
+	public static Map<String, String> extractNameMap(VerbInstance vi) {
+		if (vi.arguments.length == vi.bindings.length) {
+			Map<String, String> nameMap = new HashMap<String, String>();
+			for (int i = 0; i < vi.arguments.length; i++) {
+				nameMap.put(vi.bindings[i], vi.arguments[i]);
+			}
+			return nameMap;
+		} else {
+			throw new RuntimeException("NAME MAP LENGTHS DO NOT MATCH IN VerbInstance");
 		}
-		
-		return results;
 	}
 	
 	// Service Handlers
 	
-	static ServiceServer.Callback<FindSignature.Request, FindSignature.Response> positiveUpdate = 
-		new ServiceServer.Callback<FindSignature.Request, FindSignature.Response>() {
-			public FindSignature.Response call(FindSignature.Request request) {
+	static ServiceServer.Callback<UpdateVerb.Request, UpdateVerb.Response> updateVerb = 
+		new ServiceServer.Callback<UpdateVerb.Request, UpdateVerb.Response>() {
+			@Override
+			public UpdateVerb.Response call(UpdateVerb.Request request) {
+				logger.debug("BEGIN update_verb callback...");
+				logger.debug("Received a trace with " + request.trace.length + " states for <" + request.verb + ">");
 				
-				FindSignature.Response res = new FindSignature.Response();
-				logger.debug("BEGIN update_signature callback...");
-
-				logger.debug("Received " + request.episodes.length + " episodes for <" + request.verb + ">");
-
 				String verbName = request.verb.verb;
+				Map<String, String> nameMap = extractNameMap(request.verb);
+				Instance instance = TraceConverter.convertTrace(StateConverter.msgArrayToStates(request.trace), verbName, nameMap);
+				Verb verb = null;
 				if (verbs.containsKey(verbName)) {
-					List<Instance> instances = getSequences(request.episodes, verbName);
-
-					Verb verb = verbs.get(verbName); // VERB VERB VERB!
-					for (Instance instance : instances) {
-						verb.addPositiveInstance(instance);
-					}
+					verb = verbs.get(verbName); 
 				} else {
 					logger.info("VERB NOT FOUND: " + request.verb + ", creating it");
-					List<Instance> instances = getSequences(request.episodes, verbName);
-					if (verbs.containsKey(verbName)) {
-						logger.info("Overwriting old data for verb: " + verbName);
-					} 
-					Verb verb = new Verb(verbName, request.verb.arguments);
-					verb.addPositiveInstances(instances);
+					verb = new Verb(verbName, request.verb.arguments);
 					verbs.put(verbName, verb);
 				}
+
+				if (request.is_positive > 0) {
+					verb.addPositiveInstance(instance);
+				} else {
+					verb.addNegativeInstance(instance);
+				}
 				
-				logger.debug("... END update_signature callback.");
-				return res;
+				logger.debug("... END update_verb callback.");
+				return new UpdateVerb.Response();
 			}
 		};
 	
-	static ServiceServer.Callback<FindSignature.Request, FindSignature.Response> negativeUpdate = 
-		new ServiceServer.Callback<FindSignature.Request, FindSignature.Response>() {
-			public FindSignature.Response call(FindSignature.Request request) {
-				
-				FindSignature.Response res = new FindSignature.Response();
-				logger.debug("BEGIN negative_update callback...");
-
-				logger.debug("Received " + request.episodes.length + " negative episodes for <" + request.verb + ">");
-
-				String verbName = request.verb.verb;
-				if (verbs.containsKey(verbName)) {
-					List<Instance> instances = getSequences(request.episodes, verbName);
-
-					Verb verb = verbs.get(verbName); // VERB VERB VERB!
-					for (Instance instance : instances) {
-						verb.addNegativeInstance(instance);
-					}
-				} else {
-					logger.info("VERB NOT FOUND: " + request.verb + ", creating it");
-					List<Instance> instances = getSequences(request.episodes, verbName);
-					if (verbs.containsKey(verbName)) {
-						logger.info("Overwriting old data for verb: " + verbName);
-					} 
-					Verb verb = new Verb(verbName, request.verb.arguments);
-					for (Instance instance : instances) {
-						verb.addNegativeInstance(instance);
-					}
-					verbs.put(verbName, verb);
-				}
-				
-				logger.debug("... END update_signature callback.");
-				return res;
-			}
-		};
-		
 	static ServiceServer.Callback<ForgetVerb.Request, ForgetVerb.Response> forgetVerb =
 		new ServiceServer.Callback<ForgetVerb.Request, ForgetVerb.Response>() {
 			@Override
@@ -261,25 +191,21 @@ public class Interface {
 			}
 		};
 		
-	// TODO: Rename to planVerb
-	static ServiceServer.Callback<PlanVerb.Request, PlanVerb.Response> planVerb = 
-		new ServiceServer.Callback<PlanVerb.Request, PlanVerb.Response>() {
+	static ServiceServer.Callback<PerformVerb.Request, PerformVerb.Response> performVerb = 
+		new ServiceServer.Callback<PerformVerb.Request, PerformVerb.Response>() {
 		@Override
-		public PlanVerb.Response call(PlanVerb.Request request) {
+		public PerformVerb.Response call(PerformVerb.Request request) {
 			if (verbs.containsKey(request.verb.verb)) {
 				Verb verb = verbs.get(request.verb.verb);
-				HashMap<String,String> argumentMap = new HashMap<String, String>();
-				for (int i = 0; i < request.verb.arguments.length; i++) {
-					argumentMap.put(request.verb.bindings[i], request.verb.arguments[i]);
-				}
-				return verb.planVerb(request.start_state, argumentMap);
+				Map<String,String> argumentMap = extractNameMap(request.verb);
+				return verb.perform(request.start_state, argumentMap, request.execution_limit);
 			} else {
 				System.err.println("Verb not found: " + request.verb.verb);
-				return new PlanVerb.Response();
+				return new PerformVerb.Response();
 			}
 		}
 	};
-	
+		
 	static ServiceServer.Callback<PerformAction.Request, PerformAction.Response> performAction = 
 		new ServiceServer.Callback<PerformAction.Request, PerformAction.Response>() {
 			@Override
@@ -359,11 +285,9 @@ public class Interface {
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
 		nh.advertiseService("verb_learning/forget_verb", new ForgetVerb(), forgetVerb);
 		
-		// TODO LATER: Rename FindSignature to UpdateVerb
-		nh.advertiseService("verb_learning/positive_update", new FindSignature(), positiveUpdate);
-		nh.advertiseService("verb_learning/negative_update", new FindSignature(), negativeUpdate);
+		nh.advertiseService("verb_learning/update_verb", new UpdateVerb(), updateVerb);
 		
-		nh.advertiseService("verb_learning/plan_verb", new PlanVerb(), planVerb);
+		nh.advertiseService("verb_learning/perform_verb", new PerformVerb(), performVerb);
 
 		// These are for the teacher to use, since we will now be embedding some of the environments
 		nh.advertiseService("verb_learning/initialize_environment", new InitializeEnvironment(), initializeEnvironment);

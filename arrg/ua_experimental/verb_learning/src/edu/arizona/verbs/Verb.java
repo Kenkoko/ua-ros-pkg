@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
 
 import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.msg.VerbDescription;
+import ros.pkg.verb_learning.srv.PerformVerb;
 import ros.pkg.verb_learning.srv.PlanVerb.Response;
 
 import com.google.common.base.Joiner;
@@ -30,7 +31,10 @@ import edu.arizona.cs.learn.timeseries.experiment.BitPatternGeneration;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.util.graph.Edge;
+import edu.arizona.verbs.environment.Environment;
+import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.fsm.VerbFSM;
+import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 import edu.arizona.verbs.mdp.OOMDPState;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.planning.LRTDP;
@@ -212,34 +216,82 @@ public class Verb {
 	
 	// argumentMap maps the concrete names to the specific ones
 	// success in the response is only false if the runTrial call runs "forever"
-	public Response planVerb(MDPState startState, Map<String, String> argumentMap) {
-		Response result = new Response();
+//	public Response planVerb(MDPState startState, Map<String, String> argumentMap) {
+//		Response result = new Response();
+//		if (!hasFSM()) {
+//			result.success = 0; // Automatic failure
+//			return result;
+//		}
+//		
+//		OOMDPState properStart = StateConverter.msgToState(startState);
+//		// We will plan with the general names since that's what our verb FSM contains
+//		OOMDPState remappedStart = properStart.remapState(argumentMap);
+//		
+//		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment(), remappedStart);
+//		long startTime = System.currentTimeMillis();
+//		boolean success = planner.runAlgorithm();
+//		long elapsedTime = System.currentTimeMillis() - startTime;
+//		
+//		if (success) {
+//			HashBiMap<String,String> biMap = HashBiMap.create(argumentMap); 
+//			result.plan = planner.recoverPolicy(biMap.inverse());
+//			result.success = 1;	
+//			result.time_millis = elapsedTime;
+//		} else {
+//			result.success = 0;
+//			result.time_millis = elapsedTime;
+//			// No plan
+//		}
+//		
+//		return result;
+//	}
+	
+	public PerformVerb.Response perform(MDPState startState, Map<String, String> argumentMap, int executionLimit) {
+		PerformVerb.Response response = new PerformVerb.Response();
+		
 		if (!hasFSM()) {
-			result.success = 0; // Automatic failure
-			return result;
+			return response; // Automatic failure
 		}
 		
 		OOMDPState properStart = StateConverter.msgToState(startState);
 		// We will plan with the general names since that's what our verb FSM contains
 		OOMDPState remappedStart = properStart.remapState(argumentMap);
 		
-		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment(), remappedStart);
-		long startTime = System.currentTimeMillis();
-		boolean success = planner.runAlgorithm();
-		long elapsedTime = System.currentTimeMillis() - startTime;
+		// TODO: Need to restore planning time information
+		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
+//		long startTime = System.currentTimeMillis();
+//		long elapsedTime = System.currentTimeMillis() - startTime;
 		
-		if (success) {
-			HashBiMap<String,String> biMap = HashBiMap.create(argumentMap); 
-			result.plan = planner.recoverPolicy(biMap.inverse());
-			result.success = 1;	
-			result.time_millis = elapsedTime;
-		} else {
-			result.success = 0;
-			result.time_millis = elapsedTime;
-			// No plan
+		// TODO: Shouldn't there be an un-remapping phase?
+		
+		TreeSet<FSMState> fsmState = fsm_.getStartState();
+		TransitionResult tr = fsm_.simulateDfaTransition(fsmState, remappedStart.getActiveRelations());
+		fsmState = tr.newState;
+
+		List<OOMDPState> trace = new Vector<OOMDPState>();
+		trace.add(properStart);
+		
+		String action = planner.runAlgorithm(remappedStart, fsmState);
+		int numSteps = 0;
+		while ( numSteps < executionLimit && action != null && 
+				!action.toString().equals(LRTDP.terminateAction)) {
+			// Perform the action, get the new world state
+			OOMDPState newState = Interface.getCurrentEnvironment().performAction(action).remapState(argumentMap);
+			trace.add(newState);
+			numSteps++;
+			// Get the new FSM state
+			fsmState = fsm_.simulateDfaTransition(fsmState, newState.getActiveRelations()).newState;
+			
+			// Get the new action
+			action = planner.runAlgorithm(newState, fsmState);
 		}
 		
-		return result;
+		response.trace = StateConverter.stateToMsgArray(trace);
+		response.execution_success = (byte) ((action.toString().equals(LRTDP.terminateAction)) ? 1 : 0);
+		response.execution_length = numSteps;
+		response.planning_time = 0; // TODO: Compute the total planning time
+		
+		return response;
 	}
 	
 	public void resetRecognizer() {
