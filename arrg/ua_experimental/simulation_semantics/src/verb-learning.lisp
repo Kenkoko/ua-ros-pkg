@@ -61,7 +61,7 @@
 ;;=====================================================================
 ;; Episodes
 
-(defun get-episodes (verb)
+#+ignore(defun get-episodes (verb)
   (loop for scenario in (scenarios-of verb)
      append (loop for trace in (traces-of (simulator-of scenario))
                for episode = (intervals-to-episode 
@@ -69,7 +69,11 @@
                                (convert-trace-to-pmts trace (name-map-of scenario verb))))
                collect episode)))
 
-(defun trace-to-episode (trace name-map)
+(defun get-traces (verb)
+  (loop for scenario in (scenarios-of verb)
+     append (traces-of (simulator-of scenario))))
+
+#+ignore(defun trace-to-episode (trace name-map)
   (intervals-to-episode 
    (pmts-to-intervals 
     (convert-trace-to-pmts trace name-map))))

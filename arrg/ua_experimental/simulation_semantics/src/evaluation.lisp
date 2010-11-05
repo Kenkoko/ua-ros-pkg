@@ -3,18 +3,28 @@
 ;;===================================================================
 
 (define-unit-class test-result ()
-  (planning-success
+  (execution-success
    planning-time
-   plan-length
+   execution-length
    (trace :initform nil)
-   (accepted :initform nil)))
+   (accepted :initform :neither)))
 
+(defun read-accepted ()
+  (format t "Choose one of: (a)ccept, (r)eject, (n)either.~%")
+  (let* ((input (read)))
+    (cond ((eq input 'a)
+           :accepted)
+          ((eq input 'r)
+           :rejected)
+          (t
+           :neither))))
+           
 (defun print-test-result (result)
   (format t "~a: ~a ~,2f ~a ~a~%" 
-          (if (accepted-of result) "PASSED" "FAILED")
-          (planning-success-of result)
+          (accepted-of result)
+          (execution-success-of result)
           (planning-time-of result)
-          (plan-length-of result)
+          (execution-length-of result)
           (not (null (trace-of result)))))
                  
 ;;===================================================================
@@ -24,6 +34,7 @@
     (loop for i from min-training-size upto (if max-training-size max-training-size (length training))
        collect (make-learning-point verb-word i num-trials))))
 
+;; TODO: Fix name mapping
 (defun make-learning-point (verb-word training-size num-trials)
   (let* ((training (make-training verb-word))
          (verb (find-verb verb-word)))
@@ -33,10 +44,10 @@
          (format t "Begin Trial ~d with training size ~d~%" j training-size)
          (loop for instance in (sample-random-subset training training-size)
             for student-result = (run-test verb (first instance))
-            if (accepted-of student-result) 
-            do (update-verb-with-trace verb (trace-of student-result))
-            else if (trace-of student-result) 
-            do (update-verb-with-negative-trace verb (trace-of student-result))
+            if (eq :accepted (accepted-of student-result))
+            do (update-verb-with-trace verb (trace-of student-result) (argument-list-of verb))
+            else if (eq :rejected (accepted-of student-result))
+            do (update-verb-with-negative-trace verb (trace-of student-result) (argument-list-of verb))
             do (format t "Presenting teacher's demonstration~%") 
               (present-training-instance verb-word instance))
          (format t "Testing robot performance...~%")
@@ -58,13 +69,13 @@
                 ;do (print-test-result result)
                 if (accepted-of result) sum 1 into correct
                 sum (planning-time-of result) into time-sum
-                sum (plan-length-of result) into length-sum
+                sum (execution-length-of result) into length-sum
                 finally (push (/ time-sum n) times)
                   (push (/ correct n) scores)
                   (push (/ length-sum n) lengths))
             (format t "  Average Planning Time: ~,2f seconds~%" (mean times))
             (format t "  Percent Correct: ~,2f~%" (mean scores))
-            (format t "  Average Plan Length: ~,2f~%" (mean lengths))
+            (format t "  Average Execution Length: ~,2f~%" (mean lengths))
             (push (mean times) avg-times)
             (push (mean scores) avg-scores)
             (push (mean lengths) avg-lengths))
@@ -72,19 +83,19 @@
                (standard-deviation avg-times))
        (format t "Average Percent Correct: ~,2f (stddev ~,2f)~%" (mean avg-scores)
                (standard-deviation avg-scores))
-       (format t "Average Plan Length: ~,2f (stddev ~,2f)~%" (mean avg-lengths)
+       (format t "Average Execution Length: ~,2f (stddev ~,2f)~%" (mean avg-lengths)
                (standard-deviation avg-lengths))))
                          
 (defun present-training-instance (verb-word instance)
   (let* ((verb (find-verb verb-word))
          (start-state (initialize (first instance)))
-         (new-trace (loop for action in (second instance)
+         (teacher-trace (loop for action in (second instance)
                        do (format t "Performing action ~a~%" action)
                        collect (perform-action action) into trace
                        do (format t "Action complete.~%")
-                       finally (return (push start-state trace))))
-         (new-episode (trace-to-episode new-trace (instance-name-map (first instance) verb))))
-    (update-canonical-signature new-episode :verb verb)))
+                       finally (return (push start-state trace)))))
+    (update-verb-with-trace verb teacher-trace 
+                            (argument-names (first instance)))))
     
 (defun run-tests (verb-word tests)
   (loop with verb = (find-verb verb-word)
@@ -96,64 +107,29 @@
 (defun run-test (verb object-states)
   "Returns a list (planning-success planning-time plan-length trace accept)"
   (let* ((start-state (initialize object-states))
-         (planning-response (call-service "verb_learning/plan_verb" 'verb_learning-srv:PlanVerb
-                                        :verb (make-message "verb_learning/VerbInstance"
+         (perform-response (call-service "verb_learning/perform_verb" 'verb_learning-srv:PerformVerb
+                                         :verb (make-message "verb_learning/VerbInstance"
                                                             :verb (lexical-form-of verb)
                                                             :arguments (ros-list (argument-strings verb))
                                                             :bindings (ros-list (argument-names object-states)))
-                                        :start_state start-state))
+                                         :start_state start-state
+                                         :execution_limit 30))
+         (trace (verb_learning-srv:trace-val perform-response))
          (result (make-instance 'test-result
-                                :planning-success (verb_learning-srv:success-val planning-response)
-                                :planning-time (/ (verb_learning-srv:time_millis-val planning-response) 
+                                :execution-success (verb_learning-srv:execution_success-val perform-response)
+                                :planning-time (/ (verb_learning-srv:planning_time-val perform-response) 
                                                   1000)
-                                :plan-length (length (verb_learning-msg:actions-val 
-                                                      (verb_learning-srv:plan-val planning-response))))))
-    (if (planning-success-of result) 
-        (progn (setf (trace-of result)
-                     (execute-plan (verb_learning-srv:plan-val planning-response) start-state))
-               (if (trace-of result)
-                   (progn 
-                     (sb-ext:run-program "/usr/bin/notify-send" '("Robot needs feedback"))
-                     (format t ">>> Accept student's performance? (t or nil)~%") 
-                     (setf (accepted-of result) (read)))
-                   (format t "Plan execution failed.~%")))
-        (progn
-          (format t "Planning failed.~%")
-          (setf (plan-length-of result) 20)))
+                                :execution-length (verb_learning-srv:execution_length-val perform-response)
+                                :trace trace)))
+    (cond ((> (length trace) 0)
+           (sb-ext:run-program "/usr/bin/notify-send" '("Robot needs feedback"))
+           (format t ">>> Accept student's performance? (t or nil)~%") 
+           (setf (accepted-of result) (read-accepted))))
     result))
+                                          
 
-;; How to measure time for future reference
-;(let* ((t1 (get-internal-real-time)))
-;          (sleep 1.03)
-;          (format t "~,4fs~%" (/ (- (get-internal-real-time) t1)
-;                                 internal-time-units-per-second)))
 
-;;===================================================================
-
-;; TODO: Need to replan if necessary
-(defun execute-plan (plan start-state)
-  "Executes the plan and returns a trace, or nil if the plan did not succeed"
-  (let* ((states (verb_learning-msg:states-val plan))
-         (actions (verb_learning-msg:actions-val plan)))
-    (loop with true-state = start-state
-       for state across states
-       for action across actions 
-       for step from 1
-       if (msg-equal state true-state)
-       do (format t "State matched for Step ~d, proceeding with plan!~%" step)
-         (cond ((string-equal action "TERMINATE")
-                (format t "Action is TERMINATE, plan execution is complete!~%"))
-               (t 
-                (format t "Performing action: ~a~%" action)
-                (setf true-state (perform-action action))))
-       and collect true-state into trace
-       else 
-       do (format t "State did at Step ~d not match, terminating plan!~%" step)
-         (print-mdp-state state)
-         (print-mdp-state true-state)
-         (loop for state1 across states do (print-mdp-state state1))
-       and return nil
-       finally (return (push start-state trace)))))
+;;========================================================================
 
 (defun argument-names (object-states)
   (loop for object-state across object-states
