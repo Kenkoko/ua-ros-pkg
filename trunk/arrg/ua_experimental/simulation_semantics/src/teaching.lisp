@@ -41,32 +41,30 @@
 ;                                    :verb (lexical-form-of verb)
 ;                                    :arguments (ros-list (argument-strings verb)))))
 
-(defun update-canonical-signature (episode &key (verb *current-verb*))
-  (call-service "verb_learning/positive_update" 'verb_learning-srv:FindSignature
-                :episodes (list episode)
+#+ignore(defun update-canonical-signature (episode &key (verb *current-verb*))
+  (call-service "verb_learning/update_verb" 'verb_learning-srv:UpdateVerb
+                :trace (list episode)
                 :verb (make-message "verb_learning/VerbDescription"
                                     :verb (lexical-form-of verb)
                                     :arguments (ros-list (argument-strings verb)))))
 
-(defun update-verb-with-trace (verb trace)
-  (let* ((episode (trace-to-episode trace (instance-name-map 
-                                           (oomdp_msgs-msg:object_states-val (first trace))
-                                           verb))))
-    (call-service "verb_learning/positive_update" 'verb_learning-srv:FindSignature
-                  :episodes (list episode)
-                  :verb (make-message "verb_learning/VerbDescription"
-                                      :verb (lexical-form-of verb)
-                                      :arguments (ros-list (argument-strings verb))))))
+(defun update-verb-with-trace (verb trace bindings)
+  (call-service "verb_learning/update_verb" 'verb_learning-srv:UpdateVerb
+                :is_positive t
+                :trace trace
+                :verb (make-message "verb_learning/VerbInstance"
+                                    :verb (lexical-form-of verb)
+                                    :arguments (ros-list (argument-strings verb))
+                                    :bindings (ros-list bindings))))
 
-(defun update-verb-with-negative-trace (verb trace)
-  (let* ((episode (trace-to-episode trace (instance-name-map 
-                                           (oomdp_msgs-msg:object_states-val (first trace))
-                                           verb))))
-    (call-service "verb_learning/negative_update" 'verb_learning-srv:FindSignature
-                  :episodes (list episode)
-                  :verb (make-message "verb_learning/VerbDescription"
-                                      :verb (lexical-form-of verb)
-                                      :arguments (ros-list (argument-strings verb))))))
+(defun update-verb-with-negative-trace (verb trace bindings)
+  (call-service "verb_learning/update_verb" 'verb_learning-srv:UpdateVerb
+                :is_positive nil
+                :trace trace
+                :verb (make-message "verb_learning/VerbInstance"
+                                    :verb (lexical-form-of verb)
+                                    :arguments (ros-list (argument-strings verb))
+                                    :bindings (ros-list bindings))))
 
 ;;=====================================================================
 ;; Modifying verbs
@@ -76,23 +74,12 @@
                 :verb "go-around"
                 :banned_props (list "Contact(thing,obstacle)")))
 
-#+ignore(defun specialize-verb (verb parent new-arguments)
-  (let* ((parent-verb (find-verb parent)))
-    (if (not parent-verb)
-        (format "PARENT DOES NOT EXIST~%"))
-    (setf *current-verb* (make-instance 'verb
-                                        :instance-name (format nil "~a~a" verb "-verb")
-                                        :lexical-form verb
-                                        :argument-structure new-arguments))
-    (call-service "verb_learning/specialize_verb" 'verb_learning-srv:SpecializeVerb
-                  :parent (make-verb-description parent-verb)
-                  :new_verb (make-verb-description *current-verb*))))
-;; TODO: Implement specialize on the other end.
-
 ;;=====================================================================
 ;; Make it happen!
 
-(defun perform-verb (&key (verb *current-verb*))
+;; TODO: These are deprecated for now, need to shift to new scenario format
+
+#+ignore(defun perform-verb (&key (verb *current-verb*))
   (loop for scenario in (scenarios-of verb)
      for i from 1
      do (format t "Scenario ~d:~%" i)
@@ -126,6 +113,7 @@
 
 ;; Some help from teacher
 
+#+ignore
 (defun demonstrate-verb (&key (verb *current-verb*))
   (loop for scenario in (scenarios-of verb)
      for i from 1
