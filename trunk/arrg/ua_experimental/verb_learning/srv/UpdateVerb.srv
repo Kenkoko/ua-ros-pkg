@@ -1,0 +1,4 @@
+verb_learning/VerbInstance verb
+oomdp_msgs/MDPState[] trace
+bool is_positive
+---

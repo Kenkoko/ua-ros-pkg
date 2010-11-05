@@ -19,6 +19,26 @@ public class StateConverter {
 			  .toArray(new MDPObjectState[0]);
 	}
 	
+	public static List<OOMDPState> msgArrayToStates(MDPState[] trace) {
+		List<OOMDPState> result = new Vector<OOMDPState>();
+		
+		for (int i = 0; i < trace.length; i++) {
+			result.add(msgToState(trace[i]));
+		}
+		
+		return result;
+	}
+	
+	public static MDPState[] stateToMsgArray(List<OOMDPState> trace) {
+		MDPState[] mdpStates = new MDPState[trace.size()];
+
+		for (int i = 0; i < trace.size(); i++) {
+			mdpStates[i] = stateToMsg(trace.get(i));
+		}
+		
+		return mdpStates;
+	}
+	
 	
 	/* OOMDPObjectState */ 
 	

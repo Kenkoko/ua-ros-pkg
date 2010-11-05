@@ -2,7 +2,7 @@ VerbInstance verb
 oomdp_msgs/MDPState start_state # get this from calling initialize
 int32 execution_limit  # max number of steps in execution before failure
 ---
-bool planning_success
+oomdp_msgs/MDPState[] trace
 int64 planning_time
-int32 execution_length
+int32 execution_length # is this just the length of the trace?
 bool execution_success

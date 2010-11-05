@@ -37,9 +37,12 @@ public class LRTDP {
 		public State nextState;
 		public double cost;
 	}
+
+	public static final String terminateAction = "TERMINATE";
 	
 	// TODO: Maybe this is overkill
 	public class Action implements Comparable<Action> {
+		
 		String name_;
 		
 		public Action(String name) {
@@ -121,7 +124,7 @@ public class LRTDP {
 		}
 		
 		// This is so we can have random for exploration, but a fixed policy at the end
-		public List<Action> getGreedyActions() { 
+		public Vector<Action> getGreedyActions() { 
 			double minValue = Double.POSITIVE_INFINITY;
 			Vector<Action> result = new Vector<Action>();
 			for (Action a : LRTDP.this.actions_) {
@@ -139,6 +142,13 @@ public class LRTDP {
 			
 			return result;
 		}
+		
+//		public Action getGreedySolvedAction() {
+//			List<Action> greedyActions = getGreedyActions();
+//			for (Action action : greedyActions) {
+//				
+//			}
+//		}
 		
 		public void printQValues() {
 			for (Action a : LRTDP.this.actions_) {
@@ -222,7 +232,7 @@ public class LRTDP {
 	// BEGIN LRTDP CLASS
 	
 	public Verb verb_;
-	public State start_;
+//	public State start_;
 	public Environment environment_;
 	public List<Action> actions_;
 	
@@ -232,25 +242,20 @@ public class LRTDP {
 	public TreeMap<Action,HashMap<State,Double>> costTotals_;
 	public TreeMap<Action,HashMap<State,Integer>> costCounts_;
 	
-	public LRTDP(Verb verb, Environment environment, OOMDPState startState) {
+	public LRTDP(Verb verb, Environment environment) {
 		verb_ = verb;
 		environment_ = environment;
 
 		// This is so the entities have the remapped names
 		// TODO: There's probably more ugliness coming with this name mapping, need to clean up
-		environment_.initializeEnvironment(startState.getObjectStates());
+		// TODO: Move this out to the perform verb
+		//environment_.initializeEnvironment(startState.getObjectStates());
 		
 		// Get the set of actions from the environment
 		actions_ = new Vector<LRTDP.Action>();
 		for (String action : environment_.getActions()) {
 			actions_.add(new Action(action));
 		}
-		
-		// We have to do something like this because the first state might have relations that matter
-		TransitionResult simulationResult = verb_.getFSM().simulateDfaTransition(verb_.getFSM().getStartState(), startState.getActiveRelations());
-		start_ = new State(startState, simulationResult.newState);
-		
-		System.out.println("START STATE is " + start_);
 		
 		transitionCounts_ = new TreeMap<LRTDP.Action, HashMap<State,HashMap<State,Integer>>>();
 		costTotals_ = new TreeMap<LRTDP.Action, HashMap<State,Double>>();
@@ -262,83 +267,120 @@ public class LRTDP {
 		}
 	}
 	
-	public boolean runAlgorithm() {
+	// This now returns the action to take from the start state, or null if the planning fails altogether
+	public String runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
 		logger.info("======================================\nBEGIN RTDP");
-		logger.info("Start state is: " + start_);
 		
-		long start = System.currentTimeMillis();
+		// We have to do something like this because the first state might have relations that matter
+		// TODO: Is this really right? Seems a little bit fudge-y. TURNING OFF FOR NOW
+//		TransitionResult simulationResult = verb_.getFSM().simulateDfaTransition(fsmState, startState.getActiveRelations());
+		State start = new State(startState, fsmState);
+		if (knownStates_.containsKey(start.toString())) {
+			start = knownStates_.get(start);
+		} else {
+			knownStates_.put(start.toString(), start);
+		}
+		
+		logger.info("Start state is: " + start);
+		
+		if (start.isGoal()) { // Need to have a way to signal termination
+			return terminateAction;
+		}
+		
+		long startTime = System.currentTimeMillis();
 		
 		int i = 0;
-		while (!start_.solved) {
+		while (!start.solved) {
 			long trialStart = System.currentTimeMillis();
 			logger.info(">>>>>>>>>> BEGIN TRIAL " + i + ":");
-			boolean success = runLrtdpTrial(start_, 0.1);
+			boolean success = runLrtdpTrial(start, 0.1);
 			logger.info(">>>>>>>>>> END TRIAL " + i + ". Trial took " + 
 						((System.currentTimeMillis() - trialStart)/1000.0) + " seconds.");
 			i++;
 			
 			if (!success) {
-				return false;
+				return null;
 			}
 		}
 		
-		logger.info("END RTDP. TOTAL TIME: " + ((System.currentTimeMillis() - start)/1000.0));
-		return true;
+		logger.info("END RTDP. TOTAL TIME: " + ((System.currentTimeMillis() - startTime)/1000.0));
+		return start.getGreedyActions().firstElement().name_;
 	}
-	
-	public Policy recoverPolicy(final Map<String, String> argumentMap) { 
-		Policy plan = new Policy();
-		
-		List<OOMDPState> states = new Vector<OOMDPState>();
-		List<String> actions = new Vector<String>();
-		logger.info(">>>>>>>>>> POLICY <<<<<<<<<<<<<<");
-		State s = start_;
-		
-		int i = 0;
-		while (!s.isGoal() ) {
-			if (i >= 25) {
-				logger.error("POLICY RETRIEVAL FAILED: Returning partial plan");
-				break;
-			}
-			
-			logger.info("STATE:  " + s);
-			states.add(s.getMdpState());
-			logger.info("IS CURRENT STATE SOLVED? " + s.solved);
-			
-			List<Action> greedyActions = s.getGreedyActions();
-			Action a = null;
-			for (Action candidate : greedyActions) {
-				State sPrime = s.getNextStateDist(candidate).keySet().iterator().next();
-				if (sPrime.solved) { // Take the first action that leads to a solved state
-					a = candidate;
-					break;
-				}
-			}
 
-			if (a == null) {
-				logger.error("NO ACTION LEADS TO A SOLVED STATE, choosing stupid action");
-				a = greedyActions.iterator().next();
-			} 
-			
-			actions.add(a.name_);
-			
-			s = s.getNextStateDist(a).keySet().iterator().next();
-//			logger.info("IS NEXT STATE SOLVED? " + s.solved);
-			
-			i++;
-		}
-		
-		logger.info("FINAL STATE:  " + s); 
-		states.add(s.getMdpState()); // Add the final state
-		actions.add("TERMINATE"); // TODO: Should make a constant in the msg file
-		
-		// Populate the object
-		// Functional programming in Java is so ugly!
-		plan.states = Collections2.transform(states, new Function<OOMDPState, MDPState>() 
-						{ public MDPState apply(OOMDPState state) { return StateConverter.stateToMsg(state.remapState(argumentMap)); } } ).toArray(new MDPState[0]);
-		plan.actions = actions.toArray(new String[0]);
-		return plan;
-	}
+//	public String getBestAction(OOMDPState worldState, TreeSet<FSMState> fsmState) {
+//		State state = new State(worldState, fsmState);
+//		
+//		if (knownStates_.containsKey(state.toString())) {
+//			state = knownStates_.get(state.toString());
+//			if (state.solved) {
+//				return state.getGreedyActions().firstElement().name_;
+//			} else {
+//				// Re-plan
+//			}
+//		} else {
+//			// Re-plan
+//		}
+//		
+//		runAlgorithm();
+//		
+//		// Step 1: Push state's relations through VFSM, get combined state
+//		// Step 2: Lookup combined state, see if it is closed
+//		// Step 3: If closed, return max action, else plan until it is closed
+//	}
+	
+//	public Policy recoverPolicy(final Map<String, String> argumentMap) { 
+//		Policy plan = new Policy();
+//		
+//		List<OOMDPState> states = new Vector<OOMDPState>();
+//		List<String> actions = new Vector<String>();
+//		logger.info(">>>>>>>>>> POLICY <<<<<<<<<<<<<<");
+//		State s = start_;
+//		
+//		int i = 0;
+//		while (!s.isGoal() ) {
+//			if (i >= 25) {
+//				logger.error("POLICY RETRIEVAL FAILED: Returning partial plan");
+//				break;
+//			}
+//			
+//			logger.info("STATE:  " + s);
+//			states.add(s.getMdpState());
+//			logger.info("IS CURRENT STATE SOLVED? " + s.solved);
+//			
+//			List<Action> greedyActions = s.getGreedyActions();
+//			Action a = null;
+//			for (Action candidate : greedyActions) {
+//				State sPrime = s.getNextStateDist(candidate).keySet().iterator().next();
+//				if (sPrime.solved) { // Take the first action that leads to a solved state
+//					a = candidate;
+//					break;
+//				}
+//			}
+//
+//			if (a == null) {
+//				logger.error("NO ACTION LEADS TO A SOLVED STATE, choosing stupid action");
+//				a = greedyActions.iterator().next();
+//			} 
+//			
+//			actions.add(a.name_);
+//			
+//			s = s.getNextStateDist(a).keySet().iterator().next();
+////			logger.info("IS NEXT STATE SOLVED? " + s.solved);
+//			
+//			i++;
+//		}
+//		
+//		logger.info("FINAL STATE:  " + s); 
+//		states.add(s.getMdpState()); // Add the final state
+//		actions.add("TERMINATE"); // TODO: Should make a constant in the msg file
+//		
+//		// Populate the object
+//		// Functional programming in Java is so ugly!
+//		plan.states = Collections2.transform(states, new Function<OOMDPState, MDPState>() 
+//						{ public MDPState apply(OOMDPState state) { return StateConverter.stateToMsg(state.remapState(argumentMap)); } } ).toArray(new MDPState[0]);
+//		plan.actions = actions.toArray(new String[0]);
+//		return plan;
+//	}
 	
 	public boolean runLrtdpTrial(State state, double epsilon) {
 		State s = state;
