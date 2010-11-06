@@ -1,0 +1,17 @@
+<package>
+    <description brief="gearbox">
+         gearbox
+    </description>
+
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/gearbox</url>
+
+    <export>
+      <cpp cflags="-I${prefix}/gearbox/include" lflags="-L${prefix}/gearbox/lib64/gearbox -Wl,-rpath,${prefix}/gearbox/lib64/gearbox -lflexiport -lGbxGarminAcfr -lGbxLockFileAcfr -lGbxNovatelAcfr -lGbxNovatelUtilAcfr -lGbxSerialAcfr -lGbxSmartBatteryAcfr -lGbxUtilAcfr -lhokuyo_aist -L${prefix}/gearbox/lib -Wl,-rpath,${prefix}/gearbox/lib"/>
+    </export>
+
+</package>
+
+
