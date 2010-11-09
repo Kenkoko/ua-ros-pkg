@@ -25,6 +25,7 @@ class Logger:
         self.logfile.write('control\ttime:%s\trun:%d\tdirectory:%s\n' %(timestamp, runstatus, directory))    
         
         
-        
+ 
+       
 if __name__ == "__main__":
     Logger()
