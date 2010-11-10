@@ -15,6 +15,10 @@
 #include <sys/types.h>
 #include <string>
 
+#include "ultraspeech/Control.h"
+#include "ultraspeech/CurrentStim.h"
+#include "ultraspeech/SaveFile.h"
+
 #define ERROR 1
 #ifndef png_jmpbuf
 #  define png_jmpbuf(png_ptr) ((png_ptr)->jmpbuf)
@@ -24,7 +28,10 @@ class ImageWrite
 {
 private:
   image_transport::Subscriber sub_;
-
+  
+  ros::Subscriber control_sub_;
+  ros::Publisher savefile_pub_;
+  
   sensor_msgs::ImageConstPtr last_msg_;
   sensor_msgs::CvBridge img_bridge_;
   boost::mutex image_mutex_;
@@ -33,34 +40,49 @@ private:
   std::string window_name_;
   boost::format filename_format_;
   int count_;
-
+  std::string filename_chunk_;
+  std::string subdir_;
+  std::string image_name_;
+  int run_status_;
+  
 public:
-  ImageWrite(const ros::NodeHandle& nh, const std::string& transport)
-    : filename_format_(""), count_(0), png_threadpool(15)
+  ImageWrite(const ros::NodeHandle& nh, 
+	     const std::string& fname_chunk, 
+	     const std::string& transport)
+    : filename_format_(""), 
+      count_(0), 
+      png_threadpool(15),
+      filename_chunk_(fname_chunk),
+      run_status_(0)
   {
     std::string topic = nh.resolveName("image");
     ros::NodeHandle local_nh("~");
-    local_nh.param("window_name", window_name_, topic);
 
-    bool autosize;
-    local_nh.param("autosize", autosize, false);
-
-    std::string format_string;
-    local_nh.param("filename_format", format_string, std::string("frame%04i.jpg"));
-    filename_format_.parse(format_string);
-
-    const char* name = window_name_.c_str();
-    //cvNamedWindow(name, autosize ? CV_WINDOW_AUTOSIZE : 0);
-    //cvSetMouseCallback(name, &ImageView::mouse_cb, this);
-
-    //cvStartWindowThread();
     image_transport::ImageTransport it(nh);
     sub_ = it.subscribe(topic, 1, &ImageWrite::image_cb, this, transport);
+
+    control_sub_ = local_nh.subscribe("/control", 1, &ImageWrite::control_cb, this);
+    savefile_pub_ = local_nh.advertise<ultraspeech::SaveFile>("save_name", 1);
+  }
+  
+  void control_cb(const ultraspeech::ControlConstPtr& msg)
+  {
+    using std::cout;
+    using std::endl;
     
+    run_status_ = msg->run;
+    subdir_ = (std::string)(msg->directory + "/" + filename_chunk_ + "/");
+    std::cout << "run_status changed: " << run_status_ << std::endl;
   }
   
   void image_cb(const sensor_msgs::ImageConstPtr& msg)
   {
+    using std::cout;
+    using std::endl;
+    using boost::lexical_cast;
+    char num[10];
+    ultraspeech::SaveFile sv_msg;
+
     boost::lock_guard<boost::mutex> guard(image_mutex_);
 
     // Hang on to message pointer for sake of mouse_cb
@@ -71,11 +93,25 @@ public:
     if (msg->encoding.find("bayer") != std::string::npos)
       boost::const_pointer_cast<sensor_msgs::Image>(msg)->encoding = "mono8";
     cv::Mat img = img_bridge_.imgMsgToCv(msg, "rgb8");
-    png_thread(img);
+    std::sprintf(num, "%.06d", msg->header.seq);
+    std::string filename(subdir_ + filename_chunk_ + "_" + num +".png");
+    image_name_ = filename;
+    if (run_status_ == 1)
+    {
+      sv_msg.header.stamp = ros::Time::now();
+      sv_msg.filepath = filename;
+      savefile_pub_.publish(sv_msg);
+    } 
+    std::cout << filename << std::endl;
+    std::cout << "run_status: " << run_status_ << std::endl;
+
+    if (run_status_ == 1)
+      png_thread(img, filename);
+
     count_++;
   }
 
-  void png_thread(cv::Mat &img){
+  void png_thread(cv::Mat &img, std::string &filename){
     using boost::shared_ptr;
     using std::cout;
     using std::endl;
@@ -83,12 +119,10 @@ public:
 
     shared_ptr<cv::Mat> shared_img(new cv::Mat);
     *shared_img = img.clone();
-    cout << "shared_img->rows: " << shared_img->rows << endl;
-
-    std::string filename("/tmp/TestPNG" + lexical_cast<std::string>(count_) +".png");
+    //cout << "shared_img->rows: " << shared_img->rows << endl;
 	
     png_threadpool.schedule( boost::bind(&ImageWrite::save_to_png, this, filename, shared_img) );
-    std::cout << count_ << std::endl;
+    //std::cout << count_ << std::endl;
 
   }
 
@@ -205,7 +239,7 @@ int main(int argc, char **argv)
              "\t$ ./image_write image:=<image topic> [transport]");
   }
 
-  ImageWrite view(n, (argc > 1) ? argv[1] : "raw");
+  ImageWrite view(n, argv[1], (argc > 2) ? argv[2] : "raw");
 
   ros::spin();
 
