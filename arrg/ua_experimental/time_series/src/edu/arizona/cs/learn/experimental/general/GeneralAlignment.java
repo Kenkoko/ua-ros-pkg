@@ -62,6 +62,7 @@ public class GeneralAlignment {
 	
 	/**
 	 * Code structure courtesy of David Powell
+	 * http://drp.id.au/index.shtml
 	 * 	Time Complexity: O(n*n)  Space Complexity: O(n) 
 	 * @param params
 	 * @return
