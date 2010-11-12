@@ -125,6 +125,10 @@ class SubjectUI:
         os.makedirs(self.topleveldir)
         monocamdir = self.topleveldir + '/monocam'
         os.makedirs(monocamdir)
+        stereorightdir = self.topleveldir + '/stereoright'
+        os.makedirs(stereorightdir)
+        stereoleftdir = self.topleveldir + '/stereoleft'
+        os.makedirs(stereoleftdir)
         
         stimuli = open(stimuliFile, 'r').readlines()
         random.shuffle(stimuli)
