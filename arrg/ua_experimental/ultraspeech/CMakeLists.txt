@@ -17,13 +17,17 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
-#rosbuild_genmsg()
+rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
+rosbuild_add_executable("jack_audio_capture" src/jack_audio_capture.cpp)
+rosbuild_add_executable("audio_clip_writer" src/audio_clip_writer.cpp)
 rosbuild_add_executable(${PROJECT_NAME} src/data_collect.cpp)
 target_link_libraries(${PROJECT_NAME} png)
+target_link_libraries("jack_audio_capture" jack)
+target_link_libraries("audio_clip_writer" sndfile)
 rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)

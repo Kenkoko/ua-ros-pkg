@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/ultraspeech</url>
   <depend package="opencv2"/>
   <depend package="image_proc"/>
+  <depend package="rospy"/>
   <depend package="roscpp"/>
   <depend package="camera1394"/>
 

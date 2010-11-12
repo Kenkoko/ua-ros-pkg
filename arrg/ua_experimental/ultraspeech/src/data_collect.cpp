@@ -98,7 +98,8 @@ public:
     image_name_ = filename;
     if (run_status_ == 1)
     {
-      sv_msg.header.stamp = ros::Time::now();
+      //sv_msg.header.stamp = ros::Time::now();
+      sv_msg.header.stamp = msg->header.stamp;
       sv_msg.filepath = filename;
       savefile_pub_.publish(sv_msg);
     } 
