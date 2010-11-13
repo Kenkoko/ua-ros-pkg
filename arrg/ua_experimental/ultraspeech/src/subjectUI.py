@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, sys, datetime, random, math
+import os, sys, datetime, random, math, time, subprocess
 
 import pygtk
 pygtk.require('2.0')
@@ -13,6 +13,7 @@ roslib.load_manifest('ultraspeech')
 import rospy
 
 from ultraspeech.msg import Control, CurrentStim
+from std_msgs.msg import String
 
 gtk.gdk.threads_init()
 
@@ -74,6 +75,9 @@ class SubjectUI:
         numReps is the number of repitions for each word/sentence
         '''
         rospy.init_node('subjectUI')
+ 	self.startupTopic = rospy.Publisher('startup', String) #for the logger to open the logfile
+        self.controlTopic = rospy.Publisher('control',Control)    
+        self.currentStimulusTopic = rospy.Publisher('current_stimulus', CurrentStim)
         
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.connect("destroy", self.onDestroy)
@@ -113,15 +117,15 @@ class SubjectUI:
 	    self.currentRep = 1
 	    self.currentBatch = 1
 	    self.total = len(self.stimuliList)
+	    self.startJack()
 	    
-            self.controlTopic = rospy.Publisher('control',Control)        
-            self.currentStimulusTopic = rospy.Publisher('current_stimulus', CurrentStim)
                     
         
     def createTopLevel(self, stimuliFile, numReps):
         '''Creates the top level directory, randomizes input list'''
-        self.sessionID = str(rospy.Time.now())
-        self.topleveldir = os.environ['HOME'] + '/UltraspeechData/' + str(datetime.date.today()) + '_' + self.sessionID
+	self.sessionID = str(rospy.Time.now())
+	self.topleveldir = os.environ['HOME'] + '/UltraspeechData/' + str(datetime.date.today()) + '_' + self.sessionID
+	
         os.makedirs(self.topleveldir)
         monocamdir = self.topleveldir + '/monocam'
         os.makedirs(monocamdir)
@@ -129,6 +133,8 @@ class SubjectUI:
         os.makedirs(stereorightdir)
         stereoleftdir = self.topleveldir + '/stereoleft'
         os.makedirs(stereoleftdir)
+        mic1dir = self.topleveldir + '/mic1'
+        os.makedirs(mic1dir)
         
         stimuli = open(stimuliFile, 'r').readlines()
         random.shuffle(stimuli)
@@ -141,7 +147,27 @@ class SubjectUI:
         self.numReps = numReps
         self.numBatches = int(math.ceil(float(len(self.stimuliList)) / 10.0))
         self.console.set_text("Press Start to begin")
-      
+	
+	for i in range(2):
+	    #this tells the logger where to create the logfile
+	    msg = String()
+	    msg.data = str(self.topleveldir)
+	    self.startupTopic.publish(msg)
+	    time.sleep(1) # for some reason the first one is not published
+	    
+    def startJack(self):
+	jackstart = ['/usr/bin/jackd', '-r', '-p128', '-dfirewire', '-dhw:0', '-r96000', '-p1024', '-n3']
+	self.jack_pid = subprocess.Popen(jackstart)
+	time.sleep(3) # wait for jack to find the Saffire and turn it on
+	
+	ffadodbus = ['ffado-dbus-server']
+	self.ffado_pid = subprocess.Popen(ffadodbus)
+	time.sleep(1) # wait for ffado to start
+	
+	ffadomixer = ['ffado-mixer-qt3']
+	self.ffado_mixer_pid = subprocess.Popen(ffadomixer)
+	print "turn on phantom power\n"
+
     def onStart(self, event):
         if self.run == 0:
             self.run = 1
@@ -191,6 +217,9 @@ class SubjectUI:
             pass
         
     def onDestroy(self, event):
+	self.ffado_pid.terminate()
+	self.jack_pid.terminate()
+	self.ffado_mixer_pid.terminate()
         #self.logfile.close()
         gtk.main_quit()
 

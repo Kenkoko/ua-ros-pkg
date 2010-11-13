@@ -126,6 +126,8 @@ int main(int argc, char **argv)
   ros::init(argc, argv, argv[1], ros::init_options::AnonymousName);
   ros::NodeHandle n;
 
+  sleep(5); // wait for the jack server to start before trying to connect
+  
   JackAudioCapture(n, argv[1], channel);
 
   ros::spin();
