@@ -51,7 +51,7 @@ public:
 	     const std::string& transport)
     : filename_format_(""), 
       count_(0), 
-      png_threadpool(15),
+      png_threadpool(20),
       filename_chunk_(fname_chunk),
       run_status_(0)
   {
