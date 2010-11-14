@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Software License Agreement (BSD License)
 #
@@ -57,20 +57,20 @@ class JointControllerAX12:
         self.joint_name = rospy.get_param(self.topic_name + '/joint_name')
         self.joint_speed = rospy.get_param(self.topic_name + '/joint_speed')
         self.compliance_slope = rospy.get_param(self.topic_name + '/joint_compliance_slope', 32)
-        
+
         self.speed_service = rospy.Service(self.topic_name + '/set_speed', SetSpeed, self.process_set_speed)
         self.torque_service = rospy.Service(self.topic_name + '/torque_enable', TorqueEnable, self.process_torque_enable)
         self.compliance_slope_service = rospy.Service(self.topic_name + '/set_compliance_slope', SetComplianceSlope, self.process_set_compliance_slope)
-        
+
     def initialize(self):
         raise NotImplementedError
-        
+
     def start(self):
         self.running = True
         self.joint_state_pub = rospy.Publisher(self.topic_name + '/state', JointState)
         self.command_sub = rospy.Subscriber(self.topic_name + '/command', Float64, self.process_command)
         self.motor_states_sub = rospy.Subscriber('motor_states/%s' % self.port_namespace, MotorStateList, self.process_motor_states)
-        
+
     def stop(self):
         self.running = False
         self.joint_state_pub.unregister()
@@ -78,32 +78,33 @@ class JointControllerAX12:
         self.command_sub.unregister()
         self.speed_service.shutdown('normal shutdown')
         self.torque_service.shutdown('normal shutdown')
-        
+        self.compliance_slope_service.shutdown('normal shutdown')
+
     def set_speed(self, speed):
         raise NotImplementedError
-        
+
     def process_set_speed(self, req):
         raise NotImplementedError
-        
+
     def process_torque_enable(self, req):
         raise NotImplementedError
-        
+
     def process_set_compliance_slope(self, req):
         raise NotImplementedError
-        
+
     def process_motor_states(self, state_list):
         raise NotImplementedError
-        
+
     def process_command(self, msg):
         raise NotImplementedError
-        
+
     def rad_to_raw(self, angle, initial_position_raw, flipped, encoder_ticks_per_radian):
         """ angle is in radians """
         #print 'flipped = %s, angle_in = %f, init_raw = %d' % (str(flipped), angle, initial_position_raw)
         angle_raw = angle * encoder_ticks_per_radian
         #print 'angle = %f, val = %d' % (math.degrees(angle), int(round(initial_position_raw - angle_raw if flipped else initial_position_raw + angle_raw)))
         return int(round(initial_position_raw - angle_raw if flipped else initial_position_raw + angle_raw))
-        
+
     def raw_to_rad(self, raw, initial_position_raw, flipped, radians_per_encoder_tick):
         return (initial_position_raw - raw if flipped else raw - initial_position_raw) * radians_per_encoder_tick
 
