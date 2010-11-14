@@ -28,6 +28,7 @@ class Logger:
         rospy.Subscriber("right/stereoright_capture/save_name", SaveFile, self.stereorightsave_cb)
         #rospy.Subscriber("audio", AudioStream, self.audio_cb) #incomplete
         rospy.Subscriber("mic1_capture/save_name", SaveFile, self.mic1save_cb)
+        rospy.Subscriber("ultrasound_dvgrab/save_name", SaveFile, self.ultrasoundsave_cb)
         
         rospy.spin()
     
@@ -53,6 +54,11 @@ class Logger:
     #def audio_cb(self, data):
 	#if self.runstatus == 1:
 	    #timestamp = self.getTime(str(data.header.stamp.secs), str(data.header.stamp.nsecs))
+
+    def ultrasoundsave_cb(self, data):
+	timestamp = self.getTime(str(data.header.stamp.secs), str(data.header.stamp.nsecs))
+	filename = data.filepath
+	self.logfile.write('topic:ultrasound,time:%s,filepath:%s\n' %(timestamp, filename))
 
     def mic1save_cb(self, data):
 	timestamp = self.getTime(str(data.header.stamp.secs), str(data.header.stamp.nsecs))
