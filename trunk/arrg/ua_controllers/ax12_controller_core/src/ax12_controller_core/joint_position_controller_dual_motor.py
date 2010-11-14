@@ -100,7 +100,7 @@ class JointPositionControllerDualAX12(JointControllerAX12):
         slope2 = (slope << 8) + slope
         mcv_master = (self.master_id, slope2)
         mcv_slave = (self.slave_id, slope2)
-        self.send_packet_callback((DMXL_SET_COMPLIANCE_SLOPE, [mcv_master, mcv_slave]))
+        self.send_packet_callback((DMXL_SET_COMPLIANCE_SLOPES, [mcv_master, mcv_slave]))
         
     def process_set_speed(self, req):
         self.set_speed(req.speed)
