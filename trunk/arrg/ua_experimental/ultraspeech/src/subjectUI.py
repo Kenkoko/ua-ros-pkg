@@ -135,6 +135,8 @@ class SubjectUI:
         os.makedirs(stereoleftdir)
         mic1dir = self.topleveldir + '/mic1'
         os.makedirs(mic1dir)
+        ultrasounddir = self.topleveldir + '/ultrasound'
+        os.makedirs(ultrasounddir)
         
         stimuli = open(stimuliFile, 'r').readlines()
         random.shuffle(stimuli)
