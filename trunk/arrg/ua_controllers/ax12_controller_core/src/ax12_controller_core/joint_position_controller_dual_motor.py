@@ -48,8 +48,8 @@ from ax12_controller_core.joint_controller import JointControllerAX12
 from ua_controller_msgs.msg import JointState
 
 class JointPositionControllerDualAX12(JointControllerAX12):
-    def __init__(self, out_cb, param_path):
-        JointControllerAX12.__init__(self, out_cb, param_path)
+    def __init__(self, out_cb, param_path, port_name):
+        JointControllerAX12.__init__(self, out_cb, param_path, port_name)
         
         self.master_id = rospy.get_param(self.topic_name + '/motor_master/id')
         self.master_initial_position_raw = rospy.get_param(self.topic_name + '/motor_master/init')
