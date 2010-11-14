@@ -1,0 +1,11 @@
+<launch>
+
+  <node pkg="camera1394" name="monocam" type="camera1394_node" args='camera:=/monocam _guid:=0055050400033409 _video_mode:=640x480_mono8 _iso_speed:=400 _frame_rate:=30 _bayer_pattern:="grbg"'/>
+ 
+  <group ns="monocam">
+    <node pkg="image_proc" name="image_proc" type="image_proc"/>
+    <node pkg="image_view" name="image_view" type="image_view" args="image:=image_color"/>
+  </group>
+
+</launch>
+  

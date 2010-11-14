@@ -1,0 +1,15 @@
+<launch>
+
+  <node pkg="videre_stereo_cam" name="videre_stereo_node" type="videre_stereo_node" args='_guid:=0055050400083362 _bayer_pattern="grbg"'/>
+
+  <group ns="left">
+    <node pkg="image_proc" name="image_proc" type="image_proc"/>
+    <node pkg="image_view" name="image_view" type="image_view" args="image:=image_color"/>
+  </group>
+
+  <group ns="right">
+    <node pkg="image_proc" name="image_proc" type="image_proc"/>
+    <node pkg="image_view" name="image_view" type="image_view" args="image:=image_color"/>    
+  </group>
+
+</launch>
