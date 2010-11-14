@@ -70,8 +70,8 @@ class JointPositionControllerDualAX12(JointControllerAX12):
             rospy.logwarn('Specified ids: %d %d' % (self.master_id, self.slave_id))
             return False
             
-        self.radians_per_encoder_tick = rospy.get_param('dynamixel/%s/%d/radians_per_encoder_tick' % (self.port_namespace, self.motor_id))
-        self.encoder_ticks_per_radian = rospy.get_param('dynamixel/%s/%d/encoder_ticks_per_radian' % (self.port_namespace, self.motor_id))
+        self.radians_per_encoder_tick = rospy.get_param('dynamixel/%s/%d/radians_per_encoder_tick' % (self.port_namespace, self.master_id))
+        self.encoder_ticks_per_radian = rospy.get_param('dynamixel/%s/%d/encoder_ticks_per_radian' % (self.port_namespace, self.master_id))
         
         if self.flipped:
             self.master_min_angle = (self.master_initial_position_raw - self.master_min_angle_raw) * self.radians_per_encoder_tick
@@ -80,7 +80,7 @@ class JointPositionControllerDualAX12(JointControllerAX12):
             self.master_min_angle = (self.master_min_angle_raw - self.master_initial_position_raw) * self.radians_per_encoder_tick
             self.master_max_angle = (self.master_max_angle_raw - self.master_initial_position_raw) * self.radians_per_encoder_tick
             
-        self.encoder_resolution = rospy.get_param('dynamixel/%s/%d/encoder_resolution' % (self.port_namespace, self.motor_id))
+        self.encoder_resolution = rospy.get_param('dynamixel/%s/%d/encoder_resolution' % (self.port_namespace, self.master_id))
         self.max_position = self.encoder_resolution - 1
         self.set_speed(self.joint_speed)
         self.set_compliance_slope(self.compliance_slope)
