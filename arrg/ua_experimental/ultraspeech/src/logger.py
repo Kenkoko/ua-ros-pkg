@@ -28,7 +28,7 @@ class Logger:
         rospy.Subscriber("right/stereoright_capture/save_name", SaveFile, self.stereorightsave_cb)
         #rospy.Subscriber("audio", AudioStream, self.audio_cb) #incomplete
         rospy.Subscriber("mic1_capture/save_name", SaveFile, self.mic1save_cb)
-        rospy.Subscriber("ultrasound_dvgrab/save_name", SaveFile, self.ultrasoundsave_cb)
+        rospy.Subscriber("ultrasound/save_name", SaveFile, self.ultrasoundsave_cb)
         
         rospy.spin()
     
