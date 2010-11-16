@@ -150,7 +150,7 @@ public:
       }
       else {
 	std::sprintf(num, "%.06d", msg->header.seq);
-	std::string filename(subdir_ + filename_chunk_ + "_" + num +".jpg");
+	std::string filename(subdir_ + filename_chunk_ + "_" + num +".png");
 	char *fnamebuf(convertStringToChar(filename));
 	std::cout << "wrote file" << std::endl;
 	if(!cvSaveImage(fnamebuf,img)) 

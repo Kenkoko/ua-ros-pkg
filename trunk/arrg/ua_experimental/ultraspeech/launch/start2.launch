@@ -13,24 +13,24 @@
     <param name="frame_rate" value="30"/>
   </node>
   
-  <node pkg="ultraspeech" name="ultrasound" type="ros_dvgrab"/>
+  <!--<node pkg="ultraspeech" name="ultrasound" type="ros_dvgrab"/>-->
 
   <group ns="left">
     <node pkg="image_proc" name="image_proc_left" type="image_proc"/>
    <node pkg="image_view" name="image_view_left" type="image_view"> 
       <remap from="image" to="image_color"/>
     </node>
-    <node pkg="ultraspeech" name="stereoleft_capture" type="ultraspeech" args="stereoleft">
+    <node pkg="ultraspeech" name="stereoleft_capture" type="video_writer" args="stereoleft">
       <remap from="image" to="image_color"/>
     </node>
   </group>
 
   <group ns="right">
-    <node pkg="image_proc" name="image_proc_right" type="image_proc"/>
-    <!--<node pkg="image_view" name="image_view_right" type="image_view"> 
+    <node pkg="image_proc" name="image_proc_right" type="image_proc"/>-->
+    <node pkg="image_view" name="image_view_right" type="image_view"> 
       <remap from="image" to="image_color"/>
-    </node>-->
-    <node pkg="ultraspeech" name="stereoright_capture" type="ultraspeech" args="stereoright">
+    </node>
+    <node pkg="ultraspeech" name="stereoright_capture" type="video_writer" args="stereoright">
       <remap from="image" to="image_color"/>
     </node>
   </group>
@@ -40,9 +40,12 @@
     <node pkg="image_view" name="image_view_mono" type="image_view"> 
       <remap from="image" to="image_color"/>
     </node>
-    <node pkg="ultraspeech" name="monocam_capture" type="ultraspeech" args="monocam">
+    <node pkg="ultraspeech" name="monocam_capture" type="video_writer" args="monocam">
       <remap from="image" to="image_color"/>
     </node>
+    <!--<node pkg="ultraspeech" name="monocam_capture" type="ultraspeech" args="monocam">
+      <remap from="image" to="image_color"/>
+    </node>-->
   </group>
 
 </launch>
