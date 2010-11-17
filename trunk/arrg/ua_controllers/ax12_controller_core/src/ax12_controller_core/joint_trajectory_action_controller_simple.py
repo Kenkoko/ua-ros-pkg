@@ -65,7 +65,7 @@ from ax12_controller_core.srv import SetSpeed
 
 class Spline():
     def __init__(self):
-        self.coeff = [0.0] * 6
+        self.coef = [0.0] * 6
 
 class Segment():
     def __init__(self):
@@ -80,13 +80,14 @@ class JointTrajectoryActionController(JointControllerAX12):
         self.send_packet_callback = out_cb
         self.controller_namespace = param_path
         self.port_namespace = port_name[port_name.rfind('/') + 1:]
+        self.update_rate = 100
 
     def initialize(self):
         self.joint_names = rospy.get_param(self.controller_namespace + '/joints', [])
         self.joint_params = rospy.get_param(self.controller_namespace + '/params', [])
         self.joint_states = dict(zip(self.joint_names, [JointState(name=jn) for jn in self.joint_names]))
 
-        self.__extract_info()
+        self.__fill_joint_params()
         print self.joint_params
 
         ns = self.controller_namespace + '/joint_trajectory_action_node/constraints'
@@ -108,17 +109,11 @@ class JointTrajectoryActionController(JointControllerAX12):
 
         # Services
         self.query_state_service = rospy.Service(self.controller_namespace + '/query_state', QueryTrajectoryState, self.process_query_state)
-
-        seg = Segment()
-        seg.start_time = 0.0
-        seg.duration = 0.0
-        seg.splines = [Spline() for _ in range(len(self.joint_names))]
-        self.trajectory = [seg]
-
         self.action_server = actionlib.SimpleActionServer(self.controller_namespace + '/joint_trajectory_action',
                                                           JointTrajectoryAction,
                                                           execute_cb=self.process_trajectory_action)
 
+        # Message containing current state for all controlled joints
         self.msg = JointTrajectoryControllerState()
         self.msg.joint_names = self.joint_names
         self.msg.desired.positions = [0.0] * len(self.joint_names)
@@ -129,13 +124,14 @@ class JointTrajectoryActionController(JointControllerAX12):
         self.msg.error.positions = [0.0] * len(self.joint_names)
         self.msg.error.velocities = [0.0] * len(self.joint_names)
 
+        # Keep track of last position and velocity sent to each joint
         self.last_commanded = {}
         for joint in self.joint_names:
             self.last_commanded[joint] = { 'position': None, 'velocity': None }
 
         return True
 
-    def __extract_info(self):
+    def __fill_joint_params(self):
         for joint in self.joint_names:
             motor_id = self.joint_params[joint]['motor']['id']
             radians_per_encoder_tick = rospy.get_param('dynamixel/%s/%d/radians_per_encoder_tick' % (self.port_namespace, motor_id))
@@ -161,17 +157,44 @@ class JointTrajectoryActionController(JointControllerAX12):
 
     def start(self):
         self.running = True
-        print 'Starting'
+        self.last_time = rospy.Time.now()
+
+        seg = Segment()
+        seg.start_time = self.last_time.to_sec() - 0.001
+        seg.duration = 0.0
+        seg.splines = [Spline() for _ in range(len(self.joint_names))]
+
+        for i, joint in enumerate(self.joint_names):
+            seg.splines[i].coef[0] = self.joint_states[joint].current_pos
+
+        self.trajectory = [seg]
+        #Thread(target=self.update).start()
 
     def stop(self):
         self.running = False
         print 'Stopping'
+
+    def update(self):
+        rate = rospy.Rate(self.update_rate)
+        while True:
+            if not self.running:
+                rate.sleep()
+                continue
+
+            time = rospy.Time.now()
+            dt = time - self.last_time
+            self.last_time = time
+
+            rate.sleep()
+
 
     def process_command(self, msg):
         pass
 
     def process_motor_states(self, msg):
         if self.running:
+            self.msg.header.stamp = rospy.Time.now()
+
             for joint in self.joint_names:
                 motor_id = self.joint_params[joint]['motor']['id']
                 initial_position_raw = self.joint_params[joint]['motor']['init']
@@ -192,79 +215,18 @@ class JointTrajectoryActionController(JointControllerAX12):
                     joint_state.is_moving = state.moving
                     joint_state.header.stamp = rospy.Time.from_sec(state.timestamp)
 
+            # Publish current joint state
+            for i, joint in enumerate(self.joint_names):
+                state = self.joint_states[joint]
+                self.msg.actual.positions[i] = state.current_pos
+                self.msg.actual.velocities[i] = abs(state.velocity)
+                self.msg.error.positions[i] = self.msg.actual.positions[i] - self.msg.desired.positions[i]
+                self.msg.error.velocities[i] = self.msg.actual.velocities[i] - self.msg.desired.velocities[i]
+
+            self.state_pub.publish(self.msg)
+
     def process_query_state(self, req):
         pass
-
-    def command_will_update(self, command, joint, value):
-        current_state = None
-        command_resolution = None
-
-        if command == 'position':
-            current_state = self.joint_states[joint].current_pos
-            command_resolution = self.joint_params[joint]['motor']['radians_per_encoder_tick']
-        elif command == 'velocity':
-            current_state = self.joint_states[joint].velocity
-            command_resolution = DMXL_SPEED_RAD_SEC_PER_TICK
-        else:
-            rospy.logerr('Unrecognized motor command %s while setting %s to %f', command, joint, value)
-            return False
-
-        last_commanded = self.last_commanded[joint][command]
-        self.last_commanded[joint][command] = value
-
-        # no sense in sending command, change is too small for the motors to move
-        if last_commanded is not None and (abs(value - last_commanded) < command_resolution): print command, joint, value, 'diff with last too small', last_commanded; return False
-        if current_state is not None and (abs(value - current_state) < command_resolution): print command, joint, value, 'diff with cur too small', current_state; return False
-
-        return True
-
-    def set_joint_velocity(self, joint, velocity):
-        if not self.command_will_update('velocity', joint, velocity): return
-
-        if velocity < DMXL_MIN_SPEED_RAD: velocity = DMXL_MIN_SPEED_RAD
-        elif velocity > DMXL_MAX_SPEED_RAD: velocity = DMXL_MAX_SPEED_RAD
-        velocity_raw = int(round(velocity / DMXL_SPEED_RAD_SEC_PER_TICK))
-        motor_id = self.joint_params[joint]['motor']['id']
-        mcv = (motor_id, velocity_raw if velocity_raw > 0 else 1)
-        self.send_packet_callback((DMXL_SET_GOAL_SPEED, [mcv]))
-
-    def set_joint_angle(self, joint, angle):
-        if not self.command_will_update('position', joint, angle): return
-
-        motor_id = self.joint_params[joint]['motor']['id']
-        initial_position_raw = self.joint_params[joint]['motor']['init']
-        min_angle = self.joint_params[joint]['min_angle']
-        max_angle = self.joint_params[joint]['max_angle']
-        radians_per_encoder_tick = self.joint_params[joint]['motor']['radians_per_encoder_tick']
-        encoder_ticks_per_radian = self.joint_params[joint]['motor']['encoder_ticks_per_radian']
-        flipped = self.joint_params[joint]['motor']['flipped']
-
-        if angle < min_angle: angle = min_angle
-        elif angle > max_angle: angle = max_angle
-        mcv = (motor_id, self.rad_to_raw(angle, initial_position_raw, flipped, encoder_ticks_per_radian))
-        self.send_packet_callback((DMXL_SET_GOAL_POSITION, [mcv]))
-
-    def set_joint_angle_velocity(self, joint, position, velocity):
-        motor_id = self.joint_params[joint]['motor']['id']
-        initial_position_raw = self.joint_params[joint]['motor']['init']
-        min_angle = self.joint_params[joint]['min_angle']
-        max_angle = self.joint_params[joint]['max_angle']
-        radians_per_encoder_tick = self.joint_params[joint]['motor']['radians_per_encoder_tick']
-        encoder_ticks_per_radian = self.joint_params[joint]['motor']['encoder_ticks_per_radian']
-        flipped = self.joint_params[joint]['motor']['flipped']
-
-        if position < min_angle: position = min_angle
-        elif position > max_angle: position = max_angle
-
-        if velocity < DMXL_MIN_SPEED_RAD: velocity = DMXL_MIN_SPEED_RAD
-        elif velocity > DMXL_MAX_SPEED_RAD: velocity = DMXL_MAX_SPEED_RAD
-        velocity_raw = int(round(velocity / DMXL_SPEED_RAD_SEC_PER_TICK))
-
-        mcv = (motor_id,
-               self.rad_to_raw(position, initial_position_raw, flipped, encoder_ticks_per_radian),
-               velocity_raw)
-
-        self.send_packet_callback((DMXL_SET_GOAL_POSITION, [mcv]))
 
     def process_trajectory_action(self, goal):
         traj = goal.trajectory
@@ -354,7 +316,7 @@ class JointTrajectoryActionController(JointControllerAX12):
             trajectory.append(seg)
 
         end_time = traj.header.stamp + rospy.Duration(sum(durations))
-        rate = rospy.Rate(25)
+        rate = rospy.Rate(75)
 
         rospy.loginfo('Waiting for trajectory to start executing')
 
@@ -402,25 +364,94 @@ class JointTrajectoryActionController(JointControllerAX12):
                 print i, self.joint_names[i], 'cur', cur_pos, 'des', des_pos, 'err', error[i], 'velocity', qd[i]
 
             # Wrap up and publish current joint state
-            self.msg.header.stamp = time
-
-            for i in range(len(self.joint_names)):
-                js = self.joint_states[self.joint_names[i]]
+            for i, joint in enumerate(self.joint_names):
+                js = self.joint_states[joint]
                 self.msg.desired.positions[i] = trajectory[seg].position
                 self.msg.desired.velocities[i] = abs(qd[i])
                 self.msg.desired.accelerations[i] = 0.0
-                self.msg.actual.positions[i] = js.current_pos
-                self.msg.actual.velocities[i] = abs(js.velocity)
-                self.msg.error.positions[i] = error[i]
-                self.msg.error.velocities[i] = self.msg.actual.velocities[i] - self.msg.desired.velocities[i]
-
-                self.state_pub.publish(self.msg)
 
             rate.sleep()
             time = rospy.Time.now()
 
         rospy.loginfo('trajectory following ended at %.3lf', rospy.Time.now().to_sec())
         self.action_server.set_succeeded()
+
+
+
+    ################################################################################
+    #----------------------- Low-level servo control functions --------------------#
+    ################################################################################
+
+    def command_will_update(self, command, joint, value):
+        current_state = None
+        command_resolution = None
+
+        if command == 'position':
+            current_state = self.joint_states[joint].current_pos
+            command_resolution = self.joint_params[joint]['motor']['radians_per_encoder_tick']
+        elif command == 'velocity':
+            current_state = self.joint_states[joint].velocity
+            command_resolution = DMXL_SPEED_RAD_SEC_PER_TICK
+        else:
+            rospy.logerr('Unrecognized motor command %s while setting %s to %f', command, joint, value)
+            return False
+
+        last_commanded = self.last_commanded[joint][command]
+        self.last_commanded[joint][command] = value
+
+        # no sense in sending command, change is too small for the motors to move
+        if last_commanded is not None and (abs(value - last_commanded) < command_resolution): return False
+        if current_state is not None and (abs(value - current_state) < command_resolution): return False
+
+        return True
+
+    def set_joint_velocity(self, joint, velocity):
+        if not self.command_will_update('velocity', joint, velocity): return
+
+        if velocity < DMXL_MIN_SPEED_RAD: velocity = DMXL_MIN_SPEED_RAD
+        elif velocity > DMXL_MAX_SPEED_RAD: velocity = DMXL_MAX_SPEED_RAD
+        velocity_raw = int(round(velocity / DMXL_SPEED_RAD_SEC_PER_TICK))
+        motor_id = self.joint_params[joint]['motor']['id']
+        mcv = (motor_id, velocity_raw if velocity_raw > 0 else 1)
+        self.send_packet_callback((DMXL_SET_GOAL_SPEED, [mcv]))
+
+    def set_joint_angle(self, joint, angle):
+        if not self.command_will_update('position', joint, angle): return
+
+        motor_id = self.joint_params[joint]['motor']['id']
+        initial_position_raw = self.joint_params[joint]['motor']['init']
+        min_angle = self.joint_params[joint]['min_angle']
+        max_angle = self.joint_params[joint]['max_angle']
+        radians_per_encoder_tick = self.joint_params[joint]['motor']['radians_per_encoder_tick']
+        encoder_ticks_per_radian = self.joint_params[joint]['motor']['encoder_ticks_per_radian']
+        flipped = self.joint_params[joint]['motor']['flipped']
+
+        if angle < min_angle: angle = min_angle
+        elif angle > max_angle: angle = max_angle
+        mcv = (motor_id, self.rad_to_raw(angle, initial_position_raw, flipped, encoder_ticks_per_radian))
+        self.send_packet_callback((DMXL_SET_GOAL_POSITION, [mcv]))
+
+    def set_joint_angle_and_velocity(self, joint, position, velocity):
+        motor_id = self.joint_params[joint]['motor']['id']
+        initial_position_raw = self.joint_params[joint]['motor']['init']
+        min_angle = self.joint_params[joint]['min_angle']
+        max_angle = self.joint_params[joint]['max_angle']
+        radians_per_encoder_tick = self.joint_params[joint]['motor']['radians_per_encoder_tick']
+        encoder_ticks_per_radian = self.joint_params[joint]['motor']['encoder_ticks_per_radian']
+        flipped = self.joint_params[joint]['motor']['flipped']
+
+        if position < min_angle: position = min_angle
+        elif position > max_angle: position = max_angle
+
+        if velocity < DMXL_MIN_SPEED_RAD: velocity = DMXL_MIN_SPEED_RAD
+        elif velocity > DMXL_MAX_SPEED_RAD: velocity = DMXL_MAX_SPEED_RAD
+        velocity_raw = int(round(velocity / DMXL_SPEED_RAD_SEC_PER_TICK))
+
+        mcv = (motor_id,
+               self.rad_to_raw(position, initial_position_raw, flipped, encoder_ticks_per_radian),
+               velocity_raw)
+
+        self.send_packet_callback((DMXL_SET_GOAL_POSITION, [mcv]))
 
 
 
