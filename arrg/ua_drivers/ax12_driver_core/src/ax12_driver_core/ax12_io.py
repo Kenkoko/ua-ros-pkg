@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Software License Agreement (BSD License)
 #
@@ -38,7 +39,7 @@
 
 import time
 import serial
-import math
+from array import array
 from binascii import b2a_hex
 
 from ax12_const import *
@@ -52,7 +53,7 @@ class SerialIO(object):
     packets, send and receive a response to a ping packet, and send a SYNC WRITE
     multi-servo instruction packet.
     """
-    
+
     def __init__(self, port, baudrate):
         """ Constructor takes serial port and baudrate as arguments. """
         try:
@@ -67,60 +68,54 @@ class SerialIO(object):
         """ Destructor calls self.close_serial_port() """
         self.close_serial_port()
 
+    def __read_response(self, servoId):
+        data = []
+        try:
+            data.extend(self.ser.read(4))
+            if not data[0:2] == ['\xff', '\xff']: raise Exception('Wrong packet prefix %s' % data[0:2])
+            data.extend(self.ser.read(ord(data[3])))
+            data = array('B', ''.join(data)).tolist() # [int(b2a_hex(byte), 16) for byte in data]
+        except Exception, e:
+            raise DroppedPacketError('Invalid response received from motor %d. %s' % (servoId, e))
+
+        # verify checksum
+        checksum = 255 - sum(data[2:-1]) % 256
+        if not checksum == data[-1]: raise ChecksumError(data, checksum)
+
+        return data
+
     def read_from_servo(self, servoId, address, size):
         """ Read "size" bytes of data from servo with "servoId" starting at the
         register with "address". "address" is an integer between 0 and 49. It is
         recommended to use the constants in module ax12_const for readability.
-        
+
         To read the position from servo with id 1, the method should be called
         like:
             read_from_servo(1, AX_GOAL_POSITION_L, 2)
         """
         self.ser.flushInput()
-        
+
         # Number of bytes following standard header (0xFF, 0xFF, id, length)
         length = 4  # instruction, address, size, checksum
-        
+
         # directly from AX-12 manual:
         # Check Sum = ~ (ID + LENGTH + INSTRUCTION + PARAM_1 + ... + PARAM_N)
         # If the calculated value is > 255, the lower byte is the check sum.
-        checksum = 255 - ( (servoId + length + AX_READ_DATA + \
-                            address + size) % 256 )
-        
+        checksum = 255 - ( (servoId + length + AX_READ_DATA + address + size) % 256 )
+
         # packet: FF  FF  ID LENGTH INSTRUCTION PARAM_1 ... CHECKSUM
-        packetStr = chr(0xFF) + chr(0xFF) + chr(servoId) + chr(length) + \
-                    chr(AX_READ_DATA) + chr(address) + chr(size) + \
-                    chr(checksum)
+        packet = [0xFF, 0xFF, servoId, length, AX_READ_DATA, address, size, checksum]
+        packetStr = array('B', packet).tostring() # same as: packetStr = ''.join([chr(byte) for byte in packet])
         self.ser.write(packetStr)
-        
+
         # wait for response packet from the motor
         timestamp = time.time()
-        time.sleep(0.0013)
-        
+        time.sleep(0.0013)#0.00235)
+
         # read response
-        data = []
-        data.append(self.ser.read()) # read 0xFF
-        if not b2a_hex(data[0]) == 'ff': return []
-        data.append(self.ser.read()) # read 0xFF
-        if not b2a_hex(data[1]) == 'ff': return []
-        data.append(self.ser.read()) # read id
-        data.append(self.ser.read()) # read length
-        try:
-            length = ord(data[3])
-            while length > 0:
-                data.append(self.ser.read())
-                length -= 1
-            data = map(b2a_hex, data)
-            data = map( int, data, ([16] * len(data)) )
-        except Exception, e:
-            raise DroppedPacketError('Invalid response received from motor %d.' %servoId)
-        
-        # verify checksum
-        checksum = 255 - reduce(int.__add__, data[2:-1]) % 256
-        if not checksum == data[-1]:
-            raise ChecksumError(data, checksum)
-            
+        data = self.__read_response(servoId)
         data.append(timestamp)
+
         return data
 
     def write_to_servo(self, servoId, address, data):
@@ -129,103 +124,74 @@ class SerialIO(object):
         "address" + (n-1), where n = len(data). "address" is an integer between
         0 and 49. It is recommended to use the constants in module ax12_const
         for readability. "data" is a list/tuple of integers.
-        
+
         To set servo with id 1 to position 276, the method should be called
         like:
             read_from_servo(1, AX_GOAL_POSITION_L, (20, 1))
         """
         self.ser.flushInput()
-        
+
         # Number of bytes following standard header (0xFF, 0xFF, id, length)
         length = 3 + len(data)  # instruction, address, len(data), checksum
-        
+
         # directly from AX-12 manual:
         # Check Sum = ~ (ID + LENGTH + INSTRUCTION + PARAM_1 + ... + PARAM_N)
         # If the calculated value is > 255, the lower byte is the check sum.
-        checksum = 255 - ((servoId + length + AX_WRITE_DATA + \
-                           address + sum(data)) % 256)
-        
+        checksum = 255 - ((servoId + length + AX_WRITE_DATA + address + sum(data)) % 256)
+
         # packet: FF  FF  ID LENGTH INSTRUCTION PARAM_1 ... CHECKSUM
-        packetStr = chr(0xFF) + chr(0xFF) + chr(servoId) + chr(length) + \
-                       chr(AX_WRITE_DATA) + chr(address)
+        packet = [0xFF, 0xFF, servoId, length, AX_WRITE_DATA, address]
+        packet.extend(data)
+        packet.append(checksum)
+
+        packetStr = array('B', packet).tostring() # packetStr = ''.join([chr(byte) for byte in packet])
         self.ser.write(packetStr)
-        for d in data:
-            self.ser.write(chr(d))
-        self.ser.write(chr(checksum))
-        
+
         # wait for response packet from the motor
+        timestamp = time.time()
         time.sleep(0.0013)
-        
+
         # read response
-        data = []
-        data.append(self.ser.read()) # read 0xFF
-        if not b2a_hex(data[0]) == 'ff':
-            return []
-        data.append(self.ser.read()) # read 0xFF
-        data.append(self.ser.read()) # read id
-        data.append(self.ser.read()) # read length
-        try:
-            length = ord(data[3])
-            while length > 0:
-                data.append(self.ser.read())
-                length -= 1
-            data = map(b2a_hex, data)
-            data = map( int, data, ([16] * len(data)) )
-        except Exception, e:
-            raise DroppedPacketError('Invalid response received from motor %d.' %servoId)
-        
-        # verify checksum
-        checksum = 255 - reduce(int.__add__, data[2:-1]) % 256
-        if not checksum == data[-1]:
-            raise ChecksumError(data, checksum)
+        data = self.__read_response(servoId)
+        data.append(timestamp)
+
         return data
 
     def ping_servo(self, servoId):
         """ Ping the servo with "servoId". This causes the servo to return a
         "status packet". This can tell us if the servo is attached and powered,
         and if so, if there is any errors.
-        
+
         To ping the servo with id 1 to position 276, the method should be called
         like:
             ping_servo(1)
         """
         self.ser.flushInput()
-        
+
         # Number of bytes following standard header (0xFF, 0xFF, id, length)
         length = 2  # instruction, checksum
-        
+
         # directly from AX-12 manual:
         # Check Sum = ~ (ID + LENGTH + INSTRUCTION + PARAM_1 + ... + PARAM_N)
         # If the calculated value is > 255, the lower byte is the check sum.
         checksum = 255 - ((servoId + length + AX_PING) % 256)
-        
+
         # packet: FF  FF  ID LENGTH INSTRUCTION CHECKSUM
-        packetStr = chr(0xFF) + chr(0xFF) + chr(servoId) + chr(length) + \
-                       chr(AX_PING) + chr(checksum)
+        packet = [0xFF, 0xFF, servoId, length, AX_PING, checksum]
+        packetStr = array('B', packet).tostring()
         self.ser.write(packetStr)
-        
+
         # wait for response packet from the motor
+        timestamp = time.time()
         time.sleep(0.0013)
-        
+
         # read response
-        data = []
-        data.append(self.ser.read()) # read 0xFF
-        if not b2a_hex(data[0]) == 'ff':
-            return []
-        data.append(self.ser.read()) # read 0xFF
-        data.append(self.ser.read()) # read id
-        data.append(self.ser.read()) # read length
-        length = ord(data[3])
-        while length > 0:
-            data.append(self.ser.read())
-            length -= 1
-        data = map(b2a_hex, data)
-        data = map( int, data, ([16] * len(data)) )
-        
-        # verify checksum
-        checksum = 255 - reduce(int.__add__, data[2:-1]) % 256
-        if not checksum == data[-1]:
-            raise ChecksumError(data, checksum)
+        try:
+            data = self.__read_response(servoId)
+            data.append(timestamp)
+        except Exception, e:
+            data = []
+
         return data
 
     def sync_write_to_servos(self, address, data):
@@ -236,35 +202,30 @@ class SerialIO(object):
         tuples. Each tuple in "data" must contain the servo id followed by the
         data that should be written from the starting address. The amount of
         data can be as long as needed.
-        
+
         To set servo with id 1 to position 276 and servo with id 2 to position
         550, the method should be called like:
             sync_write_to_servos(AX_GOAL_POSITION_L, ( (1, 20, 1), (2 ,38, 2) ))
         """
         self.ser.flushInput()
-        
-        # Number of bytes following standard header (0xFF, 0xFF, id, length)
-        length = 4  # instruction, address, length, checksum
-        # Must iterate through data to calculate length and keep running sum
-        # for the checksum
-        valsum = 0
-        for d in data:
-            length += len(d)
-            valsum += sum(d)
-        
+
+        # Calculate length and sum of all data
+        flattened = [value for servo in data for value in servo]
+
+        # Number of bytes following standard header (0xFF, 0xFF, id, length) plus data
+        length = 4 + len(flattened)
+
         checksum = 255 - ((AX_BROADCAST + length + \
                           AX_SYNC_WRITE + address + len(data[0][1:]) + \
-                          valsum) % 256)
-        
+                          sum(flattened)) % 256)
+
         # packet: FF  FF  ID LENGTH INSTRUCTION PARAM_1 ... CHECKSUM
-        packetStr = chr(0xFF) + chr(0xFF) + chr(AX_BROADCAST) + \
-                    chr(length) + chr(AX_SYNC_WRITE) + chr(address) + \
-                    chr(len(data[0][1:]))
+        packet = [0xFF, 0xFF, AX_BROADCAST, length, AX_SYNC_WRITE, address, len(data[0][1:])]
+        packet.extend(flattened)
+        packet.append(checksum)
+
+        packetStr = array('B', packet).tostring() # packetStr = ''.join([chr(byte) for byte in packet])
         self.ser.write(packetStr)
-        for servo in data:
-            for value in servo:
-                self.ser.write(chr(value))
-        self.ser.write(chr(checksum))
 
     def close_serial_port(self):
         """
@@ -283,7 +244,7 @@ class AX12_IO(object):
             self.__sio = SerialIO(port, baudrate)
         except SerialOpenError, e:
             raise(e)
-            
+
         # Avoid writing facade code
         self.close_serial_port = self.__sio.close_serial_port
         self.read_from_servo = self.__sio.read_from_servo
@@ -301,11 +262,11 @@ class AX12_IO(object):
 
     def write_packet(self, packet):
         command = packet[0]
-        
+
         register = 0
         values = []
         two_byte_cmd = False
-        
+
         if command == DMXL_SET_TORQUE_ENABLE:
             register = AX_TORQUE_ENABLE
         elif command == DMXL_SET_CW_COMPLIANCE_MARGIN:
@@ -334,7 +295,7 @@ class AX12_IO(object):
         elif command == DMXL_SET_PUNCH:
             two_byte_cmd = True
             register = AX_PUNCH_L
-            
+
         for val in packet[1]:
             motor_id = val[0]
             value = val[1]
@@ -428,16 +389,16 @@ class AX12_IO(object):
         Set the min and max voltage limits.
         NOTE: the absolute min is 5v and the absolute max is 25v
         """
-        
+
         if minVoltage < 5: minVoltage = 5
         if maxVoltage > 25: maxVoltage = 25
-        
+
         minVal = int(minVoltage * 10)
         maxVal = int(maxVoltage * 10)
-        
+
         # set 4 register values with low and high bytes for min and max angles
         response = self.__sio.write_to_servo(servoId, AX_DOWN_LIMIT_VOLTAGE, (minVal, maxVal))
-        
+
         if response:
             self.exception_on_error(response[4], servoId, 'setting min and max voltage levels to %d and %d' %(minVoltage, maxVoltage))
         return response
@@ -728,7 +689,7 @@ class AX12_IO(object):
         # extract data valus from the raw data
         cwLimit = response[5] + (response[6] << 8)
         ccwLimit = response[7] + (response[8] << 8)
-        
+
         # return the data in a dictionary
         return {'min':cwLimit, 'max':ccwLimit}
 
@@ -757,7 +718,7 @@ class AX12_IO(object):
         """
         # read in 17 consecutive bytes starting with low value for goal position
         response = self.__sio.read_from_servo(servoId, AX_GOAL_POSITION_L, 17)
-        
+
         if response:
             self.exception_on_error(response[4], servoId, 'fetching full servo status')
         if len(response) == 24:
@@ -775,7 +736,7 @@ class AX12_IO(object):
             temperature = response[18]
             moving = response[21]
             timestamp = response[-1]
-            
+
             # return the data in a dictionary
             return { 'timestamp': timestamp,
                      'id': servoId,
