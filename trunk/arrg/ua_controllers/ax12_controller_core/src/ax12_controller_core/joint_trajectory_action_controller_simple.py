@@ -276,7 +276,7 @@ class JointTrajectoryActionController(JointControllerAX12):
                 seg.start_time = (time + traj.points[i].time_from_start).to_sec() - durations[i]
             else:
                 seg.start_time = (traj.header.stamp + traj.points[i].time_from_start).to_sec() - durations[i]
-                print i, traj.header.stamp.to_sec(), traj.points[i].time_from_start.to_sec(), durations[i]
+                #print i, traj.header.stamp.to_sec(), traj.points[i].time_from_start.to_sec(), durations[i]
 
             seg.duration = durations[i]
 
@@ -315,22 +315,22 @@ class JointTrajectoryActionController(JointControllerAX12):
 
             trajectory.append(seg)
 
-        end_time = traj.header.stamp + rospy.Duration(sum(durations))
-        rate = rospy.Rate(75)
-
-        rospy.loginfo('Waiting for trajectory to start executing')
+        rospy.loginfo('Trajectory start requested at %.3lf, waiting...', traj.header.stamp.to_sec())
+        rate = rospy.Rate(100)
 
         while traj.header.stamp > time:
             time = rospy.Time.now()
             rate.sleep()
 
-        rospy.loginfo('trajectory time duration is %.3lf', sum(durations))
-        rospy.loginfo('starting trajectory at %.3lf, end time is %.3lf', time.to_sec(), end_time.to_sec())
+        end_time = traj.header.stamp + rospy.Duration(sum(durations))
+        seg_end_times = [rospy.Time.from_sec(trajectory[seg].start_time + durations[seg]) for seg in range(len(trajectory))]
+
+        rospy.loginfo('Trajectory start time is %.3lf, end time is %.3lf, total duration is %.3lf', time.to_sec(), end_time.to_sec(), sum(durations))
 
         while time < end_time:
             # Determines which segment of the trajectory to use
             seg = -1
-            while (seg+1 < len(trajectory) and trajectory[seg+1].start_time < time.to_sec()):
+            while seg+1 < len(trajectory) and trajectory[seg+1].start_time <= time.to_sec():
                 seg += 1
 
             if seg == -1:
@@ -348,33 +348,60 @@ class JointTrajectoryActionController(JointControllerAX12):
 
             print 'current segment is ', seg, 'time left', durations[seg] - (time.to_sec() - trajectory[seg].start_time), 'cur time', time.to_sec()
 
-            error = [0.0] * len(self.joint_names)
-            vel_error = [0.0] * len(self.joint_names)
-            qd = [0.0] * len(self.joint_names)
+            while time < seg_end_times[seg]:
+                error = [0.0] * len(self.joint_names)
+                vel_error = [0.0] * len(self.joint_names)
+                qd = [0.0] * len(self.joint_names)
 
-            for i in range(len(self.joint_names)):
-                cur_pos = self.joint_states[self.joint_names[i]].current_pos
-                des_pos = trajectory[seg].position
-                error[i] = abs(cur_pos - des_pos)
-                time_left = durations[seg] - (time.to_sec() - trajectory[seg].start_time)
-                qd[i] = error[i] / time_left + 0.1
-                qd[i] = trajectory[seg].velocity if qd[i] > trajectory[seg].velocity else qd[i]
-                self.set_joint_velocity(self.joint_names[i], qd[i])
-                self.set_joint_angle(self.joint_names[i], des_pos)
-                print i, self.joint_names[i], 'cur', cur_pos, 'des', des_pos, 'err', error[i], 'velocity', qd[i]
+                for i in range(len(self.joint_names)):
+                    cur_pos = self.joint_states[self.joint_names[i]].current_pos
+                    des_pos = trajectory[seg].position
+                    error[i] = abs(cur_pos - des_pos)
+                    time_left = durations[seg] - (time.to_sec() - trajectory[seg].start_time)
+                    qd[i] = error[i] / time_left + 0.05
+                    qd[i] = trajectory[seg].velocity if qd[i] > trajectory[seg].velocity else qd[i]
+                    self.set_joint_velocity(self.joint_names[i], qd[i])
+                    self.set_joint_angle(self.joint_names[i], des_pos)
+                    #print i, self.joint_names[i], 'cur', cur_pos, 'des', des_pos, 'err', error[i], 'velocity', qd[i]
 
-            # Wrap up and publish current joint state
-            for i, joint in enumerate(self.joint_names):
-                js = self.joint_states[joint]
-                self.msg.desired.positions[i] = trajectory[seg].position
-                self.msg.desired.velocities[i] = abs(qd[i])
-                self.msg.desired.accelerations[i] = 0.0
+                # Wrap up and publish current joint state
+                for i, joint in enumerate(self.joint_names):
+                    js = self.joint_states[joint]
+                    self.msg.desired.positions[i] = trajectory[seg].position
+                    self.msg.desired.velocities[i] = qd[i]
+                    self.msg.desired.accelerations[i] = 0.0
 
-            rate.sleep()
-            time = rospy.Time.now()
+                rate.sleep()
+                time = rospy.Time.now()
+
+            # Verifies trajectory constraints
+            for j, joint in enumerate(self.joint_names):
+                if self.trajectory_constraints[j] > 0 and self.msg.error.positions[j] > self.trajectory_constraints[j]:
+                    msg = 'Unsatisfied position constraint for %s, trajectory point %d, %f is larger than %f' % \
+                           (joint, seg, self.msg.error.positions[j], self.trajectory_constraints[j])
+                    rospy.logwarn(msg)
+                    self.action_server.set_aborted(text=msg)
+                    return
 
         rospy.loginfo('trajectory following ended at %.3lf', rospy.Time.now().to_sec())
-        self.action_server.set_succeeded()
+        rospy.sleep(0.1)   # let motors stabilize
+
+        # Checks that we have ended inside the goal constraints
+        inside_goal_constraints = True
+
+        i = 0
+        while i < len(self.joint_names) and inside_goal_constraints:
+            if self.goal_constraints[i] > 0 and self.msg.error.positions[j] > self.goal_constraints[i]:
+                inside_goal_constraints = False
+            i += 1
+
+        if inside_goal_constraints:
+            self.action_server.set_succeeded()
+        else:
+            msg = 'Aborting because we wound up outside the goal constraints, %f is larger than %f' % \
+                  (self.msg.error.positions[j], self.goal_constraints[i])
+            rospy.logwarn(msg)
+            self.action_server.set_aborted(text=msg)
 
 
 
@@ -429,28 +456,6 @@ class JointTrajectoryActionController(JointControllerAX12):
         if angle < min_angle: angle = min_angle
         elif angle > max_angle: angle = max_angle
         mcv = (motor_id, self.rad_to_raw(angle, initial_position_raw, flipped, encoder_ticks_per_radian))
-        self.send_packet_callback((DMXL_SET_GOAL_POSITION, [mcv]))
-
-    def set_joint_angle_and_velocity(self, joint, position, velocity):
-        motor_id = self.joint_params[joint]['motor']['id']
-        initial_position_raw = self.joint_params[joint]['motor']['init']
-        min_angle = self.joint_params[joint]['min_angle']
-        max_angle = self.joint_params[joint]['max_angle']
-        radians_per_encoder_tick = self.joint_params[joint]['motor']['radians_per_encoder_tick']
-        encoder_ticks_per_radian = self.joint_params[joint]['motor']['encoder_ticks_per_radian']
-        flipped = self.joint_params[joint]['motor']['flipped']
-
-        if position < min_angle: position = min_angle
-        elif position > max_angle: position = max_angle
-
-        if velocity < DMXL_MIN_SPEED_RAD: velocity = DMXL_MIN_SPEED_RAD
-        elif velocity > DMXL_MAX_SPEED_RAD: velocity = DMXL_MAX_SPEED_RAD
-        velocity_raw = int(round(velocity / DMXL_SPEED_RAD_SEC_PER_TICK))
-
-        mcv = (motor_id,
-               self.rad_to_raw(position, initial_position_raw, flipped, encoder_ticks_per_radian),
-               velocity_raw)
-
         self.send_packet_callback((DMXL_SET_GOAL_POSITION, [mcv]))
 
 
