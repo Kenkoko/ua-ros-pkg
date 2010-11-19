@@ -346,20 +346,17 @@ class JointTrajectoryActionController(JointControllerAX12):
                     #print self.joint_names[j], 'seg', seg, 'sampling at', t, 'q', q[j], 'qd', qd[j]
 
                 # trajectory following
-                for j in range(self.num_joints):
-                    cur_pos = self.joint_states[self.joint_names[j]].current_pos
-                    cur_vel = self.joint_states[self.joint_names[j]].velocity
+                for j, joint in enumerate(self.joint_names):
+                    cur_pos = self.joint_states[joint].current_pos
+                    cur_vel = self.joint_states[joint].velocity
 
                     pos_error = cur_pos - q[j]
                     vel_error = abs(cur_vel) - qd[j]
                     #print self.joint_names[j], 'cur', cur_pos, 'des', q[j], 'err', pos_error, 'velocity', qd[j]
 
-                    self.set_joint_velocity(self.joint_names[j], qd[j])
-                    self.set_joint_angle(self.joint_names[j], q[j])
+                    self.set_joint_velocity(joint, qd[j])
+                    self.set_joint_angle(joint, q[j])
 
-                # wrap up and publish current joint state
-                for j, joint in enumerate(self.joint_names):
-                    js = self.joint_states[joint]
                     self.msg.desired.positions[j] = q[j]
                     self.msg.desired.velocities[j] = qd[j]
 
