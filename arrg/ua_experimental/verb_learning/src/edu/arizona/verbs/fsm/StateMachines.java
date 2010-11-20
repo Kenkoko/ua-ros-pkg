@@ -1,4 +1,4 @@
-package edu.arizona.verbs.util;
+package edu.arizona.verbs.fsm;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -6,21 +6,37 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
+import java.util.Vector;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.util.graph.Edge;
-import edu.arizona.verbs.fsm.FSMState;
-import edu.arizona.verbs.fsm.FSMTransition;
 import edu.arizona.verbs.fsm.FSMState.StateType;
+import edu.arizona.verbs.util.Graphs;
+import edu.arizona.verbs.util.Predicate;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import edu.uci.ics.jung.graph.util.Pair;
 
 public class StateMachines {
+	
+	public static TreeSet<FSMState> getStartState(DirectedGraph<FSMState, FSMTransition> fsm) {
+		Collection<FSMState> startStates = 
+			Collections2.filter(fsm.getVertices(), new Predicate<FSMState>() {
+			public boolean value(FSMState arg) {
+				return arg.getType().equals(StateType.START);
+			}});
+		return new TreeSet<FSMState>(startStates);
+	}
 	
 	public static DirectedGraph<FSMState, FSMTransition> combineDFAs(DirectedGraph<FSMState, FSMTransition> pos, DirectedGraph<FSMState, FSMTransition> neg) {
 		for (FSMState vertex : neg.getVertices()) {
@@ -215,50 +231,27 @@ public class StateMachines {
 		return dfa;
 	}
 	
+	public static DirectedGraph<FSMState, FSMTransition> duplicate(DirectedGraph<FSMState, FSMTransition> fsm) {
+		DirectedGraph<FSMState, FSMTransition> duplicate = new DirectedSparseGraph<FSMState, FSMTransition>();
 	
+		// Add all edges from this FSM
+		HashMap<FSMState, FSMState> stateMap1 = Maps.newHashMap();
+		for (FSMTransition ot : fsm.getEdges()) {
+			FSMState os = fsm.getSource(ot);
+			if (!stateMap1.containsKey(os)) {
+				stateMap1.put(os, new FSMState(os.getType()));
+			}
+		
+			FSMState od = fsm.getDest(ot);
+			if (!stateMap1.containsKey(od)) {
+				stateMap1.put(od, new FSMState(od.getType()));
+			}
+		
+			duplicate.addEdge(new FSMTransition(ot.getActiveRelations()), stateMap1.get(os), stateMap1.get(od));
+		}
 	
-	
-//	private void minimizeFast(DirectedGraph<FSMState, FSMTransition> dfa) {
-//		DirectedGraph<FSMState, FSMTransition> newDFA = new DirectedSparseGraph<FSMState, FSMTransition>();
-//		
-//		Set<Set<FSMState>> pi = new HashSet<Set<FSMState>>();
-//		// First initial partition is all accepting states
-//		pi.add(new HashSet<FSMState>(Collections2.filter(dfa.getVertices(), FSMState.isTerminal)));
-//		// Second initial partition is all non-accepting states
-//		pi.add(new HashSet<FSMState>(Collections2.filter(dfa.getVertices(), Predicates.not(FSMState.isTerminal))));
-//		
-//		Set<Set<FSMState>> piNew = newPartition(pi);
-//		while (!piNew.equals(pi)) {
-//			pi = piNew;
-//			piNew = newPartition(pi);
-//		}
-//		
-//		Set<Set<FSMState>> piFinal = pi;
-//		
-//		// TODO: Still need to merge states
-//	}
-//	
-//	private Set<Set<FSMState>> newPartition(Set<Set<FSMState>> pi) {
-//		Set<Set<FSMState>> result = new HashSet<Set<FSMState>>();
-//		
-//		for (Set<FSMState> s : pi) {
-//			Set<FSMState> newSet = new HashSet<FSMState>();
-//			
-//			for (FSMState state : s) {
-//				for (FSMTransition t : dfa_.getOutEdges(state)) {
-//					final FSMState opposite = dfa_.getOpposite(state, t);
-//					Set<FSMState> destSet = CollectionUtils.find(pi, new Predicate<Set<FSMState>>() {
-//						public boolean value(Set<FSMState> subset) {
-//							return subset.contains(opposite);
-//						}
-//					});
-//				}
-//			}
-//		}
-//		
-//		return result;
-//	}
-	
+		return duplicate;
+	}
 	
 	public static boolean hasTransition(DirectedGraph<FSMState, FSMTransition> dfa, FSMState source, Set<String> symbol, FSMState dest) {
 		Collection<FSMTransition> set = matchTransition(dfa, source, symbol);
@@ -279,6 +272,126 @@ public class StateMachines {
 			public boolean value(FSMTransition arg) { return arg.getSymbol().equals(symbol); }});
 		
 		return matchingTransitions;
+	}
+	
+	/***
+	 * Minimize DFA using simpler O(n^2) algorithm. 
+	 */
+	public static void minimizeSlow(DirectedGraph<FSMState, FSMTransition> dfa) {
+		System.out.println("========= BEGIN DFA MINIMIZATION");
+		
+		Vector<FSMState> states = new Vector<FSMState>(dfa.getVertices());
+		
+		Set<Pair<FSMState>> allPairs = new HashSet<Pair<FSMState>>(); 
+		Set<Pair<FSMState>> distinct = new HashSet<Pair<FSMState>>();
+		Set<Pair<FSMState>> oldDistinct = new HashSet<Pair<FSMState>>();
+		for (int i = 0; i < states.size(); i++) {
+			for (int j = i+1; j < states.size(); j++) {
+				FSMState p = states.get(i);
+				FSMState q = states.get(j);
+				Pair<FSMState> pair = new Pair<FSMState>(p, q);
+				allPairs.add(pair);
+				if (p.isTerminal() != q.isTerminal()) { // If one is accepting and the other is not, must be distinct
+					distinct.add(pair);
+				} else if (p.isTerminal() && q.isTerminal()) {
+					if (!p.getType().equals(q.getType())) {
+						distinct.add(pair);
+					}
+				}
+			}
+		}
+		
+		Function<FSMTransition, Set<String>> getSymbol = new Function<FSMTransition, Set<String>>() {
+			public Set<String> apply(FSMTransition t) {return t.getSymbol();} };
+		
+		while (!distinct.equals(oldDistinct)) {
+			oldDistinct = distinct;
+			for (Pair<FSMState> pair : Sets.difference(allPairs, distinct)) {
+				if (!distinct.contains(pair)) {
+					FSMState p = pair.getFirst();
+					FSMState q = pair.getSecond();
+					
+					Set<FSMTransition> pEdges = Sets.newHashSet(dfa.getOutEdges(p));
+					Set<FSMTransition> qEdges = Sets.newHashSet(dfa.getOutEdges(q));
+					Set<Set<String>> pSymbols = Sets.newHashSet(Collections2.transform(pEdges, getSymbol));
+					Set<Set<String>> qSymbols = Sets.newHashSet(Collections2.transform(qEdges, getSymbol));
+					if (pSymbols.equals(qSymbols)) {
+						for (FSMTransition t : pEdges) {
+							FSMState pPrime = dfa.getOpposite(p, t);
+							Collection<FSMTransition> matches = StateMachines.matchTransition(dfa, q, t.getSymbol());
+							if (matches.size() != 1) { throw new RuntimeException("NOT A DFA"); }
+							FSMState qPrime = dfa.getOpposite(q, matches.iterator().next());
+							Pair<FSMState> newPair;
+							if (states.indexOf(pPrime) < states.indexOf(qPrime)) {
+								newPair = new Pair<FSMState>(pPrime, qPrime);
+							} else {
+								newPair = new Pair<FSMState>(qPrime, pPrime);
+							}
+							if (distinct.contains(newPair)) {
+								distinct.add(pair);
+							}
+						}
+					} else { // This is true since we only specify some of the transitions
+						distinct.add(pair);
+					}
+				}
+			}
+		}
+		
+		// Now that we know which are distinguishable, we need to delete the unnecessary states
+		SetView<Pair<FSMState>> equivalentPairs = Sets.difference(allPairs, distinct);
+		Set<Set<FSMState>> subsets = new HashSet<Set<FSMState>>();
+		
+		for (Pair<FSMState> same : equivalentPairs) {
+			Set<Set<FSMState>> toMerge = new HashSet<Set<FSMState>>();
+			for (Set<FSMState> set : subsets) {
+				if (set.contains(same.getFirst()) || set.contains(same.getSecond())) {
+					toMerge.add(set);
+				}
+			}
+			
+			Set<FSMState> newSubset = new HashSet<FSMState>();
+			newSubset.add(same.getFirst());
+			newSubset.add(same.getSecond());
+			for (Set<FSMState> oldSubset : toMerge) {
+				newSubset.addAll(oldSubset);
+				subsets.remove(oldSubset);
+			}
+			subsets.add(newSubset);
+		}
+		
+		for (Set<FSMState> subset : subsets) {
+			System.out.println(subset);
+			
+			FSMState representative = subset.iterator().next();
+			subset.remove(representative);
+			
+			for (FSMState dead : subset) {
+				System.out.println("deleting state: " + dead + ", merging into: " + representative);
+				for (FSMTransition t : dfa.getInEdges(dead)) {
+					FSMState p = dfa.getOpposite(dead, t);
+					safeAddTransition(dfa, p, t.getSymbol(), representative);
+				}
+				for (FSMTransition t : dfa.getOutEdges(dead)) {
+					FSMState p = dfa.getOpposite(dead, t);
+					safeAddTransition(dfa, representative, t.getSymbol(), p);
+				}
+				
+				// It's all over for him
+				for (FSMTransition t : dfa.getIncidentEdges(dead)) {
+					dfa.removeEdge(t);
+				}
+				dfa.removeVertex(dead);
+			}
+		}
+		
+		System.out.println("========= END DFA MINIMIZATION");
+	}
+	
+	public static void safeAddTransition(DirectedGraph<FSMState, FSMTransition> dfa, FSMState source, Set<String> symbol, FSMState dest) {
+		if (!StateMachines.hasTransition(dfa, source, symbol, dest)) {
+			dfa.addEdge(new FSMTransition(symbol), source, dest);
+		} 
 	}
 	
 }

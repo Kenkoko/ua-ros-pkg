@@ -1,10 +1,8 @@
 package edu.arizona.verbs.planning;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -12,20 +10,13 @@ import java.util.Vector;
 
 import org.apache.log4j.Logger;
 
-import ros.pkg.oomdp_msgs.msg.MDPState;
-import ros.pkg.verb_learning.msg.Policy;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
-
 import edu.arizona.verbs.Verb;
-import edu.arizona.verbs.environment.Environment;
 import edu.arizona.verbs.fsm.FSMState;
-import edu.arizona.verbs.fsm.StateSet;
 import edu.arizona.verbs.fsm.FSMState.StateType;
+import edu.arizona.verbs.fsm.StateSet;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
-import edu.arizona.verbs.mdp.OOMDPState;
-import edu.arizona.verbs.mdp.StateConverter;
+import edu.arizona.verbs.shared.Environment;
+import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.util.ProbUtils;
 
 public class LRTDP {
@@ -276,7 +267,7 @@ public class LRTDP {
 //		TransitionResult simulationResult = verb_.getFSM().simulateDfaTransition(fsmState, startState.getActiveRelations());
 		State start = new State(startState, fsmState);
 		if (knownStates_.containsKey(start.toString())) {
-			start = knownStates_.get(start);
+			start = knownStates_.get(start.toString());
 		} else {
 			knownStates_.put(start.toString(), start);
 		}
@@ -396,7 +387,7 @@ public class LRTDP {
 				break;
 			}
 			
-			if (visited.size() > 1000000) { // To prevent infinite planning
+			if (visited.size() > 10000) { // To prevent infinite planning
 				return false;
 			}
 			

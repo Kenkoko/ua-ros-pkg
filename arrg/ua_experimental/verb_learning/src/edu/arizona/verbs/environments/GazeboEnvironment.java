@@ -1,11 +1,12 @@
-package edu.arizona.verbs.environment;
+package edu.arizona.verbs.environments;
 
 import java.util.List;
 import java.util.Vector;
 
-import edu.arizona.verbs.mdp.OOMDPObjectState;
-import edu.arizona.verbs.mdp.OOMDPState;
 import edu.arizona.verbs.mdp.StateConverter;
+import edu.arizona.verbs.shared.Environment;
+import edu.arizona.verbs.shared.OOMDPObjectState;
+import edu.arizona.verbs.shared.OOMDPState;
 import ros.NodeHandle;
 import ros.Ros;
 import ros.RosException;
