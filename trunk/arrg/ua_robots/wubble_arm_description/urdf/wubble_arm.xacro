@@ -179,7 +179,7 @@
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L0_base_link_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L0_base_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -203,7 +203,7 @@
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L1_shoulder_pitch_link_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L1_shoulder_pitch_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -227,7 +227,7 @@
             <collision>
                 <origin xyz="0.0 0.0545 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L2_shoulder_yaw_link_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_yaw_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -251,7 +251,7 @@
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L3_shoulder_roll_link_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L3_shoulder_roll_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -275,7 +275,7 @@
             <collision>
                 <origin xyz="0.03458 0.04399 0.026" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L4_elbow_pitch_link_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L4_elbow_pitch_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -299,7 +299,7 @@
             <collision>
                 <origin xyz="0.025 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L5_wrist_roll_link_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L5_wrist_roll_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -323,7 +323,7 @@
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L6_wrist_pitch_link_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L6_wrist_pitch_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -347,7 +347,7 @@
             <collision>
                 <origin xyz="0.0751 0 -0.002" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L7_wrist_yaw_link_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L7_wrist_yaw_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -371,7 +371,7 @@
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L8_gripper_left_finger_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L8_gripper_left_finger.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -395,7 +395,7 @@
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/convex/L9_gripper_right_finger_convex.stlb"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L9_gripper_right_finger.stl"/>
                 </geometry>
             </collision>
         </link>
