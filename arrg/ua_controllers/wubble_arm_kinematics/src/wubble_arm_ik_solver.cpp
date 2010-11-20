@@ -293,12 +293,15 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
     {
       if (callback_check)
       {
+          ROS_INFO("Callback_check succeeded.");
         solution_callback(q_out, p_in, error_code);
+        ROS_INFO("Solution Callback succeeded.");
         if(error_code.val == error_code.SUCCESS) { return 1; }
       }
       else
       {
-        error_code.val = error_code.SUCCESS;
+          ROS_INFO("Callback Check failed, return?.");
+          error_code.val = error_code.SUCCESS;
         return 1;
       }
     }

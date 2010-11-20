@@ -37,12 +37,20 @@
 <Robot name="WubbleArm">
     <KinBody file="wubble_arm_kinbody.xml"/>
     
-    <Manipulator name="arm">
+    <Manipulator name="arm_finger_tips">
         <base>ArmBaseLink</base>
         <effector>WristYawLink</effector>
         <joints>LeftFingerJoint RightFingerJoint</joints>
         <closingdirection>-1 1</closingdirection>
         <direction>1 0 0</direction>
         <translation>0.103 0 -0.025</translation>
+    </Manipulator>
+
+    <Manipulator name="arm_wrist_yaw">
+        <base>ArmBaseLink</base>
+        <effector>WristYawLink</effector>
+        <joints>LeftFingerJoint RightFingerJoint</joints>
+        <closingdirection>-1 1</closingdirection>
+        <direction>1 0 0</direction>
     </Manipulator>
 </Robot>
