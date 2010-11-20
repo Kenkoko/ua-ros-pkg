@@ -5,7 +5,6 @@ import edu.arizona.verbs.util.Predicate;
 public class FSMState implements Comparable<FSMState> {
 	private static int counter = 0; 
 	
-	
 	// Predicates
 	public static Predicate<FSMState> isTerminal = new Predicate<FSMState>() {
 		@Override

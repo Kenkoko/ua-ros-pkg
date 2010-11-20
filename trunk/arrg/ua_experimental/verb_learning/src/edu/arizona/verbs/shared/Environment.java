@@ -1,9 +1,7 @@
-package edu.arizona.verbs.environment;
+package edu.arizona.verbs.shared;
 
 import java.util.List;
 
-import edu.arizona.verbs.mdp.OOMDPObjectState;
-import edu.arizona.verbs.mdp.OOMDPState;
 
 public interface Environment {
 	

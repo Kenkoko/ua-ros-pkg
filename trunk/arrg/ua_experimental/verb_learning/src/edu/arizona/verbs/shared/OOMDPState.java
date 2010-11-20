@@ -1,4 +1,4 @@
-package edu.arizona.verbs.mdp;
+package edu.arizona.verbs.shared;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -7,7 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-public class OOMDPState {
+
+public class OOMDPState implements Remappable<OOMDPState> {
 
 	private List<OOMDPObjectState> objectStates_;
 	private List<Relation> relations_;
@@ -23,26 +24,6 @@ public class OOMDPState {
 	
 	public List<OOMDPObjectState> getObjectStates() {
 		return objectStates_;
-	}
-	
-	public OOMDPState remapState(Map<String,String> nameMap) {
-		Vector<OOMDPObjectState> newObjects = new Vector<OOMDPObjectState>();
-		for (OOMDPObjectState obj : objectStates_) {
-			newObjects.add(obj.remapState(nameMap));
-		}
-		Vector<Relation> newRelations = new Vector<Relation>();
-		for (Relation rel : relations_) {
-			Relation newRel = new Relation();
-			newRel.relation = rel.relation;
-			newRel.value = rel.value;
-			for (int i = 0; i < rel.objectNames.size(); i++) {
-				newRel.objectNames.add((nameMap.containsKey(rel.objectNames.get(i)) ? nameMap.get(rel.objectNames.get(i)) : rel.objectNames.get(i))); 
-			}
-			newRelations.add(newRel);
-		}
-		
-		OOMDPState newState = new OOMDPState(newObjects, newRelations);
-		return newState;
 	}
 	
 	public Set<String> getActiveRelations() {
@@ -78,5 +59,26 @@ public class OOMDPState {
 		} 
 		
 		return hashString_;
+	}
+
+	@Override
+	public OOMDPState remap(Map<String, String> nameMap) {
+		Vector<OOMDPObjectState> newObjects = new Vector<OOMDPObjectState>();
+		for (OOMDPObjectState obj : objectStates_) {
+			newObjects.add(obj.remap(nameMap));
+		}
+		Vector<Relation> newRelations = new Vector<Relation>();
+		for (Relation rel : relations_) {
+			Relation newRel = new Relation();
+			newRel.relation = rel.relation;
+			newRel.value = rel.value;
+			for (int i = 0; i < rel.objectNames.size(); i++) {
+				newRel.objectNames.add((nameMap.containsKey(rel.objectNames.get(i)) ? nameMap.get(rel.objectNames.get(i)) : rel.objectNames.get(i))); 
+			}
+			newRelations.add(newRel);
+		}
+		
+		OOMDPState newState = new OOMDPState(newObjects, newRelations);
+		return newState;
 	}
 }

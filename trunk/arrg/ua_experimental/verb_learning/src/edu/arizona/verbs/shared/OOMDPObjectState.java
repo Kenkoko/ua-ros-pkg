@@ -1,4 +1,4 @@
-package edu.arizona.verbs.mdp;
+package edu.arizona.verbs.shared;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-public class OOMDPObjectState implements Comparable<OOMDPObjectState> {
+
+public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappable<OOMDPObjectState> {
 	
 	private String className_;
 	private String name_;
@@ -43,18 +44,6 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState> {
 			attributeMap_.put(attributes[i], values[i]);
 		}
 		Collections.sort(attributeList_); // To ensure a consistent ordering
-	}
-	
-	public OOMDPObjectState remapState(Map<String,String> nameMap) {
-		if (nameMap.containsKey(name_)) {
-			OOMDPObjectState newObject = new OOMDPObjectState(nameMap.get(name_), className_);
-			for (Map.Entry<String, String> entry : attributeMap_.entrySet()) {
-				newObject.setAttribute(entry.getKey(), entry.getValue()); // TODO: This could be done faster
-			}
-			return newObject;
-		} else {
-			return this; // If the object isn't an argument, don't remap
-		}
 	}
 	
 	public String getName() {
@@ -100,5 +89,18 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState> {
 			}
 		}
 		return hashString_;
+	}
+
+	@Override
+	public OOMDPObjectState remap(Map<String, String> nameMap) {
+		if (nameMap.containsKey(name_)) {
+			OOMDPObjectState newObject = new OOMDPObjectState(nameMap.get(name_), className_);
+			for (Map.Entry<String, String> entry : attributeMap_.entrySet()) {
+				newObject.setAttribute(entry.getKey(), entry.getValue()); // TODO: This could be done faster
+			}
+			return newObject;
+		} else {
+			return this; // If the object isn't an argument, don't remap
+		}
 	}
 }

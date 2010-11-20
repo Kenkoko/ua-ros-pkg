@@ -37,6 +37,7 @@
 	<classpathentry kind="lib" path="lib/commons-lang-2.5.jar"/>
 	<classpathentry kind="lib" path="/time_series/lib/time-series.jar"/>
 	<classpathentry kind="lib" path="lib/guava-r07.jar"/>
+	<classpathentry kind="lib" path="lib/snakeyaml-1.7.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/wubble_world_2d">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="wubble_world_2d/natives/linux"/>
