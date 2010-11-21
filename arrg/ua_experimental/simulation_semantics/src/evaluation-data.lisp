@@ -39,7 +39,7 @@
 
 (defun make-go-training ()
   (list 
-   #+ignore(list (vector (make-msg "oomdp_msgs/MDPObjectState"
+   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
                            :name "robot_description"
                            :class_name "Robot"
                            :attributes *robot-attributes*
@@ -61,7 +61,7 @@
                            :attributes *location-attributes*
                            :values #("-1.5" "0.0")))
          '("forward" "forward" "forward"))
-   #+ignore(list (vector (make-msg "oomdp_msgs/MDPObjectState"
+   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
                            :name "robot_description"
                            :class_name "Robot"
                            :attributes *robot-attributes*
@@ -83,7 +83,7 @@
                            :attributes *location-attributes*
                            :values #("0.5" "0.0")))
          '("forward"))
-   #+ignore(list (vector (make-msg "oomdp_msgs/MDPObjectState"
+   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
                            :name "robot_description"
                            :class_name "Robot"
                            :attributes *robot-attributes*
