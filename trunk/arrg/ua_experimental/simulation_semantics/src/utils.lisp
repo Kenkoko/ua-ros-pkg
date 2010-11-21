@@ -27,6 +27,9 @@ copy is returned by default."
 ;;===========================================================
 ;; Useful for dealing with ROS messages
 
+(defun to-string-list (seq)
+  (mapcar 'string-downcase seq))
+
 (defun ros-list (seq)
   (make-array (length seq) :initial-contents seq))
 

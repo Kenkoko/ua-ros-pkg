@@ -22,6 +22,7 @@
                       (call-service "verb_learning/load_verbs" 'verb_learning-srv:LoadVerbs))
      for verb-desc across verbs
      for word = (verb_learning-msg:verb-val verb-desc)
+     do (print verb-desc)
      unless (find-verb word)
      collect (make-instance 'verb 
                             :instance-name (format nil "~a~a" word "-verb")
@@ -34,19 +35,8 @@
                                     :verb (lexical-form-of verb)
                                     :arguments (ros-list (argument-strings verb)))))
 
-;(defun learn-canonical-signature (&key (verb *current-verb*))
-;  (call-service "verb_learning/find_signature" 'verb_learning-srv:FindSignature
-;                :episodes (get-episodes verb)
-;                :verb (make-message "verb_learning/VerbDescription"
-;                                    :verb (lexical-form-of verb)
-;                                    :arguments (ros-list (argument-strings verb)))))
-
-#+ignore(defun update-canonical-signature (episode &key (verb *current-verb*))
-  (call-service "verb_learning/update_verb" 'verb_learning-srv:UpdateVerb
-                :trace (list episode)
-                :verb (make-message "verb_learning/VerbDescription"
-                                    :verb (lexical-form-of verb)
-                                    :arguments (ros-list (argument-strings verb)))))
+;;=====================================================================
+;; Updating verbs
 
 (defun update-verb-with-trace (verb trace bindings)
   (call-service "verb_learning/update_verb" 'verb_learning-srv:UpdateVerb
@@ -66,6 +56,24 @@
                                     :arguments (ros-list (argument-strings verb))
                                     :bindings (ros-list bindings))))
 
+;;=====================================================================
+;; Defining verbs
+
+(defun define-sequential-verb (verb-word arguments subverbs)
+  (let* ((verb (make-instance 'verb
+                              :instance-name (format nil "~a~a" verb-word "-verb")
+                              :lexical-form verb-word
+                              :argument-structure arguments))
+         (sv-msgs (loop for sv in subverbs 
+                     collect (make-msg "verb_learning/VerbInstance"
+                                       (verb) (first sv)
+                                       (arguments) (ros-list (argument-strings (find-verb (first sv))))
+                                       (bindings) (ros-list (to-string-list (rest sv)))))))
+    (call-service "verb_learning/define_verb" 'verb_learning-srv:DefineSequentialVerb
+                  :verb verb-word
+                  :arguments (ros-list (argument-strings verb))
+                  :subverbs (ros-list sv-msgs))))
+      
 ;;=====================================================================
 ;; Modifying verbs
 

@@ -38,16 +38,16 @@
 (defun make-learning-point (verb-word training-size num-trials)
   (let* ((training (make-training verb-word))
          (verb (find-verb verb-word)))
-    (format t "Begin Testing for trainging size ~d...~%"  training-size) 
+    (format t "Begin Testing for training size ~d...~%"  training-size) 
     (loop for j from 1 upto num-trials
        do (clear-verb-meaning verb) ;; Reset the signature, FSM 
          (format t "Begin Trial ~d with training size ~d~%" j training-size)
          (loop for instance in (sample-random-subset training training-size)
             for student-result = (run-test verb (first instance))
             if (eq :accepted (accepted-of student-result))
-            do (update-verb-with-trace verb (trace-of student-result) (argument-list-of verb))
+            do (update-verb-with-trace verb (trace-of student-result) (argument-names (first instance)))
             else if (eq :rejected (accepted-of student-result))
-            do (update-verb-with-negative-trace verb (trace-of student-result) (argument-list-of verb))
+            do (update-verb-with-negative-trace verb (trace-of student-result) (argument-names (first instance)))
             do (format t "Presenting teacher's demonstration~%") 
               (present-training-instance verb-word instance))
          (format t "Testing robot performance...~%")
@@ -94,8 +94,7 @@
                        collect (perform-action action) into trace
                        do (format t "Action complete.~%")
                        finally (return (push start-state trace)))))
-    (update-verb-with-trace verb teacher-trace 
-                            (argument-names (first instance)))))
+    (update-verb-with-trace verb teacher-trace (argument-names (first instance)))))
     
 (defun run-tests (verb-word tests)
   (loop with verb = (find-verb verb-word)
@@ -127,6 +126,12 @@
            (setf (accepted-of result) (read-accepted))))
     result))
                                           
+
+(defun seq-verb-test ()
+  (load-verbs)
+  (define-sequential-verb "go-through" '(agent waypoint goal) '(("go" agent waypoint)
+                                                                ("go" agent goal))))
+  ;(make-learning-point "go-through" 2 1))
 
 
 ;;========================================================================
