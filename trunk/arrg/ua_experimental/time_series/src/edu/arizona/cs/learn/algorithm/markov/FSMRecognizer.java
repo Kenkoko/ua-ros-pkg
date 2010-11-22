@@ -70,7 +70,7 @@ public class FSMRecognizer {
 		}
 
 		for (BPPNode node : active) {
-			if (this._graph.getOutEdges(node).size() != 0) {
+			if (!node.isFinal() && this._graph.getOutEdges(node).size() != 0) {
 				continue;
 			}
 			active.clear();
@@ -124,4 +124,10 @@ public class FSMRecognizer {
 		_active.add(this._startNode);
 	}
 
+	///////////////////////////////////////////////
+	// Added by Anh
+	
+	public DirectedGraph<BPPNode, Edge> getGraph() {
+		return _graph;
+	}
 }

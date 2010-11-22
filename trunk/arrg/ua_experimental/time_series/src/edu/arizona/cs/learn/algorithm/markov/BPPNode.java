@@ -15,6 +15,8 @@ public class BPPNode {
 	private String _color;
 	private String _fontColor;
 	
+	private boolean _isFinal;
+	
 	private BPPNode _startNode;
 
 	protected BPPNode(BPPNode startNode) {
@@ -27,7 +29,7 @@ public class BPPNode {
 		_props = new TreeSet<String>();
 	}
 
-	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode) {
+	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode, boolean isFinalState) {
 		this(startNode);
 
 		_propList = propList;
@@ -42,6 +44,12 @@ public class BPPNode {
 
 		_color = "white";
 		_fontColor = "black";
+		
+		_isFinal = isFinalState;
+	}
+	
+	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode) {
+		this(propList, buf, startNode, false);
 	}
 
 	public int id() {
@@ -50,6 +58,10 @@ public class BPPNode {
 
 	public boolean isStart() {
 		return this._startNode == null;
+	}
+	
+	public boolean isFinal() {
+		return _isFinal;
 	}
 
 	public BPPNode getStartState() {
@@ -108,14 +120,16 @@ public class BPPNode {
 	public String toDot() {
 		if ((this._color.equals("white")) || (this._color.equals("#FFFFFF"))) {
 			String node = "\t\"" + this._id + "\" [fontcolor=\""
-					+ this._fontColor + "\",label=\"" + label() + "\"];\n";
+					+ this._fontColor + "\",label=\"" + label() + "\"" +
+					(_isFinal ? ",shape=\"octagon\"" : "") + "];\n";
 			String selfLoop = "\t\"" + this._id + "\" -> \"" + this._id
 					+ "\" [label=\"" + label() + "\"];\n";
 			return node + selfLoop;
 		}
 		return "\t\"" + this._id + "\" [label=\"" + label()
 				+ "\",style=\"filled\",color=\"" + this._color
-				+ "\",fontcolor=\"" + this._fontColor + "\"];\n";
+				+ "\",fontcolor=\"" + this._fontColor + "\"" +
+				(_isFinal ? ",shape=\"octagon\"" : "") + "];\n";
 	}
 
 	public static String id(List<String> propList, StringBuffer buf) {
@@ -124,6 +138,14 @@ public class BPPNode {
 			id.append(buf.charAt(i) + " " + (String) propList.get(i) + "|");
 		}
 		return id.toString();
+	}
+	
+	public List<String> getPropList() {
+		return _propList;
+	}
+	
+	public String getValues() {
+		return _values;
 	}
 	
 	public Set<String> getProps() {
