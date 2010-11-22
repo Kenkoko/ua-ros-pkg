@@ -38,15 +38,15 @@ import com.google.common.collect.Lists;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Signature;
-import edu.arizona.verbs.AtomicVerb;
-import edu.arizona.verbs.SequentialVerb;
-import edu.arizona.verbs.Verb;
-import edu.arizona.verbs.VerbBinding;
 import edu.arizona.verbs.environments.GazeboEnvironment;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
+import edu.arizona.verbs.verb.AtomicVerb;
+import edu.arizona.verbs.verb.SequentialVerb;
+import edu.arizona.verbs.verb.Verb;
+import edu.arizona.verbs.verb.VerbBinding;
 
 public class Interface {
 	private static Logger logger = Logger.getLogger(Interface.class);
@@ -389,7 +389,6 @@ public class Interface {
 		
 		// Wubble World 2D
 //		currentEnvironment = new WW2DEnvironment(true);
-		
 //		testWW2D();
 		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);

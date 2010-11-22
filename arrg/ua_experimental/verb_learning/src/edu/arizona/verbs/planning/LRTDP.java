@@ -10,7 +10,6 @@ import java.util.Vector;
 
 import org.apache.log4j.Logger;
 
-import edu.arizona.verbs.Verb;
 import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.fsm.FSMState.StateType;
 import edu.arizona.verbs.fsm.StateSet;
@@ -18,6 +17,7 @@ import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.util.ProbUtils;
+import edu.arizona.verbs.verb.Verb;
 
 public class LRTDP {
 	private static Logger logger = Logger.getLogger(LRTDP.class);
