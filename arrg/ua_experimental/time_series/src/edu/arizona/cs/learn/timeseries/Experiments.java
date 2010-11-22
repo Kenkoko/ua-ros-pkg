@@ -15,12 +15,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
+import edu.arizona.cs.learn.algorithm.markov.BPPNode;
+import edu.arizona.cs.learn.algorithm.markov.FSMConverter;
+import edu.arizona.cs.learn.algorithm.markov.FSMFactory;
 import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
@@ -37,6 +39,8 @@ import edu.arizona.cs.learn.timeseries.recognizer.Recognizer;
 import edu.arizona.cs.learn.timeseries.recognizer.RecognizerStatistics;
 import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
+import edu.arizona.cs.learn.util.graph.Edge;
+import edu.uci.ics.jung.graph.DirectedGraph;
 
 public class Experiments {
 	private static Logger logger = Logger.getLogger(Experiments.class);
@@ -429,6 +433,19 @@ public class Experiments {
 	public Map<String, RecognizerStatistics> recognition(String dataset, 
 			Recognizer r, SequenceType type, 
 			int minPct, boolean prune, boolean onlyStart) {
+		return recognition(dataset, r, type, minPct, prune, onlyStart, false);
+	}
+	
+	public Map<String, RecognizerStatistics> recognition(String dataset, 
+			Recognizer r, SequenceType type, int minPct,
+			boolean prune, boolean onlyStart, boolean outputRecognizers) {
+		return recognition(dataset, r, type, minPct, prune, onlyStart, outputRecognizers, false);
+	}
+	
+	public Map<String, RecognizerStatistics> recognition(String dataset, 
+			Recognizer r, SequenceType type, int minPct,
+			boolean prune, boolean onlyStart, boolean outputRecognizers,
+			boolean optimizeRecognizers) {
 
 		_execute = Executors.newFixedThreadPool(Utils.numThreads);
 
@@ -457,6 +474,22 @@ public class Experiments {
 				String signatureFile = dir + className + suffix;
 				FSMRecognizer mr = r.build(className, signatureFile, data.get(className), 
 						testMap.get(className), minPct, onlyStart);
+				
+				// Dump recognizer to .dot file
+				if (outputRecognizers) {
+					FSMFactory.toDot(mr.getGraph(), signatureFile.replace(".xml", ".dot"));
+				}
+				
+				// Optimize recognizer by converting to a DFA
+				if (optimizeRecognizers) {
+					System.out.println("Optimizing FSM for " + className);
+					DirectedGraph<BPPNode, Edge> dfa = FSMConverter.convertNFAtoDFA(mr.getGraph());
+					mr = new FSMRecognizer(className, dfa);
+					if (outputRecognizers) {
+						FSMFactory.toDot(mr.getGraph(), signatureFile.replace(".xml", "-dfa.dot"));
+					}
+				}
+				
 				recognizers.add(mr);
 			}
 
