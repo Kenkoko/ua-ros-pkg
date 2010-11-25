@@ -1,0 +1,61 @@
+## This file should be loaded under <robot description>_planning
+
+## the definition of each group
+groups:
+
+  - name: robot_body
+    links:
+      base_link
+      head_base_link
+      head_pan_link
+      head_tilt_link
+      neck_support_link
+      neck_tilt_link
+      neck_scan_mount_link
+      base_scan_mount_link
+
+  - name: left_arm
+    joints:
+      shoulder_pitch_joint
+      shoulder_yaw_joint
+      shoulder_roll_joint
+      elbow_pitch_joint
+      wrist_roll_joint
+      wrist_pitch_joint
+      wrist_yaw_joint
+    links:
+      L1_shoulder_pitch_link
+      L2_shoulder_yaw_link
+      L3_shoulder_roll_link
+      L4_elbow_pitch_link
+      L5_wrist_roll_link
+      L6_wrist_pitch_link
+      L7_wrist_yaw_link
+      L8_left_finger_link
+      L9_right_finger_link
+
+  - name: arms
+    joints:
+      shoulder_pitch_joint
+      shoulder_yaw_joint
+      shoulder_roll_joint
+      elbow_pitch_joint
+      wrist_roll_joint
+      wrist_pitch_joint
+      wrist_yaw_joint
+    links:
+      L1_shoulder_pitch_link
+      L2_shoulder_yaw_link
+      L3_shoulder_roll_link
+      L4_elbow_pitch_link
+      L5_wrist_roll_link
+      L6_wrist_pitch_link
+      L7_wrist_yaw_link
+    planner_configs:
+      RRTkConfig2 SBLkConfig2 
+
+  - name: l_end_effector
+    links: 
+      L8_left_finger_link
+      L9_right_finger_link
+

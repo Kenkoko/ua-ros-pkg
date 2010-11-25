@@ -1,23 +1,53 @@
+#BEGIN VOXEL STUFF
+map_type: voxel
+origin_z: 0.0
+z_voxels: 16
+z_resolution: 0.081
+unknown_cost_value: 0
+unknown_threshold: 8
+mark_threshold: 0
+#END VOXEL STUFF
+
 transform_tolerance: 0.4
 obstacle_range: 3.5
 raytrace_range: 4.0
 inflation_radius: 0.55
 
-observation_sources: tilt_scan tilt_scan_shadow_filtered tilt_scan_self_filtered
+observation_sources: base_scan base_scan_marking neck_scan
 
-tilt_scan: {sensor_frame: neck_scan_link,
+base_scan_marking: {sensor_frame: base_scan_link,
+                    data_type: PointCloud,
+                    topic: /base_scan/marking,
+                    expected_update_rate: 0.2,
+                    observation_persistence: 0.0,
+                    marking: true,
+                    clearing: false,
+                    min_obstacle_height: 0.06,
+                    max_obstacle_height: 2.0}
+
+base_scan: {sensor_frame: base_scan_link,
             data_type: LaserScan,
-            topic: /neck_scan/scan,
+            topic: /base_scan/scan,
             expected_update_rate: 0.2,
             observation_persistence: 0.0,
             marking: false,
             clearing: true,
-            min_obstacle_height: -0.08,
+            min_obstacle_height: -0.10,
             max_obstacle_height: 2.0}
+
+neck_scan: {sensor_frame: neck_scan_link,
+            data_type: LaserScan,
+            topic: /neck_scan/scan,
+            expected_update_rate: 0.2,
+            observation_persistence: 0.2,
+            marking: false,
+            clearing: true,
+            min_obstacle_height: -20.0,
+            max_obstacle_height: 40.0}
 
 tilt_scan_shadow_filtered: {sensor_frame: neck_scan_link,
                             data_type: PointCloud,
-                            topic: /tilt_scan_shadow_filtered,
+                            topic: /tilt_scan/shadow_filtered,
                             expected_update_rate: 0.2,
                             observation_persistence: 0.0,
                             marking: true,
@@ -27,10 +57,11 @@ tilt_scan_shadow_filtered: {sensor_frame: neck_scan_link,
 
 tilt_scan_self_filtered: {sensor_frame: neck_scan_link,
                           data_type: PointCloud,
-                          topic: /tilt_scan_self_filtered,
+                          topic: /tilt_scan/self_filtered,
                           expected_update_rate: 0.0,
                           observation_persistence: 0.0,
                           marking: true,
                           clearing: false,
                           min_obstacle_height: -0.08,
                           max_obstacle_height: 2.0}
+
