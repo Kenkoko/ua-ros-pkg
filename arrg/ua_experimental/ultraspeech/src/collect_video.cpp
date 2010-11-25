@@ -139,20 +139,23 @@ public:
     //image_name_ = filename;
     if (run_status_ == 1)
     {
-      //sv_msg.header.stamp = ros::Time::now();
-      sv_msg.header.stamp = msg->header.stamp;
-      sv_msg.filepath = "video_writing_started";
-      savefile_pub_.publish(sv_msg);
-      //frame = msg->header.seq;
       if (writer_) {
+	//sv_msg.header.stamp = ros::Time::now();
+	sv_msg.header.stamp = msg->header.stamp;
+	sv_msg.filepath = "video_writing_started";
+	savefile_pub_.publish(sv_msg);
 	cvWriteFrame(writer_, img);
-	std::cout << "wrote frame" << std::endl;
+	//std::cout << "wrote frame" << std::endl;
       }
       else {
+
 	std::sprintf(num, "%.06d", msg->header.seq);
 	std::string filename(subdir_ + filename_chunk_ + "_" + num +".png");
 	char *fnamebuf(convertStringToChar(filename));
-	std::cout << "wrote file" << std::endl;
+	sv_msg.header.stamp = msg->header.stamp;
+	sv_msg.filepath = filename;
+	savefile_pub_.publish(sv_msg);
+	//std::cout << "wrote file" << std::endl;
 	if(!cvSaveImage(fnamebuf,img)) 
 	  printf("Could not save: %s\n",fnamebuf);
       }
