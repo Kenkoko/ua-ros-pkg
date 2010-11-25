@@ -74,6 +74,8 @@ class SubjectUI:
         stimuliFile should be a list of words or sentences (1 per line) that will be randomized and displayed.
         numReps is the number of repitions for each word/sentence
         '''
+        self.USE_JACK = False
+        
         rospy.init_node('subjectUI')
  	self.startupTopic = rospy.Publisher('startup', String) #for the logger to open the logfile
         self.controlTopic = rospy.Publisher('control',Control)    
@@ -108,6 +110,7 @@ class SubjectUI:
         self.next_button.connect("clicked", self.onNext)
         
         self.window.show_all()
+        
 
         gts = GtkThreadSafe()
         with gts:
@@ -117,7 +120,8 @@ class SubjectUI:
 	    self.currentRep = 1
 	    self.currentBatch = 1
 	    self.total = len(self.stimuliList)
-	    self.startJack()
+	    if self.USE_JACK:
+	        self.startJack()
 	    
                     
         
@@ -133,8 +137,6 @@ class SubjectUI:
         os.makedirs(stereorightdir)
         stereoleftdir = self.topleveldir + '/stereoleft'
         os.makedirs(stereoleftdir)
-        mic1dir = self.topleveldir + '/mic1'
-        os.makedirs(mic1dir)
         ultrasounddir = self.topleveldir + '/ultrasound'
         os.makedirs(ultrasounddir)
         
@@ -166,7 +168,7 @@ class SubjectUI:
 	self.ffado_pid = subprocess.Popen(ffadodbus)
 	time.sleep(1) # wait for ffado to start
 	
-	ffadomixer = ['ffado-mixer-qt3']
+	ffadomixer = ['ffado-mixer']
 	self.ffado_mixer_pid = subprocess.Popen(ffadomixer)
 	print "turn on phantom power\n"
 
@@ -219,9 +221,13 @@ class SubjectUI:
             pass
         
     def onDestroy(self, event):
-	self.ffado_pid.terminate()
-	self.jack_pid.terminate()
-	self.ffado_mixer_pid.terminate()
+        if self.USE_JACK:
+	    self.ffado_pid.terminate()
+	    self.jack_pid.terminate()
+	    self.ffado_mixer_pid.terminate()
+	msg = String()
+	msg.data = "done" #this tells the slave to shutdown
+	self.startupTopic.publish(msg)
         #self.logfile.close()
         gtk.main_quit()
 

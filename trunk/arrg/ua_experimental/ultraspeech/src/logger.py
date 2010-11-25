@@ -28,6 +28,8 @@ class Logger:
         rospy.Subscriber("right/stereoright_capture/save_name", SaveFile, self.stereorightsave_cb)
         #rospy.Subscriber("audio", AudioStream, self.audio_cb) #incomplete
         rospy.Subscriber("mic1_capture/save_name", SaveFile, self.mic1save_cb)
+        rospy.Subscriber("mic2_capture/save_name", SaveFile, self.mic2save_cb)
+        rospy.Subscriber("egg_capture/save_name", SaveFile, self.eggsave_cb)
         rospy.Subscriber("ultrasound/save_name", SaveFile, self.ultrasoundsave_cb)
         
         rospy.spin()
@@ -64,7 +66,18 @@ class Logger:
 	timestamp = self.getTime(str(data.header.stamp.secs), str(data.header.stamp.nsecs))
 	filename = data.filepath
 	self.logfile.write('topic:mic1start,time:%s,filepath:%s\n' %(timestamp, filename))
-      
+
+    def mic2save_cb(self, data):
+	timestamp = self.getTime(str(data.header.stamp.secs), str(data.header.stamp.nsecs))
+	filename = data.filepath
+	self.logfile.write('topic:mic2start,time:%s,filepath:%s\n' %(timestamp, filename))
+
+    def eggsave_cb(self, data):
+	timestamp = self.getTime(str(data.header.stamp.secs), str(data.header.stamp.nsecs))
+	filename = data.filepath
+	self.logfile.write('topic:eggstart,time:%s,filepath:%s\n' %(timestamp, filename))
+
+
     def monocaminfo_cb(self, data):
         if self.runstatus == 1:
 	    timestamp = self.getTime(str(data.header.stamp.secs), str(data.header.stamp.nsecs))

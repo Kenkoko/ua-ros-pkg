@@ -1,4 +1,8 @@
 <launch>
+  <node pkg="ultraspeech" name="logger" type="logger.py"/>
+
+  <node pkg="ultraspeech" name="subjectUI" type="subjectUI.py" args="/home/robotlab/ros/ua-ros-pkg/ua_experimental/ultraspeech/stimuli.txt 5"/>
+
   <node pkg="camera1394" name="monocam" type="camera1394_node">
     <remap from="camera" to="monocam"/>
     <param name="guid" type="string" value="0055050400033409"/>
@@ -13,7 +17,7 @@
     <param name="frame_rate" value="30"/>
   </node>
   
-  <!--<node pkg="ultraspeech" name="ultrasound" type="ros_dvgrab"/>-->
+  <node pkg="ultraspeech" name="ultrasound" type="ros_dvgrab"/>
 
   <group ns="left">
     <node pkg="image_proc" name="image_proc_left" type="image_proc"/>
@@ -43,9 +47,6 @@
     <node pkg="ultraspeech" name="monocam_capture" type="video_writer" args="monocam">
       <remap from="image" to="image_color"/>
     </node>
-    <!--<node pkg="ultraspeech" name="monocam_capture" type="ultraspeech" args="monocam">
-      <remap from="image" to="image_color"/>
-    </node>-->
   </group>
 
 </launch>
