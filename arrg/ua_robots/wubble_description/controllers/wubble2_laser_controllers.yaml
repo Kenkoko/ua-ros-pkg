@@ -1,12 +1,20 @@
-base_laser_tilt_controller:
-  type: robot_mechanism_controllers/JointPositionController
-  joint: hokuyo_tilt_joint
-  pid:
-    p: 120
-
 neck_laser_tilt_controller:
   type: robot_mechanism_controllers/JointPositionController
   joint: neck_tilt_joint
   pid:
     p: 120
+
+neck_laser_traj_controller:
+  type: pr2_mechanism_controllers/LaserScannerTrajController
+  joint: neck_tilt_joint
+  gains:
+    p: 200
+  velocity_filter:
+    - name: low_pass
+      type: filters/TransferFunctionFilterDouble
+      params:
+        a: [1.0, -0.1]
+        b: [0.9]
+  max_velocity:    12
+  max_acceleration: 30
 
