@@ -135,3 +135,19 @@ DMXL_MODEL_TO_NAME = \
     107: 'EX-106+',
 }
 
+KGCM_TO_NM = 0.0980665      # 1 kg-cm is that much N-m
+
+# Holding torque in N-m
+DMXL_MODEL_TO_TORQUE = \
+{
+    113: (12.0 / 10.2) * KGCM_TO_NM,        # 10.2 kg-cm @ 12V
+    116: (12.0 / 21.4) * KGCM_TO_NM,        # 21.4 kg-cm @ 12V
+    117: (12.0 / 15.0) * KGCM_TO_NM,        # 28.9 kg-cm @ 12V
+     12: (12.0 / 15.0) * KGCM_TO_NM,        # 15.0 kg-cm @ 12V
+     18: (12.0 / 18.0) * KGCM_TO_NM,        # 18.0 kg-cm @ 12V
+     10: (12.0 / 13.0) * KGCM_TO_NM,        # 13.0 kg-cm @ 12V
+     24: (12.0 / 26.0) * KGCM_TO_NM,        # 26.0 kg-cm @ 12V
+     28: (18.5 / 37.0) * KGCM_TO_NM,        # 37.0 kg-cm @ 18.5V
+     64: (18.5 / 52.0) * KGCM_TO_NM,        # 52.0 kg-cm @ 18.5V
+    107: (18.5 / 107.0) * KGCM_TO_NM,       # 107.0 kg-cm @ 18.5V
+}
