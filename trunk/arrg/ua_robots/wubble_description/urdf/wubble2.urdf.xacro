@@ -38,6 +38,7 @@
             <geometry>
                 <mesh filename="package://wubble_description/meshes/wubble2_platform.stl"/>
             </geometry>
+            <material name="White" />
         </visual>
         
         <collision>
@@ -91,6 +92,7 @@
             <geometry>
                 <mesh filename="package://wubble_description/meshes/head_base_link.stl"/>
             </geometry>
+            <material name="GunMetalBrushedAluminum" />
         </visual>
         
         <collision>
@@ -115,6 +117,7 @@
             <geometry>
                 <mesh filename="package://wubble_description/meshes/head_pan_link.stl"/>
             </geometry>
+            <material name="GunMetalBrushedAluminum" />
         </visual>
         
         <collision>
@@ -139,6 +142,7 @@
             <geometry>
                 <mesh filename="package://wubble_description/meshes/head_tilt_link.stl"/>
             </geometry>
+            <material name="GunMetalBrushedAluminum" />
         </visual>
         
         <collision>
@@ -203,6 +207,7 @@
             <geometry>
                 <mesh filename="package://wubble_description/meshes/neck_laser_support_link.stl"/>
             </geometry>
+            <material name="GunMetalBrushedAluminum" />
         </visual>
         
         <collision>
@@ -227,6 +232,7 @@
             <geometry>
                 <mesh filename="package://wubble_description/meshes/head_tilt_link.stl"/>
             </geometry>
+            <material name="GunMetalBrushedAluminum" />
         </visual>
         
         <collision>
