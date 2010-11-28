@@ -112,10 +112,12 @@ class SerialProxy():
                 model_number = self.__serial_bus.get_servo_model_number(i)
                 counts[model_number] += 1
                 angles = self.__serial_bus.get_servo_min_max_angle_limits(i)
+                voltage = self.__serial_bus.get_servo_voltage(i)
 
                 rospy.set_param('dynamixel/%s/%d/model' %(self.port_namespace, i), DMXL_MODEL_TO_NAME[model_number])
                 rospy.set_param('dynamixel/%s/%d/model_number' %(self.port_namespace, i), model_number)
                 rospy.set_param('dynamixel/%s/%d/torque_per_volt' %(self.port_namespace, i), DMXL_MODEL_TO_TORQUE[model_number])
+                rospy.set_param('dynamixel/%s/%d/max_torque' %(self.port_namespace, i), DMXL_MODEL_TO_TORQUE[model_number] * voltage)
 
                 if model_number == 107: # tested with EX-106+
                     rospy.set_param('dynamixel/%s/%d/encoder_resolution' %(self.port_namespace, i), 4096)

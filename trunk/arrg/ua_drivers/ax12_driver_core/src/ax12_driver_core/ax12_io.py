@@ -711,6 +711,13 @@ class AX12_IO(object):
             return 1023 - speed
         return speed
 
+    def get_servo_voltage(self, servoId):
+        """ Reads the servo's voltage. """
+        response = self.__sio.read_from_servo(servoId, AX_PRESENT_VOLTAGE, 1)
+        if response:
+            self.exception_on_error(response[4], servoId, 'fetching supplied voltage')
+        return response[5] / 10.0
+
     def get_servo_feedback(self, servoId):
         """
         Returns the id, goal, position, error, speed, load, voltage, temperature
