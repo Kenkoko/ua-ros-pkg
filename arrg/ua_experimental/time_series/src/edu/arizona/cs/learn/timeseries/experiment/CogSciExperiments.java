@@ -96,7 +96,7 @@ public class CogSciExperiments {
 			for (int i = 0; i < stats.size(); ++i) { 
 				BatchStatistics batch = stats.get(i);
 				for (int j = 0; j < batch.detail.size(); ++j) { 
-					out.write((int)pct*10 + "," + i + "," + j + ",");
+					out.write((int)(pct*10) + "," + i + "," + j + ",");
 					out.write(batch.actualClass.get(j) + "," + batch.predictedClass.get(j) + ",");
 					out.write((batch.detail.get(j) ? 1 : 0) + "\n");
 				}
