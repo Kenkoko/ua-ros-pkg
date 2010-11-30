@@ -103,7 +103,10 @@ public class CogSciExperiments {
 				perf.addValue(batch.accuracy());
 			}
 			System.out.println("[" + pct + "] Performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
+			out.flush();
 		}
+		
+		out.close();
 	}
 	
 	public static void main(String[] args) throws Exception { 
