@@ -8,20 +8,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 
 import edu.arizona.cs.learn.algorithm.alignment.Params;
 import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.timeseries.distance.Distances;
-import edu.arizona.cs.learn.timeseries.evaluation.FoldStatistics;
-import edu.arizona.cs.learn.timeseries.evaluation.cluster.Clustering;
-import edu.arizona.cs.learn.timeseries.model.AgglomerativeNode;
 import edu.arizona.cs.learn.timeseries.model.Episode;
 import edu.arizona.cs.learn.timeseries.model.Score;
 import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.cs.learn.timeseries.model.SignatureCallable;
 import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.util.Utils;
 
 public class CAVEClassifier extends Classifier {
 	private static Logger logger = Logger.getLogger(CAVEClassifier.class);
@@ -64,15 +65,6 @@ public class CAVEClassifier extends Classifier {
 			return "cave-" + this._method;
 		}
 		return "cave-" + this._percent;
-	}
-
-	public void addData(FoldStatistics fold) {
-		for (Signature signature : this._map.values()) {
-			int minSeen = (int) Math
-					.round(signature.trainingSize() * this._pct);
-			fold.signatureSize.addValue(SequenceAlignment.subset(
-					signature.signature(), minSeen).size());
-		}
 	}
 
 	public String test(Instance instance) {
@@ -165,6 +157,12 @@ public class CAVEClassifier extends Classifier {
 		}
 	}
 
+	/**
+	 * learn the signatures before classification... This method
+	 * is multithreaded to help speed things up.
+	 * @param x
+	 * @param training
+	 */
 	private void learn(int x, List<Instance> training) {
 		Map<String,List<Instance>> instances = new HashMap<String,List<Instance>>();
 		for (Instance instance : training) {
@@ -176,21 +174,21 @@ public class CAVEClassifier extends Classifier {
 
 			list.add(instance);
 		}
-
-		for (String key : instances.keySet()) {
-			Signature s = new Signature(key);
-			List<Instance> list = instances.get(key);
-			for (int i = 1; i <= list.size(); i++) {
-				s.update(list.get(i-1).sequence());
-				if ((_prune) && (i % 10 == 0)) {
-					s = s.prune(3);
-				}
-			}
+		
+		ExecutorService execute = Executors.newFixedThreadPool(Utils.numThreads);
+		List<Future<Signature>> futureList = new ArrayList<Future<Signature>>();
+		for (String key : instances.keySet()) 
+			futureList.add(execute.submit(new SignatureCallable(key, _prune, 3, instances.get(key))));
 			
-			// Fifty percent pruning....
-			s = s.prune(s.trainingSize()/2);
-			_map.put(key, s);
+		for (Future<Signature> results : futureList) {
+			try {
+				Signature signature = results.get();
+				_map.put(signature.key(), signature);
+			} catch (Exception e) { 
+				e.printStackTrace();
+			}
 		}
+		execute.shutdown();
 	}
 	
 	public void train(List<Instance> training) {

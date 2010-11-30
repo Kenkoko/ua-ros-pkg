@@ -6,11 +6,10 @@ import java.util.List;
 import org.dom4j.Element;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.Symbol;
+import edu.arizona.cs.learn.util.Utils;
 
 
 public class AllenRelation extends Symbol {
-	
-	public static float MARGIN = 5;
 	
 	public static final String[] fullText = new String[] { 
 		"equals", "starts-with", "finishes-with", "before",
@@ -109,7 +108,7 @@ public class AllenRelation extends Symbol {
 		if (i1.end == i2.end)
 			return text[2];
 
-		if (i1.end < i2.start && i2.start - i1.end < MARGIN)
+		if (i1.end < i2.start && i2.start - i1.end < Utils.WINDOW)
 			return text[3];
 		if (i1.end < i2.start)
 			return text[4];
@@ -141,7 +140,7 @@ public class AllenRelation extends Symbol {
 		if (i1.start > i2.start)
 			return text[8];
 		
-		if (i1.end < i2.start && i2.start - i1.end < MARGIN)
+		if (i1.end < i2.start && i2.start - i1.end < Utils.WINDOW)
 			return text[3];
 		if (i1.end < i2.start)
 			return text[4];

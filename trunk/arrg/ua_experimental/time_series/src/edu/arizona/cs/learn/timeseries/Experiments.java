@@ -28,7 +28,7 @@ import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyCallable;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyResults;
-import edu.arizona.cs.learn.timeseries.evaluation.FoldStatistics;
+import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
 import edu.arizona.cs.learn.timeseries.model.AllenRelation;
 import edu.arizona.cs.learn.timeseries.model.Episode;
 import edu.arizona.cs.learn.timeseries.model.Interval;
@@ -109,32 +109,29 @@ public class Experiments {
 	}
 
 	private void writeLog(String activityName, String classifierName,
-			List<SequenceType> types, List<List<FoldStatistics>> values) {
+			List<SequenceType> types, List<List<BatchStatistics>> values) {
 		try {
 			File f = new File("logs/" + activityName + "-" + classifierName
 					+ ".csv");
 			BufferedWriter out = new BufferedWriter(new FileWriter(f));
 
 			StringBuffer buf = new StringBuffer();
-			buf.append("activity,classifier,cavePct,sequence,fold,accuracy,avgTrainingSequenceLength,avgTestingSequenceLength,trainingTime,testingTime,avgSignatureSize");
+			buf.append("activity,classifier,cavePct,sequence,fold,accuracy,trainingTime,testingTime");
 
 			out.write(buf.toString() + "\n");
 			System.out.println(buf.toString());
 
 			for (int i = 0; i < types.size(); i++) {
 				SequenceType type = types.get(i);
-				List<FoldStatistics> results = values.get(i);
+				List<BatchStatistics> results = values.get(i);
 				for (int j = 0; j < results.size(); j++) {
-					FoldStatistics stats = (FoldStatistics) results.get(j);
+					BatchStatistics stats = (BatchStatistics) results.get(j);
 					buf = new StringBuffer();
 					buf.append(activityName + "," + classifierName + ","
 							+ this._cavePct + "," + type + "," + j + ","
-							+ stats.accuracy + ",");
-					buf.append(stats.trainingLengths.getMean() + ","
-							+ stats.testingLengths.getMean() + ",");
+							+ stats.accuracy() + ",");
 					buf.append(stats.trainingTime + "," + stats.testingTime
 							+ ",");
-					buf.append(stats.signatureSize.getMean());
 
 					out.write(buf.toString() + "\n");
 					System.out.println("," + buf.toString());
@@ -165,7 +162,7 @@ public class Experiments {
 		}
 	}
 
-	public List<FoldStatistics> crossValidationLite(String activityName, Classifier c, 
+	public List<BatchStatistics> crossValidationLite(String activityName, Classifier c, 
 			SequenceType type, List<String> classNames) {
 		
 		logger.debug("Beginning cross validation [lite]");
@@ -173,12 +170,12 @@ public class Experiments {
 		
 		Map<String,List<Episode>> data = Utils.loadAllEpisodes(activityName);
 
-		List<FoldStatistics> foldStats = new ArrayList<FoldStatistics>();
+		List<BatchStatistics> foldStats = new ArrayList<BatchStatistics>();
 		int[][] matrix = new int[classNames.size()][classNames.size()];
 
 		for (int i = 0; i < this._kFolds; i++) {
 			logger.debug("Fold --- " + i);
-			FoldStatistics fs = new FoldStatistics();
+			BatchStatistics fs = new BatchStatistics(c.getName(), classNames.size());
 
 			Map<String,List<Integer>> testMap = Utils.getTestSet(activityName, _kFolds, i);
 			
@@ -208,15 +205,12 @@ public class Experiments {
 			long trainEnd = System.currentTimeMillis();
 			fs.trainingTime = (trainEnd - trainStart);
 
-			c.addData(fs);
-
 			double right = 0.0D;
 			int wrong = 0;
 
 			List<Future<ClassifyResults>> future = new ArrayList<Future<ClassifyResults>>();
 
 			for (Instance instance : test) {
-				fs.testingLengths.addValue(instance.sequence().size());
 				future.add(_execute.submit(new ClassifyCallable(c, instance)));
 			}
 
@@ -253,7 +247,6 @@ public class Experiments {
 				appendANOVA(c.getName(), buf.toString());
 			}
 
-			fs.accuracy = (right / test.size());
 			foldStats.add(fs);
 		}
 
@@ -263,7 +256,7 @@ public class Experiments {
 		return foldStats;
 	}	
 	
-	public List<FoldStatistics> crossValidation(String activityName, Classifier c, 
+	public List<BatchStatistics> crossValidation(String activityName, Classifier c, 
 			SequenceType type, List<String> classNames) {
 		logger.debug("Beginning cross validation");
 
@@ -279,12 +272,12 @@ public class Experiments {
 
 		}
 
-		List<FoldStatistics> foldStats = new ArrayList<FoldStatistics>();
+		List<BatchStatistics> foldStats = new ArrayList<BatchStatistics>();
 		int[][] matrix = new int[classNames.size()][classNames.size()];
 
 		for (int i = 0; i < _kFolds; i++) {
 			logger.debug("Fold --- " + i);
-			FoldStatistics fs = new FoldStatistics();
+			BatchStatistics fs = new BatchStatistics(c.getName(), classNames.size());
 
 			Map<String,List<Integer>> testMap = Utils.getTestSet(activityName, _kFolds, i);
 
@@ -297,7 +290,6 @@ public class Experiments {
 				for (Instance instance : list) {
 					if (!ignore.contains(instance.id())) { 
 						training.add(instance);
-						fs.trainingLengths.addValue(instance.sequence().size());
 					} else if (Utils.testExcludeSet.size() > 0) {
 						test.add(instance.copy());
 					} else {
@@ -313,15 +305,12 @@ public class Experiments {
 			long trainEnd = System.currentTimeMillis();
 			fs.trainingTime = (trainEnd - trainStart);
 
-			c.addData(fs);
-
 			double right = 0.0D;
 			int wrong = 0;
 
 			List<Future<ClassifyResults>> future = new ArrayList<Future<ClassifyResults>>();
 
 			for (Instance instance : test) {
-				fs.testingLengths.addValue(instance.sequence().size());
 				future.add(_execute.submit(new ClassifyCallable(c, instance)));
 			}
 
@@ -358,7 +347,6 @@ public class Experiments {
 				appendANOVA(c.getName(), buf.toString());
 			}
 
-			fs.accuracy = (right / test.size());
 			foldStats.add(fs);
 		}
 
@@ -547,7 +535,6 @@ public class Experiments {
 	public void runComparison(String prefix, boolean lite) {
 		Utils.LIMIT_RELATIONS = true;
 		Utils.WINDOW = 5;
-		AllenRelation.MARGIN = 5.0F;
 
 		List<String> fileNames = Utils.getActivityNames(prefix);
 		logger.debug("Comparison for : " + prefix);
@@ -555,7 +542,7 @@ public class Experiments {
 		List<Classify> classifyList = Classify.get(_classify);
 		for (Classify c : classifyList) {
 			List<SequenceType> typesTested = new ArrayList<SequenceType>();
-			List<List<FoldStatistics>> testResults = new ArrayList<List<FoldStatistics>>();
+			List<List<BatchStatistics>> testResults = new ArrayList<List<BatchStatistics>>();
 
 			StringBuffer buf = new StringBuffer();
 
@@ -568,14 +555,14 @@ public class Experiments {
 			buf.append(prefix + " & ");
 			for (SequenceType type : SequenceType.get(this._sequenceType)) {
 				Classifier classifier = c.getClassifier(type, _k, _cavePct, _fromFile, getFolds());
-				List<FoldStatistics> values = new ArrayList<FoldStatistics>();
+				List<BatchStatistics> values = new ArrayList<BatchStatistics>();
 				if (lite)
 					values = crossValidationLite(prefix, classifier, type, fileNames);
 				else
 					values = crossValidation(prefix, classifier, type, fileNames);
 				SummaryStatistics ss = new SummaryStatistics();
-				for (FoldStatistics fd : values) {
-					ss.addValue(fd.accuracy);
+				for (BatchStatistics fd : values) {
+					ss.addValue(fd.accuracy());
 				}
 				buf.append(toString(ss) + " & ");
 

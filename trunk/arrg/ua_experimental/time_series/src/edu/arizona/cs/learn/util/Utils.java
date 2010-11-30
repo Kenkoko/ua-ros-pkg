@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.PushbackReader;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -71,6 +70,28 @@ public class Utils {
 			prefixes.add(pre);
 		}		
 		return prefixes;
+	}
+	
+	/**
+	 * Helper function to convert a confusion matrix into a CSV
+	 * string with new lines.
+	 * @param classNames
+	 * @param matrix
+	 * @return
+	 */
+	public static String toCSV(List<String> classNames, int[][] matrix) { 
+		StringBuffer buf = new StringBuffer();
+		for (String s : classNames) 
+			buf.append("," + s);
+		buf.append("\n");
+
+		for (int i = 0; i < classNames.size(); i++) {
+			buf.append(classNames.get(i));
+			for (int j = 0; j < classNames.size(); j++) 
+				buf.append("," + matrix[i][j]);
+			buf.append("\n");
+		}
+		return buf.toString();
 	}
 	
 	/**
