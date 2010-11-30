@@ -6,6 +6,9 @@ import java.util.List;
 
 public class BatchStatistics {
 	public String classifierName;
+	
+	public List<String> actualClass;
+	public List<String> predictedClass;
 	public List<Boolean> detail;
 
 	public double trainingTime;
@@ -18,6 +21,8 @@ public class BatchStatistics {
 		
 		confMatrix = new int[nClasses][nClasses];
 		detail = new ArrayList<Boolean>();
+		actualClass = new ArrayList<String>();
+		predictedClass = new ArrayList<String>();
 	}
 	
 	public double accuracy() { 

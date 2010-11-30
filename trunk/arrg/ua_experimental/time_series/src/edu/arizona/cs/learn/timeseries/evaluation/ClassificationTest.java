@@ -36,9 +36,15 @@ public abstract class ClassificationTest {
 			} 
 
 			fs.testingTime += results.elapsed;
+			
+			String actual = results.test.name();
+			String predicted = results.className;
 
-			int correctIndex = classNames.indexOf(results.test.name());
-			int classifyIndex = classNames.indexOf(results.className);
+			fs.actualClass.add(actual);
+			fs.predictedClass.add(predicted);
+			
+			int correctIndex = classNames.indexOf(actual);
+			int classifyIndex = classNames.indexOf(predicted);
 			fs.confMatrix[correctIndex][classifyIndex] += 1;
 			
 			if (results.test.name().equals(results.className))  

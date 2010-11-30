@@ -1,5 +1,7 @@
 package edu.arizona.cs.learn.timeseries.experiment;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -68,28 +70,43 @@ public class CogSciExperiments {
 	 * Generate a learning curve by splitting and testing for
 	 * multiple percents of training data.
 	 */
-	public static void learningCurve(String prefix) { 
+	public static void learningCurve(String prefix) throws Exception { 
 		Map<String,List<Instance>> data = Utils.load(prefix, SequenceType.allen);
 		List<String> classNames = new ArrayList<String>(data.keySet());
 		Collections.sort(classNames);
 		
 		Classifier c = Classify.prune.getClassifier(SequenceType.allen, -1, 50, false, -1);
 		
-		double[] pcts = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+		// Construct a file to save the results to...
+		BufferedWriter out = new BufferedWriter(new FileWriter("logs/" + prefix + " -learning-curve.csv"));
+		
+		// write out the header...
+		out.write("training_pct,batch,test_index,actual_class,predicted_class,correct\n");
+		
+		double[] pcts = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
 		for (double pct : pcts) { 
-			SplitAndTest sat = new SplitAndTest(50, pct);
+			SplitAndTest sat = new SplitAndTest(100, pct);
 			List<BatchStatistics> stats = sat.run(System.currentTimeMillis(), classNames, data, c);
-			
+
 			// print out the summary information for now.  Later we will need to 
 			// print out all of it.
 			SummaryStatistics perf = new SummaryStatistics();
-			for (int i = 0; i < stats.size(); ++i) 
-				perf.addValue(stats.get(i).accuracy());
+			
+			// append to the file the results of this latest run...
+			for (int i = 0; i < stats.size(); ++i) { 
+				BatchStatistics batch = stats.get(i);
+				for (int j = 0; j < batch.detail.size(); ++j) { 
+					out.write((int)pct*10 + "," + i + "," + j + ",");
+					out.write(batch.actualClass.get(j) + "," + batch.predictedClass.get(j) + ",");
+					out.write((batch.detail.get(j) ? 1 : 0) + "\n");
+				}
+				perf.addValue(batch.accuracy());
+			}
 			System.out.println("[" + pct + "] Performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
 		}
 	}
 	
-	public static void main(String[] args) { 
+	public static void main(String[] args) throws Exception { 
 //		performance("ww3d");
 		learningCurve("ww3d");
 	}
