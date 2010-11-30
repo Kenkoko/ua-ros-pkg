@@ -78,7 +78,7 @@ public class CogSciExperiments {
 		Classifier c = Classify.prune.getClassifier(SequenceType.allen, -1, 50, false, -1);
 		
 		// Construct a file to save the results to...
-		BufferedWriter out = new BufferedWriter(new FileWriter("logs/" + prefix + " -learning-curve.csv"));
+		BufferedWriter out = new BufferedWriter(new FileWriter("logs/" + prefix + "-learning-curve.csv"));
 		
 		// write out the header...
 		out.write("training_pct,batch,test_index,actual_class,predicted_class,correct\n");
