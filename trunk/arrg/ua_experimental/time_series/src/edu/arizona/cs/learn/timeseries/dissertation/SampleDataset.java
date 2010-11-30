@@ -31,7 +31,6 @@ public class SampleDataset {
 	public static void drawExamplesSameSize() { 
 		Utils.LIMIT_RELATIONS = false;
 		Utils.WINDOW = 4;
-		AllenRelation.MARGIN = 4;
 		AllenRelation.text = AllenRelation.fullText;
 
 		Paint._rowHeight = 10;
