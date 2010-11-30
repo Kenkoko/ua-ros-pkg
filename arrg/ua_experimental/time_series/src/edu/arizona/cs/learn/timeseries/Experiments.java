@@ -651,6 +651,27 @@ public class Experiments {
 			}
 		}
 
+		writeTestFile(prefix, classNames, sets, k);
+
+		List<SequenceType> types = SequenceType.get("all");
+		types.add(SequenceType.bpp);
+		for (SequenceType type : SequenceType.get("all"))
+			for (int i = 0; i < k; i++) {
+				String f = "data/cross-validation/k" + k + "/fold-" + i + "/"
+						+ type + "/";
+				File file = new File(f);
+				if (!file.exists())
+					file.mkdir();
+			}
+	}
+
+	/**
+	 * select the test set for each of the different folds
+	 * in the cross-validation
+	 * @param prefix
+	 * @param k
+	 */
+	public static void writeTestFile(String prefix, List<String> classNames, List<Map<String,List<Integer>>> sets, int k) {
 		try {
 			for (int i = 0; i < k; i++) {
 				String dir = "data/cross-validation/k" + k + "/fold-" + i + "/";
@@ -672,18 +693,7 @@ public class Experiments {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-
-		List<SequenceType> types = SequenceType.get("all");
-		types.add(SequenceType.bpp);
-		for (SequenceType type : SequenceType.get("all"))
-			for (int i = 0; i < k; i++) {
-				String f = "data/cross-validation/k" + k + "/fold-" + i + "/"
-						+ type + "/";
-				File file = new File(f);
-				if (!file.exists())
-					file.mkdir();
-			}
+		}	
 	}
 
 	public static void signatures(final String prefix, final SequenceType type, final int folds, final boolean prune) {

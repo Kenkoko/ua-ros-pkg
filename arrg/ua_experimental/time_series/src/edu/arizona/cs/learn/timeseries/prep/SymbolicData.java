@@ -42,44 +42,29 @@ public class SymbolicData {
 		return intervals;
 	}
 	
+	public static void convert(String prefix, String output, int numEpisodes) { 
+		try { 
+			BufferedWriter out = new BufferedWriter(new FileWriter(output));
+			for (int i = 1; i <= numEpisodes; ++i) { 
+				List<Interval> intervals = toEpisode(prefix + i);
+				out.write("(" + i + "\n");
+				out.write(" (\n");
+				for (Interval interval : intervals) { 
+					out.write("(\"" + interval.name + "\" " + 
+							interval.start + " " +
+							interval.end + ")\n");
+				}
+				out.write(" )\n");
+				out.write(")\n");
+			}
+			out.close();
+		} catch (Exception e) { 
+			e.printStackTrace();
+		}
+	}
+	
 	public static void main(String[] args) { 
-
-		try { 
-			BufferedWriter out = new BufferedWriter(new FileWriter("data/input/niall-a.lisp"));
-			for (int i = 1; i <= numEpisodes; ++i) { 
-				List<Interval> intervals = toEpisode("data/raw-data/wes/round-3/f" + i);
-				out.write("(" + i + "\n");
-				out.write(" (\n");
-				for (Interval interval : intervals) { 
-					out.write("(\"" + interval.name + "\" " + 
-							interval.start + " " +
-							interval.end + ")\n");
-				}
-				out.write(" )\n");
-				out.write(")\n");
-			}
-			out.close();
-		} catch (Exception e) { 
-			e.printStackTrace();
-		}
-
-		try { 
-			BufferedWriter out = new BufferedWriter(new FileWriter("data/input/niall-b.lisp"));
-			for (int i = 1; i <= numEpisodes; ++i) { 
-				List<Interval> intervals = toEpisode("data/raw-data/wes/round-3/g" + i);
-				out.write("(" + i + "\n");
-				out.write(" (\n");
-				for (Interval interval : intervals) { 
-					out.write("(\"" + interval.name + "\" " + 
-							interval.start + " " +
-							interval.end + ")\n");
-				}
-				out.write(" )\n");
-				out.write(")\n");
-			}
-			out.close();
-		} catch (Exception e) { 
-			e.printStackTrace();
-		}
+		convert("data/raw-data/wes/round-5/f", "data/input/niall-a.lisp", numEpisodes);
+		convert("data/raw-data/wes/round-5/g", "data/input/niall-b.lisp", numEpisodes);
 	}
 }
