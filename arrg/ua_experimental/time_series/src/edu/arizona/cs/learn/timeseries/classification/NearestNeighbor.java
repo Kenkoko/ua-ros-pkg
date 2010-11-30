@@ -14,7 +14,7 @@ import edu.arizona.cs.learn.algorithm.alignment.Params;
 import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.model.Distance;
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.timeseries.evaluation.FoldStatistics;
+import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
 import edu.arizona.cs.learn.timeseries.model.Episode;
 import edu.arizona.cs.learn.util.SequenceType;
 
@@ -39,7 +39,7 @@ public class NearestNeighbor extends Classifier {
 		return "knn";
 	}
 
-	public void addData(FoldStatistics fold) {
+	public void addData(BatchStatistics fold) {
 	}
 
 	public String test(Instance instance) {

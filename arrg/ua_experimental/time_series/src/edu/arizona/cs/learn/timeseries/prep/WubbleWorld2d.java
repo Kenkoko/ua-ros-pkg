@@ -26,14 +26,16 @@ public class WubbleWorld2d {
 	
 	public static double ZERO = 0.01;
 	
+	private boolean _ignoreWalls;
+	
 	private List<String> _headers;
 	
 	private Map<String,List<Double>> _doubleMap;
 	private Map<String,List<String>> _stringMap;
 	private Map<String,List<Boolean>> _booleanMap;
 	
-	public WubbleWorld2d() { 
-		
+	public WubbleWorld2d(boolean ignoreWalls) { 
+		_ignoreWalls = ignoreWalls;
 	}
 	
 	public void load(String input) {
@@ -109,7 +111,7 @@ public class WubbleWorld2d {
 			if (!key.startsWith("distance")) 
 				continue;
 			
-			if (key.matches(".*wall.*"))
+			if (_ignoreWalls && key.matches(".*wall.*"))
 				continue;
 			
 			String suffix = key.substring(8);
@@ -118,6 +120,9 @@ public class WubbleWorld2d {
 			// assumption is that it should be populated in the 
 			// double map.
 			List<Double> values = _doubleMap.get(key);
+			if (values == null) { 
+				throw new RuntimeException("Unknown key: " + key);
+			}
 			List<Double> diff = TimeSeries.diff(values);
 			
 			List<Boolean> dd = new ArrayList<Boolean>();
@@ -192,7 +197,7 @@ public class WubbleWorld2d {
 	public List<Interval> toIntervals() { 
 		List<Interval> intervals = new ArrayList<Interval>();
 		for (String key : _booleanMap.keySet()) { 			
-			if (key.matches(".*wall.*"))
+			if (_ignoreWalls && key.matches(".*wall.*"))
 				continue;
 
 			intervals.addAll(TimeSeries.booleanToIntervals(key, _booleanMap.get(key)));
@@ -201,7 +206,40 @@ public class WubbleWorld2d {
 	}
 
 	public static void main(String[] args) { 
-		WubbleWorld2d ww2d = new WubbleWorld2d();
+		doit2();
+	} 
+	
+	public static void doit2() { 
+		WubbleWorld2d ww2d = new WubbleWorld2d(true);
+		String[] activities = {"chase", "fight", "flee", "kick-ball", "kick-column"};
+
+		for (String act : activities) { 
+			try { 
+				BufferedWriter out = new BufferedWriter(new FileWriter("data/raw-data/ww2d-diss/" + act + ".lisp"));
+				for (int i = 1; i <= 20; ++i) { 
+					ww2d.load("data/raw-data/ww2d-diss/" + act + "/" + act + "-" + i + ".csv");
+					ww2d.doDistances();
+					ww2d.doMoving();
+					List<Interval> intervals = ww2d.toIntervals();
+					out.write("(" + i + "\n");
+					out.write(" (\n");
+					for (Interval interval : intervals) { 
+						out.write("(\"" + interval.name + "\" " + 
+								interval.start + " " +
+								interval.end + ")\n");
+					}
+					out.write(" )\n");
+					out.write(")\n");
+				}
+				out.close();
+			} catch (Exception e) { 
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void doit() { 
+		WubbleWorld2d ww2d = new WubbleWorld2d(true);
 		String[] activities = {"collide", "pass", "talk-a", "talk-b"};
 
 		for (String act : activities) { 

@@ -111,7 +111,7 @@ public class Signature {
 		}
 		_rows = tmp;
 	}
-
+	
 	public void train(List<Instance> sequences) {
 		for (int i = 0; i < sequences.size(); i++) {
 			update(sequences.get(i).sequence());

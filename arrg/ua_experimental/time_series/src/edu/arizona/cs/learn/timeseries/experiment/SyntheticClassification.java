@@ -11,6 +11,7 @@ import java.util.TreeMap;
 import edu.arizona.cs.learn.timeseries.Experiments;
 import edu.arizona.cs.learn.timeseries.prep.SymbolicData;
 import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.util.Utils;
 
 // Some things do not change
 //    The number of examples... 60
@@ -21,6 +22,9 @@ public class SyntheticClassification {
 	public static final int N = 60;
 
 	public static void main(String[] args) { 
+		Utils.LIMIT_RELATIONS = true;
+		Utils.WINDOW = 5;
+
 		initialize();
 		generateClass1();
 	}
