@@ -81,7 +81,7 @@ public class CogSciExperiments {
 		BufferedWriter out = new BufferedWriter(new FileWriter("logs/" + prefix + "-learning-curve.csv"));
 		
 		// write out the header...
-		out.write("training_pct,batch,test_index,actual_class,predicted_class,correct\n");
+		out.write("training_pct,batch,test_index,actual_class,predicted_class,correct,training_time,testing_time\n");
 		
 		double[] pcts = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
 		for (double pct : pcts) { 
@@ -98,7 +98,8 @@ public class CogSciExperiments {
 				for (int j = 0; j < batch.detail.size(); ++j) { 
 					out.write((int)(pct*10) + "," + i + "," + j + ",");
 					out.write(batch.actualClass.get(j) + "," + batch.predictedClass.get(j) + ",");
-					out.write((batch.detail.get(j) ? 1 : 0) + "\n");
+					out.write((batch.detail.get(j) ? 1 : 0) + ",");
+					out.write(batch.trainingTime + "," + batch.testingTime + "\n");
 				}
 				perf.addValue(batch.accuracy());
 			}
