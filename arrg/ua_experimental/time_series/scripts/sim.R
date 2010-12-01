@@ -1,7 +1,7 @@
 
 # this library provides the means to generate random p-dimensional Gaussian
 
-library(mvtnorm)
+library(MASS)
 
 # this is a function to create an episode
 # arguments are
@@ -14,7 +14,7 @@ library(mvtnorm)
 create.episode <- function(ep.length,mn.vec,cov.mat,cut.points){
 
   # generate Gaussian vectors
-  jj1 <- rmvnorm(ep.length,mn.vec,cov.mat)
+  jj1 <- mvrnorm(ep.length,mn.vec,cov.mat)
 
   # partition each vector 
   jj2 <- apply(jj1,2,cut,breaks=cut.points,labels=F)
