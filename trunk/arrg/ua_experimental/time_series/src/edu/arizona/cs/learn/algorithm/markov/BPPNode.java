@@ -151,4 +151,12 @@ public class BPPNode {
 	public Set<String> getProps() {
 		return _props;
 	}
+	
+	public String getColor() {
+		return _color;
+	}
+	
+	public void setColor(String color) {
+		_color = color;
+	}
 }
