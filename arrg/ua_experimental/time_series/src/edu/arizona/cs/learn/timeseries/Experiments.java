@@ -6,9 +6,11 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -798,4 +800,195 @@ public class Experiments {
 			e.printStackTrace();
 		}
 	}
+	
+
+	/**
+	 * Decomposition experiment.
+	 * 
+	 * Added by Anh T.
+	 */
+	public void decomposition(final String dataset, final String mainActivity, final String subActivity,
+			final Recognizer r, final SequenceType type, final int minPct, final boolean prune,
+			final boolean onlyStart, final boolean optimizeRecognizers, final int experimentsCount) {
+
+		final Random rand = new Random(System.currentTimeMillis());
+		final String dir = "data/decomposition/" + type + "/";
+		final String sigDir = "data/signatures/temp/";
+		final String suffix = (prune) ? "-prune" : "";
+		
+		// Load data sets
+		final String mainKey = dataset + "-" + mainActivity;
+		final String subKey = dataset + "-" + subActivity;
+		final Map<String, Map<Integer,List<Interval>>> data = new HashMap<String,Map<Integer,List<Interval>>>();
+		data.put(mainKey, Utils.load(new File("data/input/" + mainKey + ".lisp")));
+		data.put(subKey, Utils.load(new File("data/input/" + subKey + ".lisp")));
+
+		// Load training instsances & init test map
+		final Map<String, List<Instance>> instancesMap = Utils.load(dataset, type);
+		final Map<String, Set<Integer>> testMap = new HashMap<String, Set<Integer>>();
+		testMap.put(subKey, new HashSet<Integer>());
+		
+		// Train on all data for sub-activity & build signature for sub-activity
+		// Since this stays constant throughout the experiments, we only build it once
+		List<Instance> list = instancesMap.get(subKey);
+		Signature s = new Signature(subKey);
+		for (int k = 1; k <= list.size(); k++) {
+			Instance instance = list.get(k-1);
+			s.update(instance.sequence());
+			if (prune && (k % 10 == 0))
+				s = s.prune(3);
+		}
+		int half = s.trainingSize() / 2;
+		s = s.prune(half);
+		s.toXML(sigDir + subKey + "-" + type + suffix + ".xml");
+		
+		// Build sub-activity recognizer
+		String signatureFile = sigDir + subKey + "-" + type + suffix + ".xml";
+		FSMRecognizer subTemp = r.build(subKey, signatureFile, data.get(subKey), 
+				new ArrayList<Integer>(testMap.get(subKey)), minPct, onlyStart);
+		final FSMRecognizer sub =
+			(!optimizeRecognizers) ? subTemp :
+				new FSMRecognizer(subKey, FSMConverter.convertNFAtoDFA(subTemp.getGraph()));
+		
+		
+		class DecompositionCallable implements Callable<Object> { 
+			private int id;
+			
+			public DecompositionCallable(int id) { 
+				this.id = id;
+			}
+
+			@Override
+			public Object call() throws Exception {
+			
+				// Randomly select test set for main activity
+				List<Integer> dataKeys = new ArrayList<Integer>();
+				dataKeys.addAll(data.get(mainKey).keySet());
+				int testSize = (int)(data.get(mainKey).size() / 3);
+				Set<Integer> mainTestSet = new HashSet<Integer>();
+				for (int j = 0; j < testSize; j++) {
+					mainTestSet.add(dataKeys.remove(rand.nextInt(dataKeys.size())));
+				}
+				testMap.put(mainKey, mainTestSet);
+				
+				// Build signatures
+				List<Instance> list = instancesMap.get(mainKey);
+				Signature s = new Signature(mainKey);
+				for (int k = 1; k <= list.size(); k++) {
+					Instance instance = list.get(k-1);
+					if (testMap.get(mainKey).contains(instance.id()))
+						continue;
+					
+					s.update(instance.sequence());
+					if (prune && (k % 10 == 0))
+						s = s.prune(3);
+				}
+				int half = s.trainingSize() / 2;
+				s = s.prune(half);
+				s.toXML(sigDir + mainKey + "-" + type + suffix + "-" + id + ".xml");
+							
+				
+				// Build main-recognizer
+				String signatureFile = sigDir + mainKey + "-" + type + suffix + "-" + id + ".xml";
+				FSMRecognizer main = r.build(mainKey, signatureFile, data.get(mainKey), 
+						new ArrayList<Integer>(testMap.get(mainKey)), minPct, onlyStart);
+				if (optimizeRecognizers) {
+					main = new FSMRecognizer(mainKey, FSMConverter.convertNFAtoDFA(main.getGraph()));
+				}
+				
+				
+				// Perform decomposition recognition
+				for (Integer testID : testMap.get(mainKey)) {
+					List<Interval> testItem = data.get(mainKey).get(testID);
+										
+					// Pre-process data
+					int start = Integer.MAX_VALUE;
+					int end = 0;
+					for (Interval interval : testItem) {
+						start = Math.min(start, interval.start);
+						end = Math.max(end, interval.end);
+					}
+					
+					// Reset recognizers
+					main.reset(); sub.reset();
+					
+					// Recognize composision
+					boolean isMain = false;
+					boolean isSub = false;
+					Set<BPPNode> mainActive = new HashSet<BPPNode>();
+					Set<BPPNode> subActive = new HashSet<BPPNode>();
+					for (int j = start; j < end; j++) {
+						Set<String> props = new HashSet<String>();
+						for (Interval interval : testItem) {
+							if (interval.on(j)) {
+								props.add(interval.name);
+							}
+						}
+						
+						isMain = main.update(props, false);
+						
+						if (!isSub) {
+							isSub = sub.update(props);
+							if (isSub) {
+								subActive.addAll(main.getActive());
+								subActive.remove(main.getStartState());
+							}
+						}
+						
+						if (isMain) {
+							mainActive.addAll(main.getActive());
+							mainActive.remove(main.getStartState());
+							break;
+						}
+					}
+					
+					if (isMain) {
+						if (isSub) {
+							for (BPPNode n : subActive) {
+								if (n.getColor().equalsIgnoreCase("red"))
+									n.setColor("yellow");
+								else if (n.getColor().equalsIgnoreCase("white"))
+									n.setColor("blue");
+							}
+						}
+						for (BPPNode n : mainActive) {
+							if (!n.isFinal() && main.getGraph().getOutEdges(n).size() != 0)
+								continue;
+							if (n.getColor().equalsIgnoreCase("blue"))
+								n.setColor("yellow");
+							else if (n.getColor().equalsIgnoreCase("white"))
+								n.setColor("red");
+						}
+					}
+					
+				}
+	
+				// Output main activity recognizer
+				String file = dir + dataset + "-" + mainActivity + "-" + subActivity + suffix + "-" + id + ".dot";
+				FSMFactory.toDot(main.getGraph(), file);
+				
+				System.out.println("Experiment " + mainActivity + "-" + subActivity + "-" + id + " completed.");
+				return new Object();
+			}
+		}
+		
+		// Run the experiment with multi-threads
+		_execute = Executors.newFixedThreadPool(Utils.numThreads);
+		List<Future<Object>> jobs = new ArrayList<Future<Object>>();
+		for (int id = 0; id < experimentsCount; ++id) { 			
+			jobs.add(_execute.submit(new DecompositionCallable(id)));
+		}
+		
+		for (Future<Object> results : jobs) {
+			try {
+				results.get();
+			} catch (Exception e) { 
+				e.printStackTrace();
+			}
+		}
+
+		_execute.shutdown();
+		
+	}
+	
 }

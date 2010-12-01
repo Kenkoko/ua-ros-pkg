@@ -37,7 +37,15 @@ public class FSMRecognizer {
 		return update(this._active, activeProps);
 	}
 
+	public boolean update(Set<String> activeProps, boolean autoReset) {
+		return update(this._active, activeProps, autoReset);
+	}
+	
 	private boolean update(List<BPPNode> active, Set<String> activeProps) {
+		return update(active, activeProps, true);
+	}
+	
+	private boolean update(List<BPPNode> active, Set<String> activeProps, boolean autoReset) {
 		List<BPPNode> turningOn = new ArrayList<BPPNode>();
 		List<BPPNode> turningOff = new ArrayList<BPPNode>();
 
@@ -73,8 +81,10 @@ public class FSMRecognizer {
 			if (!node.isFinal() && this._graph.getOutEdges(node).size() != 0) {
 				continue;
 			}
-			active.clear();
-			active.add(this._startNode);
+			if (autoReset) {
+				active.clear();
+				active.add(this._startNode);
+			}
 			return true;
 		}
 
@@ -130,4 +140,5 @@ public class FSMRecognizer {
 	public DirectedGraph<BPPNode, Edge> getGraph() {
 		return _graph;
 	}
+	
 }
