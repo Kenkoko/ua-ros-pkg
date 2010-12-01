@@ -51,8 +51,8 @@ public class SyntheticClassification {
 
 		// two classes - niall-f and niall-g
 		List<String> classNames = new ArrayList<String>();
-		classNames.add("f");
-		classNames.add("g");
+		classNames.add("niall-f");
+		classNames.add("niall-g");
 		List<Map<String,List<Integer>>> sets = new ArrayList<Map<String,List<Integer>>>();
 		for (int i = 0; i < FOLDS; i++) {
 			Map<String,List<Integer>> map = new TreeMap<String,List<Integer>>();
@@ -101,7 +101,7 @@ public class SyntheticClassification {
 			int size = 8;
 			int eLength = 200;
 			
-			String cmd = "/tmp/sim.R 1 " + prefix + " " + streams + " " + size + " " + eLength;
+			String cmd = "scripts/sim.R 1 " + prefix + " " + streams + " " + size + " " + eLength;
 			System.out.println(cmd);
 			Process p = Runtime.getRuntime().exec("Rscript " + cmd);
 			p.waitFor();
@@ -110,7 +110,7 @@ public class SyntheticClassification {
 		}
 		
 		SymbolicData.convert("/tmp/niall/f", "data/input/niall-f.lisp", N);
-		Experiments.signatures("niall-f", SequenceType.allen, FOLDS, true);
+		Experiments.signatures("niall", SequenceType.allen, FOLDS, true);
 	}
 	
 	public static void experiment1() { 
