@@ -5,12 +5,15 @@ import java.util.concurrent.Callable;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 
-public class SignatureCallable implements Callable<Signature> {
+public class SignatureCallable implements Callable<SignatureCallable> {
 	private String _key;
 	private boolean _prune;
 	private int _min;
 	
 	private List<Instance> _training;
+
+	private Signature _signature;
+	private Long _duration;
 	
 	public SignatureCallable(String key, boolean prune, int min, List<Instance> training) { 
 		_key = key;
@@ -20,7 +23,8 @@ public class SignatureCallable implements Callable<Signature> {
 	}
 	
 	@Override
-	public Signature call() throws Exception {
+	public SignatureCallable call() throws Exception {
+		long start = System.currentTimeMillis();
 		Signature s = new Signature(_key);
 		for (int i = 1; i <= _training.size(); i++) {
 			s.update(_training.get(i-1).sequence());
@@ -30,7 +34,16 @@ public class SignatureCallable implements Callable<Signature> {
 		}
 		
 		// Fifty percent pruning....
-		s = s.prune(s.trainingSize()/2);
-		return s;
+		_signature = s.prune(s.trainingSize()/2);
+		_duration = System.currentTimeMillis() - start;
+		return this;
+	}
+	
+	public Signature signature() { 
+		return _signature;
+	}
+	
+	public Long duration() { 
+		return _duration;
 	}
 }

@@ -1,4 +1,4 @@
-package edu.arizona.cs.learn.timeseries.prep;
+package edu.arizona.cs.learn.timeseries.prep.ww2d;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.prep.TimeSeries;
 
 /**
  * The purpose of this class is to take in the raw ww2d data and
@@ -70,13 +71,14 @@ public class WubbleWorld2d {
 		_stringMap = new HashMap<String,List<String>>();
 		_booleanMap = new HashMap<String,List<Boolean>>();
 		
-		// Now iterate through all of the possible columsn and 
+		// Now iterate through all of the possible columns and 
 		// partition them into the correct sets.
 		for (String key : _headers) { 
 			
 			// determine the type....
 			String s = map.get(key).get(0);
 			if ("true".equalsIgnoreCase(s) || "false".equalsIgnoreCase(s)) { 
+				System.out.println("Adding: " + key);
 				List<Boolean> list = new ArrayList<Boolean>();
 				for (String value : map.get(key)) { 
 					list.add(Boolean.parseBoolean(value));
@@ -206,47 +208,21 @@ public class WubbleWorld2d {
 	}
 
 	public static void main(String[] args) { 
-		doit2();
-	} 
-	
-	public static void doit2() { 
-		WubbleWorld2d ww2d = new WubbleWorld2d(true);
-		String[] activities = {"chase", "fight", "flee", "kick-ball", "kick-column"};
-
-		for (String act : activities) { 
-			try { 
-				BufferedWriter out = new BufferedWriter(new FileWriter("data/raw-data/ww2d-diss/" + act + ".lisp"));
-				for (int i = 1; i <= 20; ++i) { 
-					ww2d.load("data/raw-data/ww2d-diss/" + act + "/" + act + "-" + i + ".csv");
-					ww2d.doDistances();
-					ww2d.doMoving();
-					List<Interval> intervals = ww2d.toIntervals();
-					out.write("(" + i + "\n");
-					out.write(" (\n");
-					for (Interval interval : intervals) { 
-						out.write("(\"" + interval.name + "\" " + 
-								interval.start + " " +
-								interval.end + ")\n");
-					}
-					out.write(" )\n");
-					out.write(")\n");
-				}
-				out.close();
-			} catch (Exception e) { 
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	public static void doit() { 
-		WubbleWorld2d ww2d = new WubbleWorld2d(true);
+//		String[] activities = {"chase", "fight", "flee", "kick-ball", "kick-column"};
 		String[] activities = {"collide", "pass", "talk-a", "talk-b"};
 
+		global(100, activities, true);
+	} 
+	
+	public static void global(int n, String[] activities, boolean ignoreWalls) { 
+		WubbleWorld2d ww2d = new WubbleWorld2d(ignoreWalls);
+		String prefix = "data/raw-data/ww2d/";
+
 		for (String act : activities) { 
 			try { 
-				BufferedWriter out = new BufferedWriter(new FileWriter("data/raw-data/ww2d/" + act + ".lisp"));
-				for (int i = 1; i <= 20; ++i) { 
-					ww2d.load("data/raw-data/ww2d/" + act + "/" + act + "-" + i + ".csv");
+				BufferedWriter out = new BufferedWriter(new FileWriter(prefix + "lisp/" + act + ".lisp"));
+				for (int i = 1; i <= n; ++i) { 
+					ww2d.load(prefix + "global/" + act + "/" + act + "-" + i + ".csv");
 					ww2d.doDistances();
 					ww2d.doMoving();
 					List<Interval> intervals = ww2d.toIntervals();

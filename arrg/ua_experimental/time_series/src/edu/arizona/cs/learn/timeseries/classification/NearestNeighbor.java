@@ -100,12 +100,26 @@ public class NearestNeighbor extends Classifier {
 		return maxClass;
 	}
 
-	public void train(int x, List<Instance> training) {
-		_trainingData = new ArrayList<Instance>(training);
+	public Map<String,Long> train(int x, Map<String,List<Instance>> training) {
+		_trainingData = new ArrayList<Instance>();
+
+		Map<String,Long> timing = new HashMap<String,Long>();
+		for (String key : training.keySet()) {
+			_trainingData.addAll(training.get(key));
+			timing.put(key, 0L);
+		}
+		return timing;
 	}
 
-	public void train(List<Instance> training) {
-		_trainingData = new ArrayList<Instance>(training);
+	public Map<String,Long> train(Map<String,List<Instance>> training) {
+		_trainingData = new ArrayList<Instance>();
+		
+		Map<String,Long> timing = new HashMap<String,Long>();
+		for (String key : training.keySet()) {
+			_trainingData.addAll(training.get(key));
+			timing.put(key, 0L);
+		}
+		return timing;
 	}
 	
 	public void trainEpisodes(int x, List<Episode> training, SequenceType type, boolean shuffle) { 

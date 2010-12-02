@@ -1,6 +1,7 @@
 package edu.arizona.cs.learn.timeseries.classification;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -93,19 +94,15 @@ public class CAVEClassifier extends Classifier {
 		return scores.get(0).key;
 	}
 
-	public void train(int x, List<Instance> training) {
+	public Map<String,Long> train(int x, Map<String,List<Instance>> training) {
 		_map = new HashMap<String,Signature>();
 
 		if (_method != null) {
-			doTrain(training);
+			return doTrain(training);
 		} else if (this._load) {
-			// Determine the different classes available
-			Set<String> classNames = new HashSet<String>();
-			for (Instance instance : training) 
-				classNames.add(instance.name());
-			load(x, classNames);
+			return load(x, training.keySet());
 		} else {
-			learn(x, training);
+			return learn(x, training);
 		}
 	}
 	
@@ -124,37 +121,48 @@ public class CAVEClassifier extends Classifier {
 		}
 	}
 
-	private void doTrain(List<Instance> training) {
-		Map<String,List<Instance>> instances = new HashMap<String,List<Instance>>();
-		for (Instance instance : training) {
-			List<Instance> list = instances.get(instance.name());
-			if (list == null) {
-				list = new ArrayList<Instance>();
-				instances.put(instance.name(), list);
-			}
-
-			list.add(instance);
-		}
-
-		for (String key : instances.keySet()) {
-			Signature s = Signature.agglomerativeTraining(_method, instances.get(key));
+	/**
+	 * Do the training which involves building the signatures for
+	 * each of the different class names (agglomeratively).
+	 * @param training
+	 * @return the timing information (how long it took by class)
+	 */
+	private Map<String,Long> doTrain(Map<String,List<Instance>> training) {
+		Map<String,Long> timing = new HashMap<String,Long>();
+		for (String key : training.keySet()) {
+			long start = System.currentTimeMillis();
+			Signature s = Signature.agglomerativeTraining(_method, training.get(key));
+			long end = System.currentTimeMillis();
+			
+			timing.put(key, end-start);
 			_map.put(key, s);
 		}
+		return timing;
 	}
 
-	private void load(int x, Set<String> classSet) {
-		String dir = "data/cross-validation/k" + this._folds + "/fold-" + x
+	/**
+	 * Load in the data from file.... should be much quicker than training
+	 * @param x
+	 * @param keys
+	 */
+	private Map<String,Long> load(int x, Collection<String> keys) {
+		String dir = "data/cross-validation/k" + _folds + "/fold-" + x
 				+ "/" + this._type + "/";
 		String suffix = ".xml";
 		if (_prune) {
 			suffix = "-prune.xml";
 		}
 
-		for (String key : classSet) {
-			logger.debug("loading: " + dir + key + suffix);
+		Map<String,Long> timing = new HashMap<String,Long>();
+		for (String key : keys) {
+			long start = System.currentTimeMillis();
 			Signature s = Signature.fromXML(dir + key + suffix);
+			long end = System.currentTimeMillis();
+
+			timing.put(key, end-start);
 			_map.put(key, s);
 		}
+		return timing;
 	}
 
 	/**
@@ -163,35 +171,30 @@ public class CAVEClassifier extends Classifier {
 	 * @param x
 	 * @param training
 	 */
-	private void learn(int x, List<Instance> training) {
-		Map<String,List<Instance>> instances = new HashMap<String,List<Instance>>();
-		for (Instance instance : training) {
-			List<Instance> list = instances.get(instance.name());
-			if (list == null) {
-				list = new ArrayList<Instance>();
-				instances.put(instance.name(), list);
-			}
-
-			list.add(instance);
-		}
-		
+	private Map<String,Long> learn(int x, Map<String,List<Instance>> training) {
 		ExecutorService execute = Executors.newFixedThreadPool(Utils.numThreads);
-		List<Future<Signature>> futureList = new ArrayList<Future<Signature>>();
-		for (String key : instances.keySet()) 
-			futureList.add(execute.submit(new SignatureCallable(key, _prune, 3, instances.get(key))));
+
+		List<Future<SignatureCallable>> futureList = new ArrayList<Future<SignatureCallable>>();
+		for (String key : training.keySet()) 
+			futureList.add(execute.submit(new SignatureCallable(key, _prune, 3, training.get(key))));
 			
-		for (Future<Signature> results : futureList) {
+		Map<String,Long> timing = new HashMap<String,Long>();
+		for (Future<SignatureCallable> results : futureList) {
 			try {
-				Signature signature = results.get();
+				SignatureCallable sc = results.get();
+				Signature signature = sc.signature();
+
+				timing.put(signature.key(), sc.duration());
 				_map.put(signature.key(), signature);
 			} catch (Exception e) { 
 				e.printStackTrace();
 			}
 		}
 		execute.shutdown();
+		return timing;
 	}
 	
-	public void train(List<Instance> training) {
+	public Map<String,Long> train(Map<String,List<Instance>> training) {
 		throw new RuntimeException("Not yet implemented!!");
 	}
 	

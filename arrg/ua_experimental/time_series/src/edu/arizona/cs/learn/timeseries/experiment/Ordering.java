@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -18,7 +17,6 @@ import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.classification.CAVEClassifier;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyCallable;
-import edu.arizona.cs.learn.timeseries.classification.ClassifyResults;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
@@ -31,7 +29,7 @@ public class Ordering {
 	private Map<String,List<Integer>> _testMap;
 	
 	private List<Instance> _testing;
-	private List<Instance> _training;
+	private Map<String,List<Instance>> _training;
 	
 	public Ordering() { 
 
@@ -49,7 +47,7 @@ public class Ordering {
 		_testMap = getTestSet(_classNames);
 		
 		// build a training set and a test set.
-		_training = new ArrayList<Instance>();
+		_training = new HashMap<String,List<Instance>>();
 		_testing = new ArrayList<Instance>();
 
 		// Now train up the signatures...
@@ -61,14 +59,21 @@ public class Ordering {
 			for (Instance instance : instances) { 
 				if (testSet.contains(instance.id()))
 					_testing.add(instance);
-				else
-					_training.add(instance);
+				else { 
+					List<Instance> list = _training.get(instance.name());
+					if (list == null) { 
+						list = new ArrayList<Instance>();
+						_training.put(instance.name(), list);
+					}
+					list.add(instance);
+				}
 			}
 		}
 	}
 	
 	public double experiment(SequenceType type, boolean prune) { 
-		Collections.shuffle(_training, new Random(System.currentTimeMillis()));
+		for (List<Instance> list : _training.values()) 
+			Collections.shuffle(list, new Random(System.currentTimeMillis()));
 		Classifier c = new CAVEClassifier(type, 50, prune, false, 2);
 		c.train(0, _training);
 		
@@ -94,7 +99,7 @@ public class Ordering {
 	
 	public double evaluate(Classifier c) { 
 		_execute = Executors.newFixedThreadPool(Utils.numThreads);
-		List<Future<ClassifyResults>> future = new ArrayList<Future<ClassifyResults>>();
+		List<Future<ClassifyCallable>> future = new ArrayList<Future<ClassifyCallable>>();
 
 		for (Instance instance : _testing) {
 			future.add(_execute.submit(new ClassifyCallable(c, instance)));
@@ -102,22 +107,14 @@ public class Ordering {
 
 		
 		double correct = 0;
-		for (Future<ClassifyResults> results : future) {
-			ClassifyResults thread = null;
+		for (Future<ClassifyCallable> results : future) {
 			try {
-				thread = results.get();
-			} catch (InterruptedException e) {
+				ClassifyCallable callable = results.get();
+				if (callable.actual().equals(callable.predicted()))
+					correct += 1;
+			} catch (Exception e) {
 				e.printStackTrace();
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-			}
-
-			String className = thread.className;
-			Instance instance = thread.test;
-			
-			if (className.equals(instance.name())) 
-				correct += 1;
-
+			} 
 		}
 
 		double accuracy = correct / (double) _testing.size();

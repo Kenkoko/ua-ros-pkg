@@ -50,13 +50,14 @@ public class CogSciExperiments {
 		for (int i = 0; i < stats.size(); ++i) { 
 			BatchStatistics fs = stats.get(i);
 			double accuracy = fs.accuracy();
-			
+			int[][] confMatrix = fs.confMatrix();
+
 			perf.addValue(accuracy);
 			System.out.println("Fold - " + i + " -- " + accuracy);
 			
 			for (int j = 0; j < classNames.size(); ++j) { 
 				for (int k = 0; k < classNames.size(); ++k) { 
-					matrix[j][k] += fs.confMatrix[j][k];
+					matrix[j][k] += confMatrix[j][k];
 				}
 			}
 		}
@@ -81,29 +82,45 @@ public class CogSciExperiments {
 		BufferedWriter out = new BufferedWriter(new FileWriter("logs/" + prefix + "-learning-curve.csv"));
 		
 		// write out the header...
-		out.write("training_pct,batch,test_index,actual_class,predicted_class,correct,training_time,testing_time\n");
+		out.write("training_pct,batch," + BatchStatistics.csvHeader() + "\n");
 		
 		double[] pcts = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
 		for (double pct : pcts) { 
-			SplitAndTest sat = new SplitAndTest(100, pct);
+			SplitAndTest sat = new SplitAndTest(5, pct);
 			List<BatchStatistics> stats = sat.run(System.currentTimeMillis(), classNames, data, c);
 
 			// print out the summary information for now.  Later we will need to 
 			// print out all of it.
 			SummaryStatistics perf = new SummaryStatistics();
+			SummaryStatistics[][] confMatrix = new SummaryStatistics[classNames.size()][classNames.size()];
+			for (int i = 0; i < classNames.size(); ++i) 
+				for (int j = 0; j < classNames.size(); ++j) 
+					confMatrix[i][j] = new SummaryStatistics();
 			
 			// append to the file the results of this latest run...
 			for (int i = 0; i < stats.size(); ++i) { 
 				BatchStatistics batch = stats.get(i);
-				for (int j = 0; j < batch.detail.size(); ++j) { 
-					out.write((int)(pct*10) + "," + i + "," + j + ",");
-					out.write(batch.actualClass.get(j) + "," + batch.predictedClass.get(j) + ",");
-					out.write((batch.detail.get(j) ? 1 : 0) + ",");
-					out.write(batch.trainingTime + "," + batch.testingTime + "\n");
-				}
+				out.write(batch.toCSV((int)(pct*100) + "," + i + ",", ""));
+
 				perf.addValue(batch.accuracy());
+				double[][] matrix = batch.normalizeConfMatrix();
+				for (int j = 0; j < classNames.size(); ++j)
+					for (int k = 0; k < classNames.size(); ++k)
+						confMatrix[j][k].addValue(matrix[j][k]);
 			}
 			System.out.println("[" + pct + "] Performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
+			System.out.println("  Matrix");
+
+			for (int i = 0; i < classNames.size(); ++i) 
+				System.out.print("," + classNames.get(i));
+			System.out.println();
+			
+			for (int i = 0; i < classNames.size(); ++i) {
+				System.out.print(classNames.get(i));
+				for (int j = 0; j < classNames.size(); ++j) 
+					System.out.print("," + confMatrix[i][j].getMean());
+				System.out.println();
+			}
 			out.flush();
 		}
 		
@@ -112,7 +129,8 @@ public class CogSciExperiments {
 	
 	public static void main(String[] args) throws Exception { 
 //		performance("ww3d");
-		learningCurve("ww3d");
+//		learningCurve("ww3d");
+		learningCurve("ww2d");
 	}
 	
 }

@@ -13,7 +13,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -29,9 +28,7 @@ import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyCallable;
-import edu.arizona.cs.learn.timeseries.classification.ClassifyResults;
 import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
-import edu.arizona.cs.learn.timeseries.model.AllenRelation;
 import edu.arizona.cs.learn.timeseries.model.Episode;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
@@ -87,29 +84,6 @@ public class Experiments {
 		return this._kFolds;
 	}
 
-	private void writeMatrix(String c, String g, List<String> classNames,
-			int[][] matrix) {
-		try {
-			BufferedWriter out = new BufferedWriter(new FileWriter("/tmp/" + c
-					+ "-" + g + "-matrix.csv"));
-			for (String s : classNames) {
-				out.write("," + s);
-			}
-			out.write("\n");
-
-			for (int i = 0; i < classNames.size(); i++) {
-				out.write((String) classNames.get(i));
-				for (int j = 0; j < classNames.size(); j++) {
-					out.write("," + matrix[i][j]);
-				}
-				out.write("\n");
-			}
-			out.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	private void writeLog(String activityName, String classifierName,
 			List<SequenceType> types, List<List<BatchStatistics>> values) {
 		try {
@@ -118,46 +92,22 @@ public class Experiments {
 			BufferedWriter out = new BufferedWriter(new FileWriter(f));
 
 			StringBuffer buf = new StringBuffer();
-			buf.append("activity,classifier,cavePct,sequence,fold,accuracy,trainingTime,testingTime");
-
+			buf.append("activity,classifier,cavePct,sequence,fold," + BatchStatistics.csvHeader());
 			out.write(buf.toString() + "\n");
 			System.out.println(buf.toString());
 
 			for (int i = 0; i < types.size(); i++) {
 				SequenceType type = types.get(i);
 				List<BatchStatistics> results = values.get(i);
-				for (int j = 0; j < results.size(); j++) {
-					BatchStatistics stats = (BatchStatistics) results.get(j);
+				for (int j = 0; j < results.size(); ++j) {
+					BatchStatistics batch = results.get(j);
+					String pre = activityName + "," + classifierName + "," + _cavePct + "," + type + "," + j + ",";
 					buf = new StringBuffer();
-					buf.append(activityName + "," + classifierName + ","
-							+ this._cavePct + "," + type + "," + j + ","
-							+ stats.accuracy() + ",");
-					buf.append(stats.trainingTime + "," + stats.testingTime
-							+ ",");
-
-					out.write(buf.toString() + "\n");
-					System.out.println("," + buf.toString());
+					buf.append(batch.toCSV(pre, ""));
+					out.write(buf.toString());
+					System.out.println(buf.toString());
 				}
 			}
-			out.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void appendANOVA(String c, String line) {
-		try {
-			File f = new File("data/anova/" + c + "-ANOVA.csv");
-			boolean writeHeader = true;
-			if (f.exists()) {
-				writeHeader = false;
-			}
-			BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
-
-			if (writeHeader) {
-				out.write("activity,representation,fold,correct\n");
-			}
-			out.write(line + "\n");
 			out.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -173,11 +123,9 @@ public class Experiments {
 		Map<String,List<Episode>> data = Utils.loadAllEpisodes(activityName);
 
 		List<BatchStatistics> foldStats = new ArrayList<BatchStatistics>();
-		int[][] matrix = new int[classNames.size()][classNames.size()];
-
-		for (int i = 0; i < this._kFolds; i++) {
+		for (int i = 0; i < _kFolds; i++) {
 			logger.debug("Fold --- " + i);
-			BatchStatistics fs = new BatchStatistics(c.getName(), classNames.size());
+			BatchStatistics fs = new BatchStatistics(c.getName(), classNames);
 
 			Map<String,List<Integer>> testMap = Utils.getTestSet(activityName, _kFolds, i);
 			
@@ -202,59 +150,24 @@ public class Experiments {
 
 			}
 
-			long trainStart = System.currentTimeMillis();
 			c.trainEpisodes(i, training, type, _shuffle);
-			long trainEnd = System.currentTimeMillis();
-			fs.trainingTime = (trainEnd - trainStart);
 
-			double right = 0.0D;
-			int wrong = 0;
-
-			List<Future<ClassifyResults>> future = new ArrayList<Future<ClassifyResults>>();
-
-			for (Instance instance : test) {
+			List<Future<ClassifyCallable>> future = new ArrayList<Future<ClassifyCallable>>();
+			for (Instance instance : test) 
 				future.add(_execute.submit(new ClassifyCallable(c, instance)));
-			}
 
-			for (Future<ClassifyResults> results : future) {
-				ClassifyResults thread = null;
+			for (Future<ClassifyCallable> results : future) {
 				try {
-					thread = results.get();
-				} catch (InterruptedException e) {
+					ClassifyCallable callable = results.get();
+					fs.addTestDetail(callable.actual(), callable.predicted(), callable.duration());
+				} catch (Exception e) {
 					e.printStackTrace();
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-				}
-
-				String className = thread.className;
-				Instance instance = thread.test;
-				fs.testingTime += thread.elapsed;
-
-				int correctIndex = classNames.indexOf(instance.name());
-				int classifyIndex = classNames.indexOf(className);
-				matrix[correctIndex][classifyIndex] += 1;
-
-				StringBuffer buf = new StringBuffer();
-				buf.append(activityName + "," + type.toString() + "," + i + ",");
-
-				int result = 0;
-				if (className.equals(instance.name())) {
-					result = 1;
-					right += 1.0D;
-				} else {
-					wrong++;
-				}
-
-				buf.append(result);
-				appendANOVA(c.getName(), buf.toString());
+				} 
 			}
-
 			foldStats.add(fs);
 		}
 
-		writeMatrix(c.getName(), type.toString(), classNames, matrix);
-
-		this._execute.shutdown();
+		_execute.shutdown();
 		return foldStats;
 	}	
 	
@@ -275,23 +188,22 @@ public class Experiments {
 		}
 
 		List<BatchStatistics> foldStats = new ArrayList<BatchStatistics>();
-		int[][] matrix = new int[classNames.size()][classNames.size()];
-
 		for (int i = 0; i < _kFolds; i++) {
 			logger.debug("Fold --- " + i);
-			BatchStatistics fs = new BatchStatistics(c.getName(), classNames.size());
+			BatchStatistics fs = new BatchStatistics(c.getName(), classNames);
 
 			Map<String,List<Integer>> testMap = Utils.getTestSet(activityName, _kFolds, i);
 
-			List<Instance> training = new ArrayList<Instance>();
+			Map<String,List<Instance>> training = new HashMap<String,List<Instance>>();
 			List<Instance> test = new ArrayList<Instance>();
 			for (String key : data.keySet()) {
 				List<Instance> list = data.get(key);
 				List<Integer> ignore = testMap.get(key);
-
+				
+				training.put(key, new ArrayList<Instance>());
 				for (Instance instance : list) {
 					if (!ignore.contains(instance.id())) { 
-						training.add(instance);
+						training.get(key).add(instance);
 					} else if (Utils.testExcludeSet.size() > 0) {
 						test.add(instance.copy());
 					} else {
@@ -302,122 +214,28 @@ public class Experiments {
 
 			}
 
-			long trainStart = System.currentTimeMillis();
-			c.train(i, training);
-			long trainEnd = System.currentTimeMillis();
-			fs.trainingTime = (trainEnd - trainStart);
+			Map<String,Long> timing = c.train(i, training);
+			for (String key : classNames) 
+				fs.addTrainingDetail(key, training.get(key).size(), timing.get(key));
 
-			double right = 0.0D;
-			int wrong = 0;
-
-			List<Future<ClassifyResults>> future = new ArrayList<Future<ClassifyResults>>();
-
+			List<Future<ClassifyCallable>> future = new ArrayList<Future<ClassifyCallable>>();
 			for (Instance instance : test) {
 				future.add(_execute.submit(new ClassifyCallable(c, instance)));
 			}
 
-			for (Future<ClassifyResults> results : future) {
-				ClassifyResults thread = null;
+			for (Future<ClassifyCallable> results : future) {
 				try {
-					thread = results.get();
-				} catch (InterruptedException e) {
+					ClassifyCallable callable = results.get();
+					fs.addTestDetail(callable.actual(), callable.predicted(), callable.duration());
+				} catch (Exception e) {
 					e.printStackTrace();
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-				}
-
-				String className = thread.className;
-				Instance instance = thread.test;
-				fs.testingTime += thread.elapsed;
-
-				int correctIndex = classNames.indexOf(instance.name());
-				int classifyIndex = classNames.indexOf(className);
-				matrix[correctIndex][classifyIndex] += 1;
-
-				StringBuffer buf = new StringBuffer();
-				buf.append(activityName + "," + type.toString() + "," + i + ",");
-
-				int result = 0;
-				if (className.equals(instance.name())) {
-					result = 1;
-					right += 1.0D;
-				} else {
-					wrong++;
-				}
-
-				buf.append(result);
-				appendANOVA(c.getName(), buf.toString());
+				} 
 			}
-
 			foldStats.add(fs);
 		}
 
-		writeMatrix(c.getName(), type.toString(), classNames, matrix);
-
 		_execute.shutdown();
 		return foldStats;
-	}
-
-	public void classifySplit(String activityName, Classifier c,
-			SequenceType type, List<String> classNames) {
-		this._execute = Executors.newFixedThreadPool(Utils.numThreads);
-
-		Map<String,List<Instance>> data = Utils.load(activityName, type);
-		if (_shuffle) {
-			for (List<Instance> list : data.values()) {
-				for (Instance instance : list) {
-					instance.shuffle();
-				}
-			}
-		}
-
-		List<Instance> training = new ArrayList<Instance>();
-		List<Instance> test = new ArrayList<Instance>();
-		for (String activity : data.keySet()) {
-			List<Instance> episodes = data.get(activity);
-			Collections.shuffle(episodes);
-
-			int twoThirds = (int) Math.floor(0.6666 * episodes.size());
-			for (int i = 0; i < twoThirds; i++) {
-				training.add((Instance) episodes.get(i));
-			}
-
-			for (int i = twoThirds; i < episodes.size(); i++) {
-				test.add(episodes.get(i));
-			}
-		}
-
-		c.train(training);
-
-		List<Future<ClassifyResults>> future = new ArrayList<Future<ClassifyResults>>();
-		for (Instance instance : test) {
-			future.add(_execute.submit(new ClassifyCallable(c, instance)));
-		}
-
-		for (Future<ClassifyResults> results : future) {
-			ClassifyResults thread = null;
-			try {
-				thread = results.get();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-			}
-
-			String className = thread.className;
-			Instance instance = thread.test;
-
-			int result = 0;
-			if (className.equals(instance.name())) {
-				result = 1;
-			}
-			StringBuffer buf = new StringBuffer();
-			buf.append(activityName + "," + type.toString() + ",," + result);
-
-			appendANOVA(c.getName(), buf.toString());
-		}
-
-		this._execute.shutdown();
 	}
 
 	public Map<String, RecognizerStatistics> recognition(String dataset, 
