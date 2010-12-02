@@ -3,8 +3,8 @@
         roslisp-msg-protocol)
   (:export
    "<CURRENTSTIM>"
+   "<CONTROL>"
    "<SAVEFILE>"
    "<AUDIOSTREAM>"
-   "<CONTROL>"
   ))
 

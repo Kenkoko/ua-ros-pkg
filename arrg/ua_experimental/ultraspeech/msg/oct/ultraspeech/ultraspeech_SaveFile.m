@@ -11,7 +11,7 @@ function msg = ultraspeech_SaveFile()
 persistent pathsadded__
 if (isempty (pathsadded__))
     pathsadded__ = 1;
-    addpath('/home/robotlab/ros/ros/core/roslib/msg/oct/roslib');
+    addpath('/home/jeff/ros/ros/core/roslib/msg/oct/roslib');
 end
 
 
