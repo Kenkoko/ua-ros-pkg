@@ -25,6 +25,8 @@
 #include <libraw1394/csr.h>
 #include <libiec61883/iec61883.h>
 
+#include <ros/ros.h>
+#include "ultraspeech/SaveFile.h"
 
 #include <string>
 using std::string;
@@ -145,6 +147,8 @@ public:
 	int Handler( unsigned char *data, int length, int dropped );
 	void *Thread();
 	void ResetHandler( void );
+	
+	ros::Publisher savefile_pub_;
 
 private:
 	static int ResetHandlerProxy( raw1394handle_t handle, unsigned int generation );

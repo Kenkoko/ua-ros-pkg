@@ -75,6 +75,9 @@ using std::endl;
 #include "hdvframe.h"
 #include "error.h"
 
+#include <ros/ros.h>
+#include "ultraspeech/SaveFile.h"
+
 /** Initializes the IEEE1394Reader object.
  
     The object is initialized with port and channel number. These
@@ -314,6 +317,10 @@ iec61883Reader::iec61883Reader( int p, int c, int bufSize,
 	m_handle = NULL;
 	m_iec61883_mpeg2 = NULL;
 	m_iec61883_dv = NULL;
+	
+	ros::NodeHandle local_nh("~");
+	savefile_pub_ = local_nh.advertise<ultraspeech::SaveFile>("save_name", 1);
+
 }
 
 
@@ -519,6 +526,7 @@ int iec61883Reader::DvHandlerProxy( unsigned char *data, int length,
 int iec61883Reader::Handler( unsigned char *data, int length, int dropped )
 {
 	badFrames += dropped;
+	ultraspeech::SaveFile sv_msg;
 
 	if ( currentFrame == NULL )
 	{
@@ -536,9 +544,13 @@ int iec61883Reader::Handler( unsigned char *data, int length, int dropped )
 			return 0;
 		}
 	}
-
+	/* it looks like this is the spot where we're actually getting the data */
 	memcpy( &currentFrame->data[currentFrame->GetDataLen()], data, length );
 	currentFrame->AddDataLen( length );
+	
+	sv_msg.header.stamp = ros::Time::now();
+	sv_msg.filepath = "grabbed_ultrasound_frame";
+	savefile_pub_.publish(sv_msg);
 
 	if ( currentFrame->IsComplete( ) )
 	{
