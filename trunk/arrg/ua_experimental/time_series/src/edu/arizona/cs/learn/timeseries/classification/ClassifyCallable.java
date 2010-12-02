@@ -4,21 +4,35 @@ import java.util.concurrent.Callable;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 
-public class ClassifyCallable implements Callable<ClassifyResults>
-{
-	public String className;
-	public Classifier classifier;
-	public Instance test;
+public class ClassifyCallable implements Callable<ClassifyCallable> {
+	
+	private Classifier _classifier;
+	private Instance _testInstance;
+
+	private String _predicted;
+	private long _duration;
 
 	public ClassifyCallable(Classifier c, Instance test) {
-		this.classifier = c;
-		this.test = test;
+		_classifier = c;
+		_testInstance = test;
 	}
 
-	public ClassifyResults call() throws Exception {
-		long testStart = System.currentTimeMillis();
-		this.className = this.classifier.test(this.test);
-		long testEnd = System.currentTimeMillis();
-		return new ClassifyResults(this.classifier, this.test, this.className, testEnd - testStart);
+	public ClassifyCallable call() throws Exception {
+		long start = System.currentTimeMillis();
+		_predicted = _classifier.test(_testInstance);
+		_duration = System.currentTimeMillis() - start;
+		return this;
+	}
+	
+	public String predicted() { 
+		return _predicted;
+	}
+	
+	public String actual() { 
+		return _testInstance.name();
+	}
+	
+	public Long duration() { 
+		return _duration;
 	}
 }

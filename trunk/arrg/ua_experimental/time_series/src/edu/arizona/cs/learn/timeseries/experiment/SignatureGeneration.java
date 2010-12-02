@@ -21,9 +21,9 @@ public class SignatureGeneration {
 		signature();
 //		sequence();
 	}
-		
+	
 	public static void signature() { 
-		String name = "trace-1";
+		String name = "ww2d-fight";
 		String file = "data/input/" + name + ".lisp";
 
     	List<Instance> instances = Utils.sequences(name, file, SequenceType.allen);
@@ -40,13 +40,13 @@ public class SignatureGeneration {
     		s1.update(instance.sequence());
     	}
     	s1 = s1.prune(s1.trainingSize() / 2);
-    	s1.toXML("/Users/wkerr/Desktop/signature-random.xml");
+    	s1.toXML("/tmp/" + name + "-signature.xml");
 
-    	for (String method : new String[] { "single", "complete", "average" }) { 
-        	Signature s2 = Signature.agglomerativeTraining(method, instances);
-        	s2 = s2.prune(s2.trainingSize() / 2);
-        	s2.toXML("/Users/wkerr/Desktop/signature-" + method + ".xml");
-    	}
+//    	for (String method : new String[] { "single", "complete", "average" }) { 
+//        	Signature s2 = Signature.agglomerativeTraining(method, instances);
+//        	s2 = s2.prune(s2.trainingSize() / 2);
+//        	s2.toXML("/Users/wkerr/Desktop/signature-" + method + ".xml");
+//    	}
 
 //    	generator = SequenceFactory.forwardAllenGenerator();
 //    	instances = generator.sequences(name, "data/input/" + name + ".lisp");

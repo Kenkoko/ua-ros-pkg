@@ -23,9 +23,40 @@ import edu.uci.ics.jung.graph.DirectedGraph;
 
 public class FSMSequences {
 	public static void main(String[] args) {
-		regularMarkovSequences();
+		posseFirstFour();
 	}
 
+	public static DirectedGraph<BPPNode, Edge> posseFirstFour() {
+		SignatureExample.init();
+		Map<Integer,List<Interval>> map = Utils.load(new File("data/input/chpt1-approach.lisp"));
+
+		Set<String> propSet = new TreeSet<String>();
+		for (List<Interval> list : map.values()) {
+			for (Interval interval : list) {
+				propSet.add(interval.name);
+			}
+		}
+		List<String> props = new ArrayList<String>(propSet);
+
+		List<List<Interval>> all = new ArrayList<List<Interval>>();
+		for (Integer key : map.keySet()) { 
+			if (key != 5)
+				all.add(BPPFactory.compress(map.get(key), Interval.eff));
+		}
+
+		DirectedGraph<BPPNode,Edge> graph = FSMFactory.makeGraph(props, all, false);
+		FSMFactory.toDot(graph, "data/graph/posse-1-4.dot", false);
+		
+		all = new ArrayList<List<Interval>>();
+		all.add(BPPFactory.compress(map.get(5), Interval.eff));
+		
+		graph = FSMFactory.makeGraph(props, all, false);
+		FSMFactory.toDot(graph, "data/graph/posse-5.dot", false);
+		
+		return (DirectedGraph<BPPNode, Edge>) graph;
+	}
+	
+	
 	public static DirectedGraph<BPPNode, Edge> regularMarkovSequences() {
 		
 		SignatureExample.init();

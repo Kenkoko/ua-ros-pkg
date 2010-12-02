@@ -1,6 +1,7 @@
 package edu.arizona.cs.learn.timeseries.classification;
 
 import java.util.List;
+import java.util.Map;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Episode;
@@ -15,8 +16,10 @@ public abstract class Classifier {
 
 	public abstract String getName();
 
-	public abstract void train(int fold, List<Instance> training);
-	public abstract void train(List<Instance> training);
+	// return the amount of time it took to performing training
+	// organized by class name.
+	public abstract Map<String,Long> train(int fold, Map<String,List<Instance>> training);
+	public abstract Map<String,Long> train(Map<String,List<Instance>> training);
 
 	public abstract void trainEpisodes(int x, List<Episode> training, SequenceType type, boolean shuffle);
 	public abstract void trainEpisodes(List<Episode> training, SequenceType type, boolean shuffle);

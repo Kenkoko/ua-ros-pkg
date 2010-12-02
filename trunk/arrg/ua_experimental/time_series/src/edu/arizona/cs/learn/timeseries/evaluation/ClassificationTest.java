@@ -1,14 +1,15 @@
 package edu.arizona.cs.learn.timeseries.evaluation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyCallable;
-import edu.arizona.cs.learn.timeseries.classification.ClassifyResults;
 
 public abstract class ClassificationTest {
 	
@@ -17,40 +18,38 @@ public abstract class ClassificationTest {
 	public BatchStatistics runBatch(int batch, 
 			Classifier c, List<String> classNames, 
 			List<Instance> train, List<Instance> test) { 
-		BatchStatistics fs = new BatchStatistics(c.getName(), classNames.size());
-		
-		long startTime = System.currentTimeMillis();
-		c.train(batch, train);
-		fs.trainingTime = System.currentTimeMillis() - startTime;
+		BatchStatistics fs = new BatchStatistics(c.getName(), classNames);
 
-		List<Future<ClassifyResults>> futureList = new ArrayList<Future<ClassifyResults>>();
+		// Split them into groups by class name.
+		Map<String,List<Instance>> instances = new HashMap<String,List<Instance>>();
+		for (Instance instance : train) {
+			List<Instance> list = instances.get(instance.name());
+			if (list == null) {
+				list = new ArrayList<Instance>();
+				instances.put(instance.name(), list);
+			}
+			list.add(instance);
+		}
+
+		Map<String,Long> timing = c.train(batch, instances);
+
+		// Add the training data to the batch statistics...
+		for (String key : timing.keySet()) { 
+			fs.addTrainingDetail(key, instances.get(key).size(), timing.get(key));
+		}
+		
+
+		List<Future<ClassifyCallable>> futureList = new ArrayList<Future<ClassifyCallable>>();
 		for (Instance instance : test)  
 			futureList.add(_execute.submit(new ClassifyCallable(c, instance)));
 		
-		for (Future<ClassifyResults> future : futureList) {
-			ClassifyResults results = null;
+		for (Future<ClassifyCallable> future : futureList) {
 			try {
-				results = future.get();
+				ClassifyCallable results = future.get();
+				fs.addTestDetail(results.actual(), results.predicted(), results.duration());
 			} catch (Exception e) {
 				e.printStackTrace();
 			} 
-
-			fs.testingTime += results.elapsed;
-			
-			String actual = results.test.name();
-			String predicted = results.className;
-
-			fs.actualClass.add(actual);
-			fs.predictedClass.add(predicted);
-			
-			int correctIndex = classNames.indexOf(actual);
-			int classifyIndex = classNames.indexOf(predicted);
-			fs.confMatrix[correctIndex][classifyIndex] += 1;
-			
-			if (results.test.name().equals(results.className))  
-				fs.detail.add(true);
-			else  
-				fs.detail.add(false);
 		}	
 		return fs;
 	}
