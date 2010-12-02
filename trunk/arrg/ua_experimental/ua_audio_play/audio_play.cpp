@@ -29,13 +29,13 @@
 
 #include <queue>
 #include <ros/ros.h>
-#include <audio_msgs/AudioRawStream.h>
+#include <ua_audio_msgs/AudioRawStream.h>
 #include "portaudio.h"
 
-std::deque<audio_msgs::AudioRawStream::ConstPtr> g_segment_queue;
+std::deque<ua_audio_msgs::AudioRawStream::ConstPtr> g_segment_queue;
 
 struct AudioStreamState {
-  audio_msgs::AudioRawStream::ConstPtr current_segment;
+  ua_audio_msgs::AudioRawStream::ConstPtr current_segment;
   unsigned int index;
 
   AudioStreamState() : index(0) {}
@@ -72,7 +72,7 @@ static int pa_audio_cb(const void *input_buffer, void *output_buffer,
   return paContinue;
 }
 
-void ros_audio_cb(const audio_msgs::AudioRawStream::ConstPtr &msg)
+void ros_audio_cb(const ua_audio_msgs::AudioRawStream::ConstPtr &msg)
 {
   g_segment_queue.push_back(msg);
 }
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
   PaStream *stream;
 
   PA_ERROR_CHECK( Pa_Initialize() );
-  PA_ERROR_CHECK( Pa_OpenDefaultStream(&stream, 0, 1, paFloat32, 44100, 4096, pa_audio_cb, &audio_stream_state) );
+  PA_ERROR_CHECK( Pa_OpenDefaultStream(&stream, 2, 1, paFloat32, 44100, 4096, pa_audio_cb, &audio_stream_state) );
   PA_ERROR_CHECK( Pa_StartStream(stream) );
 
   ros::spin();

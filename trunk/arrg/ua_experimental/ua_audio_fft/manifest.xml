@@ -1,0 +1,18 @@
+<package>
+  <description brief="ua_audio_fft">
+
+     ua_audio_fft
+
+  </description>
+  <author>robotlab</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ua_audio_fft</url>
+  <depend package="std_msgs"/>
+  <depend package="rospy"/>
+  <depend package="roscpp"/>
+  <depend package="ua_audio_msgs"/>
+
+</package>
+
+

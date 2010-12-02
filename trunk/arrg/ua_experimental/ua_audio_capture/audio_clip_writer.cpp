@@ -31,7 +31,7 @@
 #include <deque>
 #include <vector>
 #include "ros/ros.h"
-#include "audio_msgs/AudioRawStream.h"
+#include "ua_audio_msgs/AudioRawStream.h"
 #include <sndfile.h>
 #include <iostream>
 
@@ -52,10 +52,10 @@ public:
   : clip_num(0), clip_start(0), clip_end(0), audio_clock(0),
     clip_state(IDLE), window_power(0)
   {
-    sub = nh.subscribe<audio_msgs::AudioRawStream>("audio_capture/audio", 5, boost::bind(&AudioWriter::audio_cb, this, _1));
+    sub = nh.subscribe<ua_audio_msgs::AudioRawStream>("audio_capture/audio", 5, boost::bind(&AudioWriter::audio_cb, this, _1));
     cout << "Existing" << endl;
   }
-  void audio_cb(audio_msgs::AudioRawStreamConstPtr audio_msg)
+  void audio_cb(ua_audio_msgs::AudioRawStreamConstPtr audio_msg)
   {
     //if (audio_msg->num_channels != 1)
     //{
