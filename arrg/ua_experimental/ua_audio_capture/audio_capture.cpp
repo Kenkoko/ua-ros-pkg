@@ -32,10 +32,10 @@
 #include <portaudio.h>
 #include <boost/thread/thread.hpp>
 #include "ros/ros.h"
-#include "audio_msgs/AudioRawStream.h"
+#include "ua_audio_msgs/AudioRawStream.h"
 
 const static int SAMPLE_RATE = 44100; // todo: make this a parameter.
-const static int NUM_CHANNELS = 4;
+const static int NUM_CHANNELS = 1;
 ros::Publisher g_pub;
 bool g_caught_sigint = false;
 
@@ -47,7 +47,7 @@ static int audio_cb(const void *input, void *output,
                     const PaStreamCallbackTimeInfo *time_info,
                     PaStreamCallbackFlags status, void *user_data)
 {
-  static audio_msgs::AudioRawStream audio_msg;
+  static ua_audio_msgs::AudioRawStream audio_msg;
   audio_msg.num_channels = NUM_CHANNELS;
   audio_msg.sample_rate = SAMPLE_RATE;
 #ifdef GRATUITOUS_DEBUGGING
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
   
   ros::NodeHandle nh("audio_capture");
   //g_audio_node = ros::NodeHandle("audio_capture");
-  g_pub = nh.advertise<audio_msgs::AudioRawStream>("audio", 5);
+  g_pub = nh.advertise<ua_audio_msgs::AudioRawStream>("audio", 5);
   err = Pa_OpenDefaultStream(&stream, NUM_CHANNELS, 0, paFloat32, SAMPLE_RATE, 4096,
                              audio_cb, NULL);
   if (err != paNoError)
