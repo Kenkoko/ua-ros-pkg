@@ -86,7 +86,7 @@ public class CogSciExperiments {
 		
 		double[] pcts = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
 		for (double pct : pcts) { 
-			SplitAndTest sat = new SplitAndTest(5, pct);
+			SplitAndTest sat = new SplitAndTest(100, pct);
 			List<BatchStatistics> stats = sat.run(System.currentTimeMillis(), classNames, data, c);
 
 			// print out the summary information for now.  Later we will need to 
@@ -108,20 +108,21 @@ public class CogSciExperiments {
 					for (int k = 0; k < classNames.size(); ++k)
 						confMatrix[j][k].addValue(matrix[j][k]);
 			}
+			out.flush();
 			System.out.println("[" + pct + "] Performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
-			System.out.println("  Matrix");
 
+			BufferedWriter outMatrix = new BufferedWriter(new FileWriter("logs/" + prefix + "-" + pct + "-matrix.csv"));
 			for (int i = 0; i < classNames.size(); ++i) 
-				System.out.print("," + classNames.get(i));
-			System.out.println();
+				outMatrix.write("," + classNames.get(i));
+			outMatrix.write("\n");
 			
 			for (int i = 0; i < classNames.size(); ++i) {
-				System.out.print(classNames.get(i));
+				outMatrix.write(classNames.get(i));
 				for (int j = 0; j < classNames.size(); ++j) 
-					System.out.print("," + confMatrix[i][j].getMean());
-				System.out.println();
+					outMatrix.write("," + confMatrix[i][j].getMean());
+				outMatrix.write("\n");
 			}
-			out.flush();
+			outMatrix.close();
 		}
 		
 		out.close();
@@ -129,8 +130,8 @@ public class CogSciExperiments {
 	
 	public static void main(String[] args) throws Exception { 
 //		performance("ww3d");
-//		learningCurve("ww3d");
-		learningCurve("ww2d");
+		learningCurve("ww3d");
+//		learningCurve("ww2d");
 	}
 	
 }
