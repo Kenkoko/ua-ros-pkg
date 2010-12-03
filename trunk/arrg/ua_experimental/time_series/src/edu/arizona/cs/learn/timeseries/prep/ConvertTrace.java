@@ -129,7 +129,7 @@ public class ConvertTrace {
 //			List<String> sdl = TimeSeries.sdl(delta, 0.0025);
 //			intervals.addAll(TimeSeries.toIntervals(key, sdl));
 			
-			List<Double> breakpoints = Arrays.asList(-2.0, -0.5, 0.5, 2.0);
+			List<Double> breakpoints = Arrays.asList(-2.0, -1.0, 1.0, 2.0);
 			List<String> classes = Arrays.asList("steep-down", "down", "stable", "up", "steep-up");
 
 			List<String> regression = TimeSeries.regression(column, breakpoints, classes);
@@ -147,6 +147,11 @@ public class ConvertTrace {
 	// Params filterWindow = 5  SAX = 6 SDL 0.0025   --- 59.39% correct
 	
 	// Params filterWindow 00 regression --- 47.50% correct
+	// Params filterWindow 00 regression 0.5,2.0 -- 45.28% correct
+	// Params filterWindow 00 regression 0.75,2.0 -- 51.19% correct
+	// Params filterWindow 00 regression 	1.0,2.0  -- 46.79% correct
+	// Params filterWindow 05 regression 0.75,2.0 -- 30.28% correct
+	
 	// Params filterWindow 05 regression --- 32.97% correct
 	// Params filterWindow 10 regression --- 39.86% correct
 	// Params filterWindow 25 regression --- 40.96% correct

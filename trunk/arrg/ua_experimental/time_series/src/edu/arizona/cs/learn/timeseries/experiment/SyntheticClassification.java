@@ -8,7 +8,14 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
+import org.apache.commons.math.stat.descriptive.SummaryStatistics;
+
+import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.Experiments;
+import edu.arizona.cs.learn.timeseries.classification.Classifier;
+import edu.arizona.cs.learn.timeseries.classification.Classify;
+import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
+import edu.arizona.cs.learn.timeseries.evaluation.CrossValidation;
 import edu.arizona.cs.learn.timeseries.prep.SymbolicData;
 import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
@@ -23,10 +30,8 @@ public class SyntheticClassification {
 
 	public static void main(String[] args) { 
 		Utils.LIMIT_RELATIONS = true;
-		Utils.WINDOW = 5;
-
-		initialize();
-		generateClass1();
+		Utils.WINDOW = 2;
+		experiment1();
 	}
 	
 	/**
@@ -88,9 +93,15 @@ public class SyntheticClassification {
 	
 	/**
 	 * Class 1 does not change -- so we need to construct the niall-f.lisp file
+	 * @param index - 1 for pure random class and 2 for the structured class
 	 */
-	public static void generateClass1() { 
+	public static void generateClass(String className, int index, double mean, int eLength) { 		
 		try {
+			File f = new File("/tmp/niall/");
+			if (!f.exists())
+				f.mkdir();
+
+			
 			// initial arguments
 			//   prefix - where you want the file written
 			//   p - the number of streams.
@@ -98,10 +109,8 @@ public class SyntheticClassification {
 			//   episode.length -- the length of each episode
 			String prefix = "/tmp/niall/";
 			int streams = 6;
-			int size = 8;
-			int eLength = 200;
 			
-			String cmd = "scripts/sim.R 1 " + prefix + " " + streams + " " + size + " " + eLength;
+			String cmd = "scripts/sim.R " + index + " " + prefix + " " + streams + " " + mean + " " + eLength;
 			System.out.println(cmd);
 			Process p = Runtime.getRuntime().exec("Rscript " + cmd);
 			p.waitFor();
@@ -109,18 +118,48 @@ public class SyntheticClassification {
 			e.printStackTrace();
 		}
 		
-		SymbolicData.convert("/tmp/niall/f", "data/input/niall-f.lisp", N);
-		Experiments.signatures("niall", SequenceType.allen, FOLDS, true);
+		SymbolicData.convert("/tmp/niall/" + className, "data/input/niall-" + className +".lisp", N);
 	}
 	
 	public static void experiment1() { 
-		int[] episodeLengths = new int[] { 200, 400, 600, 800, 1000 };
-		double[] means = new double[] { 0.00, 0.5, 1.0, 1.5, 2.0 };
+		int[] episodeLengths = new int[] { 200 }; //, 200, 300, 400, 500 };
+		double[] means = new double[] { 0.00 }; //, 0.5, 1.0, 1.5, 2.0 };
 		
 		// Total number of experiments equals 25
 		for (double mean : means) { 
 			for (int episodeLength : episodeLengths) { 
+				generateClass("f", 1, 0, episodeLength);
+				generateClass("g", 2, mean, episodeLength);
+
+				Map<String,List<Instance>> data = Utils.load("niall", SequenceType.allen);
+				List<String> classNames = new ArrayList<String>(data.keySet());
+				Collections.sort(classNames);
 				
+				Classifier c = Classify.prune.getClassifier(SequenceType.allen, -1, 50, false, -1);
+				
+				CrossValidation cv = new CrossValidation(FOLDS);
+				List<BatchStatistics> stats = cv.run(System.currentTimeMillis(), classNames, data, c);
+
+				SummaryStatistics perf = new SummaryStatistics();
+				int[][] matrix = new int[classNames.size()][classNames.size()];
+				for (int i = 0; i < stats.size(); ++i) { 
+					BatchStatistics fs = stats.get(i);
+					double accuracy = fs.accuracy();
+					int[][] confMatrix = fs.confMatrix();
+
+					perf.addValue(accuracy);
+					System.out.println("Fold - " + i + " -- " + accuracy);
+					
+					for (int j = 0; j < classNames.size(); ++j) { 
+						for (int k = 0; k < classNames.size(); ++k) { 
+							matrix[j][k] += confMatrix[j][k];
+						}
+					}
+				}
+				System.out.println("Performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
+				
+				// Now print out the confusion matrix (in csv format)
+				System.out.println(Utils.toCSV(classNames, matrix));
 			}
 		}
 	}
