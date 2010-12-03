@@ -84,8 +84,9 @@ if (class.index == 1) {
     }
   
     # change in covariance
-    cov.mat <- diag(1/10,p)
-    cov.mat[2:5,2:5] <- 1/2
+#    cov.mat <- diag(1/10,p)
+#    cov.mat[2:5,2:5] <- 1/2
+	cov.mat <- diag(1/50,p)
     c2 <- rbind(c2,create.episode(episode.length,means,cov.mat,cut.points))
 
     for (j in 1:floor(n.episodes/2)) {
