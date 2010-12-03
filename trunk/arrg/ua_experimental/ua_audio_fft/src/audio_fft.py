@@ -20,24 +20,45 @@ class audio_fft(object):
         self.sub = rospy.Subscriber("audio_capture/audio", AudioRawStream, self.callback)
         self.pub = rospy.Publisher("fft_audio",TransformedStream)
 
-        #Making sense of command-line arguments and/or using defaults
-        self.wsz = 5
-        self.ovr = 1
-        if len(sys.argv) >= 2:
-            self.wsz = int(sys.argv[1])
-        if len(sys.argv) >= 3:
-            self.ovr = int(sys.argv[2])
-        if self.wsz < 1:
-            self.wsz = 1
-        if self.ovr < 1:
-            self.ovr = 1
-        if self.ovr > self.wsz:
-            self.ovr = self.wsz
-        #End command-line stuff
+        parse_cline(sys.argv[1:])
+
+        self.first_time = True
         self.numSamples = 0
+
+    def parse_cline(argv):
+        self.wszp = 0.25
+        self.ovrp = 0.125
+        self.pwr = True
+        try:
+            opts, args = getopt.getopt(argv, "w:o:p:", ["window-size=","overlap=","powers_of_two="])
+        except:
+            sys.exit(2)
+        for opt, arg in opts:
+            if opt in ("-w","--window-size"):
+                self.wszp = float(arg)
+            elif opt in ("-o","--overlap"):
+                self.ovrp = float(arg)
+            elif opt in ("-p","--powers_of_two"):
+                self.pwr = bool(arg)
+        if self.wszp <= 0:
+            self.wszp = 0.25
+        if self.ovrp <= 0:
+            self.ovrp = 0.125
+        if self.ovrp > self.wszp:
+            self.ovrp = self.wszp
+
+    def init_freq(data):
+        self.first_time = False
+        self.
 
     def callback(self,data):
         self.lock.acquire()
+        
+        if(self.first_time):
+            init_freq(data)
+
+
+
 
         if self.numSamples == 0:
             self.data = data.samples
