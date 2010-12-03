@@ -16,7 +16,8 @@ public class ExportStreamFile {
 	
 	public static String[] classes = new String[] { 
 //		"eat", "chase", "fight", "flee", "kick-ball", "kick-column"
-		"collide", "pass", "talk-a", "talk-b"
+//		"collide", "pass", "talk-a", "talk-b"
+		"fight"
 	};
 	
 	public static String inPrefix = "data/raw-data/ww2d/states/";
