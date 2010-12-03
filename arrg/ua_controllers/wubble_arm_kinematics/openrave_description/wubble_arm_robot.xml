@@ -53,4 +53,13 @@
         <closingdirection>-1 1</closingdirection>
         <direction>1 0 0</direction>
     </Manipulator>
+
+    <Manipulator name="arm_wrist_urdf">
+        <base>ArmBaseLink</base>
+        <effector>WristYawLink</effector>
+        <joints>LeftFingerJoint RightFingerJoint</joints>
+        <closingdirection>-1 1</closingdirection>
+        <direction>1 0 0</direction>
+        <translation>-0.0751 0 0.002</translation>
+    </Manipulator>
 </Robot>
