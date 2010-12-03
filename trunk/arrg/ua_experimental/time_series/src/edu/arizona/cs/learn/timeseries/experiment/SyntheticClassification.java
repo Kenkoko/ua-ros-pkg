@@ -1,6 +1,8 @@
 package edu.arizona.cs.learn.timeseries.experiment;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,16 +24,31 @@ import edu.arizona.cs.learn.util.Utils;
 
 // Some things do not change
 //    The number of examples... 60
-//    The number of folds....   3
+//    The number of folds....   5
 
 public class SyntheticClassification {
-	public static final int FOLDS = 3;
+	public static final int FOLDS = 6;
 	public static final int N = 60;
 
-	public static void main(String[] args) { 
+	public static void main(String[] args) throws Exception { 
 		Utils.LIMIT_RELATIONS = true;
 		Utils.WINDOW = 2;
-		experiment1();
+		
+		if (args.length != 2) 
+			throw new RuntimeException("Usage: \"mean1,mean2,...\" \"length1,length2,...\"");
+//		experiment1();
+		
+		List<Double> means = new ArrayList<Double>();
+		String[] meanTokens = args[0].split("[,]");
+		for (String tok : meanTokens)
+			means.add(Double.parseDouble(tok));
+		
+		List<Integer> lengths = new ArrayList<Integer>();
+		String[] lengthTokens = args[1].split("[,]");
+		for (String tok : lengthTokens)
+			lengths.add(Integer.parseInt(tok));
+		
+		experiment1(lengths, means);
 	}
 	
 	/**
@@ -121,15 +138,24 @@ public class SyntheticClassification {
 		SymbolicData.convert("/tmp/niall/" + className, "data/input/niall-" + className +".lisp", N);
 	}
 	
-	public static void experiment1() { 
-		int[] episodeLengths = new int[] { 200 }; //, 200, 300, 400, 500 };
-		double[] means = new double[] { 0.00 }; //, 0.5, 1.0, 1.5, 2.0 };
+	public static void experiment1(List<Integer> episodeLengths, List<Double> means) throws Exception { 
+//		int[] episodeLengths = new int[] { 200 }; //, 200, 300, 400, 500 };
+//		double[] means = new double[] { 0.00 }; //, 0.5, 1.0, 1.5, 2.0 };
+		System.out.println("Means: " + means);
+		System.out.println("Lengths: " + episodeLengths);
+		
+		String key = System.currentTimeMillis() + "";
+		
+		BufferedWriter out = new BufferedWriter(new FileWriter("logs/synthetic-" + key + ".csv"));
+		out.write("elength,mean," + BatchStatistics.csvHeader() + "\n");
 		
 		// Total number of experiments equals 25
 		for (double mean : means) { 
-			for (int episodeLength : episodeLengths) { 
-				generateClass("f", 1, 0, episodeLength);
-				generateClass("g", 2, mean, episodeLength);
+			for (int length : episodeLengths) { 
+				System.out.println("Mean: " + mean + " Length: " + length);
+				
+				generateClass("f", 1, 0, length);
+				generateClass("g", 2, mean, length);
 
 				Map<String,List<Instance>> data = Utils.load("niall", SequenceType.allen);
 				List<String> classNames = new ArrayList<String>(data.keySet());
@@ -138,28 +164,45 @@ public class SyntheticClassification {
 				Classifier c = Classify.prune.getClassifier(SequenceType.allen, -1, 50, false, -1);
 				
 				CrossValidation cv = new CrossValidation(FOLDS);
+//				SplitAndTest sat = new SplitAndTest(100, pct);
 				List<BatchStatistics> stats = cv.run(System.currentTimeMillis(), classNames, data, c);
 
+				// print out the summary information for now.  Later we will need to 
+				// print out all of it.
 				SummaryStatistics perf = new SummaryStatistics();
-				int[][] matrix = new int[classNames.size()][classNames.size()];
-				for (int i = 0; i < stats.size(); ++i) { 
-					BatchStatistics fs = stats.get(i);
-					double accuracy = fs.accuracy();
-					int[][] confMatrix = fs.confMatrix();
-
-					perf.addValue(accuracy);
-					System.out.println("Fold - " + i + " -- " + accuracy);
-					
-					for (int j = 0; j < classNames.size(); ++j) { 
-						for (int k = 0; k < classNames.size(); ++k) { 
-							matrix[j][k] += confMatrix[j][k];
-						}
-					}
-				}
-				System.out.println("Performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
+				SummaryStatistics[][] confMatrix = new SummaryStatistics[classNames.size()][classNames.size()];
+				for (int i = 0; i < classNames.size(); ++i) 
+					for (int j = 0; j < classNames.size(); ++j) 
+						confMatrix[i][j] = new SummaryStatistics();
 				
-				// Now print out the confusion matrix (in csv format)
-				System.out.println(Utils.toCSV(classNames, matrix));
+				// append to the file the results of this latest run...
+				for (int i = 0; i < stats.size(); ++i) { 
+					BatchStatistics batch = stats.get(i);
+					out.write(batch.toCSV(length + "," + mean + ",", ""));
+
+					perf.addValue(batch.accuracy());
+					double[][] matrix = batch.normalizeConfMatrix();
+					for (int j = 0; j < classNames.size(); ++j)
+						for (int k = 0; k < classNames.size(); ++k)
+							confMatrix[j][k].addValue(matrix[j][k]);
+				}
+				out.flush();
+				System.out.println("[" + mean + "," + length + "] performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
+
+				
+				// Write out the confusion matrix for this pairing of variables.
+				BufferedWriter outMatrix = new BufferedWriter(new FileWriter("logs/matrix-" + key + "-" + length + "-" + mean + ".csv"));
+				for (int i = 0; i < classNames.size(); ++i) 
+					outMatrix.write("," + classNames.get(i));
+				outMatrix.write("\n");
+				
+				for (int i = 0; i < classNames.size(); ++i) {
+					outMatrix.write(classNames.get(i));
+					for (int j = 0; j < classNames.size(); ++j) 
+						outMatrix.write("," + confMatrix[i][j].getMean());
+					outMatrix.write("\n");
+				}
+				outMatrix.close();
 			}
 		}
 	}

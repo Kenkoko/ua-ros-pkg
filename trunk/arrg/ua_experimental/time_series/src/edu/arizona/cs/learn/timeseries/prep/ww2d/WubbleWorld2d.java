@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Set;
 
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.prep.TimeSeries;
+
 
 /**
  * The purpose of this class is to take in the raw ww2d data and
@@ -100,6 +102,29 @@ public class WubbleWorld2d {
 	}
 	
 	/**
+	 * Take an array of strings and convert them into a map of boolean values
+	 * @param values
+	 * @return
+	 */
+	private Map<String,List<Boolean>> convert(List<String> values) { 
+		Map<String,List<Boolean>> map = new HashMap<String,List<Boolean>>();
+		for (String s : values) { 
+			if (!map.containsKey(s) && !s.equals("NaN"))
+				map.put(s, new ArrayList<Boolean>(values.size()));
+		}
+
+		for (String s : values) { 
+			for (String key : map.keySet()) { 
+				if (s.equals(key))
+					map.get(key).add(true);
+				else
+					map.get(key).add(false);
+			}
+		}
+		return map;
+	}
+	
+	/**
 	 * For each distance double, create three possible propositions
 	 *  -- DistanceStable
 	 *  -- DistanceDecreasing
@@ -162,6 +187,55 @@ public class WubbleWorld2d {
 	}
 	
 	/**
+	 * The following real-valued variables will be converted into propositions
+	 * 		relativeVx, relativeVy
+	 * 		relativeX, relativeY
+	 */
+	public void doRelative() { 
+		String[] prefixes = new String[] { "relativeVx", "relativeVy", "relativeX", "relativeY" };
+		String[] mapped = new String[] { "rvx", "rvy", "rx" ,"ry" };
+		for (int i = 0; i < prefixes.length; ++i) { 
+			String prefix = prefixes[i];
+			for (String key : _headers) {
+				if (!key.startsWith(prefix)) 
+					continue;
+				
+				if (_ignoreWalls && key.matches(".*wall.*"))
+					continue;
+				
+				String suffix = key.substring(prefix.length());
+				System.out.println(suffix);
+				
+				// assumption is that it should be populated in the 
+				// double map.
+				List<Double> values = _doubleMap.get(key);
+				if (values == null) { 
+					throw new RuntimeException("Unknown key: " + key);
+				}
+
+				List<String> list = Arrays.asList("down", "stable", "up");
+				List<Double> diff = TimeSeries.diff(values);
+				List<String> sdl = TimeSeries.sdl(diff, Arrays.asList(-0.01,0.01), list);
+				Map<String,List<Boolean>> sdlMap = convert(sdl);
+				
+				for (String symbol : sdlMap.keySet()) { 
+					String s = mapped[i] + "-" + symbol + suffix;
+					_booleanMap.put(s, sdlMap.get(symbol));
+				}
+				
+				List<Double> standard = TimeSeries.standardize(values);
+				List<String> sax = TimeSeries.sax(standard, 7);
+				Map<String,List<Boolean>> saxMap = convert(sax);
+
+				for (String symbol : saxMap.keySet()) { 
+					String s = "(sax " + mapped[i] + suffix + " " + symbol + ")";
+					_booleanMap.put(s, saxMap.get(symbol));
+				}
+			}
+		}
+	}
+	
+	/**
 	 * For each x,y pair, determine if the agent is moving.  This could be augmented
 	 * to additionally have a movement in one of the axes, such as moving-y and 
 	 * moving-x
@@ -209,7 +283,10 @@ public class WubbleWorld2d {
 
 	public static void main(String[] args) { 
 //		String[] activities = {"chase", "fight", "flee", "kick-ball", "kick-column"};
-		String[] activities = {"collide", "pass", "talk-a", "talk-b"};
+//		String[] activities = {"collide", "pass", "talk-a", "talk-b"};
+
+//		String[] activities = {"chase", "fight", "flee", "kick-ball", "kick-column", "collide", "pass", "talk-a", "talk-b"};
+		String[] activities = {"fight"};
 
 		global(100, activities, true);
 	} 
@@ -220,11 +297,12 @@ public class WubbleWorld2d {
 
 		for (String act : activities) { 
 			try { 
-				BufferedWriter out = new BufferedWriter(new FileWriter(prefix + "lisp/" + act + ".lisp"));
+				BufferedWriter out = new BufferedWriter(new FileWriter(prefix + "lisp/ww2d-" + act + ".lisp"));
 				for (int i = 1; i <= n; ++i) { 
 					ww2d.load(prefix + "global/" + act + "/" + act + "-" + i + ".csv");
 					ww2d.doDistances();
 					ww2d.doMoving();
+					ww2d.doRelative();
 					List<Interval> intervals = ww2d.toIntervals();
 					out.write("(" + i + "\n");
 					out.write(" (\n");

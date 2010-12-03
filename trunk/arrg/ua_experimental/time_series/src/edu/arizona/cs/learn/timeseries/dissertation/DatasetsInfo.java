@@ -19,7 +19,7 @@ public class DatasetsInfo {
 		
 //		AllenRelation.MARGIN = 1;
 //		Utils.WINDOW = 1;
-		getStats("niall");
+		getStats("ww2d");
 	}
 
 	public static void getStats(String prefix) { 
