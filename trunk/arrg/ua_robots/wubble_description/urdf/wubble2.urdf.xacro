@@ -250,7 +250,7 @@
     </transmission>
     
     <hokuyo_urg name="neck_scan" parent="neck_tilt_link">
-        <origin xyz="0.01148 0 0.02635" rpy="0 0 0" />
+        <origin xyz="0 -0.0056 0.02635" rpy="0 0 0" />
     </hokuyo_urg>
     
     <!-- BASE LASER ATTACHMENT -->
