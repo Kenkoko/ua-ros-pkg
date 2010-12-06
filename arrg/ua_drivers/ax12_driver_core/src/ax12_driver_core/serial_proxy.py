@@ -168,11 +168,11 @@ class SerialProxy():
                 rospy.logfatal(fece)
                 signal_shutdown(fece)
             except ax12_io.NonfatalErrorCodeError, nfece:
-                rospy.logwarn(nfece)
+                rospy.logdebug(nfece)
             except ax12_io.ChecksumError, cse:
-                rospy.logwarn(cse)
+                rospy.logdebug(cse)
             except ax12_io.DroppedPacketError, dpe:
-                rospy.loginfo(dpe.message)
+                rospy.logdebug(dpe.message)
             finally:
                 self.__state_lock.release()
 
@@ -192,11 +192,11 @@ class SerialProxy():
                     rospy.logfatal(fece)
                     rospy.signal_shutdown(fece)
                 except ax12_io.NonfatalErrorCodeError, nfece:
-                    rospy.logwarn(nfece)
+                    rospy.logdebug(nfece)
                 except ax12_io.ChecksumError, cse:
-                    rospy.logwarn(cse)
+                    rospy.logdebug(cse)
                 except ax12_io.DroppedPacketError, dpe:
-                    rospy.loginfo(dpe.message)
+                    rospy.logdebug(dpe.message)
                 except OSError, ose:
                     if ose.errno != errno.EAGAIN:
                         rospy.logfatal(errno.errorcode[ose.errno])
