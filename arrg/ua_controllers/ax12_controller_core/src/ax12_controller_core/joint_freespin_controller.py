@@ -53,6 +53,8 @@ class JointFreespinControllerAX12(JointControllerAX12):
         JointControllerAX12.__init__(self, out_cb, param_path, port_name)
         self.motor_id = rospy.get_param(self.topic_name + '/motor/id')
         
+        self.joint_state = JointState(name=self.joint_name, motor_ids=[self.motor_id])
+        
     def initialize(self):
         # verify that the expected motor is connected and responding
         available_ids = rospy.get_param('dynamixel/%s/connected_ids' % self.port_namespace, [])
@@ -72,6 +74,24 @@ class JointFreespinControllerAX12(JointControllerAX12):
         elif speed > DMXL_MAX_SPEED_RAD: speed = DMXL_MAX_SPEED_RAD
         self.joint_speed = speed
         
+    def set_compliance_margin(self, margin):
+        if margin > 255: margin = 255
+        elif margin < 0: margin = 0
+        else: margin = int(margin)
+        margin2 = (margin << 8) + margin    # pack margin_cw and margin_ccw into 2 bytes
+        mcv = (self.motor_id, margin2)
+        self.send_packet_callback((DMXL_SET_COMPLIANCE_MARGINS, [mcv]))
+        
+    def set_compliance_punch(self, punch):
+        pass
+        
+    def set_torque_limit(self, max_torque):
+        if max_torque > 1: max_torque = 1.0
+        elif max_torque < 0: max_torque = 0.0     # turn off motor torque
+        raw_torque_val = int(1024 * max_torque)
+        mcv = (self.motor_id, raw_torque_val)
+        self.send_packet_callback((DMXL_SET_TORQUE_LIMIT, [mcv]))
+        
     def process_set_speed(self, req):
         self.set_speed(req.speed)
         return []
@@ -89,21 +109,32 @@ class JointFreespinControllerAX12(JointControllerAX12):
         self.send_packet_callback((DMXL_SET_COMPLIANCE_SLOPE, [mcv]))
         return []
         
+    def process_set_compliance_margin(self, req):
+        self.set_compliance_margin(req.margin)
+        return []
+        
+    def process_set_compliance_punch(self, req):
+        self.set_compliance_punch(req.punch)
+        return False
+        
+    def process_set_torque_limit(self, req):
+        self.set_torque_limit(req.torque_limit)
+        return []
+        
     def process_motor_states(self, state_list):
         if self.running:
             state = filter(lambda state: state.id == self.motor_id, state_list.motor_states)
             if state:
                 state = state[0]
-                joint_state = JointState(name=self.joint_name,
-                                         motor_ids=[self.motor_id],
-                                         goal_pos=0.0,
-                                         current_pos=0.0,
-                                         error=0.0,
-                                         velocity=(state.speed / self.encoder_resolution) * DMXL_MAX_SPEED_RAD,
-                                         load=state.load,
-                                         is_moving=state.moving)
-                joint_state.header.stamp = rospy.Time.from_sec(state.timestamp)
-                self.joint_state_pub.publish(joint_state)
+                self.joint_state.goal_pos = 0.0
+                self.joint_state.current_pos = 0.0
+                self.joint_state.error = 0.0
+                self.joint_state.velocity = (state.speed / self.encoder_resolution) * DMXL_MAX_SPEED_RAD
+                self.joint_state.load = state.load
+                self.joint_state.is_moving = state.moving
+                self.joint_state.header.stamp = rospy.Time.from_sec(state.timestamp)
+                
+                self.joint_state_pub.publish(self.joint_state)
                 
     def process_command(self, msg):
         speed = msg.data

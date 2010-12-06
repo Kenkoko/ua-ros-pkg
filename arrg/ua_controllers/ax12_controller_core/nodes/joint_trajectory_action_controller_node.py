@@ -277,7 +277,8 @@ class JointTrajectoryActionController():
         self.trajectory = trajectory
 
         for seg in range(len(trajectory)):
-            #print 'current segment is ', seg, 'time left', durations[seg] - (time.to_sec() - trajectory[seg].start_time), 'cur time', time.to_sec()
+            print 'current segment is ', seg, 'time left', durations[seg] - (time.to_sec() - trajectory[seg].start_time), 'cur time', time.to_sec()
+            print 'goal positions are:', trajectory[seg].positions
 
             pos_error = [0.0] * self.num_joints
             vel_error = [0.0] * self.num_joints
@@ -293,8 +294,11 @@ class JointTrajectoryActionController():
                 y = [start_position, (dest_position + start_position) / 2.0, dest_position, extra]
 
                 # figure out a spline
-                trajectory[seg].splines_tck[j] = splrep(x, y, s=0, k=3)
-                #trajectory[seg].splines[j] = self.get_cubic_spline_coefficients(start_position, 0.5, dest_position, 0.5, durations[seg])
+                #trajectory[seg].splines_tck[j] = splrep(x, y, s=0, k=3)
+                #trajectory[seg].splines[j] = self.get_cubic_spline_coefficients(start_position, 0, dest_position, 0, durations[seg])
+                
+                self.set_joint_velocity(joint, abs(dest_position-start_position)/(seg_end_times[seg]-time).to_sec() + 0.1)
+                self.set_joint_angle(joint, dest_position)
 
             while time < seg_end_times[seg]:
                 # check if new trajectory was received, if so abort current trajectory execution
@@ -315,10 +319,13 @@ class JointTrajectoryActionController():
                 for j in range(self.num_joints):
                     t = durations[seg] - (seg_end_times[seg] - time).to_sec()
 
+                    q[j] = trajectory[seg].positions[j]
+                    qd[j] = abs(dest_position-start_position)/(seg_end_times[seg]-time).to_sec() + 0.1
+                    
                     # evaluate spline and derivatives
-                    vals = spalde(t, trajectory[seg].splines_tck[j])
-                    q[j]  = vals[0]
-                    qd[j] = abs(vals[1])
+                    #vals = spalde(t, trajectory[seg].splines_tck[j])
+                    #q[j]  = vals[0]
+                    #qd[j] = abs(vals[1])
                     #acc = 0
                     #q[j], qd[j], acc = self.sample_quintic_spline(trajectory[seg].splines[j], t)
                     #qd[j] = abs(qd[j])
@@ -331,11 +338,11 @@ class JointTrajectoryActionController():
                     cur_vel = self.joint_states[joint].velocity
 
                     pos_error = cur_pos - q[j]
-                    vel_error = abs(cur_vel) - qd[j]
+                    vel_error = 0.0 #abs(cur_vel) - qd[j]
                     #print self.joint_names[j], 'cur', cur_pos, 'des', q[j], 'err', pos_error, 'velocity', qd[j]
 
-                    self.set_joint_velocity(joint, qd[j])
-                    self.set_joint_angle(joint, q[j])
+                    #self.set_joint_velocity(joint, qd[j])
+                    #self.set_joint_angle(joint, q[j])
 
                     self.msg.desired.positions[j] = q[j]
                     self.msg.desired.velocities[j] = qd[j]
@@ -399,10 +406,10 @@ class JointTrajectoryActionController():
 
         if command == 'position':
             current_state = self.joint_states[joint].current_pos
-            command_resolution = 0.1
+            command_resolution = 0.006
         elif command == 'velocity':
             current_state = self.joint_states[joint].velocity
-            command_resolution = 0.1
+            command_resolution = 0.012
         else:
             rospy.logerr('Unrecognized motor command %s while setting %s to %f', command, joint, value)
             return False
