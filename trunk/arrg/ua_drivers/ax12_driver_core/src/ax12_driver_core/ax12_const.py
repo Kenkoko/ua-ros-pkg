@@ -121,6 +121,16 @@ DMXL_SPEED_RAD_SEC_PER_TICK = 0.011652344   # radians per second in one encoder 
 DMXL_MIN_SPEED_RAD = DMXL_SPEED_RAD_SEC_PER_TICK
 DMXL_MAX_SPEED_RAD = 11.920347912           # maximum speed in radians per second
 
+DMXL_MIN_COMPLIANCE_MARGIN = 0
+DMXL_MAX_COMPLIANCE_MARGIN = 255
+
+DMXL_MIN_COMPLIANCE_SLOPE = 0
+DMXL_MAX_COMPLIANCE_SLOPE = 254
+
+# These are guesses as Dynamixel documentation doesn't have any info about it
+DMXL_MIN_PUNCH = 0
+DMXL_MAX_PUNCH = 255
+
 DMXL_MODEL_TO_NAME = \
 {
     113: 'DX-113',
