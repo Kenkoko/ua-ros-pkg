@@ -62,7 +62,7 @@ class JointPositionControllerDualAX12(JointControllerAX12):
         self.flipped = self.master_min_angle_raw > self.master_max_angle_raw
         
         self.joint_state = JointState(name=self.joint_name, motor_ids=[self.master_id])
-        
+
     def initialize(self):
         # verify that the expected motor is connected and responding
         available_ids = rospy.get_param('dynamixel/%s/connected_ids' % self.port_namespace, [])
@@ -86,9 +86,18 @@ class JointPositionControllerDualAX12(JointControllerAX12):
         self.encoder_resolution = rospy.get_param('dynamixel/%s/%d/encoder_resolution' % (self.port_namespace, self.master_id))
         self.max_position = self.encoder_resolution - 1
         self.set_speed(self.joint_speed)
-        self.set_compliance_slope(self.compliance_slope)
-        return True
         
+        if self.compliance_slope is not None: self.set_compliance_slope(self.compliance_slope)
+        if self.compliance_margin is not None: self.set_compliance_margin(self.compliance_margin)
+        if self.compliance_punch is not None: self.set_compliance_punch(self.compliance_punch)
+        if self.torque_limit is not None: self.set_torque_limit(self.torque_limit)
+        return True
+
+    def set_torque_enable(self, torque_enable):
+        mcv_master = (self.master_id, torque_enable)
+        mcv_slave = (self.slave_id, torque_enable)
+        self.send_packet_callback((DMXL_SET_TORQUE_ENABLE, [mcv_master, mcv_slave]))
+
     def set_speed(self, speed):
         if speed < DMXL_MIN_SPEED_RAD: speed = DMXL_MIN_SPEED_RAD
         elif speed > DMXL_MAX_SPEED_RAD: speed = DMXL_MAX_SPEED_RAD
@@ -96,15 +105,15 @@ class JointPositionControllerDualAX12(JointControllerAX12):
         mcv_master = (self.master_id, speed_raw if speed_raw > 0 else 1)
         mcv_slave = (self.slave_id, mcv_master[1])
         self.send_packet_callback((DMXL_SET_GOAL_SPEED, [mcv_master, mcv_slave]))
-        
+
     def set_compliance_slope(self, slope):
-        if slope < 2: slope = 2
-        elif slope > 128: slope = 128
+        if slope < 0: slope = 0
+        elif slope > 254: slope = 254
         slope2 = (slope << 8) + slope
         mcv_master = (self.master_id, slope2)
         mcv_slave = (self.slave_id, slope2)
         self.send_packet_callback((DMXL_SET_COMPLIANCE_SLOPES, [mcv_master, mcv_slave]))
-        
+
     def set_compliance_margin(self, margin):
         if margin > 255: margin = 255
         elif margin < 0: margin = 0
@@ -113,10 +122,15 @@ class JointPositionControllerDualAX12(JointControllerAX12):
         mcv_master = (self.master_id, margin2)
         mcv_slave = (self.slave_id, margin2)
         self.send_packet_callback((DMXL_SET_COMPLIANCE_MARGINS, [mcv_master, mcv_slave]))
-        
+
     def set_compliance_punch(self, punch):
-        pass
-        
+        if punch < DMXL_MIN_PUNCH: punch = DMXL_MIN_PUNCH
+        elif punch > DMXL_MAX_PUNCH: punch = DMXL_MAX_PUNCH
+        else: punch = int(punch)
+        mcv_master = (self.master_id, punch)
+        mcv_slave = (self.slave_id, punch)
+        self.send_packet_callback((DMXL_SET_PUNCH, [mcv_master, mcv_slave]))
+
     def set_torque_limit(self, max_torque):
         if max_torque > 1: max_torque = 1.0
         elif max_torque < 0: max_torque = 0.0     # turn off motor torque
@@ -124,33 +138,7 @@ class JointPositionControllerDualAX12(JointControllerAX12):
         mcv_master = (self.master_id, raw_torque_val)
         mcv_slave = (self.slave_id, raw_torque_val)
         self.send_packet_callback((DMXL_SET_TORQUE_LIMIT, [mcv_master, mcv_slave]))
-        
-    def process_set_speed(self, req):
-        self.set_speed(req.speed)
-        return []
-        
-    def process_torque_enable(self, req):
-        mcv_master = (self.master_id, req.torque_enable)
-        mcv_slave = (self.slave_id, req.torque_enable)
-        self.send_packet_callback((DMXL_SET_TORQUE_ENABLE, [mcv_master, mcv_slave]))
-        return []
-        
-    def process_set_compliance_slope(self, req):
-        self.set_compliance_slope(req.slope)
-        return []
-        
-    def process_set_compliance_margin(self, req):
-        self.set_compliance_margin(req.margin)
-        return []
-        
-    def process_set_compliance_punch(self, req):
-        self.set_compliance_punch(req.punch)
-        return False
-        
-    def process_set_torque_limit(self, req):
-        self.set_torque_limit(req.torque_limit)
-        return []
-        
+
     def process_motor_states(self, state_list):
         if self.running:
             state = filter(lambda state: state.id == self.master_id, state_list.motor_states)
@@ -165,7 +153,7 @@ class JointPositionControllerDualAX12(JointControllerAX12):
                 self.joint_state.header.stamp = rospy.Time.from_sec(state.timestamp)
                 
                 self.joint_state_pub.publish(self.joint_state)
-                
+
     def process_command(self, msg):
         angle = msg.data
         if angle < self.master_min_angle: angle = self.master_min_angle

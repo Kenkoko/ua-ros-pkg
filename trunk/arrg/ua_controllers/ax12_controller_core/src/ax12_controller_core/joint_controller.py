@@ -41,6 +41,13 @@ roslib.load_manifest('ax12_controller_core')
 import rospy
 from ax12_driver_core.msg import MotorStateList
 
+from ax12_driver_core.ax12_const import DMXL_MIN_SPEED_RAD
+from ax12_driver_core.ax12_const import DMXL_MAX_SPEED_RAD
+from ax12_driver_core.ax12_const import DMXL_MIN_COMPLIANCE_MARGIN
+from ax12_driver_core.ax12_const import DMXL_MAX_COMPLIANCE_MARGIN
+from ax12_driver_core.ax12_const import DMXL_MIN_COMPLIANCE_SLOPE
+from ax12_driver_core.ax12_const import DMXL_MAX_COMPLIANCE_SLOPE
+
 from ax12_controller_core.srv import SetSpeed
 from ax12_controller_core.srv import TorqueEnable
 from ax12_controller_core.srv import SetComplianceSlope
@@ -60,15 +67,47 @@ class JointControllerAX12:
         self.topic_name = param_path
         self.port_namespace = port_name[port_name.rfind('/') + 1:]
         self.joint_name = rospy.get_param(self.topic_name + '/joint_name')
-        self.joint_speed = rospy.get_param(self.topic_name + '/joint_speed')
-        self.compliance_slope = rospy.get_param(self.topic_name + '/joint_compliance_slope', 32)
-
+        self.joint_max_speed = rospy.get_param(self.topic_name + '/joint_max_speed', DMXL_MAX_SPEED_RAD)
+        self.joint_speed = rospy.get_param(self.topic_name + '/joint_speed', 1.0)
+        self.compliance_slope = rospy.get_param(self.topic_name + '/joint_compliance_slope', None)
+        self.compliance_margin = rospy.get_param(self.topic_name + '/joint_compliance_margin', None)
+        self.compliance_punch = rospy.get_param(self.topic_name + '/joint_compliance_punch', None)
+        self.torque_limit = rospy.get_param(self.topic_name + '/joint_torque_limit', None)
+        
+        self.__ensure_limits()
+        
         self.speed_service = rospy.Service(self.topic_name + '/set_speed', SetSpeed, self.process_set_speed)
         self.torque_service = rospy.Service(self.topic_name + '/torque_enable', TorqueEnable, self.process_torque_enable)
         self.compliance_slope_service = rospy.Service(self.topic_name + '/set_compliance_slope', SetComplianceSlope, self.process_set_compliance_slope)
         self.compliance_marigin_service = rospy.Service(self.topic_name + '/set_compliance_margin', SetComplianceMargin, self.process_set_compliance_margin)
         self.compliance_punch_service = rospy.Service(self.topic_name + '/set_compliance_punch', SetCompliancePunch, self.process_set_compliance_punch)
         self.torque_limit_service = rospy.Service(self.topic_name + '/set_torque_limit', SetTorqueLimit, self.process_set_torque_limit)
+
+    def __ensure_limits(self):
+        if self.joint_max_speed < DMXL_MIN_SPEED_RAD: self.joint_max_speed = DMXL_MIN_SPEED_RAD
+        elif self.joint_max_speed > DMXL_MAX_SPEED_RAD: self.joint_max_speed = DMXL_MAX_SPEED_RAD
+        
+        if self.joint_speed < DMXL_MIN_SPEED_RAD: self.joint_speed = DMXL_MIN_SPEED_RAD
+        elif self.joint_speed > self.joint_max_speed: self.joint_speed = self.joint_max_speed
+        
+        if self.compliance_slope is not None:
+            if self.compliance_slope < DMXL_MIN_COMPLIANCE_SLOPE: self.compliance_slope = DMXL_MIN_COMPLIANCE_SLOPE
+            elif self.compliance_slope > DMXL_MAX_COMPLIANCE_SLOPE: self.compliance_slope = DMXL_MAX_COMPLIANCE_SLOPE
+            else: self.compliance_slope = int(self.compliance_slope)
+            
+        if self.compliance_margin is not None:
+            if self.compliance_margin < DMXL_MIN_COMPLIANCE_MARGIN: self.compliance_margin = DMXL_MIN_COMPLIANCE_MARGIN
+            elif self.compliance_margin > DMXL_MAX_COMPLIANCE_MARGIN: self.compliance_margin = DMXL_MAX_COMPLIANCE_MARGIN
+            else: self.compliance_margin = int(self.compliance_margin)
+            
+        if self.compliance_punch is not None:
+            if self.compliance_punch < DMXL_MIN_PUNCH: self.compliance_punch = DMXL_MIN_PUNCH
+            elif self.compliance_punch > DMXL_MAX_PUNCH: self.compliance_punch = DMXL_MAX_PUNCH
+            else: self.compliance_punch = int(self.compliance_punch)
+            
+        if self.torque_limit is not None:
+            if self.torque_limit < 0: self.torque_limit = 0.0
+            elif self.torque_limit > 1: self.torque_limit = 1.0
 
     def initialize(self):
         raise NotImplementedError
@@ -88,26 +127,47 @@ class JointControllerAX12:
         self.torque_service.shutdown('normal shutdown')
         self.compliance_slope_service.shutdown('normal shutdown')
 
+    def set_torque_enable(self, torque_enable):
+        raise NotImplementedError
+
     def set_speed(self, speed):
         raise NotImplementedError
 
-    def process_set_speed(self, req):
+    def set_compliance_slope(self, slope):
         raise NotImplementedError
+
+    def set_compliance_margin(self, margin):
+        raise NotImplementedError
+
+    def set_compliance_punch(self, punch):
+        raise NotImplementedError
+
+    def set_torque_limit(self, max_torque):
+        raise NotImplementedError
+
+    def process_set_speed(self, req):
+        self.set_speed(req.speed)
+        return [] # success
 
     def process_torque_enable(self, req):
-        raise NotImplementedError
+        self.set_torque_enable(req.torque_enable)
+        return []
 
     def process_set_compliance_slope(self, req):
-        raise NotImplementedError
+        self.set_compliance_slope(req.slope)
+        return []
 
     def process_set_compliance_margin(self, req):
-        raise NotImplementedError
+        self.set_compliance_margin(req.margin)
+        return []
 
     def process_set_compliance_punch(self, req):
-        raise NotImplementedError
+        self.set_compliance_punch(req.punch)
+        return []
 
     def process_set_torque_limit(self, req):
-        raise NotImplementedError
+        self.set_torque_limit(req.torque_limit)
+        return []
 
     def process_motor_states(self, state_list):
         raise NotImplementedError
