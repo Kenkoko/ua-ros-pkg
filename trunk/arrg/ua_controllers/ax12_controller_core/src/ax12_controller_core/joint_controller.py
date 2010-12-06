@@ -40,9 +40,14 @@ roslib.load_manifest('ax12_controller_core')
 
 import rospy
 from ax12_driver_core.msg import MotorStateList
+
 from ax12_controller_core.srv import SetSpeed
 from ax12_controller_core.srv import TorqueEnable
 from ax12_controller_core.srv import SetComplianceSlope
+from ax12_controller_core.srv import SetComplianceMargin
+from ax12_controller_core.srv import SetCompliancePunch
+from ax12_controller_core.srv import SetTorqueLimit
+
 from ua_controller_msgs.msg import JointState
 from std_msgs.msg import Float64
 
@@ -61,6 +66,9 @@ class JointControllerAX12:
         self.speed_service = rospy.Service(self.topic_name + '/set_speed', SetSpeed, self.process_set_speed)
         self.torque_service = rospy.Service(self.topic_name + '/torque_enable', TorqueEnable, self.process_torque_enable)
         self.compliance_slope_service = rospy.Service(self.topic_name + '/set_compliance_slope', SetComplianceSlope, self.process_set_compliance_slope)
+        self.compliance_marigin_service = rospy.Service(self.topic_name + '/set_compliance_margin', SetComplianceMargin, self.process_set_compliance_margin)
+        self.compliance_punch_service = rospy.Service(self.topic_name + '/set_compliance_punch', SetCompliancePunch, self.process_set_compliance_punch)
+        self.torque_limit_service = rospy.Service(self.topic_name + '/set_torque_limit', SetTorqueLimit, self.process_set_torque_limit)
 
     def initialize(self):
         raise NotImplementedError
@@ -90,6 +98,15 @@ class JointControllerAX12:
         raise NotImplementedError
 
     def process_set_compliance_slope(self, req):
+        raise NotImplementedError
+
+    def process_set_compliance_margin(self, req):
+        raise NotImplementedError
+
+    def process_set_compliance_punch(self, req):
+        raise NotImplementedError
+
+    def process_set_torque_limit(self, req):
         raise NotImplementedError
 
     def process_motor_states(self, state_list):
