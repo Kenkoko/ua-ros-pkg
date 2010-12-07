@@ -1,0 +1,42 @@
+head_pan_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: head_pan_joint
+    joint_speed: 1.17
+    motor:
+        id: 10
+        init: 2048
+        min: 0
+        max: 4095
+
+head_tilt_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller_dual_motor
+        type: JointPositionControllerDualAX12
+    joint_name: head_tilt_joint
+    joint_speed: 1.17
+    motor_master:
+        id: 15
+        init: 200
+        min: 512
+        max: 30
+    motor_slave:
+        id: 16
+        calibration_offset: -5
+
+neck_tilt_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: neck_tilt_joint
+    joint_speed: 1.17
+    motor:
+        id: 14
+        init: 355
+        min: 300
+        max: 900
+

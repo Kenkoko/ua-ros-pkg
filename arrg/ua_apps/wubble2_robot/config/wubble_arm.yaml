@@ -1,0 +1,116 @@
+shoulder_pitch_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: shoulder_pitch_joint
+    joint_speed: 1.17
+    motor:
+        id: 1
+        init: 2048
+        min: 50
+        max: 3360
+
+shoulder_yaw_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: shoulder_yaw_joint
+    joint_speed: 1.17
+    motor:
+        id: 2
+        init: 2048
+        min: 265
+        max: 3830
+
+shoulder_roll_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: shoulder_roll_joint
+    joint_speed: 1.17
+    motor:
+        id: 3
+        init: 2048
+        min: 0
+        max: 4095
+
+elbow_pitch_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: elbow_pitch_joint
+    joint_speed: 1.17
+    motor:
+        id: 4
+        init: 2400
+        min: 960
+        max: 4095
+
+wrist_roll_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: wrist_roll_joint
+    joint_speed: 1.17
+    motor:
+        id: 5
+        init: 512
+        min: 0
+        max: 1023
+
+wrist_pitch_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: wrist_pitch_joint
+    joint_speed: 1.17
+    motor:
+        id: 6
+        init: 200
+        min: 80
+        max: 645
+
+wrist_yaw_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: wrist_yaw_joint
+    joint_speed: 1.17
+    motor:
+        id: 7
+        init: 508
+        min: 185
+        max: 830
+
+gripper_left_finger_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: left_finger_joint
+    joint_speed: 1.17
+    motor:
+        id: 8
+        init: 512
+        min: 450
+        max: 680
+
+gripper_right_finger_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_position_controller
+        type: JointPositionControllerAX12
+    joint_name: right_finger_joint
+    joint_speed: 1.17
+    motor:
+        id: 9
+        init: 512
+        min: 330
+        max: 560
