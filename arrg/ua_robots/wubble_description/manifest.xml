@@ -14,6 +14,7 @@
     <depend package="erratic_description" />
     <depend package="smart_arm_description" />
     <depend package="hokuyo_urg_description" />
+    <depend package="swissranger_camera_description" />
     <depend package="videre_stoc_description" />
 
     <depend package="gazebo"/>

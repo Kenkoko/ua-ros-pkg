@@ -9,6 +9,7 @@
     <include filename="$(find erratic_description)/urdf/erratic_base.xacro" />
     <include filename="$(find hokuyo_urg_description)/urdf/hokuyo_urg.xacro" />
     <include filename="$(find wubble_arm_description)/urdf/wubble_arm.xacro" />
+    <include filename="$(find swissranger_camera_description)/urdf/swissranger_camera.xacro" />
     <include filename="$(find videre_stoc_description)/urdf/videre_stereo_6cm.xacro" />
     
     <!-- Properties (Constants) -->
@@ -51,13 +52,13 @@
     
     <!-- WUBBLE HEAD ATTACHMENT -->
     <joint name="head_base_joint" type="fixed">
-        <origin xyz="0.0254 0 0.8001" rpy="0 0 0" />
+        <origin xyz="0.0254 0 ${0.8001-0.019}" rpy="0 0 0" />
         <parent link="platform_link"/>
         <child link="head_base_link"/>
     </joint>
     
     <joint name="head_pan_joint" type="revolute">
-        <origin xyz="0.0415 0 0.004" rpy="0 0 0" />
+        <origin xyz="0.0545 0 0.026" rpy="0 0 0" />
         <parent link="head_base_link"/>
         <child link="head_pan_link"/>
         
@@ -68,7 +69,7 @@
     </joint>
     
     <joint name="head_tilt_joint" type="revolute">
-        <origin xyz="0 0 0.0415" rpy="0 0 0" />
+        <origin xyz="0.06506 0 0.06147" rpy="0 0 0" />
         <parent link="head_pan_link"/>
         <child link="head_tilt_link"/>
         
@@ -165,9 +166,14 @@
         <mechanicalReduction>1.0</mechanicalReduction>
     </transmission>
     
+    <!-- SWISSRANGER CAMERA ATTACHMENT -->
+    <swissranger_camera name="swissranger" parent="head_tilt_link">
+        <origin xyz="0.0125 0 0.036" rpy="${M_PI} 0 0" />
+    </swissranger_camera>
+    
     <!-- VIDERE STEREO CAMERA ATTACHMENT -->
     <videre_stereo_6cm name="stoc" parent="head_tilt_link" >
-        <origin xyz="0.01148 0 0.02635" rpy="0 0 0" />
+        <origin xyz="0.01148 0 0.037" rpy="0 0 0" />
     </videre_stereo_6cm>
     
     <!-- WUBBLE ARM ATTACHMENT -->
@@ -230,7 +236,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/head_tilt_link.stl"/>
+                <mesh filename="package://wubble_description/meshes/ax12_45_bracket.stl"/>
             </geometry>
             <material name="GunMetalBrushedAluminum" />
         </visual>
@@ -238,7 +244,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/head_tilt_link.stl"/>
+                <mesh filename="package://wubble_description/meshes/ax12_45_bracket.stl"/>
             </geometry>
         </collision>
     </link>
