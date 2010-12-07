@@ -1,0 +1,316 @@
+<launch>
+    <!-- send erratic description to param server -->
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble2.urdf.xacro'" />
+
+    <!-- Start the Dynamixel servo manager to control Lower Arm (wrist and fingers) -->
+    <node name="lower_arm_motor_manager" pkg="ax12_controller_core" type="controller_manager.py" output="screen">
+        <param name="port_name" type="str" value="/dev/wubble2LowerArm"/>
+        <param name="baud_rate" type="int" value="1000000"/>
+        <param name="max_motor_id" type="int" value="25"/>
+        <param name="update_rate" type="int" value="50"/>
+    </node>
+
+    <!-- Start the Dynamixel servo manager to control Upper Arm (shoulder and elbow) -->
+    <node name="upper_arm_motor_manager" pkg="ax12_controller_core" type="controller_manager.py" output="screen">
+        <param name="port_name" type="str" value="/dev/wubble2UpperArm"/>
+        <param name="baud_rate" type="int" value="1000000"/>
+        <param name="max_motor_id" type="int" value="25"/>
+        <param name="update_rate" type="int" value="50"/>
+    </node>
+
+    <!-- Start the Dynamixel servo manager to control Head pan and tilt and neck laser tilt -->
+    <node name="head_motor_manager" pkg="ax12_controller_core" type="controller_manager.py" output="screen">
+        <param name="port_name" type="str" value="/dev/wubble2Head"/>
+        <param name="baud_rate" type="int" value="1000000"/>
+        <param name="max_motor_id" type="int" value="25"/>
+        <param name="update_rate" type="int" value="50"/>
+    </node>
+
+    <!-- Start the low-level driver manager with parameters -->
+    <node name="wubble_head_pan_manager" pkg="ax12_controller_core" type="controller_manager.py" required="true" output="screen">
+        <param name="port_name" type="str" value="/dev/ttyUSB0"/>
+        <param name="baud_rate" type="int" value="1000000"/>
+        <param name="max_motor_id" type="int" value="25"/>
+        <param name="update_rate" type="int" value="50"/>
+    </node>
+
+    <!-- Start the Erratic mobile base driver -->
+    <node name="erratic_base" pkg="ua_erratic_player" type="erratic_player" output="screen" >
+        <remap from="odom" to="odom"/>
+        <remap from="battery_state" to="battery_state"/>
+        <param name="port_name" value="/dev/wubble2Erratic"/>
+        <param name="enable_ir" value="False"/>
+        <param name="odometry_frame_id" value="odom"/>
+    </node>
+
+    <!-- Start all wubble arm joint controllers -->
+    <rosparam file="$(find wubble2_robot)/config/wubble_arm.yaml" command="load"/>
+    <node name="wubble_upper_arm_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
+          args="--port /dev/wubble2UpperArm
+                shoulder_pitch_controller
+                shoulder_yaw_controller
+                shoulder_roll_controller
+                elbow_pitch_controller"
+          output="screen"/>
+    <node name="wubble_lower_arm_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
+          args="--port /dev/wubble2LowerArm
+                wrist_roll_controller
+                wrist_pitch_controller
+                wrist_yaw_controller
+                gripper_left_finger_controller
+                gripper_right_finger_controller"
+          output="screen"/>
+
+    <!-- Load joint trajectory controller configuration from YAML file to parameter server -->
+    <rosparam file="$(find wubble2_robot)/config/arm_trajectory_controller.yaml" command="load"/>
+    <node name="wubble_arm_trajectory_action" pkg="ax12_controller_core" type="joint_trajectory_action_controller_node.py" output="screen"/>
+
+    <!-- Start all wubble head joint controllers -->
+    <rosparam file="$(find wubble2_robot)/config/wubble_head.yaml" command="load"/>
+    <node name="wubble_head_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
+          args="--port /dev/wubble2Head
+                head_tilt_controller
+                neck_tilt_controller"
+          output="screen"/>
+
+    <!-- Start head pan joint controller -->
+    <rosparam file="$(find wubble2_robot)/config/wubble_head.yaml" command="load"/>
+    <node name="wubble_head_pan_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
+          args="--port /dev/ttyUSB0
+                head_pan_controller"
+          output="screen"/>
+
+    <node pkg="wubble2_robot" type="ax12_to_pr2_state_msgs.py" name="ax12_to_pr2" />
+
+    <node name="laser_tilting_action" pkg="wubble_actions" type="hokuyo_laser_action.py" output="screen" >
+        <remap from="/neck_tilt_controller/state" to="/neck_tilt_controller/state_pr2_msgs"/>
+        <param name="controller" value="neck_tilt_controller" />
+    </node>
+    <node name="tilt_neck_laser" pkg="wubble2_robot" type="tilt_neck_laser.py" output="screen" />
+
+    <!-- Navigation -->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find wubble_environments)/Media/materials/textures/wubble_lab_playground_0.025.yaml" respawn="true" />
+    <include file="$(find wubble_2dnav)/wubble2_2dnav.launch" />
+
+    <!-- Publish joint_states information -->
+    <node name="joint_states_publisher" pkg="wubble2_robot" type="joint_states_publisher.py" output="screen" />
+    <node name="wubble_state_publisher" pkg="robot_state_publisher" type="state_publisher" output="screen" />
+
+    <!-- Start the hokuyo laser at the base -->
+    <node name="base_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">
+        <remap from="scan" to="base_scan/scan"/>
+        <param name="port" value="/dev/wubble2BaseLaser"/>
+        <param name="min_ang" value="-1.65"/>
+        <param name="max_ang" value="1.65"/>
+        <param name="frame_id" value="base_scan_link"/>
+    </node>
+
+    <!-- Filter for base laser shadowing/veiling -->
+    <node pkg="laser_filters" type="scan_to_cloud_filter_chain" respawn="true" name="base_shadow_filter" >
+        <remap from="scan" to="base_scan/scan" />
+        <remap from="cloud_filtered" to="base_scan/shadow_filtered" />
+        <param name="target_frame" value="base_footprint" />
+        <param name="high_fidelity" value="false" />
+        <rosparam command="load" file="$(find wubble_description)/params/shadow_filter.yaml" />
+    </node>
+
+    <!-- Filter for base laser scans that hit the body of the robot -->
+    <node pkg="robot_self_filter" type="self_filter" name="base_laser_self_filter" respawn="true" output="screen" >
+        <remap from="cloud_in" to="base_scan/shadow_filtered" />
+        <remap from="cloud_out" to="base_scan/marking" />
+        <param name="sensor_frame" type="string" value="base_scan_link" />
+        <rosparam file="$(find wubble_description)/params/w2_base_self_filter.yaml" command="load" />
+    </node>
+
+    <!-- Start the hokuyo laser at the neck -->
+    <node name="neck_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">
+        <remap from="scan" to="neck_scan/scan"/>
+        <param name="port" value="/dev/wubble2NeckLaser"/>
+        <param name="min_ang" value="-2.09"/>
+        <param name="max_ang" value="2.09"/>
+        <param name="frame_id" value="neck_scan_link"/>
+    </node>
+
+    <!-- Laser Filters -->
+    <node pkg="laser_filters" type="scan_to_cloud_filter_chain" respawn="true" name="neck_shadow_filter">
+        <remap from="scan" to="neck_scan/scan" />
+        <remap from="cloud_filtered" to="neck_scan/shadow_filtered" />
+        <param name="target_frame" value="base_footprint" />
+        <param name="high_fidelity" value="false" />
+        <rosparam command="load" file="$(find wubble_description)/params/shadow_filter.yaml" />
+    </node>
+
+    <!-- assemble pointcloud into a full world view -->
+    <node pkg="laser_assembler" type="point_cloud_assembler" output="screen"  name="point_cloud_assembler">
+        <remap from="cloud" to="neck_scan/self_filtered"/>
+        <param name="tf_cache_time_secs" type="double" value="15.0" />
+        <param name="tf_tolerance_secs" type="double" value="0.0" />
+        <param name="max_clouds" type="int" value="400" />
+        <param name="ignore_laser_skew" type="bool" value="true" />
+        <param name="fixed_frame" type="string" value="base_link" />
+    </node>
+
+    <node pkg="pr2_arm_navigation_perception" type="pr2_laser_snapshotter" output="screen" name="snapshotter">
+        <remap from="laser_scanner_signal" to="laser_scanner_signal"/>
+        <remap from="build_cloud" to="point_cloud_assembler/build_cloud" />
+        <remap from="full_cloud" to="full_cloud_filtered" />
+    </node>
+
+    <!-- need to clear known objects from scans -->
+    <node pkg="planning_environment" type="clear_known_objects" name="laser_clear_objects" output="screen">
+        <remap from="cloud_in" to="neck_scan/shadow_filtered" />
+        <remap from="cloud_out" to="neck_scan/cloud_known" />
+        <param name="sensor_frame" type="string" value="neck_scan_link" />
+        <param name="fixed_frame" type="string" value="base_link" />
+        <param name="object_padd" type="double" value="0.02" />
+        <param name="object_scale" type="double" value="1.0" />
+    </node>
+
+    <node pkg="robot_self_filter" type="self_filter" name="laser_self_filter" respawn="true" output="screen">
+        <remap from="cloud_in" to="neck_scan/cloud_known" />
+        <remap from="cloud_out" to="neck_scan/self_filtered" />
+        <param name="sensor_frame" value="neck_scan_link" />
+        <rosparam file="$(find wubble_description)/params/w2_self_filter.yaml" command="load" />
+    </node>
+
+    <!-- displaying known model markers -->
+    <node pkg="planning_environment" name="display_planner_collision_model_environment_server" type="display_planner_collision_model" respawn="false" output="screen">
+        <param name="skip_collision_map" type="bool" value="false" />
+        <param name="prefix" type="string" value="/environment_server_left_arm" />
+    </node>
+
+    <node pkg="planning_environment" name="display_planner_collision_model_ik" type="display_planner_collision_model" respawn="false" output="screen">
+        <param name="skip_collision_map" type="bool" value="false" />
+        <param name="prefix" type="string" value="/arm_kinematics" />
+    </node>
+
+    <!-- send parameters for collision checking for Wubble2; this includes parameters for the self filter -->
+    <rosparam command="load" ns="robot_description_collision" file="$(find wubble_description)/params/w2_collision_checks_arm.yaml" />
+
+    <!-- send parameters needed for motion planning -->
+    <rosparam command="load" ns="robot_description_planning" file="$(find wubble_description)/params/w2_planning_groups.yaml" />
+
+    <node pkg="collision_map" type="collision_map_self_occ_node" name="collision_map_self_occ_node" respawn="true" output="screen">
+        <param name="self_see_default_padding" type="double" value="0.04" />
+        <param name="self_see_default_scale" type="double" value="1.0" />
+         
+        <rosparam command="load" file="$(find wubble_description)/params/w2_self_filter.yaml" />
+        
+        <!-- if someone asks for a stable map, publish the static map on the dynamic
+        map topic and no longer publish dynamic maps -->
+        <param name="publish_static_over_dynamic_map" type="bool" value="true" />
+        
+        <!-- we do not want a separate map with occlusions alone -->
+        <param name="publish_occlusion" type="bool" value="true" />
+        <param name="fixed_frame" type="string" value="base_link" />
+        
+        <!-- define a box of size 2x3x4 around (1.1,  0, 0) in the robot frame -->
+        <param name="robot_frame" type="string" value="base_link" />
+        
+        <param name="origin_x" type="double" value="1.1" />
+        <param name="origin_y" type="double" value="0.0" />
+        <param name="origin_z" type="double" value="0.0" />
+        
+        <param name="dimension_x" type="double" value="1.0" />
+        <param name="dimension_y" type="double" value="1.5" />
+        <param name="dimension_z" type="double" value="2.0" />
+        
+        <!-- set the resolution (1.0 cm) -->
+        <param name="resolution" type="double" value="0.01" />
+        
+        <!-- cloud sources -->
+        <rosparam command="load" file="$(find wubble_description)/params/w2_collision_map_sources.yaml" />
+    </node>
+
+    <!-- load collision free ik -->
+    <include file="$(find wubble_arm_kinematics_constraint_aware)/launch/left_arm_collision_free_ik.launch"/>
+
+    <node pkg="planning_environment" type="environment_server" output="screen" name="environment_server_left_arm">
+        <remap from="collision_map" to="collision_map_occ" />
+        <remap from="collision_map_update" to="collision_map_occ_update" />
+        
+        <param name="group" type="string" value="left_arm" />
+        <param name="allow_valid_collisions" type="bool" value="false" />
+        
+        <param name="collision_map_safety_timeout" type="double" value="100000.0" />
+        <param name="joint_states_safety_timeout" type="double" value="1.0" />
+        <param name="bounding_planes" type="string" value="0 0 1 -0.01" />
+        
+        <param name="pointcloud_padd" type="double" value="0.00" />
+        
+        <rosparam command="load" file="$(find wubble_description)/params/w2_environment_server_padding.yaml" />
+    </node>
+
+    <node pkg="ompl_planning" type="motion_planner" name="ompl_planning" respawn="true" output="screen">
+        <remap from="robot_description" to="robot_description" />  
+        <remap from="collision_map" to="collision_map_occ" />
+        <remap from="collision_map_update" to="collision_map_occ_update" />
+        
+        <!-- if we are moving the base, it is best to maintain the map in a fixed frame since identified objects that are being published
+         are not necessarily updated -->
+        <!--    <param name="planner_frame_id" type="string" value="odom_combined" /> -->
+        
+        <!-- planner configs -->
+        <rosparam command="load" file="$(find wubble_description)/params/w2_ompl_planning_configs.yaml" />
+        
+        <param name="state_delay" type="double" value="0.01" />
+        <param name="pointcloud_padd" type="double" value="0.00" />
+        
+        <param name="refresh_interval_collision_map" type="double" value="5.0" />
+        <param name="refresh_interval_kinematic_state" type="double" value="1.0" />
+        <param name="bounding_planes" type="string" value="0 0 1 -0.01" />
+        <param name="verbose_collisions" type="bool" value="false" />
+        
+        <rosparam command="load" file="$(find wubble_description)/params/w2_robot_padding.yaml" />
+    </node>
+
+    <node pkg="ompl_search" type="search_state" name="ompl_search" respawn="true" output="screen">
+        <remap from="robot_description" to="robot_description" />
+        <remap from="collision_map" to="collision_map_occ" />
+        <remap from="collision_map_update" to="collision_map_occ_update" />    
+        <!-- if we are moving the base, it is best to maintain the map in a fixed frame since identified objects that are being published
+             are not necessarily updated -->
+        <!--    <param name="planner_frame_id" type="string" value="odom_combined" /> -->
+        <!-- planner configs -->
+        <rosparam command="load" file="$(find wubble_description)/params/w2_ompl_planning_configs.yaml" />
+        
+        <param name="pointcloud_padd" type="double" value="0.00" />
+        
+        <param name="refresh_interval_collision_map" type="double" value="5.0" />
+        <param name="refresh_interval_kinematic_state" type="double" value="1.0" />
+        <param name="bounding_planes" type="string" value="0 0 1 -0.01" />
+        <param name="verbose_collisions" type="bool" value="false" />
+        
+        <rosparam command="load" file="$(find wubble_description)/params/w2_robot_padding.yaml" />
+    </node>
+
+    <node pkg="trajectory_filter_server" name="trajectory_filter" type="trajectory_filter_server" output="screen">
+        <rosparam command="load" file="$(find wubble_description)/params/w2_joint_limits.yaml"/>
+        <rosparam command="load" file="$(find wubble_description)/params/w2_filters.yaml"/>
+        
+        <remap from="robot_description" to="robot_description" />
+        <remap from="collision_map" to="collision_map_occ" />
+        <remap from="collision_map_update" to="collision_map_occ_update" />
+        <param name="refresh_interval_collision_map" type="double" value="0.0" />
+        <param name="refresh_interval_kinematic_state" type="double" value="1.0" />
+        <param name="bounding_planes" type="string" value="0 0 1 -0.01" />
+        <param name="compute_contacts" type="bool" value="false" />
+        
+        <param name="pointcloud_padd" type="double" value="0.00" />
+        
+        <rosparam command="load" file="$(find wubble_description)/params/w2_robot_padding.yaml" />
+    </node>
+
+    <include file="$(find wubble2_robot)/launch/move_arm.launch" />
+
+
+    <!-- Start the camera in STOC mode -->
+<!--    <include file="$(find videre_stereo_cam)/launch/videre.launch" />-->
+    
+    <!-- Start Actions -->
+<!--    <include file="$(find wubble_robot)/launch/robot_actions.launch" /> -->
+    
+    <!-- Start Teleop -->
+<!--    <include file="$(find wubble_teleop)/launch/wubble_logitech.launch" />-->
+</launch>
+

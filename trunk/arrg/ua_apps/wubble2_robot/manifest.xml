@@ -1,0 +1,23 @@
+<package>
+    <description brief="Wubble2 robot hardware">
+
+        wubble_robot
+
+    </description>
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble2_robot</url>
+    
+    <depend package="wubble_description"/>
+    <depend package="ua_erratic_player"/>
+    <depend package="hokuyo_node"/>
+    
+    <depend package="wubble_teleop"/>
+    <depend package="wubble_mapping"/>
+    <depend package="wubble_actions"/>
+    <depend package="wubble_2dnav"/>
+
+</package>
+
+
