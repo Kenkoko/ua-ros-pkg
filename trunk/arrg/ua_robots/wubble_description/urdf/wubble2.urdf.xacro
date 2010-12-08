@@ -173,7 +173,7 @@
     
     <!-- VIDERE STEREO CAMERA ATTACHMENT -->
     <videre_stereo_6cm name="stoc" parent="head_tilt_link" >
-        <origin xyz="0.01148 0 0.037" rpy="0 0 0" />
+        <origin xyz="0.03 0 ${0.036 + 0.016}" rpy="0 0 0" />
     </videre_stereo_6cm>
     
     <!-- WUBBLE ARM ATTACHMENT -->
