@@ -43,7 +43,7 @@ episode.length <- as.integer(args[5])
 
 ntrain <- 60
 alphabet.size <- 7
-n.episodes <- 5
+n.episodes <- 3 # used to be 5
 
 # these cuts are based on quantiles of a standard Gaussian
 # THIS IS WHAT I USED SO FAR
