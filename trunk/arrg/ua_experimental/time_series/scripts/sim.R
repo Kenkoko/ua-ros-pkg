@@ -58,7 +58,10 @@ if (class.index == 1) {
   # all the work is done by the function "create.episode"
   for (i in 1:ntrain){
     c1 <- NULL
-    c1 <- rbind(c1,create.episode(episode.length*n.episodes,rep(0,p),diag(1/50,p),cut.points))
+    
+    for (j in 1:n.episodes) {
+    	c1 <- rbind(c1,create.episode(episode.length,rep(0,p),diag(1/50,p),cut.points))
+    }
     write.table(c1,paste(prefix,"f",i,sep=""),row=F,col=F)
   }
 } else {
