@@ -113,9 +113,9 @@ class HokuyoLaserActionServer():
                 current_time = start_time
                 
                 while abs(target_tilt - self.laser_tilt.process_value) > self.error_threshold:
-                    delta = abs(target_tilt - self.laser_tilt.process_value)
-                    time_left = goal.duration - (rospy.Time.now() - start_time).to_sec()
-                    target_speed = delta / time_left
+                    #delta = abs(target_tilt - self.laser_tilt.process_value)
+                    #time_left = goal.duration - (rospy.Time.now() - start_time).to_sec()
+                    #target_speed = delta / time_left
                     #self.joint_speed_srv(target_speed)
                     
                     # Cancel exe if another goal was received (i.e. preempt requested)
