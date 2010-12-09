@@ -43,6 +43,8 @@ import sys
 import rospy
 
 from phidgets_ros.msg import Float64Stamped
+from phidgets_ros.srv import SetDigitalOutState
+from phidgets_ros.srv import GetDigitalOutState
 
 #Phidget specific imports
 try:
@@ -62,7 +64,7 @@ class PhidgetsInterfaceKit:
         if self.serial == -1:
             rospy.logwarn("No serial number specified. This node will connect to the first interface kit attached.")
         self.interface_kit = InterfaceKit()
-        
+
     def initialize(self):
         try:
             self.interface_kit.setOnAttachHandler(self.interfaceKitAttached)
@@ -73,37 +75,54 @@ class PhidgetsInterfaceKit:
         except PhidgetException, e:
             rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
             sys.exit(1)
-            
+
     def close(self):
         try:
             self.interface_kit.closePhidget()
         except PhidgetException, e:
             rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
             sys.exit(1)
-        
+
     def interfaceKitAttached(self, event):
         sensors = range(self.interface_kit.getSensorCount())
+        outputs = range(self.interface_kit.getOutputCount())
         map(lambda x: self.interface_kit.setSensorChangeTrigger(x, 0), sensors)
-        if self.name:
-            topic = 'interface_kit/%s' %self.name
-        else:
-            topic = 'interface_kit/%d' %event.device.getSerialNum()
+        if self.name: topic = 'interface_kit/%s' %self.name
+        else: topic = 'interface_kit/%d' %event.device.getSerialNum()
         self.publishers = [rospy.Publisher('%s/sensor/%d' %(topic, x), Float64Stamped) for x in sensors]
+        rospy.Service('%s/set_digital_out_state' % (topic), SetDigitalOutState, self.process_set_digital_out_state)
+        rospy.Service('%s/get_digital_out_state' % (topic), GetDigitalOutState, self.process_get_digital_out_state)
         rospy.loginfo("InterfaceKit %i Attached!" % (event.device.getSerialNum()))
-        
+
     def interfaceKitDetached(self, event):
         map(lambda pub: pub.unregister(), self.publishers)
         del self.publishers[:]
         rospy.loginfo("InterfaceKit %i Detached!" % (event.device.getSerialNum()))
-        
+
     def interfaceKitError(self, error):
         rospy.logerr("Phidget Error %i: %s" % (error.eCode, error.description))
-        
+
     def interfaceKitSensorChanged(self, event):
         fs_msg = Float64Stamped()
         fs_msg.header.stamp = rospy.Time.now()
         fs_msg.data = event.value
         self.publishers[event.index].publish(fs_msg)
+
+    def process_set_digital_out_state(self, req):
+        try:
+            self.interface_kit.setOutputState(req.index, req.state)
+        except PhidgetException as pe:
+            rospy.logerr('Unable to set digital output state')
+            return None
+        return []
+
+    def process_get_digital_out_state(self, req):
+        try:
+            state = self.interface_kit.getOutputState(req.index)
+        except PhidgetException as pe:
+            rospy.logerr('Unable to get digital output state')
+            return None
+        return state
 
 if __name__ == '__main__':
     try:
