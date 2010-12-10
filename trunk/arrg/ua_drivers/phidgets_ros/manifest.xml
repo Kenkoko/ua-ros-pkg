@@ -1,17 +1,16 @@
 <package>
-  <description brief="ROS wrapper for Phidgets sensors">
+    <description brief="ROS wrapper for Phidgets sensors">
+        ROSification of Phidgets sensors. Publishes sensor data to ROS topics.
+    </description>
 
-     ROSification of Phidgets sensors. Publishes sensor data to ROS topics.
+    <author>UA Robotics Research Group</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/phidgets_ros</url>
 
-  </description>
-  <author>UA Robotics Research Group</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/phidgets_ros</url>
-  <depend package="rospy"/>
-  <depend package="std_msgs"/>
-  <depend package="phidgets_py_api"/>
-
+    <depend package="rospy"/>
+    <depend package="std_msgs"/>
+    <depend package="phidgets_py_api"/>
 </package>
 
 

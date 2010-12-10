@@ -1,9 +1,13 @@
 <package>
-    <description brief="gearbox">
-         gearbox
+    <description brief="Collection of robotics-related libraries">
+         Gearbox provides a collection of usable peer-reviewed
+         robotics-related libraries. Gearbox is not an integration
+         framework. Rather, it provides a set of implementations,
+         without insisting on a standard API, for use by any number
+         of existing frameworks. 
     </description>
 
-    <author>Antons Rebguns</author>
+    <author>Project maintainers Geoffrey Biggs,Alex Makarenko.</author>
     <license>BSD</license>
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/gearbox</url>
@@ -11,7 +15,6 @@
     <export>
       <cpp cflags="-I${prefix}/gearbox/include" lflags="-L${prefix}/gearbox/lib64/gearbox -Wl,-rpath,${prefix}/gearbox/lib64/gearbox -lflexiport -lGbxGarminAcfr -lGbxLockFileAcfr -lGbxNovatelAcfr -lGbxNovatelUtilAcfr -lGbxSerialAcfr -lGbxSmartBatteryAcfr -lGbxUtilAcfr -lhokuyo_aist -L${prefix}/gearbox/lib -Wl,-rpath,${prefix}/gearbox/lib"/>
     </export>
-
 </package>
 
 

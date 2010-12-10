@@ -52,7 +52,7 @@ try:
     from Phidgets.Events.Events import *
     from Phidgets.Devices.InterfaceKit import *
 except ImportError, ie:
-    rospy.logfatal("You must install the phidgets drivers and ensure the python bindings are in your PYTHONPATH")
+    rospy.logfatal('You must install the phidgets drivers and ensure the python bindings are in your PYTHONPATH')
     sys.exit(1)
 
 class PhidgetsInterfaceKit:
@@ -62,7 +62,7 @@ class PhidgetsInterfaceKit:
         self.serial = rospy.get_param('~serial_number', -1)
         
         if self.serial == -1:
-            rospy.logwarn("No serial number specified. This node will connect to the first interface kit attached.")
+            rospy.logwarn('No serial number specified. This node will connect to the first interface kit attached.')
         self.interface_kit = InterfaceKit()
 
     def initialize(self):
@@ -73,34 +73,36 @@ class PhidgetsInterfaceKit:
             self.interface_kit.setOnSensorChangeHandler(self.interfaceKitSensorChanged)
             self.interface_kit.openPhidget(self.serial)
         except PhidgetException, e:
-            rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
+            rospy.logfatal('Phidget Exception %i: %s' % (e.code, e.message))
             sys.exit(1)
 
     def close(self):
         try:
             self.interface_kit.closePhidget()
         except PhidgetException, e:
-            rospy.logfatal("Phidget Exception %i: %s" % (e.code, e.message))
+            rospy.logfatal('Phidget Exception %i: %s' % (e.code, e.message))
             sys.exit(1)
 
     def interfaceKitAttached(self, event):
         sensors = range(self.interface_kit.getSensorCount())
-        outputs = range(self.interface_kit.getOutputCount())
         map(lambda x: self.interface_kit.setSensorChangeTrigger(x, 0), sensors)
         if self.name: topic = 'interface_kit/%s' %self.name
         else: topic = 'interface_kit/%d' %event.device.getSerialNum()
         self.publishers = [rospy.Publisher('%s/sensor/%d' %(topic, x), Float64Stamped) for x in sensors]
-        rospy.Service('%s/set_digital_out_state' % (topic), SetDigitalOutState, self.process_set_digital_out_state)
-        rospy.Service('%s/get_digital_out_state' % (topic), GetDigitalOutState, self.process_get_digital_out_state)
-        rospy.loginfo("InterfaceKit %i Attached!" % (event.device.getSerialNum()))
+        self.set_digital_out_srv = rospy.Service('%s/set_digital_out_state' % (topic), SetDigitalOutState, self.process_set_digital_out_state)
+        self.get_digital_out_srv = rospy.Service('%s/get_digital_out_state' % (topic), GetDigitalOutState, self.process_get_digital_out_state)
+        rospy.loginfo('InterfaceKit %i Attached!' % (event.device.getSerialNum()))
 
     def interfaceKitDetached(self, event):
+        msg = 'InterfaceKit %i Detached!' % (event.device.getSerialNum())
         map(lambda pub: pub.unregister(), self.publishers)
         del self.publishers[:]
-        rospy.loginfo("InterfaceKit %i Detached!" % (event.device.getSerialNum()))
+        self.set_digital_out_srv.shutdown(reason=msg)
+        self.get_digital_out_srv.shutdown(reason=msg)
+        rospy.loginfo(msg)
 
     def interfaceKitError(self, error):
-        rospy.logerr("Phidget Error %i: %s" % (error.eCode, error.description))
+        rospy.logerr('Phidget Error %i: %s' % (error.eCode, error.description))
 
     def interfaceKitSensorChanged(self, event):
         fs_msg = Float64Stamped()
