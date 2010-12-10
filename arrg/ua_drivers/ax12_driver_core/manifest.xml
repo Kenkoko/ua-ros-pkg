@@ -1,13 +1,14 @@
 <package>
-    <description brief="Python AX-12 Low Level IO">
-        This package provides low level IO for Robotis Dynamixel AX-12+ servos. 
+    <description brief="Python drivers for Robotis Dynamixel servos">
+        This package provides low level IO for Robotis Dynamixel servos. 
+        Fully supports and was tested with AX-12+, RX-28, RX-64, EX-106+ models.
         Hardware specific constants and MotorState messages are defined for 
         reading and writing information from/to the AX-12+ servos. This low 
         level package won't be used directly by most users. The higher 
         level ax12_controller_core and specific robot controllers use this 
-        package.   
+        package.
     </description>
-    <author>UA Robotics Research Group</author>
+    <author>Antons Rebguns, Cody Jorgensen (UA Robotics Research Group)</author>
     <license>BSD</license>
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/ax12_driver_core</url>

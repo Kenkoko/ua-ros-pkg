@@ -1,12 +1,11 @@
 <package>
     <description brief="Driver for Videre Stereo cameras">
-
         This driver supports both regular and STOC Videre Stereo cameras. It exposes standard ROS interface for
         cameras and publishes camera_info and image_raw topics pair for both left and right imager of the stereo
         camera. This set of topics can change depending on the selected processing mode (STOC devices only). Most
         of the configuration can be done while driver is running via dynamic_reconfigure GUI.
-
     </description>
+
     <author>Antons Rebguns</author>
     <license>BSD</license>
     <review status="unreviewed" notes=""/>

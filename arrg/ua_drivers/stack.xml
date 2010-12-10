@@ -1,13 +1,15 @@
 <stack>
-  <description brief="Servo, Phidget and STOC camera drivers.">
-    This stack contains ROS drivers for Phidgets pressure, RFID and 
-    accelerometer sensors, Dynamixel AX-12 servos, and two interfaces for the 
-    Videre STOC camera.
-  </description>
-  <author>Maintained by UA Robotics Research Group</author>
-  <license>BSD</license>  
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/ua_drivers</url>
-  <depend stack="ros" />
+    <description brief="Servo, Phidget and STOC camera drivers.">
+        This stack contains ROS drivers for Phidgets pressure, RFID and 
+        accelerometer sensors, Phidgets InterfaceKit, Dynamixel servos,
+        Videre Stereo cameras. Also includes low level C++ serial port
+        interface via Gearbox project.
+    </description>
 
+    <author>Maintained by Antons Rebguns (UA Robotics Research Group)</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/ua_drivers</url>
+
+    <depend stack="ros" />
 </stack>
