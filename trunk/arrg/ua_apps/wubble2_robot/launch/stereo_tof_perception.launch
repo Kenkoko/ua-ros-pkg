@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find videre_stereo_cam)/launch/videre_image_proc.launch" />
+    <include file="$(find wubble2_robot)/launch/swissranger.launch" />
+</launch>

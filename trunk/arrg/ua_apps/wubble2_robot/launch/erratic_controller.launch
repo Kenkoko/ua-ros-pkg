@@ -1,0 +1,11 @@
+<launch>
+    <!-- Start the Erratic mobile base driver -->
+    <node name="erratic_base" pkg="ua_erratic_player" type="erratic_player" output="screen" >
+        <remap from="odom" to="odom"/>
+        <remap from="battery_state" to="battery_state"/>
+        <param name="port_name" value="/dev/wubble2Erratic"/>
+        <param name="enable_ir" value="False"/>
+        <param name="odometry_frame_id" value="odom"/>
+    </node>
+</launch>
+
