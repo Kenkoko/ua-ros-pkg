@@ -17,6 +17,7 @@
 #include <wubble_mdp/robot.h>
 #include <wubble_mdp/object.h>
 #include <wubble_mdp/location.h>
+#include <wubble_mdp/item.h>
 
 using namespace std;
 
@@ -153,6 +154,10 @@ Entity* makeEntity(oomdp_msgs::MDPObjectState state)
   {
     return new Location(state);
   }
+  else if (state.class_name == "Item")
+  {
+    return new Item(state);
+  }
   else
   {
     cerr << "INVALID CLASS NAME" << state << endl;
@@ -213,12 +218,26 @@ bool existsInWorld(string entity_name)
   gazebo::GetWorldProperties gwp;
   if (ros::service::call("gazebo/get_world_properties", gwp))
   {
-    return find(gwp.response.model_names.begin(), gwp.response.model_names.end(), entity_name) != gwp.response.model_names.end();
+    return find(gwp.response.model_names.begin(), gwp.response.model_names.end(), entity_name)
+        != gwp.response.model_names.end();
   }
   else
   {
     return false; // This is kind of the wrong semantics
   }
+}
+
+Entity* findByName(std::string name, std::vector<Entity*> entities)
+{
+  for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+  {
+    if ((*ent_it)->name_ == name)
+    {
+      return *ent_it;
+    }
+  }
+
+  return NULL;
 }
 
 } // End namespace

@@ -8,12 +8,8 @@
 #ifndef ROBOT_H_
 #define ROBOT_H_
 
-#include <geometry_msgs/Pose.h>
-#include <simulator_state/ObjectInfo.h>
-#include <oomdp_msgs/MDPObjectState.h>
-
 #include <wubble_mdp/entity.h>
-#include <wubble_mdp/object.h>
+#include <wubble_mdp/item.h>
 
 class Robot : public Entity
 {
@@ -23,6 +19,7 @@ private:
 public:
   Robot(simulator_state::ObjectInfo obj_info);
   Robot(oomdp_msgs::MDPObjectState state);
+  void init(std::vector<Entity*> entities);
   virtual ~Robot();
 
   virtual oomdp_msgs::MDPObjectState makeObjectState();
@@ -39,14 +36,20 @@ public:
   virtual std::vector<oomdp_msgs::Relation> computePredicates();
   virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* other);
 
-  void simulateAction(std::string action, std::vector<Object*> objects);
+  void simulateAction(std::string action, std::vector<Entity*> entities);
+  void drop();
+  void pickUp(Item* item);
+  void pickUp(std::string item_name, std::vector<Entity*> entities);
+
   double computeRelativeAngle(btVector3 other_pos);
   geometry_msgs::Pose computeTargetPose(std::string action);
 
   double orientation_;
   double last_x_, last_y_;
   double last_orientation_;
-  static const double delta_ = 0.5; // TODO: Is this bad style?
+  Item* carried_item_;
+
+  static const double delta_ = 0.5; // TODO: Put this somewhere more sensible, like a "Constants" class
 };
 
 #endif /* ROBOT_H_ */
