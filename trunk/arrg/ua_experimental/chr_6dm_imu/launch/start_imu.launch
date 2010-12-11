@@ -1,5 +1,5 @@
 <launch>
     <node name="chr_6dm_imu" pkg="chr_6dm_imu" type="chr_6dm_node.py" output="screen">
-        <param name="port_name" type="str" value="/dev/imu"/>
+        <param name="port_name" type="str" value="/dev/ttyUSB0"/>
     </node>
 </launch>

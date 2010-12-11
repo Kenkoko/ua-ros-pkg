@@ -47,14 +47,14 @@ import tf
 class CHR6dmNode():
     def __init__(self):
         port_name = rospy.get_param('~port_name', '/dev/ttyUSB0')
-        frame_id = rospy.get_param('frame_id', 'imu')
+        frame_id = rospy.get_param('~frame_id', 'imu')
         self.mode = rospy.get_param('~mode', 'polled')
-        self.data_rate = rospy.get_param('~data_rate', 30)
+        self.data_rate = rospy.get_param('~data_rate', 120)
         
         self.imu = CHR6dmIMU(port_name)
         
         if self.mode == 'streaming':
-            self.imu.set_broadcast_mode(data_rate)
+            self.imu.set_broadcast_mode(self.data_rate)
         elif self.mode == 'polled':
             self.imu.set_silent_mode()
         else:
@@ -64,6 +64,7 @@ class CHR6dmNode():
         rospy.sleep(0.1)
         
         self.imu.enable_accel_angrate_orientation()
+        self.imu.set_ekf_config(True, False)
         accel_cov = self.imu.get_accel_covariance()
         mag_cov = self.imu.get_mag_covariance()
         proc_cov = self.imu.get_process_covariance()
@@ -110,7 +111,7 @@ class CHR6dmNode():
             self.imu_msg.linear_acceleration.y = data['accel_y']
             self.imu_msg.linear_acceleration.z = data['accel_z']
             
-            self.imu_msg.header.stamp = rospy.Time.now()
+            self.imu_msg.header.stamp = rospy.Time.from_sec(data['timestamp'])
             self.imu_data_pub.publish(self.imu_msg)
             
             br = tf.TransformBroadcaster()
