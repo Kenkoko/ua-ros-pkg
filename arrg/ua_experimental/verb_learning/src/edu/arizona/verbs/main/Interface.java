@@ -3,7 +3,10 @@ package edu.arizona.verbs.main;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -38,6 +41,7 @@ import com.google.common.collect.Lists;
 
 import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.environments.GazeboEnvironment;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.shared.Environment;
@@ -317,7 +321,7 @@ public class Interface {
 				Vector<OOMDPObjectState> states = new Vector<OOMDPObjectState>();
 				for (MDPObjectState stateMsg : request.object_states) {
 					states.add(StateConverter.msgToObjState(stateMsg));
-				}
+				}				
 				OOMDPState initializeResult = currentEnvironment.initializeEnvironment(states);
 				resp.start_state = StateConverter.stateToMsg(initializeResult);
 				return resp;
@@ -343,34 +347,6 @@ public class Interface {
 			}
 		};
 
-	public static void testWW2D() {
-		OOMDPObjectState obj1 = new OOMDPObjectState("agent1", "agent");
-		obj1.setAttribute("x", "10");
-		obj1.setAttribute("y", "10");
-		obj1.setAttribute("angle", "0.00");
-		obj1.setAttribute("shape-type", "circle");
-		obj1.setAttribute("radius", "0.25");
-
-		OOMDPObjectState obj2 = new OOMDPObjectState("agent2", "agent");
-		obj2.setAttribute("x", "15");
-		obj2.setAttribute("y", "15");
-		obj2.setAttribute("angle", "0.00");
-		obj2.setAttribute("shape-type", "circle");
-		obj2.setAttribute("radius", "0.25");
-		
-		List<OOMDPObjectState> objects = new ArrayList<OOMDPObjectState>();
-		objects.add(obj1);
-		objects.add(obj2);
-		
-		OOMDPState state = currentEnvironment.initializeEnvironment(objects);
-
-		System.out.println("Initialization complete...");
-		System.out.println(state.toString());
-		
-		System.out.println("Printing actions...");
-		System.out.println(currentEnvironment.getActions());
-	}
-		
 	/**
 	 * @param args
 	 * @throws RosException
@@ -383,13 +359,10 @@ public class Interface {
 		NodeHandle nh = ros.createNodeHandle();
 
 		// Gazebo
-		currentEnvironment = new GazeboEnvironment();
-		
-		// TODO: Make WW2D work. 
+//		currentEnvironment = new GazeboEnvironment();
 		
 		// Wubble World 2D
-//		currentEnvironment = new WW2DEnvironment(true);
-//		testWW2D();
+		currentEnvironment = new WW2DEnvironment(true);
 		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
 		nh.advertiseService("verb_learning/forget_verb", new ForgetVerb(), forgetVerb);

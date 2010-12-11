@@ -1,12 +1,8 @@
 package edu.arizona.verbs.environments;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
 
-import edu.arizona.verbs.mdp.StateConverter;
-import edu.arizona.verbs.shared.Environment;
-import edu.arizona.verbs.shared.OOMDPObjectState;
-import edu.arizona.verbs.shared.OOMDPState;
 import ros.NodeHandle;
 import ros.Ros;
 import ros.RosException;
@@ -15,12 +11,18 @@ import ros.pkg.oomdp_msgs.srv.InitializeEnvironment;
 import ros.pkg.oomdp_msgs.srv.PerformAction;
 import ros.pkg.oomdp_msgs.srv.SimulateAction;
 import ros.pkg.oomdp_msgs.srv.SimulateAction.Response;
+import edu.arizona.verbs.mdp.StateConverter;
+import edu.arizona.verbs.shared.Environment;
+import edu.arizona.verbs.shared.OOMDPObjectState;
+import edu.arizona.verbs.shared.OOMDPState;
 
 public class GazeboEnvironment implements Environment {
 	private NodeHandle nodeHandle_;
 	private ros.ServiceClient<SimulateAction.Request, SimulateAction.Response, SimulateAction> simulateService_;
 	private ros.ServiceClient<InitializeEnvironment.Request, InitializeEnvironment.Response, InitializeEnvironment> initializeService_;
 	private ros.ServiceClient<PerformAction.Request, PerformAction.Response, PerformAction> performService_;
+	
+	private String[] actions_ = null;
 	
 	public GazeboEnvironment() {
 		try {
@@ -58,12 +60,7 @@ public class GazeboEnvironment implements Environment {
 	
 	@Override
 	public List<String> getActions() {
-		// TODO: Get these from the MDPDescription
-		List<String> actions = new Vector<String>();
-		actions.add("forward");
-		actions.add("left");
-		actions.add("right");
-		return actions;
+		return Arrays.asList(actions_);
 	}
 
 	@Override
@@ -85,6 +82,7 @@ public class GazeboEnvironment implements Environment {
 		req.object_states = StateConverter.objectsToMsgArray(objects);
 		try {
 			ros.pkg.oomdp_msgs.srv.InitializeEnvironment.Response response = initializeService_.call(req);
+			actions_ = response.actions;
 			return StateConverter.msgToState(response.start_state);
 		} catch (RosException e) {
 			e.printStackTrace();
@@ -96,5 +94,17 @@ public class GazeboEnvironment implements Environment {
 	public OOMDPState computeRelations(List<OOMDPObjectState> objects) {
 		// TODO: Call "environment/compute_relations"
 		throw new RuntimeException("computeRelations is not yet supported");
+	}
+
+	@Override
+	public OOMDPState simulateAction(String action) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		
 	}
 }

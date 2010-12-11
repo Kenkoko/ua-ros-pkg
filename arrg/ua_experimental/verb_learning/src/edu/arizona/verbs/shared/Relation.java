@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Vector;
 
 
-public class Relation implements Remappable<Relation> {
+public class Relation implements Remappable<Relation>, Comparable<Relation>{
 	// Treating this as a data container, so public members
 	// However, it is immutable, so should probably enforce that
 	public String relation;
@@ -62,5 +62,10 @@ public class Relation implements Remappable<Relation> {
 			}
 		}
 		return new Relation(relation, remappedNames, value);
+	}
+
+	@Override
+	public int compareTo(Relation other) {
+		return this.toString().compareTo(other.toString());
 	}
 }

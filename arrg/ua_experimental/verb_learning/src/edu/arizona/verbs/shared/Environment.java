@@ -24,4 +24,8 @@ public interface Environment {
 	// Given a set of objects, compute the relations that are currently true
 	public OOMDPState computeRelations(List<OOMDPObjectState> objects);
 	
+	public OOMDPState simulateAction(String action);
+	
+	public void reset();
+	
 }

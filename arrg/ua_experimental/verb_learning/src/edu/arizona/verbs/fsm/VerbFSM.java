@@ -133,9 +133,24 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		}
 	}
 	
-	// This is the value of the cost function c(s,a,s')
+	public int getHeuristicInt(TreeSet<FSMState> newState) {
+		switch (StateSet.getStateType(newState)) {
+		case GOOD_TERMINAL: // No cost
+			return 0; 
+		case START: // Start state cost is already computed
+			return startDist_;
+		case BAD_TERMINAL: // YOU BE DEAD!
+			return Integer.MAX_VALUE; 
+		case GOOD: // For all other states // TODO: Cache these... Aren't they sort of cached already?
+			return getMinDistToGoodTerminal(newState);
+		default:
+			throw new RuntimeException("IMPOSSIBLE");
+		}
+	}
+	
+	// This is the value of the cost function c(s,s')
 	public double getCost(TreeSet<FSMState> oldState, TreeSet<FSMState> newState) {
-		return 1.0;
+		return 1.0; // All transitions in the FSM have an equal cost
 	}
 	
 	@Override
