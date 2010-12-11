@@ -30,6 +30,10 @@ import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 import edu.arizona.verbs.main.Interface;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.planning.LRTDP;
+import edu.arizona.verbs.planning.SearchPlanner;
+import edu.arizona.verbs.planning.UCT;
+import edu.arizona.verbs.planning.shared.Action;
+import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.uci.ics.jung.graph.DirectedGraph;
 
@@ -160,7 +164,10 @@ public class AtomicVerb extends AbstractVerb {
 		OOMDPState properStart = StateConverter.msgToState(startState);
 		
 		// TODO: Need to restore planning time information
-		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
+//		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
+//		SearchPlanner planner = new SearchPlanner(this, Interface.getCurrentEnvironment());
+		
+		
 //		long startTime = System.currentTimeMillis();
 //		long elapsedTime = System.currentTimeMillis() - startTime;
 		
@@ -172,12 +179,14 @@ public class AtomicVerb extends AbstractVerb {
 		System.out.println("START: " + properStart);
 		trace.add(properStart);
 		
-		String action = planner.runAlgorithm(properStart, fsmState);
+		UCT planner = new UCT(this, Interface.getCurrentEnvironment(), executionLimit);
+		Policy policy = planner.runAlgorithm(properStart, fsmState);
+		String action = policy.getAction(properStart, fsmState); 
+
 		int numSteps = 0;
-		while ( numSteps < executionLimit && action != null && 
-				!action.toString().equals(LRTDP.terminateAction)) {
+		while ( numSteps < executionLimit && !action.toString().equals(Action.TERMINATE)) {
 			// Perform the action, get the new world state
-			OOMDPState newState = Interface.getCurrentEnvironment().performAction(action); //.remap(argumentMap);
+			OOMDPState newState = Interface.getCurrentEnvironment().performAction(action); 
 			System.out.println("THIS: " + newState.getActiveRelations());
 			trace.add(newState);
 			numSteps++;
@@ -185,11 +194,17 @@ public class AtomicVerb extends AbstractVerb {
 			fsmState = fsm_.simulateDfaTransition(fsmState, newState.getActiveRelations()).newState;
 			
 			// Get the new action
-			action = planner.runAlgorithm(newState, fsmState);
+			action = policy.getAction(newState, fsmState);
+			if (action == null) { // This means we "fell off" the planned path
+				// For UCT, we need a new instance for now
+				planner.setMaxDepth(executionLimit - numSteps);
+				policy = planner.runAlgorithm(newState, fsmState); // re-plan
+				action = policy.getAction(newState, fsmState);
+			}
 		}
 		
 		response.trace = StateConverter.stateToMsgArray(trace);
-		response.execution_success = (byte) ((action != null && action.toString().equals(LRTDP.terminateAction)) ? 1 : 0);
+		response.execution_success = (byte) ((action != null && action.toString().equals(Action.TERMINATE)) ? 1 : 0);
 		response.execution_length = numSteps;
 		response.planning_time = 0; // TODO: Compute the total planning time
 		

@@ -37,6 +37,7 @@ import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 import edu.arizona.verbs.main.Interface;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.planning.LRTDP;
+import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.uci.ics.jung.graph.DirectedGraph;
 
@@ -152,24 +153,25 @@ public class SequentialVerb extends AbstractVerb {
 		List<OOMDPState> trace = new Vector<OOMDPState>();
 		trace.add(start);
 		
-		String action = planner.runAlgorithm(start, fsmState);
+//		String action = planner.runAlgorithm(start, fsmState);
+		String action = "TERMINATE"; // TODO: If atomic works, copy here
 		int numSteps = 0;
-		while ( numSteps < executionLimit && action != null && 
-				!action.toString().equals(LRTDP.terminateAction)) {
-			// Perform the action, get the new world state
-			OOMDPState newState = Interface.getCurrentEnvironment().performAction(action);
-			trace.add(newState);
-			numSteps++;
-			// Get the new FSM state
-			fsmState = fsm_.simulateDfaTransition(fsmState, newState.getActiveRelations()).newState;
-			
-			// Get the new action
-			action = planner.runAlgorithm(newState, fsmState);
-		}
+//		while ( numSteps < executionLimit && action != null && 
+//				!action.toString().equals(Action.TERMINATE)) {
+//			// Perform the action, get the new world state
+//			OOMDPState newState = Interface.getCurrentEnvironment().performAction(action);
+//			trace.add(newState);
+//			numSteps++;
+//			// Get the new FSM state
+//			fsmState = fsm_.simulateDfaTransition(fsmState, newState.getActiveRelations()).newState;
+//			
+//			// Get the new action
+//			action = planner.runAlgorithm(newState, fsmState);
+//		}
 		
 		// TODO: Don't like having to duplicate this code, need to fix that
 		response.trace = StateConverter.stateToMsgArray(trace);
-		response.execution_success = (byte) ((action != null && action.toString().equals(LRTDP.terminateAction)) ? 1 : 0);
+		response.execution_success = (byte) ((action != null && action.toString().equals(Action.TERMINATE)) ? 1 : 0);
 		response.execution_length = numSteps;
 		response.planning_time = 0; // TODO: Compute the total planning time
 		

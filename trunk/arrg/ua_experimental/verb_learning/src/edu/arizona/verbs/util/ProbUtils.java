@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+import org.apache.commons.collections15.bag.HashBag;
+
 public class ProbUtils {
 	
 	public static<T> T sample(Map<T, Double> dist) {
@@ -32,6 +34,7 @@ public class ProbUtils {
 		return things.get(0);
 	}
 	
+	// TODO: Why isn't this just Map?
 	public static<T> HashMap<T, Double> computeProbDist(HashMap<T, Integer> counts) {
 		double total = 0.0;
 		for (Integer count : counts.values()) {
@@ -41,6 +44,20 @@ public class ProbUtils {
 		HashMap<T, Double> probs = new HashMap<T, Double>();
 		for (T key : counts.keySet()) {
 			probs.put(key, counts.get(key) / total);
+		}
+		
+		return probs;
+	}
+	
+	public static<T> HashMap<T, Double> computeProbDist(HashBag<T> counts) {
+		double total = 0.0;
+		for (T thing : counts.uniqueSet()) {
+			total += counts.getCount(thing);
+		}
+		
+		HashMap<T, Double> probs = new HashMap<T, Double>();
+		for (T thing : counts.uniqueSet()) {
+			probs.put(thing, counts.getCount(thing) / total);
 		}
 		
 		return probs;

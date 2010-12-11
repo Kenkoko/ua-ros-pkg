@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-
 public class OOMDPState implements Remappable<OOMDPState> {
 
 	private List<OOMDPObjectState> objectStates_;
@@ -20,6 +19,8 @@ public class OOMDPState implements Remappable<OOMDPState> {
 		Collections.sort(objectStates_); // Important!
 		
 		relations_ = relations;
+		
+		Collections.sort(relations_); // Also Important!
 	}
 	
 	public List<OOMDPObjectState> getObjectStates() {
@@ -60,7 +61,7 @@ public class OOMDPState implements Remappable<OOMDPState> {
 		
 		return hashString_;
 	}
-
+	
 	@Override
 	public OOMDPState remap(Map<String, String> nameMap) {
 		Vector<OOMDPObjectState> newObjects = new Vector<OOMDPObjectState>();
