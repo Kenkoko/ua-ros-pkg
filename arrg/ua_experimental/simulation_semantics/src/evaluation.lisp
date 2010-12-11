@@ -29,14 +29,14 @@
                  
 ;;===================================================================
 
-(defun make-learning-curve (verb-word num-trials &key (min-training-size 1) (max-training-size nil))
-  (let* ((training (make-training verb-word)))
+(defun make-learning-curve (domain verb-word num-trials &key (min-training-size 1) (max-training-size nil))
+  (let* ((training (make-training domain verb-word)))
     (loop for i from min-training-size upto (if max-training-size max-training-size (length training))
-       collect (make-learning-point verb-word i num-trials))))
+       collect (make-learning-point domain verb-word i num-trials))))
 
 ;; TODO: Fix name mapping
-(defun make-learning-point (verb-word training-size num-trials)
-  (let* ((training (make-training verb-word))
+(defun make-learning-point (domain verb-word training-size num-trials)
+  (let* ((training (make-training domain verb-word))
          (verb (find-verb verb-word)))
     (format t "Begin Testing for training size ~d...~%"  training-size) 
     (loop for j from 1 upto num-trials
@@ -51,7 +51,7 @@
             do (format t "Presenting teacher's demonstration~%") 
               (present-training-instance verb-word instance))
          (format t "Testing robot performance...~%")
-       collect (run-tests verb-word (make-tests verb-word)))))
+       collect (run-tests verb-word (make-tests domain verb-word)))))
                        
 (defun process-learning-curve (lc-result)
   (loop for training-size from 1 upto (length lc-result)
@@ -132,18 +132,3 @@
   (define-sequential-verb "go-through" '(agent waypoint goal) '(("go" agent waypoint)
                                                                 ("go" agent goal))))
   ;(make-learning-point "go-through" 2 1))
-
-
-;;========================================================================
-
-(defun argument-names (object-states)
-  (loop for object-state across object-states
-     collect (oomdp_msgs-msg:name-val object-state)))           
-
-;; NB: Does not preserve ordering!
-(defun sample-random-subset (seq size)
-  (loop with remaining = seq
-     for i below size
-     for chosen = (nth (random (length remaining)) remaining)
-     do (setf remaining (remove chosen remaining))
-     collect chosen))
