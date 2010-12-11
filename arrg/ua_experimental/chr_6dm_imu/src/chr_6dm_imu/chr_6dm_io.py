@@ -80,6 +80,7 @@ class CHR6dmIMU(object):
         self.accel_z = 0.0
         
         self.imu_data = {
+            'timestamp':  time.time(),
             'yaw':        0.0,
             'pitch':      0.0,
             'roll':       0.0,
@@ -121,10 +122,10 @@ class CHR6dmIMU(object):
         packetStr = 'snp' + chr(command) + chr(len(dataStr)) + dataStr + chr(chkSum >> 8) + chr(chkSum & 0x0FF)
         self.ser.write(packetStr)
         
-        print 'Command: %s (%s), data packet: %s' % (CODE_TO_STR[command], hex(command).upper(), str(data))
+        #print 'Command: %s (%s), data packet: %s' % (CODE_TO_STR[command], hex(command).upper(), str(data))
         
         # wait for response
-        time.sleep(0.005)
+        time.sleep(0.006)
         
         self.read_from_imu()
 
@@ -152,7 +153,7 @@ class CHR6dmIMU(object):
         data = map(b2a_hex, dataStr)
         data = map(int, data, [16] * len(data))
         
-        print "Received reply: %s (%s), data: %s" % (CODE_TO_STR[command], hex(command).upper(), str(data))
+        #print "Received reply: %s (%s), data: %s" % (CODE_TO_STR[command], hex(command).upper(), str(data))
         
         chkSumStr = self.ser.read(2)
         chkSumData = map(b2a_hex, chkSumStr)
@@ -192,6 +193,7 @@ class CHR6dmIMU(object):
             if data[0] & 0x01:
                 print 'FAILED self-test: accel_x'
         elif command == SENSOR_DATA:
+            self.imu_data['timestamp'] = time.time()
             active_channels = (data[0] << 8) | data[1]
             
             i = 2
@@ -200,105 +202,105 @@ class CHR6dmIMU(object):
             if active_channels & 0x8000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['yaw'] = value[0] * SCALE_YAW * DEG_TO_RAD
-                print 'yaw = %f' % self.imu_data['yaw']
+                #print 'yaw = %f' % self.imu_data['yaw']
                 i += 2
                 
             # pitch angle
             if active_channels & 0x4000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['pitch'] = value[0] * SCALE_PITCH * DEG_TO_RAD
-                print 'pitch = %f' % self.imu_data['pitch']
+                #print 'pitch = %f' % self.imu_data['pitch']
                 i += 2
                 
             # roll angle
             if active_channels & 0x2000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['roll'] = value[0] * SCALE_ROLL * DEG_TO_RAD
-                print 'roll = %f' % self.imu_data['roll']
+                #print 'roll = %f' % self.imu_data['roll']
                 i += 2
                 
             # yaw rate
             if active_channels & 0x1000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['yaw_rate'] = value[0] * SCALE_YAW_RATE * DEG_TO_RAD
-                print 'yaw_rate = %f' % self.imu_data['yaw_rate']
+                #print 'yaw_rate = %f' % self.imu_data['yaw_rate']
                 i += 2
                 
             # pitch rate
             if active_channels & 0x0800:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['pitch_rate'] = value[0] * SCALE_PITCH_RATE * DEG_TO_RAD
-                print 'pitch_rate = %f' % self.imu_data['pitch_rate']
+                #print 'pitch_rate = %f' % self.imu_data['pitch_rate']
                 i += 2
                 
             # roll rate
             if active_channels & 0x0400:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['roll_rate'] = value[0] * SCALE_ROLL_RATE * DEG_TO_RAD
-                print 'roll_rate = %f' % self.imu_data['roll_rate']
+                #print 'roll_rate = %f' % self.imu_data['roll_rate']
                 i += 2
                 
             # mag X
             if active_channels & 0x0200:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['mag_x'] = value[0] * SCALE_MAG_X
-                print 'mx = %f' % self.imu_data['mag_x']
+                #print 'mx = %f' % self.imu_data['mag_x']
                 i += 2
                 
             # mag Y
             if active_channels & 0x0100:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['mag_y'] = value[0] * SCALE_MAG_Y
-                print 'my = %f' % self.imu_data['mag_y']
+                #print 'my = %f' % self.imu_data['mag_y']
                 i += 2
                 
             # mag Z
             if active_channels & 0x0080:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['mag_z'] = value[0] * SCALE_MAG_Z
-                print 'mz = %f' % self.imu_data['mag_z']
+                #print 'mz = %f' % self.imu_data['mag_z']
                 i += 2
                 
             # gyro X
             if active_channels & 0x0040:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['gyro_x'] = value[0] * SCALE_GYRO_X * DEG_TO_RAD
-                print 'gx = %f' % self.imu_data['gyro_x']
+                #print 'gx = %f' % self.imu_data['gyro_x']
                 i += 2
                 
             # gyro Y
             if active_channels & 0x0020:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['gyro_y'] = value[0] * SCALE_GYRO_Y * DEG_TO_RAD
-                print 'gy = %f' % self.imu_data['gyro_y']
+                #print 'gy = %f' % self.imu_data['gyro_y']
                 i += 2
                 
             # gyro Z
             if active_channels & 0x0010:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['gyro_z'] = value[0] * SCALE_GYRO_Z * DEG_TO_RAD
-                print 'gz = %f' % self.imu_data['gyro_z']
+                #print 'gz = %f' % self.imu_data['gyro_z']
                 i += 2
                 
             # accel X
             if active_channels & 0x0008:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['accel_x'] = value[0] * SCALE_ACCEL_X * MILIG_TO_MSS
-                print 'ax = %f' % self.imu_data['accel_x']
+                #print 'ax = %f' % self.imu_data['accel_x']
                 i += 2
                 
             # accel Y
             if active_channels & 0x0004:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['accel_y'] = value[0] * SCALE_ACCEL_Y * MILIG_TO_MSS
-                print 'ay = %f' % self.imu_data['accel_y']
+                #print 'ay = %f' % self.imu_data['accel_y']
                 i += 2
                 
             # accel Z
             if active_channels & 0x0002:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 self.imu_data['accel_z'] = value[0] * SCALE_ACCEL_Z * MILIG_TO_MSS
-                print 'az = %f' % self.imu_data['accel_z']
+                #print 'az = %f' % self.imu_data['accel_z']
                 i += 2
         elif command == GYRO_BIAS_REPORT:
             value = struct.unpack('>h', dataStr[0] + dataStr[1])
@@ -922,15 +924,15 @@ class CHR6dmIMU(object):
             return
 
         command = ord(self.ser.read())
-        print "packet type = %s" % hex(command).upper()
+        #print "packet type = %s" % hex(command).upper()
 
         n = ord(self.ser.read())
-        print "data bytes = %d" % n
+        #print "data bytes = %d" % n
 
         dataStr = self.ser.read(n)
         data = map(b2a_hex, dataStr)
         data = map(int, data, [16] * len(data))
-        print data
+        #print data
 
         chkSumStr = self.ser.read(2)
         chkSumData = map(b2a_hex, chkSumStr)
@@ -946,6 +948,7 @@ class CHR6dmIMU(object):
         res = {}
 
         if command == SENSOR_DATA:
+            res['timestamp'] = time.time()
             active_channels = (data[0] << 8) | data[1]
             
             i = 2
@@ -954,7 +957,7 @@ class CHR6dmIMU(object):
             if active_channels & 0x8000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 yaw = value[0] * SCALE_YAW * DEG_TO_RAD
-                print 'yaw = %f' % yaw
+                #print 'yaw = %f' % yaw
                 res['yaw'] = yaw
                 i += 2
             
@@ -962,7 +965,7 @@ class CHR6dmIMU(object):
             if active_channels & 0x4000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 pitch = value[0] * SCALE_PITCH * DEG_TO_RAD
-                print 'pitch = %f' % pitch
+                #print 'pitch = %f' % pitch
                 res['pitch'] = pitch
                 i += 2
             
@@ -970,7 +973,7 @@ class CHR6dmIMU(object):
             if active_channels & 0x2000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 roll = value[0] * SCALE_ROLL * DEG_TO_RAD
-                print 'roll = %f' % roll
+                #print 'roll = %f' % roll
                 res['roll'] = roll
                 i += 2
             
@@ -978,7 +981,7 @@ class CHR6dmIMU(object):
             if active_channels & 0x1000:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 yaw_rate = value[0] * SCALE_YAW_RATE * DEG_TO_RAD
-                print 'yaw_rate = %f' % yaw_rate
+                #print 'yaw_rate = %f' % yaw_rate
                 res['yaw_rate'] = yaw_rate
                 i += 2
             
@@ -986,7 +989,7 @@ class CHR6dmIMU(object):
             if active_channels & 0x0800:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 pitch_rate = value[0] * SCALE_PITCH_RATE * DEG_TO_RAD
-                print 'pitch_rate = %f' % pitch_rate
+                #print 'pitch_rate = %f' % pitch_rate
                 res['pitch_rate'] = pitch_rate
                 i += 2
             
@@ -994,7 +997,7 @@ class CHR6dmIMU(object):
             if active_channels & 0x0400:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 roll_rate = value[0] * SCALE_ROLL_RATE * DEG_TO_RAD
-                print 'roll_rate = %f' % roll_rate
+                #print 'roll_rate = %f' % roll_rate
                 res['roll_rate'] = roll_rate
                 i += 2
 
@@ -1002,7 +1005,7 @@ class CHR6dmIMU(object):
             if active_channels & 0x0008:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 ax = value[0] * SCALE_ACCEL_X * MILIG_TO_MSS
-                print 'ax = %f' % ax
+                #print 'ax = %f' % ax
                 res['accel_x'] = ax
                 i += 2
             
@@ -1010,7 +1013,7 @@ class CHR6dmIMU(object):
             if active_channels & 0x0004:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 ay = value[0] * SCALE_ACCEL_Y * MILIG_TO_MSS
-                print 'ay = %f' % ay
+                #print 'ay = %f' % ay
                 res['accel_y'] = ay
                 i += 2
             
@@ -1018,7 +1021,7 @@ class CHR6dmIMU(object):
             if active_channels & 0x0002:
                 value = struct.unpack('>h', dataStr[i] + dataStr[i+1])
                 az = value[0] * SCALE_ACCEL_Z * MILIG_TO_MSS
-                print 'az = %f' % az
+                #print 'az = %f' % az
                 res['accel_z'] = az
                 i += 2
                 
