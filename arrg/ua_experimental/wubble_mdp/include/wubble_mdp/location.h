@@ -9,8 +9,6 @@
 #define LOCATION_H_
 
 #include <wubble_mdp/entity.h>
-#include <oomdp_msgs/MDPObjectState.h>
-#include <oomdp_msgs/Relation.h>
 
 class Location : public Entity
 {

@@ -54,6 +54,7 @@ int chessDistance(btVector3 first_pos, btVector3 second_pos);
 double roundToDelta(double number, double delta);
 double roundYaw(double yaw);
 bool existsInWorld(std::string entity_name);
+Entity* findByName(std::string name, std::vector<Entity*> entities);
 } // End namespace
 
 

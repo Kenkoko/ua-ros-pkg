@@ -8,7 +8,7 @@
 #ifndef OBJECT_H_
 #define OBJECT_H_
 
-#include "entity.h"
+#include <wubble_mdp/entity.h>
 #include <oomdp_msgs/MDPObjectState.h>
 
 // TODO: There is a lot of overlap with robot, probably should share code

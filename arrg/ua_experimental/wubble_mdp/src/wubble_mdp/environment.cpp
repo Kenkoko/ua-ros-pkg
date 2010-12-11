@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <boost/assign/std/vector.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <ros/ros.h>
 #include <LinearMath/btQuaternion.h>
@@ -44,10 +46,18 @@ using oomdp_msgs::MDPState;
 vector<Entity*> Environment::makeEntityList(vector<MDPObjectState> states)
 {
   vector<Entity*> entities;
-  vector<MDPObjectState>::const_iterator obj_it;
-  for (obj_it = states.begin(); obj_it != states.end(); ++obj_it)
+  for (vector<MDPObjectState>::const_iterator obj_it = states.begin(); obj_it != states.end(); ++obj_it)
   {
     entities.push_back(wubble_mdp::makeEntity(*obj_it));
+  }
+
+  for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+  {
+    if ((*ent_it)->getClassString() == "Robot")
+    {
+      Robot* robot = dynamic_cast<Robot*>(*ent_it);
+      robot->init(entities); // TODO: Does this need to be somewhere else too?
+    }
   }
   return entities;
 }
@@ -118,7 +128,6 @@ Environment::Environment(ros::NodeHandle nh)
   simulate_ = nh_.advertiseService("environment/simulate_action", &Environment::simulateAction, this);
   compute_ = nh_.advertiseService("environment/compute_relations", &Environment::computeRelations, this);
 
-  // TODO: What's the problem here? new?
   ros::ServiceClient get_state_client_ = nh_.serviceClient<simulator_state::GetState> ("/gazebo/get_state");
   ros::ServiceClient pause_physics_client_ = nh_.serviceClient<std_srvs::Empty> ("/gazebo/pause_physics");
   ros::ServiceClient unpause_physics_client_ = nh_.serviceClient<std_srvs::Empty> ("/gazebo/unpause_physics");
@@ -198,6 +207,20 @@ bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
 
   res.start_state = updateState();
 
+  vector<string> actions;
+  actions += "forward", "left", "right", "drop";
+
+  for (vector<Entity*>::iterator ent_it = new_entities.begin(); ent_it != new_entities.end(); ++ent_it)
+  {
+    if ((*ent_it)->getClassString() == "Item")
+    {
+      Item* item = dynamic_cast<Item*> (*ent_it);
+      actions += "pick_up " + item->name_;
+    }
+  }
+
+  res.actions = actions;
+
   return true;
 }
 
@@ -231,7 +254,6 @@ bool Environment::clearSimulation()
         }
       }
     }
-    // TODO: Probably should re-verify with another get_world_properties call
   }
   else
   {
@@ -244,12 +266,12 @@ bool Environment::clearSimulation()
 bool Environment::performAction(oomdp_msgs::PerformAction::Request& req, oomdp_msgs::PerformAction::Response& res)
 {
   std_srvs::Empty empty;
-  ros::service::call("/gazebo/unpause_physics", empty);
 
-  if (entities_.empty())
-  {
-    updateState(); // TODO: Remove this, since initialize is working now
-  }
+  // TODO: If working, delete this dead code
+  //  if (entities_.empty())
+  //  {
+  //    updateState();
+  //  }
 
   Robot* robot = findRobot(getEntityList());
 
@@ -259,25 +281,42 @@ bool Environment::performAction(oomdp_msgs::PerformAction::Request& req, oomdp_m
     return false;
   }
 
-  move_base_client_->waitForServer();
-  move_base_msgs::MoveBaseGoal goal;
-  goal.target_pose.header.stamp = ros::Time::now();
-  goal.target_pose.header.frame_id = "/map";
-  goal.target_pose.pose = robot->computeTargetPose(req.action);
-  move_base_client_->sendGoal(goal); // TODO: Why is he stopping 0.2 away from the goal? Is it something in the nav params?
-
-  bool finished_before_timeout = move_base_client_->waitForResult(ros::Duration(30.0));
-  if (finished_before_timeout)
+  if (req.action == "drop")
   {
-    actionlib::SimpleClientGoalState state = move_base_client_->getState();
-    ROS_INFO("Action finished, client state: %s", state.toString().c_str());
+    robot->drop();
+  }
+  else if (boost::starts_with(req.action, "pick_up"))
+  {
+    std::vector<std::string> strs;
+    boost::split(strs, req.action, boost::is_space());
+    std::string item_name = strs[1];
+
+    robot->pickUp(item_name, entity_list_);
   }
   else
   {
-    ROS_INFO("Action did not finish before the time out.");
-  }
+    ros::service::call("/gazebo/unpause_physics", empty);
 
-  ros::service::call("/gazebo/pause_physics", empty);
+    move_base_client_->waitForServer();
+    move_base_msgs::MoveBaseGoal goal;
+    goal.target_pose.header.stamp = ros::Time::now();
+    goal.target_pose.header.frame_id = "/map";
+    goal.target_pose.pose = robot->computeTargetPose(req.action);
+    move_base_client_->sendGoal(goal); // Remember that the exact true position is at the mercy of the nav system
+
+    bool finished_before_timeout = move_base_client_->waitForResult(ros::Duration(30.0));
+    if (finished_before_timeout)
+    {
+      actionlib::SimpleClientGoalState state = move_base_client_->getState();
+      ROS_INFO("Action finished, client state: %s", state.toString().c_str());
+    }
+    else
+    {
+      ROS_INFO("Action did not finish before the time out.");
+    }
+
+    ros::service::call("/gazebo/pause_physics", empty);
+  }
 
   res.new_state = updateState();
 
@@ -300,16 +339,16 @@ bool Environment::simulateAction(oomdp_msgs::SimulateAction::Request& req, oomdp
   }
   else
   {
-    vector<Object*> objects;
+    vector<Entity*> nonRobots;
     for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
     {
-      if ((*ent_it)->getClassString() == "Object")
+      if ((*ent_it)->getClassString() != "Robot")
       {
-        objects.push_back(dynamic_cast<Object*> (*ent_it));
+        nonRobots.push_back(*ent_it);
       }
     }
 
-    robot->simulateAction(req.action, objects);
+    robot->simulateAction(req.action, nonRobots);
   }
 
   res.new_state = Environment::makeState(entities);

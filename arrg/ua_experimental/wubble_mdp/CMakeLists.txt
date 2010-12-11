@@ -27,6 +27,7 @@ rosbuild_add_library (wubble_mdp
                       src/wubble_mdp/robot.cpp
                       src/wubble_mdp/location.cpp
                       src/wubble_mdp/object.cpp
+                      src/wubble_mdp/item.cpp
                       src/wubble_mdp/relations.cpp
                       src/wubble_mdp/environment.cpp
                      )

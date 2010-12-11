@@ -10,6 +10,8 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/assign/std/vector.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <ros/ros.h>
 #include <gazebo/GetWorldProperties.h>
@@ -18,6 +20,8 @@
 #include <wubble_description/DeleteWubbleBase.h>
 
 #include <wubble_mdp/robot.h>
+#include <wubble_mdp/object.h>
+#include <wubble_mdp/item.h>
 
 using namespace std;
 using namespace geometry_msgs;
@@ -51,6 +55,24 @@ Robot::Robot(oomdp_msgs::MDPObjectState state)
   last_x_ = lexical_cast<double> (attr_map["last_x"]);
   last_y_ = lexical_cast<double> (attr_map["last_y"]);
   last_orientation_ = wubble_mdp::convertOrientationString(attr_map["last_orientation"]);
+
+  carried_item_ = NULL; // This will be filled in later by init()
+}
+
+// This is necessary to link the robot to the item it is holding
+void Robot::init(vector<Entity*> entities)
+{
+  for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+  {
+    if ((*ent_it)->getClassString() == "Item")
+    {
+      Item* item = dynamic_cast<Item*> (*ent_it);
+      if (item->shouldInitPickUp(this))
+      {
+        carried_item_ = item; // This is sort of forcing the pickUp
+      }
+    }
+  }
 }
 
 Robot::~Robot()
@@ -68,6 +90,11 @@ void Robot::update(simulator_state::ObjectInfo new_info)
   x_ = roundToDelta(new_info.pose.position.x, delta_);
   y_ = roundToDelta(new_info.pose.position.y, delta_);
   orientation_ = wubble_mdp::convertOrientationString(wubble_mdp::extractOrientationString(new_info));
+
+  if (carried_item_ != NULL)
+  {
+    carried_item_->updatePosition(this, true);
+  }
 }
 
 bool Robot::addToWorld()
@@ -148,6 +175,8 @@ vector<Relation> Robot::computePredicates()
   //    result.push_back(wubble_mdp::makeRelation("Orientation" + orientation_string, names, (*dit == orientation_string)));
   //  }
 
+  result.push_back(wubble_mdp::makeRelation("CarryingSomething", names, (carried_item_ != NULL)));
+
   return result;
 }
 
@@ -188,6 +217,12 @@ vector<Relation> Robot::computeBinaryRelations(Entity* other)
     relations.push_back(wubble_mdp::makeRelation(rels[i], names, (true_index == i)));
   }
 
+  if (other->getClassString() == "Item")
+  {
+    bool carrying_other = (carried_item_ != NULL && other == carried_item_);
+    relations.push_back(wubble_mdp::makeRelation("Carrying", names, carrying_other));
+  }
+
   return relations;
 }
 
@@ -213,43 +248,95 @@ btVector3 Robot::getLastPosition()
   return btVector3(last_x_, last_y_, 0.0);
 }
 
-void Robot::simulateAction(string action, vector<Object*> objects)
+void Robot::drop()
+{
+  if (carried_item_ != NULL)
+  {
+    if (carried_item_->handlePutDown(this))
+    {
+      carried_item_ = NULL;
+    }
+  }
+}
+
+void Robot::pickUp(Item* item)
+{
+  if (carried_item_ == NULL)
+  {
+    if (item->handlePickUp(this))
+    {
+      carried_item_ = item;
+    }
+  }
+}
+
+// TODO: This is sort of redundant
+void Robot::pickUp(string item_name, vector<Entity*> entities)
+{
+  if (carried_item_ == NULL)
+  {
+    Item* target = dynamic_cast<Item*> (wubble_mdp::findByName(item_name, entities));
+    pickUp(target);
+  }
+}
+
+void Robot::simulateAction(string action, vector<Entity*> entities)
 {
   // Copy the old state
   last_x_ = x_;
   last_y_ = y_;
   last_orientation_ = orientation_;
 
-  btVector3 new_pose = computeNewPose(action);
-
-  // This gives him virtual "walls" when planning
-  bool is_valid = true;
-
-  if (-5 > new_pose.x() || new_pose.x() > 5)
+  if (boost::starts_with(action, "pick_up"))
   {
-    is_valid = false;
+    std::vector<std::string> strs;
+    boost::split(strs, action, boost::is_space());
+    std::string item_name = strs[1];
+
+    pickUp(item_name, entities);
   }
-  if (-5 > new_pose.y() || new_pose.y() > 5)
+  else if (action == "drop")
   {
-    is_valid = false;
+    drop();
   }
-
-  for (vector<Object*>::iterator obj_it = objects.begin(); obj_it != objects.end(); ++obj_it)
+  else
   {
-    if (wubble_mdp::chessDistance(new_pose, (*obj_it)->getPosition()) == 0)
+    btVector3 new_pose = computeNewPose(action);
+
+    // This gives him virtual "walls" when planning
+    bool is_valid = true;
+
+    if (-5 > new_pose.x() || new_pose.x() > 5)
     {
-      // Freeze if you're trying to go into an object (TODO: Later will need more sophisticated checks)
-      is_valid = false;
       is_valid = false;
     }
+    if (-5 > new_pose.y() || new_pose.y() > 5)
+    {
+      is_valid = false;
+    }
+
+    for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+    {
+      if ((*ent_it)->getClassString() == "Object" && wubble_mdp::chessDistance(new_pose, (*ent_it)->getPosition()) == 0)
+      {
+        // Freeze if you're trying to go into an object (TODO: Later will need more sophisticated checks)
+        is_valid = false;
+      }
+    }
+
+    if (is_valid)
+    {
+      x_ = new_pose.x();
+      y_ = new_pose.y();
+    }
+    orientation_ = new_pose.z();
   }
 
-  if (is_valid)
+  // The regular update doesn't get called in simulate
+  if (carried_item_ != NULL)
   {
-    x_ = new_pose.x();
-    y_ = new_pose.y();
+    carried_item_->updatePosition(this, false);
   }
-  orientation_ = new_pose.z();
 }
 
 Pose Robot::computeTargetPose(string action)
