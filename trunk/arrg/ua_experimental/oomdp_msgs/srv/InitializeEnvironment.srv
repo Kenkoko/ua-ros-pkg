@@ -1,3 +1,4 @@
 MDPObjectState[] object_states
 ---
 MDPState start_state
+string[] actions

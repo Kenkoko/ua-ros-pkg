@@ -1,2 +1,1 @@
 MDPClassDescription[] classes
-string[] actions
