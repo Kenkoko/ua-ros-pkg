@@ -23,7 +23,15 @@
                  (:file "environment" :depends-on ("utils"))
                  (:file "verb-learning" :depends-on ("time-series" "environment"))
                  (:file "scenarios" :depends-on ("verb-learning"))
-                 (:file "evaluation-data" :depends-on ("scenarios"))
+
+                 (:file "data/gazebo-training" :depends-on ("pkg"))
+                 (:file "data/gazebo-test" :depends-on ("data/gazebo-training"))
+                 (:file "data/ww2d-training" :depends-on ("pkg"))
+                 (:file "data/ww2d-test" :depends-on ("data/ww2d-training"))
+                 (:file "evaluation-data" :depends-on ("scenarios"
+                                                       "data/gazebo-test"
+                                                       "data/ww2d-test"))
+
                  (:file "evaluation" :depends-on ("evaluation-data"))
                  (:file "teaching" :depends-on ("verb-learning")))
 
