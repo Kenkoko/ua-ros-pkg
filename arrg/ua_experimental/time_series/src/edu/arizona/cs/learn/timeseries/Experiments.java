@@ -3,8 +3,11 @@ package edu.arizona.cs.learn.timeseries;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +28,7 @@ import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.algorithm.markov.FSMConverter;
 import edu.arizona.cs.learn.algorithm.markov.FSMFactory;
 import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
+import edu.arizona.cs.learn.algorithm.markov.FSMUtil;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyCallable;
@@ -625,12 +629,15 @@ public class Experiments {
 	 * 
 	 * Added by Anh T.
 	 */
+	@SuppressWarnings("unchecked")
 	public void decomposition(final String dataset, final String mainActivity, final String subActivity,
 			final Recognizer r, final SequenceType type, final int minPct, final boolean prune,
-			final boolean onlyStart, final boolean optimizeRecognizers, final int experimentsCount) {
+			final boolean onlyStart, final boolean optimizeRecognizers, final int experimentsCount,
+			final boolean compose) {
 
 		final Random rand = new Random(System.currentTimeMillis());
-		final String dir = "data/decomposition/" + type + "/";
+		final String decompdir = "data/decomposition/" + type + "/";
+		final String compdir = "data/composition/" + type + "/";
 		final String sigDir = "data/signatures/temp/";
 		final String suffix = (prune) ? "-prune" : "";
 		
@@ -641,10 +648,8 @@ public class Experiments {
 		data.put(mainKey, Utils.load(new File("data/input/" + mainKey + ".lisp")));
 		data.put(subKey, Utils.load(new File("data/input/" + subKey + ".lisp")));
 
-		// Load training instsances & init test map
+		// Load training instances & init test map
 		final Map<String, List<Instance>> instancesMap = Utils.load(dataset, type);
-		final Map<String, Set<Integer>> testMap = new HashMap<String, Set<Integer>>();
-		testMap.put(subKey, new HashSet<Integer>());
 		
 		// Train on all data for sub-activity & build signature for sub-activity
 		// Since this stays constant throughout the experiments, we only build it once
@@ -661,13 +666,7 @@ public class Experiments {
 		s.toXML(sigDir + subKey + "-" + type + suffix + ".xml");
 		
 		// Build sub-activity recognizer
-		String signatureFile = sigDir + subKey + "-" + type + suffix + ".xml";
-		FSMRecognizer subTemp = r.build(subKey, signatureFile, data.get(subKey), 
-				new ArrayList<Integer>(testMap.get(subKey)), minPct, onlyStart);
-		final FSMRecognizer sub =
-			(!optimizeRecognizers) ? subTemp :
-				new FSMRecognizer(subKey, FSMConverter.convertNFAtoDFA(subTemp.getGraph()));
-		
+		final String subSignatureFile = sigDir + subKey + "-" + type + suffix + ".xml";
 		
 		class DecompositionCallable implements Callable<Object> { 
 			private int id;
@@ -678,23 +677,30 @@ public class Experiments {
 
 			@Override
 			public Object call() throws Exception {
-			
+				
+				// Test size
+				int partitions = 4;
+				int decompPortions = (compose) ? 1 : 2;
+				int testPortions = (compose) ? 1 : 0;
+				
+				Map<String, Set<Integer>> decompTestMap = new HashMap<String, Set<Integer>>();
+				
 				// Randomly select test set for main activity
 				List<Integer> dataKeys = new ArrayList<Integer>();
 				dataKeys.addAll(data.get(mainKey).keySet());
-				int testSize = (int)(data.get(mainKey).size() / 3);
-				Set<Integer> mainTestSet = new HashSet<Integer>();
-				for (int j = 0; j < testSize; j++) {
-					mainTestSet.add(dataKeys.remove(rand.nextInt(dataKeys.size())));
+				int compTestSize = (int)(data.get(mainKey).size() * (decompPortions + testPortions) / partitions);
+				Set<Integer> mainDecompTestSet = new HashSet<Integer>();
+				for (int j = 0; j < compTestSize; j++) {
+					mainDecompTestSet.add(dataKeys.remove(rand.nextInt(dataKeys.size())));
 				}
-				testMap.put(mainKey, mainTestSet);
+				decompTestMap.put(mainKey, mainDecompTestSet);
 				
-				// Build signatures
+				// Build main signature
 				List<Instance> list = instancesMap.get(mainKey);
 				Signature s = new Signature(mainKey);
 				for (int k = 1; k <= list.size(); k++) {
 					Instance instance = list.get(k-1);
-					if (testMap.get(mainKey).contains(instance.id()))
+					if (decompTestMap.get(mainKey).contains(instance.id()))
 						continue;
 					
 					s.update(instance.sequence());
@@ -703,20 +709,44 @@ public class Experiments {
 				}
 				int half = s.trainingSize() / 2;
 				s = s.prune(half);
-				s.toXML(sigDir + mainKey + "-" + type + suffix + "-" + id + ".xml");
+				String mainSignatureFile = sigDir + mainKey + "-" + type + suffix + "-" + id + ".xml";
+				s.toXML(mainSignatureFile);
 							
 				
 				// Build main-recognizer
-				String signatureFile = sigDir + mainKey + "-" + type + suffix + "-" + id + ".xml";
-				FSMRecognizer main = r.build(mainKey, signatureFile, data.get(mainKey), 
-						new ArrayList<Integer>(testMap.get(mainKey)), minPct, onlyStart);
+				FSMRecognizer decompMain = r.build(mainKey, mainSignatureFile, data.get(mainKey), 
+						new ArrayList<Integer>(decompTestMap.get(mainKey)), minPct, onlyStart);
+				FSMRecognizer main = r.build(mainKey, mainSignatureFile, data.get(mainKey), 
+						new ArrayList<Integer>(decompTestMap.get(mainKey)), minPct, onlyStart);
 				if (optimizeRecognizers) {
+					decompMain = new FSMRecognizer(mainKey, FSMConverter.convertNFAtoDFA(decompMain.getGraph()));
 					main = new FSMRecognizer(mainKey, FSMConverter.convertNFAtoDFA(main.getGraph()));
 				}
 				
+				// Build sub-recognizer
+				FSMRecognizer sub = r.build(subKey, subSignatureFile, data.get(subKey), 
+						new ArrayList<Integer>(), minPct, onlyStart);
+				if (optimizeRecognizers) {
+					sub = new FSMRecognizer(subKey, FSMConverter.convertNFAtoDFA(sub.getGraph()));
+				}
+
+				// Split the decomposition set into a test & decomposition set if doing compose
+				Map<String, Set<Integer>> testMap = new HashMap<String, Set<Integer>>();
+				if (compose) {
+					int testSize = (int)(data.get(mainKey).size() * (testPortions) / partitions);
+					Set<Integer> testSet = new HashSet<Integer>();
+					for (int j = 0; j < testSize; j++) {
+						int instanceID = decompTestMap.get(mainKey).iterator().next();
+						decompTestMap.get(mainKey).remove(instanceID);
+						testSet.add(instanceID);
+					}
+					testMap.put(mainKey, testSet);
+				}
 				
-				// Perform decomposition recognition
-				for (Integer testID : testMap.get(mainKey)) {
+				
+				// Decomposition
+				Set<BPPNode> actives = new HashSet<BPPNode>();
+				for (Integer testID : decompTestMap.get(mainKey)) {
 					List<Interval> testItem = data.get(mainKey).get(testID);
 										
 					// Pre-process data
@@ -728,7 +758,7 @@ public class Experiments {
 					}
 					
 					// Reset recognizers
-					main.reset(); sub.reset();
+					decompMain.reset(); sub.reset();
 					
 					// Recognize composision
 					boolean isMain = false;
@@ -743,25 +773,26 @@ public class Experiments {
 							}
 						}
 						
-						isMain = main.update(props, false);
+						isMain = decompMain.update(props, false);
 						
 						if (!isSub) {
 							isSub = sub.update(props);
 							if (isSub) {
-								subActive.addAll(main.getActive());
-								subActive.remove(main.getStartState());
+								subActive.addAll(decompMain.getActive());
+								subActive.remove(decompMain.getStartState());
 							}
 						}
 						
 						if (isMain) {
-							mainActive.addAll(main.getActive());
-							mainActive.remove(main.getStartState());
+							mainActive.addAll(decompMain.getActive());
+							mainActive.remove(decompMain.getStartState());
 							break;
 						}
 					}
 					
 					if (isMain) {
 						if (isSub) {
+							actives.addAll(subActive);
 							for (BPPNode n : subActive) {
 								if (n.getColor().equalsIgnoreCase("red"))
 									n.setColor("yellow");
@@ -770,7 +801,7 @@ public class Experiments {
 							}
 						}
 						for (BPPNode n : mainActive) {
-							if (!n.isFinal() && main.getGraph().getOutEdges(n).size() != 0)
+							if (!n.isFinal() && decompMain.getGraph().getOutEdges(n).size() != 0)
 								continue;
 							if (n.getColor().equalsIgnoreCase("blue"))
 								n.setColor("yellow");
@@ -782,10 +813,60 @@ public class Experiments {
 				}
 	
 				// Output main activity recognizer
-				String file = dir + dataset + "-" + mainActivity + "-" + subActivity + suffix + "-" + id + ".dot";
-				FSMFactory.toDot(main.getGraph(), file);
+				String file = decompdir + dataset + "-" + mainActivity + "-" + subActivity + suffix + "-" + id + ".dot";
+				FSMFactory.toDot(decompMain.getGraph(), file);
 				
-				System.out.println("Experiment " + mainActivity + "-" + subActivity + "-" + id + " completed.");
+				
+				if (compose){
+					// Compose prefix
+					if (actives.size() > 0)
+						actives.add(decompMain.getStartState());					
+					DirectedGraph<BPPNode, Edge> compositeGraph =
+						FSMUtil.composePrefix(decompMain.getGraph(), actives, sub.getGraph());
+					FSMRecognizer comp = new FSMRecognizer(mainKey, compositeGraph);
+					
+					// Output
+					file = compdir + dataset + "-" + mainActivity + "-" + subActivity + suffix + "-" + id + ".dot";
+					FSMFactory.toDot(main.getGraph(), file.replace(".dot", "-orig.dot"));
+					FSMFactory.toDot(comp.getGraph(), file.replace(".dot", "-comp.dot"));
+					
+					// Test differences
+					double mismatches = 0;
+					double mainPrecision = 0;
+					double compPrecision = 0;
+					double totalSize = testMap.get(mainKey).size();
+					for (Integer testID : testMap.get(mainKey)) {
+						List<Interval> testItem = data.get(mainKey).get(testID);
+											
+						// Pre-process data
+						int start = Integer.MAX_VALUE;
+						int end = 0;
+						for (Interval interval : testItem) {
+							start = Math.min(start, interval.start);
+							end = Math.max(end, interval.end);
+						}
+						
+						// Reset recognizers
+						comp.reset(); main.reset();
+						
+						boolean compOut = comp.test(testItem, start, end);
+						boolean mainOut = main.test(testItem, start, end);
+						
+						mainPrecision += (mainOut) ? 1 : 0;
+						compPrecision += (compOut) ? 1 : 0;
+						mismatches += (mainOut != compOut) ? 1 : 0;
+					}
+
+					System.out.println("Composition Experiment " + mainActivity + "-" + subActivity + "-" + id + " completed.");
+					List<Object> temp = new ArrayList<Object>();
+					temp.add(this.id);
+					temp.add(mainPrecision / totalSize);
+					temp.add(compPrecision / totalSize);
+					temp.add(mismatches);
+					return temp;
+				}
+				
+				System.out.println("Decomposition Experiment " + mainActivity + "-" + subActivity + "-" + id + " completed.");
 				return new Object();
 			}
 		}
@@ -797,10 +878,33 @@ public class Experiments {
 			jobs.add(_execute.submit(new DecompositionCallable(id)));
 		}
 		
+		List<Object> resultStats = new ArrayList<Object>();
 		for (Future<Object> results : jobs) {
 			try {
-				results.get();
+				if (compose)
+					resultStats.add(results.get());
+				else
+					results.get();
 			} catch (Exception e) { 
+				e.printStackTrace();
+			}
+		}
+		
+		if (compose) {
+			try {
+				//SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
+				String file = compdir + dataset + "-" + mainActivity + "-"
+					+ subActivity + suffix + /*"-" + dateFormat.format(new Date()) +*/ ".csv";
+				BufferedWriter out;
+					out = new BufferedWriter(new FileWriter(file));
+				out.write("experimentID,originalPrecision,compositePrecision,mismatches\n");
+				for (Object o : resultStats) {
+					List<Object> stats = (List<Object>)o;
+					out.write(((Integer)stats.get(0)) + "," + ((Double)stats.get(1)) +
+							"," + ((Double)stats.get(2)) + "," + ((Double)stats.get(3)) +"\n");
+				}
+				out.close();
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
