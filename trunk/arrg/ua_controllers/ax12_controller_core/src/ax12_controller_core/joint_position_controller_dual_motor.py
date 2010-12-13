@@ -107,16 +107,16 @@ class JointPositionControllerDualAX12(JointControllerAX12):
         self.send_packet_callback((DMXL_SET_GOAL_SPEED, [mcv_master, mcv_slave]))
 
     def set_compliance_slope(self, slope):
-        if slope < 0: slope = 0
-        elif slope > 254: slope = 254
+        if slope < DMXL_MIN_COMPLIANCE_SLOPE: slope = DMXL_MIN_COMPLIANCE_SLOPE
+        elif slope > DMXL_MAX_COMPLIANCE_SLOPE: slope = DMXL_MAX_COMPLIANCE_SLOPE
         slope2 = (slope << 8) + slope
         mcv_master = (self.master_id, slope2)
         mcv_slave = (self.slave_id, slope2)
         self.send_packet_callback((DMXL_SET_COMPLIANCE_SLOPES, [mcv_master, mcv_slave]))
 
     def set_compliance_margin(self, margin):
-        if margin > 255: margin = 255
-        elif margin < 0: margin = 0
+        if margin < DMXL_MIN_COMPLIANCE_MARGIN: margin = DMXL_MIN_COMPLIANCE_MARGIN
+        elif margin > DMXL_MAX_COMPLIANCE_MARGIN: margin = DMXL_MAX_COMPLIANCE_MARGIN
         else: margin = int(margin)
         margin2 = (margin << 8) + margin    # pack margin_cw and margin_ccw into 2 bytes
         mcv_master = (self.master_id, margin2)
@@ -134,7 +134,7 @@ class JointPositionControllerDualAX12(JointControllerAX12):
     def set_torque_limit(self, max_torque):
         if max_torque > 1: max_torque = 1.0
         elif max_torque < 0: max_torque = 0.0     # turn off motor torque
-        raw_torque_val = int(1024 * max_torque)
+        raw_torque_val = int(DMXL_MAX_TORQUE_TICK * max_torque)
         mcv_master = (self.master_id, raw_torque_val)
         mcv_slave = (self.slave_id, raw_torque_val)
         self.send_packet_callback((DMXL_SET_TORQUE_LIMIT, [mcv_master, mcv_slave]))
@@ -147,7 +147,7 @@ class JointPositionControllerDualAX12(JointControllerAX12):
                 self.joint_state.goal_pos = self.raw_to_rad(state.goal, self.master_initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.current_pos = self.raw_to_rad(state.position, self.master_initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.error = state.error * self.radians_per_encoder_tick
-                self.joint_state.velocity = (state.speed / self.encoder_resolution) * DMXL_MAX_SPEED_RAD
+                self.joint_state.velocity = (state.speed / DMXL_MAX_SPEED_TICK) * DMXL_MAX_SPEED_RAD
                 self.joint_state.load = state.load
                 self.joint_state.is_moving = state.moving
                 self.joint_state.header.stamp = rospy.Time.from_sec(state.timestamp)
