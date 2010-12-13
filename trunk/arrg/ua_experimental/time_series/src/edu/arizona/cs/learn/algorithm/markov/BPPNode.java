@@ -159,4 +159,8 @@ public class BPPNode {
 	public void setColor(String color) {
 		_color = color;
 	}
+	
+	public void setIsFinal(boolean isfinal) {
+		_isFinal = isfinal;
+	}
 }

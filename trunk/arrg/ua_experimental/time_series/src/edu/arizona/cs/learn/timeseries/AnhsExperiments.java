@@ -25,11 +25,12 @@ public class AnhsExperiments {
 			boolean[] prunes = { true };
 			int experimentsCount = 20;
 			String prefix = "ww3d";
-			String[] activities = { "jump-on", "jump-over", "left", "push", "right" };
+			String[] activities = { "jump-over" }; //, "jump-on", "left", "push", "right" };
 			String subActivity = "approach";
 			SequenceType type = SequenceType.allen;
 			Recognizer recognizer = Recognizer.cave;
 			boolean optimizeRecognizers = true;
+			boolean composeGraphs = true;
 			
 			for (String activity : activities) {
 				for (boolean prune : prunes) {
@@ -38,7 +39,8 @@ public class AnhsExperiments {
 						Experiments cv = new Experiments(0);
 						cv.decomposition(prefix, activity, subActivity,
 								recognizer, type, i, prune, false,
-								optimizeRecognizers, experimentsCount);
+								optimizeRecognizers, experimentsCount,
+								composeGraphs);
 						
 						
 					}
@@ -53,55 +55,63 @@ public class AnhsExperiments {
 
 	private static void runRecognitionExperiment() {
 		try {
+			int experiments = 20;
+			String prefix = "wes-pen";
 			int[] folds = { 6 };
 			int[] pcts = { 80 };
 			boolean[] prunes = { true , false };
-			int experiments = 1; //20;
-			String prefix = "global-ww2d";
+			boolean[] optimizeRecognizers = { true, false };
+
+			boolean setup = true;
+			
 			SequenceType type = SequenceType.allen;
 			Recognizer recognizer = Recognizer.cave;
-			boolean optimizeRecognizers = false;
-			
-			boolean setup = false;
-			boolean outputRecognizer = true;
-			
+			boolean outputRecognizer = true;			
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
 			String fileName = "data/recognizer-" + prefix + "-" +
 					type + "-all-" + dateFormat.format(new Date()) + ".csv";
 			
 			BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
-			out.write("experimentID,className,type,fold,recognizer,optimized,prune,minPct,precision,recall,f\n");
+			out.write("experimentID,className,type,folds,recognizer,optimized,prune,minPct,precision,recall,f\n");
 			
 			for (int expID = 0; expID < experiments; expID++) {
-				for (boolean prune : prunes) {
-					for (int i : pcts) {
-						for (int fold : folds) {
-		
-							if (setup) {
-								Experiments.selectCrossValidation(prefix, fold);
-								Experiments.signatures(prefix, type, fold, prune);
-							}
+				for (int f : folds) {
+
+					if (setup) {
+						Experiments.selectCrossValidation(prefix, f);
+					}
+						
+					for (boolean prune : prunes) {
+						
+						if (setup) {
+							Experiments.signatures(prefix, type, f, prune);
+						}
+						
+						for (boolean optimize : optimizeRecognizers) {
 							
-							Experiments cv = new Experiments(fold);
-							Map<String, RecognizerStatistics> map = 
-								cv.recognition(prefix, recognizer, type, i, prune,
-										false, outputRecognizer, optimizeRecognizers);
-							
-							System.out.println("i=" + i + ", fold=" + fold);
-							
-							for (String className : map.keySet()) {
-								RecognizerStatistics rs = map.get(className);
-								out.write(expID + "," 
-										+ className + "," 
-										+ type + "," 
-										+ fold + ","
-										+ recognizer.name() + "," 
-										+ ((optimizeRecognizers) ? "true" : "false") + ","
-										+ ((prune) ? "true" : "false") + ","
-										+ i + ","
-										+ rs.precision() + ","
-										+ rs.recall() + ","
-										+ rs.fscore() + "\n");
+							for (int i : pcts) {
+								
+								Experiments cv = new Experiments(f);
+								Map<String, RecognizerStatistics> map = 
+									cv.recognition(prefix, recognizer, type, i, prune,
+											false, outputRecognizer, optimize);
+								
+								System.out.println("i=" + i + ", folds=" + f);
+								
+								for (String className : map.keySet()) {
+									RecognizerStatistics rs = map.get(className);
+									out.write(expID + "," 
+											+ className + "," 
+											+ type + "," 
+											+ f + ","
+											+ recognizer.name() + "," 
+											+ ((optimize) ? "true" : "false") + ","
+											+ ((prune) ? "true" : "false") + ","
+											+ i + ","
+											+ rs.precision() + ","
+											+ rs.recall() + ","
+											+ rs.fscore() + "\n");
+								}
 							}
 						}
 					}
