@@ -2,7 +2,7 @@ dvframe.o: dvframe.cc /usr/include/stdlib.h /usr/include/features.h \
  /usr/include/bits/predefs.h /usr/include/sys/cdefs.h \
  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
  /usr/include/gnu/stubs-64.h \
- /usr/lib/gcc/x86_64-linux-gnu/4.4.3/include/stddef.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stddef.h \
  /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
  /usr/include/endian.h /usr/include/bits/endian.h \
  /usr/include/bits/byteswap.h /usr/include/xlocale.h \
@@ -32,7 +32,7 @@ dvframe.o: dvframe.cc /usr/include/stdlib.h /usr/include/features.h \
  /usr/include/c++/4.4/bits/stl_iterator.h \
  /usr/include/c++/4.4/debug/debug.h /usr/include/c++/4.4/bits/postypes.h \
  /usr/include/c++/4.4/cwchar /usr/include/wchar.h /usr/include/stdio.h \
- /usr/lib/gcc/x86_64-linux-gnu/4.4.3/include/stdarg.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stdarg.h \
  /usr/include/bits/wchar.h /usr/include/bits/wchar2.h \
  /usr/include/c++/4.4/bits/allocator.h \
  /usr/include/c++/4.4/x86_64-linux-gnu/bits/c++allocator.h \
@@ -51,7 +51,7 @@ dvframe.o: dvframe.cc /usr/include/stdlib.h /usr/include/features.h \
  /usr/include/c++/4.4/x86_64-linux-gnu/bits/gthr.h \
  /usr/include/c++/4.4/x86_64-linux-gnu/bits/gthr-default.h \
  /usr/include/pthread.h /usr/include/sched.h /usr/include/bits/sched.h \
- /usr/include/signal.h /usr/include/bits/setjmp.h /usr/include/unistd.h \
+ /usr/include/bits/setjmp.h /usr/include/unistd.h \
  /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
  /usr/include/bits/confname.h /usr/include/getopt.h \
  /usr/include/bits/unistd.h \
@@ -98,7 +98,7 @@ dvframe.o: dvframe.cc /usr/include/stdlib.h /usr/include/features.h \
 
 /usr/include/gnu/stubs-64.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/4.4.3/include/stddef.h:
+/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stddef.h:
 
 /usr/include/bits/waitflags.h:
 
@@ -194,7 +194,7 @@ config.h:
 
 /usr/include/stdio.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/4.4.3/include/stdarg.h:
+/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stdarg.h:
 
 /usr/include/bits/wchar.h:
 
@@ -247,8 +247,6 @@ config.h:
 /usr/include/sched.h:
 
 /usr/include/bits/sched.h:
-
-/usr/include/signal.h:
 
 /usr/include/bits/setjmp.h:
 
