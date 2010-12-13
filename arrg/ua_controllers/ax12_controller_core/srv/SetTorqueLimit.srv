@@ -1,5 +1,5 @@
-# Set maximum motor torque in percenatge (100 - maximum)
+# Set maximum motor torque in percenatge (0 - no torque to 1 - maximum torque)
 
-uint8 torque_limit
+float64 torque_limit
 ---
 

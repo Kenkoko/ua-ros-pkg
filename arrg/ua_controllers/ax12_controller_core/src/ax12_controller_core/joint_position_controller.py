@@ -125,7 +125,7 @@ class JointPositionControllerAX12(JointControllerAX12):
     def set_torque_limit(self, max_torque):
         if max_torque > 1: max_torque = 1.0         # use all torque motor can provide
         elif max_torque < 0: max_torque = 0.0       # turn off motor torque
-        raw_torque_val = int(1024 * max_torque)
+        raw_torque_val = int(DMXL_MAX_TORQUE_TICK * max_torque)
         mcv = (self.motor_id, raw_torque_val)
         self.send_packet_callback((DMXL_SET_TORQUE_LIMIT, [mcv]))
 
@@ -137,7 +137,7 @@ class JointPositionControllerAX12(JointControllerAX12):
                 self.joint_state.goal_pos = self.raw_to_rad(state.goal, self.initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.current_pos = self.raw_to_rad(state.position, self.initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.error = state.error * self.radians_per_encoder_tick
-                self.joint_state.velocity = (state.speed / self.encoder_resolution) * DMXL_MAX_SPEED_RAD
+                self.joint_state.velocity = (state.speed / DMXL_MAX_SPEED_TICK) * DMXL_MAX_SPEED_RAD
                 self.joint_state.load = state.load
                 self.joint_state.is_moving = state.moving
                 self.joint_state.header.stamp = rospy.Time.from_sec(state.timestamp)
