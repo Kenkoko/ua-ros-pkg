@@ -8,7 +8,7 @@ avi.o: avi.cc config.h /usr/include/c++/4.4/string \
  /usr/include/c++/4.4/bits/stringfwd.h \
  /usr/include/c++/4.4/bits/char_traits.h \
  /usr/include/c++/4.4/bits/stl_algobase.h /usr/include/c++/4.4/cstddef \
- /usr/lib/gcc/x86_64-linux-gnu/4.4.3/include/stddef.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stddef.h \
  /usr/include/c++/4.4/bits/functexcept.h \
  /usr/include/c++/4.4/exception_defines.h \
  /usr/include/c++/4.4/bits/cpp_type_traits.h \
@@ -21,7 +21,7 @@ avi.o: avi.cc config.h /usr/include/c++/4.4/string \
  /usr/include/c++/4.4/bits/stl_iterator.h \
  /usr/include/c++/4.4/debug/debug.h /usr/include/c++/4.4/bits/postypes.h \
  /usr/include/c++/4.4/cwchar /usr/include/wchar.h /usr/include/stdio.h \
- /usr/lib/gcc/x86_64-linux-gnu/4.4.3/include/stdarg.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stdarg.h \
  /usr/include/bits/wchar.h /usr/include/xlocale.h \
  /usr/include/bits/wchar2.h /usr/include/c++/4.4/bits/allocator.h \
  /usr/include/c++/4.4/x86_64-linux-gnu/bits/c++allocator.h \
@@ -42,12 +42,11 @@ avi.o: avi.cc config.h /usr/include/c++/4.4/string \
  /usr/include/c++/4.4/x86_64-linux-gnu/bits/gthr.h \
  /usr/include/c++/4.4/x86_64-linux-gnu/bits/gthr-default.h \
  /usr/include/pthread.h /usr/include/sched.h /usr/include/time.h \
- /usr/include/bits/sched.h /usr/include/bits/time.h /usr/include/signal.h \
- /usr/include/bits/sigset.h /usr/include/bits/pthreadtypes.h \
- /usr/include/bits/setjmp.h /usr/include/unistd.h \
- /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
- /usr/include/bits/confname.h /usr/include/getopt.h \
- /usr/include/bits/unistd.h \
+ /usr/include/bits/sched.h /usr/include/bits/time.h \
+ /usr/include/bits/pthreadtypes.h /usr/include/bits/setjmp.h \
+ /usr/include/unistd.h /usr/include/bits/posix_opt.h \
+ /usr/include/bits/environments.h /usr/include/bits/confname.h \
+ /usr/include/getopt.h /usr/include/bits/unistd.h \
  /usr/include/c++/4.4/x86_64-linux-gnu/bits/atomic_word.h \
  /usr/include/c++/4.4/initializer_list \
  /usr/include/c++/4.4/bits/basic_string.tcc /usr/include/c++/4.4/iostream \
@@ -71,8 +70,8 @@ avi.o: avi.cc config.h /usr/include/c++/4.4/string \
  /usr/include/bits/stdio.h /usr/include/bits/stdio2.h \
  /usr/include/fcntl.h /usr/include/bits/fcntl.h /usr/include/sys/types.h \
  /usr/include/sys/select.h /usr/include/bits/select.h \
- /usr/include/sys/sysmacros.h /usr/include/bits/uio.h \
- /usr/include/sys/stat.h /usr/include/bits/stat.h \
+ /usr/include/bits/sigset.h /usr/include/sys/sysmacros.h \
+ /usr/include/bits/uio.h /usr/include/bits/stat.h \
  /usr/include/bits/fcntl2.h /usr/include/assert.h /usr/include/string.h \
  /usr/include/bits/string3.h error.h riff.h /usr/include/c++/4.4/vector \
  /usr/include/c++/4.4/bits/stl_construct.h \
@@ -119,7 +118,7 @@ config.h:
 
 /usr/include/c++/4.4/cstddef:
 
-/usr/lib/gcc/x86_64-linux-gnu/4.4.3/include/stddef.h:
+/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stddef.h:
 
 /usr/include/c++/4.4/bits/functexcept.h:
 
@@ -153,7 +152,7 @@ config.h:
 
 /usr/include/stdio.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/4.4.3/include/stdarg.h:
+/usr/lib/gcc/x86_64-linux-gnu/4.4.5/include/stdarg.h:
 
 /usr/include/bits/wchar.h:
 
@@ -222,10 +221,6 @@ config.h:
 /usr/include/bits/sched.h:
 
 /usr/include/bits/time.h:
-
-/usr/include/signal.h:
-
-/usr/include/bits/sigset.h:
 
 /usr/include/bits/pthreadtypes.h:
 
@@ -313,11 +308,11 @@ config.h:
 
 /usr/include/bits/select.h:
 
+/usr/include/bits/sigset.h:
+
 /usr/include/sys/sysmacros.h:
 
 /usr/include/bits/uio.h:
-
-/usr/include/sys/stat.h:
 
 /usr/include/bits/stat.h:
 
