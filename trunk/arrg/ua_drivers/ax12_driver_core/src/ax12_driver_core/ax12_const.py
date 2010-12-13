@@ -120,6 +120,7 @@ AX_NO_ERROR = 0
 DMXL_SPEED_RAD_SEC_PER_TICK = 0.011652344   # radians per second in one encoder unit
 DMXL_MIN_SPEED_RAD = DMXL_SPEED_RAD_SEC_PER_TICK
 DMXL_MAX_SPEED_RAD = 11.920347912           # maximum speed in radians per second
+DMXL_MAX_SPEED_TICK = 1023                  # maximum speed in encoder units
 
 DMXL_MIN_COMPLIANCE_MARGIN = 0
 DMXL_MAX_COMPLIANCE_MARGIN = 255
@@ -161,3 +162,5 @@ DMXL_MODEL_TO_TORQUE = \
      64: ( 52.0 * KGCM_TO_NM) / 18.5,        #  52.0 kg-cm @ 18.5V
     107: (107.0 * KGCM_TO_NM) / 18.5,        # 107.0 kg-cm @ 18.5V
 }
+
+DMXL_MAX_TORQUE_TICK = 1023         # maximum torque in encoder units
