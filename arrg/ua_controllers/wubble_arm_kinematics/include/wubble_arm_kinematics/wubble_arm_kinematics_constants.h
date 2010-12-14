@@ -1,5 +1,6 @@
 //Software License Agreement (BSD License)
 
+//Copyright (c) 2010, Antons Rebguns
 //Copyright (c) 2008, Willow Garage, Inc.
 //All rights reserved.
 
@@ -36,8 +37,6 @@
 namespace wubble_arm_kinematics
 {
   static const int NUM_JOINTS_ARM7DOF = 7;
-
-  static const double IK_EPS = 1e-5;
 }
 
 #endif

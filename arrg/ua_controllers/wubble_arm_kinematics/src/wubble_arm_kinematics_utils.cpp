@@ -115,64 +115,6 @@ namespace wubble_arm_kinematics
     return sqrt(transform.position.x*transform.position.x+transform.position.y*transform.position.y+transform.position.z*transform.position.z);
   }
 
-
-  bool solveQuadratic(const double &a, const double &b, const double &c, double *x1, double *x2)
-  {
-    double discriminant = b*b-4*a*c;
-    if(fabs(a) < IK_EPS)
-    {
-      *x1 = -c/b;
-      *x2 = *x1;
-      return true;
-    }
-    //ROS_DEBUG("Discriminant: %f\n",discriminant);
-    if (discriminant >= 0)
-    {
-      *x1 = (-b + sqrt(discriminant))/(2*a);
-      *x2 = (-b - sqrt(discriminant))/(2*a);
-      return true;
-    }
-    else if(fabs(discriminant) < IK_EPS)
-    {
-      *x1 = -b/(2*a);
-      *x2 = -b/(2*a);
-      return true;
-    }
-    else
-    {
-      *x1 = -b/(2*a);
-      *x2 = -b/(2*a);
-      return false;
-    }
-  }
-
-  bool solveCosineEqn(const double &a, const double &b, const double &c, double &soln1, double &soln2)
-  {
-    double theta1 = atan2(b,a);
-    double denom  = sqrt(a*a+b*b);
-
-    if(fabs(denom) < IK_EPS) // should never happen, wouldn't make sense but make sure it is checked nonetheless
-    {
-#ifdef DEBUG
-      std::cout << "denom: " << denom << std::endl;
-#endif
-      return false;
-    }
-    double rhs_ratio = c/denom;
-    if(rhs_ratio < -1 || rhs_ratio > 1)
-    {
-#ifdef DEBUG
-      std::cout << "rhs_ratio: " << rhs_ratio << std::endl;
-#endif
-      return false;
-    }
-    double acos_term = acos(rhs_ratio);
-    soln1 = theta1 + acos_term;
-    soln2 = theta1 - acos_term;
-
-    return true;
-  }
-
   bool checkJointNames(const std::vector<std::string> &joint_names,
                        const kinematics_msgs::KinematicSolverInfo &chain_info)
   {

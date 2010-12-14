@@ -1,5 +1,6 @@
 //Software License Agreement (BSD License)
 
+//Copyright (c) 2010, Antons Rebguns
 //Copyright (c) 2008, Willow Garage, Inc.
 //All rights reserved.
 
@@ -34,7 +35,6 @@
 #define WUBBLE_ARM_IK_SOLVER_H
 
 #include <urdf/model.h>
-#include <Eigen/Array>
 #include <kdl/chainiksolver.hpp>
 #include <wubble_arm_kinematics/wubble_arm_ik.h>
 #include <wubble_arm_kinematics/wubble_arm_kinematics_utils.h>
@@ -52,25 +52,22 @@ namespace wubble_arm_kinematics
   {
     public:
 
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     /** @class
-     *  @brief ROS/KDL based interface for the inverse kinematics of the PR2 arm
-     *  @author Sachin Chitta <sachinc@willowgarage.com>
+     *  @brief ROS/KDL based interface for the inverse kinematics of the Wubble arm
+     *  @author Antons Rebguns, based on code by Sachin Chitta <sachinc@willowgarage.com>
      *
-     *  This class provides a KDL based interface to the inverse kinematics of the PR2 arm. It inherits from the KDL::ChainIkSolverPos class
+     *  This class provides a KDL based interface to the inverse kinematics of the Wubble arm. It inherits from the KDL::ChainIkSolverPos class
      *  but also exposes additional functionality to return multiple solutions from an inverse kinematics computation.
      */
     WubbleArmIKSolver(const urdf::Model &robot_model,
                       const std::string &root_frame_name,
                       const std::string &tip_frame_name,
-                      const double &search_discretization_angle,
-                      const int &free_angle);
+                      const double &search_discretization_angle);
 
     ~WubbleArmIKSolver() {};
 
     /**
-     * @brief The PR2 inverse kinematics solver
+     * @brief The Wubble inverse kinematics solver
      */
     WubbleArmIK wubble_arm_ik_;
 
@@ -85,8 +82,7 @@ namespace wubble_arm_kinematics
      * method detailed below.
      *
      * @return < 0 if no solution is found
-     * @param q_init The initial guess for the inverse kinematics solution. The solver uses the joint value q_init(pr2_ik_->free_angle_) as
-     * as an input to the inverse kinematics. pr2_ik_->free_angle_ can either be 0 or 2 corresponding to the shoulder pan or shoulder roll angle
+     * @param q_init The initial guess for the inverse kinematics solution.
      * @param p_in A KDL::Frame representation of the position of the end-effector for which the IK is being solved.
      * @param q_out A single inverse kinematic solution (if it exists).
      */
@@ -100,8 +96,7 @@ namespace wubble_arm_kinematics
      * method detailed below.
      *
      * @return < 0 if no solution is found
-     * @param q_init The initial guess for the inverse kinematics solution. The solver uses the joint value q_init(pr2_ik_->free_angle_) as
-     * as an input to the inverse kinematics. pr2_ik_->free_angle_ can either be 0 or 2 corresponding to the shoulder pan or shoulder roll angle
+     * @param q_init The initial guess for the inverse kinematics solution.
      * @param p_in A KDL::Frame representation of the position of the end-effector for which the IK is being solved.
      * @param q_out A std::vector of KDL::JntArray containing all found solutions.
      */
@@ -113,8 +108,7 @@ namespace wubble_arm_kinematics
      * @brief This method searches for and returns the first set of solutions it finds.
      *
      * @return < 0 if no solution is found
-     * @param q_in The initial guess for the inverse kinematics solution. The solver uses the joint value q_init(pr2_ik_->free_angle_) as
-     * as an input to the inverse kinematics. pr2_ik_->free_angle_ can either be 0 or 2 corresponding to the shoulder pan or shoulder roll angle
+     * @param q_in The initial guess for the inverse kinematics solution.
      * @param p_in A KDL::Frame representation of the position of the end-effector for which the IK is being solved.
      * @param q_out A std::vector of KDL::JntArray containing all found solutions.
      * @param timeout The amount of time (in seconds) to spend looking for a solution.
@@ -128,8 +122,7 @@ namespace wubble_arm_kinematics
      * @brief This method searches for and returns the closest solution to the initial guess in the first set of solutions it finds.
      *
      * @return < 0 if no solution is found
-     * @param q_in The initial guess for the inverse kinematics solution. The solver uses the joint value q_init(pr2_ik_->free_angle_) as
-     * as an input to the inverse kinematics. pr2_ik_->free_angle_ can either be 0 or 2 corresponding to the shoulder pan or shoulder roll angle
+     * @param q_in The initial guess for the inverse kinematics solution.
      * @param p_in A KDL::Frame representation of the position of the end-effector for which the IK is being solved.
      * @param q_out A std::vector of KDL::JntArray containing all found solutions.
      * @param timeout The amount of time (in seconds) to spend looking for a solution.
@@ -148,7 +141,7 @@ namespace wubble_arm_kinematics
      * @brief This method searches for and returns the first solution it finds that also satisifies both user defined callbacks.
      *
      * @return < 0 if no solution is found
-     * @param q_init The initial guess for the inverse kinematics solution. The solver uses the joint value q_init(pr2_ik_->free_angle_) as
+     * @param q_init The initial guess for the inverse kinematics solution.
      * @param p_in A KDL::Frame representation of the position of the end-effector for which the IK is being solved.
      * @param q_out A std::vector of KDL::JntArray containing all found solutions.
      * @param desired_pose_callback A callback function to which the desired pose is passed in
@@ -173,3 +166,4 @@ namespace wubble_arm_kinematics
   };
 }
 #endif// WUBBLE_ARM_IK_SOLVER_H
+

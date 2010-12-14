@@ -61,18 +61,6 @@ namespace wubble_arm_kinematics
 
   double distance(const urdf::Pose &transform);
 
-  bool solveQuadratic(const double &a,
-                      const double &b,
-                      const double &c,
-                      double *x1,
-                      double *x2);
-
-  bool solveCosineEqn(const double &a,
-                      const double &b,
-                      const double &c,
-                      double &soln1,
-                      double &soln2);
-
   bool loadRobotModel(ros::NodeHandle node_handle,
                       urdf::Model &robot_model,
                       std::string &root_name,

@@ -2,6 +2,7 @@
 *
 * Software License Agreement (BSD License)
 *
+*  Copyright (c) 2010, Antons Rebguns
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  All rights reserved.
 *
@@ -63,7 +64,7 @@ namespace wubble_arm_kinematics
 
     /** @class
      *  @brief ROS/KDL based interface for the inverse kinematics of the Wubble arm
-     *  @author Sachin Chitta <sachinc@willowgarage.com>
+     *  @author Antons Rebguns, based on code by Sachin Chitta <sachinc@willowgarage.com>
      *
      *  This class provides a ROS/KDL based interface to the inverse kinematics of the Wubble arm. It inherits from the KDL::ChainIkSolverPos class
      *  but also exposes additional functionality to return the multiple solutions from an inverse kinematics computation. It uses an instance of
@@ -116,7 +117,6 @@ namespace wubble_arm_kinematics
     protected:
 
     bool active_;
-    int free_angle_;
     urdf::Model robot_model_;
     double search_discretization_;
     std::string root_name_;

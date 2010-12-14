@@ -37,11 +37,9 @@ using namespace wubble_arm_kinematics;
 WubbleArmIKSolver::WubbleArmIKSolver(const urdf::Model &robot_model,
                                      const std::string &root_frame_name,
                                      const std::string &tip_frame_name,
-                                     const double &search_discretization_angle,
-                                     const int &free_angle):ChainIkSolverPos()
+                                     const double &search_discretization_angle):ChainIkSolverPos()
 {
   search_discretization_angle_ = search_discretization_angle;
-  free_angle_ = free_angle;
   root_frame_name_ = root_frame_name;
 
   if(!wubble_arm_ik_.init(robot_model, root_frame_name, tip_frame_name)) { active_ = false; }
@@ -57,16 +55,8 @@ int WubbleArmIKSolver::CartToJnt(const KDL::JntArray& q_init,
                                  const KDL::Frame& p_in,
                                  KDL::JntArray &q_out)
 {
-  if (free_angle_ == 0)
-  {
-    ROS_DEBUG("Solving with %f",q_init(0));
-    wubble_arm_ik_.computeIKShoulderPitch(p_in, q_init(0));
-  }
-  else
-  {
-    wubble_arm_ik_.computeIKShoulderRoll(p_in, q_init(2));
-  }
-
+  ROS_DEBUG("Solving with %f",q_init(0));
+  wubble_arm_ik_.computeIKShoulderPitch(p_in, q_init(0));
   if (wubble_arm_ik_.solution_ik_.empty()) { return -1; }
 
   double min_distance = 1e6;
@@ -116,15 +106,7 @@ int WubbleArmIKSolver::CartToJnt(const KDL::JntArray& q_init,
 {
   KDL::JntArray q;
 
-  if (free_angle_ == 0)
-  {
-    wubble_arm_ik_.computeIKShoulderPitch(p_in, q_init(0));
-  }
-  else
-  {
-    wubble_arm_ik_.computeIKShoulderRoll(p_in, q_init(2));
-  }
-
+  wubble_arm_ik_.computeIKShoulderPitch(p_in, q_init(0));
   if(wubble_arm_ik_.solution_ik_.empty()) { return -1; }
 
   q.resize(NUM_JOINTS_ARM7DOF);
@@ -187,23 +169,24 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
                                        const double &timeout)
 {
   KDL::JntArray q_init = q_in;
-  double initial_guess = q_init(free_angle_);
+  const int free_angle = 0; // shoulder_pitch
+  double initial_guess = q_init(free_angle);
 
   ros::Time start_time = ros::Time::now();
   double loop_time = 0;
   int count = 0;
 
-  int num_positive_increments = (int) ((wubble_arm_ik_.solver_info_.limits[free_angle_].max_position-initial_guess) / search_discretization_angle_);
-  int num_negative_increments = (int) ((initial_guess-wubble_arm_ik_.solver_info_.limits[free_angle_].min_position) / search_discretization_angle_);
-  ROS_DEBUG("%f %f %f %d %d \n\n", initial_guess, wubble_arm_ik_.solver_info_.limits[free_angle_].max_position, wubble_arm_ik_.solver_info_.limits[free_angle_].min_position, num_positive_increments, num_negative_increments);
+  int num_positive_increments = (int) ((wubble_arm_ik_.solver_info_.limits[free_angle].max_position-initial_guess) / search_discretization_angle_);
+  int num_negative_increments = (int) ((initial_guess-wubble_arm_ik_.solver_info_.limits[free_angle].min_position) / search_discretization_angle_);
+  ROS_DEBUG("%f %f %f %d %d \n\n", initial_guess, wubble_arm_ik_.solver_info_.limits[free_angle].max_position, wubble_arm_ik_.solver_info_.limits[free_angle_].min_position, num_positive_increments, num_negative_increments);
 
   while (loop_time < timeout)
   {
     if (CartToJnt(q_init, p_in, q_out) > 0) { return 1; }
     if (!getCount(count, num_positive_increments, -num_negative_increments)) { return -1; }
 
-    q_init(free_angle_) = initial_guess + search_discretization_angle_ * count;
-    ROS_DEBUG("%d, %f", count, q_init(free_angle_));
+    q_init(free_angle) = initial_guess + search_discretization_angle_ * count;
+    ROS_DEBUG("%d, %f", count, q_init(free_angle));
     loop_time = (ros::Time::now() - start_time).toSec();
   }
 
@@ -227,23 +210,24 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
                                        const double &timeout)
 {
   KDL::JntArray q_init = q_in;
-  double initial_guess = q_init(free_angle_);
+  const int free_angle = 0; // shoulder_pitch
+  double initial_guess = q_init(free_angle);
 
   ros::Time start_time = ros::Time::now();
   double loop_time = 0;
   int count = 0;
 
-  int num_positive_increments = (int) ((wubble_arm_ik_.solver_info_.limits[free_angle_].max_position-initial_guess) / search_discretization_angle_);
-  int num_negative_increments = (int) ((initial_guess-wubble_arm_ik_.solver_info_.limits[free_angle_].min_position) / search_discretization_angle_);
-  ROS_DEBUG("%f %f %f %d %d \n\n", initial_guess, wubble_arm_ik_.solver_info_.limits[free_angle_].max_position, wubble_arm_ik_.solver_info_.limits[free_angle_].min_position, num_positive_increments, num_negative_increments);
+  int num_positive_increments = (int) ((wubble_arm_ik_.solver_info_.limits[free_angle].max_position-initial_guess) / search_discretization_angle_);
+  int num_negative_increments = (int) ((initial_guess-wubble_arm_ik_.solver_info_.limits[free_angle].min_position) / search_discretization_angle_);
+  ROS_DEBUG("%f %f %f %d %d \n\n", initial_guess, wubble_arm_ik_.solver_info_.limits[free_angle].max_position, wubble_arm_ik_.solver_info_.limits[free_angle_].min_position, num_positive_increments, num_negative_increments);
 
   while (loop_time < timeout)
   {
     if (CartToJnt(q_init, p_in, q_out) > 0) { return 1; }
     if (!getCount(count, num_positive_increments, -num_negative_increments)) { return -1; }
 
-    q_init(free_angle_) = initial_guess + search_discretization_angle_ * count;
-    ROS_DEBUG("%d, %f", count, q_init(free_angle_));
+    q_init(free_angle) = initial_guess + search_discretization_angle_ * count;
+    ROS_DEBUG("%d, %f", count, q_init(free_angle));
     loop_time = (ros::Time::now() - start_time).toSec();
   }
 
@@ -270,15 +254,16 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
                                        const boost::function<void(const KDL::JntArray&, const KDL::Frame&, motion_planning_msgs::ArmNavigationErrorCodes&)> &solution_callback)
 {
   KDL::JntArray q_init = q_in;
-  double initial_guess = q_init(free_angle_);
+  const int free_angle = 0; // shoulder_pitch
+  double initial_guess = q_init(free_angle);
 
   ros::Time start_time = ros::Time::now();
   double loop_time = 0;
   int count = 0;
 
-  int num_positive_increments = (int) ((wubble_arm_ik_.solver_info_.limits[free_angle_].max_position-initial_guess) / search_discretization_angle_);
-  int num_negative_increments = (int) ((initial_guess-wubble_arm_ik_.solver_info_.limits[free_angle_].min_position) / search_discretization_angle_);
-  ROS_DEBUG("%f %f %f %d %d \n\n", initial_guess, wubble_arm_ik_.solver_info_.limits[free_angle_].max_position, wubble_arm_ik_.solver_info_.limits[free_angle_].min_position, num_positive_increments, num_negative_increments);
+  int num_positive_increments = (int) ((wubble_arm_ik_.solver_info_.limits[free_angle].max_position-initial_guess) / search_discretization_angle_);
+  int num_negative_increments = (int) ((initial_guess-wubble_arm_ik_.solver_info_.limits[free_angle].min_position) / search_discretization_angle_);
+  ROS_DEBUG("%f %f %f %d %d \n\n", initial_guess, wubble_arm_ik_.solver_info_.limits[free_angle].max_position, wubble_arm_ik_.solver_info_.limits[free_angle_].min_position, num_positive_increments, num_negative_increments);
 
   if (!desired_pose_callback.empty()) { desired_pose_callback(q_init, p_in, error_code); }
   if (error_code.val != error_code.SUCCESS) { return -1; }
@@ -293,7 +278,7 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
     {
       if (callback_check)
       {
-          ROS_INFO("Callback_check succeeded.");
+        ROS_INFO("Callback_check succeeded.");
         solution_callback(q_out, p_in, error_code);
         ROS_INFO("Solution Callback succeeded.");
         if(error_code.val == error_code.SUCCESS) { return 1; }
@@ -312,8 +297,8 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
       return -1;
     }
 
-    q_init(free_angle_) = initial_guess + search_discretization_angle_ * count;
-    ROS_DEBUG("Redundancy search, index:%d, free angle value: %f", count, q_init(free_angle_));
+    q_init(free_angle) = initial_guess + search_discretization_angle_ * count;
+    ROS_DEBUG("Redundancy search, index:%d, free angle value: %f", count, q_init(free_angle));
     loop_time = (ros::Time::now()-start_time).toSec();
   }
 

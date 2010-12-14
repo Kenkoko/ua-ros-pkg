@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2010, Antons Rebguns
  * Copyright (c) 2008, Willow Garage, Inc.
  * All rights reserved.
  *
@@ -28,7 +29,7 @@
  */
 
 /*
- * Author: Sachin Chitta
+ * Author: Antons Rebguns, based on code by Sachin Chitta
  */
 
 #include <wubble_arm_kinematics/wubble_arm_kinematics.h>
@@ -52,7 +53,7 @@ namespace wubble_arm_kinematics
   static const std::string IK_INFO_SERVICE = "get_ik_solver_info";
   static const std::string FK_INFO_SERVICE = "get_fk_solver_info";
 
-  WubbleArmKinematics::WubbleArmKinematics(): node_handle_("~"), dimension_(7)
+  WubbleArmKinematics::WubbleArmKinematics(): dimension_(7), node_handle_("~")
   {
     urdf::Model robot_model;
     std::string tip_name;
@@ -75,9 +76,8 @@ namespace wubble_arm_kinematics
     ROS_INFO("Advertising services");
 
     jnt_to_pose_solver_.reset(new KDL::ChainFkSolverPos_recursive(kdl_chain_));
-    node_handle_.param<int>("free_angle", free_angle_, 0);
     node_handle_.param<double>("search_discretization", search_discretization_, 0.01);
-    wubble_arm_ik_solver_.reset(new wubble_arm_kinematics::WubbleArmIKSolver(robot_model, root_name_, tip_name, search_discretization_, free_angle_));
+    wubble_arm_ik_solver_.reset(new wubble_arm_kinematics::WubbleArmIKSolver(robot_model, root_name_, tip_name, search_discretization_));
 
     if (!wubble_arm_ik_solver_->active_)
     {
