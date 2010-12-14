@@ -1,13 +1,11 @@
 package edu.arizona.verbs.environments;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import ros.NodeHandle;
 import ros.Ros;
 import ros.RosException;
-import ros.pkg.oomdp_msgs.msg.MDPObjectState;
 import ros.pkg.oomdp_msgs.srv.InitializeEnvironment;
 import ros.pkg.oomdp_msgs.srv.PerformAction;
 import ros.pkg.oomdp_msgs.srv.SimulateAction;
@@ -29,8 +27,6 @@ public class GazeboEnvironment implements Environment {
 		try {
 			Ros.getInstance().init("environment_interface");
 		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-			System.out.println("...BUT IT'S REALLY OK");
 		}
 		nodeHandle_ = Ros.getInstance().createNodeHandle();
 		

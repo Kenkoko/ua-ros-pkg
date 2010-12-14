@@ -175,8 +175,8 @@ public class AtomicVerb extends AbstractVerb {
 		trace.add(properStart);
 		
 		// TODO: Need to restore planning time information
-		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
-//		SearchPlanner planner = new SearchPlanner(this, Interface.getCurrentEnvironment());
+//		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
+		SearchPlanner planner = new SearchPlanner(this, Interface.getCurrentEnvironment());
 //		UCT planner = new UCT(this, Interface.getCurrentEnvironment(), executionLimit);
 		Policy policy = planner.runAlgorithm(properStart, fsmState);
 		String action = policy.getAction(properStart, fsmState); 
