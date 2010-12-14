@@ -20,14 +20,14 @@ class plot_fft(object):
 
         rospy.init_node('plot_fft', anonymous=True)
         self.lock = threading.Lock()
-        self.sub = rospy.Subscriber("fft_audio", TransformedStream, self.callback)
+        self.sub = rospy.Subscriber("transformed_audio", TransformedStream, self.callback)
 
     def callback(self,data):
         self.lock.acquire()
         rospy.loginfo(rospy.get_name()+": I received %d datapoints.", data.num_points)
         freqArray = arange(0, data.num_points, 1.0) * (data.orig_rate/data.num_points);
         self.fig.clear()
-        logpower = 10*log10(data.fft)
+        logpower = 10*log10(data.stream)
         self.minpower = min((self.minpower, min(logpower)))
         self.maxpower = max((self.maxpower, max(logpower)))
         plot(freqArray/1000, logpower, color='k')
