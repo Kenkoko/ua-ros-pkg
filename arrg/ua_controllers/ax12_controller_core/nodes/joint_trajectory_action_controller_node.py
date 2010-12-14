@@ -289,11 +289,11 @@ class JointTrajectoryActionController():
             for j, joint in enumerate(self.joint_names):
                 start_position = self.joint_states[joint].current_pos
                 dest_position = trajectory[seg].positions[j]
-                extra = dest_position - 2.0 if dest_position > 0 else dest_position + 1.0
+                #extra = dest_position - 2.0 if dest_position > 0 else dest_position + 1.0
 
                 # start time, half-way point, end time, extra point
-                x = [0, durations[seg] / 2.0, durations[seg], durations[seg] + 2.0]
-                y = [start_position, (dest_position + start_position) / 2.0, dest_position, extra]
+                #x = [0, durations[seg] / 2.0, durations[seg], durations[seg] + 2.0]
+                #y = [start_position, (dest_position + start_position) / 2.0, dest_position, extra]
 
                 # figure out a spline
                 #trajectory[seg].splines_tck[j] = splrep(x, y, s=0, k=3)
@@ -302,6 +302,7 @@ class JointTrajectoryActionController():
                 #self.set_joint_velocity(joint, abs(dest_position-start_position)/(seg_end_times[seg]-time).to_sec() + 0.1)
                 #self.set_joint_angle(joint, dest_position)
 
+                if durations[seg] == 0: durations[seg] += 0.001 # too hacky? maybe set to maximum joint speed if duration is 0?
                 self.set_joint_velocity(joint, abs(dest_position - start_position) / durations[seg] + 0.1)
                 self.set_joint_angle(joint, dest_position)
 
