@@ -1,6 +1,7 @@
 package edu.arizona.verbs.verb;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -14,11 +15,11 @@ import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.verbs.fsm.VerbFSM;
 
 public abstract class AbstractVerb implements Verb {
-	String lexicalForm_;
-	List<String> arguments_;
-	Signature signature_ = null;
-	Signature negativeSignature_; // This is not really used for pruning, just fits better
-	VerbFSM fsm_ = null;
+	protected String lexicalForm_;
+	protected ArrayList<String> arguments_;
+	protected Signature signature_ = null;
+	protected Signature negativeSignature_; // This is not really used for pruning, just fits better
+	protected VerbFSM fsm_ = null;
 	
 	AbstractVerb baseVerb_ = null;
 	
@@ -101,6 +102,11 @@ public abstract class AbstractVerb implements Verb {
 		return arguments_.toArray(new String[0]);
 	}
 	
+	@Override
+	public ArrayList<String> getArguments() {
+		return arguments_;
+	}
+
 	public boolean hasSignature() {
 		return signature_ != null;
 	}
@@ -122,10 +128,11 @@ public abstract class AbstractVerb implements Verb {
 		return "verbs/" + getIdentifierString() + "/";
 	}
 	
+	// TODO: Do we want to make new Lists?
 	public VerbDescription makeVerbDescription() {
 		VerbDescription desc = new VerbDescription();
 		desc.verb = lexicalForm_;
-		desc.arguments = arguments_.toArray(new String[0]);
+		desc.arguments = arguments_;
 		return desc;
 	}
 

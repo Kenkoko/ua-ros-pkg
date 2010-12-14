@@ -173,7 +173,7 @@ public class LRTDP extends AbstractPlanner {
 	// Ensure that each state is cached
 	@Override
 	public State lookupState(OOMDPState mdpState, TreeSet<FSMState> fsmState) {
-		String stateString = mdpState.toString() + fsmState.toString();
+		String stateString = State.makeStateString(mdpState, fsmState);
 		if (!knownStates_.containsKey(stateString)) {
 			knownStates_.put(stateString, new LRTDPState(mdpState, fsmState, this));
 		}

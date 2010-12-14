@@ -25,5 +25,10 @@
 			<type>2</type>
 			<location>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/oomdp_msgs/srv/java</location>
 		</link>
+		<link>
+			<name>rosjava</name>
+			<type>2</type>
+			<location>/home/dhewlett/ros/client_rosjava/rosjava/src</location>
+		</link>
 	</linkedResources>
 </projectDescription>

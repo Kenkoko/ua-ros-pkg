@@ -1,5 +1,6 @@
 package edu.arizona.verbs.shared;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +13,7 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappabl
 	private String className_;
 	private String name_;
 	private Map<String,String> attributeMap_; 
-	private List<String> attributeList_;
+	private ArrayList<String> attributeList_;
 	private String hashString_ = null;
 	
 	// This constructor assumes the attributes will be set using setAttribute 
@@ -21,27 +22,27 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappabl
 		className_ = className;
 		name_ = name;
 		attributeMap_ = new HashMap<String, String>();
-		attributeList_ = new Vector<String>(); 
+		attributeList_ = new ArrayList<String>(); 
 	}
 
 	public void setAttribute(String attribute, String value) {
 		attributeMap_.put(attribute, value);
-		attributeList_ = new Vector<String>(attributeMap_.keySet());
+		attributeList_ = new ArrayList<String>(attributeMap_.keySet());
 		Collections.sort(attributeList_);
 		hashString_ = null; // To regenerate it
 	}
 	
-	public void setAttributes(String[] attributes, String[] values) {
+	public void setAttributes(ArrayList<String> attributes, ArrayList<String> values) {
 		// Populate the attributes
-		if (attributes.length != values.length) {
+		if (attributes.size() != values.size()) {
 			throw new RuntimeException("ATTRIBUTE NAMES AND VALUES DO NOT MATCH!");
 		}
 		
-		attributeList_ = new Vector<String>();
+		attributeList_ = new ArrayList<String>();
 		attributeMap_ = new HashMap<String, String>();
-		for (int i = 0; i < attributes.length; i++) {
-			attributeList_.add(attributes[i]);
-			attributeMap_.put(attributes[i], values[i]);
+		for (int i = 0; i < attributes.size(); i++) {
+			attributeList_.add(attributes.get(i));
+			attributeMap_.put(attributes.get(i), values.get(i));
 		}
 		Collections.sort(attributeList_); // To ensure a consistent ordering
 	}
@@ -54,7 +55,7 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappabl
 		return className_;
 	}
 	
-	public List<String> getAttributes() {
+	public ArrayList<String> getAttributes() {
 		return attributeList_;
 	}
 	
@@ -67,8 +68,8 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappabl
 		return attributeMap_.get(key);
 	}
 	
-	public List<String> getValues() {
-		List<String> result = new Vector<String>();
+	public ArrayList<String> getValues() {
+		ArrayList<String> result = new ArrayList<String>();
 		for (String a : attributeList_) {
 			result.add(attributeMap_.get(a));
 		}

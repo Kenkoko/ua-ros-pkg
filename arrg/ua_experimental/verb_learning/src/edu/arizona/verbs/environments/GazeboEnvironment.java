@@ -1,5 +1,6 @@
 package edu.arizona.verbs.environments;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class GazeboEnvironment implements Environment {
 	private ros.ServiceClient<InitializeEnvironment.Request, InitializeEnvironment.Response, InitializeEnvironment> initializeService_;
 	private ros.ServiceClient<PerformAction.Request, PerformAction.Response, PerformAction> performService_;
 	
-	private String[] actions_ = null;
+	private ArrayList<String> actions_ = null;
 	
 	public GazeboEnvironment() {
 		try {
@@ -43,9 +44,8 @@ public class GazeboEnvironment implements Environment {
 		SimulateAction.Request request = new SimulateAction.Request();
 		request.action = action;
 		
-		request.state.object_states = new MDPObjectState[state.getObjectStates().size()];
 		for (int i = 0; i < state.getObjectStates().size(); i++) {
-			request.state.object_states[i] = StateConverter.objStateToMsg(state.getObjectStates().get(i));
+			request.state.object_states.add(StateConverter.objStateToMsg(state.getObjectStates().get(i)));
 		}
 		
 		try {
@@ -60,7 +60,7 @@ public class GazeboEnvironment implements Environment {
 	
 	@Override
 	public List<String> getActions() {
-		return Arrays.asList(actions_);
+		return actions_;
 	}
 
 	@Override

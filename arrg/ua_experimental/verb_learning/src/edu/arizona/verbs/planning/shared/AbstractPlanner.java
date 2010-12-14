@@ -76,7 +76,7 @@ public abstract class AbstractPlanner implements Planner {
 
 	// Ensure that each state is cached 
 	public State lookupState(OOMDPState mdpState, TreeSet<FSMState> fsmState) {
-		String stateString = mdpState.toString() + fsmState.toString();
+		String stateString = State.makeStateString(mdpState, fsmState);
 		if (!knownStates_.containsKey(stateString)) {
 			knownStates_.put(stateString, new State(mdpState, fsmState, this));
 		}

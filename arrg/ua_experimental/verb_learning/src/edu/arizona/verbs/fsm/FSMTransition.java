@@ -1,5 +1,6 @@
 package edu.arizona.verbs.fsm;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -98,12 +99,12 @@ public class FSMTransition implements Remappable<FSMTransition> {
 		Vector<String> tokens = new Vector<String>();
 		Iterables.addAll(tokens, it);
 		String relation = tokens.remove(0);
-		List<String> objectNames = new Vector<String>();
+		ArrayList<String> objectNames = new ArrayList<String>();
 		if (!tokens.isEmpty()) {
 			Iterable<String> names = Splitter.on(',').split(tokens.remove(0));
 			Iterables.addAll(objectNames, names);
 		}
-		return new Relation(relation, objectNames.toArray(new String[0]), true);
+		return new Relation(relation, objectNames, true);
 	}
 
 	@Override

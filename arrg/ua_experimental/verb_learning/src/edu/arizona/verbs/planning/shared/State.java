@@ -12,6 +12,10 @@ import edu.arizona.verbs.shared.OOMDPState;
 public class State {
 //	private static Logger logger = Logger.getLogger(State.class);
 	
+	public static String makeStateString(OOMDPState mdpState, TreeSet<FSMState> fsmState) {
+		return fsmState.toString() + mdpState.toString();
+	}
+	
 	protected Planner planner_;
 	protected OOMDPState mdpState_;
 	protected TreeSet<FSMState> fsmState_;
@@ -39,7 +43,7 @@ public class State {
 			costTotals_.put(a, 0.0);
 		}
 		
-		hashString_ = fsmState_.toString() + mdpState_.toString();
+		hashString_ = makeStateString(mdpState_, fsmState_);
 	}
 	
 	public OOMDPState getMdpState() {
