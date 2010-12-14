@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('ua_audio_transform')
+import roslib; roslib.load_manifest('ua_audio_fft')
 import rospy
 import sys
 import traceback
@@ -13,8 +13,8 @@ class audio_fft(object):
 
     def __init__(self,argv):
         rospy.init_node('audio_transform', anonymous=True)
-        self.sub = rospy.Subscriber("audio_capture/audio", AudioRawStream, self.callback)
-        self.pub = rospy.Publisher("transform_audio",TransformedStream)
+        self.sub = rospy.Subscriber('audio_capture/audio', AudioRawStream, self.callback)
+        self.pub = rospy.Publisher('transform_audio',TransformedStream)
         self.parse_cline(argv)
         self.first_time = True
 
@@ -23,22 +23,22 @@ class audio_fft(object):
         self.ovrp = 0.125
         self.pwr = True
         try:
-            opts, args = getopt.getopt(argv, "w:o:p:", ["window-size=","overlap=","powers_of_two="])
+            opts, args = getopt.getopt(argv, 'w:o:p:', ['window-size=','overlap=','powers_of_two='])
         except:
             traceback.print_exc()
-            rospy.loginfo(rospy.get_name()+": Command line fail")
+            rospy.loginfo(rospy.get_name()+': Command line fail')
             sys.exit(2)
         for opt, arg in opts:
-            if opt in ("-w","--window-size"):
-                rospy.loginfo(rospy.get_name()+": window-size="+arg)
+            if opt in ('-w','--window-size'):
+                rospy.loginfo(rospy.get_name()+': window-size='+arg)
                 self.wszp = float(arg)
-            elif opt in ("-o","--overlap"):
-                rospy.loginfo(rospy.get_name()+": overlap="+arg)
+            elif opt in ('-o','--overlap'):
+                rospy.loginfo(rospy.get_name()+': overlap='+arg)
                 self.ovrp = float(arg)
-            elif opt in ("-p","--powers_of_two"):
-                if arg=="False":
+            elif opt in ('-p','--powers_of_two'):
+                if arg=='False':
                     self.pwr = False
-                rospy.loginfo(rospy.get_name()+": powers_of_two="+str(self.pwr))
+                rospy.loginfo(rospy.get_name()+': powers_of_two='+str(self.pwr))
         if self.wszp <= 0:
             self.wszp = 0.25
         if self.ovrp <= 0:
@@ -69,7 +69,7 @@ class audio_fft(object):
                 self.ovr = lo_pwr
             else:
                 self.ovr = hi_pwr
-        rospy.loginfo(rospy.get_name()+": From frequency %d, using window-size %d and overlap %d.",data.sample_rate,self.wsz,self.ovr)
+        rospy.loginfo(rospy.get_name()+': From frequency %d, using window-size %d and overlap %d.',data.sample_rate,self.wsz,self.ovr)
         self.nUniquePts = (self.wsz+1)/2 + (self.wsz+1)%2
 
     def callback(self,data):
@@ -93,7 +93,7 @@ class audio_fft(object):
                 p[1:len(p)] = p[1:len(p)] * 2
             else:
                 p[1:len(p) -1] = p[1:len(p) - 1] * 2 # we've got even number of points fft
-            rospy.loginfo(rospy.get_name()+": publishing %d datapoints.", len(p))
+            rospy.loginfo(rospy.get_name()+': publishing %d datapoints.', len(p))
             self.data = self.data[self.ovr:len(self.data)]
             self.pub.publish(p,1,data.num_channels,data.sample_rate,self.nUniquePts,self.wsz,self.ovr)
             #Currently the '1' indicates that it is fft transform. Other transforms can be indicated by other integers.
