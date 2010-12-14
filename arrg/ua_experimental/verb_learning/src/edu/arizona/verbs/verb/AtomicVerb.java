@@ -175,9 +175,9 @@ public class AtomicVerb extends AbstractVerb {
 		trace.add(properStart);
 		
 		// TODO: Need to restore planning time information
-//		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
+		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
 //		SearchPlanner planner = new SearchPlanner(this, Interface.getCurrentEnvironment());
-		UCT planner = new UCT(this, Interface.getCurrentEnvironment(), executionLimit);
+//		UCT planner = new UCT(this, Interface.getCurrentEnvironment(), executionLimit);
 		Policy policy = planner.runAlgorithm(properStart, fsmState);
 		String action = policy.getAction(properStart, fsmState); 
 
@@ -195,7 +195,7 @@ public class AtomicVerb extends AbstractVerb {
 			action = policy.getAction(newState, fsmState);
 			if (action == null) { // This means we "fell off" the planned path
 				// For UCT, we need a new instance for now
-				planner.setMaxDepth(executionLimit - numSteps);
+//				planner.setMaxDepth(executionLimit - numSteps);
 				policy = planner.runAlgorithm(newState, fsmState); // re-plan
 				action = policy.getAction(newState, fsmState);
 			}

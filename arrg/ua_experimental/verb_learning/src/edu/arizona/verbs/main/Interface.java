@@ -349,17 +349,17 @@ public class Interface {
 	 * @throws RosException
 	 */
 	public static void main(String[] args) throws RosException {
-		// TODO: Should take the environment as an argument
+		// TODO: Should take the environment (and preferred planner?) as an argument
 		
 		final Ros ros = Ros.getInstance();
 		ros.init("verb_learning");
 		NodeHandle nh = ros.createNodeHandle();
 
 		// Gazebo
-//		currentEnvironment = new GazeboEnvironment();
+		currentEnvironment = new GazeboEnvironment();
 		
 		// Wubble World 2D
-		currentEnvironment = new WW2DEnvironment(true);
+//		currentEnvironment = new WW2DEnvironment(true);
 		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
 		nh.advertiseService("verb_learning/forget_verb", new ForgetVerb(), forgetVerb);
