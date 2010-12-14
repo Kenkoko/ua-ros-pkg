@@ -1,10 +1,10 @@
 <launch>
-    <node name="interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
+    <node name="relay_arm_sensor_interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
         <param name="name" type="str" value="relay_arm_sensor_interface"/> 
         <param name="serial_number" type="int" value="124427"/>
     </node>
 
-    <node name="interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
+    <node name="top_interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
         <param name="name" type="str" value="top_interface"/> 
         <param name="serial_number" type="int" value="106950"/>
     </node>
@@ -18,7 +18,7 @@
     <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble2.urdf.xacro'" />
 
     <!-- Start the Erratic mobile base driver -->
-    <include file="$(find wubble2_robot)/launch/erratic_controllers.launch" />
+    <include file="$(find wubble2_robot)/launch/erratic_controller.launch" />
 
     <!-- Start arm and head motor controllers -->
     <include file="$(find wubble2_robot)/launch/arm_controllers.launch" />

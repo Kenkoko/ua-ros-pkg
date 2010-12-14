@@ -39,29 +39,29 @@ class ActionTrajectoryTest:
 
         # First trajectory point
         # To be reached 1 second after starting along the trajectory
-        point = JointTrajectoryPoint()
-        point.positions  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        point.time_from_start = rospy.Duration(3.0)
-        goal.trajectory.points.append(point)
+#        point = JointTrajectoryPoint()
+#        point.positions  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#        point.time_from_start = rospy.Duration(3.0)
+#        goal.trajectory.points.append(point)
 
-        point = JointTrajectoryPoint()
-        point.positions =  [-1.90742604, -1.7149727400000001, 0.11761035, -0.32930898000000003, -1.830550302, 1.130032449, -0.020453076000000001]
-        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        point.time_from_start = rospy.Duration(6.0)
-        goal.trajectory.points.append(point)
+#        point = JointTrajectoryPoint()
+#        point.positions =  [-1.90742604, -1.7149727400000001, 0.11761035, -0.32930898000000003, -1.830550302, 1.130032449, -0.020453076000000001]
+#        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#        point.time_from_start = rospy.Duration(6.0)
+#        goal.trajectory.points.append(point)
 
-        point = JointTrajectoryPoint()
-        point.positions  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        point.time_from_start = rospy.Duration(9.0)
-        goal.trajectory.points.append(point)
+#        point = JointTrajectoryPoint()
+#        point.positions  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#        point.time_from_start = rospy.Duration(9.0)
+#        goal.trajectory.points.append(point)
 
-        point = JointTrajectoryPoint()
-        point.positions =  [-1.90742604, -1.7149727400000001, 0.11761035, -0.32930898000000003, -1.830550302, 1.130032449, -0.020453076000000001]
-        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        point.time_from_start = rospy.Duration(12.0)
-        goal.trajectory.points.append(point)
+#        point = JointTrajectoryPoint()
+#        point.positions =  [-1.90742604, -1.7149727400000001, 0.11761035, -0.32930898000000003, -1.830550302, 1.130032449, -0.020453076000000001]
+#        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#        point.time_from_start = rospy.Duration(12.0)
+#        goal.trajectory.points.append(point)
 
 #        point = JointTrajectoryPoint()
 #        point.positions  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -75,11 +75,19 @@ class ActionTrajectoryTest:
 #        point.time_from_start = rospy.Duration(14.0)
 #        goal.trajectory.points.append(point)
 
+        # pick up location
 #        point = JointTrajectoryPoint()
-#        point.positions  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#        point.positions  = [0.213837, -1.2028331250000002, 0.46188792000000001, 0.089811540000000009, 0.30168287100000002, -0.62893208700000003, -0.10737864900000001]
 #        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 #        point.time_from_start = rospy.Duration(16.0)
 #        goal.trajectory.points.append(point)
+
+        # shake location
+        point = JointTrajectoryPoint()
+        point.positions  = [-1.1, -1.58025543, 0.52817739000000008, -0.75698298000000008, -1.130032449, -0.30679613999999999, -0.18407768400000002]
+        point.velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        point.time_from_start = rospy.Duration(18.0)
+        goal.trajectory.points.append(point)
 
         #we are done; return the goal
         return goal

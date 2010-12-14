@@ -44,64 +44,41 @@ from ua_controller_msgs.msg import JointState
 
 class AX12ToPR2StateMsgs:
     def __init__(self):
-        self.arm_controllers = {'shoulder_pitch_controller': None,
-                                'shoulder_yaw_controller': None,
-                                'shoulder_roll_controller': None,
-                                'elbow_pitch_controller': None,
-                                'wrist_roll_controller': None,
-                                'wrist_pitch_controller': None,
-                                'wrist_yaw_controller': None,
-                                'left_finger_controller': None,
-                                'right_finger_controller': None}
-                           
-        self.head_controllers = {'head_pan_controller': None,
-                                 'head_tilt_controller': None}
-        self.laser_controllers = {'neck_tilt_controller': None}
-                             
-        for pub in self.arm_controllers:
-            self.arm_controllers[pub] = rospy.Publisher(pub + '/state_pr2_msgs', JointControllerState)
-            
-        for pub in self.head_controllers:
-            self.head_controllers[pub] = rospy.Publisher(pub + '/state_pr2_msgs', JointControllerState)
-            
-        for pub in self.laser_controllers:
-            self.laser_controllers[pub] = rospy.Publisher(pub + '/state_pr2_msgs', JointControllerState)
-        
         rospy.init_node('ax12_to_pr2_state_msgs', anonymous=True)
         
-        [rospy.Subscriber(c + '/state', JointState, self.handle_arm_state) for c in self.arm_controllers]
-        [rospy.Subscriber(c + '/state', JointState, self.handle_head_state) for c in self.head_controllers]
-        [rospy.Subscriber(c + '/state', JointState, self.handle_laser_state) for c in self.laser_controllers]
+        self.robot_controllers = ('shoulder_pitch_controller',
+                                  'shoulder_yaw_controller',
+                                  'shoulder_roll_controller',
+                                  'elbow_pitch_controller',
+                                  'wrist_roll_controller',
+                                  'wrist_pitch_controller',
+                                  'wrist_yaw_controller',
+                                  'gripper_left_finger_controller',
+                                  'gripper_right_finger_controller',
+                                  'head_pan_controller',
+                                  'head_tilt_controller',
+                                  'neck_tilt_controller')
+                                  
+        self.joint_to_publisher_state = {}
         
-    def handle_arm_state(self, msg):
-        jcs = JointControllerState(set_point=msg.goal_pos,
-                                   process_value=msg.current_pos,
-                                   process_value_dot=msg.velocity,
-                                   error=msg.error,
-                                   command=msg.load)
-        jcs.header.stamp = msg.header.stamp
-        name = msg.name.replace('_joint', '_controller', 1)
-        self.arm_controllers[name].publish(jcs)
+        for controller in self.robot_controllers:
+            joint_name = rospy.get_param(controller + '/joint_name')
+            publisher = rospy.Publisher(controller + '/state_pr2_msgs', JointControllerState)
+            state = JointControllerState()
+            self.joint_to_publisher_state[joint_name] = {'publisher': publisher, 'state': state}
+            
+        [rospy.Subscriber(controller + '/state', JointState, self.handle_controller_state) for controller in self.robot_controllers]
+        [rospy.wait_for_message(controller + '/state', JointState)]
         
-    def handle_head_state(self, msg):
-        jcs = JointControllerState(set_point=msg.goal_pos,
-                                   process_value=msg.current_pos,
-                                   process_value_dot=msg.velocity,
-                                   error=msg.error,
-                                   command=msg.load)
-        jcs.header.stamp = msg.header.stamp
-        name = msg.name.replace('_joint', '_controller', 1)
-        self.head_controllers[name].publish(jcs)
-        
-    def handle_laser_state(self, msg):
-        jcs = JointControllerState(set_point=msg.goal_pos,
-                                   process_value=msg.current_pos,
-                                   process_value_dot=msg.velocity,
-                                   error=msg.error,
-                                   command=msg.load)
-        jcs.header.stamp = msg.header.stamp
-        name = 'neck_tilt_controller'
-        self.laser_controllers[name].publish(jcs)
+    def handle_controller_state(self, msg):
+        state = self.joint_to_publisher_state[msg.name]['state']
+        state.set_point = msg.goal_pos
+        state.process_value = msg.current_pos
+        state.process_value_dot = msg.velocity
+        state.error = msg.error
+        state.command = msg.load
+        state.header.stamp = msg.header.stamp
+        self.joint_to_publisher_state[msg.name]['publisher'].publish(state)
 
 if __name__ == '__main__':
     try:
