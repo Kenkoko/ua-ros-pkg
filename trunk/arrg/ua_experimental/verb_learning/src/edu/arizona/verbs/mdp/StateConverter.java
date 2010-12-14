@@ -1,5 +1,6 @@
 package edu.arizona.verbs.mdp;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -21,29 +22,31 @@ import edu.arizona.verbs.shared.Relation;
 
 public class StateConverter {
 	
+	// TODO: Clean up this class now that rosjava is officially released
+	
 	/* Arrays */
 	
-	public static MDPObjectState[] objectsToMsgArray(List<OOMDPObjectState> objectList) {
-		return Collections2.transform(objectList, new Function<OOMDPObjectState, MDPObjectState>() {
-					public MDPObjectState apply(OOMDPObjectState state) { return objStateToMsg(state); }})
-			  .toArray(new MDPObjectState[0]);
+	public static ArrayList<MDPObjectState> objectsToMsgArray(List<OOMDPObjectState> objectList) {
+		return new ArrayList<MDPObjectState>(
+				Collections2.transform(objectList, new Function<OOMDPObjectState, MDPObjectState>() {
+					public MDPObjectState apply(OOMDPObjectState state) { return objStateToMsg(state); }}));
 	}
 	
-	public static List<OOMDPState> msgArrayToStates(MDPState[] trace) {
+	public static List<OOMDPState> msgArrayToStates(ArrayList<MDPState> trace) {
 		List<OOMDPState> result = new Vector<OOMDPState>();
 		
-		for (int i = 0; i < trace.length; i++) {
-			result.add(msgToState(trace[i]));
+		for (int i = 0; i < trace.size(); i++) {
+			result.add(msgToState(trace.get(i)));
 		}
 		
 		return result;
 	}
 	
-	public static MDPState[] stateToMsgArray(List<OOMDPState> trace) {
-		MDPState[] mdpStates = new MDPState[trace.size()];
+	public static ArrayList<MDPState> stateToMsgArray(List<OOMDPState> trace) {
+		ArrayList<MDPState> mdpStates = new ArrayList<MDPState>();
 
-		for (int i = 0; i < trace.size(); i++) {
-			mdpStates[i] = stateToMsg(trace.get(i));
+		for (OOMDPState s : trace) {
+			mdpStates.add(stateToMsg(s));
 		}
 		
 		return mdpStates;
@@ -63,8 +66,8 @@ public class StateConverter {
 		
 		message.class_name = state.getClassName();
 		message.name = state.getName();
-		message.attributes = state.getAttributes().toArray(new String[0]);
-		message.values = state.getValues().toArray(new String[0]);
+		message.attributes = state.getAttributes();
+		message.values = state.getValues();
 		
 		return message;
 	}
@@ -90,13 +93,13 @@ public class StateConverter {
 	public static MDPState stateToMsg(OOMDPState state) {
 		MDPState message = new MDPState();
 		
-		message.object_states = Collections2.transform(state.getObjectStates(), new Function<OOMDPObjectState, MDPObjectState>() {
-			public MDPObjectState apply(OOMDPObjectState state) { return objStateToMsg(state); }
-		}).toArray(new MDPObjectState[0]);
+		message.object_states = new ArrayList<MDPObjectState>(
+				Collections2.transform(state.getObjectStates(), new Function<OOMDPObjectState, MDPObjectState>() {
+					public MDPObjectState apply(OOMDPObjectState state) { return objStateToMsg(state); }
+				}));
 		
-		message.relations = new ros.pkg.oomdp_msgs.msg.Relation[state.getRelations().size()];
-		for (int i = 0; i < state.getRelations().size(); i++) {
-			message.relations[i] = deconvertRelation(state.getRelations().get(i)); 
+		for (Relation r : state.getRelations()) {
+			message.relations.add(deconvertRelation(r));
 		}
 		
 		return message;
@@ -105,21 +108,21 @@ public class StateConverter {
 	/* Relation */ 
 	
 	public static Relation convertRelation(ros.pkg.oomdp_msgs.msg.Relation relMsg) {
-		return new Relation(relMsg.relation, relMsg.obj_names, (relMsg.value > 0 ? true : false));
+		return new Relation(relMsg.relation, relMsg.obj_names, relMsg.value);
 	}
 	
 	public static ros.pkg.oomdp_msgs.msg.Relation deconvertRelation(Relation relation) {
 		ros.pkg.oomdp_msgs.msg.Relation relMsg = new ros.pkg.oomdp_msgs.msg.Relation();
 		relMsg.relation = relation.relation;
-		relMsg.obj_names = relation.getObjectNameArray();
-		relMsg.value = (relation.value ? (byte) 1 : (byte) 0);
+		relMsg.obj_names = relation.objectNames;
+		relMsg.value = relation.value;
 		return relMsg;
 	}
 	
 	/* Traces (Lists of States) */
 	
 	public static Instance convertTrace(List<OOMDPState> trace, String verb, Map<String, String> nameMap) {
-		List<Interval> closedIntervals = new Vector<Interval>();
+		ArrayList<Interval> closedIntervals = new ArrayList<Interval>();
 		Map<String, Interval> openIntervals = new HashMap<String, Interval>();
 
 		for (int i = 0; i < trace.size(); i++) {

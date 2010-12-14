@@ -44,9 +44,9 @@ import edu.uci.ics.jung.graph.DirectedGraph;
 public class SequentialVerb extends AbstractVerb {
 	private Vector<VerbBinding> verbBindings_ = new Vector<VerbBinding>();
 	
-	public SequentialVerb(String lexicalForm, String[] arguments, List<VerbBinding> verbs) {
+	public SequentialVerb(String lexicalForm, List<String> arguments, List<VerbBinding> verbs) {
 		lexicalForm_ = lexicalForm;
-		arguments_ = Arrays.asList(arguments);
+		arguments_ = new ArrayList<String>(arguments);
 		verbBindings_.addAll(verbs);
 		
 		initializeSignatures();
@@ -171,7 +171,7 @@ public class SequentialVerb extends AbstractVerb {
 		
 		// TODO: Don't like having to duplicate this code, need to fix that
 		response.trace = StateConverter.stateToMsgArray(trace);
-		response.execution_success = (byte) ((action != null && action.toString().equals(Action.TERMINATE)) ? 1 : 0);
+		response.execution_success = (action != null && action.toString().equals(Action.TERMINATE));
 		response.execution_length = numSteps;
 		response.planning_time = 0; // TODO: Compute the total planning time
 		
@@ -183,7 +183,7 @@ public class SequentialVerb extends AbstractVerb {
 		SequentialVerb remapped = new SequentialVerb();
 		
 		remapped.lexicalForm_ = lexicalForm_;
-		remapped.arguments_ = new Vector<String>();
+		remapped.arguments_ = new ArrayList<String>();
 		for (String s : arguments_) {
 			remapped.arguments_.add((nameMap.containsKey(s) ? nameMap.get(s) : s));
 		}

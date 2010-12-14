@@ -1,5 +1,6 @@
 package edu.arizona.verbs.verb;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import ros.pkg.oomdp_msgs.msg.MDPState;
@@ -28,5 +29,6 @@ public interface Verb extends Remappable<Verb> {
 	public Signature getSignature();
 	public VerbFSM getFSM();
 	public String[] getArgumentArray();
+	public ArrayList<String> getArguments();
 	public String getIdentifierString();
 }

@@ -70,10 +70,10 @@ public class Interface {
 
 	// Maps: Binding -> Argument
 	public static Map<String, String> extractReverseNameMap(VerbInstance vi) {
-		if (vi.arguments.length == vi.bindings.length) {
+		if (vi.arguments.size() == vi.bindings.size()) {
 			Map<String, String> nameMap = new HashMap<String, String>();
-			for (int i = 0; i < vi.arguments.length; i++) {
-				nameMap.put(vi.bindings[i], vi.arguments[i]);
+			for (int i = 0; i < vi.arguments.size(); i++) {
+				nameMap.put(vi.bindings.get(i), vi.arguments.get(i));
 			}
 			return nameMap;
 		} else {
@@ -83,10 +83,10 @@ public class Interface {
 	
 	// Maps: Argument -> Binding
 	public static LinkedHashMap<String, String> extractNameMap(VerbInstance vi) {
-		if (vi.arguments.length == vi.bindings.length) {
+		if (vi.arguments.size() == vi.bindings.size()) {
 			LinkedHashMap<String, String> nameMap = new LinkedHashMap<String, String>();
-			for (int i = 0; i < vi.arguments.length; i++) {
-				nameMap.put(vi.arguments[i], vi.bindings[i]);
+			for (int i = 0; i < vi.arguments.size(); i++) {
+				nameMap.put(vi.arguments.get(i), vi.bindings.get(i));
 			}
 			
 			return nameMap;
@@ -102,7 +102,7 @@ public class Interface {
 			@Override
 			public UpdateVerb.Response call(UpdateVerb.Request request) {
 				logger.debug("BEGIN update_verb callback...");
-				logger.debug("Received a trace with " + request.trace.length + " states for <" + request.verb + ">");
+				logger.debug("Received a trace with " + request.trace.size() + " states for <" + request.verb + ">");
 				
 				String verbName = request.verb.verb;
 				Map<String, String> nameMap = extractReverseNameMap(request.verb);
@@ -116,7 +116,7 @@ public class Interface {
 					verbs.put(verbName, verb);
 				}
 
-				if (request.is_positive > 0) {
+				if (request.is_positive) {
 					verb.addPositiveInstance(instance);
 				} else {
 					verb.addNegativeInstance(instance);
@@ -176,7 +176,7 @@ public class Interface {
 					
 					// First pass loads all the atomic verbs, marks the others to load later
 				    for (String dir : verbDirs) {
-				    	Vector<String> strings = new Vector<String>();
+				    	ArrayList<String> strings = new ArrayList<String>();
 				    	Iterables.addAll(strings, Splitter.on(",").split(dir));
 				    	
 				    	File seq = new File("verbs/" + dir + "/sequential.yaml");
@@ -191,19 +191,19 @@ public class Interface {
 				    		if (f.exists()) {
 				    			positiveSignature = Signature.fromXML(signatureFile);
 				    		} else {
-				    			positiveSignature = new Signature(strings.firstElement());
+				    			positiveSignature = new Signature(strings.get(0));
 				    		}
 				    		
 				    		String negSigFile = "verbs/" + dir + "/neg-signature.xml";
 				    		if (new File(negSigFile).exists()) {
 				    			negativeSignature = Signature.fromXML(negSigFile);
 				    		} else {
-				    			negativeSignature = new Signature("non-" + strings.firstElement());
+				    			negativeSignature = new Signature("non-" + strings.get(0));
 				    		}
 				    		
-				    		AtomicVerb verb = new AtomicVerb(strings.firstElement(),
-				    				strings.subList(1, strings.size()).toArray(new String[0]),
-				    				positiveSignature, negativeSignature);
+				    		AtomicVerb verb = new AtomicVerb(strings.get(0),
+				    										 strings.subList(1, strings.size()),
+				    										 positiveSignature, negativeSignature);
 				    		verbs.put(verb.getLexicalForm(), verb);
 				    	}
 				    }
@@ -252,7 +252,7 @@ public class Interface {
 				    		}
 							
 							ArrayList<String> split = Lists.newArrayList(Splitter.on(",").split(compDir));
-							SequentialVerb sv = new SequentialVerb(split.get(0), split.subList(1, split.size()).toArray(new String[0]), subverbs);
+							SequentialVerb sv = new SequentialVerb(split.get(0), split.subList(1, split.size()), subverbs);
 							sv.setPositiveSignature(positiveSignature);
 							sv.setNegativeSignature(negativeSignature);
 							verbs.put(split.get(0), sv);
@@ -263,17 +263,14 @@ public class Interface {
 				    }
 				}
 				
-				Vector<VerbDescription> verbDescriptions = new Vector<VerbDescription>();
 				for (Verb verb : verbs.values()) {
 					VerbDescription desc = new VerbDescription();
 		    		desc.verb = verb.getLexicalForm();
-		    		desc.arguments = verb.getArgumentArray();
-		    		verbDescriptions.add(desc);
+		    		desc.arguments = verb.getArguments();
+		    		resp.verbs.add(desc);
 				}
 				
 				System.out.println(verbs);
-				
-				resp.verbs = verbDescriptions.toArray(new VerbDescription[0]);
 				
 				logger.debug("VERBS LOADED");
 				

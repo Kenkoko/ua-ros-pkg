@@ -8,6 +8,9 @@ import java.util.TreeSet;
 
 import org.apache.commons.collections15.bag.HashBag;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+
 import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.planning.shared.AbstractPlanner;
 import edu.arizona.verbs.planning.shared.Action;
@@ -16,7 +19,6 @@ import edu.arizona.verbs.planning.shared.SimulationResult;
 import edu.arizona.verbs.planning.shared.State;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.arizona.verbs.util.ProbUtils;
 import edu.arizona.verbs.verb.Verb;
 
 public class UCT extends AbstractPlanner {
@@ -55,7 +57,7 @@ public class UCT extends AbstractPlanner {
 			return new Policy();
 		}
 		
-		for (int i = 0; i < 300; i++) {
+		for (int i = 0; i < 400; i++) {
 			environment_.reset();
 			
 			System.out.println(">>> BEGIN TRIAL " + i);
@@ -69,6 +71,7 @@ public class UCT extends AbstractPlanner {
 	public double uct(State s, int d) {
 		
 		if (s.isGoal()) {
+			System.out.println("Trial Reached Goal!");
 			for (Action a : actions_) {
 				setQ(s, a.toString(), d, 0.0);  
 			}
@@ -140,20 +143,23 @@ public class UCT extends AbstractPlanner {
 		List<Action> actions = new ArrayList<Action>();
 		
 		State current = start;
-		for (int i = maxDepth; i > 0; i--) {
+		for (int d = maxDepth; d > 0; d--) {
 			states.add(current);
 
-			// TODO: For some reason current is null on the second iteration?
 			if (current.isGoal()) {
 				actions.add(Action.TERMINATE_ACTION);
 				break;
 			}
 			
+			String sdString = lookupString(current, d);
 			List<Action> bestActions = new ArrayList<Action>();
 			double minQ = Double.MAX_VALUE;
-			
 			for (Action a : actions_) {
-				double qValue = getQ(start, a.toString(), i);
+				String nasdString = lookupString(current, a, d);
+				double qValue = getQ(current, a.toString(), d);
+//				if (nasd.getCount(nasdString) > 0) {
+//					qValue += Math.sqrt(2 * Math.log(nsd.getCount(sdString)) / nasd.getCount(nasdString));
+//				}
 				if (qValue < minQ) {
 					bestActions.clear();
 					bestActions.add(a);
@@ -168,19 +174,26 @@ public class UCT extends AbstractPlanner {
 			Action aStar = bestActions.get(r.nextInt(bestActions.size()));
 			actions.add(aStar);
 			
-			String lookupString = lookupString(current, aStar, i);
-			HashBag<String> nextStateCounts = t.get(lookupString);
-			int max = Integer.MIN_VALUE;
-			State mostLikelyNextState = null;
-			for (String s : nextStateCounts.uniqueSet()) {
-				int count = nextStateCounts.getCount(s);
-				if (count > max) {
-					max = count;
-					mostLikelyNextState = knownStates_.get(s);
-				}
-			}
+			String lookupString = lookupString(current, aStar, d);
 			
-			current = mostLikelyNextState;
+			if (!t.containsKey(lookupString)) {
+				break; // Why is this happening?
+			} else {
+				HashBag<String> nextStateCounts = t.get(lookupString);
+				int max = Integer.MIN_VALUE;
+				String mostLikelyNextState = null;
+				for (String s : nextStateCounts.uniqueSet()) {
+					int count = nextStateCounts.getCount(s);
+					if (count > max) {
+						max = count;
+						mostLikelyNextState = s;
+					}
+				}
+	
+				String stateString = Iterables.getLast(Splitter.on("|").split(mostLikelyNextState));
+				current = knownStates_.get(stateString);
+				System.out.println(current);
+			}
 		}
 		
 		return new Policy(states, actions);
@@ -226,11 +239,11 @@ public class UCT extends AbstractPlanner {
 	}
 	
 	private String lookupString(State s, int d) {
-		return String.valueOf(d) + s.toString();
+		return String.valueOf(d) + "|" + s.toString();
 	}
 	
 	private String lookupString(State s, Action a, int d) {
-		return String.valueOf(d) + a.toString() + s.toString();
+		return String.valueOf(d) + "|" + a.toString() + "|" + s.toString();
 	}
 	
 	public String chooseRandomAction() {
@@ -240,6 +253,7 @@ public class UCT extends AbstractPlanner {
 	}
 	
 	public double getCost(State s, State next) {
-		return (gamma * next.getHeuristic()) - s.getHeuristic() + 1.0;
+//		return (gamma * next.getHeuristic()) - s.getHeuristic() + 1.0;
+		return (gamma * next.getHeuristic()) - s.getHeuristic() + (next.isGoal() ? 0.0 : 1.0);
 	}
 }

@@ -51,17 +51,17 @@ public class AtomicVerb extends AbstractVerb {
 		initializeSignatures();
 	}
 	
-	public AtomicVerb(String word, String[] arguments) {
+	public AtomicVerb(String word, ArrayList<String> arguments) {
 		lexicalForm_ = word;
-		arguments_ = Arrays.asList(arguments);
+		arguments_ = arguments;
 		makeVerbFolder();
 		
 		initializeSignatures();
 	}
 	
-	public AtomicVerb(String word, String[] arguments, Signature signature, Signature negSignature) {
+	public AtomicVerb(String word, List<String> arguments, Signature signature, Signature negSignature) {
 		lexicalForm_ = word;
-		arguments_ = Arrays.asList(arguments);
+		arguments_ = new ArrayList<String>(arguments);
 		makeVerbFolder();
 
 		signature_ = signature;
@@ -163,11 +163,6 @@ public class AtomicVerb extends AbstractVerb {
 		
 		OOMDPState properStart = StateConverter.msgToState(startState);
 		
-		// TODO: Need to restore planning time information
-//		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
-//		SearchPlanner planner = new SearchPlanner(this, Interface.getCurrentEnvironment());
-		
-		
 //		long startTime = System.currentTimeMillis();
 //		long elapsedTime = System.currentTimeMillis() - startTime;
 		
@@ -179,6 +174,9 @@ public class AtomicVerb extends AbstractVerb {
 		System.out.println("START: " + properStart);
 		trace.add(properStart);
 		
+		// TODO: Need to restore planning time information
+//		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
+//		SearchPlanner planner = new SearchPlanner(this, Interface.getCurrentEnvironment());
 		UCT planner = new UCT(this, Interface.getCurrentEnvironment(), executionLimit);
 		Policy policy = planner.runAlgorithm(properStart, fsmState);
 		String action = policy.getAction(properStart, fsmState); 
@@ -204,7 +202,7 @@ public class AtomicVerb extends AbstractVerb {
 		}
 		
 		response.trace = StateConverter.stateToMsgArray(trace);
-		response.execution_success = (byte) ((action != null && action.toString().equals(Action.TERMINATE)) ? 1 : 0);
+		response.execution_success = (action != null && action.toString().equals(Action.TERMINATE));
 		response.execution_length = numSteps;
 		response.planning_time = 0; // TODO: Compute the total planning time
 		
@@ -219,7 +217,7 @@ public class AtomicVerb extends AbstractVerb {
 	public Verb remap(Map<String, String> nameMap) {
 		AtomicVerb newVerb = new AtomicVerb();
 		newVerb.lexicalForm_ = lexicalForm_;
-		newVerb.arguments_ = new Vector<String>();
+		newVerb.arguments_ = new ArrayList<String>();
 		for (String s : arguments_) {
 			newVerb.arguments_.add(nameMap.containsKey(s) ? nameMap.get(s) : s);
 		}

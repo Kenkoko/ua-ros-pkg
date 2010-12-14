@@ -1,35 +1,46 @@
 package edu.arizona.verbs.shared;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 
 public class Relation implements Remappable<Relation>, Comparable<Relation>{
 	// Treating this as a data container, so public members
 	// However, it is immutable, so should probably enforce that
 	public String relation;
-	public List<String> objectNames;
+	public ArrayList<String> objectNames;
 	public boolean value;
 	private String cachedString = null;
 	
 	public Relation() {
 		relation = new String();
-		objectNames = new Vector<String>();
+		objectNames = new ArrayList<String>();
 		value = false;
 		toString();
 	}
 	
+	public Relation(String relation, ArrayList<String> objectNames, boolean value) {
+		this.relation = relation;
+		this.objectNames = objectNames;
+		this.value = value;
+		toString();
+	}
+	
+	@Deprecated
 	public Relation(String relation, String[] objectNames, boolean value) {
 		this.relation = relation;
-		this.objectNames = Arrays.asList(objectNames);
+		this.objectNames = new ArrayList<String>(Arrays.asList(objectNames));
 		this.value = value;
 		toString();
 	}
 	
 	public String[] getObjectNameArray() {
 		return objectNames.toArray(new String[0]);
+	}
+	
+	public ArrayList<String> getObjectNames() {
+		return objectNames;
 	}
 	
 	@Override
@@ -52,13 +63,12 @@ public class Relation implements Remappable<Relation>, Comparable<Relation>{
 
 	@Override
 	public Relation remap(Map<String, String> nameMap) {
-		String[] remappedNames = new String[objectNames.size()];
-		for (int i = 0; i < remappedNames.length; i++) {
-			String oldName = objectNames.get(i);
+		ArrayList<String> remappedNames = new ArrayList<String>();
+		for (String oldName : objectNames) {
 			if (nameMap.containsKey(oldName)) {
-				remappedNames[i] = nameMap.get(objectNames.get(i));
+				remappedNames.add(nameMap.get(oldName));
 			} else {
-				remappedNames[i] = oldName;
+				remappedNames.add(oldName);
 			}
 		}
 		return new Relation(relation, remappedNames, value);
