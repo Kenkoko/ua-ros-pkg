@@ -20,9 +20,9 @@ shoulder_yaw_controller:
     joint_speed: 1.17
     motor:
         id: 2
-        init: 2048
-        min: 265
-        max: 3830
+        init: 1720
+        min: 0
+        max: 3200
 
 shoulder_roll_controller:
     controller:

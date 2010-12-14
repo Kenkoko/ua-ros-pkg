@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2010, Arizona Robotics Research Group, University of Arizona
+# Copyright (c) 2010, Antons Rebguns
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+#
+# Author: Antons Rebguns
+#
 
 import roslib; roslib.load_manifest('wubble2_robot')
 import rospy
@@ -33,22 +36,10 @@ import rospy
 from sensor_msgs.msg import JointState as JointStatePR2
 from ua_controller_msgs.msg import JointState as JointStateWubble
 
-class JointStateMessage():
-    def __init__(self, name, position, velocity, effort):
-        self.name = name
-        self.position = position
-        self.velocity = velocity
-        self.effort = effort
-
 class JointStatesPublisher():
     def __init__(self):
         rospy.init_node('wubble_joint_states_publisher', anonymous=True)
         
-        self.joint_states = {'base_caster_support_joint': JointStateMessage('base_caster_support_joint', 0.0, 0.0, 0.0),
-                             'caster_wheel_joint': JointStateMessage('caster_wheel_joint', 0.0, 0.0, 0.0),
-                             'base_link_left_wheel_joint': JointStateMessage('base_link_left_wheel_joint', 0.0, 0.0, 0.0),
-                             'base_link_right_wheel_joint': JointStateMessage('base_link_right_wheel_joint', 0.0, 0.0, 0.0)}
-                             
         self.controllers = ('shoulder_pitch_controller',
                             'shoulder_yaw_controller',
                             'shoulder_roll_controller',
@@ -62,8 +53,18 @@ class JointStatesPublisher():
                             'head_tilt_controller',
                             'neck_tilt_controller')
                             
+        self.joint_states = {'base_caster_support_joint': JointStateWubble(name='base_caster_support_joint', current_pos=0.0, velocity=0.0, load=0.0),
+                             'caster_wheel_joint': JointStateWubble(name='caster_wheel_joint', current_pos=0.0, velocity=0.0, load=0.0),
+                             'base_link_left_wheel_joint': JointStateWubble(name='base_link_left_wheel_joint', current_pos=0.0, velocity=0.0, load=0.0),
+                             'base_link_right_wheel_joint': JointStateWubble(name='base_link_right_wheel_joint', current_pos=0.0, velocity=0.0, load=0.0)}
+                             
+        for controller in self.controllers:
+            joint_name = rospy.get_param(controller + '/joint_name')
+            self.joint_states[joint_name] = JointStateWubble(name=joint_name)
+            
         # Start controller state subscribers
         [rospy.Subscriber(c + '/state', JointStateWubble, self.controller_state_handler) for c in self.controllers]
+        [rospy.wait_for_message(c + '/state', JointStateWubble) for c in self.controllers]
         
         # Start publisher
         self.joint_states_pub = rospy.Publisher('joint_states', JointStatePR2)
@@ -74,24 +75,22 @@ class JointStatesPublisher():
         while not rospy.is_shutdown():
             self.publish_joint_states()
             r.sleep()
-            
+
     def controller_state_handler(self, msg):
-        jcs = JointStateMessage(msg.name, msg.current_pos, msg.velocity, msg.load)
-        self.joint_states[msg.name] = jcs
-        
+        state = self.joint_states[msg.name]
+        state.current_pos = msg.current_pos
+        state.velocity = msg.velocity
+        state.load = msg.load
+
     def publish_joint_states(self):
         # Construct message & publish joint states
         msg = JointStatePR2()
-        msg.name = []
-        msg.position = []
-        msg.velocity = []
-        msg.effort = []
         
-        for joint in self.joint_states.values():
-            msg.name.append(joint.name)
-            msg.position.append(joint.position)
-            msg.velocity.append(joint.velocity)
-            msg.effort.append(joint.effort)
+        for joint, state in self.joint_states.items():
+            msg.name.append(joint)
+            msg.position.append(state.current_pos)
+            msg.velocity.append(state.velocity)
+            msg.effort.append(state.load)
             
         msg.header.stamp = rospy.Time.now()
         self.joint_states_pub.publish(msg)
