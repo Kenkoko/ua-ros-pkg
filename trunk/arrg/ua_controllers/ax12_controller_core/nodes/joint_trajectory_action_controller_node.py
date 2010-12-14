@@ -161,7 +161,7 @@ class JointTrajectoryActionController():
 
         # Determines which segment of the trajectory to use
         seg = -1
-        while seg + 1 < num_joints and self.trajectory[seg+1].start_time < req.time.to_sec():
+        while seg + 1 < len(self.trajectory) and self.trajectory[seg+1].start_time < req.time.to_sec():
             seg += 1
 
         if seg == -1: return False
@@ -175,11 +175,13 @@ class JointTrajectoryActionController():
         seg_end_time = self.trajectory.start_time + self.trajectory.duration
         t = self.trajectory.duration - (seg_end_time - req.time)
 
-        for j in range(self.num_joints):
+        for j, joint in enumerate(self.joint_names):
+            resp.position[j] = self.joint_states[joint].current_pos
+            resp.velocity[j] = self.joint_states[joint].velocity
             # evaluate spline and derivatives
-            vals = spalde(t, self.trajectory[seg].splines_tck[j])
-            resp.position[j] = vals[0]
-            resp.velocity[j] = abs(vals[1])
+            #vals = spalde(t, self.trajectory[seg].splines_tck[j])
+            #resp.position[j] = vals[0]
+            #resp.velocity[j] = abs(vals[1])
             #resp.position[j], resp.velocity[j], resp.acceleration[j] = self.sample_spline_with_time_bounds(self.trajectory[seg].splines[j].coeff,
             #                                                                                               self.trajectory[seg].duration,
             #                                                                                               req.time.to_sec() - self.trajectory[seg].start_time)
@@ -297,7 +299,10 @@ class JointTrajectoryActionController():
                 #trajectory[seg].splines_tck[j] = splrep(x, y, s=0, k=3)
                 #trajectory[seg].splines[j] = self.get_cubic_spline_coefficients(start_position, 0, dest_position, 0, durations[seg])
                 
-                self.set_joint_velocity(joint, abs(dest_position-start_position)/(seg_end_times[seg]-time).to_sec() + 0.1)
+                #self.set_joint_velocity(joint, abs(dest_position-start_position)/(seg_end_times[seg]-time).to_sec() + 0.1)
+                #self.set_joint_angle(joint, dest_position)
+
+                self.set_joint_velocity(joint, abs(dest_position - start_position) / durations[seg] + 0.1)
                 self.set_joint_angle(joint, dest_position)
 
             while time < seg_end_times[seg]:
