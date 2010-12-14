@@ -344,22 +344,41 @@ public class Interface {
 			}
 		};
 
+	enum Simulators {
+		gazebo {
+			@Override
+			public Environment create() {
+				return new GazeboEnvironment();
+			}
+		},
+		
+		ww2d {
+			@Override
+			public Environment create() {
+				return new WW2DEnvironment(true);
+			}
+		};
+		
+		public abstract Environment create();
+	}
+		
 	/**
 	 * @param args
 	 * @throws RosException
 	 */
 	public static void main(String[] args) throws RosException {
-		// TODO: Should take the environment (and preferred planner?) as an argument
+		if (args.length == 0) {
+			System.out.println("Please choose an environment:");
+			for (Simulators s : Simulators.values()) {
+				System.out.println("\t" + s.toString());
+			}
+		}
 		
 		final Ros ros = Ros.getInstance();
 		ros.init("verb_learning");
 		NodeHandle nh = ros.createNodeHandle();
 
-		// Gazebo
-		currentEnvironment = new GazeboEnvironment();
-		
-		// Wubble World 2D
-//		currentEnvironment = new WW2DEnvironment(true);
+		currentEnvironment = Simulators.valueOf(args[0]).create();
 		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
 		nh.advertiseService("verb_learning/forget_verb", new ForgetVerb(), forgetVerb);
