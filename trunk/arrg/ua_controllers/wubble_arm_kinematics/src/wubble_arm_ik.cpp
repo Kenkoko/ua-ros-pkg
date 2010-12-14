@@ -1,5 +1,6 @@
 //Software License Agreement (BSD License)
 
+//Copyright (c) 2010, Antons Rebguns
 //Copyright (c) 2008, Willow Garage, Inc.
 //All rights reserved.
 
@@ -164,7 +165,7 @@ void WubbleArmIK::computeIKShoulderPitch(const KDL::Frame& g_in, const double& s
 
   if (ik(translation, rotation, free_params, ik_solutions))
   {
-      ROS_DEBUG("Found %d IK solutions before pruning", ik_solutions.size());
+      ROS_DEBUG("Found %zd IK solutions before pruning", ik_solutions.size());
       std::vector<IKReal> sol(NUM_JOINTS_ARM7DOF);
 
     for (size_t i = 0; i < ik_solutions.size(); ++i)
@@ -189,13 +190,7 @@ void WubbleArmIK::computeIKShoulderPitch(const KDL::Frame& g_in, const double& s
     }
   }
 
-  ROS_DEBUG("Found %d IK solutions after pruning", solution_ik_.size());
-}
-
-void WubbleArmIK::computeIKShoulderRoll(const KDL::Frame &g_in, const double &shoulder_roll_initial_guess)
-{
-  solution_ik_.clear();
-  ROS_WARN("Compute IK with free Shoulder Roll not implemented");
+  ROS_DEBUG("Found %zd IK solutions after pruning", solution_ik_.size());
 }
 
 bool WubbleArmIK::checkJointLimits(const std::vector<double> &joint_values)
@@ -223,3 +218,4 @@ bool WubbleArmIK::checkJointLimits(const double &joint_value, const int &joint_n
 
   return true;
 }
+

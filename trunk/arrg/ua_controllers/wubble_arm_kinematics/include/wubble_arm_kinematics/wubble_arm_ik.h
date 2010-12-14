@@ -1,5 +1,6 @@
 //Software License Agreement (BSD License)
 
+//Copyright (c) 2010, Antons Rebguns
 //Copyright (c) 2008, Willow Garage, Inc.
 //All rights reserved.
 
@@ -46,7 +47,7 @@ public:
 
   /** @class
    *  @brief Inverse kinematics for the Wubble arm.
-   *  @author Sachin Chitta <sachinc@willowgarage.com>
+   *  @author Antons Rebguns, based on code by Sachin Chitta <sachinc@willowgarage.com>
    *
    */
   WubbleArmIK();
@@ -68,13 +69,6 @@ public:
   */
   void computeIKShoulderPitch(const KDL::Frame &g_in, const double &shoulder_pitch_initial_guess);
 
-  /**
-  @brief compute IK based on an initial guess for the shoulder roll angle.
-  @param Input pose for end-effector
-  @param Initial guess for shoulder roll angle
-  */
-  void computeIKShoulderRoll(const KDL::Frame &g_in, const double &shoulder_roll_initial_guess);
-
   std::vector<std::vector<double> > solution_ik_;/// a vector of ik solutions
 
   /**
@@ -87,8 +81,6 @@ public:
      @brief get chain information about the arm.
   */
   kinematics_msgs::KinematicSolverInfo solver_info_;
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
 
@@ -105,3 +97,4 @@ private:
 };
 }
 #endif// WUBBLE_ARM_IK_H
+
