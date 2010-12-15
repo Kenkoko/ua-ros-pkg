@@ -69,7 +69,8 @@ if __name__ == '__main__':
     stop_service_name = 'stop_controller/%s' % device_namespace
     restart_service_name = 'restart_controller/%s' % device_namespace
     
-    rospy.loginfo('controller_spawner: waiting for controller_manager to startup in %s namespace...' % rospy.get_namespace())
+    parent_namespace = 'global' if rospy.get_namespace() == '/' else rospy.get_namespace()
+    rospy.loginfo('%s controller_spawner: waiting for controller_manager to startup in %s namespace...' % (device_namespace, parent_namespace)
     
     rospy.wait_for_service(start_service_name)
     rospy.wait_for_service(stop_service_name)
@@ -79,7 +80,7 @@ if __name__ == '__main__':
     stop_controller = rospy.ServiceProxy(stop_service_name, StopController)
     restart_controller = rospy.ServiceProxy(restart_service_name, RestartController)
     
-    rospy.loginfo('controller_spawner: All services are up, spawning controllers...')
+    rospy.loginfo('%s controller_spawner: All services are up, spawning controllers...' % device_namespace)
     
     for controller_name in joint_controllers:
         try:
@@ -95,6 +96,7 @@ if __name__ == '__main__':
             sys.exit(1)
         except Exception as e:
             rospy.logerr('[%s]: %s' % (controller_name, e))
+            sys.exit(1)
             
         if command.lower() == 'start':
             try:
