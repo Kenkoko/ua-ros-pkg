@@ -2,8 +2,8 @@
 #
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2010, Arizona Robotics Research Group,
-# University of Arizona. All rights reserved.
+# Copyright (c) 2010, Antons Rebguns
+# All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,8 +33,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Antons Rebguns
-# Author: Cody Jorgensen
-# Author: Cara Slutter
 #
 
 import roslib
@@ -43,42 +41,12 @@ roslib.load_manifest('ax12_controller_core')
 from roslib.packages import InvalidROSPkgException
 
 import rospy
-from ax12_controller_core.srv import *
+from ax12_controller_core.srv import StartController
+from ax12_controller_core.srv import StopController
+from ax12_controller_core.srv import RestartController
 
-import os
 import sys
 from optparse import OptionParser
-
-def manage_controller(port, command, package_path, module_name, class_name, controller_name):
-    namespace = port[port.rfind('/') + 1:]
-    
-    if command.lower() == 'start':
-        try:
-            start_controller = rospy.ServiceProxy('start_controller/%s' % namespace, StartController)
-            response = start_controller(port, package_path, module_name, class_name, controller_name)
-            if response.success: rospy.loginfo(response.reason)
-            else: rospy.logerr(response.reason)
-        except rospy.ServiceException, e:
-            rospy.logerr('Service call failed: %s' % e)
-    elif command.lower() == 'stop':
-        try:
-            stop_controller = rospy.ServiceProxy('stop_controller/%s' % namespace, StopController)
-            response = stop_controller(controller_name)
-            if response.success: rospy.loginfo(response.reason)
-            else: rospy.logerr(response.reason)
-        except rospy.ServiceException, e:
-            rospy.logerr('Service call failed: %s' % e)
-    elif command.lower() == 'restart':
-        try:
-            restart_controller = rospy.ServiceProxy('restart_controller/%s' % namespace, RestartController)
-            response = restart_controller(port, package_path, module_name, class_name, controller_name)
-            if response.success: rospy.loginfo(response.reason)
-            else: rospy.logerr(response.reason)
-        except rospy.ServiceException, e:
-            rospy.logerr('Service call failed: %s' % e)
-    else:
-        rospy.logerr('Invalid command.')
-        print_usage()
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -96,25 +64,22 @@ if __name__ == '__main__':
     command = options.command
     joint_controllers = args
     
-    parent_namespace = rospy.get_namespace()
     device_namespace = port[port.rfind('/') + 1:]
     start_service_name = 'start_controller/%s' % device_namespace
     stop_service_name = 'stop_controller/%s' % device_namespace
     restart_service_name = 'restart_controller/%s' % device_namespace
     
-    rospy.loginfo('controller_spawner: Service [%s%s] has not been advertised, waiting...' % (parent_namespace, start_service_name))
-    rospy.loginfo('controller_spawner: Service [%s%s] has not been advertised, waiting...' % (parent_namespace, stop_service_name))
-    rospy.loginfo('controller_spawner: Service [%s%s] has not been advertised, waiting...' % (parent_namespace, restart_service_name))
+    rospy.loginfo('controller_spawner: waiting for controller_manager to startup in %s namespace...' % rospy.get_namespace())
     
     rospy.wait_for_service(start_service_name)
     rospy.wait_for_service(stop_service_name)
     rospy.wait_for_service(restart_service_name)
     
-    rospy.loginfo('controller_spawner: Service [%s%s] is now available' % (parent_namespace, start_service_name))
-    rospy.loginfo('controller_spawner: Service [%s%s] is now available' % (parent_namespace, stop_service_name))
-    rospy.loginfo('controller_spawner: Service [%s%s] is now available' % (parent_namespace, restart_service_name))
+    start_controller = rospy.ServiceProxy(start_service_name, StartController)
+    stop_controller = rospy.ServiceProxy(stop_service_name, StopController)
+    restart_controller = rospy.ServiceProxy(restart_service_name, RestartController)
     
-    rospy.loginfo('controller_spawner: Spawning controllers')
+    rospy.loginfo('controller_spawner: All services are up, spawning controllers...')
     
     for controller_name in joint_controllers:
         try:
@@ -128,6 +93,31 @@ if __name__ == '__main__':
         except InvalidROSPkgException as pe:
             rospy.logerr('[%s] configuration error: %s' % (controller_name, pe))
             sys.exit(1)
+        except Exception as e:
+            rospy.logerr('[%s]: %s' % (controller_name, e))
             
-        manage_controller(port, command, package_path, module_name, class_name, controller_name)
+        if command.lower() == 'start':
+            try:
+                response = start_controller(port, package_path, module_name, class_name, controller_name)
+                if response.success: rospy.loginfo(response.reason)
+                else: rospy.logerr(response.reason)
+            except rospy.ServiceException, e:
+                rospy.logerr('Service call failed: %s' % e)
+        elif command.lower() == 'stop':
+            try:
+                response = stop_controller(controller_name)
+                if response.success: rospy.loginfo(response.reason)
+                else: rospy.logerr(response.reason)
+            except rospy.ServiceException, e:
+                rospy.logerr('Service call failed: %s' % e)
+        elif command.lower() == 'restart':
+            try:
+                response = restart_controller(port, package_path, module_name, class_name, controller_name)
+                if response.success: rospy.loginfo(response.reason)
+                else: rospy.logerr(response.reason)
+            except rospy.ServiceException, e:
+                rospy.logerr('Service call failed: %s' % e)
+        else:
+            rospy.logerr('Invalid command.')
+            parser.print_help()
 
