@@ -40,6 +40,8 @@
 import roslib
 roslib.load_manifest('ax12_controller_core')
 
+from roslib.packages import InvalidROSPkgException
+
 import rospy
 from ax12_controller_core.srv import *
 
@@ -51,10 +53,6 @@ def manage_controller(port, command, package_path, module_name, class_name, cont
     namespace = port[port.rfind('/') + 1:]
     
     if command.lower() == 'start':
-        start_service_name = 'start_controller/%s' % namespace
-        rospy.loginfo('Waiting for %s to become available...' % (rospy.get_namespace() + start_service_name)
-        rospy.wait_for_service(start_service_name)
-        rospy.loginfo('%s is now available' % (rospy.get_namespace() + start_service_name)
         try:
             start_controller = rospy.ServiceProxy('start_controller/%s' % namespace, StartController)
             response = start_controller(port, package_path, module_name, class_name, controller_name)
@@ -63,10 +61,6 @@ def manage_controller(port, command, package_path, module_name, class_name, cont
         except rospy.ServiceException, e:
             rospy.logerr('Service call failed: %s' % e)
     elif command.lower() == 'stop':
-        stop_service_name = 'stop_controller/%s' % namespace
-        rospy.loginfo('Waiting for %s to become available...' % (rospy.get_namespace() + stop_service_name)
-        rospy.wait_for_service(stop_service_name)
-        rospy.loginfo('%s is now available' % (rospy.get_namespace() + stop_service_name)
         try:
             stop_controller = rospy.ServiceProxy('stop_controller/%s' % namespace, StopController)
             response = stop_controller(controller_name)
@@ -75,10 +69,6 @@ def manage_controller(port, command, package_path, module_name, class_name, cont
         except rospy.ServiceException, e:
             rospy.logerr('Service call failed: %s' % e)
     elif command.lower() == 'restart':
-        restart_service_name = 'restart_controller/%s' % namespace
-        rospy.loginfo('Waiting for %s to become available...' % (rospy.get_namespace() + restart_service_name)
-        rospy.wait_for_service(restart_service_name)
-        rospy.loginfo('%s is now available' % (rospy.get_namespace() + restart_service_name)
         try:
             restart_controller = rospy.ServiceProxy('restart_controller/%s' % namespace, RestartController)
             response = restart_controller(port, package_path, module_name, class_name, controller_name)
@@ -106,21 +96,37 @@ if __name__ == '__main__':
     command = options.command
     joint_controllers = args
     
+    parent_namespace = rospy.get_namespace()
+    device_namespace = port[port.rfind('/') + 1:]
+    start_service_name = 'start_controller/%s' % device_namespace
+    stop_service_name = 'stop_controller/%s' % device_namespace
+    restart_service_name = 'restart_controller/%s' % device_namespace
+    
+    rospy.loginfo('controller_spawner: Service [%s%s] has not been advertised, waiting...' % (parent_namespace, start_service_name))
+    rospy.loginfo('controller_spawner: Service [%s%s] has not been advertised, waiting...' % (parent_namespace, stop_service_name))
+    rospy.loginfo('controller_spawner: Service [%s%s] has not been advertised, waiting...' % (parent_namespace, restart_service_name))
+    
+    rospy.wait_for_service(start_service_name)
+    rospy.wait_for_service(stop_service_name)
+    rospy.wait_for_service(restart_service_name)
+    
+    rospy.loginfo('controller_spawner: Service [%s%s] is now available' % (parent_namespace, start_service_name))
+    rospy.loginfo('controller_spawner: Service [%s%s] is now available' % (parent_namespace, stop_service_name))
+    rospy.loginfo('controller_spawner: Service [%s%s] is now available' % (parent_namespace, restart_service_name))
+    
+    rospy.loginfo('controller_spawner: Spawning controllers')
+    
     for controller_name in joint_controllers:
         try:
             controller = rospy.get_param(controller_name + '/controller')
-        except KeyError, ke:
-            rospy.logerr('Controller\'s [%s] configuration was not properly loaded on the parameter server' % controller_name)
+            package_path = roslib.packages.get_pkg_dir(controller['package'])
+            module_name = controller['module']
+            class_name = controller['type']
+        except KeyError as ke:
+            rospy.logerr('[%s] configuration error: could not find controller parameters on parameter server' % controller_name)
             sys.exit(1)
-            
-        rospack = os.popen('rospack find ' + controller['package'])
-        package_path = rospack.readline().strip()
-        module_name = controller['module']
-        class_name = controller['type']
-        rospack.close()
-        
-        if not package_path:
-            rospy.logerr('Controller\'s [%s] configuration specified package that does not exist' % controller_name)
+        except InvalidROSPkgException as pe:
+            rospy.logerr('[%s] configuration error: %s' % (controller_name, pe))
             sys.exit(1)
             
         manage_controller(port, command, package_path, module_name, class_name, controller_name)
