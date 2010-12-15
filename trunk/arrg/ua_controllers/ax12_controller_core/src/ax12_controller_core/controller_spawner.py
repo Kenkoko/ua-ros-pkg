@@ -52,9 +52,9 @@ def manage_controller(port, command, package_path, module_name, class_name, cont
     
     if command.lower() == 'start':
         start_service_name = 'start_controller/%s' % namespace
-        rospy.loginfo('Waiting for %s to become available...', % (rospy.get_namespace() + start_service_name)
+        rospy.loginfo('Waiting for %s to become available...' % (rospy.get_namespace() + start_service_name)
         rospy.wait_for_service(start_service_name)
-        rospy.loginfo('%s is now available', % (rospy.get_namespace() + start_service_name)
+        rospy.loginfo('%s is now available' % (rospy.get_namespace() + start_service_name)
         try:
             start_controller = rospy.ServiceProxy('start_controller/%s' % namespace, StartController)
             response = start_controller(port, package_path, module_name, class_name, controller_name)
@@ -64,9 +64,9 @@ def manage_controller(port, command, package_path, module_name, class_name, cont
             rospy.logerr('Service call failed: %s' % e)
     elif command.lower() == 'stop':
         stop_service_name = 'stop_controller/%s' % namespace
-        rospy.loginfo('Waiting for %s to become available...', % (rospy.get_namespace() + stop_service_name)
+        rospy.loginfo('Waiting for %s to become available...' % (rospy.get_namespace() + stop_service_name)
         rospy.wait_for_service(stop_service_name)
-        rospy.loginfo('%s is now available', % (rospy.get_namespace() + stop_service_name)
+        rospy.loginfo('%s is now available' % (rospy.get_namespace() + stop_service_name)
         try:
             stop_controller = rospy.ServiceProxy('stop_controller/%s' % namespace, StopController)
             response = stop_controller(controller_name)
@@ -76,9 +76,9 @@ def manage_controller(port, command, package_path, module_name, class_name, cont
             rospy.logerr('Service call failed: %s' % e)
     elif command.lower() == 'restart':
         restart_service_name = 'restart_controller/%s' % namespace
-        rospy.loginfo('Waiting for %s to become available...', % (rospy.get_namespace() + restart_service_name)
+        rospy.loginfo('Waiting for %s to become available...' % (rospy.get_namespace() + restart_service_name)
         rospy.wait_for_service(restart_service_name)
-        rospy.loginfo('%s is now available', % (rospy.get_namespace() + restart_service_name)
+        rospy.loginfo('%s is now available' % (rospy.get_namespace() + restart_service_name)
         try:
             restart_controller = rospy.ServiceProxy('restart_controller/%s' % namespace, RestartController)
             response = restart_controller(port, package_path, module_name, class_name, controller_name)
