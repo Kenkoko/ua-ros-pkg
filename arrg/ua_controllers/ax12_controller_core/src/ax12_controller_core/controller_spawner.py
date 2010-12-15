@@ -70,7 +70,7 @@ if __name__ == '__main__':
     restart_service_name = 'restart_controller/%s' % device_namespace
     
     parent_namespace = 'global' if rospy.get_namespace() == '/' else rospy.get_namespace()
-    rospy.loginfo('%s controller_spawner: waiting for controller_manager to startup in %s namespace...' % (device_namespace, parent_namespace)
+    rospy.loginfo('%s controller_spawner: waiting for controller_manager to startup in %s namespace...' % (device_namespace, parent_namespace))
     
     rospy.wait_for_service(start_service_name)
     rospy.wait_for_service(stop_service_name)
