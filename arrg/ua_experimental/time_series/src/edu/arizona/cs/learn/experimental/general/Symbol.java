@@ -7,34 +7,31 @@ import java.util.TreeSet;
 
 import org.dom4j.Element;
 
+import edu.arizona.cs.learn.experimental.general.values.Value;
+
 public class Symbol {
-	private List<Double> _key;
+	private List<Value> _key;
 	private double _weight;
 
-	private List<List<Double>> _examples;
-	
-	private Symbol(List<Double> key, double weight, List<List<Double>> examples) {
+	public Symbol(List<Value> key, double weight) {
 		_key = key;
 		_weight = weight;
-		
-		_examples = examples;
 	}
 	
-	public Symbol(List<Double> key, double weight) {
-		this(key, weight, new ArrayList<List<Double>>());
-		_examples.add(key);
-	}
-
-	public Symbol(List<Double> key) {
+	public Symbol(List<Value> key) {
 		this(key, 1.0);
 	}
 
-	public List<Double> key() {
+	public List<Value> key() {
 		return _key;
 	}
 	
 	public double weight() {
 		return _weight;
+	}
+	
+	public double size() { 
+		return _key.size();
 	}
 
 	/**
@@ -43,15 +40,9 @@ public class Symbol {
 	 * to the correct value.
 	 * @param example
 	 */
-	public void addExample(List<Double> example) { 
-		_examples.add(new ArrayList<Double>(example));
-		
-		for (int i = 0; i < _key.size(); ++i) { 
-			if (_key.get(i) == Double.NaN) 
-				continue;
-			
-			if (Double.compare(_key.get(i), example.get(i)) != 0) 
-				_key.set(i, Double.NaN);
+	public void addExample(List<Value> example) { 
+		for (int i = 0; i < _key.size(); ++i) {
+			_key.get(i).merge(example.get(i));
 		}
 	}
 	
@@ -64,7 +55,11 @@ public class Symbol {
 	}
 	
 	public Symbol copy() {
-		return new Symbol(new ArrayList<Double>(_key), _weight, _examples);
+		List<Value> key = new ArrayList<Value>();
+		for (Value v : _key)
+			key.add(v.copy());
+		
+		return new Symbol(key, _weight);
 	}
 
 	public boolean equals(Object o) {
@@ -76,11 +71,25 @@ public class Symbol {
 	}
 	
 	public void toXML(Element e) {
-		throw new RuntimeException("Not supported yet");
+		Element sElement = e.addElement("symbol");
+		sElement.addAttribute("weight", _weight+"");
+		for (Value v : _key) { 
+			v.toXML(sElement);
+		}
 	}
 
 	public static Symbol fromXML(Element e) {
-		throw new RuntimeException("Not supported yet");
+		
+		double weight = Double.parseDouble(e.attributeValue("weight"));
+		List<Value> values = new ArrayList<Value>();
+
+		List<?> vList = e.elements("value");
+		for (int i = 0; i < vList.size(); ++i) { 
+			Element ve = (Element) vList.get(i);
+			
+			values.add(Value.fromXML(ve));
+		}
+		return new Symbol(values, weight);
 	}
 	
 	/**
@@ -89,10 +98,10 @@ public class Symbol {
 	 * @param B
 	 * @return
 	 */
-	public static double dot(List<Double> A, List<Double> B) { 
+	public static double dot(List<Value> A, List<Value> B) { 
 		double d = 0;
 		for (int i = 0; i < A.size(); ++i) { 
-			d += (A.get(i) * B.get(i));
+			d += A.get(i).multiply(B.get(i));
 		}
 		return d;
 	}
@@ -102,7 +111,7 @@ public class Symbol {
 	 * @param A
 	 * @return
 	 */
-	public static double length(List<Double> A) { 
+	public static double length(List<Value> A) { 
 		return Math.sqrt(lengthSquared(A));
 	}
 	
@@ -111,14 +120,12 @@ public class Symbol {
 	 * @param A
 	 * @return
 	 */
-	public static double lengthSquared(List<Double> A) { 
+	public static double lengthSquared(List<Value> A) { 
 		double d = 0.0;
 		for (int i = 0; i < A.size(); ++i) 
-			d += (A.get(i) * A.get(i));
+			d += A.get(i).multiply(A.get(i));
 		return d;
 	}
-
-
 
 	/**
 	 * Although A and B consist of Vectors of doubles the 
@@ -130,20 +137,17 @@ public class Symbol {
 	public static double tanimotoCoefficient(Symbol A, Symbol B) { 
 		if (A._key.size() != B._key.size())
 			throw new RuntimeException("Key sizes do not match\n" + A._key + "\n" + B._key);
-		
+
 		// we have to subsequence the keys since they may have
 		// NaN within them.
 		Set<Integer> exclude = new TreeSet<Integer>();
 		for (int i = 0; i < A._key.size(); ++i) {
-			if (Double.compare(Double.NaN, A._key.get(i)) == 0)
-				exclude.add(i);
-			
-			if (Double.compare(Double.NaN, B._key.get(i)) == 0)
+			if (!A._key.get(i).considerDistance() || !B._key.get(i).considerDistance())
 				exclude.add(i);
 		}
-		
-		List<Double> subA = new ArrayList<Double>();
-		List<Double> subB = new ArrayList<Double>();
+
+		List<Value> subA = new ArrayList<Value>();
+		List<Value> subB = new ArrayList<Value>();
 		for (int i = 0; i < A._key.size(); ++i) { 
 			if (exclude.contains(i))
 				continue;
@@ -151,7 +155,7 @@ public class Symbol {
 			subA.add(A._key.get(i));
 			subB.add(B._key.get(i));
 		}
-		
+
 		double dot = dot(subA, subB);
 		double lengthA = lengthSquared(subA);
 		double lengthB = lengthSquared(subB);
@@ -169,8 +173,12 @@ public class Symbol {
 //		System.out.println("---- Merge: \n   " + A._key + "\n   " + B._key + " " + B._examples.size());
 		Symbol newSymbol = A.copy();
 		newSymbol.increment(B._weight);
-		for (List<Double> example : B._examples) {
-			newSymbol.addExample(example);
+		
+		for (int i = 0; i < newSymbol._key.size(); ++i) { 
+			Value v1 = newSymbol._key.get(i);
+			Value v2 = B._key.get(i);
+			
+			v1.merge(v2);
 		}
 		return newSymbol;
 	}

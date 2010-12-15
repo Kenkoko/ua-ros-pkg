@@ -41,11 +41,11 @@ public class FSMRecognizer {
 		return update(this._active, activeProps, autoReset);
 	}
 	
-	private boolean update(List<BPPNode> active, Set<String> activeProps) {
+	public boolean update(List<BPPNode> active, Set<String> activeProps) {
 		return update(active, activeProps, true);
 	}
 	
-	private boolean update(List<BPPNode> active, Set<String> activeProps, boolean autoReset) {
+	public boolean update(List<BPPNode> active, Set<String> activeProps, boolean autoReset) {
 		List<BPPNode> turningOn = new ArrayList<BPPNode>();
 		List<BPPNode> turningOff = new ArrayList<BPPNode>();
 
@@ -92,15 +92,14 @@ public class FSMRecognizer {
 	}
 	
 	public boolean test(List<Interval> intervals, int start, int end) {
-		List active = new ArrayList();
-		active.add(this._startNode);
+		List<BPPNode> active = new ArrayList<BPPNode>();
+		active.add(_startNode);
 
 		for (int i = start; i < end; i++) {
-			Set props = new HashSet();
+			Set<String> props = new HashSet<String>();
 			for (Interval interval : intervals) {
-				if (interval.on(i)) {
+				if (interval.on(i)) 
 					props.add(interval.name);
-				}
 			}
 
 			if (update(active, props)) {

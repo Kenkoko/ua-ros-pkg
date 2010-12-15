@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
+import edu.arizona.cs.learn.experimental.general.values.Value;
 
 
 public class Report {
@@ -82,13 +82,10 @@ public class Report {
 			List<String> list = new ArrayList<String>();
 			if (obj1 != null && obj2 != null) {
 				for (int j = 0; j < obj1.key().size(); ++j) { 
-					Double d1 = obj1.key().get(j);
-					Double d2 = obj2.key().get(j);
-					
-					if (Double.compare(d1, d2) == 0) 
-						list.add(((int) d1.doubleValue()) + "");
-					else 
-						list.add("*");
+					Value d1 = obj1.key().get(j);
+					Value d2 = obj2.key().get(j);
+
+					// TODO: actually add in some interesting print statements.
 				}
 			}
 			combined.add(list);

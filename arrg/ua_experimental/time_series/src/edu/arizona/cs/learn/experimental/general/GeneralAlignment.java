@@ -194,7 +194,8 @@ public class GeneralAlignment {
 				
 				// Substitution will always be allowed and should have
 				// Do not substitute if we have a complete mismatch though.
-				double compare = Symbol.tanimotoCoefficient(obj1, obj2);
+				double compare = params.similarity.similarity(obj1, obj2);
+//				double compare = Symbol.tanimotoCoefficient(obj1, obj2);
 
 				// if we have at least matched one thing....then it's not
 				// a complete substitution

@@ -24,10 +24,14 @@ public enum Recognizer {
 				String key, String signatureFile,
 				Map<Integer, List<Interval>> training, List<Integer> test,
 				int minPct, boolean onlyStart) {
+			Signature s = Signature.fromXML(signatureFile);
+			return build(key, s, minPct, onlyStart);
+		}
 
+		@Override
+		public FSMRecognizer build(String key, Signature s, int minPct, boolean onlyStart) {
 			double pct = minPct / 100.0D;
 
-			Signature s = Signature.fromXML(signatureFile);
 			int minSeen = (int) Math.round(s.trainingSize() * pct);
 			s = s.prune(minSeen);
 
@@ -70,7 +74,14 @@ public enum Recognizer {
 			return new FSMRecognizer(key, graph);
 		}
 
+		@Override
+		public FSMRecognizer build(String key, Signature s, int minPct, boolean onlyStart) {
+			throw new RuntimeException("Not yet implemented!!");
+		}
+
 	};
+	
+	public abstract FSMRecognizer build(String key, Signature s, int minPct, boolean onlyStart);
 
 	public abstract FSMRecognizer build(String key, String signatureFile,
 			Map<Integer, List<Interval>> training, List<Integer> test,
