@@ -14,11 +14,102 @@ import java.util.TreeSet;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
 import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
+import edu.arizona.cs.learn.experimental.general.similarity.Similarity;
+import edu.arizona.cs.learn.experimental.general.values.Binary;
+import edu.arizona.cs.learn.experimental.general.values.Value;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.util.Utils;
 
 public class GeneralTests {
 
+	public static void main(String[] args) { 
+//		approach();
+//		jumpOver();
+//		doit("ww3d");
+		
+		tests();
+	}
+	
+	public static GeneralSignature makeSignature(String key, List<List<Symbol>> instances) { 
+		GeneralSignature s = new GeneralSignature(key);
+		
+		for (int i = 0; i < instances.size(); ++i) { 
+			s.update(instances.get(i));
+		}
+		s.toXML("data/raw-data/handwriting/" + key + "-signature.xml");
+		
+		return s;
+	}
+	
+	public static void tests() { 
+		Pair<String,List<List<Symbol>>> aPair = XMLUtils.loadXML("data/raw-data/handwriting/wes/xml/a.xml");
+		makeSignature(aPair.getFirst(), aPair.getSecond());
+				
+		Pair<String,List<List<Symbol>>> bPair = XMLUtils.loadXML("data/raw-data/handwriting/wes/xml/b.xml");
+		makeSignature(bPair.getFirst(), bPair.getSecond());
+
+		Pair<String,List<List<Symbol>>> cPair = XMLUtils.loadXML("data/raw-data/handwriting/wes/xml/c.xml");
+		makeSignature(cPair.getFirst(), cPair.getSecond());
+		
+		SummaryStatistics aa = test(aPair.getSecond(), aPair.getSecond());
+		SummaryStatistics bb = test(bPair.getSecond(), bPair.getSecond());
+		SummaryStatistics cc = test(cPair.getSecond(), cPair.getSecond());
+		
+		SummaryStatistics ab = test(aPair.getSecond(), bPair.getSecond());
+		SummaryStatistics ac = test(aPair.getSecond(), cPair.getSecond());
+		SummaryStatistics bc = test(bPair.getSecond(), cPair.getSecond());
+		
+		
+		System.out.println(" a -- a " + aa.getMean() + " -- " + aa.getStandardDeviation());
+		System.out.println(" b -- b " + bb.getMean() + " -- " + bb.getStandardDeviation());
+		System.out.println(" c -- c " + cc.getMean() + " -- " + cc.getStandardDeviation());
+
+		System.out.println(" a -- b " + ab.getMean() + " -- " + ab.getStandardDeviation());
+		System.out.println(" a -- c " + ac.getMean() + " -- " + ac.getStandardDeviation());
+		System.out.println(" b -- c " + bc.getMean() + " -- " + bc.getStandardDeviation());
+		
+		
+	}
+	
+	public static SummaryStatistics test(List<List<Symbol>> a, List<List<Symbol>> b) { 
+		Params p = new Params();
+		p.setMin(0, 0);
+		p.setBonus(1, 1);
+		p.normalize = Params.Normalize.none;
+		p.similarity = Similarity.cosine;
+		
+		SummaryStatistics ss = new SummaryStatistics();
+		for (int i = 0; i < a.size(); ++i) { 
+			for (int j = 0; j < b.size(); ++j) { 
+				p.seq1 = a.get(i);
+				p.seq2 = b.get(i);
+				
+				Report report = GeneralAlignment.alignCheckp(p);
+				ss.addValue(report.score);
+			}
+		}
+		return ss;
+	}
+	
+	public static void buildSignature() { 
+		Map<Integer,List<Interval>> map = Utils.load(new File("data/input/chpt1-approach.lisp"));
+		Map<Integer,List<Symbol>> instanceMap = new TreeMap<Integer,List<Symbol>>();
+		
+		Set<String> propSet = new TreeSet<String>();
+		for (List<Interval> list : map.values()) { 
+			for (Interval interval : list)
+				propSet.add(interval.name);
+		}
+		List<String> props = new ArrayList<String>(propSet);
+		for (Integer key : map.keySet()) {
+			instanceMap.put(key, toSequence(props, BPPFactory.compress(map.get(key), Interval.eff)));
+			System.out.println("Key: " + key + " ---- " + instanceMap.get(key));
+		}		
+
+		
+		GeneralSignature signature = new GeneralSignature("chtp1-approach");
+	}
+	
 	public static List<Symbol> toSequence(List<String> props, List<Interval> intervals) { 
 		List<Symbol> results = new ArrayList<Symbol>();
 		
@@ -46,36 +137,30 @@ public class GeneralTests {
 		for (int i = 0; i < time; ++i) { 
 			// Determine the state by looping over all of the props and determining
 			// if they are on or off.
-			List<Double> state = new ArrayList<Double>();
+			List<Value> state = new ArrayList<Value>();
 			for (int j = 0; j < props.size(); ++j) {
 				String prop = props.get(j);
 				List<Interval> propIntervals = propMap.get(prop);
 				if (propIntervals == null) {
-					state.add(0.0);
+					state.add(new Binary(prop, Binary.FALSE));
 					continue;
 				} 
 
 				boolean on = false;
 				for (Interval interval : propIntervals) { 
 					if (interval.on(i)) {
-						state.add(1.0);
+						state.add(new Binary(prop, Binary.TRUE));
 						on = true;
 						break;
 					}
 				}
 				if (!on)
-					state.add(0.0);
+					state.add(new Binary(prop, Binary.FALSE));
 			}
 			
 			results.add(new Symbol(state, 1));
 		}
 		return results;
-	}
-	
-	public static void main(String[] args) { 
-//		approach();
-//		jumpOver();
-		doit("ww3d");
 	}
 	
 	/**

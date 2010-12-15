@@ -2,6 +2,8 @@ package edu.arizona.cs.learn.experimental.general;
 
 import java.util.List;
 
+import edu.arizona.cs.learn.experimental.general.similarity.Similarity;
+
 public class Params {
 	public List<Symbol> seq1;
 	public int min1;
@@ -17,6 +19,8 @@ public class Params {
 
 	public double subPenalty = -10000.0D;
 	public double gapPenalty = 0.0D;
+	
+	public Similarity similarity;
 
 	public Params() {
 	}

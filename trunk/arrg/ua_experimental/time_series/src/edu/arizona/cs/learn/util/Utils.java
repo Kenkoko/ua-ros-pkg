@@ -146,6 +146,26 @@ public class Utils {
 	}
 	
 	/**
+	 * Load in a dataset from a specific directory
+	 * @param prefix
+	 * @param type
+	 * @return
+	 */
+	public static Map<String,List<Instance>> load(String directory, String prefix, SequenceType type) { 
+		Map<String,List<Instance>> map = new HashMap<String,List<Instance>>();
+		for (File f : new File(directory).listFiles()) {
+			if (f.getName().startsWith(prefix) && f.getName().endsWith("lisp")) { 
+				String name = f.getName();
+				String className = name.substring(0, name.indexOf(".lisp"));
+
+				map.put(className, sequences(className, f.getAbsolutePath(), type));
+			}
+		}
+		return map;
+	}
+	
+	
+	/**
 	 * load will actually pull in all of the information
 	 * from the lisp file since it doesn't matter
 	 */

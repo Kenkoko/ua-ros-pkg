@@ -16,7 +16,8 @@ public class BatchStatistics {
 	private List<Long> _duration;
 	
 	private Map<String,Integer> _trainingCount;
-	private Map<String,Long> _trainingTime;
+	private Map<String,Long>    _trainingTime;
+	private Map<String,Double>  _avgTrainingSize;
 	
 	private int[][] _confMatrix;
 	
@@ -32,6 +33,7 @@ public class BatchStatistics {
 		
 		_trainingCount = new HashMap<String,Integer>();
 		_trainingTime = new HashMap<String,Long>();
+		_avgTrainingSize = new HashMap<String,Double>();
 	}
 	
 	public double accuracy() { 
@@ -81,9 +83,14 @@ public class BatchStatistics {
 		_duration.add(duration);
 	}
 	
-	public void addTrainingDetail(String className, int count, Long duration) { 
+	public void addTrainingDetail(String className, int count, Long duration, Double avgSize) { 
 		_trainingCount.put(className, count);
 		_trainingTime.put(className, duration);
+		_avgTrainingSize.put(className, avgSize);
+	}
+	
+	public void addTrainingDetail(String className, int count, Long duration) { 
+		addTrainingDetail(className, count, duration, 0.0);
 	}
 	
 	public String toCSV(String prefix, String suffix) { 
@@ -95,6 +102,7 @@ public class BatchStatistics {
 			buf.append(i + "," + _actualClass.get(i) + "," + _predictedClass.get(i) + ",");
 			buf.append((_detail.get(i) ? 1 : 0) + ",");
 			buf.append(_trainingTime.get(_actualClass.get(i)) + "," + _trainingCount.get(_actualClass.get(i)) + ",");
+			buf.append(_avgTrainingSize.get(_actualClass.get(i)) + ",");
 			buf.append(_duration.get(i));
 			
 			buf.append(suffix + "\n");
@@ -103,6 +111,6 @@ public class BatchStatistics {
 	}
 	
 	public static String csvHeader() { 
-		return "test_index,actual_class,predicted_class,correct,training_time,training_count,testing_time";
+		return "test_index,actual_class,predicted_class,correct,training_time,training_count,avgTrainingSize,testing_time";
 	}
 }
