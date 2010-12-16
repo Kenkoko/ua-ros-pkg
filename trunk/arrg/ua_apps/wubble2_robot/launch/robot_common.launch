@@ -166,6 +166,7 @@
     </node>
 
     <include file="$(find wubble2_robot)/launch/move_arm.launch" />
+    <include file="$(find wubble2_robot)/launch/interpolated_ik.launch" />
 
 
     <!-- Start Actions -->

@@ -1,0 +1,8 @@
+int32 command
+
+int32 CLOSE_GRIPPER=1
+int32 OPEN_GRIPPER=2
+
+float64 torque_limit
+---
+---
