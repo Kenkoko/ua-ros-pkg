@@ -18,6 +18,14 @@
     <depend package="wubble_actions"/>
     <depend package="wubble_2dnav"/>
 
+    <depend package="actionlib"/>
+    <depend package="actionlib_msgs"/>
+    <depend package="move_arm_msgs"/>
+    <depend package="motion_planning_msgs"/>
+    <depend package="geometry_msgs"/>
+
+    <depend package="interpolated_ik_motion_planner"/>
+
 </package>
 
 
