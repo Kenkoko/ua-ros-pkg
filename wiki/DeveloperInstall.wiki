@@ -2,7 +2,7 @@
 
   # If the machine has never had ROS installed it, do this first:
 {{{
-sudo apt-get install build-essential python-yaml cmake subversion
+sudo apt-get install build-essential python-yaml cmake subversion git-core
 }}}
   # Download the rosinstall file
 {{{
