@@ -45,7 +45,7 @@ from ax12_driver_core import ax12_io
 if __name__ == '__main__':
     usage_msg = 'Usage: %prog [options] MOTOR_IDs'
     desc_msg = 'Sets various configuration options of specified Dynamixel servo motor.'
-    epi_msg = 'Example: %s --port=/dev/ttyUSB1 --baud=57600 --baud-rate=1 --return_delay=1 5 9 23' % sys.argv[0]
+    epi_msg = 'Example: %s --port=/dev/ttyUSB1 --baud=57600 --baud-rate=1 --return-delay=1 5 9 23' % sys.argv[0]
     
     parser = OptionParser(usage=usage_msg, description=desc_msg, epilog=epi_msg)
     parser.add_option('-p', '--port', metavar='PORT', default='/dev/ttyUSB0',
@@ -63,7 +63,7 @@ if __name__ == '__main__':
                       
     (options, args) = parser.parse_args(sys.argv)
     
-    if len(args) < 1:
+    if len(args) < 2:
         parser.print_help()
         exit(1)
         
