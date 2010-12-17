@@ -236,6 +236,11 @@
     uri: https://code.ros.org/svn/ros/stacks/ros_experimental/trunk
     local-name: ros-experimental-trunk
 
+- git:
+    uri: http://code.in.tum.de/git/client-rosjava.git
+    version: master
+    local-name: tum-ros-pkg/client_rosjava
+
 - svn:
     uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
     local-name: ua-ros-pkg
