@@ -19,7 +19,6 @@
     <rosparam file="$(find wubble2_robot)/config/wubble_head.yaml" command="load"/>
     <node name="wubble_head_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
           args="--port /dev/wubble2Head
-                head_tilt_controller
                 neck_tilt_controller"
           output="screen"/>
 
@@ -27,7 +26,8 @@
     <rosparam file="$(find wubble2_robot)/config/wubble_head.yaml" command="load"/>
     <node name="wubble_head_pan_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
           args="--port /dev/ttyUSB0
-                head_pan_controller"
+                head_pan_controller
+                head_tilt_controller"
           output="screen"/>
 </launch>
 
