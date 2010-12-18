@@ -52,24 +52,24 @@
     
     <!-- WUBBLE HEAD ATTACHMENT -->
     <joint name="head_base_joint" type="fixed">
-        <origin xyz="0.0254 0 ${0.8001-0.019}" rpy="0 0 0" />
+        <origin xyz="0.0264 0 0.7811" rpy="0 0 0" />
         <parent link="platform_link"/>
         <child link="head_base_link"/>
     </joint>
     
     <joint name="head_pan_joint" type="revolute">
-        <origin xyz="0.0545 0 0.026" rpy="0 0 0" />
+        <origin xyz="0.052 0 0.025" rpy="0 0 0" />
         <parent link="head_base_link"/>
         <child link="head_pan_link"/>
         
         <axis xyz="0 0 1" />
-        <limit lower="-1.57" upper="1.57" effort="100" velocity="12.0" />
-        <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.57}" soft_upper_limit="${1.57}" />
+        <limit lower="-2.61" upper="2.61" effort="100" velocity="12.0" />
+        <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.61}" soft_upper_limit="${2.61}" />
         <dynamics damping="50" friction="1"/>
     </joint>
     
     <joint name="head_tilt_joint" type="revolute">
-        <origin xyz="0.06506 0 0.06147" rpy="0 0 0" />
+        <origin xyz="0.02899 0 0.03458" rpy="0 0 0" />
         <parent link="head_pan_link"/>
         <child link="head_tilt_link"/>
         
@@ -81,7 +81,7 @@
     
     <link name="head_base_link"> 
         <inertial>
-            <mass value="0.05"/>
+            <mass value="0.13"/>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <inertia ixx="0.1" ixy="0" ixz="0"
                      iyy="0.1" iyz="0"
@@ -131,7 +131,7 @@
     
     <link name="head_tilt_link"> 
         <inertial>
-            <mass value="0.05"/>
+            <mass value="0.25"/>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <inertia ixx="0.1" ixy="0" ixz="0"
                      iyy="0.1" iyz="0"
@@ -168,12 +168,12 @@
     
     <!-- SWISSRANGER CAMERA ATTACHMENT -->
     <swissranger_camera name="swissranger" parent="head_tilt_link">
-        <origin xyz="0.0125 0 ${0.036-0.003}" rpy="${M_PI} 0 0" />
+        <origin xyz="0.0195 -0.004 0.1235" rpy="${M_PI} 0 0" />
     </swissranger_camera>
     
     <!-- VIDERE STEREO CAMERA ATTACHMENT -->
     <videre_stereo_6cm name="stoc" parent="head_tilt_link" >
-        <origin xyz="0.03 0 ${0.036 + 0.016}" rpy="0 0 0" />
+        <origin xyz="0.0375 0 0.142" rpy="0 0 0" />
     </videre_stereo_6cm>
     
     <!-- WUBBLE ARM ATTACHMENT -->
@@ -267,26 +267,32 @@
     <!-- GAZEBO MATERIALS -->  
     <gazebo reference="head_base_link">
         <material>SmartArm/GunMetalBrushedAluminum</material>
+        <turnGravityOff>true</turnGravityOff>
     </gazebo>
     
     <gazebo reference="head_pan_link">
         <material>SmartArm/GunMetalBrushedAluminum</material>
+        <turnGravityOff>true</turnGravityOff>
     </gazebo>
     
     <gazebo reference="head_tilt_link">
         <material>SmartArm/GunMetalBrushedAluminum</material>
+        <turnGravityOff>true</turnGravityOff>
     </gazebo>
     
     <gazebo reference="neck_support_link">
         <material>SmartArm/GunMetalBrushedAluminum</material>
+        <turnGravityOff>true</turnGravityOff>
     </gazebo>
     
     <gazebo reference="neck_tilt_link">
         <material>SmartArm/GunMetalBrushedAluminum</material>
+        <turnGravityOff>true</turnGravityOff>
     </gazebo>
     
     <gazebo reference="platform_link">
         <material>Erratic/White</material>
+        <turnGravityOff>true</turnGravityOff>
     </gazebo>
 </robot>
 
