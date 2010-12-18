@@ -6,6 +6,9 @@ public class Action implements Comparable<Action> {
 	public static final String TERMINATE = "TERMINATE";
 	public static final Action TERMINATE_ACTION = new Action("TERMINATE");
 	
+	public static final String REPLAN = "REPLAN";
+	public static final Action REPLAN_ACTION = new Action("REPLAN");
+	
 	String name_;
 	
 	public Action(String name) {

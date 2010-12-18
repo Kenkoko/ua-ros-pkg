@@ -75,7 +75,7 @@ public class GazeboEnvironment implements Environment {
 	@Override
 	public OOMDPState initializeEnvironment(List<OOMDPObjectState> objects) {
 		InitializeEnvironment.Request req = new InitializeEnvironment.Request();
-		req.object_states = StateConverter.objectsToMsgArray(objects);
+		req.object_states = StateConverter.objectsToMsgArrayList(objects);
 		try {
 			ros.pkg.oomdp_msgs.srv.InitializeEnvironment.Response response = initializeService_.call(req);
 			actions_ = response.actions;

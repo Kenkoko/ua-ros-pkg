@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.TreeSet;
-import java.util.Vector;
 
 import org.apache.log4j.Logger;
 
@@ -14,7 +13,9 @@ import com.google.common.collect.Lists;
 import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.planning.shared.AbstractPlanner;
 import edu.arizona.verbs.planning.shared.Action;
+import edu.arizona.verbs.planning.shared.PlanningReport;
 import edu.arizona.verbs.planning.shared.Policy;
+import edu.arizona.verbs.planning.shared.Policy.PolicyType;
 import edu.arizona.verbs.planning.shared.State;
 import edu.arizona.verbs.planning.state.LRTDPState;
 import edu.arizona.verbs.shared.Environment;
@@ -35,8 +36,9 @@ public class LRTDP extends AbstractPlanner {
 	
 	// This now returns the action to take from the start state, or null if the planning fails altogether
 	@Override
-	public Policy runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
-		logger.info("======================================\nBEGIN RTDP");
+	public PlanningReport runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
+		long startTime = System.currentTimeMillis();
+//		logger.info("======================================\nBEGIN RTDP");
 		
 		double epsilon = 0.5;
 		
@@ -45,10 +47,8 @@ public class LRTDP extends AbstractPlanner {
 		logger.info("Start state is: " + start);
 		
 		if (start.isGoal()) { 
-			return new Policy(); // TODO: We can do better than this if we bring back recoverPolicy
+			return new PlanningReport(new Policy(PolicyType.Terminate), true, (System.currentTimeMillis() - startTime)); // TODO: We can do better than this if we bring back recoverPolicy
 		}
-		
-		long startTime = System.currentTimeMillis();
 		
 		int i = 0;
 		while (!start.isSolved()) {
@@ -61,15 +61,18 @@ public class LRTDP extends AbstractPlanner {
 			i++;
 			
 			if (!success) {
-				return new Policy();
+				return new PlanningReport(new Policy(PolicyType.Terminate), false, (System.currentTimeMillis() - startTime));
 			}
 		}
 		
-		logger.info("END RTDP. TOTAL TIME: " + ((System.currentTimeMillis() - startTime)/1000.0));
+//		logger.info("END RTDP. TOTAL TIME: " + ((System.currentTimeMillis() - startTime)/1000.0));
+		
+		// TODO: LRTDP's recoverPolicy method was removed, need to restore it
 		
 		List<State> states = new ArrayList<State>();
 		states.add(start);
-		return new Policy(states, Lists.newArrayList(start.getGreedyActions().firstElement()));
+		Policy policy = new Policy(states, Lists.newArrayList(start.getGreedyActions().firstElement()));
+		return new PlanningReport(policy, true, (System.currentTimeMillis() - startTime));
 	}
 	
 	public boolean runLrtdpTrial(LRTDPState state, double epsilon) {
@@ -102,7 +105,7 @@ public class LRTDP extends AbstractPlanner {
 			s.update();
 			
 			// stochastically simulate next state
-			LRTDPState oldState = s;
+//			LRTDPState oldState = s;
 			s = s.pickNextState(a);
 //			System.out.println("=====================================================");
 //			System.out.println("S:  " + ((int) oldState.value()) + " " + oldState);
@@ -178,5 +181,10 @@ public class LRTDP extends AbstractPlanner {
 			knownStates_.put(stateString, new LRTDPState(mdpState, fsmState, this));
 		}
 		return knownStates_.get(stateString);
+	}
+
+	@Override
+	public void setMaxDepth(int maxDepth) {
+		// TODO Auto-generated method stub
 	}
 }

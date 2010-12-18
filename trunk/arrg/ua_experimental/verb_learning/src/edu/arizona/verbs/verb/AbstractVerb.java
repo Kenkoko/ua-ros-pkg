@@ -76,6 +76,7 @@ public abstract class AbstractVerb implements Verb {
 	public void forgetInstances() {
 		signature_ = new Signature(lexicalForm_);
 		negativeSignature_ = new Signature("non-" + lexicalForm_);
+		fsm_ = null; // The old FSM is invalid now
 	}
 	
 	abstract void postInstance();
@@ -111,6 +112,7 @@ public abstract class AbstractVerb implements Verb {
 		return signature_ != null;
 	}
 	
+	@Override
 	public boolean hasFSM() {
 		return fsm_ != null;
 	}

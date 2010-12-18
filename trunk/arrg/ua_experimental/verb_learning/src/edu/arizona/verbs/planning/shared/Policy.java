@@ -6,17 +6,21 @@ import java.util.TreeSet;
 
 import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.planning.search.SearchNode;
-import edu.arizona.verbs.planning.state.LRTDPState;
 import edu.arizona.verbs.shared.OOMDPState;
 
 public class Policy {
+	public enum PolicyType { Standard, Terminate, Replan };
+	
 	private List<OOMDPState> mdpStates = new ArrayList<OOMDPState>();
 	private List<TreeSet<FSMState>> fsmStates = new ArrayList<TreeSet<FSMState>>();
 	private List<String> actions = new ArrayList<String>();
-	private boolean fake = false;
+	private PolicyType type = PolicyType.Standard;
 	
-	public Policy() { // This is the null policy
-		fake = true;
+	public Policy(PolicyType pType) { // This is the null policy, signals immediate termination
+		if (pType.equals(PolicyType.Standard)) {
+			throw new RuntimeException("THIS CONSTRUCTOR IS NOT FOR STANDARD POLICIES");
+		}
+		type = pType;
 	}
 	
 	public Policy(List<State> states, List<Action> actions) {
@@ -53,16 +57,21 @@ public class Policy {
 	
 	// Returns the appropriate action or null if the policy does not specify what to do from that state
 	public String getAction(OOMDPState mdpState, TreeSet<FSMState> fsmState) {
-		if (fake) {
+		switch (type) {
+		case Terminate:
 			return Action.TERMINATE;
-		} else {
+		case Replan:
+			return Action.REPLAN;
+		case Standard:
 			for (int i = 0; i < mdpStates.size(); i++) {
 				if (mdpState.toString().equals(mdpStates.get(i).toString()) 
-					&& fsmState.toString().equals(fsmStates.get(i).toString())) {
+						&& fsmState.toString().equals(fsmStates.get(i).toString())) {
 					return actions.get(i);
 				} 
 			}
-			return null;
+			return Action.REPLAN; // If agent fell off the path, he should replan
+		default:
+			throw new RuntimeException("IMPOSSIBLE POLICY TYPE");
 		}
 	}
 }

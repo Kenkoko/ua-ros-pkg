@@ -24,6 +24,8 @@ import edu.arizona.cs.learn.timeseries.experiment.BitPatternGeneration;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.util.graph.Edge;
+import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
+import edu.arizona.verbs.environments.GazeboEnvironment;
 import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
@@ -33,7 +35,10 @@ import edu.arizona.verbs.planning.LRTDP;
 import edu.arizona.verbs.planning.SearchPlanner;
 import edu.arizona.verbs.planning.UCT;
 import edu.arizona.verbs.planning.shared.Action;
+import edu.arizona.verbs.planning.shared.Planner;
+import edu.arizona.verbs.planning.shared.PlanningReport;
 import edu.arizona.verbs.planning.shared.Policy;
+import edu.arizona.verbs.planning.shared.Policy.PolicyType;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.uci.ics.jung.graph.DirectedGraph;
 
@@ -135,7 +140,6 @@ public class AtomicVerb extends AbstractVerb {
 		fsm_.toDot(getVerbFolder() + "constrained.dot", false);
 	}
 	
-	// TODO: Move to higher level
 	public double testInstance(Instance instance, int min) {
 		logger.debug("Computing Alignment Score...");
 		
@@ -161,50 +165,99 @@ public class AtomicVerb extends AbstractVerb {
 			return response; // Automatic failure
 		}
 		
-		OOMDPState properStart = StateConverter.msgToState(startState);
-		
-//		long startTime = System.currentTimeMillis();
-//		long elapsedTime = System.currentTimeMillis() - startTime;
-		
-		TreeSet<FSMState> fsmState = fsm_.getStartState();
-		TransitionResult tr = fsm_.simulateDfaTransition(fsmState, properStart.getActiveRelations());
-		fsmState = tr.newState;
-
-		List<OOMDPState> trace = new Vector<OOMDPState>();
-		System.out.println("START: " + properStart);
-		trace.add(properStart);
-		
-		// TODO: Need to restore planning time information
-//		LRTDP planner = new LRTDP(this, Interface.getCurrentEnvironment());
-		SearchPlanner planner = new SearchPlanner(this, Interface.getCurrentEnvironment());
-//		UCT planner = new UCT(this, Interface.getCurrentEnvironment(), executionLimit);
-		Policy policy = planner.runAlgorithm(properStart, fsmState);
-		String action = policy.getAction(properStart, fsmState); 
-
-		int numSteps = 0;
-		while ( numSteps < executionLimit && !action.toString().equals(Action.TERMINATE)) {
-			// Perform the action, get the new world state
-			OOMDPState newState = Interface.getCurrentEnvironment().performAction(action); 
-			System.out.println("THIS: " + newState.getActiveRelations());
-			trace.add(newState);
-			numSteps++;
-			// Get the new FSM state
-			fsmState = fsm_.simulateDfaTransition(fsmState, newState.getActiveRelations()).newState;
+		Planner planner;
+		if (Interface.getCurrentEnvironment() instanceof GazeboEnvironment) {
+			planner = new SearchPlanner(this, Interface.getCurrentEnvironment());
 			
-			// Get the new action
-			action = policy.getAction(newState, fsmState);
-			if (action == null) { // This means we "fell off" the planned path
-				// For UCT, we need a new instance for now
-//				planner.setMaxDepth(executionLimit - numSteps);
-				policy = planner.runAlgorithm(newState, fsmState); // re-plan
-				action = policy.getAction(newState, fsmState);
-			}
+		} else if (Interface.getCurrentEnvironment() instanceof WW2DEnvironment) {
+			planner = new UCT(this, Interface.getCurrentEnvironment(), executionLimit);
+			
+		} else {
+			throw new RuntimeException("WHAT ENVIRONMENT ARE YOU USING?");
+			// Sorry LRTDP...
+			//planner = new LRTDP(this, Interface.getCurrentEnvironment());
 		}
 		
-		response.trace = StateConverter.stateToMsgArray(trace);
-		response.execution_success = (action != null && action.toString().equals(Action.TERMINATE));
+//		Policy policy = planner.runAlgorithm(properStart, fsmState);
+//		String action = policy.getAction(properStart, fsmState); 
+//
+//		response.trace.add(StateConverter.stateToMsg(properStart));
+//		response.actions.add(action);
+//		
+//		logger.info("Begin Execution");
+//		logger.info("Start state is " + fsmState + " " + properStart.getActiveRelations());
+//		int numSteps = 0;
+//		while ( numSteps < executionLimit && !action.toString().equals(Action.TERMINATE)) {
+//			// Perform the action, get the new world state
+//			logger.info("Performing action: " + action);
+//			OOMDPState newState = Interface.getCurrentEnvironment().performAction(action); 
+//			response.trace.add(StateConverter.stateToMsg(newState));
+//			
+//			numSteps++;
+//			// Get the new FSM state
+//			fsmState = fsm_.simulateDfaTransition(fsmState, newState.getActiveRelations()).newState;
+//
+//			logger.info("Resulting State: " + fsmState + " " + newState.getActiveRelations());
+//			
+//			// Get the new action
+//			action = policy.getAction(newState, fsmState);
+//			if (action == null) { // This means we "fell off" the planned path
+//				logger.info("Fell off garden path, replanning...");
+//				planner.setMaxDepth(executionLimit - numSteps);
+//				policy = planner.runAlgorithm(newState, fsmState); // re-plan
+//				action = policy.getAction(newState, fsmState);
+//			}
+//		}
+		
+		// MDP starts at the given start state
+		OOMDPState mdpState = StateConverter.msgToState(startState);
+		// FSM starts at the start + any transitions triggered by the start
+		TreeSet<FSMState> fsmState = fsm_.getStartState();
+		TransitionResult tr = fsm_.simulateDfaTransition(fsmState, mdpState.getActiveRelations());
+		fsmState = tr.newState;
+		Policy policy = new Policy(PolicyType.Replan);
+		
+		long totalPlanningTime = 0;
+		boolean executionSuccess = false;
+		
+		// Main loop
+		int numSteps = 0;
+		while (numSteps < executionLimit) {
+			// Add the current state to the trace
+			response.trace.add(StateConverter.stateToMsg(mdpState));
+			
+			String action = policy.getAction(mdpState, fsmState); 
+			if (Action.REPLAN.equals(action)) { // This means we "fell off" the planned path
+				logger.info("Fell off garden path, replanning...");
+				planner.setMaxDepth(executionLimit - numSteps); // Needed by UCT
+				PlanningReport report = planner.runAlgorithm(mdpState, fsmState); // re-plan
+				totalPlanningTime += report.getElaspedTime();
+				policy = report.getPolicy();
+				action = policy.getAction(mdpState, fsmState);
+			}
+			
+			// Record the action that we performed (to make validation easier)
+			System.out.println("---> " + action);
+			response.actions.add(action);
+			
+			if (Action.TERMINATE.equals(action)) {
+				executionSuccess = (numSteps > 0); // If we immediately terminated, that's a failure
+				break;
+			} else {
+				// Update to the new states
+				mdpState = Interface.getCurrentEnvironment().performAction(action);
+				fsmState = fsm_.simulateDfaTransition(fsmState, mdpState.getActiveRelations()).newState;
+			}			
+			
+			numSteps++;
+		}
+		
+		logger.info("Execution complete.");
+		
+		// What exactly does this mean? That we terminated "voluntarily"?
+		response.execution_success = executionSuccess;
 		response.execution_length = numSteps;
-		response.planning_time = 0; // TODO: Compute the total planning time
+		response.planning_time = totalPlanningTime;
 		
 		return response;
 	}

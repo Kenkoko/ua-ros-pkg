@@ -3,11 +3,9 @@ package edu.arizona.verbs.shared;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
-
+// TODO: We may have to remap attribute values if they refer to other objects
 public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappable<OOMDPObjectState> {
 	
 	private String className_;
