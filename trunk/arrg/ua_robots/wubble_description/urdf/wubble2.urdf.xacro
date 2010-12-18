@@ -183,7 +183,7 @@
     
     <!-- NECK TILTING LASER ATTACHMENT -->
     <joint name="neck_support_joint" type="fixed">
-        <origin xyz="0.0254 0 0.6411" rpy="0 0 0" />
+        <origin xyz="0.0254 0 0.628" rpy="0 0 0" />
         <parent link="platform_link"/>
         <child link="neck_support_link"/>
     </joint>
