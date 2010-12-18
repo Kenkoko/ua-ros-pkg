@@ -31,4 +31,6 @@ public interface Verb extends Remappable<Verb> {
 	public String[] getArgumentArray();
 	public ArrayList<String> getArguments();
 	public String getIdentifierString();
+	
+	public boolean hasFSM();
 }

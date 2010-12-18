@@ -156,6 +156,9 @@ public class SequentialVerb extends AbstractVerb {
 //		String action = planner.runAlgorithm(start, fsmState);
 		String action = "TERMINATE"; // TODO: If atomic works, copy here
 		int numSteps = 0;
+		
+		throw new RuntimeException("THIS IS NOT FIXED YET, FIX IT!");
+		
 //		while ( numSteps < executionLimit && action != null && 
 //				!action.toString().equals(Action.TERMINATE)) {
 //			// Perform the action, get the new world state
@@ -170,12 +173,12 @@ public class SequentialVerb extends AbstractVerb {
 //		}
 		
 		// TODO: Don't like having to duplicate this code, need to fix that
-		response.trace = StateConverter.stateToMsgArray(trace);
-		response.execution_success = (action != null && action.toString().equals(Action.TERMINATE));
-		response.execution_length = numSteps;
-		response.planning_time = 0; // TODO: Compute the total planning time
-		
-		return response;
+//		response.trace = StateConverter.stateToMsgArrayList(trace);
+//		response.execution_success = (action != null && action.toString().equals(Action.TERMINATE));
+//		response.execution_length = numSteps;
+//		response.planning_time = 0; // TODO: Compute the total planning time
+//		
+//		return response;
 	}
 
 	@Override

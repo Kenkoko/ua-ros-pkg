@@ -14,9 +14,11 @@ import com.google.common.collect.Iterables;
 import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.planning.shared.AbstractPlanner;
 import edu.arizona.verbs.planning.shared.Action;
+import edu.arizona.verbs.planning.shared.PlanningReport;
 import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.planning.shared.SimulationResult;
 import edu.arizona.verbs.planning.shared.State;
+import edu.arizona.verbs.planning.shared.Policy.PolicyType;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
@@ -25,14 +27,14 @@ public class UCT extends AbstractPlanner {
 	
 	private static double gamma = 0.9;
 	
-	private HashMap<String, HashMap<String, Double>> q = new HashMap<String, HashMap<String, Double>>();
+	private HashMap<String, HashMap<String, Double>> q_ = new HashMap<String, HashMap<String, Double>>();
 	// Map state+depth+action to counts of states
-	private HashMap<String, HashBag<String>> t = new HashMap<String, HashBag<String>>();
-	private HashBag<String> nsd = new HashBag<String>();
-	private HashBag<String> nasd = new HashBag<String>();
+	private HashMap<String, HashBag<String>> t_ = new HashMap<String, HashBag<String>>();
+	private HashBag<String> nsd_ = new HashBag<String>();
+	private HashBag<String> nasd_ = new HashBag<String>();
 	
-	private int maxDepth;
-	private Random r = new Random();
+	private int maxDepth_;
+	private Random r_ = new Random();
 	
 	public UCT(Verb verb, Environment environment, int maxDepth) {
 		super(verb, environment);
@@ -40,21 +42,23 @@ public class UCT extends AbstractPlanner {
 	}
 
 	public void setMaxDepth(int maxDepth) {
-		this.maxDepth = maxDepth;
+		this.maxDepth_ = maxDepth;
 	}
 	
 	@Override
-	public Policy runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
+	public PlanningReport runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
+		long startTime = System.currentTimeMillis();
+		
 		// Reset all statistics
-		q = new HashMap<String, HashMap<String,Double>>();
-		t = new HashMap<String, HashBag<String>>();
-		nsd = new HashBag<String>();
-		nasd = new HashBag<String>();
+		q_ = new HashMap<String, HashMap<String,Double>>();
+		t_ = new HashMap<String, HashBag<String>>();
+		nsd_ = new HashBag<String>();
+		nasd_ = new HashBag<String>();
 		
 		State start = lookupState(startState, fsmState);
 		
 		if (start.isGoal()) {
-			return new Policy();
+			return new PlanningReport(new Policy(PolicyType.Terminate), true, (System.currentTimeMillis() - startTime));
 		}
 		
 		for (int i = 0; i < 400; i++) {
@@ -62,10 +66,10 @@ public class UCT extends AbstractPlanner {
 			
 			System.out.println(">>> BEGIN TRIAL " + i);
 			
-			uct(start, maxDepth);
+			uct(start, maxDepth_);
 		}
 		
-		return recoverPolicy(start);
+		return new PlanningReport(recoverPolicy(start), true, (System.currentTimeMillis() - startTime));
 	}
 
 	public double uct(State s, int d) {
@@ -92,8 +96,8 @@ public class UCT extends AbstractPlanner {
 			for (Action a : actions_) {
 				double qValue = getQ(s, a.toString(), d);
 				String nasdString = lookupString(s, a, d);
-				if (nasd.getCount(nasdString) > 0) {
-					qValue += Math.sqrt(2 * Math.log(nsd.getCount(sdString)) / nasd.getCount(nasdString));
+				if (nasd_.getCount(nasdString) > 0) {
+					qValue += Math.sqrt(2 * Math.log(nsd_.getCount(sdString)) / nasd_.getCount(nasdString));
 				}
 				if (qValue < minQ) {
 					bestActions.clear();
@@ -104,7 +108,7 @@ public class UCT extends AbstractPlanner {
 				}
 			}
 			
-			Action aStar = bestActions.get(r.nextInt(bestActions.size()));
+			Action aStar = bestActions.get(r_.nextInt(bestActions.size()));
 			
 			// Sample next state from environment
 			SimulationResult result = groundSampleNextState(s, aStar);
@@ -112,25 +116,25 @@ public class UCT extends AbstractPlanner {
 			
 			// Update T
 			String tString = lookupString(s, aStar, d);
-			if (!t.containsKey(tString)) {
-				t.put(tString, new HashBag<String>());
+			if (!t_.containsKey(tString)) {
+				t_.put(tString, new HashBag<String>());
 			}
-			t.get(tString).add(nextState.toString());
+			t_.get(tString).add(nextState.toString());
 			
 			// Compute v
 			double cost = getCost(s, nextState);
 			double v = cost + gamma * uct(nextState, d - 1);
 
 			// Increment nsd
-			nsd.add(sdString);
+			nsd_.add(sdString);
 			
 			// Increment nasd
 			String nasdString = lookupString(s, aStar, d);
-			nasd.add(nasdString);
+			nasd_.add(nasdString);
 
 			// Update Q value
 			double oldQ = getQ(s, aStar.toString(), d);
-			double nasdCount = nasd.getCount(nasdString);
+			double nasdCount = nasd_.getCount(nasdString);
 			double newQ = (oldQ * (nasdCount - 1) + v) / nasdCount;
 			setQ(s, aStar.toString(), d, newQ);
 			
@@ -143,7 +147,7 @@ public class UCT extends AbstractPlanner {
 		List<Action> actions = new ArrayList<Action>();
 		
 		State current = start;
-		for (int d = maxDepth; d > 0; d--) {
+		for (int d = maxDepth_; d > 0; d--) {
 			states.add(current);
 
 			if (current.isGoal()) {
@@ -151,11 +155,11 @@ public class UCT extends AbstractPlanner {
 				break;
 			}
 			
-			String sdString = lookupString(current, d);
+//			String sdString = lookupString(current, d);
 			List<Action> bestActions = new ArrayList<Action>();
 			double minQ = Double.MAX_VALUE;
 			for (Action a : actions_) {
-				String nasdString = lookupString(current, a, d);
+//				String nasdString = lookupString(current, a, d);
 				double qValue = getQ(current, a.toString(), d);
 //				if (nasd.getCount(nasdString) > 0) {
 //					qValue += Math.sqrt(2 * Math.log(nsd.getCount(sdString)) / nasd.getCount(nasdString));
@@ -170,16 +174,16 @@ public class UCT extends AbstractPlanner {
 				
 				System.out.println(a + ": " + qValue);
 			}
-			
-			Action aStar = bestActions.get(r.nextInt(bestActions.size()));
+			// TODO: Maybe there's a better way to choose than randomly
+			Action aStar = bestActions.get(r_.nextInt(bestActions.size()));
 			actions.add(aStar);
 			
 			String lookupString = lookupString(current, aStar, d);
 			
-			if (!t.containsKey(lookupString)) {
+			if (!t_.containsKey(lookupString)) {
 				break; // Why is this happening?
 			} else {
-				HashBag<String> nextStateCounts = t.get(lookupString);
+				HashBag<String> nextStateCounts = t_.get(lookupString);
 				int max = Integer.MIN_VALUE;
 				String mostLikelyNextState = null;
 				for (String s : nextStateCounts.uniqueSet()) {
@@ -202,8 +206,8 @@ public class UCT extends AbstractPlanner {
 	
 	public boolean hasQ(State s, String a, int d) {
 		String lookupString = lookupString(s, d);
-		if (q.containsKey(lookupString)) {
-			return q.get(lookupString).containsKey(a);
+		if (q_.containsKey(lookupString)) {
+			return q_.get(lookupString).containsKey(a);
 		}
 		
 		return false;
@@ -211,8 +215,8 @@ public class UCT extends AbstractPlanner {
 	
 	public double getQ(State s, String a, int d) {
 		String lookupString = lookupString(s, d);
-		if (q.containsKey(lookupString)) {
-			HashMap<String, Double> qTable = q.get(lookupString);
+		if (q_.containsKey(lookupString)) {
+			HashMap<String, Double> qTable = q_.get(lookupString);
 			return qTable.get(a);
 		} else {
 			// If this is a new state, initialize
@@ -221,20 +225,20 @@ public class UCT extends AbstractPlanner {
 				qTable.put(action.toString(), 0.0); 
 //				qTable.put(action.toString(), s.getHeuristic()); // TODO: Is it OK to use heuristic here? 
 			}
-			q.put(lookupString, qTable);
-			return q.get(lookupString).get(a);
+			q_.put(lookupString, qTable);
+			return q_.get(lookupString).get(a);
 		}
 	}
 	
 	public void setQ(State s, String a, int d, double newQ) {
 		String lookupString = lookupString(s, d);
-		if (q.containsKey(lookupString)) {
-			HashMap<String,Double> qTable = q.get(lookupString);
+		if (q_.containsKey(lookupString)) {
+			HashMap<String,Double> qTable = q_.get(lookupString);
 			qTable.put(a, newQ);
 		} else {
 			HashMap<String,Double> qTable = new HashMap<String, Double>();
 			qTable.put(a.toString(), newQ);
-			q.put(lookupString, qTable);
+			q_.put(lookupString, qTable);
 		}
 	}
 	

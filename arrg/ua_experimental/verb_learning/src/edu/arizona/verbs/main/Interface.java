@@ -131,10 +131,14 @@ public class Interface {
 		new ServiceServer.Callback<ForgetVerb.Request, ForgetVerb.Response>() {
 			@Override
 			public ForgetVerb.Response call(ForgetVerb.Request request) {
+				System.out.println("Forgetting verb");
+				
 				String verbName = request.verb.verb;
 				if (verbs.containsKey(verbName)) {
 					Verb verb = verbs.get(request.verb.verb);
 					verb.forgetInstances();
+					
+					System.out.println("Forgot verb");
 				} 
 				
 				return new ForgetVerb.Response();
@@ -284,11 +288,14 @@ public class Interface {
 		public PerformVerb.Response call(PerformVerb.Request request) {
 			if (verbs.containsKey(request.verb.verb)) {
 				Verb verb = verbs.get(request.verb.verb);
-				Map<String,String> argumentMap = extractNameMap(request.verb);
 				
-				Verb remapped = verb.remap(argumentMap);
-//				return verb.perform(request.start_state, argumentMap, request.execution_limit);
-				return remapped.perform(request.start_state, request.execution_limit);
+				if (verb.hasFSM()) {
+					Map<String,String> argumentMap = extractNameMap(request.verb);
+					Verb remapped = verb.remap(argumentMap);
+					return remapped.perform(request.start_state, request.execution_limit);
+				} else {
+					return new PerformVerb.Response();
+				}
 			} else {
 				System.err.println("Verb not found: " + request.verb.verb);
 				return new PerformVerb.Response();

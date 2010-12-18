@@ -12,7 +12,9 @@ import org.apache.log4j.Logger;
 import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.planning.search.SearchNode;
 import edu.arizona.verbs.planning.shared.AbstractPlanner;
+import edu.arizona.verbs.planning.shared.PlanningReport;
 import edu.arizona.verbs.planning.shared.Policy;
+import edu.arizona.verbs.planning.shared.Policy.PolicyType;
 import edu.arizona.verbs.planning.shared.State;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
@@ -35,11 +37,14 @@ public class SearchPlanner extends AbstractPlanner {
 	}
 	
 	@Override
-	public Policy runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
+	public PlanningReport runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
+		long startTime = System.currentTimeMillis();
+		
 		State start = lookupState(startState, fsmState);
-		
 		logger.info("Start state is: " + start);
-		
+
+		// Reset everything
+		knownNodes_ = new HashMap<String, SearchNode>();
 		root_ = lookupNode(start, 0);
 		
 		HashSet<SearchNode> closed = new HashSet<SearchNode>();
@@ -48,20 +53,14 @@ public class SearchPlanner extends AbstractPlanner {
 		HashMap<SearchNode, SearchNode> cameFrom = new HashMap<SearchNode, SearchNode>();
 
 		int visited = 0;
-		int maxVisited = 100000;
+		int maxVisited = 10000;
 		
-		while (!open.isEmpty() && visited < maxVisited) { // Hack but needs to stop if no solution 
+		while (!open.isEmpty() && visited < maxVisited) { // Hack but needs to stop somehow if no solution 
 			SearchNode x = open.remove();
 			
 			if (x.state.isGoal()) {
 				List<SearchNode> path = reconstructPath(cameFrom, x);
-//				System.out.println("DONE!");
-//				System.out.println("PATH: ");
-//				for (SearchNode n : path) {
-//					System.out.println(n.state);
-//				}
-				
-				return new Policy(path);
+				return new PlanningReport(new Policy(path), true, (System.currentTimeMillis() - startTime));
 			}
 			
 			closed.add(x);
@@ -94,7 +93,7 @@ public class SearchPlanner extends AbstractPlanner {
 			visited++;
 		}
 	
-		return new Policy();
+		return new PlanningReport(new Policy(PolicyType.Terminate), false, (System.currentTimeMillis() - startTime));
 	}
 	
 	public List<SearchNode> reconstructPath(HashMap<SearchNode, SearchNode> cameFrom, SearchNode current) {
@@ -117,5 +116,9 @@ public class SearchPlanner extends AbstractPlanner {
 		
 		return knownNodes_.get(hashString);
 	}
-	
+
+	@Override
+	public void setMaxDepth(int maxDepth) {
+		// TODO: We could use this for constraining the search
+	}
 }

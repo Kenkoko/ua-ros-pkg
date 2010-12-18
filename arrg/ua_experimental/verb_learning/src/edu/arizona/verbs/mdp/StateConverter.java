@@ -26,7 +26,7 @@ public class StateConverter {
 	
 	/* Arrays */
 	
-	public static ArrayList<MDPObjectState> objectsToMsgArray(List<OOMDPObjectState> objectList) {
+	public static ArrayList<MDPObjectState> objectsToMsgArrayList(List<OOMDPObjectState> objectList) {
 		return new ArrayList<MDPObjectState>(
 				Collections2.transform(objectList, new Function<OOMDPObjectState, MDPObjectState>() {
 					public MDPObjectState apply(OOMDPObjectState state) { return objStateToMsg(state); }}));
@@ -34,7 +34,6 @@ public class StateConverter {
 	
 	public static List<OOMDPState> msgArrayToStates(ArrayList<MDPState> trace) {
 		List<OOMDPState> result = new Vector<OOMDPState>();
-		
 		for (int i = 0; i < trace.size(); i++) {
 			result.add(msgToState(trace.get(i)));
 		}
@@ -42,9 +41,8 @@ public class StateConverter {
 		return result;
 	}
 	
-	public static ArrayList<MDPState> stateToMsgArray(List<OOMDPState> trace) {
+	public static ArrayList<MDPState> stateToMsgArrayList(List<OOMDPState> trace) {
 		ArrayList<MDPState> mdpStates = new ArrayList<MDPState>();
-
 		for (OOMDPState s : trace) {
 			mdpStates.add(stateToMsg(s));
 		}
