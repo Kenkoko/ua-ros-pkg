@@ -121,7 +121,7 @@ vector<oomdp_msgs::Relation> Location::computePredicates()
   return result;
 }
 
-vector<oomdp_msgs::Relation> Location::computeBinaryRelations(Entity* other)
+vector<oomdp_msgs::Relation> Location::computeBinaryRelations(EntityPtr other)
 {
   vector<oomdp_msgs::Relation> relations;
   return relations;

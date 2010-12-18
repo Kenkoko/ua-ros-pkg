@@ -30,7 +30,7 @@ using boost::regex_replace;
 // TODO: Do we need this?
 Item::Item(simulator_state::ObjectInfo obj_info)
 {
-  cerr << "You didn't write this yet, dumbass!" << endl;
+  cerr << "You didn't write this yet!" << endl;
 }
 
 Item::Item(oomdp_msgs::MDPObjectState state)
@@ -111,7 +111,7 @@ std::vector<oomdp_msgs::Relation> Item::computePredicates()
   return relations;
 }
 
-std::vector<oomdp_msgs::Relation> Item::computeBinaryRelations(Entity* other)
+std::vector<oomdp_msgs::Relation> Item::computeBinaryRelations(EntityPtr other)
 {
   vector<oomdp_msgs::Relation> relations;
 

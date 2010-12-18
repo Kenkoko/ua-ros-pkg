@@ -140,28 +140,33 @@ map<string, string> extractAttributeValues(oomdp_msgs::MDPObjectState state)
   return result;
 }
 
-Entity* makeEntity(oomdp_msgs::MDPObjectState state)
+EntityPtr makeEntity(oomdp_msgs::MDPObjectState state)
 {
   if (state.class_name == "Robot")
   {
-    return new Robot(state);
+    EntityPtr p(new Robot(state));
+    return p;
   }
   else if (state.class_name == "Object")
   {
-    return new Object(state);
+    EntityPtr p(new Object(state));
+    return p;
   }
   else if (state.class_name == "Location")
   {
-    return new Location(state);
+    EntityPtr p(new Location(state));
+    return p;
   }
   else if (state.class_name == "Item")
   {
-    return new Item(state);
+    EntityPtr p(new Item(state));
+    return p;
   }
   else
   {
     cerr << "INVALID CLASS NAME" << state << endl;
-    return NULL;
+    EntityPtr null_ptr;
+    return null_ptr;
   }
 }
 
@@ -227,9 +232,9 @@ bool existsInWorld(string entity_name)
   }
 }
 
-Entity* findByName(std::string name, std::vector<Entity*> entities)
+EntityPtr findByName(std::string name, std::vector<EntityPtr> entities)
 {
-  for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+  for (vector<EntityPtr>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
   {
     if ((*ent_it)->name_ == name)
     {
@@ -237,7 +242,8 @@ Entity* findByName(std::string name, std::vector<Entity*> entities)
     }
   }
 
-  return NULL;
+  EntityPtr null_ptr;
+  return null_ptr;
 }
 
 } // End namespace

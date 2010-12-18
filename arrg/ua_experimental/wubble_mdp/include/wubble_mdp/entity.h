@@ -2,7 +2,7 @@
  * entity.h
  *
  *  Created on: Oct 10, 2010
- *      Author: dhewlett
+ *      Author: Daniel Hewlett
  */
 
 #ifndef ENTITY_H_
@@ -19,6 +19,9 @@
 #include <oomdp_msgs/MDPObjectState.h>
 #include <oomdp_msgs/Relation.h>
 
+class Entity;
+typedef boost::shared_ptr<Entity> EntityPtr;
+
 class Entity
 {
 public:
@@ -31,7 +34,7 @@ public:
   virtual geometry_msgs::Pose getPose() = 0;
 
   virtual std::vector<oomdp_msgs::Relation> computePredicates() = 0;
-  virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* other) = 0;
+  virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(EntityPtr other) = 0;
 
   virtual bool addToWorld() = 0;
 
@@ -47,14 +50,14 @@ std::string extractOrientationString(simulator_state::ObjectInfo info);
 double convertOrientationString(std::string orientation);
 std::string doubleToString(double d);
 std::map<std::string, std::string> extractAttributeValues(oomdp_msgs::MDPObjectState state);
-Entity* makeEntity(oomdp_msgs::MDPObjectState state);
+EntityPtr makeEntity(oomdp_msgs::MDPObjectState state);
 oomdp_msgs::Relation makeRelation(std::string relation, std::vector<std::string> names, bool value);
 double deltaAngle(double theta_1, double theta_2);
 int chessDistance(btVector3 first_pos, btVector3 second_pos);
 double roundToDelta(double number, double delta);
 double roundYaw(double yaw);
 bool existsInWorld(std::string entity_name);
-Entity* findByName(std::string name, std::vector<Entity*> entities);
+EntityPtr findByName(std::string name, std::vector<EntityPtr> entities);
 } // End namespace
 
 

@@ -12,6 +12,7 @@
 #include <boost/assign/std/vector.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/pointer_cast.hpp>
 
 #include <ros/ros.h>
 #include <gazebo/GetWorldProperties.h>
@@ -56,17 +57,17 @@ Robot::Robot(oomdp_msgs::MDPObjectState state)
   last_y_ = lexical_cast<double> (attr_map["last_y"]);
   last_orientation_ = wubble_mdp::convertOrientationString(attr_map["last_orientation"]);
 
-  carried_item_ = NULL; // This will be filled in later by init()
+  // carried_item_ will be filled in later by init()
 }
 
 // This is necessary to link the robot to the item it is holding
-void Robot::init(vector<Entity*> entities)
+void Robot::init(vector<EntityPtr> entities)
 {
-  for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+  for (vector<EntityPtr>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
   {
     if ((*ent_it)->getClassString() == "Item")
     {
-      Item* item = dynamic_cast<Item*> (*ent_it);
+      ItemPtr item = boost::dynamic_pointer_cast<Item>(*ent_it);
       if (item->shouldInitPickUp(this))
       {
         carried_item_ = item; // This is sort of forcing the pickUp
@@ -180,7 +181,7 @@ vector<Relation> Robot::computePredicates()
   return result;
 }
 
-vector<Relation> Robot::computeBinaryRelations(Entity* other)
+vector<Relation> Robot::computeBinaryRelations(EntityPtr other)
 {
   const double pi = boost::math::constants::pi<double>();
 
@@ -250,18 +251,19 @@ btVector3 Robot::getLastPosition()
 
 void Robot::drop()
 {
-  if (carried_item_ != NULL)
+  if (carried_item_)
   {
     if (carried_item_->handlePutDown(this))
     {
-      carried_item_ = NULL;
+      ItemPtr nullPtr;
+      carried_item_ = nullPtr; // = new ItemPtr();
     }
   }
 }
 
-void Robot::pickUp(Item* item)
+void Robot::pickUp(ItemPtr item)
 {
-  if (carried_item_ == NULL)
+  if (!carried_item_)
   {
     if (item->handlePickUp(this))
     {
@@ -271,16 +273,17 @@ void Robot::pickUp(Item* item)
 }
 
 // TODO: This is sort of redundant
-void Robot::pickUp(string item_name, vector<Entity*> entities)
+void Robot::pickUp(string item_name, vector<EntityPtr> entities)
 {
-  if (carried_item_ == NULL)
+  if (!carried_item_)
   {
-    Item* target = dynamic_cast<Item*> (wubble_mdp::findByName(item_name, entities));
+    EntityPtr ent = wubble_mdp::findByName(item_name, entities);
+    ItemPtr target = boost::dynamic_pointer_cast<Item>(ent);
     pickUp(target);
   }
 }
 
-void Robot::simulateAction(string action, vector<Entity*> entities)
+void Robot::simulateAction(string action, vector<EntityPtr> entities)
 {
   // Copy the old state
   last_x_ = x_;
@@ -315,7 +318,7 @@ void Robot::simulateAction(string action, vector<Entity*> entities)
       is_valid = false;
     }
 
-    for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+    for (vector<EntityPtr>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
     {
       if ((*ent_it)->getClassString() == "Object" && wubble_mdp::chessDistance(new_pose, (*ent_it)->getPosition()) == 0)
       {

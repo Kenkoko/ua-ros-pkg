@@ -12,7 +12,7 @@
 
 namespace wubble_mdp
 {
-std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* first, Entity* second);
+std::vector<oomdp_msgs::Relation> computeBinaryRelations(EntityPtr first, EntityPtr second);
 }
 
 #endif /* RELATIONS_H_ */
