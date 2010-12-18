@@ -164,7 +164,7 @@ std::vector<oomdp_msgs::Relation> Object::computePredicates()
   return result;
 }
 
-vector<oomdp_msgs::Relation> Object::computeBinaryRelations(Entity* other)
+vector<oomdp_msgs::Relation> Object::computeBinaryRelations(EntityPtr other)
 {
   vector<oomdp_msgs::Relation> relations;
   return relations;

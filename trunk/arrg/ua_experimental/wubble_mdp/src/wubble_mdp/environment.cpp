@@ -12,6 +12,7 @@
 #include <boost/assign/std/vector.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <ros/ros.h>
 #include <LinearMath/btQuaternion.h>
@@ -29,6 +30,7 @@
 #include <wubble_mdp/robot.h>
 #include <wubble_mdp/location.h>
 #include <wubble_mdp/object.h>
+#include <wubble_mdp/item.h>
 #include <wubble_mdp/relations.h>
 
 using namespace boost::assign;
@@ -43,29 +45,29 @@ using oomdp_msgs::Relation;
 using oomdp_msgs::MDPObjectState;
 using oomdp_msgs::MDPState;
 
-vector<Entity*> Environment::makeEntityList(vector<MDPObjectState> states)
+vector<EntityPtr> Environment::makeEntityList(vector<MDPObjectState> states)
 {
-  vector<Entity*> entities;
+  vector<EntityPtr> entities;
   for (vector<MDPObjectState>::const_iterator obj_it = states.begin(); obj_it != states.end(); ++obj_it)
   {
     entities.push_back(wubble_mdp::makeEntity(*obj_it));
   }
 
-  for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+  for (vector<EntityPtr>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
   {
     if ((*ent_it)->getClassString() == "Robot")
     {
-      Robot* robot = dynamic_cast<Robot*>(*ent_it);
+      RobotPtr robot = boost::dynamic_pointer_cast<Robot>(*ent_it);
       robot->init(entities); // TODO: Does this need to be somewhere else too?
     }
   }
   return entities;
 }
 
-MDPState Environment::makeState(vector<Entity*> entities)
+MDPState Environment::makeState(vector<EntityPtr> entities)
 {
   MDPState state;
-  for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+  for (vector<EntityPtr>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
   {
     state.object_states.push_back((*ent_it)->makeObjectState());
   }
@@ -75,16 +77,16 @@ MDPState Environment::makeState(vector<Entity*> entities)
 
 vector<Relation> Environment::computeRelationsFromStates(vector<oomdp_msgs::MDPObjectState> states)
 {
-  vector<Entity*> entities = Environment::makeEntityList(states);
+  vector<EntityPtr> entities = Environment::makeEntityList(states);
   return computeRelationsFromEntities(entities);
 }
 
-vector<Relation> Environment::computeRelationsFromEntities(vector<Entity*> entities)
+vector<Relation> Environment::computeRelationsFromEntities(vector<EntityPtr> entities)
 {
   vector<Relation> result;
 
   // First compute the predicates (unary relations)
-  for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+  for (vector<EntityPtr>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
   {
     vector<Relation> predicates = (*ent_it)->computePredicates();
     result.insert(result.end(), predicates.begin(), predicates.end());
@@ -167,9 +169,9 @@ bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
                              oomdp_msgs::InitializeEnvironment::Response& res)
 {
   // Annoying special case for the robot
-  vector<Entity*> new_entities = Environment::makeEntityList(req.object_states);
+  vector<EntityPtr> new_entities = Environment::makeEntityList(req.object_states);
   string new_robot_name = "";
-  for (vector<Entity*>::iterator ent_it = new_entities.begin(); ent_it != new_entities.end(); ++ent_it)
+  for (vector<EntityPtr>::iterator ent_it = new_entities.begin(); ent_it != new_entities.end(); ++ent_it)
   {
     if ((*ent_it)->getClassString() == "Robot")
     {
@@ -179,11 +181,11 @@ bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
 
   if (new_robot_name != "")
   {
-    for (vector<Entity*>::iterator ent_it = entity_list_.begin(); ent_it != entity_list_.end(); ++ent_it)
+    for (vector<EntityPtr>::iterator ent_it = entity_list_.begin(); ent_it != entity_list_.end(); ++ent_it)
     {
       if ((*ent_it)->getClassString() == "Robot" && (*ent_it)->name_ != new_robot_name)
       {
-        dynamic_cast<Robot*> (*ent_it)->removeFromWorld();
+        (boost::dynamic_pointer_cast<Robot> (*ent_it))->removeFromWorld();
       }
     }
   }
@@ -193,7 +195,7 @@ bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
   entity_list_.clear();
 
   entity_list_ = new_entities;
-  for (vector<Entity*>::iterator ent_it = entity_list_.begin(); ent_it != entity_list_.end(); ++ent_it)
+  for (vector<EntityPtr>::iterator ent_it = entity_list_.begin(); ent_it != entity_list_.end(); ++ent_it)
   {
     entities_[(*ent_it)->name_] = *ent_it;
     bool added = (*ent_it)->addToWorld();
@@ -210,12 +212,11 @@ bool Environment::initialize(oomdp_msgs::InitializeEnvironment::Request& req,
   vector<string> actions;
   actions += "forward", "left", "right", "drop";
 
-  for (vector<Entity*>::iterator ent_it = new_entities.begin(); ent_it != new_entities.end(); ++ent_it)
+  for (vector<EntityPtr>::iterator ent_it = new_entities.begin(); ent_it != new_entities.end(); ++ent_it)
   {
     if ((*ent_it)->getClassString() == "Item")
     {
-      Item* item = dynamic_cast<Item*> (*ent_it);
-      actions += "pick_up " + item->name_;
+      actions += "pick_up " + (boost::dynamic_pointer_cast<Item> (*ent_it))->name_;
     }
   }
 
@@ -234,8 +235,8 @@ bool Environment::clearSimulation()
     vector<string> safe;
     safe += "clock", "gplane", "point_white";
 
-    vector<Entity*> entities = getEntityList();
-    for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+    vector<EntityPtr> entities = getEntityList();
+    for (vector<EntityPtr>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
     {
       safe += (*ent_it)->name_;
     }
@@ -273,7 +274,7 @@ bool Environment::performAction(oomdp_msgs::PerformAction::Request& req, oomdp_m
   //    updateState();
   //  }
 
-  Robot* robot = findRobot(getEntityList());
+  RobotPtr robot = findRobot(getEntityList());
 
   if (robot == NULL)
   {
@@ -327,9 +328,9 @@ bool Environment::simulateAction(oomdp_msgs::SimulateAction::Request& req, oomdp
 {
   // NB: For now, this method does not use the simulator, so it can only naively simulate the robot's movement
 
-  vector<Entity*> entities = Environment::makeEntityList(req.state.object_states);
+  vector<EntityPtr> entities = Environment::makeEntityList(req.state.object_states);
   // Find the robot:
-  Robot* robot = findRobot(entities);
+  RobotPtr robot = findRobot(entities);
 
   if (robot == NULL)
   {
@@ -339,8 +340,8 @@ bool Environment::simulateAction(oomdp_msgs::SimulateAction::Request& req, oomdp
   }
   else
   {
-    vector<Entity*> nonRobots;
-    for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+    vector<EntityPtr> nonRobots;
+    for (vector<EntityPtr>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
     {
       if ((*ent_it)->getClassString() != "Robot")
       {
@@ -356,20 +357,20 @@ bool Environment::simulateAction(oomdp_msgs::SimulateAction::Request& req, oomdp
   return true;
 }
 
-Robot* Environment::findRobot(vector<Entity*> entities)
+RobotPtr Environment::findRobot(vector<EntityPtr> entities)
 {
-  Robot* robot = NULL;
-  for (vector<Entity*>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
+  RobotPtr robot; // Initially null
+  for (vector<EntityPtr>::iterator ent_it = entities.begin(); ent_it != entities.end(); ++ent_it)
   {
     if ((*ent_it)->getClassString() == "Robot")
     {
-      robot = dynamic_cast<Robot*> (*ent_it);
+      robot = boost::dynamic_pointer_cast<Robot> (*ent_it);
     }
   }
   return robot;
 }
 
-vector<Entity*> Environment::getEntityList()
+vector<EntityPtr> Environment::getEntityList()
 {
   return entity_list_;
 }
@@ -407,23 +408,21 @@ oomdp_msgs::MDPState Environment::updateState()
     }
     else
     {
-      Entity *entity = NULL;
       if (name.find("robot") == 0)
       {
-        //        ROS_INFO("ROBOT");
-        entity = new Robot(info);
+        EntityPtr entity_ptr(new Robot(info));
+        entities_[name] = entity_ptr;
       }
       else if (name.find("goal") == 0)
       {
-        //        ROS_INFO("LOCATION");
-        entity = new Location(info);
+        EntityPtr entity_ptr(new Location(info));
+        entities_[name] = entity_ptr;
       }
       else
       {
-        //        ROS_INFO("OBJECT");
-        entity = new Object(info);
+        EntityPtr entity_ptr(new Object(info));
+        entities_[name] = entity_ptr;
       }
-      entities_[name] = entity;
     }
   }
 

@@ -30,7 +30,7 @@ public:
   virtual geometry_msgs::Pose getPose();
 
   virtual std::vector<oomdp_msgs::Relation> computePredicates();
-  virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* other);
+  virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(EntityPtr other);
 
   double orientation_;
   double last_x_, last_y_;

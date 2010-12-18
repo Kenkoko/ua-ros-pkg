@@ -20,7 +20,7 @@ using oomdp_msgs::Relation;
 namespace wubble_mdp
 {
 
-vector<Relation> computeBinaryRelations(Entity* first, Entity* second)
+vector<Relation> computeBinaryRelations(EntityPtr first, EntityPtr second)
 {
   vector<Relation> result;
 

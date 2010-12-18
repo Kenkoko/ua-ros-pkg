@@ -10,7 +10,10 @@
 
 #include <wubble_mdp/entity.h>
 
+class Item;
 class Robot;
+
+typedef boost::shared_ptr<Item> ItemPtr;
 
 class Item : public Entity
 {
@@ -29,7 +32,7 @@ public:
   virtual geometry_msgs::Pose getPose();
 
   virtual std::vector<oomdp_msgs::Relation> computePredicates();
-  virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(Entity* other);
+  virtual std::vector<oomdp_msgs::Relation> computeBinaryRelations(EntityPtr other);
 
   virtual bool addToWorld();
 

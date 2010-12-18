@@ -31,13 +31,13 @@ public:
   Environment(ros::NodeHandle nh);
   virtual ~Environment();
 
-  static std::vector<Entity*> makeEntityList(std::vector<oomdp_msgs::MDPObjectState> states);
-  static oomdp_msgs::MDPState makeState(std::vector<Entity*> entities);
+  static std::vector<EntityPtr> makeEntityList(std::vector<oomdp_msgs::MDPObjectState> states);
+  static oomdp_msgs::MDPState makeState(std::vector<EntityPtr> entities);
   static std::vector<oomdp_msgs::Relation> computeRelationsFromStates(std::vector<oomdp_msgs::MDPObjectState> states);
-  static std::vector<oomdp_msgs::Relation> computeRelationsFromEntities(std::vector<Entity*> entities);
+  static std::vector<oomdp_msgs::Relation> computeRelationsFromEntities(std::vector<EntityPtr> entities);
 
-  std::vector<Entity*> getEntityList();
-  Robot* findRobot(std::vector<Entity*> entities);
+  std::vector<EntityPtr> getEntityList();
+  RobotPtr findRobot(std::vector<EntityPtr> entities);
 private:
   bool describeMDP(oomdp_msgs::DescribeMDP::Request& req, oomdp_msgs::DescribeMDP::Response& res);
   bool initialize(oomdp_msgs::InitializeEnvironment::Request& req, oomdp_msgs::InitializeEnvironment::Response& res);
@@ -60,9 +60,9 @@ private:
   ros::ServiceClient unpause_physics_client_;
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>* move_base_client_;
 
-  std::vector<Entity*> entity_list_;
-  std::map<std::string, Entity*> entities_;
-  std::map<std::string, Entity*> last_entities_;
+  std::vector<EntityPtr> entity_list_;
+  std::map<std::string, EntityPtr> entities_;
+  std::map<std::string, EntityPtr> last_entities_;
 };
 
 #endif /* ENVIRONMENT_H_ */
