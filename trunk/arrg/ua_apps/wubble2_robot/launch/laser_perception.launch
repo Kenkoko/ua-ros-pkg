@@ -46,7 +46,7 @@
         <remap from="cloud_out" to="neck_scan/cloud_known" />
         <param name="sensor_frame" type="string" value="neck_scan_link" />
         <param name="fixed_frame" type="string" value="base_link" />
-        <param name="object_padd" type="double" value="0.02" />
+        <param name="object_padd" type="double" value="0.04" />
         <param name="object_scale" type="double" value="1.0" />
     </node>
 

@@ -167,6 +167,7 @@
 
     <include file="$(find wubble2_robot)/launch/move_arm.launch" />
     <include file="$(find wubble2_robot)/launch/interpolated_ik.launch" />
+    <include file="$(find wubble2_robot)/launch/stereo_tof_perception.launch" />
 
 
     <!-- Start Actions -->
