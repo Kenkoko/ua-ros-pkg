@@ -42,6 +42,7 @@
                 <geometry>
                     <cylinder radius="${eye_radius}" length="${eye_length}" />
                 </geometry>
+                <material name="Black" />
             </visual>
             
             <collision>

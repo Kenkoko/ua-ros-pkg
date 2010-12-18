@@ -25,6 +25,7 @@
                 <geometry>
                     <mesh filename="package://hokuyo_urg_description/meshes/hokuyo_urg.stl"/>
                 </geometry>
+                <material name="Black" />
             </visual>
             
             <collision>
