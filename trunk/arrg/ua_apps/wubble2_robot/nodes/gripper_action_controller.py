@@ -90,8 +90,8 @@ class GripperActionController():
         if req.command == WubbleGripperGoal.CLOSE_GRIPPER:
             self.left_finger_joint_torque_limit_srv(req.torque_limit)
             self.right_finger_joint_torque_limit_srv(req.torque_limit)
-            self.left_finger_joint_position_pub.publish(0.0)
-            self.right_finger_joint_position_pub.publish(0.0)
+            self.left_finger_joint_position_pub.publish(-1.0)
+            self.right_finger_joint_position_pub.publish(1.0)
             rospy.sleep(0.1)
             
             r = rospy.Rate(500)
@@ -101,7 +101,6 @@ class GripperActionController():
             # set current position as goal so motors won't overload, maybe?
             self.left_finger_joint_position_pub.publish(self.left_finger_joint_state.current_pos - 0.05)
             self.right_finger_joint_position_pub.publish(self.right_finger_joint_state.current_pos + 0.05)
-            rospy.loginfo('CLosed gripper')
             
             self.action_server.set_succeeded()
         elif req.command == WubbleGripperGoal.OPEN_GRIPPER:
@@ -109,7 +108,6 @@ class GripperActionController():
             self.right_finger_joint_torque_limit_srv(req.torque_limit)
             self.left_finger_joint_position_pub.publish(1.0)
             self.right_finger_joint_position_pub.publish(-1.0)
-            rospy.loginfo('Opned gripper')
             self.action_server.set_succeeded()
         else:
             rospy.logerr('Unrecognized command, gripper is not moving enywhere!')

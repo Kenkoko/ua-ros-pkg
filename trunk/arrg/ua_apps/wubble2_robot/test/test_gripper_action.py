@@ -41,7 +41,7 @@ def open_gripper():
     # Creates a goal to send to the action server.
     goal = WubbleGripperGoal()
     goal.command = WubbleGripperGoal.OPEN_GRIPPER
-    goal.torque_limit = 0.2
+    goal.torque_limit = 1.0
     
     # Sends the goal to the action server.
     client.send_goal(goal)

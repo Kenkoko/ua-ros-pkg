@@ -40,6 +40,8 @@ from motion_planning_msgs.msg import JointConstraint
 from ua_controller_msgs.msg import JointState
 
 import actionlib
+from actionlib_msgs.msg import GoalStatus
+
 from wubble2_robot.msg import WubbleArmPushAction
 from wubble2_robot.msg import WubbleArmPushGoal
 from wubble2_robot.msg import WubbleGripperAction
@@ -127,10 +129,19 @@ class GripperActionController():
             rospy.loginfo('Timed out trying to get to ready position')
             self.action_server.set_aborted()
             return
-            
+        else:
+            state = self.move_arm_client.get_state()
+            if state == GoalStatus.SUCCEEDED:
+                rospy.loginfo('Action finished: %s', str(state))
+            else:
+                rospy.logerr('Action failed: %s', str(state))
+                self.action_server.set_aborted()
+                return
+                
         self.open_gripper()
+        self.save_sound = True
         
-        #straight grasp
+        # side grasp
         msg = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState)
         start_angles = msg.actual.positions
         approachpos = [0.0, 0.0, 0.0]
@@ -140,15 +151,14 @@ class GripperActionController():
         frame_id = 'L7_wrist_yaw_link'
         self.check_cartesian_path_lists(approachpos, approachquat, grasppos, graspquat, start_angles, frame=frame_id)
         
-        self.close_gripper()
-        
+        #self.close_gripper()
         self.action_server.set_succeeded()
 
     def open_gripper(self):
         # Creates a goal to send to the action server.
         goal = WubbleGripperGoal()
         goal.command = WubbleGripperGoal.OPEN_GRIPPER
-        goal.torque_limit = 0.5
+        goal.torque_limit = 1.0
         
         self.gripper_client.send_goal(goal)
         self.gripper_client.wait_for_result()
@@ -157,7 +167,7 @@ class GripperActionController():
         # Creates a goal to send to the action server.
         goal = WubbleGripperGoal()
         goal.command = WubbleGripperGoal.CLOSE_GRIPPER
-        goal.torque_limit = 0.5
+        goal.torque_limit = 0.2
         
         self.gripper_client.send_goal(goal)
         self.gripper_client.wait_for_result()
