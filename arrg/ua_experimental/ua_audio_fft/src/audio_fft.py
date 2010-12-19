@@ -93,7 +93,7 @@ class audio_fft(object):
                 p[1:len(p)] = p[1:len(p)] * 2
             else:
                 p[1:len(p) -1] = p[1:len(p) - 1] * 2 # we've got even number of points fft
-            rospy.loginfo(rospy.get_name()+': publishing %d datapoints.', len(p))
+            #rospy.loginfo(rospy.get_name()+': publishing %d datapoints.', len(p))
             self.data = self.data[self.ovr:len(self.data)]
             self.pub.publish(p,1,data.num_channels,data.sample_rate,self.nUniquePts,self.wsz,self.ovr)
             #Currently the '1' indicates that it is fft transform. Other transforms can be indicated by other integers.

@@ -70,6 +70,7 @@ wrist_pitch_controller:
         type: JointPositionControllerAX12
     joint_name: wrist_pitch_joint
     joint_speed: 1.17
+    joint_compliance_slope: 64
     motor:
         id: 6
         init: 200
@@ -83,6 +84,7 @@ wrist_yaw_controller:
         type: JointPositionControllerAX12
     joint_name: wrist_yaw_joint
     joint_speed: 1.17
+    joint_compliance_slope: 64
     motor:
         id: 7
         init: 508
@@ -96,6 +98,8 @@ gripper_left_finger_controller:
         type: JointPositionControllerAX12
     joint_name: left_finger_joint
     joint_speed: 1.17
+    joint_compliance_margin: 5
+    joint_compliance_slope: 64
     motor:
         id: 8
         init: 512
@@ -109,6 +113,8 @@ gripper_right_finger_controller:
         type: JointPositionControllerAX12
     joint_name: right_finger_joint
     joint_speed: 1.17
+    joint_compliance_margin: 5
+    joint_compliance_slope: 64
     motor:
         id: 9
         init: 512

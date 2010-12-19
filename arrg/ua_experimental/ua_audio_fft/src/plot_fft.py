@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import roslib; roslib.load_manifest('ua_audio_fft')
 import rospy
-import threading
 from scipy.fftpack import fft, fftshift
 
 import matplotlib
@@ -19,12 +18,10 @@ class plot_fft(object):
         self.maxpower = -1000000000
 
         rospy.init_node('plot_fft', anonymous=True)
-        self.lock = threading.Lock()
-        self.sub = rospy.Subscriber("transformed_audio", TransformedStream, self.callback)
+        self.sub = rospy.Subscriber('transform_audio', TransformedStream, self.callback)
 
     def callback(self,data):
-        self.lock.acquire()
-        rospy.loginfo(rospy.get_name()+": I received %d datapoints.", data.num_points)
+        #rospy.loginfo(rospy.get_name()+": I received %d datapoints.", data.num_points)
         freqArray = arange(0, data.num_points, 1.0) * (data.orig_rate/data.num_points);
         self.fig.clear()
         logpower = 10*log10(data.stream)
@@ -35,7 +32,7 @@ class plot_fft(object):
         ylabel('Power (dB)')
         ylim(self.minpower, self.maxpower)
         draw()
-        self.lock.release()
+        show()
 
 
 if __name__ == '__main__':
