@@ -1,0 +1,26 @@
+<package>
+    <description brief="point_cloud_filters">
+
+        point_cloud_filters
+
+    </description>
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/point_cloud_filters</url>
+    
+    <depend package="sensor_msgs"/>
+    <depend package="roscpp"/>
+    <depend package="tf"/>
+    <depend package="filters"/>
+    <depend package="message_filters"/>
+    <depend package="pluginlib"/>
+    
+    <export>
+        <cpp cflags="-I${prefix}/include `rosboost-cfg --cflags`" lflags=""/>
+        <filters plugin="${prefix}/point_cloud_filters_plugins.xml"/>
+    </export>
+
+</package>
+
+
