@@ -242,7 +242,7 @@
     local-name: tum-ros-pkg/client_rosjava
 
 - svn:
-    uri: https://code.ros.org/trac/ros-pkg/browser/stacks/geometry/trunk/eigen3
+    uri: https://code.ros.org/svn/ros-pkg/stacks/geometry/trunk/eigen3
     local-name: stacks/geometry/eigen3
 
 - svn:
