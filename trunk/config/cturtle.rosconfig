@@ -239,6 +239,9 @@
     local-name: tum-ros-pkg/client_rosjava
 
 - svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/geometry/trunk/eigen3
+    local-name: stacks/geometry/eigen3
+- svn:
     uri: https://code.ros.org/svn/ros-pkg/stacks/point_cloud_perception/trunk
     local-name: stacks/point_cloud_perception
 - svn:
