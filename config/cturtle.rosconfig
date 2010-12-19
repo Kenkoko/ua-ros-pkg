@@ -80,9 +80,6 @@
     uri: https://code.ros.org/svn/ros-pkg/stacks/physics_ode/tags/cturtle
     local-name: stacks/physics_ode
 - svn:
-    uri: https://code.ros.org/svn/ros-pkg/stacks/point_cloud_perception/tags/cturtle
-    local-name: stacks/point_cloud_perception
-- svn:
     uri: https://code.ros.org/svn/wg-ros-pkg/stacks/pr2_apps/tags/cturtle
     local-name: stacks/pr2_apps
 - svn:
@@ -244,6 +241,16 @@
 - svn:
     uri: https://code.ros.org/svn/ros-pkg/stacks/geometry/trunk/eigen3
     local-name: stacks/geometry/eigen3
+
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/point_cloud_perception/trunk
+    local-name: stacks/point_cloud_perception
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/perception_pcl/tags/unstable
+    local-name: stacks/perception_pcl
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/stacks/perception_pcl_addons/tags/unstable
+    local-name: stacks/perception_pcl_addons
 
 - svn:
     uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
