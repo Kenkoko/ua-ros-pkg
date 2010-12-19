@@ -1,0 +1,9 @@
+<class_libraries>
+  <library path="lib/libpc_filters">
+    <class name="PointCloudIntensityFilter" type="point_cloud_filters::PointCloudIntensityFilter" 
+	    base_class_type="filters::FilterBase<sensor_msgs::PointCloud>">
+      <description>
+	This is a filter which filters sensor_msgs::LaserScan messages based on intensity
+      </description>
+    </class>
+</class_libraries>

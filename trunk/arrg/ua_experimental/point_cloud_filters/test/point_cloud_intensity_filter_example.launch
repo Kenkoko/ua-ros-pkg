@@ -1,0 +1,7 @@
+<launch>
+<node pkg="point_cloud_filters" type="cloud_to_cloud_filter_chain" output="screen" name="swissranger_intensity_filter" >
+      <remap from="cloud_in" to="swissranger/pointcloud_raw" />
+      <remap from="cloud_out" to="swissranger/intensity_filtered" />
+      <rosparam command="load" file="$(find point_cloud_filters)/test/point_cloud_intensity_filter_example.yaml" />
+</node>
+</launch>
