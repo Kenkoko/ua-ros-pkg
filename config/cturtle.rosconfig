@@ -240,9 +240,6 @@
     local-name: tum-ros-pkg/client_rosjava
 
 - svn:
-    uri: https://code.ros.org/svn/ros-pkg/stacks/geometry/trunk/eigen3
-    local-name: stacks/geometry/eigen3
-- svn:
     uri: https://code.ros.org/svn/ros-pkg/stacks/point_cloud_perception/trunk
     local-name: stacks/point_cloud_perception
 - svn:
@@ -256,16 +253,16 @@
     uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
     local-name: ua-ros-pkg
 - svn:
-    uri: https://ua-cs665-ros-pkg.googlecode.com/svn/trunk/
+    uri: https://ua-cs665-ros-pkg.googlecode.com/svn/trunk
     local-name: ua-cs665-ros-pkg
 - svn:
     uri: http://foote-ros-pkg.googlecode.com/svn/trunk/phidgets/phidgetspp_c_api
     local-name: foote-ros-pkg/phidgets/phidgetspp_c_api
 - svn:
-    uri: https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/trunk/stacks/bosch_drivers/
-    local-name: bosch-ros-pkg/bosch_drivers/
+    uri: https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/trunk/stacks/bosch_drivers
+    local-name: bosch-ros-pkg/bosch_drivers
 - svn:
-    uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/openrave_planning/
+    uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/openrave_planning
     local-name: jsk-ros-pkg/openrave_planning
 - svn:
     uri: https://wu-ros-pkg.svn.sourceforge.net/svnroot/wu-ros-pkg/stacks/urdf_tools/trunk/arm_kinematics
