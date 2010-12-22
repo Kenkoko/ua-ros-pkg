@@ -40,5 +40,5 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="wubble_world_2d/natives/linux"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="output" path="eclipse_bin"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>
