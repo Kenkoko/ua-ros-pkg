@@ -1,0 +1,16 @@
+<stack>
+    <description brief="Packages for learning verbs from human heachers.">Packages for learning verbs from human heachers.</description>
+    <author>Daniel Hewlett</author>
+    <license>BSD</license>  
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/ua_verbs</url>
+
+    <depend stack="ros" />
+
+    <depend stack="ua_drivers" />
+    <depend stack="ua_controllers" />
+    <depend stack="ua_robots" />
+    <depend stack="ua_vision" />
+    <depend stack="wubble_world" />
+
+</stack>
