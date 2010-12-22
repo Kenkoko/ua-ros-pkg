@@ -113,6 +113,25 @@ copy is returned by default."
   "Returns true if x is within +/- delta of y."
   (and (< x (+ y delta)) (> x (- y delta))))
 
+;;==========================================================
+;; Permutations
+
+(defun perms (seq size &key (used nil))
+  (if (eq size 1)
+      (loop for x in seq unless (member x used) collect (list x))
+      (loop for x in seq 
+         for sub = (perms seq (- size 1) :used (append (list x) used))
+         append (loop for y in sub
+                   unless (member x used)
+                   collect (append (list x) y)))))
+
+(defun sample-n-perms (seq perm-size n)
+  (loop with perms = (perms seq perm-size) 
+     for i below (min n (length perms))
+     for perm = (nth (random (length perms)) perms)
+     do (setf perms (remove perm perms))
+     collect perm))
+
 ;;===========================================================
 
 (defun boolean-string (value)

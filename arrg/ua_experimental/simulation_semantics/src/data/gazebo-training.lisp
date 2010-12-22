@@ -186,6 +186,22 @@
                            :name "item"
                            :class_name "Item"
                            :attributes *item-attributes*
+                           :values #("1.0" "0.0" "1.0" "0.0" "0" "NONE"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "destination"
+                           :class_name "Location"
+                           :attributes *location-attributes*
+                           :values #("1.5" "0.0")))
+         '("forward" "forward" "pick_up item" "forward" "drop"))
+   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "robot_description"
+                           :class_name "Robot"
+                           :attributes *robot-attributes*
+                           :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "item"
+                           :class_name "Item"
+                           :attributes *item-attributes*
                            :values #("1.0" "1.0" "1.0" "1.0" "0" "NONE"))
                  (make-msg "oomdp_msgs/MDPObjectState"
                            :name "destination"
@@ -193,6 +209,38 @@
                            :attributes *location-attributes*
                            :values #("2.0" "0.0")))
          '("left" "forward" "forward" "pick_up item" "right" "right" "forward" "forward" "drop"))
+   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "robot_description"
+                           :class_name "Robot"
+                           :attributes *robot-attributes*
+                           :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "item"
+                           :class_name "Item"
+                           :attributes *item-attributes*
+                           :values #("0.0" "0.0" "0.0" "0.0" "1" "robot_description"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "destination"
+                           :class_name "Location"
+                           :attributes *location-attributes*
+                           :values #("2.0" "0.0")))
+         '("forward" "forward" "forward" "forward" "drop"))
+   (list (vector (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "robot_description"
+                           :class_name "Robot"
+                           :attributes *robot-attributes*
+                           :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "item"
+                           :class_name "Item"
+                           :attributes *item-attributes*
+                           :values #("0.0" "0.0" "0.0" "0.0" "0" "NONE"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "destination"
+                           :class_name "Location"
+                           :attributes *location-attributes*
+                           :values #("2.0" "0.0")))
+         '("pick_up item" "forward" "forward" "forward" "forward" "drop"))
 ))
 
 (defun get-gazebo-training (verb)
