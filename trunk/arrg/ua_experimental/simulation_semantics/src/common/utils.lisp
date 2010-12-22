@@ -51,6 +51,13 @@ copy is returned by default."
   (loop for x across vec collect x))
 
 ;;===========================================================
+;; Traces
+
+(defun argument-names (object-states)
+  (loop for object-state across object-states
+     collect (oomdp_msgs-msg:name-val object-state)))           
+
+;;===========================================================
 ;; Printing
 
 (defun default-print-slots (obj stream)
@@ -131,6 +138,14 @@ copy is returned by default."
      for perm = (nth (random (length perms)) perms)
      do (setf perms (remove perm perms))
      collect perm))
+
+;; Probably best to use the newer forms above
+(defun sample-random-subset (seq size)
+  (loop with remaining = seq
+     for i below size
+     for chosen = (nth (random (length remaining)) remaining)
+     do (setf remaining (remove chosen remaining))
+     collect chosen))
 
 ;;===========================================================
 
