@@ -136,6 +136,7 @@
 
 (defparameter *gazebo-deliver-tests*
   (list
+   ;; Test 1: Not holding, left
    (vector (make-msg "oomdp_msgs/MDPObjectState"
                      :name "robot_description"
                      :class_name "Robot"
@@ -151,6 +152,7 @@
                      :class_name "Location"
                      :attributes *location-attributes*
                      :values #("2.0" "0.0")))
+   ;; Test 2: Not holding, behind
    (vector (make-msg "oomdp_msgs/MDPObjectState"
                      :name "robot_description"
                      :class_name "Robot"
@@ -166,6 +168,70 @@
                      :class_name "Location"
                      :attributes *location-attributes*
                      :values #("-1.0" "0.0")))
+   ;; Test 3: Holding, dest in front
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "robot_description"
+                     :class_name "Robot"
+                     :attributes *robot-attributes*
+                     :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "item"
+                     :class_name "Item"
+                     :attributes *item-attributes*
+                     :values #("0.0" "0.0" "0.0" "0.0" "1" "robot_description"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "destination"
+                     :class_name "Location"
+                     :attributes *location-attributes*
+                     :values #("2.0" "0.0")))
+   ;; Test 4: Holding, dest behind
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "robot_description"
+                     :class_name "Robot"
+                     :attributes *robot-attributes*
+                     :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "item"
+                     :class_name "Item"
+                     :attributes *item-attributes*
+                     :values #("0.0" "0.0" "0.0" "0.0" "1" "robot_description"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "destination"
+                     :class_name "Location"
+                     :attributes *location-attributes*
+                     :values #("-2.0" "0.0")))
+   ;; Test 5: Not holding, at object
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "robot_description"
+                     :class_name "Robot"
+                     :attributes *robot-attributes*
+                     :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "item"
+                     :class_name "Item"
+                     :attributes *item-attributes*
+                     :values #("0.0" "0.0" "0.0" "0.0" "0" "NONE"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "destination"
+                     :class_name "Location"
+                     :attributes *location-attributes*
+                     :values #("1.0" "0.0")))
+   ;; Test 6: Not holding, minimal spacing
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "robot_description"
+                     :class_name "Robot"
+                     :attributes *robot-attributes*
+                     :values #("0.0" "0.0" "E" "0.0" "0.0" "E"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "item"
+                     :class_name "Item"
+                     :attributes *item-attributes*
+                     :values #("0.5" "0.0" "0.0" "0.0" "0" "NONE"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "destination"
+                     :class_name "Location"
+                     :attributes *location-attributes*
+                     :values #("1.0" "0.0")))
    ))   
 
 (defun get-gazebo-tests (verb)

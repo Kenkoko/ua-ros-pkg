@@ -29,8 +29,8 @@
                  (:file "data/ww2d-training" :depends-on ("pkg"))
                  (:file "data/ww2d-test" :depends-on ("data/ww2d-training"))
                  (:file "evaluation-data" :depends-on ("scenarios"
-                                                       "data/gazebo-test"
-                                                       "data/ww2d-test"))
+                                                       "data/gazebo-test"))
+                                                       ;"data/ww2d-test"))
 
                  (:file "evaluation" :depends-on ("evaluation-data"))
                  (:file "teaching" :depends-on ("verb-learning")))
