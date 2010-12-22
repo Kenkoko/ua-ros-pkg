@@ -2,19 +2,15 @@
 
   # If the machine has never had ROS installed it, do this first:
 {{{
-sudo apt-get install build-essential python-yaml cmake subversion git-core
+sudo apt-get install build-essential python-yaml cmake subversion git-core mercurial python-setuptools
 }}}
-  # Download the rosinstall file
+  # Install the rosinstall program
 {{{
-wget --no-check-certificate http://ros.org/rosinstall -O ~/rosinstall
-}}}
-  # Make it executable
-{{{
-chmod 755 ~/rosinstall
+sudo easy_install -U rosinstall
 }}}
   # Install ROS!
 {{{
-~/rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/cturtle.rosconfig
+rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/cturtle.rosconfig
 }}}
   # Update your .bashrc
 {{{
