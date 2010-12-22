@@ -25,8 +25,9 @@
 - svn:
     uri: https://code.ros.org/svn/wg-ros-pkg/stacks/executive_python/tags/cturtle
     local-name: stacks/executive_python
-- svn:
-    uri: https://code.ros.org/svn/ros-pkg/stacks/geometry/tags/cturtle
+- hg:
+    uri: https://ros-geometry.googlecode.com/hg/
+    version: cturtle
     local-name: stacks/geometry
 - svn:
     uri: https://code.ros.org/svn/ros-pkg/stacks/image_common/tags/cturtle
