@@ -1,22 +1,12 @@
 package edu.arizona.verbs.main;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
-import org.yaml.snakeyaml.Yaml;
 
 import ros.NodeHandle;
 import ros.Ros;
@@ -26,7 +16,6 @@ import ros.ServiceServer.Callback;
 import ros.pkg.oomdp_msgs.msg.MDPObjectState;
 import ros.pkg.oomdp_msgs.srv.InitializeEnvironment;
 import ros.pkg.oomdp_msgs.srv.PerformAction;
-import ros.pkg.verb_learning.msg.VerbDescription;
 import ros.pkg.verb_learning.msg.VerbInstance;
 import ros.pkg.verb_learning.srv.DefineSequentialVerb;
 import ros.pkg.verb_learning.srv.DefineSequentialVerb.Response;
@@ -34,13 +23,6 @@ import ros.pkg.verb_learning.srv.ForgetVerb;
 import ros.pkg.verb_learning.srv.LoadVerbs;
 import ros.pkg.verb_learning.srv.PerformVerb;
 import ros.pkg.verb_learning.srv.UpdateVerb;
-
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.environments.GazeboEnvironment;
 import edu.arizona.verbs.mdp.StateConverter;
@@ -48,9 +30,7 @@ import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.AtomicVerb;
-import edu.arizona.verbs.verb.SequentialVerb;
 import edu.arizona.verbs.verb.Verb;
-import edu.arizona.verbs.verb.VerbBinding;
 
 public class Interface {
 	private static Logger logger = Logger.getLogger(Interface.class);
@@ -61,13 +41,6 @@ public class Interface {
 	private static Environment currentEnvironment = null;
 	public static Environment getCurrentEnvironment() { return currentEnvironment; }
 	
-	// Saves a heatmap to file. For reference, see Heatmaps.java
-	// TODO: This should probably be somewhere else
-//	public static void makeHeatmap(Verb verb, List<Interval> episode, int min) {
-//		String f = verb.getVerbFolder() + "heatmap.png"; // Will overwrite earlier heatmaps, that's OK
-//		HeatmapImage.makeHeatmap(f, verb.getSignature().signature(), min, episode, SequenceType.allen);
-//	}
-
 	// Maps: Binding -> Argument
 	public static Map<String, String> extractReverseNameMap(VerbInstance vi) {
 		if (vi.arguments.size() == vi.bindings.size()) {
@@ -103,10 +76,9 @@ public class Interface {
 			public UpdateVerb.Response call(UpdateVerb.Request request) {
 				logger.debug("BEGIN update_verb callback...");
 				logger.debug("Received a trace with " + request.trace.size() + " states for <" + request.verb + ">");
-				
+
+				// Get/make the verb
 				String verbName = request.verb.verb;
-				Map<String, String> nameMap = extractReverseNameMap(request.verb);
-				Instance instance = StateConverter.convertTrace(StateConverter.msgArrayToStates(request.trace), verbName, nameMap);
 				Verb verb = null;
 				if (verbs.containsKey(verbName)) {
 					verb = verbs.get(verbName); 
@@ -116,10 +88,13 @@ public class Interface {
 					verbs.put(verbName, verb);
 				}
 
+				// Update it with the trace
+				Map<String, String> nameMap = extractReverseNameMap(request.verb);
+				List<OOMDPState> trace = StateConverter.msgArrayListToStates(request.trace);
 				if (request.is_positive) {
-					verb.addPositiveInstance(instance);
+					verb.addPositiveInstance(trace);
 				} else {
-					verb.addNegativeInstance(instance);
+					verb.addNegativeInstance(trace);
 				}
 				
 				logger.debug("... END update_verb callback.");
@@ -158,125 +133,14 @@ public class Interface {
 			}
 		};
 		
+	// TODO: Restore load verbs	
 	static ServiceServer.Callback<LoadVerbs.Request, LoadVerbs.Response> loadVerbs =
 		new ServiceServer.Callback<LoadVerbs.Request, LoadVerbs.Response>() {
 			@Override
 			public LoadVerbs.Response call(LoadVerbs.Request request) {
 				LoadVerbs.Response resp = new LoadVerbs.Response();
 				
-				File verbDirectory = new File("verbs");
-				FilenameFilter filter = new FilenameFilter() {
-				    public boolean accept(File dir, String name) {
-				    	return dir.isDirectory() && !name.startsWith(".");
-				    }
-				};
-				
-				String[] verbDirs = verbDirectory.list(filter);
-				if (verbDirs == null) {
-					logger.error("PROBLEM LOADING VERBS");
-				} else {
-					logger.debug("LOADING " + verbDirs.length + " SIGNATURES...");
-					List<String> compositeVerbs = new Vector<String>();
-					
-					// First pass loads all the atomic verbs, marks the others to load later
-				    for (String dir : verbDirs) {
-				    	ArrayList<String> strings = new ArrayList<String>();
-				    	Iterables.addAll(strings, Splitter.on(",").split(dir));
-				    	
-				    	File seq = new File("verbs/" + dir + "/sequential.yaml");
-				    	if (seq.exists()) { // The verb is a sequential verb
-				    		compositeVerbs.add(dir); // We will load these only after all the atomic verbs
-				    		
-				    	} else { // The verb is an atomic verb
-				    		Signature positiveSignature, negativeSignature;
-				    		
-				    		String signatureFile = "verbs/" + dir + "/signature.xml";
-				    		File f = new File(signatureFile);
-				    		if (f.exists()) {
-				    			positiveSignature = Signature.fromXML(signatureFile);
-				    		} else {
-				    			positiveSignature = new Signature(strings.get(0));
-				    		}
-				    		
-				    		String negSigFile = "verbs/" + dir + "/neg-signature.xml";
-				    		if (new File(negSigFile).exists()) {
-				    			negativeSignature = Signature.fromXML(negSigFile);
-				    		} else {
-				    			negativeSignature = new Signature("non-" + strings.get(0));
-				    		}
-				    		
-				    		AtomicVerb verb = new AtomicVerb(strings.get(0),
-				    										 strings.subList(1, strings.size()),
-				    										 positiveSignature, negativeSignature);
-				    		verbs.put(verb.getLexicalForm(), verb);
-				    	}
-				    }
-				    	
-				    // Now we load the composite verbs
-			    	for (String compDir : compositeVerbs) {
-			    		Vector<String> strings = new Vector<String>();
-				    	Iterables.addAll(strings, Splitter.on(",").split(compDir));
-			    		
-				    	try {
-				    		File seq = new File("verbs/" + compDir + "/sequential.yaml");
-							Yaml yaml = new Yaml();
-							@SuppressWarnings("rawtypes")
-							List yamlList = (List) yaml.load(new FileInputStream(seq));
-
-							List<VerbBinding> subverbs = new Vector<VerbBinding>();
-							
-							for (Object o : yamlList) {
-								@SuppressWarnings("unchecked")
-								Map<String,Map<String,String>> map = (Map<String, Map<String, String>>) o;
-								Entry<String, Map<String, String>> entry = Iterables.getOnlyElement(map.entrySet());
-								String verbFolder = entry.getKey();
-								LinkedHashMap<String,String> binding = (LinkedHashMap<String, String>) entry.getValue();
-								
-								VerbBinding vb = new VerbBinding();
-								vb.verb = verbs.get(Iterables.getFirst(Splitter.on(",").split(verbFolder), null));
-								vb.binding = binding;
-								subverbs.add(vb);
-							}
-							
-							// TODO: Need to load the signatures, etc. if they exist
-							Signature positiveSignature, negativeSignature;
-							String signatureFile = "verbs/" + compDir + "/signature.xml";
-				    		File f = new File(signatureFile);
-				    		if (f.exists()) {
-				    			positiveSignature = Signature.fromXML(signatureFile);
-				    		} else {
-				    			positiveSignature = new Signature(strings.firstElement());
-				    		}
-				    		
-				    		String negSigFile = "verbs/" + compDir + "/neg-signature.xml";
-				    		if (new File(negSigFile).exists()) {
-				    			negativeSignature = Signature.fromXML(negSigFile);
-				    		} else {
-				    			negativeSignature = new Signature("non-" + strings.firstElement());
-				    		}
-							
-							ArrayList<String> split = Lists.newArrayList(Splitter.on(",").split(compDir));
-							SequentialVerb sv = new SequentialVerb(split.get(0), split.subList(1, split.size()), subverbs);
-							sv.setPositiveSignature(positiveSignature);
-							sv.setNegativeSignature(negativeSignature);
-							verbs.put(split.get(0), sv);
-							
-						} catch (FileNotFoundException e) {
-							e.printStackTrace();
-						}
-				    }
-				}
-				
-				for (Verb verb : verbs.values()) {
-					VerbDescription desc = new VerbDescription();
-		    		desc.verb = verb.getLexicalForm();
-		    		desc.arguments = verb.getArguments();
-		    		resp.verbs.add(desc);
-				}
-				
-				System.out.println(verbs);
-				
-				logger.debug("VERBS LOADED");
+				logger.error("load_verbs service is current non-functional");
 				
 				return resp;
 			}
@@ -289,7 +153,7 @@ public class Interface {
 			if (verbs.containsKey(request.verb.verb)) {
 				Verb verb = verbs.get(request.verb.verb);
 				
-				if (verb.hasFSM()) {
+				if (verb.hasPositiveFSM()) {
 					Map<String,String> argumentMap = extractNameMap(request.verb);
 					Verb remapped = verb.remap(argumentMap);
 					return remapped.perform(request.start_state, request.execution_limit);
@@ -332,21 +196,22 @@ public class Interface {
 			}
 		};
 		
+	// TODO: Restore SequentialVerb
 	static Callback<DefineSequentialVerb.Request, DefineSequentialVerb.Response> defineVerb =
 		new Callback<DefineSequentialVerb.Request, DefineSequentialVerb.Response>() {
 			@Override
 			public Response call(DefineSequentialVerb.Request request) {
-				Vector<VerbBinding> subverbs = new Vector<VerbBinding>();
-				for (VerbInstance vi : request.subverbs) {
-					VerbBinding vb = new VerbBinding();
-					vb.verb = verbs.get(vi.verb); // TODO: Need some kind of a check here
-					vb.binding = extractNameMap(vi); // TODO: Confirm this is the right direction
-				
-					subverbs.add(vb);
-				}
-				SequentialVerb verb = new SequentialVerb(request.verb, request.arguments, subverbs);
-				verbs.put(request.verb, verb);
-				
+//				Vector<VerbBinding> subverbs = new Vector<VerbBinding>();
+//				for (VerbInstance vi : request.subverbs) {
+//					VerbBinding vb = new VerbBinding();
+//					vb.verb = verbs.get(vi.verb); // TODO: Need some kind of a check here
+//					vb.binding = extractNameMap(vi); // TODO: Confirm this is the right direction
+//				
+//					subverbs.add(vb);
+//				}
+//				SequentialVerb verb = new SequentialVerb(request.verb, request.arguments, subverbs);
+//				verbs.put(request.verb, verb);
+//				
 				return new Response();
 			}
 		};

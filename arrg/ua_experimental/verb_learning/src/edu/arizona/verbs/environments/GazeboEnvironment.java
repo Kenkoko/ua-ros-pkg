@@ -87,20 +87,12 @@ public class GazeboEnvironment implements Environment {
 	}
 
 	@Override
-	public OOMDPState computeRelations(List<OOMDPObjectState> objects) {
-		// TODO: Call "environment/compute_relations"
-		throw new RuntimeException("computeRelations is not yet supported");
-	}
-
-	@Override
 	public OOMDPState simulateAction(String action) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("GazeboEnvironment does not support this form of simulateAction.");
 	}
 
 	@Override
 	public void reset() {
-		// TODO Auto-generated method stub
-		
+		throw new RuntimeException("GazeboEnvironment does not support reset.");
 	}
 }

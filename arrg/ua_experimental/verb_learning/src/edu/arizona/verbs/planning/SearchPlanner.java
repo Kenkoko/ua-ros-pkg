@@ -5,20 +5,19 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import edu.arizona.verbs.fsm.FSMState;
+import edu.arizona.verbs.planning.data.PlanningReport;
 import edu.arizona.verbs.planning.search.SearchNode;
 import edu.arizona.verbs.planning.shared.AbstractPlanner;
-import edu.arizona.verbs.planning.shared.PlanningReport;
 import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.planning.shared.Policy.PolicyType;
-import edu.arizona.verbs.planning.shared.State;
+import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
+import edu.arizona.verbs.verb.VerbState;
 
 /*
  * An implementation of the A* search algorithm for planning with VFSMs
@@ -37,10 +36,10 @@ public class SearchPlanner extends AbstractPlanner {
 	}
 	
 	@Override
-	public PlanningReport runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
+	public PlanningReport runAlgorithm(OOMDPState startState, VerbState verbState) {
 		long startTime = System.currentTimeMillis();
 		
-		State start = lookupState(startState, fsmState);
+		PlanningState start = lookupState(startState, verbState);
 		logger.info("Start state is: " + start);
 
 		// Reset everything
@@ -58,7 +57,7 @@ public class SearchPlanner extends AbstractPlanner {
 		while (!open.isEmpty() && visited < maxVisited) { // Hack but needs to stop somehow if no solution 
 			SearchNode x = open.remove();
 			
-			if (x.state.isGoal()) {
+			if (x.state.getVerbState().isGoodTerminal()) {
 				List<SearchNode> path = reconstructPath(cameFrom, x);
 				return new PlanningReport(new Policy(path), true, (System.currentTimeMillis() - startTime));
 			}
@@ -70,13 +69,14 @@ public class SearchPlanner extends AbstractPlanner {
 					continue;
 				}
 				
-				int tentativeG = x.g + 1;
+				int tentativeG = x.g() + 1;
 				
 				boolean tentativeIsBetter;
+				boolean addToOpen = false;
 				if (!open.contains(y)) {
-					open.add(y);
+					addToOpen = true;
 					tentativeIsBetter = true;
-				} else if (tentativeG < y.g) {
+				} else if (tentativeG < y.g()) {
 					tentativeIsBetter = true;
 				} else {
 					tentativeIsBetter = false;
@@ -84,10 +84,11 @@ public class SearchPlanner extends AbstractPlanner {
 				
 				if (tentativeIsBetter) {
 					cameFrom.put(y, x);
+					y.setG(tentativeG);
+				}
 				
-					y.g = tentativeG;
-//					y.h is already set
-					y.f = y.g + y.h;
+				if (addToOpen) { // Needed so that the value of F for y is already set when inserting into priority queue
+					open.add(y);
 				}
 			}
 			visited++;
@@ -108,17 +109,17 @@ public class SearchPlanner extends AbstractPlanner {
 		}
 	}
 	
-	public SearchNode lookupNode(State s, int depth) {
+	public SearchNode lookupNode(PlanningState s, int depth) {
 		String hashString = String.valueOf(depth) + s.toString();
 		if (!knownNodes_.containsKey(hashString)) {
-			knownNodes_.put(hashString, new SearchNode(this, s, depth, getVerb().getFSM().getHeuristicInt(s.getFsmState())));
+			knownNodes_.put(hashString, new SearchNode(this, s, depth, getVerb().getHeuristic(s.getVerbState())));
 		}
 		
 		return knownNodes_.get(hashString);
 	}
-
+	
 	@Override
 	public void setMaxDepth(int maxDepth) {
-		// TODO: We could use this for constraining the search
+		// Could we use this for constraining the search?
 	}
 }

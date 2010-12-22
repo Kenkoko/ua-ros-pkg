@@ -1,4 +1,6 @@
-package edu.arizona.verbs.planning.shared;
+package edu.arizona.verbs.planning.data;
+
+import edu.arizona.verbs.planning.shared.Policy;
 
 public class PlanningReport {
 	private boolean success_;

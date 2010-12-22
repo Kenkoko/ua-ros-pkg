@@ -1,6 +1,10 @@
 package edu.arizona.verbs.planning.shared;
 
-// TODO: This is a stub in case future actions have arguments or are otherwise more complex than just strings
+/**
+ * This is a stub in case future actions have arguments or are otherwise more complex than simple strings.
+ * 
+ * @author dhewlett
+ */
 public class Action implements Comparable<Action> {
 	
 	public static final String TERMINATE = "TERMINATE";

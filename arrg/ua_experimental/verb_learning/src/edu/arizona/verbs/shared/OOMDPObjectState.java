@@ -95,7 +95,7 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappabl
 		if (nameMap.containsKey(name_)) {
 			OOMDPObjectState newObject = new OOMDPObjectState(nameMap.get(name_), className_);
 			for (Map.Entry<String, String> entry : attributeMap_.entrySet()) {
-				newObject.setAttribute(entry.getKey(), entry.getValue()); // TODO: This could be done faster
+				newObject.setAttribute(entry.getKey(), entry.getValue()); // TODO: Do this faster
 			}
 			return newObject;
 		} else {

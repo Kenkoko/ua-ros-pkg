@@ -4,23 +4,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
 import com.google.common.collect.Lists;
 
-import edu.arizona.verbs.fsm.FSMState;
+import edu.arizona.verbs.planning.data.PlanningReport;
 import edu.arizona.verbs.planning.shared.AbstractPlanner;
 import edu.arizona.verbs.planning.shared.Action;
-import edu.arizona.verbs.planning.shared.PlanningReport;
 import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.planning.shared.Policy.PolicyType;
-import edu.arizona.verbs.planning.shared.State;
 import edu.arizona.verbs.planning.state.LRTDPState;
+import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
+import edu.arizona.verbs.verb.VerbState;
 
 /*
  * An implementation of LRTDP (Labeled Real-Time Dynamic Programming) from (Bonet and Geffner, 2003)
@@ -36,17 +35,17 @@ public class LRTDP extends AbstractPlanner {
 	
 	// This now returns the action to take from the start state, or null if the planning fails altogether
 	@Override
-	public PlanningReport runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
+	public PlanningReport runAlgorithm(OOMDPState startState, VerbState verbState) {
 		long startTime = System.currentTimeMillis();
 //		logger.info("======================================\nBEGIN RTDP");
 		
 		double epsilon = 0.5;
 		
-		LRTDPState start = (LRTDPState) lookupState(startState, fsmState);
+		LRTDPState start = (LRTDPState) lookupState(startState, verbState);
 		
 		logger.info("Start state is: " + start);
 		
-		if (start.isGoal()) { 
+		if (start.isTerminal()) { 
 			return new PlanningReport(new Policy(PolicyType.Terminate), true, (System.currentTimeMillis() - startTime)); // TODO: We can do better than this if we bring back recoverPolicy
 		}
 		
@@ -69,7 +68,7 @@ public class LRTDP extends AbstractPlanner {
 		
 		// TODO: LRTDP's recoverPolicy method was removed, need to restore it
 		
-		List<State> states = new ArrayList<State>();
+		List<PlanningState> states = new ArrayList<PlanningState>();
 		states.add(start);
 		Policy policy = new Policy(states, Lists.newArrayList(start.getGreedyActions().firstElement()));
 		return new PlanningReport(policy, true, (System.currentTimeMillis() - startTime));
@@ -86,7 +85,7 @@ public class LRTDP extends AbstractPlanner {
 			visited.push(s);
 			
 			// check termination at goal states
-			if (s.isGoal()) {
+			if (s.isTerminal()) {
 				break;
 			}
 			
@@ -146,8 +145,8 @@ public class LRTDP extends AbstractPlanner {
 			
 			// expand state
 			Action a = state.greedyAction();
-			Map<State, Double> nextStateDist = state.getNextStateDist(a);
-			for (State nextishState : nextStateDist.keySet()) {
+			Map<PlanningState, Double> nextStateDist = state.getNextStateDist(a);
+			for (PlanningState nextishState : nextStateDist.keySet()) {
 				LRTDPState nextState = (LRTDPState) nextishState;
 				if (!nextState.isSolved() && !(open.contains(nextState) || closed.contains(nextState))) {
 					if (nextState.needsSimulaton()) { nextState.simulateAllActions(); }
@@ -175,16 +174,16 @@ public class LRTDP extends AbstractPlanner {
 	
 	// Ensure that each state is cached
 	@Override
-	public State lookupState(OOMDPState mdpState, TreeSet<FSMState> fsmState) {
-		String stateString = State.makeStateString(mdpState, fsmState);
+	public PlanningState lookupState(OOMDPState mdpState, VerbState verbState) {
+		String stateString = PlanningState.makeStateString(mdpState, verbState);
 		if (!knownStates_.containsKey(stateString)) {
-			knownStates_.put(stateString, new LRTDPState(mdpState, fsmState, this));
+			knownStates_.put(stateString, new LRTDPState(mdpState, verbState, this));
 		}
 		return knownStates_.get(stateString);
 	}
 
 	@Override
 	public void setMaxDepth(int maxDepth) {
-		// TODO Auto-generated method stub
+		// Does this method make sense in LRTDP?
 	}
 }

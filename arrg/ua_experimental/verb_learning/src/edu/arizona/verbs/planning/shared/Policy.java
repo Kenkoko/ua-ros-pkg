@@ -2,17 +2,17 @@ package edu.arizona.verbs.planning.shared;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeSet;
 
-import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.planning.search.SearchNode;
+import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.OOMDPState;
+import edu.arizona.verbs.verb.VerbState;
 
 public class Policy {
 	public enum PolicyType { Standard, Terminate, Replan };
 	
 	private List<OOMDPState> mdpStates = new ArrayList<OOMDPState>();
-	private List<TreeSet<FSMState>> fsmStates = new ArrayList<TreeSet<FSMState>>();
+	private List<VerbState> verbStates = new ArrayList<VerbState>();
 	private List<String> actions = new ArrayList<String>();
 	private PolicyType type = PolicyType.Standard;
 	
@@ -23,12 +23,12 @@ public class Policy {
 		type = pType;
 	}
 	
-	public Policy(List<State> states, List<Action> actions) {
+	public Policy(List<PlanningState> states, List<Action> actions) {
 		for (int i = 0; i < states.size(); i++) {
-			State state = states.get(i);
+			PlanningState state = states.get(i);
 			
 			mdpStates.add(state.getMdpState());
-			fsmStates.add(state.getFsmState());
+			verbStates.add(state.getVerbState());
 			this.actions.add(actions.get(i).toString());
 		}
 	}
@@ -38,7 +38,7 @@ public class Policy {
 			SearchNode searchNode = path.get(i);
 			
 			mdpStates.add(searchNode.state.getMdpState());
-			fsmStates.add(searchNode.state.getFsmState());
+			verbStates.add(searchNode.state.getVerbState());
 			
 			if (i == path.size() - 1) {
 				actions.add(Action.TERMINATE);
@@ -56,7 +56,7 @@ public class Policy {
 	}
 	
 	// Returns the appropriate action or null if the policy does not specify what to do from that state
-	public String getAction(OOMDPState mdpState, TreeSet<FSMState> fsmState) {
+	public String getAction(OOMDPState mdpState, VerbState verbState) {
 		switch (type) {
 		case Terminate:
 			return Action.TERMINATE;
@@ -65,7 +65,7 @@ public class Policy {
 		case Standard:
 			for (int i = 0; i < mdpStates.size(); i++) {
 				if (mdpState.toString().equals(mdpStates.get(i).toString()) 
-						&& fsmState.toString().equals(fsmStates.get(i).toString())) {
+					&& verbState.toString().equals(verbStates.get(i).toString())) {
 					return actions.get(i);
 				} 
 			}

@@ -7,7 +7,6 @@ import java.util.Vector;
 
 import edu.uci.ics.jung.graph.DirectedGraph;
 
-// TODO: Some of this is redundant with StateMachines, probably can be merged into StateMachines
 public class Graphs {
 		
 	public static<V, E> boolean isDFA(DirectedGraph<V, E> fsm) {
