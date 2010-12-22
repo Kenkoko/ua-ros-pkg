@@ -3,14 +3,14 @@ package edu.arizona.verbs.planning.shared;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.Vector;
 
-import edu.arizona.verbs.fsm.FSMState;
-import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
+import edu.arizona.verbs.planning.data.SimulationResult;
+import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
+import edu.arizona.verbs.verb.VerbState;
 
 public abstract class AbstractPlanner implements Planner {
 
@@ -18,7 +18,7 @@ public abstract class AbstractPlanner implements Planner {
 	protected Environment environment_;
 	protected List<Action> actions_;
 	
-	protected Map<String, State> knownStates_ = new HashMap<String, State>();
+	protected Map<String, PlanningState> knownStates_ = new HashMap<String, PlanningState>();
 	
 	public AbstractPlanner(Verb verb, Environment environment) {
 		verb_ = verb;
@@ -43,42 +43,40 @@ public abstract class AbstractPlanner implements Planner {
 	}
 
 	// This is simply a convenient way to sample an (s, a, s') from the simulation 
-	public SimulationResult sampleNextState(State s, Action a) {
+	public SimulationResult sampleNextState(PlanningState s, Action a) {
 		OOMDPState nextMdpState = environment_.simulateAction(s.getMdpState(), a.toString());
 		
-		TransitionResult dfaResult = verb_.getFSM().simulateDfaTransition(s.getFsmState(), nextMdpState.getActiveRelations());
-		State nextState = lookupState(nextMdpState, dfaResult.newState);
+		VerbState vs = verb_.fsmTransition(s.getVerbState(), nextMdpState.getActiveRelations());
+		PlanningState nextState = lookupState(nextMdpState, vs);
 		
 		SimulationResult result = new SimulationResult();
 		result.state = s;
 		result.action = a;
 		result.nextState = nextState;
-		result.cost = dfaResult.cost;
 		
 		return result;
 	}
 	
 	// This version does not use simulateAction, it uses perform! Dangerous
-	public SimulationResult groundSampleNextState(State s, Action a) {
+	public SimulationResult groundSampleNextState(PlanningState s, Action a) {
 		OOMDPState nextMdpState = environment_.simulateAction(a.toString());
 		
-		TransitionResult dfaResult = verb_.getFSM().simulateDfaTransition(s.getFsmState(), nextMdpState.getActiveRelations());
-		State nextState = lookupState(nextMdpState, dfaResult.newState);
+		VerbState vs = verb_.fsmTransition(s.getVerbState(), nextMdpState.getActiveRelations());
+		PlanningState nextState = lookupState(nextMdpState, vs);
 		
 		SimulationResult result = new SimulationResult();
 		result.state = s;
 		result.action = a;
 		result.nextState = nextState;
-		result.cost = dfaResult.cost;
 		
 		return result;
 	}
 
 	// Ensure that each state is cached 
-	public State lookupState(OOMDPState mdpState, TreeSet<FSMState> fsmState) {
-		String stateString = State.makeStateString(mdpState, fsmState);
+	public PlanningState lookupState(OOMDPState mdpState, VerbState verbState) {
+		String stateString = PlanningState.makeStateString(mdpState, verbState);
 		if (!knownStates_.containsKey(stateString)) {
-			knownStates_.put(stateString, new State(mdpState, fsmState, this));
+			knownStates_.put(stateString, new PlanningState(mdpState, verbState, this));
 		}
 		return knownStates_.get(stateString);
 	}

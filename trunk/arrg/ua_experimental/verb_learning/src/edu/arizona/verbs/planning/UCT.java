@@ -4,24 +4,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
-import java.util.TreeSet;
 
 import org.apache.commons.collections15.bag.HashBag;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
-import edu.arizona.verbs.fsm.FSMState;
+import edu.arizona.verbs.planning.data.PlanningReport;
+import edu.arizona.verbs.planning.data.SimulationResult;
 import edu.arizona.verbs.planning.shared.AbstractPlanner;
 import edu.arizona.verbs.planning.shared.Action;
-import edu.arizona.verbs.planning.shared.PlanningReport;
 import edu.arizona.verbs.planning.shared.Policy;
-import edu.arizona.verbs.planning.shared.SimulationResult;
-import edu.arizona.verbs.planning.shared.State;
 import edu.arizona.verbs.planning.shared.Policy.PolicyType;
+import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
+import edu.arizona.verbs.verb.VerbState;
 
 public class UCT extends AbstractPlanner {
 	
@@ -46,7 +45,7 @@ public class UCT extends AbstractPlanner {
 	}
 	
 	@Override
-	public PlanningReport runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState) {
+	public PlanningReport runAlgorithm(OOMDPState startState, VerbState verbState) {
 		long startTime = System.currentTimeMillis();
 		
 		// Reset all statistics
@@ -55,9 +54,9 @@ public class UCT extends AbstractPlanner {
 		nsd_ = new HashBag<String>();
 		nasd_ = new HashBag<String>();
 		
-		State start = lookupState(startState, fsmState);
+		PlanningState start = lookupState(startState, verbState);
 		
-		if (start.isGoal()) {
+		if (start.isTerminal()) {
 			return new PlanningReport(new Policy(PolicyType.Terminate), true, (System.currentTimeMillis() - startTime));
 		}
 		
@@ -72,9 +71,9 @@ public class UCT extends AbstractPlanner {
 		return new PlanningReport(recoverPolicy(start), true, (System.currentTimeMillis() - startTime));
 	}
 
-	public double uct(State s, int d) {
+	public double uct(PlanningState s, int d) {
 		
-		if (s.isGoal()) {
+		if (s.getVerbState().isGoodTerminal()) {
 			System.out.println("Trial Reached Goal!");
 			for (Action a : actions_) {
 				setQ(s, a.toString(), d, 0.0);  
@@ -112,7 +111,7 @@ public class UCT extends AbstractPlanner {
 			
 			// Sample next state from environment
 			SimulationResult result = groundSampleNextState(s, aStar);
-			State nextState = result.nextState;
+			PlanningState nextState = result.nextState;
 			
 			// Update T
 			String tString = lookupString(s, aStar, d);
@@ -142,15 +141,15 @@ public class UCT extends AbstractPlanner {
 		}		
 	}
 	
-	public Policy recoverPolicy(State start) {
-		List<State> states = new ArrayList<State>();
+	public Policy recoverPolicy(PlanningState start) {
+		List<PlanningState> states = new ArrayList<PlanningState>();
 		List<Action> actions = new ArrayList<Action>();
 		
-		State current = start;
+		PlanningState current = start;
 		for (int d = maxDepth_; d > 0; d--) {
 			states.add(current);
 
-			if (current.isGoal()) {
+			if (current.getVerbState().isGoodTerminal()) {
 				actions.add(Action.TERMINATE_ACTION);
 				break;
 			}
@@ -204,7 +203,7 @@ public class UCT extends AbstractPlanner {
 	}
 	
 	
-	public boolean hasQ(State s, String a, int d) {
+	public boolean hasQ(PlanningState s, String a, int d) {
 		String lookupString = lookupString(s, d);
 		if (q_.containsKey(lookupString)) {
 			return q_.get(lookupString).containsKey(a);
@@ -213,7 +212,7 @@ public class UCT extends AbstractPlanner {
 		return false;
 	}
 	
-	public double getQ(State s, String a, int d) {
+	public double getQ(PlanningState s, String a, int d) {
 		String lookupString = lookupString(s, d);
 		if (q_.containsKey(lookupString)) {
 			HashMap<String, Double> qTable = q_.get(lookupString);
@@ -230,7 +229,7 @@ public class UCT extends AbstractPlanner {
 		}
 	}
 	
-	public void setQ(State s, String a, int d, double newQ) {
+	public void setQ(PlanningState s, String a, int d, double newQ) {
 		String lookupString = lookupString(s, d);
 		if (q_.containsKey(lookupString)) {
 			HashMap<String,Double> qTable = q_.get(lookupString);
@@ -242,11 +241,11 @@ public class UCT extends AbstractPlanner {
 		}
 	}
 	
-	private String lookupString(State s, int d) {
+	private String lookupString(PlanningState s, int d) {
 		return String.valueOf(d) + "|" + s.toString();
 	}
 	
-	private String lookupString(State s, Action a, int d) {
+	private String lookupString(PlanningState s, Action a, int d) {
 		return String.valueOf(d) + "|" + a.toString() + "|" + s.toString();
 	}
 	
@@ -256,8 +255,8 @@ public class UCT extends AbstractPlanner {
 		return actions_.get(index).toString();
 	}
 	
-	public double getCost(State s, State next) {
+	public double getCost(PlanningState s, PlanningState next) {
 //		return (gamma * next.getHeuristic()) - s.getHeuristic() + 1.0;
-		return (gamma * next.getHeuristic()) - s.getHeuristic() + (next.isGoal() ? 0.0 : 1.0);
+		return (gamma * next.getHeuristic()) - s.getHeuristic() + next.getVerbState().getCost();
 	}
 }

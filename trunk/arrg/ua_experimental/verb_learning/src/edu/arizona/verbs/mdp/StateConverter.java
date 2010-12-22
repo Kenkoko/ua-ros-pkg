@@ -22,8 +22,6 @@ import edu.arizona.verbs.shared.Relation;
 
 public class StateConverter {
 	
-	// TODO: Clean up this class now that rosjava is officially released
-	
 	/* Arrays */
 	
 	public static ArrayList<MDPObjectState> objectsToMsgArrayList(List<OOMDPObjectState> objectList) {
@@ -32,7 +30,7 @@ public class StateConverter {
 					public MDPObjectState apply(OOMDPObjectState state) { return objStateToMsg(state); }}));
 	}
 	
-	public static List<OOMDPState> msgArrayToStates(ArrayList<MDPState> trace) {
+	public static List<OOMDPState> msgArrayListToStates(ArrayList<MDPState> trace) {
 		List<OOMDPState> result = new Vector<OOMDPState>();
 		for (int i = 0; i < trace.size(); i++) {
 			result.add(msgToState(trace.get(i)));
@@ -156,7 +154,7 @@ public class StateConverter {
 		}
 		
 		Collections.sort(closedIntervals, Interval.eff);
-		// TODO: What to do for ID?
+		// NOTE: Does "id" matter here?
 		Instance result = new Instance(verb, 0, SequenceFactory.allenSequence(closedIntervals));
 		return result;
 	}

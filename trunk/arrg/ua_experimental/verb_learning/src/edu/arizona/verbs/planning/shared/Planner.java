@@ -1,11 +1,13 @@
 package edu.arizona.verbs.planning.shared;
 
 import java.util.List;
-import java.util.TreeSet;
 
-import edu.arizona.verbs.fsm.FSMState;
+import edu.arizona.verbs.planning.data.PlanningReport;
+import edu.arizona.verbs.planning.data.SimulationResult;
+import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
+import edu.arizona.verbs.verb.VerbState;
 
 public interface Planner {
 	
@@ -13,9 +15,9 @@ public interface Planner {
 	
 	public Verb getVerb();
 	
-	public PlanningReport runAlgorithm(OOMDPState startState, TreeSet<FSMState> fsmState);
+	public PlanningReport runAlgorithm(OOMDPState startState, VerbState verbState);
 
 	public void setMaxDepth(int maxDepth);
 
-	public SimulationResult sampleNextState(State state, Action a);
+	public SimulationResult sampleNextState(PlanningState state, Action a);
 }

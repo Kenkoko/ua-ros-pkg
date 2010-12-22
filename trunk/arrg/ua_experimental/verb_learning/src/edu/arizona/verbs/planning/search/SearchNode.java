@@ -1,28 +1,32 @@
 package edu.arizona.verbs.planning.search;
 
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Vector;
 
 import edu.arizona.verbs.planning.SearchPlanner;
+import edu.arizona.verbs.planning.data.SimulationResult;
 import edu.arizona.verbs.planning.shared.Action;
-import edu.arizona.verbs.planning.shared.SimulationResult;
-import edu.arizona.verbs.planning.shared.State;
+import edu.arizona.verbs.planning.state.PlanningState;
 
 public class SearchNode implements Comparable<SearchNode> {
 	private SearchPlanner planner_;
 	
-	public State state;
+	public PlanningState state;
 	public int depth; 
-	public int g; // Depth is also the g, since each step is +1 depth and +1 cost
-	public int h; // Admissible heuristic for steps to goal
-	public int f;
+	private int g; // Depth is also the g, since each step is +1 depth and +1 cost
+	private int h; // Admissible heuristic for steps to goal
+	private int f;
+	
+	private boolean read = false;
+	private boolean changed = false;
 	
 	public LinkedHashMap<Action, SearchNode> children; // Preserve order for determinism
 	public SearchNode parent = null;
 	
-	public SearchNode(SearchPlanner p, State state, int depth, int h) {
+	public SearchNode(SearchPlanner p, PlanningState state, int depth, int h) {
 		planner_ = p;
 		this.state = state;
 		this.depth = depth;
@@ -34,8 +38,22 @@ public class SearchNode implements Comparable<SearchNode> {
 		children = new LinkedHashMap<Action, SearchNode>();
 	}
 	
-	public int getF() {
+	public int f() {
 		return f;
+	}
+	
+	public int g() {
+		return g;
+	}
+	
+	public int h() {
+		return h;
+	}
+	
+	public void setG(int newG) {
+		g = newG;
+		f = depth + h;
+		changed = true;
 	}
 	
 	public void populateChildren() {
@@ -46,14 +64,6 @@ public class SearchNode implements Comparable<SearchNode> {
 			child.parent = this;
 			
 			children.put(a, child);
-		}
-	}
-	
-	public void updateParent() {
-		if (parent != null) {
-			if (parent.h < this.h + 1) {
-				parent.h = this.h + 1;
-			}
 		}
 	}
 	
@@ -71,10 +81,10 @@ public class SearchNode implements Comparable<SearchNode> {
 		for (Action a : planner_.getActions()) {
 			SearchNode child = children.get(a);
 			
-			if (child.getF() < minScore) {
+			if (child.f() < minScore) {
 				bestChildren = new Vector<SearchNode>();
 				bestChildren.add(child);
-			} else if (child.getF() == minScore) {
+			} else if (child.f() == minScore) {
 				bestChildren.add(child);
 			}
 		}
@@ -87,11 +97,17 @@ public class SearchNode implements Comparable<SearchNode> {
 		System.out.println("\tState: " + state);
 		System.out.println("\tDepth: " + depth);
 		System.out.println("\tHeuristic: " + h);
-		System.out.println("\tScore: " + getF());
+		System.out.println("\tScore: " + f);
 	}
 	
 	@Override
 	public int compareTo(SearchNode other) {
-		return this.f - other.f; // TODO: What if the score changes after sorting? How will it re-sort?
+		if (read && changed) {
+			throw new ConcurrentModificationException("You changed the values after you sorted the list!");
+		}
+		
+		read = true;
+		changed = false;
+		return this.f - other.f; // DANGER: Do not change f after sorting the list, ordering will be invalid!
 	}
 }

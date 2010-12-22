@@ -1,26 +1,19 @@
 package edu.arizona.verbs.planning.state;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
 
-import edu.arizona.verbs.fsm.FSMState;
-import edu.arizona.verbs.fsm.FSMState.StateType;
-import edu.arizona.verbs.fsm.StateSet;
+import edu.arizona.verbs.planning.data.SimulationResult;
 import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.planning.shared.Planner;
-import edu.arizona.verbs.planning.shared.SimulationResult;
-import edu.arizona.verbs.planning.shared.State;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.util.ProbUtils;
+import edu.arizona.verbs.verb.VerbState;
 
-public class LRTDPState extends State {
+public class LRTDPState extends PlanningState {
 	
 	private static Logger logger = Logger.getLogger(LRTDPState.class);
 	
@@ -28,18 +21,18 @@ public class LRTDPState extends State {
 	
 	private int simulationCount_ = 0; // This is the number of times we have simulated all outgoing transitions from this state
 	
-	public LRTDPState(OOMDPState mdpState, TreeSet<FSMState> fsmState, Planner planner) {
-		super(mdpState, fsmState, planner);
+	public LRTDPState(OOMDPState mdpState, VerbState verbState, Planner planner) {
+		super(mdpState, verbState, planner);
 		
-		solved = (isGoal() || isBadTerminal()); // Goal state are automatically solved
+		solved = (isTerminal()); // Goal state are automatically solved
 		
-		hashString_ = fsmState_.toString() + mdpState_.toString();
+		hashString_ = PlanningState.makeStateString(mdpState, verbState);
 	}
 	
 	public Action greedyAction() { 
 		List<Action> result = getGreedyActions();
 		
-		// TODO: Add this random element back
+		// TODO: Remember that random is not being used now
 		if (result.size() > 1) { 
 //			Random generator = new Random();
 //			int index = generator.nextInt(result.size());
@@ -79,8 +72,8 @@ public class LRTDPState extends State {
 		double q = getExpectedCost(a); // c(s,a)
 
 		// sum_{s'} P(s'|s)*s'.value
-		Map<State, Double> nextStateDist = getNextStateDist(a);
-		for (State nextish : nextStateDist.keySet()) {
+		Map<PlanningState, Double> nextStateDist = getNextStateDist(a);
+		for (PlanningState nextish : nextStateDist.keySet()) {
 			LRTDPState next = (LRTDPState) nextish;
 			q += nextStateDist.get(next) * next.value_;
 		}
@@ -89,7 +82,7 @@ public class LRTDPState extends State {
 	}
 	
 	public void update() { 
-		if (isGoal()) { System.err.println("WHY ARE YOU UPDATING A TERMINAL STATE!"); return; }
+		if (isTerminal()) { System.err.println("WHY ARE YOU UPDATING A TERMINAL STATE!"); return; }
 		
 		Action a = this.greedyAction();
 		this.value_ = this.qValue(a);
@@ -110,7 +103,7 @@ public class LRTDPState extends State {
 		return value_;
 	}
 	
-	public Map<State,Double> getNextStateDist(Action a) {
+	public Map<PlanningState,Double> getNextStateDist(Action a) {
 		return transitionProbs_.get(a);
 	}
 
@@ -136,7 +129,7 @@ public class LRTDPState extends State {
 			if (costTotals_.containsKey(a)) {
 				oldCostTotal = costTotals_.get(a);
 			}
-			costTotals_.put(a, oldCostTotal + sr.cost);		
+			costTotals_.put(a, oldCostTotal + sr.nextState.getVerbState().getCost());		
 		}
 		
 		simulationCount_++;

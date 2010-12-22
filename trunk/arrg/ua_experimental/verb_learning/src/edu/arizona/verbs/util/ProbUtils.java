@@ -34,8 +34,7 @@ public class ProbUtils {
 		return things.get(0);
 	}
 	
-	// TODO: Why isn't this just Map?
-	public static<T> HashMap<T, Double> computeProbDist(HashMap<T, Integer> counts) {
+	public static<T> Map<T, Double> computeProbDist(Map<T, Integer> counts) {
 		double total = 0.0;
 		for (Integer count : counts.values()) {
 			total += count;
@@ -49,7 +48,7 @@ public class ProbUtils {
 		return probs;
 	}
 	
-	public static<T> HashMap<T, Double> computeProbDist(HashBag<T> counts) {
+	public static<T> Map<T, Double> computeProbDist(HashBag<T> counts) {
 		double total = 0.0;
 		for (T thing : counts.uniqueSet()) {
 			total += counts.getCount(thing);

@@ -2,81 +2,105 @@ package edu.arizona.verbs.verb;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Vector;
+import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.msg.VerbDescription;
+import ros.pkg.verb_learning.srv.PerformVerb;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.verbs.fsm.VerbFSM;
+import edu.arizona.verbs.fsm.core.CorePath;
+import edu.arizona.verbs.main.Interface;
+import edu.arizona.verbs.mdp.StateConverter;
+import edu.arizona.verbs.planning.Planners;
+import edu.arizona.verbs.planning.data.PlanningReport;
+import edu.arizona.verbs.planning.shared.Action;
+import edu.arizona.verbs.planning.shared.Planner;
+import edu.arizona.verbs.planning.shared.Policy;
+import edu.arizona.verbs.planning.shared.Policy.PolicyType;
+import edu.arizona.verbs.shared.OOMDPState;
 
 public abstract class AbstractVerb implements Verb {
+	private static Logger logger = Logger.getLogger(AbstractVerb.class);
+	
 	protected String lexicalForm_;
 	protected ArrayList<String> arguments_;
-	protected Signature signature_ = null;
-	protected Signature negativeSignature_; // This is not really used for pruning, just fits better
-	protected VerbFSM fsm_ = null;
 	
 	AbstractVerb baseVerb_ = null;
 	
-	/* Updating the signatures */
+	// NEW STUFF
 	
-	void initializeSignatures() {
-		signature_ = new Signature(lexicalForm_);
-		negativeSignature_ = new Signature("non-" + lexicalForm_);
+	Set<CorePath> posCorePaths_ = new HashSet<CorePath>();
+	Set<CorePath> negCorePaths_ = new HashSet<CorePath>();
+	
+	protected VerbFSM posFSM_ = null;
+	protected VerbFSM negFSM_ = null;
+	
+	/* Core Path methods */
+	
+	// Utility method for updating core paths
+	protected void updateCorePathSet(List<OOMDPState> trace, Set<CorePath> pathSet) {
+		CorePath seq = new CorePath(trace);
+		
+		boolean addPath = true;
+		HashSet<CorePath> deadPaths = new HashSet<CorePath>();
+		for (CorePath core : pathSet) {
+			if (core.contains(seq)) {
+				deadPaths.add(core);
+			} else if (seq.contains(core) || seq.equals(core)) {
+				addPath = false;
+			}
+		}
+		
+		if (addPath) {
+			pathSet.add(seq);
+		}
+		
+		for (CorePath dead : deadPaths) {
+			pathSet.remove(dead);
+		}
 	}
 	
-	public void setPositiveSignature(Signature s) {
-		signature_ = s;
-		postInstance();
-	}
-	
-	public void setNegativeSignature(Signature s) {
-		negativeSignature_ = s;
+	@Override
+	public void addPositiveInstance(List<OOMDPState> trace) {
+		updateCorePathSet(trace, posCorePaths_);
 		postInstance();
 	}
 	
 	@Override
-	public void addPositiveInstances(List<Instance> instances) {
-		for (Instance instance : instances) {
-			signature_.update(instance.sequence());
-		}
+	public void addNegativeInstance(List<OOMDPState> trace) {
+		updateCorePathSet(trace, negCorePaths_);
+		postInstance();
+	}
 
-		postInstance();
-	}
-	
 	@Override
-	public void addPositiveInstance(Instance instance) {
-		signature_.update(instance.sequence());
-		
-		postInstance();
-	}
-	
-	@Override
-	public void addNegativeInstance(Instance instance) {
-		negativeSignature_.update(instance.sequence());
-		
-		postInstance();
-	}
-	
-	@Override
-	public void addNegativeInstances(List<Instance> instances) {
-		for (Instance instance : instances) {
-			negativeSignature_.update(instance.sequence());
+	public void addPositiveInstances(List<List<OOMDPState>> traces) {
+		for (List<OOMDPState> trace : traces) {
+			updateCorePathSet(trace, posCorePaths_);
 		}
-		
+		postInstance();
+	}
+	
+	@Override
+	public void addNegativeInstances(List<List<OOMDPState>> traces) {
+		for (List<OOMDPState> trace : traces) {
+			updateCorePathSet(trace, negCorePaths_);
+		}
 		postInstance();
 	}
 	
 	@Override
 	public void forgetInstances() {
-		signature_ = new Signature(lexicalForm_);
-		negativeSignature_ = new Signature("non-" + lexicalForm_);
-		fsm_ = null; // The old FSM is invalid now
+		posCorePaths_ = new HashSet<CorePath>();
+		negCorePaths_ = new HashSet<CorePath>();
+		postInstance();
 	}
 	
 	abstract void postInstance();
@@ -89,16 +113,6 @@ public abstract class AbstractVerb implements Verb {
 	}
 
 	@Override
-	public Signature getSignature() {
-		return signature_;
-	}
-
-	@Override
-	public VerbFSM getFSM() {
-		return fsm_;
-	}
-	
-	@Override
 	public String[] getArgumentArray() {
 		return arguments_.toArray(new String[0]);
 	}
@@ -107,16 +121,27 @@ public abstract class AbstractVerb implements Verb {
 	public ArrayList<String> getArguments() {
 		return arguments_;
 	}
+	
+	@Override
+	public VerbFSM getPositiveFSM() {
+		return posFSM_;
+	}
 
-	public boolean hasSignature() {
-		return signature_ != null;
+	@Override
+	public VerbFSM getNegativeFSM() {
+		return negFSM_;
 	}
 	
 	@Override
-	public boolean hasFSM() {
-		return fsm_ != null;
+	public boolean hasPositiveFSM() {
+		return posFSM_ != null;
 	}
-	
+
+	@Override
+	public boolean hasNegativeFSM() {
+		return negFSM_ != null;
+	}
+
 	/* Folders and ROS */
 	
 	void makeVerbFolder() {
@@ -130,7 +155,6 @@ public abstract class AbstractVerb implements Verb {
 		return "verbs/" + getIdentifierString() + "/";
 	}
 	
-	// TODO: Do we want to make new Lists?
 	public VerbDescription makeVerbDescription() {
 		VerbDescription desc = new VerbDescription();
 		desc.verb = lexicalForm_;
@@ -149,5 +173,75 @@ public abstract class AbstractVerb implements Verb {
 		} else {
 			return baseVerb_;
 		}
+	}
+	
+	@Override
+	public VerbState getStartState() {
+		return new VerbState(posFSM_.getStartState(), negFSM_.getStartState());
+	}
+	
+	@Override
+	public PerformVerb.Response perform(MDPState startState, int executionLimit) {
+		PerformVerb.Response response = new PerformVerb.Response();
+		
+		if (!hasPositiveFSM()) {
+			return response; // Automatic failure
+		}
+		
+		Planner planner = Planners.getPlanner(this, executionLimit);
+		
+		// MDP starts at the given start state
+		OOMDPState mdpState = StateConverter.msgToState(startState);
+		
+		// Create initial verb state (transition on initial relations if possible
+		VerbState verbState = getStartState();
+		verbState = fsmTransition(verbState, mdpState.getActiveRelations());
+		
+		// Dummy policy which triggers immediate planning
+		Policy policy = new Policy(PolicyType.Replan);
+		
+		long totalPlanningTime = 0;
+		boolean executionSuccess = false;
+		
+		// Main loop
+		int numSteps = 0;
+		while (numSteps < executionLimit) {
+			// Add the current state to the trace
+			response.trace.add(StateConverter.stateToMsg(mdpState));
+			
+			String action = policy.getAction(mdpState, verbState); 
+			if (Action.REPLAN.equals(action)) { // This means we "fell off" the planned path
+				logger.info("Fell off garden path, replanning...");
+				planner.setMaxDepth(executionLimit - numSteps); // Needed by UCT
+				PlanningReport report = planner.runAlgorithm(mdpState, verbState); // re-plan
+				totalPlanningTime += report.getElaspedTime();
+				policy = report.getPolicy();
+				action = policy.getAction(mdpState, verbState);
+			}
+			
+			// Record the action that we performed (to make validation easier)
+			System.out.println("---> " + action);
+			response.actions.add(action);
+			
+			if (Action.TERMINATE.equals(action)) {
+				executionSuccess = (numSteps > 0); // If we immediately terminated, that's a failure
+				break;
+			} else {
+				// Update to the new states
+				mdpState = Interface.getCurrentEnvironment().performAction(action);
+				verbState = fsmTransition(verbState, mdpState.getActiveRelations());
+			}			
+			
+			numSteps++;
+		}
+		
+		logger.info("Execution complete.");
+		
+		// What exactly does this mean? That we terminated "voluntarily"?
+		response.execution_success = executionSuccess;
+		response.execution_length = numSteps;
+		response.planning_time = totalPlanningTime;
+		
+		return response;
 	}
 }
