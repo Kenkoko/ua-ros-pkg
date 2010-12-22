@@ -2,8 +2,6 @@
 
 (defun initialize (object-vector)
   (oomdp_msgs-srv:start_state-val
-   ;; TODO: Change this back to verb_learning/initialize_environment
-   ;(call-service "environment/initialize" 'oomdp_msgs-srv:InitializeEnvironment
    (call-service "verb_learning/initialize_environment" 'oomdp_msgs-srv:InitializeEnvironment
                  :object_states object-vector)))
 

@@ -21,17 +21,5 @@
 ;;========================================================================
 ;; Utility functions
 
-(defun argument-names (object-states)
-  (loop for object-state across object-states
-     collect (oomdp_msgs-msg:name-val object-state)))           
-
-;; NB: Does not preserve ordering!
-(defun sample-random-subset (seq size)
-  (loop with remaining = seq
-     for i below size
-     for chosen = (nth (random (length remaining)) remaining)
-     do (setf remaining (remove chosen remaining))
-     collect chosen))
-
 (defun test-examples (domain verb)
   (initialize (first (first (make-training domain verb)))))
