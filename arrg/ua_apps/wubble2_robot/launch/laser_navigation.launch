@@ -3,8 +3,8 @@
     <node name="base_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">
         <remap from="scan" to="base_scan/scan"/>
         <param name="port" value="/dev/wubble2BaseLaser"/>
-        <param name="min_ang" value="-1.65"/>
-        <param name="max_ang" value="1.65"/>
+        <param name="min_ang" value="-2.08"/>
+        <param name="max_ang" value="2.08"/>
         <param name="frame_id" value="base_scan_link"/>
     </node>
 
