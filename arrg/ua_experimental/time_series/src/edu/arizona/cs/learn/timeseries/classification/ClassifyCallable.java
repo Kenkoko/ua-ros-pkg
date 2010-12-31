@@ -2,7 +2,7 @@ package edu.arizona.cs.learn.timeseries.classification;
 
 import java.util.concurrent.Callable;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 
 public class ClassifyCallable implements Callable<ClassifyCallable> {
 	

@@ -1,4 +1,4 @@
-package edu.arizona.cs.learn.timeseries.model;
+package edu.arizona.cs.learn.timeseries.model.symbols;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,10 +7,10 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.dom4j.Element;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Symbol;
 import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
+import edu.arizona.cs.learn.timeseries.model.Interval;
 
-public class CBA extends Symbol implements Comparable<CBA> {
+public class CBA extends StringSymbol implements Comparable<CBA> {
 	private static Logger logger = Logger.getLogger(CBA.class);
 
 	private String _key;
@@ -166,9 +166,19 @@ public class CBA extends Symbol implements Comparable<CBA> {
 	public List<String> getProps() {
 		return _props;
 	}
+	
+	@Override
+	public Symbol copy() { 
+		throw new RuntimeException("Not yet implemented!");
+	}
+	
+	@Override
+	public Symbol merge(Symbol B) { 
+		throw new RuntimeException("Not yet implemented!");
+	}	
 
 	public void toXML(Element e) {
-		Element cba = e.addElement("Symbol").addAttribute("type", "CBA");
+		Element cba = e.addElement("symbol").addAttribute("class", "CBA");
 
 		cba.addAttribute("key", _key);
 		for (Interval interval : _intervals)

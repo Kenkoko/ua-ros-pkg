@@ -13,12 +13,18 @@ import java.util.TreeSet;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
+import edu.arizona.cs.learn.algorithm.alignment.Normalize;
+import edu.arizona.cs.learn.algorithm.alignment.Params;
+import edu.arizona.cs.learn.algorithm.alignment.Report;
+import edu.arizona.cs.learn.algorithm.alignment.Similarity;
 import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
-import edu.arizona.cs.learn.experimental.general.similarity.Similarity;
-import edu.arizona.cs.learn.experimental.general.values.Binary;
-import edu.arizona.cs.learn.experimental.general.values.Value;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.util.Utils;
+import edu.arizona.cs.learn.util.XMLUtils;
 
 public class GeneralTests {
 
@@ -30,11 +36,11 @@ public class GeneralTests {
 		tests();
 	}
 	
-	public static GeneralSignature makeSignature(String key, List<List<Symbol>> instances) { 
-		GeneralSignature s = new GeneralSignature(key);
+	public static Signature makeSignature(String key, List<Instance> instances) { 
+		Signature s = new Signature(key, Similarity.cosine);
 		
 		for (int i = 0; i < instances.size(); ++i) { 
-			s.update(instances.get(i));
+			s.update(instances.get(i).sequence());
 		}
 		s.toXML("data/raw-data/handwriting/" + key + "-signature.xml");
 		
@@ -42,22 +48,22 @@ public class GeneralTests {
 	}
 	
 	public static void tests() { 
-		Pair<String,List<List<Symbol>>> aPair = XMLUtils.loadXML("data/raw-data/handwriting/wes/xml/a.xml");
-		makeSignature(aPair.getFirst(), aPair.getSecond());
+		List<Instance> a = XMLUtils.loadXML("data/raw-data/handwriting/wes/xml/a.xml");
+		makeSignature("a", a);
 				
-		Pair<String,List<List<Symbol>>> bPair = XMLUtils.loadXML("data/raw-data/handwriting/wes/xml/b.xml");
-		makeSignature(bPair.getFirst(), bPair.getSecond());
+		List<Instance> b = XMLUtils.loadXML("data/raw-data/handwriting/wes/xml/b.xml");
+		makeSignature("b", b);
 
-		Pair<String,List<List<Symbol>>> cPair = XMLUtils.loadXML("data/raw-data/handwriting/wes/xml/c.xml");
-		makeSignature(cPair.getFirst(), cPair.getSecond());
+		List<Instance> c= XMLUtils.loadXML("data/raw-data/handwriting/wes/xml/c.xml");
+		makeSignature("c", c);
 		
-		SummaryStatistics aa = test(aPair.getSecond(), aPair.getSecond());
-		SummaryStatistics bb = test(bPair.getSecond(), bPair.getSecond());
-		SummaryStatistics cc = test(cPair.getSecond(), cPair.getSecond());
-		
-		SummaryStatistics ab = test(aPair.getSecond(), bPair.getSecond());
-		SummaryStatistics ac = test(aPair.getSecond(), cPair.getSecond());
-		SummaryStatistics bc = test(bPair.getSecond(), cPair.getSecond());
+		SummaryStatistics aa = test(a, a);
+		SummaryStatistics bb = test(b, b);
+		SummaryStatistics cc = test(c, c);
+
+		SummaryStatistics ab = test(a, b);
+		SummaryStatistics ac = test(a, c);
+		SummaryStatistics bc = test(b, c);
 		
 		
 		System.out.println(" a -- a " + aa.getMean() + " -- " + aa.getStandardDeviation());
@@ -71,18 +77,18 @@ public class GeneralTests {
 		
 	}
 	
-	public static SummaryStatistics test(List<List<Symbol>> a, List<List<Symbol>> b) { 
+	public static SummaryStatistics test(List<Instance> a, List<Instance> b) { 
 		Params p = new Params();
 		p.setMin(0, 0);
 		p.setBonus(1, 1);
-		p.normalize = Params.Normalize.none;
+		p.normalize = Normalize.none;
 		p.similarity = Similarity.cosine;
 		
 		SummaryStatistics ss = new SummaryStatistics();
 		for (int i = 0; i < a.size(); ++i) { 
 			for (int j = 0; j < b.size(); ++j) { 
-				p.seq1 = a.get(i);
-				p.seq2 = b.get(i);
+				p.seq1 = a.get(i).sequence();
+				p.seq2 = b.get(i).sequence();
 				
 				Report report = GeneralAlignment.alignCheckp(p);
 				ss.addValue(report.score);
@@ -102,66 +108,14 @@ public class GeneralTests {
 		}
 		List<String> props = new ArrayList<String>(propSet);
 		for (Integer key : map.keySet()) {
-			instanceMap.put(key, toSequence(props, BPPFactory.compress(map.get(key), Interval.eff)));
+			instanceMap.put(key, Utils.toSequence(props, BPPFactory.compress(map.get(key), Interval.eff)));
 			System.out.println("Key: " + key + " ---- " + instanceMap.get(key));
 		}		
 
 		
-		GeneralSignature signature = new GeneralSignature("chtp1-approach");
+		GeneralSignature signature = new GeneralSignature("chtp1-approach", Similarity.tanimoto);
 	}
-	
-	public static List<Symbol> toSequence(List<String> props, List<Interval> intervals) { 
-		List<Symbol> results = new ArrayList<Symbol>();
-		
-		
-		int tmpSize = 0;
-		int endTime = 0;
-		int startTime = Integer.MAX_VALUE;
-		Map<String,List<Interval>> propMap = new TreeMap<String,List<Interval>>();
-		for (Interval i : intervals) { 
-			List<Interval> propIntervals = propMap.get(i.name);
-			if (propIntervals == null) { 
-				propIntervals = new ArrayList<Interval>();
-				propMap.put(i.name, propIntervals);
-			}
-			
-			propIntervals.add(i);
-			startTime = Math.min(i.start, startTime);
-			endTime = Math.max(i.end, endTime);
-			
-			tmpSize = Math.max(tmpSize, i.name.length());
-		}
-		tmpSize += 1;
 
-		int time = (endTime - startTime);
-		for (int i = 0; i < time; ++i) { 
-			// Determine the state by looping over all of the props and determining
-			// if they are on or off.
-			List<Value> state = new ArrayList<Value>();
-			for (int j = 0; j < props.size(); ++j) {
-				String prop = props.get(j);
-				List<Interval> propIntervals = propMap.get(prop);
-				if (propIntervals == null) {
-					state.add(new Binary(prop, Binary.FALSE));
-					continue;
-				} 
-
-				boolean on = false;
-				for (Interval interval : propIntervals) { 
-					if (interval.on(i)) {
-						state.add(new Binary(prop, Binary.TRUE));
-						on = true;
-						break;
-					}
-				}
-				if (!on)
-					state.add(new Binary(prop, Binary.FALSE));
-			}
-			
-			results.add(new Symbol(state, 1));
-		}
-		return results;
-	}
 	
 	/**
 	 * This test involves loading in the appraoch 
@@ -179,7 +133,7 @@ public class GeneralTests {
 		}
 		List<String> props = new ArrayList<String>(propSet);
 		for (Integer key : map.keySet()) {
-			timelineMap.put(key, toSequence(props, BPPFactory.compress(map.get(key), Interval.eff)));
+			timelineMap.put(key, Utils.toSequence(props, BPPFactory.compress(map.get(key), Interval.eff)));
 			System.out.println("Key: " + key + " ---- " + timelineMap.get(key));
 		}
 		
@@ -195,7 +149,7 @@ public class GeneralTests {
 				Params params = new Params(sequence1, sequence2);
 				params.setMin(0, 0);
 				params.setBonus(1, 1);
-				params.normalize = Params.Normalize.none;
+				params.normalize = Normalize.none;
 				
 				Report r = GeneralAlignment.alignCheckp(params);
 				r.print();
@@ -230,7 +184,7 @@ public class GeneralTests {
 		}
 		List<String> props = new ArrayList<String>(propSet);
 		for (Integer key : map.keySet()) {
-			timelineMap.put(key, toSequence(props, BPPFactory.compress(map.get(key), Interval.eff)));
+			timelineMap.put(key, Utils.toSequence(props, BPPFactory.compress(map.get(key), Interval.eff)));
 		}
 		
 		// Let's build a pretend signature ....
@@ -274,7 +228,7 @@ public class GeneralTests {
 		for (String key : eMap.keySet()) { 
 			sMap.put(key, new ArrayList<List<Symbol>>());
 			for (List<Interval> list : eMap.get(key)) { 
-				sMap.get(key).add(toSequence(props, BPPFactory.compress(list, Interval.eff)));
+				sMap.get(key).add(Utils.toSequence(props, BPPFactory.compress(list, Interval.eff)));
 			}
 		}
 		

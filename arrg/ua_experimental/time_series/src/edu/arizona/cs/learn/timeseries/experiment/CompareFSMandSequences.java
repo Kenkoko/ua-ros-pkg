@@ -13,13 +13,13 @@ import java.util.Set;
 
 import edu.arizona.cs.learn.algorithm.alignment.Params;
 import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.timeseries.recognizer.Recognizer;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 public class CompareFSMandSequences {
@@ -50,7 +50,7 @@ public class CompareFSMandSequences {
 		Signature s = new Signature(className);
 		for (int i = 1; i <= training.size(); ++i) { 
 			List<Interval> episode = training.get(i-1);
-			List<WeightedObject> sequence = SequenceType.allen.getSequence(episode);
+			List<Symbol> sequence = SequenceType.allen.getSequence(episode);
 			
 			s.update(sequence);
 			if (i % 10 == 0) {

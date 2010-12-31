@@ -9,13 +9,14 @@ import java.util.Map;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
+import edu.arizona.cs.learn.timeseries.classification.ClassifyParams;
 import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
 import edu.arizona.cs.learn.timeseries.evaluation.CrossValidation;
 import edu.arizona.cs.learn.timeseries.evaluation.SplitAndTest;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 /**
@@ -38,7 +39,11 @@ public class CogSciExperiments {
 		List<String> classNames = new ArrayList<String>(data.keySet());
 		Collections.sort(classNames);
 		
-		Classifier c = Classify.prune.getClassifier(SequenceType.allen, -1, 50, false, -1);
+		ClassifyParams params = new ClassifyParams();
+		params.type = SequenceType.allen;
+		params.prunePct = 0.5;
+		params.incPrune = true;
+		Classifier c = Classify.prune.getClassifier(params);
 		
 		CrossValidation cv = new CrossValidation(5);
 		List<BatchStatistics> stats = cv.run(System.currentTimeMillis(), classNames, data, c);
@@ -76,7 +81,11 @@ public class CogSciExperiments {
 		List<String> classNames = new ArrayList<String>(data.keySet());
 		Collections.sort(classNames);
 		
-		Classifier c = Classify.prune.getClassifier(SequenceType.allen, -1, 50, false, -1);
+		ClassifyParams params = new ClassifyParams();
+		params.type = SequenceType.allen;
+		params.prunePct = 0.5;
+		params.incPrune = true;
+		Classifier c = Classify.prune.getClassifier(params);
 		
 		// Construct a file to save the results to...
 		BufferedWriter out = new BufferedWriter(new FileWriter("logs/" + prefix + "-learning-curve.csv"));
@@ -129,8 +138,8 @@ public class CogSciExperiments {
 	}
 	
 	public static void main(String[] args) throws Exception { 
-//		performance("ww3d");
-		learningCurve("ww3d");
+		performance("ww3d");
+//		learningCurve("ww3d");
 //		learningCurve("ww2d");
 	}
 	

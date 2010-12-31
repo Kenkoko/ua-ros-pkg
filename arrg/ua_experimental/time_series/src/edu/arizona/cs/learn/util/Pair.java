@@ -1,4 +1,4 @@
-package edu.arizona.cs.learn.experimental.general;
+package edu.arizona.cs.learn.util;
 
 public class Pair<A, B> {
     private final A _first;

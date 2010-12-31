@@ -18,10 +18,10 @@ import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 
-import edu.arizona.cs.learn.experimental.general.Symbol;
-import edu.arizona.cs.learn.experimental.general.XMLUtils;
-import edu.arizona.cs.learn.experimental.general.values.Real;
-import edu.arizona.cs.learn.experimental.general.values.Value;
+import edu.arizona.cs.learn.timeseries.model.symbols.ComplexSymbol;
+import edu.arizona.cs.learn.timeseries.model.values.Real;
+import edu.arizona.cs.learn.timeseries.model.values.Value;
+import edu.arizona.cs.learn.util.XMLUtils;
 
 public class Handwriting {
 	private static String PREFIX = "data/raw-data/handwriting/";
@@ -119,7 +119,7 @@ public class Handwriting {
 }
 
 class HWInstance { 
-	public List<Symbol> symbols;
+	public List<ComplexSymbol> symbols;
 	
 	public List<Double> x;
 	public List<Double> y;
@@ -130,7 +130,7 @@ class HWInstance {
 		this.y = y;
 		this.stroke = stroke;
 		
-		symbols = new ArrayList<Symbol>();
+		symbols = new ArrayList<ComplexSymbol>();
 		for (int i = 0; i < x.size(); ++i) { 
 			List<Value> values = new ArrayList<Value>();
 			values.add(new Real("x", x.get(i)));
@@ -141,7 +141,7 @@ class HWInstance {
 			// values.add(new Symbolic("stroke", stroke.get(i)));
 			values.add(new Real("stroke", Double.parseDouble(stroke.get(i))));
 			
-			symbols.add(new Symbol(values, 1.0));
+			symbols.add(new ComplexSymbol(values, 1.0));
 			
 		}
 	}

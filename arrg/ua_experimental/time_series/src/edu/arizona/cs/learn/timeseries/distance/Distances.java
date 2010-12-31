@@ -16,10 +16,12 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
+import edu.arizona.cs.learn.algorithm.alignment.Normalize;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
 import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 public class Distances {
@@ -125,7 +127,7 @@ public class Distances {
     	}
 
 		Params params = new Params();
-		params.normalize = Params.Normalize.knn;
+		params.normalize = Normalize.knn;
 		params.setMin(0, 0);
 		params.setBonus(1,1);
 		params.setPenalty(0, 0);
@@ -144,7 +146,7 @@ public class Distances {
     			// 1 - distance for affinity propogation since
     			// it larger values are deemed more similar
 //    			double d = 1-SequenceAlignment.distance(params);
-    			double d = SequenceAlignment.distance(params);
+    			double d = GeneralAlignment.distance(params);
     			table[i][j] = d;
     			table[j][i] = d;
     			
@@ -247,7 +249,7 @@ class DistanceCallable implements Callable<DistanceResult> {
 	
 	public DistanceResult call() throws Exception { 
 		Params params = new Params();
-		params.normalize = Params.Normalize.knn;
+		params.normalize = Normalize.knn;
 		params.setMin(0, 0);
 		params.setBonus(1,1);
 		params.setPenalty(0,0);			

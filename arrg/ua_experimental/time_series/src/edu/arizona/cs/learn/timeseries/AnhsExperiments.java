@@ -6,9 +6,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.recognizer.Recognizer;
 import edu.arizona.cs.learn.timeseries.recognizer.RecognizerStatistics;
-import edu.arizona.cs.learn.util.SequenceType;
 
 public class AnhsExperiments {
 	

@@ -7,9 +7,9 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 public class SignatureGeneration {

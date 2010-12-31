@@ -1,4 +1,4 @@
-package edu.arizona.cs.learn.algorithm.alignment.model;
+package edu.arizona.cs.learn.timeseries.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,17 +9,16 @@ import org.apache.commons.math.stat.clustering.Clusterable;
 import org.apache.log4j.Logger;
 
 import edu.arizona.cs.learn.timeseries.evaluation.cluster.Clustering;
-import edu.arizona.cs.learn.timeseries.model.Interval;
-import edu.arizona.cs.learn.util.Utils;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 
 public class Instance implements Clusterable<Instance> {
 	private static Logger logger = Logger.getLogger(Instance.class);
 	private int _id;
 	private int _uniqueId;
 	private String _name;
-	private List<WeightedObject> _sequence;
+	private List<Symbol> _sequence;
 
-	public Instance(String name, int id, List<WeightedObject> seq) {
+	public Instance(String name, int id, List<Symbol> seq) {
 		this._name = name;
 		this._id = id;
 		this._sequence = seq;
@@ -45,7 +44,7 @@ public class Instance implements Clusterable<Instance> {
 		Collections.shuffle(this._sequence);
 	}
 
-	public List<WeightedObject> sequence() {
+	public List<Symbol> sequence() {
 		return this._sequence;
 	}
 
@@ -54,26 +53,9 @@ public class Instance implements Clusterable<Instance> {
 	}
 
 	public Instance copy() {
-		List<WeightedObject> seq = new ArrayList<WeightedObject>();
-		for (WeightedObject obj : this._sequence) {
-			boolean add = true;
-			for (Interval interval : obj.key().getIntervals()) {
-				for (String exclude : Utils.testExcludeSet) {
-					if ((!interval.name.endsWith(exclude))
-							&& (!interval.name.startsWith(exclude)))
-						continue;
-					add = false;
-					break;
-				}
-
-				if (!add) {
-					break;
-				}
-			}
-			if (add) {
-				seq.add(obj);
-			}
-
+		List<Symbol> seq = new ArrayList<Symbol>();
+		for (Symbol obj : _sequence) {
+			seq.add(obj.copy());
 		}
 
 		Instance copy = new Instance(this._name, this._id, seq);

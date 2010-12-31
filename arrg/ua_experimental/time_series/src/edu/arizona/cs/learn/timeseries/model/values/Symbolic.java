@@ -1,11 +1,11 @@
-package edu.arizona.cs.learn.experimental.general.values;
+package edu.arizona.cs.learn.timeseries.model.values;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.dom4j.Element;
 
-import edu.arizona.cs.learn.experimental.general.XMLUtils;
+import edu.arizona.cs.learn.util.XMLUtils;
 
 public class Symbolic extends Value {
 

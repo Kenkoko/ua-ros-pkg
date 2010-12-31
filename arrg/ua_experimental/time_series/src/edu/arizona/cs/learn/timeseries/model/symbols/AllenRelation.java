@@ -1,15 +1,15 @@
-package edu.arizona.cs.learn.timeseries.model;
+package edu.arizona.cs.learn.timeseries.model.symbols;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.dom4j.Element;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Symbol;
+import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.util.Utils;
 
 
-public class AllenRelation extends Symbol {
+public class AllenRelation extends StringSymbol {
 	
 	public static final String[] fullText = new String[] { 
 		"equals", "starts-with", "finishes-with", "before",
@@ -32,18 +32,28 @@ public class AllenRelation extends Symbol {
 	private Interval _interval2;
 	
 	public AllenRelation(String p1, String r, String p2) { 
+		this(p1, r, p2, 1.0);
+	}
+	
+	public AllenRelation(String relation, Interval i1, Interval i2) { 
+		this(relation, i1, i2, 1.0);
+	}
+
+	public AllenRelation(String relation, Interval i1, Interval i2, double weight) { 
+		this(i1.name, relation, i2.name, weight);
+		
+		_interval1 = i1;
+		_interval2 = i2;
+	}
+	
+	public AllenRelation(String p1, String r, String p2, double weight) { 
+		super(weight);
+		
 		_prop1 = p1;
 		_relation = r;
 		_prop2 = p2;
 		
 		_key = "(" + _prop1 + " " + _relation + " " + _prop2 + ")";
-	}
-	
-	public AllenRelation(String relation, Interval i1, Interval i2) { 
-		this(i1.name, relation, i2.name);
-		
-		_interval1 = i1;
-		_interval2 = i2;
 	}
 	
 	public String prop1() { 
@@ -59,7 +69,7 @@ public class AllenRelation extends Symbol {
 	}
 	
 	public String toString() { 
-		return _key;
+		return _key + "--" + _weight;
 	}
 	
 	/**
@@ -176,9 +186,22 @@ public class AllenRelation extends Symbol {
 		return _key;
 	}	
 	
+	@Override
+	public Symbol copy() { 
+		if (_interval1 != null && _interval2 != null) 
+			return new AllenRelation(_relation, _interval1, _interval2, _weight);
+
+		return new AllenRelation(_prop1, _relation, _prop2, _weight);
+	}
+	
+	@Override
+	public Symbol merge(Symbol B) { 
+		return new AllenRelation(_relation, _interval1, _interval2, _weight+B._weight);
+	}
+	
 	public void toXML(Element e) {
-		Element allen = e.addElement("Symbol")
-			.addAttribute("type", "AllenRelation");
+		Element allen = e.addElement("symbol")
+			.addAttribute("class", "AllenRelation");
 
 		allen.addAttribute("key", this._key);
 		allen.addAttribute("relation", this._relation);

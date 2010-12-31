@@ -15,74 +15,48 @@ import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
-import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Episode;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Score;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.timeseries.model.SignatureCallable;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 public class CAVEClassifier extends Classifier {
 	private static Logger logger = Logger.getLogger(CAVEClassifier.class);
-	protected int _percent;
-	protected double _pct;
-	protected boolean _prune;
-	protected boolean _load;
-	
-	protected String _method;
 
 	protected Map<String, Signature> _map;
-	protected int _folds;
 
-	public CAVEClassifier(SequenceType type, int percent, boolean prune, boolean fromFile, int folds) {
-		super(type);
-
-		this._folds = folds;
-		this._percent = percent;
-		this._pct = (this._percent / 100.0D);
-
-		this._load = fromFile;
-		this._prune = prune;
-	}
-
-	public CAVEClassifier(SequenceType type, int percent, boolean prune, boolean fromFile, int folds, String method) {
-		super(type);
-
-		this._folds = folds;
-		this._percent = percent;
-		this._pct = (this._percent / 100.0D);
-
-		this._load = fromFile;
-		this._prune = prune;
-
-		this._method = method;
+	public CAVEClassifier(ClassifyParams params) {
+		super(params);
 	}
 
 	public String getName() {
-		if (this._method != null) {
-			return "cave-" + this._method;
+		if (_params.method != null) {
+			return "cave-" + _params.method;
 		}
-		return "cave-" + this._percent;
+		return "cave-" + _params.prunePct;
 	}
 
 	public String test(Instance instance) {
 		Params params = new Params();
-		params.setMin(5, 0);
+		params.setMin(0, 0);
 		params.setBonus(1.0D, 0.0D);
 		params.setPenalty(-1.0D, 0.0D);
+		params.similarity = _params.similarity;
 
 		List<Score> scores = new ArrayList<Score>();
 		for (Signature signature : this._map.values()) {
 			params.seq1 = signature.signature();
-			params.min1 = (int) Math.round(signature.trainingSize() * _pct);
+			params.min1 = (int) Math.round(signature.trainingSize() * _params.prunePct);
 			params.seq2 = instance.sequence();
 
 			Score score = new Score();
 			score.key = signature.key();
-			score.distance = SequenceAlignment.distance(params);
+			score.distance = GeneralAlignment.distance(params);
 			scores.add(score);
 		}
 
@@ -97,9 +71,9 @@ public class CAVEClassifier extends Classifier {
 	public Map<String,Long> train(int x, Map<String,List<Instance>> training) {
 		_map = new HashMap<String,Signature>();
 
-		if (_method != null) {
+		if (_params.method != null) {
 			return doTrain(training);
-		} else if (this._load) {
+		} else if (_params.fromFiles) {
 			return load(x, training.keySet());
 		} else {
 			return learn(x, training);
@@ -109,9 +83,9 @@ public class CAVEClassifier extends Classifier {
 	public void trainEpisodes(int x, List<Episode> training, SequenceType type, boolean shuffle) { 
 		_map = new HashMap<String,Signature>();
 
-		if (_method != null) 
+		if (_params.method != null) 
 			throw new RuntimeException("Not yet implemented!!!");
-		else if (_load) {
+		else if (_params.fromFiles) {
 			Set<String> classNames = new HashSet<String>();
 			for (Episode episode : training) 
 				classNames.add(episode.name());
@@ -131,7 +105,7 @@ public class CAVEClassifier extends Classifier {
 		Map<String,Long> timing = new HashMap<String,Long>();
 		for (String key : training.keySet()) {
 			long start = System.currentTimeMillis();
-			Signature s = Signature.agglomerativeTraining(_method, training.get(key));
+			Signature s = Signature.agglomerativeTraining(_params.method, training.get(key));
 			long end = System.currentTimeMillis();
 			
 			timing.put(key, end-start);
@@ -146,10 +120,10 @@ public class CAVEClassifier extends Classifier {
 	 * @param keys
 	 */
 	private Map<String,Long> load(int x, Collection<String> keys) {
-		String dir = "data/cross-validation/k" + _folds + "/fold-" + x
-				+ "/" + this._type + "/";
+		String dir = "data/cross-validation/k" + _params.folds + "/fold-" + x
+				+ "/" + _params.type + "/";
 		String suffix = ".xml";
-		if (_prune) {
+		if (_params.incPrune) {
 			suffix = "-prune.xml";
 		}
 
@@ -175,9 +149,11 @@ public class CAVEClassifier extends Classifier {
 		ExecutorService execute = Executors.newFixedThreadPool(Utils.numThreads);
 
 		List<Future<SignatureCallable>> futureList = new ArrayList<Future<SignatureCallable>>();
-		for (String key : training.keySet()) 
-			futureList.add(execute.submit(new SignatureCallable(key, _prune, 3, training.get(key))));
-			
+		for (String key : training.keySet()) {
+			SignatureCallable sc = new SignatureCallable(key, _params.incPrune, 3, _params.similarity, training.get(key));
+			futureList.add(execute.submit(sc));
+		}
+		
 		Map<String,Long> timing = new HashMap<String,Long>();
 		for (Future<SignatureCallable> results : futureList) {
 			try {

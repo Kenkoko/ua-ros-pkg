@@ -13,12 +13,13 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.classification.CAVEClassifier;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyCallable;
+import edu.arizona.cs.learn.timeseries.classification.ClassifyParams;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 public class Ordering {
@@ -74,7 +75,13 @@ public class Ordering {
 	public double experiment(SequenceType type, boolean prune) { 
 		for (List<Instance> list : _training.values()) 
 			Collections.shuffle(list, new Random(System.currentTimeMillis()));
-		Classifier c = new CAVEClassifier(type, 50, prune, false, 2);
+		ClassifyParams params = new ClassifyParams();
+		params.type = type;
+		params.prunePct = 0.5;
+		params.incPrune = prune;
+		params.folds = 2;
+		
+		Classifier c = new CAVEClassifier(params);
 		c.train(0, _training);
 		
 		return evaluate(c);
@@ -90,7 +97,12 @@ public class Ordering {
 	public double orderingExperiment(String prefix, SequenceType type, boolean prune) { 
 		prepare(prefix, type);
 		
-		Classifier c = new CAVEClassifier(type, 50, true, false, 2);
+		ClassifyParams params = new ClassifyParams();
+		params.type = type;
+		params.prunePct = 0.5;
+		params.incPrune = true;
+		params.folds = 2;
+		Classifier c = new CAVEClassifier(params);
 		c.train(0, _training);
 		
 		return evaluate(c);

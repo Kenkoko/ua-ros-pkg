@@ -15,11 +15,17 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
+import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
 import edu.arizona.cs.learn.timeseries.model.Episode;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.symbols.ComplexSymbol;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
+import edu.arizona.cs.learn.timeseries.model.values.Binary;
+import edu.arizona.cs.learn.timeseries.model.values.Value;
 
 public class Utils {
 	public static Random random;
@@ -34,6 +40,10 @@ public class Utils {
 	  
 	public static String[] HARD_DATA = { "vowel", "ww2d", "auslan", };
 	public static String[] EASY_DATA = { "wes", "nicole", "derek", "ecg", "wafer", "ww3d" };
+	
+	public static String[] alphabet = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+		"k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+	};
 
     public static boolean LIMIT_RELATIONS = true;
 	public static int WINDOW = 5;
@@ -107,7 +117,7 @@ public class Utils {
 		Map<Integer,List<Interval>> map = load(new File(file));
 		for (Map.Entry<Integer, List<Interval>> entry : map.entrySet()) { 
 			List<Interval> list = entry.getValue();
-			List<WeightedObject> sequence = type.getSequence(list);
+			List<Symbol> sequence = type.getSequence(list);
 			
 			results.add(new Instance(key, entry.getKey(), sequence));
 		}
@@ -130,6 +140,102 @@ public class Utils {
 			}
 		}
 		return activities;
+	}
+	
+	/**
+	 * convert will load in all the lisp files and construct Instances
+	 * composed of complex Symbols.
+	 * @param fileMap
+	 * @return
+	 */
+	public static Map<String,List<Instance>> convert(Map<String,String> fileMap) { 
+		
+		Map<String,Map<Integer,List<Interval>>> map = new HashMap<String,Map<Integer,List<Interval>>>();
+		Set<String> propSet = new TreeSet<String>();
+		for (String key : fileMap.keySet()) { 
+			
+			Map<Integer,List<Interval>> episodeMap = load(new File(fileMap.get(key)));
+			map.put(key, episodeMap);
+			
+			for (List<Interval> tmp : episodeMap.values()) { 
+				for (Interval i : tmp)  
+					propSet.add(i.name);
+			}
+		}
+		
+		List<String> props = new ArrayList<String>(propSet);
+		Map<String,List<Instance>> resultsMap = new HashMap<String,List<Instance>>();
+		for (String key : map.keySet()) { 
+			List<Instance> tmp = new ArrayList<Instance>();
+
+			Map<Integer,List<Interval>> tmpMap = map.get(key);
+			for (Integer id : tmpMap.keySet()) {
+				List<Symbol> sequence = toSequence(props, BPPFactory.compress(tmpMap.get(id), Interval.eff));
+				tmp.add(new Instance(key, id, sequence));
+			}		
+			
+			resultsMap.put(key, tmp);
+		}
+
+		return resultsMap;
+	}
+	
+	/**
+	 * Construct a sequence from the propositions and the intervals given.
+	 * @param props
+	 * @param intervals
+	 * @return
+	 */
+	public static List<Symbol> toSequence(List<String> props, List<Interval> intervals) { 
+		List<Symbol> results = new ArrayList<Symbol>();
+		
+		int tmpSize = 0;
+		int endTime = 0;
+		int startTime = Integer.MAX_VALUE;
+		Map<String,List<Interval>> propMap = new TreeMap<String,List<Interval>>();
+		for (Interval i : intervals) { 
+			List<Interval> propIntervals = propMap.get(i.name);
+			if (propIntervals == null) { 
+				propIntervals = new ArrayList<Interval>();
+				propMap.put(i.name, propIntervals);
+			}
+			
+			propIntervals.add(i);
+			startTime = Math.min(i.start, startTime);
+			endTime = Math.max(i.end, endTime);
+			
+			tmpSize = Math.max(tmpSize, i.name.length());
+		}
+		tmpSize += 1;
+
+		int time = (endTime - startTime);
+		for (int i = 0; i < time; ++i) { 
+			// Determine the state by looping over all of the props and determining
+			// if they are on or off.
+			List<Value> state = new ArrayList<Value>();
+			for (int j = 0; j < props.size(); ++j) {
+				String prop = props.get(j);
+				List<Interval> propIntervals = propMap.get(prop);
+				if (propIntervals == null) {
+					state.add(new Binary(prop, Binary.FALSE));
+					continue;
+				} 
+
+				boolean on = false;
+				for (Interval interval : propIntervals) { 
+					if (interval.on(i)) {
+						state.add(new Binary(prop, Binary.TRUE));
+						on = true;
+						break;
+					}
+				}
+				if (!on)
+					state.add(new Binary(prop, Binary.FALSE));
+			}
+			
+			results.add(new ComplexSymbol(state, 1));
+		}
+		return results;
 	}
 
 	public static Map<String,List<Instance>> load(String prefix, SequenceType type) { 

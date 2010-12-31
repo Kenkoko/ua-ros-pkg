@@ -7,16 +7,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
 import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.algorithm.markov.FSMFactory;
 import edu.arizona.cs.learn.timeseries.experiment.BitPatternGeneration;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.cs.learn.timeseries.model.symbols.StringSymbol;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.timeseries.visualization.TableFactory;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 import edu.arizona.cs.learn.util.graph.Edge;
 import edu.uci.ics.jung.graph.DirectedGraph;
@@ -120,8 +121,9 @@ public class FSMSequences {
 		Signature s = new Signature("approach");
 		for (Instance instance : examples) {
 			s.update(instance.sequence());
-			for (WeightedObject obj : instance.sequence()) {
-				for (Interval interval : obj.key().getIntervals())
+			for (Symbol obj : instance.sequence()) {
+				StringSymbol ss = (StringSymbol) obj;
+				for (Interval interval : ss.getIntervals())
 					propSet.add(interval.name);
 			}
 		}
@@ -148,8 +150,9 @@ public class FSMSequences {
 		s = s.prune(min);
 
 		Set<String> propSet = new TreeSet<String>();
-		for (WeightedObject obj : s.signature()) {
-			propSet.addAll(obj.key().getProps());
+		for (Symbol obj : s.signature()) {
+			StringSymbol ss = (StringSymbol) obj;
+			propSet.addAll(ss.getProps());
 		}
 		List<String> props = new ArrayList<String>(propSet);
 		List<List<Interval>> all = BitPatternGeneration.getBPPs(key, s.table(), propSet);

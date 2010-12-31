@@ -3,47 +3,42 @@ package edu.arizona.cs.learn.timeseries.classification;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.arizona.cs.learn.util.SequenceType;
-
 public enum Classify {
 	knn {
-		public Classifier getClassifier(SequenceType type,
-				int k, int percent, boolean fromFile, int folds) {
-			return new NearestNeighbor(type, k, true);
+		public Classifier getClassifier(ClassifyParams params) {
+			return new NearestNeighbor(params);
 		}
 	},
 	cave {
-		public Classifier getClassifier(SequenceType type,
-				int k, int percent, boolean fromFile, int folds) {
-			return new CAVEClassifier(type, percent, false, fromFile, folds);
+		public Classifier getClassifier(ClassifyParams params) {
+			return new CAVEClassifier(params);
 		}
 	},
 	single {
-		public Classifier getClassifier(SequenceType type,
-				int k, int percent, boolean fromFile, int folds) {
-			return new CAVEClassifier(type, percent, true, fromFile, folds, "single");
+		public Classifier getClassifier(ClassifyParams params) {
+			params.method = "single";
+			return new CAVEClassifier(params);
 		}
 	},
 	complete {
-		public Classifier getClassifier(SequenceType type,
-				int k, int percent, boolean fromFile, int folds) {
-			return new CAVEClassifier(type, percent, true, fromFile, folds, "complete");
+		public Classifier getClassifier(ClassifyParams params) {
+			params.method = "complete";
+			return new CAVEClassifier(params);
 		}
 	},
 	average {
-		public Classifier getClassifier(SequenceType type,
-				int k, int percent, boolean fromFile, int folds) {
-			return new CAVEClassifier(type, percent, true, fromFile, folds, "average");
+		public Classifier getClassifier(ClassifyParams params) {
+			params.method = "average";
+			return new CAVEClassifier(params);
 		}
 	},
 	prune { 
-		public Classifier getClassifier(SequenceType type,
-				int k, int percent, boolean fromFile, int folds) {
-			return new CAVEClassifier(type, percent, true, fromFile, folds);
+		public Classifier getClassifier(ClassifyParams params) {
+			return new CAVEClassifier(params);
 		}
 	};
 
-	public abstract Classifier getClassifier(SequenceType sequenceType, int k, int percent, boolean fromFiles, int folds);
+	public abstract Classifier getClassifier(ClassifyParams params);
 
 	public static List<Classify> get(String option) {
 		List<Classify> list = new ArrayList<Classify>();

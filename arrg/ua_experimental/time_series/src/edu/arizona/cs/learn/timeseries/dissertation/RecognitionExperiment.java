@@ -10,17 +10,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.algorithm.markov.FSMFactory;
 import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
 import edu.arizona.cs.learn.timeseries.Experiments;
 import edu.arizona.cs.learn.timeseries.experiment.BitPatternGeneration;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.cs.learn.timeseries.model.symbols.StringSymbol;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.timeseries.recognizer.Recognizer;
 import edu.arizona.cs.learn.timeseries.recognizer.RecognizerStatistics;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 import edu.arizona.cs.learn.util.graph.Edge;
 import edu.uci.ics.jung.graph.DirectedGraph;
@@ -108,8 +109,9 @@ public class RecognitionExperiment {
 			Signature s = Signature.fromXML(file);
 
 			Set<String> propSet = new TreeSet<String>();
-			for (WeightedObject obj : s.signature()) {
-				propSet.addAll(obj.key().getProps());
+			for (Symbol obj : s.signature()) {
+				StringSymbol ss = (StringSymbol) obj;
+				propSet.addAll(ss.getProps());
 			}
 			List<String> props = new ArrayList<String>(propSet);
 			List<List<Interval>> all = BitPatternGeneration.getBPPs(null, s.table(), propSet);

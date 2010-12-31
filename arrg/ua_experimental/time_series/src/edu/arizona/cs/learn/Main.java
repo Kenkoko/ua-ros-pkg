@@ -9,8 +9,8 @@ import com.martiansoftware.jsap.Switch;
 
 import edu.arizona.cs.learn.timeseries.Experiments;
 import edu.arizona.cs.learn.timeseries.evaluation.cluster.Clustering;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.util.Ablation;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 public class Main {
