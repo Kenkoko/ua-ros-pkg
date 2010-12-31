@@ -8,8 +8,8 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.util.Utils;
 
 public class CrossValidation extends ClassificationTest {

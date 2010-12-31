@@ -1,11 +1,11 @@
-package edu.arizona.cs.learn.timeseries.model;
+package edu.arizona.cs.learn.timeseries.model.symbols;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.dom4j.Element;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Symbol;
+import edu.arizona.cs.learn.timeseries.model.Interval;
 
 /**
  * The event class essentially wraps the interval class so that we don't have to
@@ -15,7 +15,7 @@ import edu.arizona.cs.learn.algorithm.alignment.model.Symbol;
  * 
  */
 
-public class Event extends Symbol {
+public class Event extends StringSymbol {
 	private String _key;
 	private List<String> _props;
 	private List<Interval> _intervals;
@@ -58,10 +58,20 @@ public class Event extends Symbol {
 	public String toString() {
 		return this._key;
 	}
+	
+	@Override
+	public Symbol copy() { 
+		throw new RuntimeException("Not yet implemented!");
+	}
+	
+	@Override
+	public Symbol merge(Symbol B) { 
+		throw new RuntimeException("Not yet implemented!");
+	}	
 
 	public void toXML(Element e) {
-		Element evt = e.addElement("Symbol")
-			.addAttribute("type", "Event")	
+		Element evt = e.addElement("symbol")
+			.addAttribute("class", "Event")	
 			.addAttribute("key", _key);
 
 		_intervals.get(0).toXML(evt);

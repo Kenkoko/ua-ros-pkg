@@ -23,7 +23,6 @@ import java.util.concurrent.Future;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.algorithm.markov.FSMConverter;
 import edu.arizona.cs.learn.algorithm.markov.FSMFactory;
@@ -32,15 +31,17 @@ import edu.arizona.cs.learn.algorithm.markov.FSMUtil;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyCallable;
+import edu.arizona.cs.learn.timeseries.classification.ClassifyParams;
 import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
 import edu.arizona.cs.learn.timeseries.model.Episode;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.timeseries.recognizer.RecognizeCallable;
 import edu.arizona.cs.learn.timeseries.recognizer.RecognizeResults;
 import edu.arizona.cs.learn.timeseries.recognizer.Recognizer;
 import edu.arizona.cs.learn.timeseries.recognizer.RecognizerStatistics;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 import edu.arizona.cs.learn.util.graph.Edge;
 import edu.uci.ics.jung.graph.DirectedGraph;
@@ -378,7 +379,14 @@ public class Experiments {
 
 			buf.append(prefix + " & ");
 			for (SequenceType type : SequenceType.get(this._sequenceType)) {
-				Classifier classifier = c.getClassifier(type, _k, _cavePct, _fromFile, getFolds());
+				ClassifyParams params = new ClassifyParams();
+				params.k = _k;
+				params.type = type;
+				params.prunePct = _cavePct;
+				params.fromFiles = _fromFile;
+				params.folds = getFolds();
+				
+				Classifier classifier = c.getClassifier(params);
 				List<BatchStatistics> values = new ArrayList<BatchStatistics>();
 				if (lite)
 					values = crossValidationLite(prefix, classifier, type, fileNames);

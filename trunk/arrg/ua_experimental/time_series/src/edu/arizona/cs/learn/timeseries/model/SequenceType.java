@@ -1,21 +1,21 @@
-package edu.arizona.cs.learn.util;
+package edu.arizona.cs.learn.timeseries.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
 import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
-import edu.arizona.cs.learn.timeseries.model.AllenRelation;
-import edu.arizona.cs.learn.timeseries.model.CBA;
-import edu.arizona.cs.learn.timeseries.model.Event;
-import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.symbols.AllenRelation;
+import edu.arizona.cs.learn.timeseries.model.symbols.CBA;
+import edu.arizona.cs.learn.timeseries.model.symbols.Event;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
+import edu.arizona.cs.learn.util.Utils;
 
 public enum SequenceType {
 	starts {
 		@Override
-		public List<WeightedObject> getSequence(List<Interval> intervals) {
+		public List<Symbol> getSequence(List<Interval> intervals) {
 			Collections.sort(intervals, Interval.starts);
 			return propSequence(intervals);
 		}
@@ -28,7 +28,7 @@ public enum SequenceType {
 	}, 
 	ends {
 		@Override
-		public List<WeightedObject> getSequence(List<Interval> intervals) {
+		public List<Symbol> getSequence(List<Interval> intervals) {
 			Collections.sort(intervals, Interval.ends);
 			return propSequence(intervals);
 		}
@@ -40,14 +40,14 @@ public enum SequenceType {
 	}, 
 	startsEnds {
 		@Override
-		public List<WeightedObject> getSequence(List<Interval> intervals) {
+		public List<Symbol> getSequence(List<Interval> intervals) {
 			// first thing is to make a timeline
 			int maxTime = -1;
 			for (Interval interval : intervals) { 
 				maxTime = Math.max(maxTime, interval.end);
 			}
 			
-			List<WeightedObject> sequence = new ArrayList<WeightedObject>();
+			List<Symbol> sequence = new ArrayList<Symbol>();
 			for (int i = 0; i <= maxTime; ++i) {
 				List<Interval> events = new ArrayList<Interval>();
 				for (Interval interval : intervals) { 
@@ -64,9 +64,9 @@ public enum SequenceType {
 				
 				for (Interval interval : events) { 
 					if (interval.start == i ) 
-						sequence.add(new WeightedObject(new Event(interval.name+"_on", interval), 1));
+						sequence.add(new Event(interval.name+"_on", interval));
 					if (interval.end == i) 
-						sequence.add(new WeightedObject(new Event(interval.name+"_off", interval), 1));
+						sequence.add(new Event(interval.name+"_off", interval));
 				}
 			}
 			return sequence;
@@ -79,19 +79,19 @@ public enum SequenceType {
 	}, 
 	allen {
 		@Override
-		public List<WeightedObject> getSequence(List<Interval> intervals) {
+		public List<Symbol> getSequence(List<Interval> intervals) {
 			Collections.sort(intervals, Interval.eff);
-			List<WeightedObject> results = new ArrayList<WeightedObject>();
+			List<Symbol> results = new ArrayList<Symbol>();
 			
 			class Data { 
-				public WeightedObject obj;
+				public Symbol obj;
 				public Interval i1;
 				public Interval i2;
 				
 				public int start;
 				public int end;
 				
-				public Data(WeightedObject obj, Interval i1, Interval i2, int start, int end) { 
+				public Data(Symbol obj, Interval i1, Interval i2, int start, int end) { 
 					this.obj = obj;
 					this.i1 = i1;
 					this.i2 = i2;
@@ -109,9 +109,8 @@ public enum SequenceType {
 					if (!Utils.LIMIT_RELATIONS || i2.start - i1.end < Utils.WINDOW) { // or 5 for most things....
 						String relation = AllenRelation.get(i1, i2);
 						AllenRelation allen = new AllenRelation(relation, i1, i2);
-						WeightedObject obj = new WeightedObject(allen, 1);
 						
-						tmp.add(new Data(obj, i1, i2, Math.min(i1.start,i2.start), Math.max(i1.end, i2.end)));
+						tmp.add(new Data(allen, i1, i2, Math.min(i1.start,i2.start), Math.max(i1.end, i2.end)));
 					}
 				}
 			}
@@ -174,7 +173,7 @@ public enum SequenceType {
 	}, 
 	randomStarts {
 		@Override
-		public List<WeightedObject> getSequence(List<Interval> intervals) {
+		public List<Symbol> getSequence(List<Interval> intervals) {
 			List<Interval> shortList = new ArrayList<Interval>();
 			for (Interval orig : intervals) { 
 				int randomStart = Utils.random.nextInt(orig.end-orig.start);
@@ -192,8 +191,8 @@ public enum SequenceType {
 	}, 
 	bpp {
 		@Override
-		public List<WeightedObject> getSequence(List<Interval> intervals) {
-			List<WeightedObject> results = new ArrayList<WeightedObject>();
+		public List<Symbol> getSequence(List<Interval> intervals) {
+			List<Symbol> results = new ArrayList<Symbol>();
 //			logger.debug("pre: " + list);
 			
 			// sort them by earliest start time... and who cares about the finish time
@@ -222,8 +221,7 @@ public enum SequenceType {
 			}
 			
 			Collections.sort(tmp);
-			for (CBA cba : tmp)
-				results.add(new WeightedObject(cba));
+			results.addAll(tmp);
 			
 			// print the sequence....
 //			logger.debug("**** SEQUENCE **** ");
@@ -255,7 +253,7 @@ public enum SequenceType {
 	},
 	fullCBA {
 		@Override
-		public List<WeightedObject> getSequence(List<Interval> intervals) {
+		public List<Symbol> getSequence(List<Interval> intervals) {
 			List<Interval> list = BPPFactory.compress(intervals, Interval.eff);
 			int maxTime = 0;
 			for (Interval i : list) 
@@ -276,7 +274,7 @@ public enum SequenceType {
 		
 	};
 
-	public abstract List<WeightedObject> getSequence(List<Interval> intervals);
+	public abstract List<Symbol> getSequence(List<Interval> intervals);
 	public abstract int getSequenceSize(List<Interval> intervals);
 
 	public static List<SequenceType> get(String option) {
@@ -303,11 +301,11 @@ public enum SequenceType {
 	 * @param list
 	 * @return
 	 */
-	public static List<WeightedObject> propSequence(List<Interval> list) { 
-		List<WeightedObject> results = new ArrayList<WeightedObject>();
+	public static List<Symbol> propSequence(List<Interval> list) { 
+		List<Symbol> results = new ArrayList<Symbol>();
 		for (int i = 0; i < list.size(); ++i) { 
 			Interval i1 = list.get(i);
-			results.add(new WeightedObject(new Event(i1),1));
+			results.add(new Event(i1));
 		}
 		return results;
 		

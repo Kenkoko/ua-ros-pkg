@@ -1,4 +1,4 @@
-package edu.arizona.cs.learn.experimental.general.values;
+package edu.arizona.cs.learn.timeseries.model.values;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.dom4j.Element;
 
-import edu.arizona.cs.learn.experimental.general.XMLUtils;
+import edu.arizona.cs.learn.util.XMLUtils;
 
 public class Real extends Value {
 	

@@ -1,4 +1,6 @@
-package edu.arizona.cs.learn.algorithm.alignment.model;
+package edu.arizona.cs.learn.timeseries.classification;
+
+import edu.arizona.cs.learn.timeseries.model.Instance;
 
 public class Distance {
 	public Instance instance;

@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.util.Utils;
 
 public class SequenceOverlap {
@@ -51,11 +51,11 @@ public class SequenceOverlap {
 		Set<String> s1 = new TreeSet<String>();
 		Set<String> s2 = new TreeSet<String>();
 
-		for (WeightedObject obj : i1.sequence()) {
-			s1.add(obj.key().getKey());
+		for (Symbol obj : i1.sequence()) {
+			s1.add(obj.toString());
 		}
-		for (WeightedObject obj : i2.sequence()) {
-			s2.add(obj.key().getKey());
+		for (Symbol obj : i2.sequence()) {
+			s2.add(obj.toString());
 		}
 		s1.retainAll(s2);
 		return s1.size();

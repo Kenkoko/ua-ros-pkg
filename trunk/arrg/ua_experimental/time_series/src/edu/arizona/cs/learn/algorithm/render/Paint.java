@@ -23,9 +23,9 @@ import javax.imageio.ImageIO;
 
 import org.apache.log4j.Logger;
 
-import edu.arizona.cs.learn.timeseries.model.AllenRelation;
 import edu.arizona.cs.learn.timeseries.model.Interval;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.symbols.AllenRelation;
 
 public class Paint {
     private static Logger logger = Logger.getLogger(Paint.class);

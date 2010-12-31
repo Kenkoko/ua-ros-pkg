@@ -8,15 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
 import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
 import edu.arizona.cs.learn.algorithm.heatmap.HeatmapImage;
 import edu.arizona.cs.learn.algorithm.render.Paint;
-import edu.arizona.cs.learn.timeseries.model.AllenRelation;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.symbols.AllenRelation;
+import edu.arizona.cs.learn.timeseries.model.symbols.StringSymbol;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.util.Utils;
 
 public class Heatmaps {
@@ -169,8 +170,9 @@ public class Heatmaps {
 			s.update(i.sequence());
 
 			Map<String, Interval> intervalMap = new HashMap<String, Interval>();
-			for (WeightedObject obj : i.sequence()) {
-				for (Interval interval : obj.key().getIntervals()) {
+			for (Symbol obj : i.sequence()) {
+				StringSymbol ss = (StringSymbol) obj;
+				for (Interval interval : ss.getIntervals()) {
 					intervalMap.put(interval.toString(), interval);
 				}
 			}
@@ -195,13 +197,13 @@ public class Heatmaps {
 	}
 
 	public static void rmap1() {
-		List<WeightedObject> signature = new ArrayList<WeightedObject>();
-		signature.add(new WeightedObject(new AllenRelation("A","finishes-with", "D"), 1.0D));
-		signature.add(new WeightedObject(new AllenRelation("A", "overlaps", "B"), 5.0D));
-		signature.add(new WeightedObject(new AllenRelation("A", "meets", "C"),5.0D));
-		signature.add(new WeightedObject(new AllenRelation("D", "overlaps", "B"), 1.0D));
-		signature.add(new WeightedObject(new AllenRelation("D", "meets", "C"),1.0D));
-		signature.add(new WeightedObject(new AllenRelation("B", "overlaps", "C"), 5.0D));
+		List<Symbol> signature = new ArrayList<Symbol>();
+		signature.add(new AllenRelation("A","finishes-with", "D", 1.0D));
+		signature.add(new AllenRelation("A", "overlaps", "B", 5.0D));
+		signature.add(new AllenRelation("A", "meets", "C",5.0D));
+		signature.add(new AllenRelation("D", "overlaps", "B", 1.0D));
+		signature.add(new AllenRelation("D", "meets", "C",1.0D));
+		signature.add(new AllenRelation("B", "overlaps", "C", 5.0D));
 
 		List<Interval> episode = new ArrayList<Interval>();
 		episode.add(Interval.make("C", 1, 3));
@@ -214,13 +216,13 @@ public class Heatmaps {
 	}
 
 	public static void rmap2() {
-		List<WeightedObject> signature = new ArrayList<WeightedObject>();
-		signature.add(new WeightedObject(new AllenRelation("A","finishes-with", "D"), 1.0D));
-		signature.add(new WeightedObject(new AllenRelation("A", "overlaps", "B"), 5.0D));
-		signature.add(new WeightedObject(new AllenRelation("A", "meets", "C"),5.0D));
-		signature.add(new WeightedObject(new AllenRelation("D", "overlaps", "B"), 1.0D));
-		signature.add(new WeightedObject(new AllenRelation("D", "meets", "C"),1.0D));
-		signature.add(new WeightedObject(new AllenRelation("B", "overlaps", "C"), 5.0D));
+		List<Symbol> signature = new ArrayList<Symbol>();
+		signature.add(new AllenRelation("A","finishes-with", "D", 1.0D));
+		signature.add(new AllenRelation("A", "overlaps", "B", 5.0D));
+		signature.add(new AllenRelation("A", "meets", "C",5.0D));
+		signature.add(new AllenRelation("D", "overlaps", "B", 1.0D));
+		signature.add(new AllenRelation("D", "meets", "C",1.0D));
+		signature.add(new AllenRelation("B", "overlaps", "C", 5.0D));
 
 		List<Interval> episode = new ArrayList<Interval>();
 		episode.add(Interval.make("A", 1, 5));
@@ -233,13 +235,13 @@ public class Heatmaps {
 	}
 
 	public static void rmap3() {
-		List<WeightedObject> signature = new ArrayList<WeightedObject>();
-		signature.add(new WeightedObject(new AllenRelation("A","finishes-with", "D"), 1.0D));
-		signature.add(new WeightedObject(new AllenRelation("A", "overlaps", "B"), 5.0D));
-		signature.add(new WeightedObject(new AllenRelation("A", "meets", "C"), 5.0D));
-		signature.add(new WeightedObject(new AllenRelation("D", "overlaps", "B"), 1.0D));
-		signature.add(new WeightedObject(new AllenRelation("D", "meets", "C"), 1.0D));
-		signature.add(new WeightedObject(new AllenRelation("B", "overlaps", "C"), 5.0D));
+		List<Symbol> signature = new ArrayList<Symbol>();
+		signature.add(new AllenRelation("A","finishes-with", "D", 1.0D));
+		signature.add(new AllenRelation("A", "overlaps", "B", 5.0D));
+		signature.add(new AllenRelation("A", "meets", "C", 5.0D));
+		signature.add(new AllenRelation("D", "overlaps", "B", 1.0D));
+		signature.add(new AllenRelation("D", "meets", "C", 1.0D));
+		signature.add(new AllenRelation("B", "overlaps", "C", 5.0D));
 
 		List<Interval> episode = new ArrayList<Interval>();
 		episode.add(Interval.make("A", 1, 5));

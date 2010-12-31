@@ -11,16 +11,17 @@ import org.apache.commons.collections15.Bag;
 import org.apache.commons.collections15.bag.TreeBag;
 import org.apache.log4j.Logger;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.algorithm.alignment.model.Symbol;
 import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.algorithm.markov.FSMFactory;
 import edu.arizona.cs.learn.algorithm.render.Paint;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.cs.learn.timeseries.model.symbols.StringSymbol;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.timeseries.visualization.TableFactory;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 import edu.arizona.cs.learn.util.graph.Edge;
 import edu.uci.ics.jung.graph.DirectedGraph;
@@ -82,7 +83,8 @@ public class BitPatternGeneration {
 				if (obj == null)
 					continue;
 				
-				for (Interval interval : obj.getIntervals()) {
+				StringSymbol ss = (StringSymbol) obj;
+				for (Interval interval : ss.getIntervals()) {
 					if (!map.containsKey(interval.toString()))  
 						map.put(interval.toString(), interval);
 					

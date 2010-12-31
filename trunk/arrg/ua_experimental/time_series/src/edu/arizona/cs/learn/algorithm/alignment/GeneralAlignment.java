@@ -1,10 +1,15 @@
-package edu.arizona.cs.learn.experimental.general;
+package edu.arizona.cs.learn.algorithm.alignment;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
+
 public class GeneralAlignment {
-	
+	private static Logger logger = Logger.getLogger(GeneralAlignment.class);
+
 	
 	/**
 	 * Mash together to the two sequences and create one sequence that is 
@@ -25,7 +30,7 @@ public class GeneralAlignment {
 				throw new RuntimeException("Alignment cannot choose to align two null items!");
 
 			if (item1 != null && item2 != null) 
-				results.add(Symbol.merge(item1, item2));
+				results.add(item1.merge(item2));
 			else if (item1 != null)
 				results.add(item1.copy());
 			else
@@ -59,6 +64,186 @@ public class GeneralAlignment {
 		}
 		return seq1;
 	}
+
+	/**
+	 * Perform alignment with the given parameters.  Wrapped like
+	 * this in case we want to try out different alignment methods.
+	 * @param params
+	 * @return
+	 */
+	public static Report align(Params params) {
+		return alignCheckp(params);
+	}
+	
+	
+	/**
+	 * Perform the sequence alignment building the table in 
+	 * main memory.
+	 * @param params
+	 * @return
+	 */
+	public static Report alignWithCons(Params params) {
+		class Cons {
+			public char value;
+			public Cons next;
+			
+			public Cons() { 
+				next = null;
+			}
+			
+			public Cons(char value, Cons next) { 
+				this.value = value;
+				this.next = next;
+			}
+		}
+		
+		class Cell {
+			public double score;
+			public Cons directions;
+			
+			public Cell(double score) { 
+				this.score = score;
+				this.directions = null;
+			}
+		}
+			
+		boolean printTable = false;
+
+		List<Symbol> seq1 = subset(params.seq1, params.min1);
+		List<Symbol> seq2 = subset(params.seq2, params.min2);
+
+		int m = seq1.size();
+		int n = seq2.size();
+
+		Cell[] nextRow = new Cell[m + 1];
+		Cell[] lastRow = new Cell[m + 1];
+		lastRow[0] = new Cell(0.0D);
+
+		if (printTable)
+			System.out.print("0 & ");
+		for (int i = 1; i <= m; i++) {
+			Symbol obj = seq1.get(i - 1);
+			Cell previous = lastRow[(i - 1)];
+
+			double value = previous.score + obj.weight() * params.penalty1;
+
+			Cell next = new Cell(value);
+			next.directions = new Cons('l', previous.directions);
+
+			if (printTable) {
+				System.out.print(value + " & ");
+			}
+			lastRow[i] = next;
+		}
+
+		if (printTable) {
+			System.out.println();
+		}
+
+		Cell[] starterCol = new Cell[n + 1];
+		starterCol[0] = new Cell(0.0D);
+		for (int i = 1; i <= n; i++) {
+			Symbol obj = seq2.get(i - 1);
+			Cell previous = starterCol[(i - 1)];
+
+			double value = previous.score + obj.weight() * params.penalty2;
+
+			Cell next = new Cell(value);
+			next.directions = new Cons('u', previous.directions);
+			starterCol[i] = next;
+		}
+
+		for (int i = 1; i <= n; i++) {
+			Symbol item2 = seq2.get(i - 1);
+
+			nextRow[0] = starterCol[i];
+
+			if (printTable)
+				System.out.print(nextRow[0].score + " & ");
+			for (int j = 1; j <= m; j++) {
+				Symbol item1 = seq1.get(j - 1);
+
+				Cell diag = lastRow[(j - 1)];
+				Cell up = lastRow[j];
+				Cell left = nextRow[(j - 1)];
+				
+				// Substitution will always be allowed and should have
+				// Do not substitute if we have a complete mismatch though.
+				double compare = params.similarity.similarity(item1, item2);
+
+				// if we have at least matched one thing....then it's not
+				// a complete substitution
+				double choice1 = diag.score + params.subPenalty;
+				if (compare > 0) { 
+					double v1 = item1.weight();
+					double v2 = item2.weight();
+					
+					choice1 = diag.score + (params.bonus1*v1*compare) + (params.bonus2*v2*compare);
+				}
+				
+				double choice2 = up.score + (params.penalty2 * item2.weight());
+				double choice3 = left.score + (params.penalty1 * item1.weight());
+
+				Cell c = new Cell(Math.max(choice1, Math.max(choice2, choice3)));
+				if ((choice1 >= choice2) && (choice1 >= choice3)) {
+					c.directions = new Cons('d', diag.directions);
+				} else if ((choice2 >= choice3) && (choice2 > choice1)) {
+					c.directions = new Cons('u', up.directions);
+				} else if ((choice3 > choice2) && (choice3 > choice1)) {
+					c.directions = new Cons('l', left.directions);
+				} else {
+					logger.error("Error occurred [" + i + "," + j + "] "
+							+ item1.toString() + " " + item2.toString());
+					throw new RuntimeException("Weird: [" + i + "," + j + "] "
+							+ item1.weight() + " " + item2.weight() + " "
+							+ choice1 + " " + choice2 + " " + choice3);
+				}
+				nextRow[j] = c;
+
+				if (printTable)
+					System.out.print(c.score + " & ");
+			}
+			if (printTable) {
+				System.out.println();
+			}
+			Cell[] tmp = lastRow;
+			lastRow = nextRow;
+			nextRow = tmp;
+		}
+
+		Cell best = lastRow[m];
+		Report sc = new Report();
+		sc.s1Size = m;
+		sc.s2Size = n;
+		sc.score = params.normalize.normalize(params, seq1, seq2, best.score);
+
+		int i = m - 1;
+		int j = n - 1;
+
+		Cons current = best.directions;
+		while (current != null) {
+			switch (current.value) {
+			case 'd':
+				sc.add(seq1.get(i), seq2.get(j));
+				i--;
+				j--;
+				break;
+			case 'l':
+				sc.add(seq1.get(i), null);
+				i--;
+				break;
+			case 'u':
+				sc.add(null, seq2.get(j));
+				j--;
+			}
+
+			current = current.next;
+		}
+
+		assert ((i == -1) && (j == -1)) : ("i: " + i + " j: " + j);
+		sc.finish();
+		return sc;
+	}	
 	
 	/**
 	 * Code structure courtesy of David Powell
@@ -116,6 +301,8 @@ public class GeneralAlignment {
 			}
 		}
 
+		// TODO: ensure that we don't need to call 
+		// report.finish() before returning.
 		return report;
 	}
 	
@@ -266,6 +453,64 @@ public class GeneralAlignment {
 		return editDistance;		// Return edit distance
 	}
 	
+	
+	/**
+	 * Calculate the distance
+	 * @param params
+	 * @return
+	 */
+	public static double distance(Params params) {
+		List<Symbol> seq1 = subset(params.seq1, params.min1);
+		List<Symbol> seq2 = subset(params.seq2, params.min2);
+
+		int m = seq1.size();
+		int n = seq2.size();
+
+		double[] nextRow = new double[m + 1];
+		double[] lastRow = new double[m + 1];
+		lastRow[0] = 0.0D;
+		for (int i = 1; i <= m; i++) {
+			Symbol obj = seq1.get(i - 1);
+			double previous = lastRow[(i - 1)];
+			lastRow[i] = (previous + obj.weight() * params.penalty1);
+		}
+
+		double[] starterCol = new double[n + 1];
+		starterCol[0] = 0.0D;
+		for (int i = 1; i <= n; i++) {
+			Symbol obj = seq2.get(i - 1);
+			double previous = starterCol[(i - 1)];
+			starterCol[i] = (previous + obj.weight() * params.penalty2);
+		}
+
+		for (int i = 1; i <= n; i++) {
+			Symbol item2 = seq2.get(i - 1);
+			nextRow[0] = starterCol[i];
+
+			for (int j = 1; j <= m; j++) {
+				Symbol item1 = seq1.get(j - 1);
+
+				double compare = params.similarity.similarity(item1, item2);
+				double choice1 = lastRow[(j - 1)] + params.subPenalty;
+				if (compare > 0) {
+					choice1 = lastRow[(j - 1)] 
+					        + (params.bonus1*item1.weight()*compare)
+							+ (params.bonus2*item2.weight()*compare);
+				}
+
+				double choice2 = lastRow[j] + item2.weight() * params.penalty2;
+				double choice3 = nextRow[(j - 1)] + item1.weight() * params.penalty1;
+				nextRow[j] = Math.max(choice1, Math.max(choice2, choice3));
+			}
+
+			double[] tmp = lastRow;
+			lastRow = nextRow;
+			nextRow = tmp;
+		}
+
+		double score = params.normalize.normalize(params, seq1, seq2, lastRow[m]);
+		return score;
+	}	
 	
 }
 

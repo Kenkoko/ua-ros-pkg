@@ -31,9 +31,9 @@ import javax.swing.JTextArea;
 
 import org.apache.log4j.Logger;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
 import edu.arizona.cs.learn.timeseries.model.Episode;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.timeseries.visualization.graphics.DataComponent;
 import edu.arizona.cs.learn.timeseries.visualization.graphics.ScrolledCanvas;
 import edu.arizona.cs.learn.timeseries.visualization.graphics.TimelineCanvas;
@@ -87,8 +87,8 @@ public class DataController extends Controller {
 		
 		Instance instance = _dataModel.instance();
 		StringBuffer buf = new StringBuffer();
-		for (WeightedObject obj : instance.sequence()) { 
-			buf.append(obj.weight() + "," + obj.key().getKey()+"\n");
+		for (Symbol obj : instance.sequence()) { 
+			buf.append(obj.weight() + "," + obj.toString() +"\n");
 		}
 		_sequenceText.setText(buf.toString());
 	}
@@ -229,8 +229,8 @@ public class DataController extends Controller {
 					return;
 				
 				StringBuffer buf = new StringBuffer();
-				for (WeightedObject obj : _dataModel.signature().signature()) {
-					buf.append(obj.weight() + "\t" + obj.key().getKey() + "\n");
+				for (Symbol obj : _dataModel.signature().signature()) {
+					buf.append(obj.weight() + "\t" + obj.toString() + "\n");
 				}
 				JTextArea textArea = new JTextArea(buf.toString());
 				JScrollPane pane = new JScrollPane(textArea);

@@ -3,17 +3,17 @@ package edu.arizona.cs.learn.timeseries.dissertation;
 import java.util.List;
 import java.util.Map;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
 import edu.arizona.cs.learn.algorithm.alignment.Report;
-import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
-import edu.arizona.cs.learn.timeseries.model.AllenRelation;
-import edu.arizona.cs.learn.timeseries.model.Event;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.cs.learn.timeseries.model.symbols.AllenRelation;
+import edu.arizona.cs.learn.timeseries.model.symbols.Event;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.timeseries.visualization.TableFactory;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 public class SignatureExample {
@@ -53,16 +53,16 @@ public class SignatureExample {
 		params.setMin(0, 0);
 		params.setBonus(1.0D, 0.0D);
 		params.setPenalty(-1.0D, 0.0D);
-		Report report = SequenceAlignment.align(params);
-		List<WeightedObject> results = SequenceAlignment.combineAlignments(report.results1, report.results2);
+		Report report = GeneralAlignment.align(params);
+		List<Symbol> results = GeneralAlignment.combineAlignments(report.results1, report.results2);
 		for (int i = 0; i < report.results1.size(); ++i) { 
 			StringBuffer buf = new StringBuffer();
-			WeightedObject obj1 = report.results1.get(i);
-			WeightedObject obj2 = report.results2.get(i);
+			Symbol obj1 = report.results1.get(i);
+			Symbol obj2 = report.results2.get(i);
 			if (obj1 == null)  
 				buf.append("$-$");
 			else {
-				AllenRelation ar = (AllenRelation) obj1.key();
+				AllenRelation ar = (AllenRelation) obj1;
 				buf.append("\\ar{" + ar.prop1() + "}{" + ar.relation() + "}{" + ar.prop2() + "}");
 			}
 			buf.append(" & ");
@@ -70,13 +70,13 @@ public class SignatureExample {
 			if (obj2 == null)
 				buf.append("$-$");
 			else {
-				AllenRelation ar = (AllenRelation) obj2.key();
+				AllenRelation ar = (AllenRelation) obj2;
 				buf.append("\\ar{" + ar.prop1() + "}{" + ar.relation() + "}{" + ar.prop2() + "}");
 			}
 			buf.append(" & ");
 			
-			WeightedObject result = results.get(i);
-			AllenRelation ar = (AllenRelation) result.key();
+			Symbol result = results.get(i);
+			AllenRelation ar = (AllenRelation) result;
 			buf.append("\\ar{" + ar.prop1() + "}{" + ar.relation() + "}{" + ar.prop2() + "} & " + (int) result.weight());
 			System.out.println(buf.toString() + " \\\\");
 		}
@@ -86,10 +86,10 @@ public class SignatureExample {
 	
 	public static void latexPrintSignature(String xml) { 
 		Signature s = Signature.fromXML(xml);
-		for (WeightedObject obj : s.signature()) { 
+		for (Symbol obj : s.signature()) { 
 			// Assumption is the WeightedObject symbol is an
 			// Allen relation
-			AllenRelation ar = (AllenRelation) obj.key();
+			AllenRelation ar = (AllenRelation) obj;
 			System.out.println("\\ar{" + ar.prop1() + "}{" + ar.relation() + "}{" + ar.prop2() + "} & " + ((int) obj.weight()) + "\\\\");
 		}
 	}
@@ -100,8 +100,8 @@ public class SignatureExample {
 		s1 = s1.prune(minSeen);
 
 		System.out.println("Signature: ww2d-ball pruned to " + minSeen);
-		for (WeightedObject obj : s1.signature())
-			System.out.println("\t" + obj.key().getKey() + " - " + obj.weight());
+		for (Symbol obj : s1.signature())
+			System.out.println("\t" + obj.toString() + " - " + obj.weight());
 	}
 
 	/**
@@ -144,18 +144,18 @@ public class SignatureExample {
 			p.setBonus(1.0D, 0.0D);
 			p.setPenalty(-1.0D, 0.0D);
 
-			Report report = SequenceAlignment.align(p);
+			Report report = GeneralAlignment.align(p);
 
-			List<WeightedObject> combined = SequenceAlignment.combineAlignments(report.results1, report.results2);
+			List<Symbol> combined = GeneralAlignment.combineAlignments(report.results1, report.results2);
 			for (int i = 0; i < report.results1.size(); i++) {
-				WeightedObject left = (WeightedObject) report.results1.get(i);
-				WeightedObject right = (WeightedObject) report.results2.get(i);
+				Symbol left = report.results1.get(i);
+				Symbol right = report.results2.get(i);
 
 				String name = "null";
 				if (left == null) {
 					System.out.print("$-$ & ");
 				} else {
-					Event event = (Event) left.key();
+					Event event = (Event) left;
 					name = ((Interval) event.getIntervals().get(0)).name;
 					System.out.print("\\prop{" + name + "} & ");
 				}
@@ -163,12 +163,12 @@ public class SignatureExample {
 				if (right == null) {
 					System.out.print("$-$ & ");
 				} else {
-					Event event = (Event) right.key();
+					Event event = (Event) right;
 					name = ((Interval) event.getIntervals().get(0)).name;
 					System.out.print("\\prop{" + name + "} & ");
 				}
 
-				WeightedObject obj = (WeightedObject) combined.get(i);
+				Symbol obj = combined.get(i);
 				System.out.println("\\prop{" + name + "} & "
 						+ (int) obj.weight() + " \\\\");
 			}

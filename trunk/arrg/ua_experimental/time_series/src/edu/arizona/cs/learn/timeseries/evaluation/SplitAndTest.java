@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Executors;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.util.Utils;
 
 /**
@@ -68,6 +68,9 @@ public class SplitAndTest extends ClassificationTest {
 		
 		Random r = new Random(seed);
 		for (int i = 0; i < _repeats; ++i) { 
+			if (i % 10 == 0)
+				System.out.println("Batch " + i);
+			
 			partition(r, data);
 			stats.add(runBatch(i, c, classNames, _training, _testing));
 		}

@@ -9,9 +9,9 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyCallable;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 
 public abstract class ClassificationTest {
 	

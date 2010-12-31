@@ -5,21 +5,21 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
+import edu.arizona.cs.learn.timeseries.classification.ClassifyParams;
 import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
 import edu.arizona.cs.learn.timeseries.evaluation.SplitAndTest;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.prep.SymbolicData;
 import edu.arizona.cs.learn.util.RandomFile;
-import edu.arizona.cs.learn.util.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 // Some things do not change
@@ -29,27 +29,58 @@ import edu.arizona.cs.learn.util.Utils;
 public class SyntheticClassification {
 	public static final int FOLDS = 6;
 	public static final int N = 60;
+	
+	public static int EXPERIMENTS = 50;
 
 	public static void main(String[] args) throws Exception { 
 		Utils.LIMIT_RELATIONS = true;
 		Utils.WINDOW = 2;
 		
-		if (args.length != 2) 
-			throw new RuntimeException("Usage: \"mean1,mean2,...\" \"length1,length2,...\"");
-//		experiment1();
+//		String pid = RandomFile.getPID();
+//		generateClass(pid, "f", 1, 0, 25);
+//		generateClass(pid, "g", 2, 0.1, 25);
+		
+		if (args.length != 4) {
+			System.out.println("Usage: numRepeat experiment \"mean1,mean2,...\" \"length1,length2,...\"");
+			return;
+		}
+		
+		EXPERIMENTS = Integer.parseInt(args[0]);
+		String experiment = args[1];
 		
 		List<Double> means = new ArrayList<Double>();
-		String[] meanTokens = args[0].split("[,]");
+		String[] meanTokens = args[2].split("[,]");
 		for (String tok : meanTokens)
 			means.add(Double.parseDouble(tok));
 		
 		List<Integer> lengths = new ArrayList<Integer>();
-		String[] lengthTokens = args[1].split("[,]");
+		String[] lengthTokens = args[3].split("[,]");
 		for (String tok : lengthTokens)
 			lengths.add(Integer.parseInt(tok));
 		
-		experiment1(lengths, means);
+		if ("curve".equals(experiment)) 
+			learningCurve(means, lengths);
+		else
+			experiment1(lengths, means);
 //		expectedSequenceSizes(lengths,means);
+	}
+	
+	public static void learningCurve(List<Double> means, List<Integer> episodeLengths) throws Exception { 
+		String pid = RandomFile.getPID();
+		String dir = "/tmp/niall-" + pid + "/";
+		
+		LearningCurve curve = new LearningCurve();
+
+		for (double mean : means) { 
+			for (int length : episodeLengths) { 
+		
+				generateClass(pid, "f", 1, 0, length);
+				generateClass(pid, "g", 2, mean, length);
+		
+				Map<String,List<Instance>> data = Utils.load(dir, "niall", SequenceType.allen);
+				curve.buildCurve("logs/niall-" + mean + "-" + length, data);
+			}
+		}
 	}
 	
 	/**
@@ -106,10 +137,13 @@ public class SyntheticClassification {
 				List<String> classNames = new ArrayList<String>(data.keySet());
 				Collections.sort(classNames);
 				
-				Classifier c = Classify.prune.getClassifier(SequenceType.allen, -1, 50, false, -1);
+				ClassifyParams params = new ClassifyParams();
+				params.type = SequenceType.allen;
+				params.prunePct = 0.5;
+				Classifier c = Classify.prune.getClassifier(params);
 				
 //				CrossValidation cv = new CrossValidation(FOLDS);
-				SplitAndTest sat = new SplitAndTest(100, 2.0/3.0);
+				SplitAndTest sat = new SplitAndTest(EXPERIMENTS, 2.0/3.0);
 				List<BatchStatistics> stats = sat.run(System.currentTimeMillis(), classNames, data, c);
 
 				// print out the summary information for now.  Later we will need to 

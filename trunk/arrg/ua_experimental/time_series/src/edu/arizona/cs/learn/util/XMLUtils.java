@@ -1,16 +1,16 @@
-package edu.arizona.cs.learn.experimental.general;
+package edu.arizona.cs.learn.util;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
-import org.dom4j.io.XMLWriter;
+
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.symbols.ComplexSymbol;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 
 public class XMLUtils {
 
@@ -20,7 +20,7 @@ public class XMLUtils {
 	 * @param fileName
 	 * @return
 	 */
-	public static Pair<String,List<List<Symbol>>> loadXML(String fileName) { 
+	public static List<Instance> loadXML(String fileName) { 
 		return loadXML(new File(fileName));
 	}
 	
@@ -30,7 +30,7 @@ public class XMLUtils {
 	 * @param file
 	 * @return
 	 */
-	public static Pair<String,List<List<Symbol>>> loadXML(File file) { 
+	public static List<Instance> loadXML(File file) { 
 		Document document = null;
 		try {
 			SAXReader reader = new SAXReader();
@@ -40,7 +40,7 @@ public class XMLUtils {
 		}
 		Element root = document.getRootElement();
 
-		List<List<Symbol>> results = new ArrayList<List<Symbol>>();
+		List<Instance> results = new ArrayList<Instance>();
 		String key = root.attributeValue("key");
 		
 		List<?> list = root.elements("instance");
@@ -53,10 +53,10 @@ public class XMLUtils {
 				Element so = (Element) sList.get(j);
 				symbols.add(Symbol.fromXML(so));
 			}
-			
-			results.add(symbols);
+
+			results.add(new Instance(key, i+1, symbols));
 		}
-		return new Pair<String,List<List<Symbol>>>(key, results);
+		return results;
 	}
 	
 	
@@ -67,9 +67,9 @@ public class XMLUtils {
 	 * @param instance
 	 * @return
 	 */
-	public static void toXML(Element root, List<Symbol> instance) {
+	public static void toXML(Element root, List<ComplexSymbol> instance) {
 		Element e = root.addElement("instance");
-		for (Symbol s : instance) { 
+		for (ComplexSymbol s : instance) { 
 			s.toXML(e);
 		}
 	}

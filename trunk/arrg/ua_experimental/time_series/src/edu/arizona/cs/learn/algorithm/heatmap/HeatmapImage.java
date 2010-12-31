@@ -6,14 +6,14 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
 import edu.arizona.cs.learn.algorithm.alignment.Report;
-import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
-import edu.arizona.cs.learn.algorithm.alignment.model.Symbol;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
 import edu.arizona.cs.learn.algorithm.render.Paint;
 import edu.arizona.cs.learn.timeseries.model.Interval;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.symbols.StringSymbol;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 
 public class HeatmapImage {
     private static Logger logger = Logger.getLogger(HeatmapImage.class);
@@ -26,8 +26,8 @@ public class HeatmapImage {
      * @param type
      * @return
      */
-    public static Map<String,Double> intensityMap(List<WeightedObject> signature, int min, List<Interval> episode, SequenceType type) { 
-		List<WeightedObject> sequence = type.getSequence(episode);
+    public static Map<String,Double> intensityMap(List<Symbol> signature, int min, List<Interval> episode, SequenceType type) { 
+		List<Symbol> sequence = type.getSequence(episode);
 		
 		Map<String,Double> map = new HashMap<String,Double>();
 		for (Interval i : episode)  
@@ -39,17 +39,17 @@ public class HeatmapImage {
 		params.setBonus(1, 0);
 		params.setPenalty(-1, 0);
 		
-		Report report = SequenceAlignment.align(params);
+		Report report = GeneralAlignment.align(params);
 		logger.debug("Matches: " + report.numMatches + " Score: " + report.score);
 		
 		for (int i = 0; i < report.results1.size(); ++i) { 
-			WeightedObject obj1 = report.results1.get(i);
-			WeightedObject obj2 = report.results2.get(i);
+			StringSymbol obj1 = (StringSymbol) report.results1.get(i);
+			StringSymbol obj2 = (StringSymbol) report.results2.get(i);
 			
 			if (obj1 == null || obj2 == null)
 				continue;
 			
-			for (Interval interval : obj2.key().getIntervals()) { 
+			for (Interval interval : obj2.getIntervals()) { 
 				Double d1 = map.get(interval.toString());
 				double d = d1 + obj1.weight();
 
@@ -67,13 +67,16 @@ public class HeatmapImage {
      * @param min
      * @return
      */
-    public static Map<String,Double> scale(Map<String,Double> map, List<WeightedObject> signature, int min) { 
+    public static Map<String,Double> scale(Map<String,Double> map, List<Symbol> signature, int min) { 
 		Map<String,Double> maxWeightMap = new HashMap<String,Double>();
-		for (WeightedObject obj : signature) { 
+		for (Symbol obj : signature) { 
 			if (obj.weight() < min)
 				continue;
 			
-			Symbol s = obj.key();
+			if (!(obj instanceof StringSymbol))
+				throw new RuntimeException("Not yet supported!");
+			
+			StringSymbol s = (StringSymbol) obj;
 			for (String prop : s.getProps()) { 
 				Double d = maxWeightMap.get(prop);
 				if (d == null) 
@@ -113,7 +116,7 @@ public class HeatmapImage {
      * @param episode
      * @param type
      */
-    public static void makeHeatmap(String imageFile, List<WeightedObject> signature, int min, List<Interval> episode, SequenceType type) { 
+    public static void makeHeatmap(String imageFile, List<Symbol> signature, int min, List<Interval> episode, SequenceType type) { 
     	Map<String,Double> map = intensityMap(signature, min, episode, type);
     	map = scale(map, signature, min);
 

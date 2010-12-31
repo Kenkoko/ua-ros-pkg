@@ -6,12 +6,14 @@ import java.util.Map;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
+import edu.arizona.cs.learn.algorithm.alignment.Normalize;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
 import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.distance.Distances;
 import edu.arizona.cs.learn.timeseries.evaluation.cluster.Clustering;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
 
 public class RandomStarts {
@@ -40,11 +42,10 @@ public class RandomStarts {
 				params.setMin(0, 0);
 				params.setBonus(1,0);
 				params.setPenalty(0, 0);
-				params.gapPenalty = 0;
-				params.normalize = Params.Normalize.none;
+				params.normalize = Normalize.none;
 				params.seq1 = list.get(i).sequence();
 				params.seq2 = list.get(i).sequence();
-				selfDistance.add(SequenceAlignment.distance(params));
+				selfDistance.add(GeneralAlignment.distance(params));
 			}
 
 			for (int i = 0; i < 1000; ++i) { 
@@ -61,8 +62,7 @@ public class RandomStarts {
 					params.setMin(0, 0);
 					params.setBonus(1,0);
 					params.setPenalty(0, 0);
-					params.gapPenalty = 0;
-					params.normalize = Params.Normalize.none;
+					params.normalize = Normalize.none;
 					params.seq1 = i1.sequence();
 					params.seq2 = i2.sequence();
 					

@@ -3,11 +3,11 @@ package edu.arizona.cs.learn.timeseries.dissertation;
 import java.util.List;
 import java.util.Map;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
-import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.util.Utils;
 
 public class SequenceAlignmentTable {
@@ -28,8 +28,8 @@ public class SequenceAlignmentTable {
 	public void latexTable(Params params) { 
 		StringBuilder buf = new StringBuilder("\\begin{tabular}{|c|c|c|");
 		
-		List<WeightedObject> seq1 = SequenceAlignment.subset(params.seq1, params.min1);
-		List<WeightedObject> seq2 = SequenceAlignment.subset(params.seq2, params.min2);
+		List<Symbol> seq1 = GeneralAlignment.subset(params.seq1, params.min1);
+		List<Symbol> seq2 = GeneralAlignment.subset(params.seq2, params.min2);
 		
 		int m = seq1.size();
 		int n = seq2.size();
@@ -44,18 +44,18 @@ public class SequenceAlignmentTable {
 		lastRow[0] = 0;
 		for (int i = 1; i <= m; ++i) {
 			// this should be running sum of the cost of this sequence
-			WeightedObject obj = seq1.get(i-1);
+			Symbol obj = seq1.get(i-1);
 			double previous = lastRow[i-1];
-			lastRow[i] = previous + (obj.weight()*params.penalty1) + params.gapPenalty;
+			lastRow[i] = previous + (obj.weight()*params.penalty1);
 		}
 
 		double[] starterCol = new double[n+1];
 		starterCol[0] = 0;
 		for (int i = 1; i <= n; ++i) {
 			// this should be running sum of the cost of this sequence
-			WeightedObject obj = seq2.get(i-1);
+			Symbol obj = seq2.get(i-1);
 			double previous = starterCol[i-1];
-			starterCol[i] = previous + (obj.weight()*params.penalty2) + params.gapPenalty;
+			starterCol[i] = previous + (obj.weight()*params.penalty2);
 		}		
 		
 		// begin constructing the table string.... 
@@ -74,8 +74,8 @@ public class SequenceAlignmentTable {
 		
 		// second row is the actual sequence values
 		buf.append(mc1 + " & " + cc1 + " & " + cc1 + " $\\emptyset$ ");
-		for (WeightedObject obj : seq1) { 
-			buf.append(" & " + cc1 + " \\prop{" + obj.key().getKey() + "} ");
+		for (Symbol obj : seq1) { 
+			buf.append(" & " + cc1 + " \\prop{" + obj.toString() + "} ");
 		}
 		buf.append(eol);
 		
@@ -87,11 +87,11 @@ public class SequenceAlignmentTable {
 		buf.append(eol);
 		
 		for (int i = 1; i <= n; ++i) { 
-			WeightedObject item2 = seq2.get(i-1);
+			Symbol item2 = seq2.get(i-1);
 			nextRow[0] = starterCol[i];
 
 			for (int j = 1; j <= m; ++j) { 
-				WeightedObject item1 = seq1.get(j-1);
+				Symbol item1 = seq1.get(j-1);
 
 				double choice1 = lastRow[j-1] + params.subPenalty;
 				if (item1.equals(item2)) {
@@ -100,8 +100,8 @@ public class SequenceAlignmentTable {
 							(params.bonus2 * item2.weight());
 				}
 
-				double choice2 = lastRow[j] + (item2.weight()*params.penalty2) + params.gapPenalty;
-				double choice3 = nextRow[j-1] + (item1.weight()*params.penalty1) + params.gapPenalty;
+				double choice2 = lastRow[j] + (item2.weight()*params.penalty2);
+				double choice3 = nextRow[j-1] + (item1.weight()*params.penalty1);
 				nextRow[j] = Math.max(choice1, Math.max(choice2, choice3));
 				
 				if (choice1 >= choice2 && choice1 >= choice3) { 
@@ -116,7 +116,7 @@ public class SequenceAlignmentTable {
 				}
 			}
 			
-			outputRow(buf, item2.key().getKey(), i, nextRow, row);
+			outputRow(buf, item2.toString(), i, nextRow, row);
 			
 			double[] tmp = lastRow;
 			lastRow = nextRow;
@@ -163,7 +163,6 @@ public class SequenceAlignmentTable {
 		p.setMin(0, 0);
 		p.setPenalty(-1, -1);
 		p.setBonus(1, 1);
-		p.gapPenalty = 0;
 		p.subPenalty = -3;
 		
 		sat.latexTable(p);

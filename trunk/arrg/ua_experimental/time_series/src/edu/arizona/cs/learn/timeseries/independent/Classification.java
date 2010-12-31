@@ -11,10 +11,11 @@ import java.util.Map;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
+import edu.arizona.cs.learn.algorithm.alignment.Normalize;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
-import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
-import edu.arizona.cs.learn.algorithm.alignment.model.Symbol;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
+import edu.arizona.cs.learn.timeseries.model.symbols.StringSymbol;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 
 public class Classification {
 	
@@ -159,7 +160,7 @@ class Variable {
 	public int index;
 	public List<Symbol> series;
 	
-	public List<WeightedObject> sequence;
+	public List<Symbol> sequence;
 	
 	public Variable(int index) {
 		this.index = index;
@@ -168,15 +169,13 @@ class Variable {
 	}
 	
 	public void add(String value) { 
-		series.add(new Symbol(value));
+		series.add(new StringSymbol(value));
 	}
 	
-	public List<WeightedObject> sequence() { 
+	public List<Symbol> sequence() { 
 		if (sequence == null) { 
-			sequence = new ArrayList<WeightedObject>();
-			for (Symbol s : series) { 
-				sequence.add(new WeightedObject(s,1));
-			}
+			sequence = new ArrayList<Symbol>();
+			sequence.addAll(series);
 		}
 		return sequence;
 	}
@@ -188,10 +187,10 @@ class Variable {
 		p.setMin(0,0);
 		p.setBonus(1,1);
 		p.setPenalty(0,0);
-		p.gapPenalty = 0;
-		p.normalize = Params.Normalize.knn;
+		p.normalize = Normalize.knn;
 		
-		return SequenceAlignment.distance(p);
+		
+		return GeneralAlignment.distance(p);
 	}
 }
 

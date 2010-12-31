@@ -5,10 +5,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
-import edu.arizona.cs.learn.timeseries.model.AllenRelation;
 import edu.arizona.cs.learn.timeseries.model.Interval;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.symbols.AllenRelation;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.util.Utils;
 
 public class DisplaySequences {
@@ -30,10 +30,10 @@ public class DisplaySequences {
 				System.out.println("-------" + i);
 			}
 			
-			List<WeightedObject> sequence = type.getSequence(list);
+			List<Symbol> sequence = type.getSequence(list);
 			System.out.println("Sequence: " + eid);
-			for (WeightedObject obj : sequence) { 
-				System.out.println("  " + obj.key().getKey());
+			for (Symbol obj : sequence) { 
+				System.out.println("  " + obj.toString());
 			}
 		}
 	}

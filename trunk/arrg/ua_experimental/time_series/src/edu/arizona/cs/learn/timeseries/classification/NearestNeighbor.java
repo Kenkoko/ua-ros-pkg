@@ -10,29 +10,21 @@ import java.util.Map;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
+import edu.arizona.cs.learn.algorithm.alignment.Normalize;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
-import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
-import edu.arizona.cs.learn.algorithm.alignment.model.Distance;
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
 import edu.arizona.cs.learn.timeseries.model.Episode;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 
 public class NearestNeighbor extends Classifier {
 	private static Logger logger = Logger.getLogger(NearestNeighbor.class);
 
-	private int _k;
-	private boolean _weighted;
-
 	private List<Instance> _trainingData;
 
-	public NearestNeighbor(SequenceType type, int k, boolean weighted) {
-		super(type);
-
-		this._k = k;
-		this._weighted = weighted;
-
-		logger.debug(this._k + "-NN");
+	public NearestNeighbor(ClassifyParams params) {
+		super(params);
 	}
 
 	public String getName() {
@@ -47,7 +39,7 @@ public class NearestNeighbor extends Classifier {
 		params.setMin(0, 0);
 		params.setBonus(1.0D, 1.0D);
 		params.setPenalty(0.0D, 0.0D);
-		params.normalize = Params.Normalize.regular;
+		params.normalize = Normalize.regular;
 
 		SummaryStatistics time = new SummaryStatistics();
 
@@ -57,7 +49,7 @@ public class NearestNeighbor extends Classifier {
 			params.seq2 = tmp.sequence();
 
 			long start = System.currentTimeMillis();
-			double distance = SequenceAlignment.distance(params);
+			double distance = GeneralAlignment.distance(params);
 
 			long end = System.currentTimeMillis();
 
@@ -77,12 +69,12 @@ public class NearestNeighbor extends Classifier {
 		double max = 0.0D;
 
 		Map<String,Double> map = new HashMap<String,Double>();
-		for (int i = 0; (i < distanceList.size()) && (i < _k); i++) {
+		for (int i = 0; (i < distanceList.size()) && (i < _params.k); i++) {
 			Distance distance = (Distance) distanceList.get(i);
 			String name = distance.instance.name();
 
 			double inc = 1.0D;
-			if (_weighted) 
+			if (_params.weighted) 
 				inc = 1.0D / distance.d;
 
 			if (map.containsKey(name)) {

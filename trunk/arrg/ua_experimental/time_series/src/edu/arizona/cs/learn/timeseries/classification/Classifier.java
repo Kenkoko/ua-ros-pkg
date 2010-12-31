@@ -3,17 +3,17 @@ package edu.arizona.cs.learn.timeseries.classification;
 import java.util.List;
 import java.util.Map;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Episode;
-import edu.arizona.cs.learn.util.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
 
 public abstract class Classifier {
-	protected SequenceType _type;
-
-	public Classifier(SequenceType type) {
-		_type = type;
+	protected ClassifyParams _params;
+	
+	public Classifier(ClassifyParams params) { 
+		_params = params;
 	}
-
+	
 	public abstract String getName();
 
 	// return the amount of time it took to performing training

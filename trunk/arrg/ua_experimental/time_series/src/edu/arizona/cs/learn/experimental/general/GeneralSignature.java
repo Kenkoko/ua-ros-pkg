@@ -14,7 +14,12 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 
-import edu.arizona.cs.learn.experimental.general.similarity.Similarity;
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
+import edu.arizona.cs.learn.algorithm.alignment.Params;
+import edu.arizona.cs.learn.algorithm.alignment.Report;
+import edu.arizona.cs.learn.algorithm.alignment.Similarity;
+import edu.arizona.cs.learn.timeseries.model.symbols.ComplexSymbol;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 
 public class GeneralSignature {
 	private static Logger logger = Logger.getLogger(GeneralSignature.class);
@@ -25,7 +30,7 @@ public class GeneralSignature {
 	private int _count;
 	private Params _params;
 
-	public GeneralSignature(String key) {
+	public GeneralSignature(String key, Similarity similarity) {
 		_key = key;
 		_count = 0;
 		_signature = new ArrayList<Symbol>();
@@ -34,7 +39,7 @@ public class GeneralSignature {
 		_params.setMin(0, 0);
 		_params.setBonus(1.0D, 0.0D);
 		_params.setPenalty(-1.0D, 0.0D);
-		_params.similarity = Similarity.cosine;
+		_params.similarity = similarity;
 	}
 
 	public String key() {
@@ -81,7 +86,7 @@ public class GeneralSignature {
 	 * @return
 	 */
 	public GeneralSignature prune(int min) {
-		GeneralSignature s = new GeneralSignature(_key);
+		GeneralSignature s = new GeneralSignature(_key, _params.similarity);
 		s._count = _count;
 
 		Set<Integer> ignore = new HashSet<Integer>();
@@ -89,7 +94,7 @@ public class GeneralSignature {
 		for (int i = 0; i < _signature.size(); i++) {
 			Symbol obj = _signature.get(i);
 			if (obj.weight() > min)
-				sequence.add(new Symbol(obj.key(), obj.weight()));
+				sequence.add(obj.copy());
 			else {
 				ignore.add(Integer.valueOf(i));
 			}
@@ -108,7 +113,8 @@ public class GeneralSignature {
 		Document document = DocumentHelper.createDocument();
 		Element root = document.addElement("Signature ")
 				.addAttribute("key", _key)
-				.addAttribute("count", _count+"");
+				.addAttribute("count", _count+"")
+				.addAttribute("similarity", _params.similarity.toString());
 
 		for (Symbol obj : this._signature) {
 			obj.toXML(root);
@@ -140,13 +146,14 @@ public class GeneralSignature {
 		Element root = document.getRootElement();
 
 		String key = root.attributeValue("key");
-		GeneralSignature s = new GeneralSignature(key);
+		Similarity similarity = Similarity.valueOf(root.attributeValue("similarity"));
+		GeneralSignature s = new GeneralSignature(key, similarity);
 		s._count = Integer.parseInt(root.attributeValue("count"));
 
 		List list = root.elements("symbol");
 		for (Object o : list) { 
 			Element woe = (Element) o;
-			s._signature.add(Symbol.fromXML(woe));
+			s._signature.add(ComplexSymbol.fromXML(woe));
 		}
 		return s;
 	}

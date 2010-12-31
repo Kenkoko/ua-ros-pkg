@@ -8,10 +8,9 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.Symbol;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
-import edu.arizona.cs.learn.timeseries.model.AllenRelation;
 import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.cs.learn.timeseries.model.symbols.AllenRelation;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.timeseries.visualization.graph.Node;
 import edu.arizona.cs.learn.util.graph.Edge;
 import edu.uci.ics.jung.graph.DirectedGraph;
@@ -32,7 +31,7 @@ public class TableFactory {
 
 		Set<Integer> ignore = new HashSet<Integer>();
 		for (int i = 0; i < s.signature().size(); i++) {
-			WeightedObject obj = (WeightedObject) s.signature().get(i);
+			Symbol obj = s.signature().get(i);
 			if (obj.weight() < min) {
 				ignore.add(i);
 			}
@@ -43,7 +42,7 @@ public class TableFactory {
 
 		for (int i = 0; i < s.table().size(); i++) {
 			Symbol[] newRow = new Symbol[newSize];
-			Symbol[] oldRow = (Symbol[]) s.table().get(i);
+			Symbol[] oldRow = s.table().get(i);
 
 			int pos = 0;
 			for (int j = 0; j < oldRow.length; j++) {
