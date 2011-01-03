@@ -40,8 +40,11 @@ public class SyntheticClassification {
 //		generateClass(pid, "f", 1, 0, 25);
 //		generateClass(pid, "g", 2, 0.1, 25);
 		
-		if (args.length != 4) {
-			System.out.println("Usage: numRepeat experiment \"mean1,mean2,...\" \"length1,length2,...\"");
+		if (args.length != 5) {
+			System.out.print("Usage: numRepeat experiment ");
+			System.out.print("\"mean1,mean2,...\" \"pct1,pct2,..\"");
+			System.out.print("\"length1,length2,...\"");
+			System.out.println();
 			return;
 		}
 		
@@ -53,32 +56,40 @@ public class SyntheticClassification {
 		for (String tok : meanTokens)
 			means.add(Double.parseDouble(tok));
 		
+		List<Double> pcts = new ArrayList<Double>();
+		String[] pctTokens = args[3].split("[,]");
+		for (String tok : pctTokens)
+			pcts.add(Double.parseDouble(tok));
+		
 		List<Integer> lengths = new ArrayList<Integer>();
-		String[] lengthTokens = args[3].split("[,]");
+		String[] lengthTokens = args[4].split("[,]");
 		for (String tok : lengthTokens)
 			lengths.add(Integer.parseInt(tok));
 		
 		if ("curve".equals(experiment)) 
-			learningCurve(means, lengths);
+			learningCurve(lengths, means, pcts);
 		else
-			experiment1(lengths, means);
+			experiment(lengths, means, pcts);
 //		expectedSequenceSizes(lengths,means);
 	}
 	
-	public static void learningCurve(List<Double> means, List<Integer> episodeLengths) throws Exception { 
+	public static void learningCurve(List<Integer> lengths, List<Double> means, List<Double> pcts) throws Exception { 
 		String pid = RandomFile.getPID();
 		String dir = "/tmp/niall-" + pid + "/";
 		
 		LearningCurve curve = new LearningCurve();
 
-		for (double mean : means) { 
-			for (int length : episodeLengths) { 
-		
-				generateClass(pid, "f", 1, 0, length);
-				generateClass(pid, "g", 2, mean, length);
-		
-				Map<String,List<Instance>> data = Utils.load(dir, "niall", SequenceType.allen);
-				curve.buildCurve("logs/niall-" + mean + "-" + length, data);
+		for (double pct : pcts) {
+			for (double mean : means) { 
+				for (int length : lengths) { 
+					System.out.println("Mean: " + mean + " Pct: " + pct + " Length: " + length);
+
+					generateClass(pid, "f", 0, 0, length);
+					generateClass(pid, "g", mean, pct, length);
+
+					Map<String,List<Instance>> data = Utils.load(dir, "niall", SequenceType.allen);
+					curve.buildCurve("logs/niall-" + mean + "-" + pct + "-" + length, data);
+				}
 			}
 		}
 	}
@@ -87,22 +98,16 @@ public class SyntheticClassification {
 	 * Class 1 does not change -- so we need to construct the niall-f.lisp file
 	 * @param index - 1 for pure random class and 2 for the structured class
 	 */
-	public static void generateClass(String pid, String className, int index, double mean, int eLength) { 		
+	public static void generateClass(String pid, String className, double mean, double pct, int eLength) { 		
 		String prefix = "/tmp/niall-" + pid + "/";
 		File f = new File(prefix);
 		if (!f.exists())
 			f.mkdir();
+		
 		try {
-
-			
-			// initial arguments
-			//   prefix - where you want the file written
-			//   p - the number of streams.
-			//   alphabet.size - the number of symbols (constant in each stream)
-			//   episode.length -- the length of each episode
 			int streams = 6;
 			
-			String cmd = "scripts/sim.R " + index + " " + prefix + " " + streams + " " + mean + " " + eLength;
+			String cmd = "scripts/sim.R " + prefix + className + " " + streams + " " + eLength + " " + mean + " " + pct;
 			System.out.println(cmd);
 			Process p = Runtime.getRuntime().exec("Rscript " + cmd);
 			p.waitFor();
@@ -112,79 +117,89 @@ public class SyntheticClassification {
 		
 		SymbolicData.convert(prefix + className, prefix + "niall-" + className +".lisp", N);
 	}
-	
-	public static void experiment1(List<Integer> episodeLengths, List<Double> means) throws Exception { 
-//		int[] episodeLengths = new int[] { 200 }; //, 200, 300, 400, 500 };
-//		double[] means = new double[] { 0.00 }; //, 0.5, 1.0, 1.5, 2.0 };
+
+	/**
+	 * Run the for all of the values across the means, lengths, and pct to vary
+	 * the covariance between no covariance and an easy covariance structure.
+	 * @param episodeLengths
+	 * @param means
+	 * @param pcts
+	 * @throws Exception
+	 */
+	public static void experiment(List<Integer> episodeLengths, List<Double> means, List<Double> pcts) throws Exception { 
 		String pid = RandomFile.getPID();
 		System.out.println("Means: " + means);
 		System.out.println("Lengths: " + episodeLengths);
+		System.out.println("Pcts: " + pcts);
 		
 		String key = System.currentTimeMillis() + "";
 		
 		BufferedWriter out = new BufferedWriter(new FileWriter("logs/synthetic-" + key + ".csv"));
-		out.write("elength,mean,test," + BatchStatistics.csvHeader() + "\n");
+		out.write("elength,mean,pct,test," + BatchStatistics.csvHeader() + "\n");
 		
 		// Total number of experiments equals 25
-		for (double mean : means) { 
-			for (int length : episodeLengths) { 
-				System.out.println("Mean: " + mean + " Length: " + length);
-				
-				generateClass(pid, "f", 1, 0, length);
-				generateClass(pid, "g", 2, mean, length);
+		for (double pct : pcts) { 
+			for (double mean : means) { 
+				for (int length : episodeLengths) { 
+					System.out.println("Mean: " + mean + " Length: " + length);
 
-				Map<String,List<Instance>> data = Utils.load("/tmp/niall-" + pid + "/", "niall", SequenceType.allen);
-				List<String> classNames = new ArrayList<String>(data.keySet());
-				Collections.sort(classNames);
-				
-				ClassifyParams params = new ClassifyParams();
-				params.type = SequenceType.allen;
-				params.prunePct = 0.5;
-				Classifier c = Classify.prune.getClassifier(params);
-				
-//				CrossValidation cv = new CrossValidation(FOLDS);
-				SplitAndTest sat = new SplitAndTest(EXPERIMENTS, 2.0/3.0);
-				List<BatchStatistics> stats = sat.run(System.currentTimeMillis(), classNames, data, c);
+					generateClass(pid, "f", 0, 0, length);
+					generateClass(pid, "g", mean, pct, length);
 
-				// print out the summary information for now.  Later we will need to 
-				// print out all of it.
-				SummaryStatistics perf = new SummaryStatistics();
-				SummaryStatistics[][] confMatrix = new SummaryStatistics[classNames.size()][classNames.size()];
-				for (int i = 0; i < classNames.size(); ++i) 
-					for (int j = 0; j < classNames.size(); ++j) 
-						confMatrix[i][j] = new SummaryStatistics();
-				
-				// append to the file the results of this latest run...
-				for (int i = 0; i < stats.size(); ++i) { 
-					BatchStatistics batch = stats.get(i);
-					out.write(batch.toCSV(length + "," + mean + "," + i + ",", ""));
+					Map<String,List<Instance>> data = Utils.load("/tmp/niall-" + pid + "/", "niall", SequenceType.allen);
+					List<String> classNames = new ArrayList<String>(data.keySet());
+					Collections.sort(classNames);
 
-					perf.addValue(batch.accuracy());
-					double[][] matrix = batch.normalizeConfMatrix();
-					for (int j = 0; j < classNames.size(); ++j)
-						for (int k = 0; k < classNames.size(); ++k)
-							confMatrix[j][k].addValue(matrix[j][k]);
-				}
-				out.flush();
-				System.out.println("[" + mean + "," + length + "] performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
+					ClassifyParams params = new ClassifyParams();
+					params.type = SequenceType.allen;
+					params.prunePct = 0.5;
+					Classifier c = Classify.prune.getClassifier(params);
 
-				
-				// Write out the confusion matrix for this pairing of variables.
-				BufferedWriter outMatrix = new BufferedWriter(new FileWriter("logs/matrix-" + key + "-" + length + "-" + mean + ".csv"));
-				for (int i = 0; i < classNames.size(); ++i) 
-					outMatrix.write("," + classNames.get(i));
-				outMatrix.write("\n");
-				
-				for (int i = 0; i < classNames.size(); ++i) {
-					outMatrix.write(classNames.get(i));
-					for (int j = 0; j < classNames.size(); ++j) 
-						outMatrix.write("," + confMatrix[i][j].getMean());
+					//				CrossValidation cv = new CrossValidation(FOLDS);
+					SplitAndTest sat = new SplitAndTest(EXPERIMENTS, 2.0/3.0);
+					List<BatchStatistics> stats = sat.run(System.currentTimeMillis(), classNames, data, c);
+
+					// print out the summary information for now.  Later we will need to 
+					// print out all of it.
+					SummaryStatistics perf = new SummaryStatistics();
+					SummaryStatistics[][] confMatrix = new SummaryStatistics[classNames.size()][classNames.size()];
+					for (int i = 0; i < classNames.size(); ++i) 
+						for (int j = 0; j < classNames.size(); ++j) 
+							confMatrix[i][j] = new SummaryStatistics();
+
+					// append to the file the results of this latest run...
+					for (int i = 0; i < stats.size(); ++i) { 
+						BatchStatistics batch = stats.get(i);
+						out.write(batch.toCSV(length + "," + mean + "," + pct + "," + i + ",", ""));
+
+						perf.addValue(batch.accuracy());
+						double[][] matrix = batch.normalizeConfMatrix();
+						for (int j = 0; j < classNames.size(); ++j)
+							for (int k = 0; k < classNames.size(); ++k)
+								confMatrix[j][k].addValue(matrix[j][k]);
+					}
+					out.flush();
+					System.out.println("[pct:" + pct + ",mean:" + mean + ",length:" + length + "] " +
+							"performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
+
+
+					// Write out the confusion matrix for this pairing of variables.
+					BufferedWriter outMatrix = new BufferedWriter(new FileWriter("logs/matrix-" + key + "-" + length + "-" + mean + ".csv"));
+					for (int i = 0; i < classNames.size(); ++i) 
+						outMatrix.write("," + classNames.get(i));
 					outMatrix.write("\n");
+
+					for (int i = 0; i < classNames.size(); ++i) {
+						outMatrix.write(classNames.get(i));
+						for (int j = 0; j < classNames.size(); ++j) 
+							outMatrix.write("," + confMatrix[i][j].getMean());
+						outMatrix.write("\n");
+					}
+					outMatrix.close();
 				}
-				outMatrix.close();
 			}
 		}
-	}
+	}	
 	
 	public static void expectedSequenceSizes(List<Integer> episodeLengths, List<Double> means) throws Exception { 
 		String pid = RandomFile.getPID();
