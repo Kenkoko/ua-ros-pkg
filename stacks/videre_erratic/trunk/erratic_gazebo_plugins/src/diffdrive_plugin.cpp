@@ -243,14 +243,14 @@ void DiffDrivePlugin::UpdateChild()
 // Finalize the controller
 void DiffDrivePlugin::FiniChild()
 {
-  std::cout << "ENTERING FINALIZE\n";
+  //std::cout << "ENTERING FINALIZE\n";
   alive_ = false;
   // Custom Callback Queue
   queue_.clear();
   queue_.disable();
   rosnode_->shutdown();
   callback_queue_thread_->join();
-  std::cout << "EXITING FINALIZE\n";
+  //std::cout << "EXITING FINALIZE\n";
 }
 
 // NEW: Now uses the target velocities from the ROS message, not the Iface 

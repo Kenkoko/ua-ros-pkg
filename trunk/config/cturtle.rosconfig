@@ -253,6 +253,9 @@
     uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
     local-name: ua-ros-pkg
 - svn:
+    uri: https://ua-ros-pkg.googlecode.com/svn/stacks/videre_erratic/trunk
+    local-name: stacks/videre_erratic
+- svn:
     uri: https://ua-cs665-ros-pkg.googlecode.com/svn/trunk
     local-name: ua-cs665-ros-pkg
 - svn:
