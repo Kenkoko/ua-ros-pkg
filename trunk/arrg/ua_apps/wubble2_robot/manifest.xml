@@ -10,7 +10,7 @@
     <url>http://ros.org/wiki/wubble2_robot</url>
     
     <depend package="wubble_description"/>
-    <depend package="ua_erratic_player"/>
+    <depend package="erratic_player"/>
     <depend package="hokuyo_node"/>
     
     <depend package="wubble_teleop"/>
@@ -21,6 +21,7 @@
     <depend package="actionlib"/>
     <depend package="actionlib_msgs"/>
     <depend package="move_arm_msgs"/>
+    <depend package="move_base_msgs"/>
     <depend package="motion_planning_msgs"/>
     <depend package="geometry_msgs"/>
     <depend package="ua_audio_msgs"/>

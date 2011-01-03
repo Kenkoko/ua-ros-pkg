@@ -4,7 +4,7 @@
     
     <!-- start all hardware systems -->
     <include file="$(find wubble_controllers)/launch/wubble_controllers.launch" />
-    <include file="$(find ua_erratic_player)/launch/erratic_base.launch" />
+    <include file="$(find erratic_player)/launch/erratic_base.launch" />
     
     <!-- Publish joint_states information -->
     <node name="joint_states_publisher" pkg="wubble_controllers" type="joint_states_publisher.py" />

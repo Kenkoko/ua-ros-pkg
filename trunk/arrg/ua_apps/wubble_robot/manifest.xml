@@ -10,7 +10,7 @@
     <url>http://ros.org/wiki/wubble_robot</url>
     
     <depend package="wubble_description"/>
-    <depend package="ua_erratic_player"/>
+    <depend package="erratic_player"/>
     <depend package="hokuyo_node"/>
     
     <depend package="wubble_teleop"/>
