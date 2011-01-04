@@ -27,6 +27,7 @@
 
 #include <ros/ros.h>
 #include "ultraspeech/SaveFile.h"
+#include "ultraspeech/Control.h"
 
 #include <string>
 using std::string;
@@ -149,6 +150,8 @@ public:
 	void ResetHandler( void );
 	
 	ros::Publisher savefile_pub_;
+	ros::Subscriber control_sub_;
+	int session_run_;
 
 private:
 	static int ResetHandlerProxy( raw1394handle_t handle, unsigned int generation );
@@ -157,6 +160,7 @@ private:
 	static int DvHandlerProxy( unsigned char *data, int length, int complete, 
 		void *callback_data );
 	static void* ThreadProxy( void *arg );
+	void control_cb(const ultraspeech::ControlConstPtr&);
 };
 
 
