@@ -320,6 +320,7 @@ iec61883Reader::iec61883Reader( int p, int c, int bufSize,
 	
 	ros::NodeHandle local_nh("~");
 	savefile_pub_ = local_nh.advertise<ultraspeech::SaveFile>("save_name", 1);
+	control_sub_ = local_nh.subscribe("/control", 1, &iec61883Reader::control_cb, this);
 
 }
 
@@ -337,6 +338,11 @@ iec61883Reader::~iec61883Reader()
     retrieved from the outFrames queue.
  
 */
+
+void iec61883Reader::control_cb(const ultraspeech::ControlConstPtr& msg)
+{
+	session_run_ = msg->run;
+}
 
 bool iec61883Reader::StartThread()
 {
@@ -548,10 +554,12 @@ int iec61883Reader::Handler( unsigned char *data, int length, int dropped )
 	memcpy( &currentFrame->data[currentFrame->GetDataLen()], data, length );
 	currentFrame->AddDataLen( length );
 	
-	sv_msg.header.stamp = ros::Time::now();
-	sv_msg.filepath = "grabbed_ultrasound_frame";
-	savefile_pub_.publish(sv_msg);
-
+	if (session_run_){
+		sv_msg.header.stamp = ros::Time::now();
+		sv_msg.filepath = "grabbed_ultrasound_frame";
+		savefile_pub_.publish(sv_msg);
+	}
+	
 	if ( currentFrame->IsComplete( ) )
 	{
 		pthread_mutex_lock( &mutex );
