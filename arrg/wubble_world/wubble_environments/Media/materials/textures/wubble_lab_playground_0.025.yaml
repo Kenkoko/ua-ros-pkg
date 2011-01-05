@@ -1,4 +1,4 @@
-image: map.pgm
+image: wubble_lab_playground_0.025.pgm
 resolution: 0.025000
 origin: [-22.800000, -10.000000, 0.000000]
 negate: 0
