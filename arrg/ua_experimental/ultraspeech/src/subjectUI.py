@@ -6,6 +6,7 @@ import os, sys, datetime, random, math, time, subprocess
 import pygtk
 pygtk.require('2.0')
 import gtk
+import gtk.glade
 import pango
 
 import roslib
@@ -69,7 +70,7 @@ class GFConsoleController:
         self.text_buffer.set_text('')
 
 class SubjectUI:
-    def __init__(self, stimuliFile, numReps):
+    def __init__(self):
         '''
         stimuliFile should be a list of words or sentences (1 per line) that will be randomized and displayed.
         numReps is the number of repitions for each word/sentence
@@ -114,14 +115,17 @@ class SubjectUI:
 
         gts = GtkThreadSafe()
         with gts:
-            self.createTopLevel(stimuliFile, int(numReps))
-            self.run = 0
-            self.currentInd = 0
-	    self.currentRep = 1
-	    self.currentBatch = 1
-	    self.total = len(self.stimuliList)
-	    if self.USE_JACK:
-	        self.startJack()
+	    s = Startup()
+	    result, stimuliFile, numReps = s.run()
+	    if result == 1:
+		self.createTopLevel(stimuliFile, numReps)
+		self.run = 0
+		self.currentInd = 0
+		self.currentRep = 1
+		self.currentBatch = 1
+		self.total = len(self.stimuliList)
+		if self.USE_JACK:
+		    self.startJack()
 	    
                     
         
@@ -146,7 +150,8 @@ class SubjectUI:
         self.stimuliList = []
         for i in range(numReps):
             for j in stimuli:
-                self.stimuliList.append(j[:-1])
+		if (j != '\n'):
+		    self.stimuliList.append(j[:-1])
         
         self.numReps = numReps
         self.numBatches = int(math.ceil(float(len(self.stimuliList)) / 10.0))
@@ -203,10 +208,11 @@ class SubjectUI:
             try:
 	        if (((self.currentInd)%(self.total/self.numReps)) == 0):
 		    self.currentRep += 1
-		    self.console.set_text('')
+		    #self.console.set_text('')
 		if (((self.currentInd)%10) == 0):
 		    self.currentBatch += 1
 		print self.stimuliList[self.currentInd]
+		self.console.set_text('')
 		self.console.append_text('\n')
 		self.console.append_text(self.stimuliList[self.currentInd])
                 currentMessage = CurrentStim(stimulus=self.stimuliList[self.currentInd],
@@ -231,9 +237,56 @@ class SubjectUI:
         #self.logfile.close()
         gtk.main_quit()
 
+class Startup:
+    def __init__(self):
+	#rospy.init_node('subjectUI')
+	self.gladefile = os.environ['HOME'] + "/ros/ua-ros-pkg/ua_experimental/ultraspeech/src/startup.glade" #this is a bad hack
+	
+    def run(self):
+	self.wTree = gtk.glade.XML(self.gladefile, "dialog1")
+	self.dlg = self.wTree.get_widget("dialog1")
+	dic = { "on_button1_clicked" : self.onOpen}
+	self.wTree.signal_autoconnect(dic)
+	
+	self.file_display = self.wTree.get_widget("entry1")
+	self.reps_display = self.wTree.get_widget("entry2")
+	
+	result = self.dlg.run()
+	
+	stimuliFile = self.file_display.get_text()
+	numReps = int(self.reps_display.get_text())
+	
+	self.dlg.destroy()
+	
+	return result, stimuliFile, numReps
+	
+	
+	
+    def onOpen(self, event):
+	fc = gtk.FileChooserDialog(title='Open Stimuli File', parent=None, 
+	    action=gtk.FILE_CHOOSER_ACTION_OPEN, 
+	    buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, 
+	gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+	g_directory = fc.get_current_folder()
+	fc.set_current_folder(g_directory)
+	fc.set_default_response(gtk.RESPONSE_OK)
+	fc.set_select_multiple(False)
+	ffilter = gtk.FileFilter()
+	ffilter.set_name('.txt Files')
+	ffilter.add_pattern('*.txt')
+	fc.add_filter(ffilter)
+	response = fc.run()
+	if response == gtk.RESPONSE_OK:
+	    self.datafile = fc.get_filename()
+	    g_directory = fc.get_current_folder()
+	    self.file_display.set_text(self.datafile)
+	fc.destroy()
+	
+	    
 def usage():
     return "usage: rosrun ultraspeech subjectUI.py stimuliFile numReps"
 
 if __name__ == "__main__":
-    g = SubjectUI(sys.argv[1], sys.argv[2])
+    #Startup()
+    g = SubjectUI()
     gtk.main()
