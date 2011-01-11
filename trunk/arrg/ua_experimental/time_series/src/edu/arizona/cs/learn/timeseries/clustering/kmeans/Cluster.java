@@ -14,8 +14,6 @@ import edu.arizona.cs.learn.timeseries.model.Signature;
 public class Cluster {
 
 	private int _id;
-	
-	private List<Integer> _indexes;
 	private List<Instance> _instances;
 	
 	private Signature _signature;
@@ -29,33 +27,32 @@ public class Cluster {
 		return _id;
 	}
 	
-	public List<Integer> indexes() { 
-		return _indexes;
-	}
-	
 	public void clear() { 
 		_signature = new Signature(_id + "");
-		_indexes = new ArrayList<Integer>();
 		_instances = new ArrayList<Instance>();
 	}
 	
-	public void add(int index, Instance instance) {
-		_indexes.add(index);
+	public void add(Instance instance) {
 		_instances.add(instance);
 	}
 
+	public List<Instance> instances() { 
+		return _instances;
+	}
+	
 	public void finish() { 
-		if (_indexes.size() == 0) {
-			System.out.println("Shit --- a cluster is empty");
+		if (_instances.size() == 0) {
+			System.out.println("[finish] Shit --- a cluster is empty");
 			return;
 		}
 		
-		for (int i = 1; i < _instances.size(); ++i) { 
+		for (int i = 1; i <= _instances.size(); ++i) { 
 			if (i % 10 == 0) 
 				_signature = _signature.prune(3);
 			_signature.update(_instances.get(i-1).sequence());
 		}
 
+		System.out.println("Finished: " + _signature.signature().size());
 //		int min = (int) Math.floor(0.5 * (double) _indexes.size());
 //		_signature = _signature.prune(min);
 	}	
@@ -67,7 +64,7 @@ public class Cluster {
 	 * @return
 	 */
 	public double distance(Instance instance) { 
-		if (_indexes.size() == 0) {
+		if (_instances.size() == 0) {
 			return Math.random();
 		}
 		
@@ -79,6 +76,9 @@ public class Cluster {
 		p.similarity = Similarity.strings;
 		
 		Report report = GeneralAlignment.align(p);
+		if (Double.compare(report.score, Double.NaN) == 0) { 
+			System.out.println("WTF?: " + _signature.signature().size() + " -- " + instance.sequence().size());
+		}
 		return report.score;
 	}
 }

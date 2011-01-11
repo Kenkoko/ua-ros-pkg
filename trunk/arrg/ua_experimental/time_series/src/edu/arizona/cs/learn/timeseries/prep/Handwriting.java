@@ -43,6 +43,10 @@ public class Handwriting {
 			Set<String> classNames = new HashSet<String>();
 			Map<String,List<Double>> xMap = new HashMap<String,List<Double>>();
 			Map<String,List<Double>> yMap = new HashMap<String,List<Double>>();
+			
+			Map<String,List<Double>> dxMap = new HashMap<String,List<Double>>();
+			Map<String,List<Double>> dyMap = new HashMap<String,List<Double>>();
+			
 			Map<String,List<String>> strokeMap = new HashMap<String,List<String>>();
 			
 			while (in.ready()) { 
@@ -62,6 +66,7 @@ public class Handwriting {
 					classNames.add(className);
 					xMap.put(className, new ArrayList<Double>());
 					yMap.put(className, new ArrayList<Double>());
+					
 					strokeMap.put(className, new ArrayList<String>());
 				}
 				
@@ -70,10 +75,20 @@ public class Handwriting {
 				strokeMap.get(className).add(stroke);
 			}
 			
-			// Now we need to actually standardize these values 
+			// Now we need to actually standardize these values and calculate the 
+			// delta time-series.
 			for (String className : classNames) { 
-				xMap.put(className, TimeSeries.standardize(xMap.get(className)));
-				yMap.put(className, TimeSeries.standardize(yMap.get(className)));
+				List<Double> x = TimeSeries.standardize(xMap.get(className));
+				List<Double> dx = TimeSeries.diff(x);
+				
+				xMap.put(className, x);
+				dxMap.put(className, dx);
+
+				List<Double> y = TimeSeries.standardize(yMap.get(className));
+				List<Double> dy = TimeSeries.diff(y);
+
+				yMap.put(className, y);
+				dyMap.put(className, dy);
 			}
 			
 			for (String className : classNames) {
@@ -82,7 +97,8 @@ public class Handwriting {
 					list = new ArrayList<HWInstance>();
 					map.put(className, list);
 				}
-				list.add(new HWInstance(xMap.get(className), yMap.get(className), strokeMap.get(className)));
+				list.add(new HWInstance(xMap.get(className), dxMap.get(className), 
+						yMap.get(className), dyMap.get(className), strokeMap.get(className)));
 			}
 		}
 		
@@ -125,7 +141,7 @@ class HWInstance {
 	public List<Double> y;
 	public List<String> stroke;
 	
-	public HWInstance(List<Double> x, List<Double> y, List<String> stroke) { 
+	public HWInstance(List<Double> x, List<Double> dx, List<Double> y, List<Double> dy, List<String> stroke) { 
 		this.x = x;
 		this.y = y;
 		this.stroke = stroke;
@@ -135,6 +151,9 @@ class HWInstance {
 			List<Value> values = new ArrayList<Value>();
 			values.add(new Real("x", x.get(i)));
 			values.add(new Real("y", y.get(i)));
+			
+			values.add(new Real("dx", dx.get(i)));
+			values.add(new Real("dy", dy.get(i)));
 
 			// technically the variable "stroke" is a symbol, but
 			// for now I will treat it as real valued.
