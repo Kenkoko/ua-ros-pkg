@@ -74,23 +74,23 @@ public class Classification {
 	
 	public static void main(String[] args) throws Exception { 
 		Map<String,String> map = new HashMap<String,String>();
-//		for (String character : Utils.alphabet) { 
-//			map.put(character, "data/raw-data/handwriting/wes/xml/" + character + ".xml");
-//		}
-//		
-//		Map<String,List<Instance>> data = new HashMap<String,List<Instance>>();
-//		for (String key : map.keySet()) { 
-//			data.put(key, XMLUtils.loadXML(map.get(key)));
-//		}
-//		
-//		performance(data);
-		
-		List<String> activities = Utils.getActivityNames("ww3d");
-		for (String s : activities) { 
-			map.put(s, "data/input/" + s + ".lisp");
+		for (String character : Utils.alphabet) { 
+			map.put(character, "data/raw-data/handwriting/wes/xml/" + character + ".xml");
 		}
 		
-		performance(Utils.convert(map));
+		Map<String,List<Instance>> data = new HashMap<String,List<Instance>>();
+		for (String key : map.keySet()) { 
+			data.put(key, XMLUtils.loadXML(map.get(key)));
+		}
+		
+		performance(data);
+		
+//		List<String> activities = Utils.getActivityNames("ww3d");
+//		for (String s : activities) { 
+//			map.put(s, "data/input/" + s + ".lisp");
+//		}
+//		
+//		performance(Utils.convert(map));
 		
 //		performance("ww3d");
 //		learningCurve("ww3d");
