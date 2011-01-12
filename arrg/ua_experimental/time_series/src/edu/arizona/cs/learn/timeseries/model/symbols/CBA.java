@@ -27,6 +27,8 @@ public class CBA extends StringSymbol implements Comparable<CBA> {
 	private boolean _finished = false;
 
 	public CBA() {
+		super(1.0);
+
 		_start = Integer.MAX_VALUE;
 		_end = 0;
 
@@ -38,8 +40,12 @@ public class CBA extends StringSymbol implements Comparable<CBA> {
 	}
 	
 	public CBA(String key) {
-		this();
+		this(key, 1.0);
+	}
+	
+	public CBA(String key, double weight) { 
 		_key = key;
+		_weight = weight;
 	}
 
 	public String toString() {
@@ -178,16 +184,21 @@ public class CBA extends StringSymbol implements Comparable<CBA> {
 	}	
 
 	public void toXML(Element e) {
-		Element cba = e.addElement("symbol").addAttribute("class", "CBA");
-
+		Element cba = e.addElement("symbol");
+		
+		cba.addAttribute("class", "CBA");
 		cba.addAttribute("key", _key);
+		cba.addAttribute("weight", _weight +"");
+
 		for (Interval interval : _intervals)
 			interval.toXML(cba);
 	}
 
 	public static CBA fromXML(Element e) {
 		String key = e.attributeValue("key");
-		CBA cba = new CBA(key);
+		double weight = Double.parseDouble(e.attributeValue("weight"));
+
+		CBA cba = new CBA(key, weight);
 
 		List list = e.elements("Interval");
 		for (Object o : list) { 
