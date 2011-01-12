@@ -2,7 +2,9 @@ package edu.arizona.cs.learn.algorithm.markov;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
@@ -215,7 +217,12 @@ public class FSMConverter {
 			statesSets.put(s, isFinal);
 		}
 		DirectedGraph<BPPNode, Edge> dfa = constructDFA(start, statesSets, transitions);
+		
+		// Dump stats
 		dumpStatistics(nfa, dfa);
+		
+		// Init distance to nearest final for each node
+		FSMFactory.initDistanceToNearestFinal(dfa);
 		
 		return dfa;
 	}
