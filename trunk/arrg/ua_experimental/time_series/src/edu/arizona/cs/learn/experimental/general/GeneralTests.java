@@ -150,6 +150,7 @@ public class GeneralTests {
 				params.setMin(0, 0);
 				params.setBonus(1, 1);
 				params.normalize = Normalize.none;
+				params.similarity = Similarity.tanimoto;
 				
 				Report r = GeneralAlignment.alignCheckp(params);
 				r.print();
