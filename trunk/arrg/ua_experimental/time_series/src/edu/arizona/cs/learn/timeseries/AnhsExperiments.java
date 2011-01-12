@@ -14,8 +14,31 @@ public class AnhsExperiments {
 	
 	public static void main(String[] args) {
 
-		runDecompositionExperiment();
+//		runDecompositionExperiment();
 //		runRecognitionExperiment();
+		
+		runInformationDepthExperiment();
+	}
+	
+	
+	private static void runInformationDepthExperiment() {
+		int[] pcts = { 80 };
+		boolean[] prunes = { true };
+		String prefix = "ww3d";
+		String[] activities = { "approach", "jump-over", "jump-on" }; //, "left", "push", "right" };
+		String testActivity = "jump-over";
+		SequenceType type = SequenceType.allen;
+		Recognizer recognizer = Recognizer.cave;
+		boolean optimizeRecognizers = true;
+
+
+		for (boolean prune : prunes) {
+			for (int i : pcts) {
+				Experiments cv = new Experiments(0);
+				cv.informationDepth(prefix, activities, testActivity, recognizer, type, 
+						i, prune, false, optimizeRecognizers);
+			}
+		}
 	}
 
 
@@ -55,18 +78,18 @@ public class AnhsExperiments {
 
 	private static void runRecognitionExperiment() {
 		try {
-			int experiments = 20;
+			int experiments = 5;
 			String prefix = "wes-pen";
-			int[] folds = { 6 };
+			int[] folds = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 			int[] pcts = { 80 };
-			boolean[] prunes = { true , false };
-			boolean[] optimizeRecognizers = { true, false };
+			boolean[] prunes = { true };
+			boolean[] optimizeRecognizers = { true };
 
 			boolean setup = true;
 			
 			SequenceType type = SequenceType.allen;
 			Recognizer recognizer = Recognizer.cave;
-			boolean outputRecognizer = true;			
+			boolean outputRecognizer = true;
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
 			String fileName = "data/recognizer-" + prefix + "-" +
 					type + "-all-" + dateFormat.format(new Date()) + ".csv";
