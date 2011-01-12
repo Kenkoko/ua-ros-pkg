@@ -16,6 +16,7 @@ public class BPPNode {
 	private String _fontColor;
 	
 	private boolean _isFinal;
+	private int _depth;
 	
 	private BPPNode _startNode;
 
@@ -26,10 +27,15 @@ public class BPPNode {
 		_color = "white";
 		_fontColor = "black";
 
+		_isFinal = false;
+		_depth = 0;
+
 		_props = new TreeSet<String>();
 	}
 
-	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode, boolean isFinalState) {
+	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode,
+			boolean isFinalState, int depth) {
+		
 		this(startNode);
 
 		_propList = propList;
@@ -46,6 +52,12 @@ public class BPPNode {
 		_fontColor = "black";
 		
 		_isFinal = isFinalState;
+		_depth = depth;
+	}
+
+	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode,
+			boolean isFinalState) {
+		this(propList, buf, startNode, isFinalState, 0);
 	}
 	
 	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode) {
@@ -162,5 +174,13 @@ public class BPPNode {
 	
 	public void setIsFinal(boolean isfinal) {
 		_isFinal = isfinal;
+	}
+	
+	public int getDepth() {
+		return _depth;
+	}
+	
+	public void setDepth(int depth) {
+		_depth = depth;
 	}
 }

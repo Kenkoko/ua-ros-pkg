@@ -62,12 +62,14 @@ public class FSMRecognizer {
 						|| (turningOff.indexOf(next) != -1))
 					continue;
 				turningOn.add(next);
+				next.setDepth(Math.max(next.getDepth(), node.getDepth() + 1));
 			}
 
 		}
 
 		for (BPPNode node : turningOff) {
 			active.remove(node);
+			node.setDepth(0);
 		}
 
 		for (BPPNode node : turningOn) {
@@ -90,6 +92,7 @@ public class FSMRecognizer {
 
 		return false;
 	}
+	
 	
 	public boolean test(List<Interval> intervals, int start, int end) {
 		List<BPPNode> active = new ArrayList<BPPNode>();

@@ -921,4 +921,148 @@ public class Experiments {
 		
 	}
 	
+	
+	/**
+	 * Information Depth experiment.
+	 * 
+	 * Added by Anh T.
+	 */
+	public void informationDepth(final String dataset, final String[] activities, final String testActivity,
+			final Recognizer r, final SequenceType type, final int minPct, final boolean prune,
+			final boolean onlyStart, final boolean optimizeRecognizers) {
+
+		final String depthdir = "data/infodepth/" + type + "/";
+		final String suffix = (prune) ? "-prune" : "";
+		
+		// Load data sets
+		final Map<String, Map<Integer,List<Interval>>> data = new HashMap<String,Map<Integer,List<Interval>>>();
+		for (String activity : activities) {
+			String key = dataset + "-" + activity;
+			data.put(key, Utils.load(new File("data/input/" + key + ".lisp")));
+		}
+
+		// Randomly select a test instance
+		Random rand = new Random(System.currentTimeMillis());
+		Map<Integer,List<Interval>> testData = data.get(dataset + "-" + testActivity);
+		final List<Interval> testInstance = testData.get(rand.nextInt(testData.size()));
+
+		// Load training instances
+		final Map<String, List<Instance>> instancesMap = Utils.load(dataset, type);
+		
+		class InfoDepthCallable implements Callable<Object> { 
+			
+			private String _key;
+			
+			public InfoDepthCallable(String key) {
+				_key = key;
+			}
+			
+			public Object call() throws Exception {
+
+				System.out.println("Info depth experiment for " + _key + " started...");
+				
+				// Generate signature from all data
+				List<Instance> list = instancesMap.get(_key);
+				Signature s = new Signature(_key);
+				for (int k = 1; k <= list.size(); k++) {
+					Instance instance = list.get(k-1);
+					s.update(instance.sequence());
+					if (prune && (k % 10 == 0))
+						s = s.prune(3);
+				}
+				int half = s.trainingSize() / 2;
+				s = s.prune(half);
+				
+				// Build recognizer
+				FSMRecognizer recognizer = r.build(_key, s, minPct, onlyStart);
+				if (optimizeRecognizers) {
+					recognizer = new FSMRecognizer(_key, FSMConverter.convertNFAtoDFA(recognizer.getGraph()));
+				}
+				FSMFactory.toDot(recognizer.getGraph(), depthdir + _key + suffix + ".dot");
+				
+				// Pre-process test data
+				int start = Integer.MAX_VALUE;
+				int end = 0;
+				for (Interval interval : testInstance) {
+					start = Math.min(start, interval.start);
+					end = Math.max(end, interval.end);
+				}
+				
+				// Reset recognizers
+				recognizer.reset();
+				
+				StringBuffer results = new StringBuffer();
+				
+				// Perform recognition
+				List<BPPNode> actives = new ArrayList<BPPNode>();
+				boolean isAccepted = false;
+				for (int j = start; j < end; j++) {
+					Set<String> props = new HashSet<String>();
+					for (Interval interval : testInstance) {
+						if (interval.on(j)) {
+							props.add(interval.name);
+						}
+					}
+					
+					// Update each time step
+					isAccepted = recognizer.update(props, false);
+					actives = recognizer.getActive();
+					
+					// Find max depth among actives
+					int maxActiveDepth = 0;
+					for (BPPNode n : actives) {
+						maxActiveDepth = Math.max(maxActiveDepth, n.getDepth());
+					}
+					
+					results.append(_key.replace(dataset+"-", "") + ","
+							+ j + ","
+							//+ maxDepth + ","
+							+ maxActiveDepth + ","
+							+ ((isAccepted) ? "true" : "false") + ","
+							+ type + "," 
+							+ r.name() + "," 
+							+ ((optimizeRecognizers) ? "true" : "false") + ","
+							+ ((prune) ? "true" : "false") + "\n");
+				}
+
+				System.out.println("Info depth experiment for " + _key + " completed.");
+				
+				return results;
+			}
+		}
+		
+		// Run the experiment (multi-thread)
+		_execute = Executors.newFixedThreadPool(Utils.numThreads);
+		List<Future<Object>> jobs = new ArrayList<Future<Object>>();
+		for (String activity : activities) {
+			String key = dataset + "-" + activity;	
+			jobs.add(_execute.submit(new InfoDepthCallable(key)));
+		}
+
+
+		try {
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
+			String fileName = depthdir + "recognizer-" + type + "-" + dateFormat.format(new Date()) + ".csv";
+			BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
+	
+			out.write("className,timestep," + /*"maxdepth,"+*/ "maxactivedepth,accepted,type,recognizer,optimized,prune\n");
+			
+			for (Future<Object> results : jobs) {
+				try {
+					StringBuffer res = (StringBuffer)results.get();
+					out.write(res.toString());
+				} catch (Exception e) { 
+					e.printStackTrace();
+				}
+			}
+			
+			out.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		_execute.shutdown();
+	
+	}
+	
 }
