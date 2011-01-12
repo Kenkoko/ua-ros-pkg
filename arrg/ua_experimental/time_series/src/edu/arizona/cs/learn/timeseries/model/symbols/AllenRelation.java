@@ -205,6 +205,7 @@ public class AllenRelation extends StringSymbol {
 
 		allen.addAttribute("key", this._key);
 		allen.addAttribute("relation", this._relation);
+		allen.addAttribute("weight", this._weight +"");
 		this._interval1.toXML(allen);
 		this._interval2.toXML(allen);
 	}
@@ -212,6 +213,7 @@ public class AllenRelation extends StringSymbol {
 	public static AllenRelation fromXML(Element e) {
 		String key = e.attributeValue("key");
 		String relation = e.attributeValue("relation");
+		double weight = Double.parseDouble(e.attributeValue("weight"));
 
 		List list = e.elements("Interval");
 		if (list.size() != 2) {
@@ -221,6 +223,6 @@ public class AllenRelation extends StringSymbol {
 		Interval i1 = Interval.fromXML((Element) list.get(0));
 		Interval i2 = Interval.fromXML((Element) list.get(1));
 
-		return new AllenRelation(relation, i1, i2);
+		return new AllenRelation(relation, i1, i2, weight);
 	}
 }
