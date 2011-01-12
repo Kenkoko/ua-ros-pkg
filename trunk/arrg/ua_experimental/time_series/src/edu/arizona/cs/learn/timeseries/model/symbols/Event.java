@@ -21,18 +21,22 @@ public class Event extends StringSymbol {
 	private List<Interval> _intervals;
 
 	public Event(Interval interval) {
-		_key = interval.name;
+		this(interval.name, interval);
+	}
+
+	public Event(String name, Interval interval) {
+		this(name, interval, 1.0);
+	}
+	
+	public Event(String name, Interval interval, double weight) { 
+		_key = name;
+		_weight = weight;
 
 		_props = new ArrayList<String>();
 		_props.add(interval.name);
 
 		_intervals = new ArrayList<Interval>();
 		_intervals.add(interval);
-	}
-
-	public Event(String name, Interval interval) {
-		this(interval);
-		this._key = name;
 	}
 
 	public boolean equals(Object o) {
@@ -72,15 +76,17 @@ public class Event extends StringSymbol {
 	public void toXML(Element e) {
 		Element evt = e.addElement("symbol")
 			.addAttribute("class", "Event")	
-			.addAttribute("key", _key);
+			.addAttribute("key", _key)
+			.addAttribute("weight", _weight+"");
 
 		_intervals.get(0).toXML(evt);
 	}
 
 	public static Event fromXML(Element e) {
 		String key = e.attributeValue("key");
+		double weight = Double.parseDouble(e.attributeValue("weight"));
 		Interval i = Interval.fromXML(e.element("Interval"));
-
-		return new Event(key, i);
+		
+		return new Event(key, i, weight);
 	}
 }
