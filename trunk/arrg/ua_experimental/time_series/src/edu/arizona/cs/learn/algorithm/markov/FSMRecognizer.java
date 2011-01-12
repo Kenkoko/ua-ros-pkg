@@ -62,14 +62,14 @@ public class FSMRecognizer {
 						|| (turningOff.indexOf(next) != -1))
 					continue;
 				turningOn.add(next);
-				next.setDepth(Math.max(next.getDepth(), node.getDepth() + 1));
+				next.setActiveDepth(Math.max(next.getActiveDepth(), node.getActiveDepth() + 1));
 			}
 
 		}
 
 		for (BPPNode node : turningOff) {
 			active.remove(node);
-			node.setDepth(0);
+			node.setActiveDepth(0);
 		}
 
 		for (BPPNode node : turningOn) {

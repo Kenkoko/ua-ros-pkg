@@ -16,7 +16,8 @@ public class BPPNode {
 	private String _fontColor;
 	
 	private boolean _isFinal;
-	private int _depth;
+	private int _activeDepth;			// Distance from start in active path
+	private int _distanceToFinal;		// Distance to 'nearest' final state
 	
 	private BPPNode _startNode;
 
@@ -28,13 +29,14 @@ public class BPPNode {
 		_fontColor = "black";
 
 		_isFinal = false;
-		_depth = 0;
+		_activeDepth = 0;
+		_distanceToFinal = Integer.MAX_VALUE;
 
 		_props = new TreeSet<String>();
 	}
 
 	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode,
-			boolean isFinalState, int depth) {
+			boolean isFinalState) {
 		
 		this(startNode);
 
@@ -52,12 +54,6 @@ public class BPPNode {
 		_fontColor = "black";
 		
 		_isFinal = isFinalState;
-		_depth = depth;
-	}
-
-	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode,
-			boolean isFinalState) {
-		this(propList, buf, startNode, isFinalState, 0);
 	}
 	
 	public BPPNode(List<String> propList, StringBuffer buf, BPPNode startNode) {
@@ -132,14 +128,16 @@ public class BPPNode {
 	public String toDot() {
 		if ((this._color.equals("white")) || (this._color.equals("#FFFFFF"))) {
 			String node = "\t\"" + this._id + "\" [fontcolor=\""
-					+ this._fontColor + "\",label=\"" + label() + "\"" +
+					+ this._fontColor + "\",label=\"distanceToFinal: " +
+					_distanceToFinal + "\\n" + label() + "\"" +
 					(_isFinal ? ",shape=\"octagon\"" : "") + "];\n";
 			String selfLoop = "\t\"" + this._id + "\" -> \"" + this._id
 					+ "\" [label=\"" + label() + "\"];\n";
 			return node + selfLoop;
 		}
-		return "\t\"" + this._id + "\" [label=\"" + label()
-				+ "\",style=\"filled\",color=\"" + this._color
+		return "\t\"" + this._id + "\" [label=\"distanceToFinal: " +
+				_distanceToFinal + "\\n" + label() +
+				"\",style=\"filled\",color=\"" + this._color
 				+ "\",fontcolor=\"" + this._fontColor + "\"" +
 				(_isFinal ? ",shape=\"octagon\"" : "") + "];\n";
 	}
@@ -176,11 +174,19 @@ public class BPPNode {
 		_isFinal = isfinal;
 	}
 	
-	public int getDepth() {
-		return _depth;
+	public int getActiveDepth() {
+		return _activeDepth;
 	}
 	
-	public void setDepth(int depth) {
-		_depth = depth;
+	public void setActiveDepth(int depth) {
+		_activeDepth = depth;
+	}
+	
+	public int getDistanceToFinal() {
+		return _distanceToFinal;
+	}
+	
+	public void setDistanceToFinal(int dist) {
+		_distanceToFinal = dist;
 	}
 }

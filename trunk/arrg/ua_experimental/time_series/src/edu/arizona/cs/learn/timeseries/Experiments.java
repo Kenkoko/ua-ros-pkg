@@ -1010,14 +1010,19 @@ public class Experiments {
 					
 					// Find max depth among actives
 					int maxActiveDepth = 0;
+					float maxActiveDepthRatio = 0;
 					for (BPPNode n : actives) {
-						maxActiveDepth = Math.max(maxActiveDepth, n.getDepth());
+						maxActiveDepth = Math.max(maxActiveDepth, n.getActiveDepth());
+						maxActiveDepthRatio =
+							Math.max(maxActiveDepthRatio,
+									((float)n.getActiveDepth()) /
+										((float)n.getActiveDepth()+n.getDistanceToFinal()));
 					}
 					
 					results.append(_key.replace(dataset+"-", "") + ","
 							+ j + ","
-							//+ maxDepth + ","
 							+ maxActiveDepth + ","
+							+ maxActiveDepthRatio + ","
 							+ ((isAccepted) ? "true" : "false") + ","
 							+ type + "," 
 							+ r.name() + "," 
@@ -1042,10 +1047,11 @@ public class Experiments {
 
 		try {
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
-			String fileName = depthdir + "recognizer-" + type + "-" + dateFormat.format(new Date()) + ".csv";
+			String fileName = depthdir + "recognizer-" + dataset + "-" +
+				type + "-" + dateFormat.format(new Date()) + ".csv";
 			BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
 	
-			out.write("className,timestep," + /*"maxdepth,"+*/ "maxactivedepth,accepted,type,recognizer,optimized,prune\n");
+			out.write("className,timestep,maxactivedepth,maxactivedepthratio,accepted,type,recognizer,optimized,prune\n");
 			
 			for (Future<Object> results : jobs) {
 				try {

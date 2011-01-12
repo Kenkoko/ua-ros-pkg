@@ -24,9 +24,9 @@ public class AnhsExperiments {
 	private static void runInformationDepthExperiment() {
 		int[] pcts = { 80 };
 		boolean[] prunes = { true };
-		String prefix = "ww3d";
-		String[] activities = { "approach", "jump-over", "jump-on" }; //, "left", "push", "right" };
-		String testActivity = "jump-over";
+		String prefix = "ww3d"; //"wes-pen";
+		String[] activities = { "approach", "jump-over", "jump-on", "push" }; //{"d", "l", "s", "e" }; //{ "left", "right" };
+		String testActivity = "jump-over"; // "d";
 		SequenceType type = SequenceType.allen;
 		Recognizer recognizer = Recognizer.cave;
 		boolean optimizeRecognizers = true;

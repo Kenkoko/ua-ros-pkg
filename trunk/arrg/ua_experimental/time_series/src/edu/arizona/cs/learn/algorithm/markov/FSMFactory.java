@@ -4,8 +4,10 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -75,8 +77,50 @@ public class FSMFactory {
 			}
 
 		}
+		
+		initDistanceToNearestFinal(graph);
 
 		return graph;
+	}
+	
+	/**
+	 * Set the distance to nearest final state for each node in the FSM.
+	 * @param fsm The FSM graph to manipulate.
+	 */
+	public static void initDistanceToNearestFinal(DirectedGraph<BPPNode, Edge> fsm) {
+		
+		// Reset distance to max int for all nodes
+		for (BPPNode n : fsm.getVertices()) {
+			n.setDistanceToFinal(Integer.MAX_VALUE);
+		}
+		
+		Queue<BPPNode> queue = new LinkedList<BPPNode>();
+		
+		// Init queue with states that have no out edges
+		for (BPPNode n : fsm.getVertices()) {
+			if (fsm.getOutEdges(n).size() == 0) {
+				n.setDistanceToFinal(0);
+				queue.add(n);
+			}
+		}
+		
+		// Go backward and increment 1 for each step
+		BPPNode dest;
+		while (!queue.isEmpty()) {
+			dest = queue.poll();
+			for (Edge inEdge : fsm.getInEdges(dest)) {
+				BPPNode source = fsm.getSource(inEdge);
+				if (source.isFinal() && source.getDistanceToFinal() != 0) {
+					source.setDistanceToFinal(0);
+					if (!queue.contains(source))
+						queue.add(source);
+				} else if (source.getDistanceToFinal() > dest.getDistanceToFinal() + 1){
+					source.setDistanceToFinal(dest.getDistanceToFinal() + 1);
+					if (!queue.contains(source))
+						queue.add(source);
+				}
+			}
+		}
 	}
 
 	public static void toDot(DirectedGraph<BPPNode, Edge> graph, String file) {
