@@ -1,9 +1,9 @@
 package edu.arizona.cs.learn.timeseries.clustering.kmeans;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -34,6 +34,19 @@ public class KMeans {
 	public void cluster(final List<Instance> instances, ClusterInit init, int seedAmt) { 
 		_execute = Executors.newFixedThreadPool(Utils.numThreads);
 
+		// Make ground truth clusters....
+		Map<String,Cluster> gtClusters = new HashMap<String,Cluster>();
+		for (Instance instance : instances) { 
+			Cluster c = gtClusters.get(instance.name());
+			if (c == null) { 
+				c = new Cluster(gtClusters.size());
+				gtClusters.put(instance.name(), c);
+			}
+			c.add(instance);
+		}
+		List<Cluster> groundTruth = new ArrayList<Cluster>(gtClusters.values());
+		
+		
 		// assign uniqueIds to each of the instances....
 		for (int i = 0; i < instances.size(); ++i) { 
 			instances.get(i).uniqueId(i+1000);
@@ -99,6 +112,9 @@ public class KMeans {
 			System.out.println("]");
 		}
 		
+		// now we can measure performance
+		System.out.println("Performance: " + performance(groundTruth, clusters));
+		
 		_execute.shutdown();
 	}
 	
@@ -120,6 +136,18 @@ public class KMeans {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public static double performance(List<Cluster> groundTruth, List<Cluster> clusters) { 
+		double total = 0;
+		for (Cluster gt : groundTruth) { 
+			// find the cluster that maximizes the overlap with this one
+			double max = 0;
+			for (Cluster c : clusters) 
+				max = Math.max(gt.sim(c), max);
+			total += max;
+		}
+		return total / (double) groundTruth.size();
 	}
 	
 	public static void main(String[] args) { 
