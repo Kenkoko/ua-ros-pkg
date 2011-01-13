@@ -2,6 +2,8 @@ package edu.arizona.cs.learn.timeseries.clustering.kmeans;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.Normalize;
@@ -80,5 +82,27 @@ public class Cluster {
 			System.out.println("WTF?: " + _signature.signature().size() + " -- " + instance.sequence().size());
 		}
 		return report.score;
+	}
+	
+	/**
+	 * Return an overlap score between this cluster and the
+	 * given cluster.
+	 * @param c
+	 * @return
+	 */
+	public double sim(Cluster c) { 
+		// first find the intersection of these two clusters...
+		// use the unique id for quick testing.
+		Set<Integer> id1 = new TreeSet<Integer>();
+		Set<Integer> id2 = new TreeSet<Integer>();
+		
+		for (Instance i : _instances) 
+			id1.add(i.uniqueId());
+		
+		for (Instance i : c._instances) 
+			id2.add(i.uniqueId());
+
+		id1.retainAll(id2);
+		return ((double) 2.0 * id1.size()) / ((double) (_instances.size() + c._instances.size()));
 	}
 }
