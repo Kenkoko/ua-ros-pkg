@@ -39,7 +39,7 @@ public class KMeans {
 		for (Instance instance : instances) { 
 			Cluster c = gtClusters.get(instance.name());
 			if (c == null) { 
-				c = new Cluster(gtClusters.size());
+				c = new Cluster(instance.name(), gtClusters.size());
 				gtClusters.put(instance.name(), c);
 			}
 			c.add(instance);
@@ -143,9 +143,19 @@ public class KMeans {
 		for (Cluster gt : groundTruth) { 
 			// find the cluster that maximizes the overlap with this one
 			double max = 0;
-			for (Cluster c : clusters) 
-				max = Math.max(gt.sim(c), max);
+			Cluster closest = null;
+			
+			for (Cluster c : clusters) {
+				double d = gt.sim(c);
+				if (d > max) { 
+					max = d;
+					closest = c;
+				}
+			}
+			
+			System.out.println("...Cluster " + gt.name() + " -- closest: " + closest.id() + " -- " + max);
 			total += max;
+			
 		}
 		return total / (double) groundTruth.size();
 	}
@@ -158,26 +168,26 @@ public class KMeans {
 		List<Instance> set3 = Utils.sequences("C", "data/input/ww3d-left.lisp", SequenceType.allen);
 		List<Instance> set4 = Utils.sequences("D", "data/input/ww3d-right.lisp", SequenceType.allen);
 		List<Instance> set5 = Utils.sequences("E", "data/input/ww3d-push.lisp", SequenceType.allen);
-		List<Instance> set6 = Utils.sequences("F", "data/input/ww3d-approach.lisp", SequenceType.allen);
+//		List<Instance> set6 = Utils.sequences("F", "data/input/ww3d-approach.lisp", SequenceType.allen);
 
-		for (int i = 0; i < 10; ++i) { 
-			all.add(set1.get(i));
-			all.add(set2.get(i));
-			all.add(set3.get(i));
-			all.add(set4.get(i));
-			all.add(set5.get(i));
-			all.add(set6.get(i));
-		}
+//		for (int i = 0; i < 10; ++i) { 
+//			all.add(set1.get(i));
+//			all.add(set2.get(i));
+//			all.add(set3.get(i));
+//			all.add(set4.get(i));
+//			all.add(set5.get(i));
+////			all.add(set6.get(i));
+//		}
 		
-//		all.addAll(set1);
-//		all.addAll(set2);
-//		all.addAll(set3);
-//		all.addAll(set4);
-//		all.addAll(set5);
+		all.addAll(set1);
+		all.addAll(set2);
+		all.addAll(set3);
+		all.addAll(set4);
+		all.addAll(set5);
 //		all.addAll(set6);
 
-		KMeans kmeans = new KMeans(6, 20);
-		kmeans.cluster(all, ClusterInit.supervised, 3);
+		KMeans kmeans = new KMeans(5, 20);
+		kmeans.cluster(all, ClusterInit.supervised, 5);
 	}
 
 	

@@ -16,17 +16,27 @@ import edu.arizona.cs.learn.timeseries.model.Signature;
 public class Cluster {
 
 	private int _id;
+	private String _name;
 	private List<Instance> _instances;
 	
 	private Signature _signature;
 	
 	public Cluster(int id) { 
+		this(id+"", id);
+	}
+	
+	public Cluster(String name, int id) { 
 		_id = id;
+		_name = name;
 		clear();
 	}
 	
 	public int id() { 
 		return _id;
+	}
+	
+	public String name() { 
+		return _name;
 	}
 	
 	public void clear() { 
@@ -72,8 +82,8 @@ public class Cluster {
 		
 		Params p = new Params(_signature.signature(), instance.sequence());
 		p.setMin(0,0);
-		p.setBonus(1, 0);
-		p.setPenalty(-1, 0);
+		p.setBonus(1, 1);
+		p.setPenalty(-1, -1);
 		p.normalize = Normalize.signature;
 		p.similarity = Similarity.strings;
 		
