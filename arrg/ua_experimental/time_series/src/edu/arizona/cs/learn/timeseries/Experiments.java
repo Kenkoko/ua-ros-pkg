@@ -1027,7 +1027,8 @@ public class Experiments {
 							+ type + "," 
 							+ r.name() + "," 
 							+ ((optimizeRecognizers) ? "true" : "false") + ","
-							+ ((prune) ? "true" : "false") + "\n");
+							+ ((prune) ? "true" : "false") + ","
+							+ minPct + "\n");
 				}
 
 				System.out.println("Info depth experiment for " + _key + " completed.");
@@ -1047,11 +1048,11 @@ public class Experiments {
 
 		try {
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
-			String fileName = depthdir + "recognizer-" + dataset + "-" +
+			String fileName = depthdir + "infodepth-" + dataset + "-" +
 				type + "-" + dateFormat.format(new Date()) + ".csv";
 			BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
 	
-			out.write("className,timestep,maxactivedepth,maxactivedepthratio,accepted,type,recognizer,optimized,prune\n");
+			out.write("className,timestep,maxactivedepth,maxactivedepthratio,accepted,type,recognizer,optimized,prune,minPct\n");
 			
 			for (Future<Object> results : jobs) {
 				try {
