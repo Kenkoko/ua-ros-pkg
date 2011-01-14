@@ -16,34 +16,46 @@ public class Instance implements Clusterable<Instance> {
 	private int _id;
 	private int _uniqueId;
 	private String _name;
+	
+	private List<Interval> _intervals;
 	private List<Symbol> _sequence;
 
 	public Instance(String name, int id, List<Symbol> seq) {
-		this._name = name;
-		this._id = id;
-		this._sequence = seq;
+		this(name, id, null, seq);
+	}
+
+	public Instance(String name, int id, List<Interval> intervals, List<Symbol> seq) {
+		_name = name;
+		_id = id;
+		
+		_intervals = intervals;
+		_sequence = seq;
 	}
 
 	public String name() {
-		return this._name;
+		return _name;
 	}
 
 	public int id() {
-		return this._id;
-	}
-
-	public void uniqueId(int uniqueId) {
-		this._uniqueId = uniqueId;
+		return _id;
 	}
 
 	public int uniqueId() {
-		return this._uniqueId;
+		return _uniqueId;
+	}
+
+	public void uniqueId(int uniqueId) {
+		_uniqueId = uniqueId;
 	}
 
 	public void shuffle() {
 		Collections.shuffle(this._sequence);
 	}
 
+	public List<Interval> intervals() { 
+		return _intervals;
+	}
+	
 	public List<Symbol> sequence() {
 		return this._sequence;
 	}
@@ -58,8 +70,8 @@ public class Instance implements Clusterable<Instance> {
 			seq.add(obj.copy());
 		}
 
-		Instance copy = new Instance(this._name, this._id, seq);
-		copy.uniqueId(this._uniqueId);
+		Instance copy = new Instance(_name, _id, _intervals, seq);
+		copy.uniqueId(_uniqueId);
 		return copy;
 	}
 

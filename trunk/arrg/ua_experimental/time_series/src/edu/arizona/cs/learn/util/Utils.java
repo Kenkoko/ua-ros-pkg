@@ -119,7 +119,7 @@ public class Utils {
 			List<Interval> list = entry.getValue();
 			List<Symbol> sequence = type.getSequence(list);
 			
-			results.add(new Instance(key, entry.getKey(), sequence));
+			results.add(new Instance(key, entry.getKey(), list, sequence));
 		}
 		return results;
 	}
@@ -170,8 +170,9 @@ public class Utils {
 
 			Map<Integer,List<Interval>> tmpMap = map.get(key);
 			for (Integer id : tmpMap.keySet()) {
-				List<Symbol> sequence = toSequence(props, BPPFactory.compress(tmpMap.get(id), Interval.eff));
-				tmp.add(new Instance(key, id, sequence));
+				List<Interval> intervals = BPPFactory.compress(tmpMap.get(id), Interval.eff);
+				List<Symbol> sequence = toSequence(props, intervals);
+				tmp.add(new Instance(key, id, intervals, sequence));
 			}		
 			
 			resultsMap.put(key, tmp);
