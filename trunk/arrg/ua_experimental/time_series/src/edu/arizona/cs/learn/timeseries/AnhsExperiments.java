@@ -16,17 +16,16 @@ public class AnhsExperiments {
 
 //		runDecompositionExperiment();
 //		runRecognitionExperiment();
-		
 		runInformationDepthExperiment();
 	}
 	
 	
 	private static void runInformationDepthExperiment() {
-		int[] pcts = { 80 };
+		int[] pcts = { 80 }; //{ 95 };
 		boolean[] prunes = { true };
-		String prefix = "ww3d"; //"wes-pen";
-		String[] activities = { "approach", "jump-over", "jump-on", "push" }; //{"d", "l", "s", "e" }; //{ "left", "right" };
-		String testActivity = "jump-over"; // "d";
+		String prefix = "ww3d"; // "wes-pen";
+		String[] activities = { "approach", "jump-over", "jump-on", "push" };  //{ "left", "right" }; //{"d", "l", "a", "h" };
+		String testActivity = "jump-over"; //"d"; 
 		SequenceType type = SequenceType.allen;
 		Recognizer recognizer = Recognizer.cave;
 		boolean optimizeRecognizers = true;
@@ -81,7 +80,7 @@ public class AnhsExperiments {
 			int experiments = 5;
 			String prefix = "wes-pen";
 			int[] folds = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-			int[] pcts = { 80 };
+			int[] pcts = { 95 };
 			boolean[] prunes = { true };
 			boolean[] optimizeRecognizers = { true };
 
