@@ -36,14 +36,14 @@
 
 (defun make-learning-point (domain verb-word training-size num-trials scoring-function)
   (let* ((training (make-training domain verb-word))
-         (verb (find-verb verb-word))
-         (training-sets (sample-n-perms training training-size num-trials))
-         (actual-num-trials (length training-sets))) ;; because there may no be num-trials possible permutations
+         (verb (find-verb verb-word)))
+         ;(training-sets (sample-n-perms training training-size num-trials))
+         ;(actual-num-trials (length training-sets))) ;; because there may no be num-trials possible permutations
     (format t "Begin Evaluation for Training Size ~d...~%"  training-size) 
-    (loop for j from 1 upto actual-num-trials
-       for training-set = (nth (- j 1) training-sets)
+    (loop for j from 1 upto num-trials ;actual-num-trials
+       for training-set = (sample-random-subset training training-size)  ;(nth (- j 1) training-sets)
        do (clear-verb-meaning verb) ;; Reset the signature, FSM 
-         (format t "Begin Trial ~d of ~d with Training Size ~d~%" j actual-num-trials training-size)
+         (format t "Begin Trial ~d of ~d with Training Size ~d~%" j num-trials training-size)
          ;(format t "~a~%" training-set)
          (loop for instance in training-set
             for student-result = (run-test verb (first instance) scoring-function)
@@ -63,29 +63,24 @@
      for avg-scores = nil
      for avg-lengths = nil
      do (format t "~%>>>>>>>>>>>>>~%Results with Training Size ~d~%" training-size)
-       (loop with times = nil
-          with scores = nil
-          with lengths = nil
-          for result-set in results
-          do (loop for result in result-set
-                for n = (length result-set)
-                ;do (print-test-result result)
-                if (eq (accepted-of result) :accepted) sum 1 into correct
-                sum (planning-time-of result) into time-sum
-                sum (execution-length-of result) into length-sum
-                finally (push (/ time-sum n) times)
-                  (push (/ correct n) scores)
-                  (push (/ length-sum n) lengths))
-            (format t "  Average Planning Time: ~,2f seconds~%" (mean times))
-            (format t "  Percent Correct: ~,2f~%" (mean scores))
-            (format t "  Average Execution Length: ~,2f~%" (mean lengths))
-            (push (mean times) avg-times)
-            (push (mean scores) avg-scores)
-            (push (mean lengths) avg-lengths))
-       (format t "Average Planning Time: ~,2f seconds (stddev ~,2f)~%" (mean avg-times)
-               (standard-deviation avg-times))
+       (loop for result-set in results
+          for n = (length result-set)
+          for percent-correct = (/ (count-if (lambda (res) (eq (accepted-of res) :accepted)) result-set) 
+                                   n)
+          for avg-planning-time = (/ (loop for result in result-set summing (planning-time-of result))
+                                     n)
+          for avg-execution-length = (/ (loop for result in result-set summing (execution-length-of result)) 
+                                        n)
+          do (format t "  Percent Correct: ~,2f~%" percent-correct)
+            (format t "  Average Planning Time: ~,2f seconds~%" avg-planning-time)
+            (format t "  Average Execution Length: ~,2f~%" avg-execution-length)
+            (push avg-planning-time avg-times)
+            (push percent-correct avg-scores)
+            (push avg-execution-length  avg-lengths))
        (format t "Average Percent Correct: ~,2f (stddev ~,2f)~%" (mean avg-scores)
                (standard-deviation avg-scores))
+       (format t "Average Planning Time: ~,2f seconds (stddev ~,2f)~%" (mean avg-times)
+               (standard-deviation avg-times))
        (format t "Average Execution Length: ~,2f (stddev ~,2f)~%" (mean avg-lengths)
                (standard-deviation avg-lengths))))
                          
@@ -108,6 +103,7 @@
      
 (defun run-test (verb object-states scoring-function)
   "Returns a list (planning-success planning-time plan-length trace accept)"
+  (format t "Testing Student...~%")
   (let* ((start-state (initialize object-states))
          (perform-response (call-service "verb_learning/perform_verb" 'verb_learning-srv:PerformVerb
                                          :verb (make-message "verb_learning/VerbInstance"
@@ -115,7 +111,7 @@
                                                             :arguments (ros-list (argument-strings verb))
                                                             :bindings (ros-list (argument-names object-states)))
                                          :start_state start-state
-                                         :execution_limit 50))
+                                         :execution_limit 20))
          (trace (verb_learning-srv:trace-val perform-response))
          (result (make-instance 'test-result
                                 :execution-success (verb_learning-srv:execution_success-val perform-response)
@@ -138,7 +134,7 @@
   (format t ">>> Accept student's performance?~%")
   (read-accepted))
 
-(defun simple-gz-go-scorer (result)
+#+ignore(defun simple-gz-go-scorer (result)
   (let* ((trace (verb_learning-srv:trace-val result))
          (last-state (aref trace (- (length trace) 1))))
     (format t "=========================~%SCORING~%")
@@ -150,6 +146,55 @@
        finally (return (if (eq contact-count 2)
                            :accepted
                            :neither)))))
+
+(defun gz-go-scorer (result)
+  (loop with trace = (verb_learning-srv:trace-val result)
+     with step = 'approaching
+     for state across trace
+     for in-contact? = (contains-relation state "Contact" '("robot_description" "goal"))
+     if (and in-contact? (eq step 'approaching))
+     do (setf step 'contact)
+     else if (and (not in-contact?) (eq step 'contact))
+     do (return-from gz-go-scorer :rejected)
+     finally (return (if (eq step 'contact)
+                         :accepted
+                         :neither))))
+
+(defun new-gz-deliver-scorer (result)
+  (loop with trace = (verb_learning-srv:trace-val result)
+     with step = 'approaching
+     for state across trace
+     for robot-at-item? = (contains-relation state "Contact" '("robot_description" "item"))
+     for robot-has-item? = (contains-relation state "Carrying" '("robot_description" "item"))
+     for robot-at-goal? = (contains-relation state "Contact" '("robot_description" "destination"))
+     do (cond ((eq step 'approaching)
+               (cond (robot-has-item? 
+                      (setf step 'carrying))
+                     (robot-at-item?
+                      (setf step 'at-item))))
+
+              ((eq step 'at-item)
+               (cond (robot-has-item?
+                      (setf step 'carrying))
+                     ((not robot-at-item?)
+                      (return-from new-gz-deliver-scorer :rejected)))) ;; left the item without picking it up 
+                                       
+              ((eq step 'carrying)
+               (if (not robot-has-item?) 
+                   (if robot-at-goal?
+                       (setf step 'delivered)
+                       (return-from new-gz-deliver-scorer :rejected)))) ;; dropped the item away from the goal
+               
+              ((eq step 'delivered)
+               (if (not robot-at-goal?)
+                   (return-from new-gz-deliver-scorer :rejected))) ;; left the goal after delivery
+              )
+     finally (progn
+               (format t ">>>>> STEP: ~a~%" step)
+               (if (eq step 'delivered)
+                 (return :accepted)
+                 (return :neither))))
+)
 
 ;; TODO: Is there an issue with the last deliver test?
 ;; TODO: What if the robot starts at the object - will our visit-counts work?
@@ -200,6 +245,12 @@
                        (eq holding-count 0))
                    (return-from gz-deliver-scorer :neither)))
     :accepted))
+
+(defun nb-scorer (scorer)
+  (lambda (result)
+    (if (eq (funcall scorer result) :accepted)
+        :accepted
+        :rejected)))
 
 (defun contains-relation (state rel-name names)
   (loop for relation across (oomdp_msgs-msg:relations-val state)
