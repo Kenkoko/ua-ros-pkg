@@ -7,7 +7,7 @@
 	</classpathentry>
 	<classpathentry kind="src" path="msg_gen/java"/>
 	<classpathentry kind="src" path="srv_gen/java"/>
-	<classpathentry kind="src" path="rosjava"/>
+	<classpathentry kind="src" path="client_rosjava"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/time_series"/>
 	<classpathentry kind="lib" path="/time_series/lib/collections-generic-4.01.jar"/>
@@ -35,6 +35,7 @@
 	<classpathentry kind="lib" path="/time_series/lib/time-series.jar"/>
 	<classpathentry kind="lib" path="lib/guava-r07.jar"/>
 	<classpathentry kind="lib" path="lib/snakeyaml-1.7.jar"/>
+	<classpathentry kind="lib" path="lib/weka.jar" sourcepath="lib/weka-src.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/wubble_world_2d">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="wubble_world_2d/natives/linux"/>

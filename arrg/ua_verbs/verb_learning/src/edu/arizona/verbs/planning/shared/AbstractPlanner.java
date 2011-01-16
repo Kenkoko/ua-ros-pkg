@@ -9,18 +9,18 @@ import edu.arizona.verbs.planning.data.SimulationResult;
 import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.arizona.verbs.verb.Verb;
-import edu.arizona.verbs.verb.VerbState;
+import edu.arizona.verbs.verb.vfsm.FSMVerb;
+import edu.arizona.verbs.verb.vfsm.VerbState;
 
 public abstract class AbstractPlanner implements Planner {
 
-	protected Verb verb_;
+	protected FSMVerb verb_;
 	protected Environment environment_;
 	protected List<Action> actions_;
 	
 	protected Map<String, PlanningState> knownStates_ = new HashMap<String, PlanningState>();
 	
-	public AbstractPlanner(Verb verb, Environment environment) {
+	public AbstractPlanner(FSMVerb verb, Environment environment) {
 		verb_ = verb;
 		environment_ = environment;
 
@@ -38,7 +38,7 @@ public abstract class AbstractPlanner implements Planner {
 	}
 
 	@Override
-	public Verb getVerb() {
+	public FSMVerb getVerb() {
 		return verb_;
 	}
 

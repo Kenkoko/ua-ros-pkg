@@ -18,8 +18,8 @@ import edu.arizona.verbs.planning.state.LRTDPState;
 import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.arizona.verbs.verb.Verb;
-import edu.arizona.verbs.verb.VerbState;
+import edu.arizona.verbs.verb.vfsm.FSMVerb;
+import edu.arizona.verbs.verb.vfsm.VerbState;
 
 /*
  * An implementation of LRTDP (Labeled Real-Time Dynamic Programming) from (Bonet and Geffner, 2003)
@@ -27,7 +27,7 @@ import edu.arizona.verbs.verb.VerbState;
  */
 public class LRTDP extends AbstractPlanner {
 	
-	public LRTDP(Verb verb, Environment environment) {
+	public LRTDP(FSMVerb verb, Environment environment) {
 		super(verb, environment);
 	}
 

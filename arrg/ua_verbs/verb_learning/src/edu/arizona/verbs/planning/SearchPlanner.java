@@ -16,8 +16,8 @@ import edu.arizona.verbs.planning.shared.Policy.PolicyType;
 import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.arizona.verbs.verb.Verb;
-import edu.arizona.verbs.verb.VerbState;
+import edu.arizona.verbs.verb.vfsm.FSMVerb;
+import edu.arizona.verbs.verb.vfsm.VerbState;
 
 /*
  * An implementation of the A* search algorithm for planning with VFSMs
@@ -29,7 +29,7 @@ public class SearchPlanner extends AbstractPlanner {
 	private SearchNode root_;
 	private HashMap<String, SearchNode> knownNodes_ = new HashMap<String, SearchNode>();
 	
-	public SearchPlanner(Verb verb, Environment environment) {
+	public SearchPlanner(FSMVerb verb, Environment environment) {
 		super(verb, environment);
 		
 		root_ = null;
@@ -52,7 +52,7 @@ public class SearchPlanner extends AbstractPlanner {
 		HashMap<SearchNode, SearchNode> cameFrom = new HashMap<SearchNode, SearchNode>();
 
 		int visited = 0;
-		int maxVisited = 10000;
+		int maxVisited = 30000;
 		
 		while (!open.isEmpty() && visited < maxVisited) { // Hack but needs to stop somehow if no solution 
 			SearchNode x = open.remove();

@@ -29,8 +29,10 @@ import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.arizona.verbs.verb.AtomicVerb;
 import edu.arizona.verbs.verb.Verb;
+import edu.arizona.verbs.verb.bayes.MaximumLikelihoodVerb;
+import edu.arizona.verbs.verb.vfsm.AtomicVerb;
+import edu.arizona.verbs.verb.vfsm.FSMVerb;
 
 public class Interface {
 	private static Logger logger = Logger.getLogger(Interface.class);
@@ -40,6 +42,9 @@ public class Interface {
 	
 	private static Environment currentEnvironment = null;
 	public static Environment getCurrentEnvironment() { return currentEnvironment; }
+	
+	public enum VerbType { FSM, NaiveBayes };
+	public static VerbType currentVerbType = VerbType.FSM;
 	
 	// Maps: Binding -> Argument
 	public static Map<String, String> extractReverseNameMap(VerbInstance vi) {
@@ -84,7 +89,15 @@ public class Interface {
 					verb = verbs.get(verbName); 
 				} else {
 					logger.info("VERB NOT FOUND: " + request.verb + ", creating it");
-					verb = new AtomicVerb(verbName, request.verb.arguments);
+					switch (currentVerbType) {
+					case FSM:
+						verb = new AtomicVerb(verbName, request.verb.arguments);
+						break;
+					case NaiveBayes:
+						verb = new MaximumLikelihoodVerb(verbName, request.verb.arguments);
+						break;
+					}
+					
 					verbs.put(verbName, verb);
 				}
 
@@ -153,10 +166,20 @@ public class Interface {
 			if (verbs.containsKey(request.verb.verb)) {
 				Verb verb = verbs.get(request.verb.verb);
 				
-				if (verb.hasPositiveFSM()) {
+				if (verb.isReady()) {
 					Map<String,String> argumentMap = extractNameMap(request.verb);
-					Verb remapped = verb.remap(argumentMap);
-					return remapped.perform(request.start_state, request.execution_limit);
+					
+					switch (currentVerbType) {
+					case FSM:
+						FSMVerb remapped = ((FSMVerb) verb).remap(argumentMap);
+						return remapped.perform(request.start_state, request.execution_limit);
+					case NaiveBayes:
+						MaximumLikelihoodVerb remapped2 = ((MaximumLikelihoodVerb) verb).remap(argumentMap);
+						return remapped2.perform(request.start_state, request.execution_limit);
+					default:
+						return new PerformVerb.Response();
+					}
+					
 				} else {
 					return new PerformVerb.Response();
 				}
@@ -239,10 +262,14 @@ public class Interface {
 	 * @throws RosException
 	 */
 	public static void main(String[] args) throws RosException {
-		if (args.length == 0) {
+		if (args.length < 2) {
 			System.out.println("Please choose an environment:");
 			for (Simulators s : Simulators.values()) {
 				System.out.println("\t" + s.toString());
+			}
+			System.out.println("and choose a verb representation:");
+			for (VerbType v : VerbType.values()) {
+				System.out.println("\t" + v.toString());
 			}
 		}
 		
@@ -251,6 +278,10 @@ public class Interface {
 		NodeHandle nh = ros.createNodeHandle();
 
 		currentEnvironment = Simulators.valueOf(args[0]).create();
+		
+		if (args[1].equals("nb")) {
+			currentVerbType = VerbType.NaiveBayes;
+		}
 		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
 		nh.advertiseService("verb_learning/forget_verb", new ForgetVerb(), forgetVerb);
