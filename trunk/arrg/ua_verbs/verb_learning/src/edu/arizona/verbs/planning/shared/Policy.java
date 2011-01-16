@@ -6,7 +6,7 @@ import java.util.List;
 import edu.arizona.verbs.planning.search.SearchNode;
 import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.arizona.verbs.verb.VerbState;
+import edu.arizona.verbs.verb.vfsm.VerbState;
 
 public class Policy {
 	public enum PolicyType { Standard, Terminate, Replan };

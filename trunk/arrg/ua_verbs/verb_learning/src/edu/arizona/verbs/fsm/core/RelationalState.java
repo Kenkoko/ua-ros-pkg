@@ -18,7 +18,7 @@ public class RelationalState {
 		}
 	}
 
-	public Set<Relation> getRelations() {
+	public TreeSet<Relation> getRelations() {
 		return relations_;
 	}
 	

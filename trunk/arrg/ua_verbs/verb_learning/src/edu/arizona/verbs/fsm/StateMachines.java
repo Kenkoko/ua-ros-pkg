@@ -398,6 +398,10 @@ public class StateMachines {
 		FSMNode start = new FSMNode(StateType.START);
 		nfa.addVertex(start);
 		
+		if (corePaths.isEmpty()) { // If there are no core paths, the FSM is just a single start state, so we're done
+			return nfa;
+		}
+		
 		for (CorePath path : corePaths) {
 			Vector<RelationalState> states = path.getPath();
 			
@@ -421,6 +425,7 @@ public class StateMachines {
 		// Now we convert to DFA (structurally, at least)...
 		DirectedGraph<FSMNode, FSMTransition> dfa = convertToDFA(nfa);
 		// And minimize
+		
 		minimizeSlow(dfa);
 		
 		return dfa;

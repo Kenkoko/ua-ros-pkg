@@ -19,8 +19,8 @@ import edu.arizona.verbs.planning.shared.Policy.PolicyType;
 import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.arizona.verbs.verb.Verb;
-import edu.arizona.verbs.verb.VerbState;
+import edu.arizona.verbs.verb.vfsm.FSMVerb;
+import edu.arizona.verbs.verb.vfsm.VerbState;
 
 public class UCT extends AbstractPlanner {
 	
@@ -35,7 +35,7 @@ public class UCT extends AbstractPlanner {
 	private int maxDepth_;
 	private Random r_ = new Random();
 	
-	public UCT(Verb verb, Environment environment, int maxDepth) {
+	public UCT(FSMVerb verb, Environment environment, int maxDepth) {
 		super(verb, environment);
 		setMaxDepth(maxDepth);
 	}

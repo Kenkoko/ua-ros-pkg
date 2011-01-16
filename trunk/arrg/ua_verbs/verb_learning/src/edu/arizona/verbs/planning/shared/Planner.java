@@ -6,14 +6,14 @@ import edu.arizona.verbs.planning.data.PlanningReport;
 import edu.arizona.verbs.planning.data.SimulationResult;
 import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.arizona.verbs.verb.Verb;
-import edu.arizona.verbs.verb.VerbState;
+import edu.arizona.verbs.verb.vfsm.FSMVerb;
+import edu.arizona.verbs.verb.vfsm.VerbState;
 
 public interface Planner {
 	
 	public List<Action> getActions();
 	
-	public Verb getVerb();
+	public FSMVerb getVerb();
 	
 	public PlanningReport runAlgorithm(OOMDPState startState, VerbState verbState);
 

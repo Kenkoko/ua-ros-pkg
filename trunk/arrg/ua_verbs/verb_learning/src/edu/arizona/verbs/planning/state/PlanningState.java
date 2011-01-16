@@ -7,7 +7,7 @@ import java.util.TreeMap;
 import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.planning.shared.Planner;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.arizona.verbs.verb.VerbState;
+import edu.arizona.verbs.verb.vfsm.VerbState;
 
 public class PlanningState {
 
