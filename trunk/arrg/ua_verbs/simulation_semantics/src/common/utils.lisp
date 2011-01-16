@@ -123,7 +123,7 @@ copy is returned by default."
 ;;==========================================================
 ;; Permutations
 
-(defun perms (seq size &key (used nil))
+#+ignore(defun perms (seq size &key (used nil))
   (if (eq size 1)
       (loop for x in seq unless (member x used) collect (list x))
       (loop for x in seq 
@@ -132,14 +132,13 @@ copy is returned by default."
                    unless (member x used)
                    collect (append (list x) y)))))
 
-(defun sample-n-perms (seq perm-size n)
+#+ignore(defun sample-n-perms (seq perm-size n)
   (loop with perms = (perms seq perm-size) 
      for i below (min n (length perms))
      for perm = (nth (random (length perms)) perms)
      do (setf perms (remove perm perms))
      collect perm))
 
-;; Probably best to use the newer forms above
 (defun sample-random-subset (seq size)
   (loop with remaining = seq
      for i below size

@@ -1,1 +1,1 @@
-/home/dhewlett/ros/ua-ros-pkg/ua_experimental/simulation_semantics/src/simulation_semantics.asd
+../src/simulation_semantics.asd
