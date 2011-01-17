@@ -60,10 +60,15 @@ public class FSMFactory {
 						state.append(timeLine[j][i]);
 					}
 				}
-
-				if (props.size() == 0) {
-					continue;
-				}
+				
+				// Commented out by wkerr on 1/15/2011
+				// Turns out that we need these "break" nodes
+				// in order to allow the machine to wait until
+				// it needs to start moving forward again.  These
+				// essentially are gaps in the structure of the activity.
+//				if (props.size() == 0) {
+//					continue;
+//				}
 
 				BPPNode node = new BPPNode(propList, state, startNode);
 				Edge e = (Edge) graph.findEdge(lastNode, node);

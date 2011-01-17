@@ -19,35 +19,35 @@ public class Visualize {
 
 	
 	public static void main(String[] args) { 
-		List<Interval> set1 = new ArrayList<Interval>();
-		set1.add(Interval.make("A", 0, 8));
-		set1.add(Interval.make("B", 4, 10));
-		set1.add(Interval.make("C", 8, 15));
-		set1.add(Interval.make("D", 2, 8));
-
-		Paint.render(set1, "/Users/wkerr/Desktop/example1.png");
-		System.out.println(SequenceType.allen.getSequence(set1));
-		
-		List<Interval> set2 = new ArrayList<Interval>();
-		set2.add(Interval.make("C", 1, 3));
-		set2.add(Interval.make("A", 3, 6));
-		set2.add(Interval.make("B", 4, 9));
-		set2.add(Interval.make("C", 6, 10));
-		System.out.println(SequenceType.allen.getSequence(set2));
-		set2.add(Interval.make("D", 0, 0));
-		Paint.render(set2, "/Users/wkerr/Desktop/example2.png");
-
-		List<Interval> set3 = new ArrayList<Interval>();
-		set3.add(Interval.make("A", 1, 5));
-		set3.add(Interval.make("B", 4, 6));
-		set3.add(Interval.make("C", 5, 7));
-		System.out.println(SequenceType.allen.getSequence(set3));
-		set3.add(Interval.make("D", 0, 0));
-		Paint.render(set3, "/Users/wkerr/Desktop/example3.png");
+//		List<Interval> set1 = new ArrayList<Interval>();
+//		set1.add(Interval.make("A", 0, 8));
+//		set1.add(Interval.make("B", 4, 10));
+//		set1.add(Interval.make("C", 8, 15));
+//		set1.add(Interval.make("D", 2, 8));
+//
+//		Paint.render(set1, "/Users/wkerr/Desktop/example1.png");
+//		System.out.println(SequenceType.allen.getSequence(set1));
+//		
+//		List<Interval> set2 = new ArrayList<Interval>();
+//		set2.add(Interval.make("C", 1, 3));
+//		set2.add(Interval.make("A", 3, 6));
+//		set2.add(Interval.make("B", 4, 9));
+//		set2.add(Interval.make("C", 6, 10));
+//		System.out.println(SequenceType.allen.getSequence(set2));
+//		set2.add(Interval.make("D", 0, 0));
+//		Paint.render(set2, "/Users/wkerr/Desktop/example2.png");
+//
+//		List<Interval> set3 = new ArrayList<Interval>();
+//		set3.add(Interval.make("A", 1, 5));
+//		set3.add(Interval.make("B", 4, 6));
+//		set3.add(Interval.make("C", 5, 7));
+//		System.out.println(SequenceType.allen.getSequence(set3));
+//		set3.add(Interval.make("D", 0, 0));
+//		Paint.render(set3, "/Users/wkerr/Desktop/example3.png");
 		
 		
 //		Paint.sample2();
-//		niallData();
+		niallData();
 	}
 	
 	public static void niallData() { 

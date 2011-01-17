@@ -45,15 +45,54 @@ public class FSMRecognizer {
 		return update(active, activeProps, true);
 	}
 	
+	/**
+	 * Update this recognizer with the new active state.  If this recognizer ends up in an 
+	 * acceptance state, then return true, otherwise return false.
+	 * @param active
+	 * @param activeProps
+	 * @param autoReset
+	 * @return
+	 */
 	public boolean update(List<BPPNode> active, Set<String> activeProps, boolean autoReset) {
+		return update(active, activeProps, autoReset, false);
+	}
+	
+	/**
+	 * Update this recognizer with the new active state.  If this recognizer ends up in an 
+	 * acceptance state, then return true, otherwise return false.  If printDebug is true
+	 * then lots and lots of debugging information is printed.
+	 * @param active
+	 * @param activeProps
+	 * @param autoReset
+	 * @param printDebug
+	 * @return
+	 */
+	public boolean update(List<BPPNode> active, Set<String> activeProps, boolean autoReset, boolean printDebug) {
 		List<BPPNode> turningOn = new ArrayList<BPPNode>();
 		List<BPPNode> turningOff = new ArrayList<BPPNode>();
-
+		
+		if (printDebug) {
+			System.out.println("  Update....");
+			System.out.println("    Active Props: " + activeProps);
+			System.out.println("    Active Nodes: " );
+		}
+		
 		for (BPPNode node : active) {
 			boolean currentState = node.active(activeProps);
 
+			if (printDebug) { 
+				System.out.println("     Node: " + node.id() + " -- " + node.getProps());
+//				System.out.println("       Final? " + node.isFinal() + " -- " + _graph.getOutEdges(node).size());
+//				System.out.println("       Active? " + currentState);
+			}
+			
 			if (!currentState) {
-				turningOff.add(node);
+//				turningOff.add(node);
+				
+				if (printDebug) { 
+//					System.out.println("     Node: " + node.id() + " -- " + node.getProps());
+					System.out.println("       Turning Off!");
+				}
 			}
 
 			for (Edge e : this._graph.getOutEdges(node)) {
@@ -63,6 +102,10 @@ public class FSMRecognizer {
 					continue;
 				turningOn.add(next);
 				next.setActiveDepth(Math.max(next.getActiveDepth(), node.getActiveDepth() + 1));
+				
+				if (printDebug) { 
+					System.out.println("       Transitioning to node " + next.id());
+				}
 			}
 
 		}
@@ -80,7 +123,7 @@ public class FSMRecognizer {
 		}
 
 		for (BPPNode node : active) {
-			if (!node.isFinal() && this._graph.getOutEdges(node).size() != 0) {
+			if (!node.isFinal() && _graph.getOutEdges(node).size() != 0) {
 				continue;
 			}
 			if (autoReset) {
@@ -93,7 +136,25 @@ public class FSMRecognizer {
 		return false;
 	}
 	
+	public boolean test(List<Interval> intervals) { 
+		int start = Integer.MAX_VALUE;
+		int end = 0;
+		for (Interval interval : intervals) {
+			start = Math.min(start, interval.start);
+			end = Math.max(end, interval.end);
+		}
+		
+		return test(intervals, start, end);
+	}
 	
+	/**
+	 * Returns true if this recognizer accepts the given episode represented
+	 * as intervals.  Returns false otherwise.
+	 * @param intervals
+	 * @param start
+	 * @param end
+	 * @return
+	 */
 	public boolean test(List<Interval> intervals, int start, int end) {
 		List<BPPNode> active = new ArrayList<BPPNode>();
 		active.add(_startNode);
@@ -112,6 +173,87 @@ public class FSMRecognizer {
 
 		return false;
 	}
+	
+	/**
+	 * Determine the depth, or how far along this recognizer is
+	 * at every time step.
+	 * @param intervals
+	 * @param start
+	 * @param end
+	 * @param maxDepth -- filled in, must not be null
+	 * @param maxDepthRatio -- filled in, must not be null
+	 * @return whether or not the recognizer accepts
+	 */
+	public boolean test(List<Interval> intervals, int start, int end, 
+			List<Double> maxDepth, List<Double> maxDepthRatio) { 
+		reset();
+		
+		boolean accepted = false;
+		List<BPPNode> actives = new ArrayList<BPPNode>();
+		for (int j = start; j < end; j++) {
+			Set<String> props = new HashSet<String>();
+			for (Interval interval : intervals) {
+				if (interval.on(j)) {
+					props.add(interval.name);
+				}
+			}
+			
+			// Update each time step
+			boolean accept = update(props, false);
+			actives = getActive();
+			
+			// Find max depth among actives
+			double maxActiveDepth = 0;
+			double maxActiveDepthRatio = 0;
+			for (BPPNode n : actives) {
+				maxActiveDepth = Math.max(maxActiveDepth, n.getActiveDepth());
+
+				double depth = n.getActiveDepth();
+				double totalDepth = n.getActiveDepth() + n.getDistanceToFinal();
+				maxActiveDepthRatio = Math.max(maxActiveDepthRatio, depth / totalDepth);
+			}
+			
+			maxDepth.add(maxActiveDepth);
+			maxDepthRatio.add(maxActiveDepthRatio);
+			accepted = accept || accepted;
+		}
+		
+		return accepted;
+	}
+	
+	/**
+	 * Lots of debugging information is printed as the given episode is
+	 * traversed.
+	 * @param intervals
+	 * @return
+	 */
+	public boolean trace(List<Interval> intervals) {
+		reset();
+		
+		int start = Integer.MAX_VALUE;
+		int end = 0;
+		for (Interval interval : intervals) {
+			start = Math.min(start, interval.start);
+			end = Math.max(end, interval.end);
+		}
+		
+		boolean accept = false;
+		for (int i = start; i < end; i++) {
+			System.out.println(" TimeStep: " + i);
+			Set<String> props = new HashSet<String>();
+			for (Interval interval : intervals) {
+				if (interval.on(i)) 
+					props.add(interval.name);
+			}
+	
+			boolean tmp = update(_active, props, false, true);
+			if (tmp) { 
+				System.out.println(".....Accepted");
+			}
+			accept = tmp || accept;
+		}
+		return accept;
+	}	
 	
 	///////////////////////////////////////////////
 	// Added by Daniel

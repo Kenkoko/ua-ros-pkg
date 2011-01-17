@@ -118,8 +118,8 @@ public class BitPatternGeneration {
 			List<Interval> bpp = BPPFactory.compress(intervals, Interval.eff);
 
 			// make two renderings... bpp and original.
-			Paint.render(intervals, "data/images/original/" + name + "-" + i + ".png");
-			Paint.render(bpp, "data/images/bpp/" + name + "-" + i + ".png");
+//			Paint.render(intervals, "data/images/original/" + name + "-" + i + ".png");
+//			Paint.render(bpp, "data/images/bpp/" + name + "-" + i + ".png");
 			
 			bppInstances.add(bpp);
 		}

@@ -4,7 +4,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.log4j.Logger;
+
 public class BPPNode {
+	private static Logger logger = Logger.getLogger(BPPNode.class);
 	public static int _counter = 0;
 	private int _id;
 	
@@ -48,6 +51,10 @@ public class BPPNode {
 			if (_values.charAt(i) == '1') {
 				_props.add(_propList.get(i));
 			}
+		}
+		
+		if (_props.size() == 0) {
+			logger.debug("Created empty node: " + _id);
 		}
 
 		_color = "white";

@@ -88,4 +88,8 @@ public class LearningCurve {
 		
 		out.close();
 	}
+	
+	public void buildRecognitionCurve(String filePrefix, Map<String,List<Instance>> data) throws Exception { 
+		
+	}
 }

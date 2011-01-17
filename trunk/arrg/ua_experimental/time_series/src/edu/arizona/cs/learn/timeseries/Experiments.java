@@ -306,19 +306,19 @@ public class Experiments {
 				recognizers.add(mr);
 			}
 
-			List<Future<RecognizeResults>> future = new ArrayList<Future<RecognizeResults>>();
+			List<Future<RecognizeCallable>> future = new ArrayList<Future<RecognizeCallable>>();
 			for (String className : testMap.keySet()) {
 				for (Integer id : testMap.get(className)) {
 					List<Interval> testItem = data.get(className).get(id);
-					RecognizeCallable rc = new RecognizeCallable(recognizers, className, id, testItem);
+					RecognizeCallable rc = new RecognizeCallable(recognizers, id, className, testItem);
 					future.add(_execute.submit(rc));
 				}
 
 				testSize += testMap.get(className).size();
 			}
 
-			for (Future<RecognizeResults> results : future) {
-				RecognizeResults rr = null;
+			for (Future<RecognizeCallable> results : future) {
+				RecognizeCallable rr = null;
 				try {
 					rr = results.get();
 				} catch (Exception e) {
@@ -328,16 +328,16 @@ public class Experiments {
 				for (String className : classes) {
 					RecognizerStatistics rs = map.get(className);
 
-					if (className.equals(rr.testClass)) {
-						if (rr.recognized.get(className)) { 
-							rs.truePositives.add(Integer.valueOf(rr.testId));
+					if (className.equals(rr.name())) {
+						if (rr.recognized(className)) { 
+							rs.truePositives.add(Integer.valueOf(rr.id()));
 						} else {
-							rs.falseNegative.add(Integer.valueOf(rr.testId));
+							rs.falseNegative.add(Integer.valueOf(rr.id()));
 						}
-					} else if (rr.recognized.get(className)) { 
-						rs.falsePositive(rr.testClass, rr.testId);
+					} else if (rr.recognized(className)) { 
+						rs.falsePositive(rr.name(), rr.id());
 					} else { 
-						rs.trueNegative(rr.testClass, rr.testId);
+						rs.trueNegative(rr.name(), rr.id());
 					}
 				}
 			}

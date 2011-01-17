@@ -19,36 +19,31 @@ public abstract class ClassificationTest {
 
 	public BatchStatistics runBatch(int batch, 
 			Classifier c, List<String> classNames, 
-			List<Instance> train, List<Instance> test) { 
+			Map<String,List<Instance>> train, Map<String,List<Instance>> test) { 
 		BatchStatistics fs = new BatchStatistics(c.getName(), classNames);
 
 		// Split them into groups by class name.
 		Map<String,SummaryStatistics> sizeMap = new HashMap<String,SummaryStatistics>();
-		Map<String,List<Instance>> instances = new HashMap<String,List<Instance>>();
-		for (Instance instance : train) {
-			List<Instance> list = instances.get(instance.name());
-			if (list == null) {
-				list = new ArrayList<Instance>();
-				instances.put(instance.name(), list);
-				
-				SummaryStatistics size = new SummaryStatistics();
-				sizeMap.put(instance.name(), size);
-			}
-			list.add(instance);
-			sizeMap.get(instance.name()).addValue(instance.sequence().size());
+		for (String key : train.keySet()) { 
+			SummaryStatistics size = new SummaryStatistics();
+			sizeMap.put(key, size);
+			
+			for (Instance instance : train.get(key)) 
+				size.addValue(instance.sequence().size());
 		}
 
-		Map<String,Long> timing = c.train(batch, instances);
+		Map<String,Long> timing = c.train(batch, train);
 
 		// Add the training data to the batch statistics...
 		for (String key : timing.keySet()) { 
-			fs.addTrainingDetail(key, instances.get(key).size(), timing.get(key), sizeMap.get(key).getMean());
+			fs.addTrainingDetail(key, train.get(key).size(), timing.get(key), sizeMap.get(key).getMean());
 		}
 		
 
 		List<Future<ClassifyCallable>> futureList = new ArrayList<Future<ClassifyCallable>>();
-		for (Instance instance : test)  
-			futureList.add(_execute.submit(new ClassifyCallable(c, instance)));
+		for (List<Instance> instances : test.values())
+			for (Instance instance : instances) 
+				futureList.add(_execute.submit(new ClassifyCallable(c, instance)));
 		
 		for (Future<ClassifyCallable> future : futureList) {
 			try {
