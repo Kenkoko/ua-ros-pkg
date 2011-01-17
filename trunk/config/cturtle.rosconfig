@@ -29,6 +29,10 @@
     uri: https://ros-geometry.googlecode.com/hg/
     version: cturtle
     local-name: stacks/geometry
+- hg:
+    uri: https://ros-geometry-experimental.googlecode.com/hg/
+    version: cturtle
+    local-name: stacks/geometry_experimental
 - svn:
     uri: https://code.ros.org/svn/ros-pkg/stacks/image_common/tags/cturtle
     local-name: stacks/image_common
