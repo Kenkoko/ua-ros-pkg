@@ -95,6 +95,17 @@ public class Cluster {
 	}
 	
 	/**
+	 * Does this cluster contain the given instance.
+	 * Returning true if the instance's reference is in
+	 * the list of instances
+	 * @param instance
+	 * @return
+	 */
+	public boolean contains(Instance instance) { 
+		return _instances.contains(instance);
+	}
+	
+	/**
 	 * Return an overlap score between this cluster and the
 	 * given cluster.
 	 * @param c

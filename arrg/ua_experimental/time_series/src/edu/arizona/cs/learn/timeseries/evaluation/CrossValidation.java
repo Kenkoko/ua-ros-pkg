@@ -2,6 +2,7 @@ package edu.arizona.cs.learn.timeseries.evaluation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -64,21 +65,23 @@ public class CrossValidation extends ClassificationTest {
 		
 		List<Map<String,List<Instance>>> sets = partition(seed, data);
 		for (int i = 0; i < _nFolds; ++i) { 
-			List<Instance> train = new ArrayList<Instance>();
+			Map<String,List<Instance>> train = new HashMap<String,List<Instance>>();
 			for (int j = 0; j < _nFolds; ++j) { 
 				if (i == j)
 					continue;
 				
 				Map<String,List<Instance>> map = sets.get(j);
-				for (List<Instance> list : map.values()) 
-					train.addAll(list);
+				for (String key : map.keySet()) { 
+					List<Instance> trainList = train.get(key);
+					if (trainList == null) { 
+						trainList = new ArrayList<Instance>();
+						train.put(key, trainList);
+					}
+					trainList.addAll(map.get(key));
+				}
 			}
 
-			Map<String,List<Instance>> testMap = sets.get(i);
-			List<Instance> test = new ArrayList<Instance>();
-			for (List<Instance> list : testMap.values()) 
-				test.addAll(list);
-			
+			Map<String,List<Instance>> test = sets.get(i);
 			foldStats.add(runBatch(i, c, classNames, train, test));
 
 		}

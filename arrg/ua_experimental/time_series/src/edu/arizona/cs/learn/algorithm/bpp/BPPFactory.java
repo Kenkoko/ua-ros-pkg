@@ -247,14 +247,14 @@ public class BPPFactory {
 
 			// I want to print the bpp just so that I can visually make sure
 			// that it is correct for the time being.
-			System.out.print(prop);
-			for (int k = prop.length(); k <= tmpSize; ++k) { 
-				System.out.print(" ");
-			}
-			for (int k = 0; k < time; ++k) { 
-				System.out.print(timeLine[i][k]);
-			}
-			System.out.println();
+//			System.out.print(prop);
+//			for (int k = prop.length(); k <= tmpSize; ++k) { 
+//				System.out.print(" ");
+//			}
+//			for (int k = 0; k < time; ++k) { 
+//				System.out.print(timeLine[i][k]);
+//			}
+//			System.out.println();
 		}
 
 		return timeLine;
@@ -291,15 +291,18 @@ public class BPPFactory {
 //		sample1();
 //		sample2();
 		
-//		bppTest1();
+		bppTest1();
 	}
 	
 	public static void bppTest1() {
 		List<Interval> intervals = new ArrayList<Interval>();
 		intervals.add(Interval.make("a", 0, 10));
-		intervals.add(Interval.make("b", 3, 7));
-		intervals.add(Interval.make("c", 0, 4));
+		intervals.add(Interval.make("b", 20, 25));
+		intervals.add(Interval.make("c", 22, 24));
 		
-		System.out.println(bpp(intervals, Interval.eff));
+		List<Interval> bpp = compress(intervals, Interval.eff);
+		System.out.println(bpp);
+		
+		char[][] timeLine = timeLine(Arrays.asList("a","b","c"), bpp);
 	}
 }
