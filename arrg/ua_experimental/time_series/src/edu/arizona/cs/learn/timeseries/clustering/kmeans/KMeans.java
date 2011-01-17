@@ -187,7 +187,7 @@ public class KMeans {
 				else if (!k && f)
 					++n2;
 				else if (!k && !f)
-					++n3;
+					++n4;
 			}
 		}
 		
