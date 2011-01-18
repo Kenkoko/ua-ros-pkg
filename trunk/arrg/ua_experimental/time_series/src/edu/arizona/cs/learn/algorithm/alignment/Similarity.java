@@ -77,7 +77,7 @@ public enum Similarity {
 				bLength += bv.multiply(bv);
 			}
 			
-			double cosine = numer / (aLength * bLength);
+			double cosine = numer / (Math.sqrt(aLength) * Math.sqrt(bLength));
 			
 			// The resulting similarity ranges from −1 meaning exactly opposite, 
 			// to 1 meaning exactly the same, with 0 usually indicating independence, 
