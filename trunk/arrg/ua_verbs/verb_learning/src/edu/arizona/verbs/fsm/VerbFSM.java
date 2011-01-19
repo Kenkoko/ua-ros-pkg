@@ -231,7 +231,6 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		}
 	}
 	
-	// The cycles that are implicit should have been made explicit, so this will all be very clean
 	public TransitionResult simulateDfaTransition(FSMState state, Set<String> activeProps) {
 		FSMNode singleState = null;
 		if (state.getStates().size() != 1) {
@@ -261,12 +260,21 @@ public class VerbFSM implements Remappable<VerbFSM> {
 			
 			switch (possibleTransitions.size()) {
 			case 0:
-				// We have gone off the graph, go back to start
+				// No forward transitions, but...
+				// We might be able to loop on the current state, so we need to check the incoming edges
+				for (FSMTransition e : dfa_.getInEdges(singleState)) {
+					if (e.accept(activeProps)) {
+						newNode = singleState;
+					}
+				}
+				// If not, we have gone off the graph, go back to start
 				break;
+				
 			case 1:
 				// Simple transition
 				newNode = dfa_.getDest(possibleTransitions.get(0));
 				break;
+				
 			default:
 				// Descending order by size since we want the most specific first
 				Collections.sort(possibleTransitions, new Comparator<FSMTransition>() {

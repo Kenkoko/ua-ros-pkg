@@ -426,7 +426,7 @@ public class StateMachines {
 		DirectedGraph<FSMNode, FSMTransition> dfa = convertToDFA(nfa);
 		// And minimize
 		
-		minimizeSlow(dfa);
+//		minimizeSlow(dfa);
 		
 		return dfa;
 	}

@@ -74,4 +74,12 @@ public class Policy {
 			throw new RuntimeException("IMPOSSIBLE POLICY TYPE");
 		}
 	}
+	
+	public void print() {
+		System.out.println("POLICY:");
+		for (int i = 0; i < mdpStates.size(); i++) {
+			System.out.println(mdpStates.get(i));
+			System.out.println("--- > " + actions.get(i));
+		}
+	}
 }

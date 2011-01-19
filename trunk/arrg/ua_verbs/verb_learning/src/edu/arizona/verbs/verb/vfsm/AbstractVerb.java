@@ -221,14 +221,31 @@ public abstract class AbstractVerb implements FSMVerb {
 			// Add the current state to the trace
 			response.trace.add(StateConverter.stateToMsg(mdpState));
 			
+			if (verbState.isGoodTerminal()) { // In case this happens unexpectedly
+				System.out.println("------------ It is finished!");
+				System.out.println(mdpState.getActiveRelations());
+				response.actions.add(Action.TERMINATE);
+				executionSuccess = true;
+				break;
+			}
+			
 			String action = policy.getAction(mdpState, verbState); 
 			if (Action.REPLAN.equals(action)) { // This means we "fell off" the planned path
 				logger.info("Fell off garden path, replanning...");
 				planner.setMaxDepth(executionLimit - numSteps); // Needed by UCT
 				PlanningReport report = planner.runAlgorithm(mdpState, verbState); // re-plan
 				totalPlanningTime += report.getElaspedTime();
-				policy = report.getPolicy();
-				action = policy.getAction(mdpState, verbState);
+				
+				if (totalPlanningTime > 30*60*1000) { // If we've spent over 2 minutes planning, can it
+					action = Action.TERMINATE;
+					executionSuccess = false;
+					break;
+				} else {
+					policy = report.getPolicy();
+					action = policy.getAction(mdpState, verbState);
+					
+					policy.print();
+				}
 			}
 			
 			// Record the action that we performed (to make validation easier)
@@ -242,6 +259,9 @@ public abstract class AbstractVerb implements FSMVerb {
 				// Update to the new states
 				mdpState = Interface.getCurrentEnvironment().performAction(action);
 				verbState = fsmTransition(verbState, mdpState.getActiveRelations());
+				
+				System.out.println("THIS: " + verbState + " " + mdpState.getActiveRelations());
+				"a".length();
 			}			
 			
 			numSteps++;

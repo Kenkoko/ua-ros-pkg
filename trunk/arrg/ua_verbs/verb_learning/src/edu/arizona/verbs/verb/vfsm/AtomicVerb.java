@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.verbs.fsm.FSMNode.StateType;
 import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 
@@ -81,6 +82,11 @@ public class AtomicVerb extends AbstractVerb {
 	@Override
 	public VerbState fsmTransition(VerbState verbState, Set<String> activeRelations) {
 		TransitionResult posResult = posFSM_.simulateDfaTransition(verbState.posState, activeRelations);
+		// Let's try the push-through start state
+		if (posResult.newState.getStateType().equals(StateType.START)) {
+			posResult = posFSM_.simulateDfaTransition(posResult.newState, activeRelations);
+		}
+		
 		TransitionResult negResult = negFSM_.simulateNfaTransition(verbState.negState, activeRelations);
 		
 		return new VerbState(posResult.newState, negResult.newState);
