@@ -1049,7 +1049,7 @@ public class Experiments {
 		try {
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
 			String fileName = depthdir + "infodepth-" + dataset + "-" +
-				type + "-" + dateFormat.format(new Date()) + ".csv";
+				testActivity + "-" + type + "-" + dateFormat.format(new Date()) + ".csv";
 			BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
 	
 			out.write("className,timestep,maxactivedepth,maxactivedepthratio,accepted,type,recognizer,optimized,prune,minPct\n");
