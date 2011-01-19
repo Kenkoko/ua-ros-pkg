@@ -1,5 +1,7 @@
 (in-package :simsem)
 
+(defparameter *execution-limit* 50)
+
 ;;===================================================================
 
 (define-unit-class test-result ()
@@ -46,16 +48,42 @@
          (format t "Begin Trial ~d of ~d with Training Size ~d~%" j num-trials training-size)
          ;(format t "~a~%" training-set)
          (loop for instance in training-set
-            for student-result = (run-test verb (first instance) scoring-function)
-            if (eq :accepted (accepted-of student-result))
-            do (update-verb-with-trace verb (trace-of student-result) (argument-names (first instance)))
-            else if (eq :rejected (accepted-of student-result))
-            do (update-verb-with-negative-trace verb (trace-of student-result) (argument-names (first instance)))
+            ;for student-result = (run-test verb (first instance) scoring-function)
+            ;if (eq :accepted (accepted-of student-result))
+            ;do (update-verb-with-trace verb (trace-of student-result) (argument-names (first instance)))
+            ;else if (eq :rejected (accepted-of student-result))
+            ;do (update-verb-with-negative-trace verb (trace-of student-result) (argument-names (first instance)))
             do (format t "Presenting teacher's demonstration~%") 
               (present-training-instance verb-word instance))
          (format t "Testing robot performance...~%")
        collect (run-tests verb-word (make-tests domain verb-word) scoring-function))))
-                       
+
+(defun make-learning-trajectory (domain verb-word scoring-function)
+  (let* ((training (make-training domain verb-word))
+         (verb (find-verb verb-word))
+         (training-set (sample-random-subset training (length training))))
+    (format t "Clearing verb meaning...~%")
+    (clear-verb-meaning verb)
+    (format t "Begin Trajectory~%")
+    (loop for instance in training-set
+       for i from 1
+       ;for student-result = (run-test verb (first instance) scoring-function)
+       ;do (format t "~%============ Teaching Loop Iteration ~a~%" i)
+       ;if (eq :accepted (accepted-of student-result))
+       ;do (update-verb-with-trace verb (trace-of student-result) (argument-names (first instance)))
+       ;else if (eq :rejected (accepted-of student-result))
+       ;do (update-verb-with-negative-trace verb (trace-of student-result) (argument-names (first instance)))
+       do (format t "Presenting teacher's demonstration~%") 
+         (present-training-instance verb-word instance)
+         (format t "Testing robot performance...~%")
+       collect (list (run-tests verb-word (make-tests domain verb-word) scoring-function)))))
+
+(defun process-learning-trajectories (trajectories)
+  (process-learning-curve
+   (loop for i from 0 below (length (first trajectories))
+      collect (loop for traj in trajectories 
+                 append (nth i traj)))))
+
 (defun process-learning-curve (lc-result)
   (loop for training-size from 1 upto (length lc-result)
      for results in lc-result
@@ -111,7 +139,7 @@
                                                             :arguments (ros-list (argument-strings verb))
                                                             :bindings (ros-list (argument-names object-states)))
                                          :start_state start-state
-                                         :execution_limit 20))
+                                         :execution_limit *execution-limit*))
          (trace (verb_learning-srv:trace-val perform-response))
          (result (make-instance 'test-result
                                 :execution-success (verb_learning-srv:execution_success-val perform-response)
@@ -126,7 +154,7 @@
     result))                                        
 
 ;;============================================================================
-;; Automatic Scorers
+;; Automatic Scorers - TODO: Move these to a separate file
 
 (defun human-scorer (result)
   (declare (ignore result))
@@ -146,6 +174,32 @@
        finally (return (if (eq contact-count 2)
                            :accepted
                            :neither)))))
+
+(defun ww2d-go-scorer (result)
+  (format t "~%~%+++++++++++++++++++++++++++++++++~%~%")
+
+  (loop with trace = (verb_learning-srv:trace-val result)
+     ;with actions = (verb_learning-srv:actions-val result)
+     with step = 'approaching
+     for state across trace
+     ;for action across actions
+     for in-contact? = (contains-relation state "Collision" '("person" "place"))
+
+     ;do ;(format t "~a~%" state) 
+       ;(print-relations state)
+       ;(format t ">>> ACTION: ~a~%" action)
+
+     if (eq step 'approaching)
+     do (if in-contact?
+            (setf step 'contact))
+
+     else if (eq step 'contact)
+     do (if (not in-contact?)
+            (return-from ww2d-go-scorer :rejected))
+
+     finally (return (if (eq step 'contact)
+                         :accepted
+                         :neither))))
 
 (defun gz-go-scorer (result)
   (loop with trace = (verb_learning-srv:trace-val result)
@@ -196,9 +250,10 @@
                  (return :neither))))
 )
 
+;; This has been deprecated
 ;; TODO: Is there an issue with the last deliver test?
 ;; TODO: What if the robot starts at the object - will our visit-counts work?
-(defun gz-deliver-scorer (result)
+#+ignore(defun gz-deliver-scorer (result)
   (let* ((trace (vec-to-list (verb_learning-srv:trace-val result)))
          (actions (vec-to-list (verb_learning-srv:actions-val result))))
     (format t "~a~%" actions)
@@ -245,6 +300,9 @@
                        (eq holding-count 0))
                    (return-from gz-deliver-scorer :neither)))
     :accepted))
+
+;;==============================================================================
+
 
 (defun nb-scorer (scorer)
   (lambda (result)
