@@ -36,6 +36,6 @@ public class VerbState {
 	
 	@Override
 	public String toString() {
-		return posState.toString() + negState.toString();
+		return "POS:" + posState.toString() + "NEG:" + negState.toString();
 	}
 }

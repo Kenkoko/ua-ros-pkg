@@ -69,4 +69,8 @@ public class FSMState {
 		return (obj instanceof FSMState &&
 				subStates_.equals(((FSMState) obj).subStates_));
 	}
+	
+	public String toString() {
+		return subStates_.toString();
+	}
 }

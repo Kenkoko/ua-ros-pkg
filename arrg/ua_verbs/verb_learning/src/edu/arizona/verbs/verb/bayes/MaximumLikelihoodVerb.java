@@ -184,8 +184,11 @@ public class MaximumLikelihoodVerb implements Verb, Remappable<MaximumLikelihood
 		///////////////////////////////////////////////////////////////////
 		// This part follows the (Kollar et al. 2010) paper
 
-		int t = 4; // The depth to explore each replan step
+		int t = 6; // The depth to explore each replan step
 		int k = 1; // The number of previous plans to consider in evaluating termination condition
+		
+		// For go tests, t = 4, k = 1
+		// For deliver tests, t = 6, k = 1
 		
 		ArrayList<Double> likelihoods = new ArrayList<Double>(); // Stores the best likelihood at each depth
 		boolean maxFound = false;

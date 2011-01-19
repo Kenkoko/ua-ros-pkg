@@ -24,6 +24,7 @@ import edu.arizona.verbs.verb.vfsm.VerbState;
 
 public class UCT extends AbstractPlanner {
 	
+	private static int maxIterations = 1000;
 	private static double gamma = 0.9;
 	
 	private HashMap<String, HashMap<String, Double>> q_ = new HashMap<String, HashMap<String, Double>>();
@@ -60,10 +61,12 @@ public class UCT extends AbstractPlanner {
 			return new PlanningReport(new Policy(PolicyType.Terminate), true, (System.currentTimeMillis() - startTime));
 		}
 		
-		for (int i = 0; i < 400; i++) {
+		goalCounter = 0;
+		for (int i = 1; i <= maxIterations; i++) {
 			environment_.reset();
 			
-			System.out.println(">>> BEGIN TRIAL " + i);
+			if (i % 50 == 0) 
+				System.out.println(">>> BEGIN TRIAL " + i + " (Reached Goal " + goalCounter + " times so far)");
 			
 			uct(start, maxDepth_);
 		}
@@ -71,18 +74,25 @@ public class UCT extends AbstractPlanner {
 		return new PlanningReport(recoverPolicy(start), true, (System.currentTimeMillis() - startTime));
 	}
 
+	public static int goalCounter = 0;
 	public double uct(PlanningState s, int d) {
 		
 		if (s.getVerbState().isGoodTerminal()) {
-			System.out.println("Trial Reached Goal!");
+			goalCounter++;
 			for (Action a : actions_) {
 				setQ(s, a.toString(), d, 0.0);  
 			}
 			return 0.0;
-			
-		} else if (d == 1) { 
+		
+		} else if (s.getVerbState().isBadTerminal()) {
 			for (Action a : actions_) {
-				setQ(s, a.toString(), d, s.getHeuristic()); // Hmm. 
+				setQ(s, a.toString(), d, s.getHeuristic()); // This should be tighter than using 0 
+			}
+			return s.getHeuristic(); // Should be something like 1000
+			
+		} else if (d == 0) { 
+			for (Action a : actions_) {
+				setQ(s, a.toString(), d, s.getHeuristic()); // This should be tighter than using 0 
 			}
 			return 1.0;
 			
@@ -147,22 +157,27 @@ public class UCT extends AbstractPlanner {
 		
 		PlanningState current = start;
 		for (int d = maxDepth_; d > 0; d--) {
-			states.add(current);
-
-			if (current.getVerbState().isGoodTerminal()) {
+			System.out.println("RECOVER POLICY CURRENT STATE: " + current.getVerbState());
+			
+			if (current.getVerbState().isGoodTerminal() || d == 0) {
+				System.out.println("TERMINAL REACHED! ");
+				
+				states.add(current);
 				actions.add(Action.TERMINATE_ACTION);
-				break;
+				return new Policy(states, actions); 
 			}
 			
-//			String sdString = lookupString(current, d);
 			List<Action> bestActions = new ArrayList<Action>();
 			double minQ = Double.MAX_VALUE;
 			for (Action a : actions_) {
-//				String nasdString = lookupString(current, a, d);
+				String nasdString = lookupString(current, a, d);
 				double qValue = getQ(current, a.toString(), d);
-//				if (nasd.getCount(nasdString) > 0) {
-//					qValue += Math.sqrt(2 * Math.log(nsd.getCount(sdString)) / nasd.getCount(nasdString));
-//				}
+				if (nasd_.getCount(nasdString) == 0 && d != maxDepth_) { // Must make a choice at the first level
+					// Sparsity in the Q table means it's time to replan
+					System.out.println("ZEROS IN Q TABLE: depth was " + d);
+					return new Policy(states, actions); 
+				}
+				
 				if (qValue < minQ) {
 					bestActions.clear();
 					bestActions.add(a);
@@ -173,7 +188,9 @@ public class UCT extends AbstractPlanner {
 				
 				System.out.println(a + ": " + qValue);
 			}
-			// TODO: Maybe there's a better way to choose than randomly
+			
+			states.add(current);
+			
 			Action aStar = bestActions.get(r_.nextInt(bestActions.size()));
 			actions.add(aStar);
 			
