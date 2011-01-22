@@ -158,6 +158,7 @@ public abstract class AbstractVerb implements FSMVerb {
 	
 	void makeVerbFolder() {
 		File verbFolder = new File(getVerbFolder());
+		
 		if (!verbFolder.exists()) {
 			verbFolder.mkdirs();
 		}

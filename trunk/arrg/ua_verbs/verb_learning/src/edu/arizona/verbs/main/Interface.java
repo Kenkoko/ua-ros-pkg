@@ -30,9 +30,11 @@ import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
+import edu.arizona.verbs.verb.VerbBinding;
 import edu.arizona.verbs.verb.bayes.MaximumLikelihoodVerb;
 import edu.arizona.verbs.verb.vfsm.AtomicVerb;
 import edu.arizona.verbs.verb.vfsm.FSMVerb;
+import edu.arizona.verbs.verb.vfsm.SequentialVerb;
 
 public class Interface {
 	private static Logger logger = Logger.getLogger(Interface.class);
@@ -219,22 +221,22 @@ public class Interface {
 			}
 		};
 		
-	// TODO: Restore SequentialVerb
+	// TODO: This doesn't seem to be working since the refactor, fix it
 	static Callback<DefineSequentialVerb.Request, DefineSequentialVerb.Response> defineVerb =
 		new Callback<DefineSequentialVerb.Request, DefineSequentialVerb.Response>() {
 			@Override
 			public Response call(DefineSequentialVerb.Request request) {
-//				Vector<VerbBinding> subverbs = new Vector<VerbBinding>();
-//				for (VerbInstance vi : request.subverbs) {
-//					VerbBinding vb = new VerbBinding();
-//					vb.verb = verbs.get(vi.verb); // TODO: Need some kind of a check here
-//					vb.binding = extractNameMap(vi); // TODO: Confirm this is the right direction
-//				
-//					subverbs.add(vb);
-//				}
-//				SequentialVerb verb = new SequentialVerb(request.verb, request.arguments, subverbs);
-//				verbs.put(request.verb, verb);
-//				
+				Vector<VerbBinding> subverbs = new Vector<VerbBinding>();
+				for (VerbInstance vi : request.subverbs) {
+					VerbBinding vb = new VerbBinding();
+					vb.verb = (FSMVerb) verbs.get(vi.verb);
+					vb.binding = extractNameMap(vi); 
+				
+					subverbs.add(vb);
+				}
+				SequentialVerb verb = new SequentialVerb(request.verb, request.arguments, subverbs);
+				verbs.put(request.verb, verb);
+				
 				return new Response();
 			}
 		};

@@ -219,7 +219,19 @@ public class VerbFSM implements Remappable<VerbFSM> {
 			}
 		}
 		startState_ = new FSMState(startNodes);
-		startDist_ = getMinDistToTerminal(startState_);
+		
+		if (dfa_.getVertexCount() == 1) {
+			startDist_ = 0;
+		} else {
+			startDist_ = Integer.MAX_VALUE;
+			for (FSMNode node : startNodes) {
+				int minDistToTerminal = computeMinDistToTerminal(node);
+				startDist_ = Math.min(startDist_, minDistToTerminal);
+			}
+		}
+		
+//		startDist_ = getMinDistToTerminal(startState_);
+//		startDist_ = startState_.
 	}
 	
 	private void populateTerminals() {
@@ -312,17 +324,24 @@ public class VerbFSM implements Remappable<VerbFSM> {
 						transitions.add(e); 
 					}
 				}
+				for (FSMTransition e : dfa_.getInEdges(s)) {
+					if (e.accept(activeProps)) {
+						transitions.add(e);
+					}
+				}
 			}
 			for (FSMTransition t : transitions) {
 				newState.add(dfa_.getDest(t));
 			}
+
+			// The start state is "free"
+			newState.addAll(startState_.getStates());
 			
-			if (newState.isEmpty()) {
+//			if (!newState.isEmpty()) {
 				// We have gone off the graph, go back to start
-				result.newState = startState_;
-			} else {
+//			} else {
 				result.newState = new FSMState(newState);
-			}
+//			}
 		}
 		
 		result.cost = getCost(state, result.newState);
