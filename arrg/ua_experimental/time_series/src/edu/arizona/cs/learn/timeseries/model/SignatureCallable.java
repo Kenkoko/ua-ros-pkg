@@ -35,11 +35,12 @@ public class SignatureCallable implements Callable<SignatureCallable> {
 				s = s.prune(_min);
 			}
 		}
-		s.toXML("/tmp/" + s.key() + "-signature.xml");
+//		s.toXML("/tmp/" + s.key() + "-signature.xml");
 		
-		// Fifty percent pruning....
-		_signature = s.prune(s.trainingSize()/2);
-		_signature.toXML("/tmp/" + _signature.key() + "-pruned.xml");
+//		// Fifty percent pruning....
+//		_signature = s.prune(s.trainingSize()/2);
+//		_signature.toXML("/tmp/" + _signature.key() + "-pruned.xml");
+		_signature = s;
 		_duration = System.currentTimeMillis() - start;
 		return this;
 	}

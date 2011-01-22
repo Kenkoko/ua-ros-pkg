@@ -3,27 +3,35 @@ package edu.arizona.cs.learn.timeseries.dissertation;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.SequenceType;
-import edu.arizona.cs.learn.timeseries.model.symbols.AllenRelation;
 import edu.arizona.cs.learn.util.Utils;
 
 public class DatasetsInfo {
 	public static void main(String[] args) {
-//		makeLatexTable3("vowel");
-		
-//		AllenRelation.MARGIN = 1;
-//		Utils.WINDOW = 1;
-		getStats("ww2d");
+		//		makeLatexTable3("vowel");
+
+		//		AllenRelation.MARGIN = 1;
+		//		Utils.WINDOW = 1;
+		getStats("data/input/", "ww3d");
+		getStats("data/input/", "global-ww2d");
+		getStats("/Users/wkerr/Sync/data/handwriting/wes/lisp/original/", "wes-pen");
 	}
 
-	public static void getStats(String prefix) { 
-		for (File f : new File("data/input/").listFiles())
+	public static void getStats(String dir, String prefix) { 
+		SummaryStatistics numSteps = new SummaryStatistics();
+		SummaryStatistics intervalSize = new SummaryStatistics();
+		SummaryStatistics sequenceSize = new SummaryStatistics();
+		SummaryStatistics propSize = new SummaryStatistics();
+
+		for (File f : new File(dir).listFiles())
 			if ((f.getName().startsWith(prefix))
 					&& (f.getName().endsWith("lisp"))) {
 				String name = f.getName();
@@ -32,29 +40,30 @@ public class DatasetsInfo {
 
 				System.out.println("[" + prefix + "] " + className + " " + map.size());
 
-				SummaryStatistics numSteps = new SummaryStatistics();
-				SummaryStatistics intervalSize = new SummaryStatistics();
-				SummaryStatistics sequenceSize = new SummaryStatistics();
-				
 				for (List<Interval> list : map.values()) {
 					int minStart = Integer.MAX_VALUE;
 					int maxEnd = 0;
 
+					Set<String> props = new HashSet<String>();
 					for (Interval interval : list) {
 						minStart = Math.min(minStart, interval.start);
 						maxEnd = Math.max(maxEnd, interval.end);
+						props.add(interval.name);
 					}
+
+					propSize.addValue(props.size());
 					numSteps.addValue(maxEnd - minStart);
 					intervalSize.addValue(list.size());
 					sequenceSize.addValue(SequenceType.allen.getSequenceSize(list));
 					System.gc();
 				}
-				System.out.println(" Steps: " + numSteps.getMean());
-				System.out.println(" Intervals: " + intervalSize.getMean());
-				System.out.println(" Sequence: " + sequenceSize.getMean());
 			}
+		System.out.println(" Steps: " + numSteps.getMean());
+		System.out.println(" Propositions: " + propSize.getMean());
+		System.out.println(" Intervals: " + intervalSize.getMean());
+		System.out.println(" Sequence: " + sequenceSize.getMean());
 	}
-	
+
 	public static void datasetsInfo() {
 		String[] prefixes = { "ww3d", "wes", "nicole", "derek", "vowel",
 				"auslan", "wafer", "ecg", "ww2d" };
@@ -64,7 +73,7 @@ public class DatasetsInfo {
 		types.add(SequenceType.bpp);
 
 		System.out
-				.println("dataset,activity,num-examples,mean-steps,mean-num-intervals,mean-allen,mean-bpp");
+		.println("dataset,activity,num-examples,mean-steps,mean-num-intervals,mean-allen,mean-bpp");
 		for (String prefix : prefixes) { 
 			int numClasses = 0;
 			for (File f : new File("data/input/").listFiles())
@@ -258,7 +267,7 @@ public class DatasetsInfo {
 		System.out.println("\\hline");
 
 		System.out
-				.println("  & Num Examples & Time & Num Fluents & Allen & CBA \\\\ \\hline");
+		.println("  & Num Examples & Time & Num Fluents & Allen & CBA \\\\ \\hline");
 		for (int i = 0; i < activities.size(); i++) {
 			StringBuffer buf = new StringBuffer("{\\it "
 					+ (String) activities.get(i) + "} ");

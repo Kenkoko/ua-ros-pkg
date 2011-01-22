@@ -22,6 +22,8 @@ public class BPPNode {
 	private int _activeDepth;			// Distance from start in active path
 	private int _distanceToFinal;		// Distance to 'nearest' final state
 	
+	private int _timeSpentOff;
+	
 	private BPPNode _startNode;
 
 	protected BPPNode(BPPNode startNode) {
@@ -31,6 +33,7 @@ public class BPPNode {
 		_color = "white";
 		_fontColor = "black";
 
+		_timeSpentOff = 0;
 		_isFinal = false;
 		_activeDepth = 0;
 		_distanceToFinal = Integer.MAX_VALUE;
@@ -82,18 +85,32 @@ public class BPPNode {
 	public BPPNode getStartState() {
 		return this._startNode;
 	}
-
+	
+	public int timeSpentOff() { 
+		return _timeSpentOff;
+	}
+	
 	public boolean satisfied(Set<String> props) {
 		return props.containsAll(this._props);
 	}
 
+	/**
+	 * Returns true if this node is activated by
+	 * the set of propositions.  If false, the _timeSpentOff
+	 * counter is incremented, if true then the _timeSpentOff
+	 * counter is reset.
+	 * @param activeProps
+	 * @return
+	 */
 	public boolean active(Set<String> activeProps) {
 		for (int i = 0; i < this._propList.size(); i++) {
 			if ((this._values.charAt(i) == '1')
 					&& (!activeProps.contains(this._propList.get(i)))) {
+				++_timeSpentOff;
 				return false;
 			}
 		}
+		_timeSpentOff = 0;
 		return true;
 	}
 

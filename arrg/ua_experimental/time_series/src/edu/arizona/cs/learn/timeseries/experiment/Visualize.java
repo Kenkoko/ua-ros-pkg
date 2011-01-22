@@ -19,13 +19,12 @@ public class Visualize {
 
 	
 	public static void main(String[] args) { 
-//		List<Interval> set1 = new ArrayList<Interval>();
-//		set1.add(Interval.make("A", 0, 8));
-//		set1.add(Interval.make("B", 4, 10));
-//		set1.add(Interval.make("C", 8, 15));
-//		set1.add(Interval.make("D", 2, 8));
-//
-//		Paint.render(set1, "/Users/wkerr/Desktop/example1.png");
+		List<Interval> set1 = new ArrayList<Interval>();
+		set1.add(Interval.make("F", 0, 15));
+		set1.add(Interval.make("D", 1, 20));
+		set1.add(Interval.make("S", 15, 20));
+
+		Paint.render(set1, "/Users/wkerr/Desktop/example1.png");
 //		System.out.println(SequenceType.allen.getSequence(set1));
 //		
 //		List<Interval> set2 = new ArrayList<Interval>();
@@ -47,7 +46,7 @@ public class Visualize {
 		
 		
 //		Paint.sample2();
-		niallData();
+//		niallData();
 	}
 	
 	public static void niallData() { 

@@ -15,6 +15,9 @@ public class FSMRecognizer {
 	private List<BPPNode> _active;
 	private DirectedGraph<BPPNode, Edge> _graph;
 	private BPPNode _startNode;
+	
+	/** Timeout is a parameter that determines how long we can spend in an off state. */
+	private int _timeOut = 0;
 
 	public FSMRecognizer(String className, DirectedGraph<BPPNode, Edge> graph) {
 		this._key = className;
@@ -87,7 +90,8 @@ public class FSMRecognizer {
 			}
 			
 			if (!currentState) {
-//				turningOff.add(node);
+				if (node.timeSpentOff() >= _timeOut)
+					turningOff.add(node);
 				
 				if (printDebug) { 
 //					System.out.println("     Node: " + node.id() + " -- " + node.getProps());
