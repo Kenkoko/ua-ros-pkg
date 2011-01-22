@@ -37,11 +37,11 @@ public class RecognitionExperiment {
 		_prefix = prefix;
 		_prunePct = prunePct;
 		
-		_pOut = new BufferedWriter(new FileWriter(inputDir + "recognition-performance.csv"));
+		_pOut = new BufferedWriter(new FileWriter(inputDir + _prefix + "-recognition-performance.csv"));
 		_pOut.write("batch_id,split_pct,id,name,r_name,accepted,tp,fp,tn,fn\n");
 		
 		if (writeSample) {
-			_sOut = new BufferedWriter(new FileWriter(inputDir + "recognition-samples.csv"));
+			_sOut = new BufferedWriter(new FileWriter(inputDir + _prefix + "-recognition-samples.csv"));
 			_sOut.write("batch_id,split_pct,id,name,r_name,time_step,index,depth,ratio\n");
 		}
 	}
@@ -60,10 +60,16 @@ public class RecognitionExperiment {
 //		inputDir = "/Users/wkerr/Sync/data/handwriting/wes/lisp/original/";
 //		RecognitionExperiment exp = new RecognitionExperiment("wes-pen", 90, false);
 
+		if (args.length != 2) { 
+			System.out.println("Usage: RecognitionExperiment <path> <prefix>");
+			return;
+
+		}
 		inputDir = "data/input/";
-		RecognitionExperiment exp = new RecognitionExperiment("ww3d", 90, false);
-		
+		RecognitionExperiment exp = new RecognitionExperiment("ww3d", 80, false);
 		exp.recognitionLearningCurve(100);
+		exp.done();
+		
 //		trace("/tmp/signatures/wes-pen-a.xml", "wes-pen-o");
 	}
 	
@@ -226,6 +232,8 @@ public class RecognitionExperiment {
 	public void recognitionLearningCurve(int repeat) throws Exception { 
 		Map<String,List<Instance>> dataMap = Utils.load(inputDir, _prefix, SequenceType.allen);
 		double[] pcts = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 };
+//		double[] pcts = new double[] { 0.2, 0.4, 0.6, 0.8 };
+		
 		for (double pct : pcts) { 
 			for (int i = 0; i < repeat; ++i) { 
 				recognition(i, dataMap, pct);

@@ -1,12 +1,13 @@
 package edu.arizona.cs.learn.timeseries.experiment;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
@@ -14,13 +15,14 @@ import edu.arizona.cs.learn.algorithm.alignment.Similarity;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyParams;
+import edu.arizona.cs.learn.timeseries.evaluation.BatchSignatures;
 import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
-import edu.arizona.cs.learn.timeseries.evaluation.CrossValidation;
 import edu.arizona.cs.learn.timeseries.evaluation.SplitAndTest;
 import edu.arizona.cs.learn.timeseries.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.util.Utils;
-import edu.arizona.cs.learn.util.XMLUtils;
 
 public class Classification {
 

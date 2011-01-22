@@ -15,8 +15,8 @@ public class AnhsExperiments {
 	public static void main(String[] args) {
 
 //		runDecompositionExperiment();
-//		runRecognitionExperiment();
-		runInformationDepthExperiment();
+		runRecognitionExperiment();
+//		runInformationDepthExperiment();
 	}
 	
 	
@@ -77,8 +77,8 @@ public class AnhsExperiments {
 
 	private static void runRecognitionExperiment() {
 		try {
-			int experiments = 5;
-			String prefix = "wes-pen";
+			int experiments = 1;
+			String prefix = "ww3d";
 			int[] folds = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 			int[] pcts = { 95 };
 			boolean[] prunes = { true };
