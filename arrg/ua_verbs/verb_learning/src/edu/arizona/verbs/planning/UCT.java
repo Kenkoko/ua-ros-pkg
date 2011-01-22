@@ -24,7 +24,7 @@ import edu.arizona.verbs.verb.vfsm.VerbState;
 
 public class UCT extends AbstractPlanner {
 	
-	private static int maxIterations = 1000;
+	private static int maxIterations = 500;
 	private static double gamma = 0.9;
 	
 	private HashMap<String, HashMap<String, Double>> q_ = new HashMap<String, HashMap<String, Double>>();
@@ -60,13 +60,19 @@ public class UCT extends AbstractPlanner {
 		if (start.isTerminal()) {
 			return new PlanningReport(new Policy(PolicyType.Terminate), true, (System.currentTimeMillis() - startTime));
 		}
+
+		// ONLY FOR TESTING DO NOT LEAVE THIS ON NO NO NO NO NO
+//		maxDepth_ = 20;
 		
 		goalCounter = 0;
+		bestState = Integer.MAX_VALUE;
 		for (int i = 1; i <= maxIterations; i++) {
 			environment_.reset();
 			
-			if (i % 50 == 0) 
-				System.out.println(">>> BEGIN TRIAL " + i + " (Reached Goal " + goalCounter + " times so far)");
+			if (i % 50 == 0) {
+				System.out.println(">>> BEGIN TRIAL " + i + " (Reached Goal " + goalCounter + " of last 50 trials, got within " + bestState + " of goal)");
+				goalCounter = 0;
+			}
 			
 			uct(start, maxDepth_);
 		}
@@ -75,7 +81,11 @@ public class UCT extends AbstractPlanner {
 	}
 
 	public static int goalCounter = 0;
+	public static int bestState = Integer.MAX_VALUE;
 	public double uct(PlanningState s, int d) {
+		
+//		System.out.println(s.getHeuristic());
+		bestState = Math.min(bestState, (int) s.getHeuristic());
 		
 		if (s.getVerbState().isGoodTerminal()) {
 			goalCounter++;

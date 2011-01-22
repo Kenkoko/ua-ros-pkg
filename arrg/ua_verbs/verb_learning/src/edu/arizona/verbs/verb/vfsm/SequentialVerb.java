@@ -1,57 +1,25 @@
 package edu.arizona.verbs.verb.vfsm;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
-import java.util.TreeSet;
+import java.util.Set;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import ros.pkg.oomdp_msgs.msg.MDPState;
-import ros.pkg.verb_learning.srv.PerformVerb;
-import ros.pkg.verb_learning.srv.PerformVerb.Response;
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
-import edu.arizona.cs.learn.algorithm.markov.BPPNode;
-import edu.arizona.cs.learn.algorithm.markov.FSMFactory;
-import edu.arizona.cs.learn.timeseries.experiment.BitPatternGeneration;
-import edu.arizona.cs.learn.timeseries.model.Interval;
-import edu.arizona.cs.learn.timeseries.model.Signature;
-import edu.arizona.cs.learn.util.graph.Edge;
-import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
-import edu.arizona.verbs.environments.GazeboEnvironment;
-import edu.arizona.verbs.fsm.FSMState;
 import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
-import edu.arizona.verbs.main.Interface;
-import edu.arizona.verbs.mdp.StateConverter;
-import edu.arizona.verbs.planning.LRTDP;
-import edu.arizona.verbs.planning.Planners;
-import edu.arizona.verbs.planning.SearchPlanner;
-import edu.arizona.verbs.planning.UCT;
-import edu.arizona.verbs.planning.data.PlanningReport;
-import edu.arizona.verbs.planning.shared.Action;
-import edu.arizona.verbs.planning.shared.Planner;
-import edu.arizona.verbs.planning.shared.Policy;
-import edu.arizona.verbs.planning.shared.Policy.PolicyType;
-import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.VerbBinding;
-import edu.uci.ics.jung.graph.DirectedGraph;
 
+// TODO: This isn't quite right anymore since the core paths change, fix it
 public class SequentialVerb extends AbstractVerb {
 	private static Logger logger = Logger.getLogger(SequentialVerb.class);
 	

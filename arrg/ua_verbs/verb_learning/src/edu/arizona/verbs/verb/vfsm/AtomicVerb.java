@@ -82,10 +82,11 @@ public class AtomicVerb extends AbstractVerb {
 	@Override
 	public VerbState fsmTransition(VerbState verbState, Set<String> activeRelations) {
 		TransitionResult posResult = posFSM_.simulateDfaTransition(verbState.posState, activeRelations);
-		// Let's try the push-through start state
+//		 Let's try the push-through start state
 		if (posResult.newState.getStateType().equals(StateType.START)) {
 			posResult = posFSM_.simulateDfaTransition(posResult.newState, activeRelations);
 		}
+//		TransitionResult posResult = posFSM_.simulateNfaTransition(verbState.posState, activeRelations);
 		
 		TransitionResult negResult = negFSM_.simulateNfaTransition(verbState.negState, activeRelations);
 		
