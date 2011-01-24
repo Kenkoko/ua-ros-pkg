@@ -2,6 +2,7 @@ package edu.arizona.verbs.fsm;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import org.apache.log4j.Logger;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import edu.arizona.verbs.fsm.FSMNode.StateType;
 import edu.arizona.verbs.fsm.core.CorePath;
@@ -34,10 +36,11 @@ public class VerbFSM implements Remappable<VerbFSM> {
 	}
 	
 	private DirectedGraph<FSMNode, FSMTransition> dfa_;
-	private FSMState startState_ = new FSMState();
 	private FSMState activeState_ = new FSMState();
 	private Set<FSMNode> terminalNodes_;
 	private int startDist_;
+	
+	private ArrayList<FSMState> startStates_ = new ArrayList<FSMState>();
 	
 	private VerbFSM(DirectedGraph<FSMNode, FSMTransition> dfa) {
 		dfa_ = dfa;
@@ -46,14 +49,19 @@ public class VerbFSM implements Remappable<VerbFSM> {
 	
 	public VerbFSM(Set<CorePath> corePaths) {
 		dfa_ = StateMachines.createFSM(corePaths);
+		// This distances are potentially invalid because we don't know how the FSM was made
+		for (FSMNode n : dfa_.getVertices()) { 
+			n.clearMinDist();
+		}
 		init();
 	}
 
 	private void init() {
-		populateTerminals(); 
+		populateTerminals(); 	
 		populateStartState();
 		
-		activeState_ = startState_;
+		activeState_ = startStates_.get(0);
+		
 		printStateValues();
 	}
 	
@@ -69,8 +77,12 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		return result.cost;
 	}
 	
-	public FSMState getStartState() {
-		return startState_;
+	public FSMState getGlobalStartState() {
+		return startStates_.get(0);
+	}
+	
+	public FSMState getStartState(int subverbIndex) {
+		return startStates_.get(subverbIndex);
 	}
 	
 	public int getMinDistToTerminal(FSMState newState) {
@@ -163,12 +175,11 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		if (terminalNodes_.isEmpty()) {
 //			throw new RuntimeException("GTFO THERE ARE NO TERMINALS!");
 //			logger.info("No terminal nodes found, better be a negative FSM.");
-			return Integer.MAX_VALUE;
+			return minDist; // Return the max value
 		}
 		
 		for (FSMNode s : state.getStates()) {
-			int sMinDist = computeMinDistToTerminal(s);
-			minDist = Math.min(minDist, sMinDist);
+			minDist = Math.min(minDist, computeMinDistToTerminal(s));
 		}
 		
 		return minDist;
@@ -179,30 +190,38 @@ public class VerbFSM implements Remappable<VerbFSM> {
 			throw new RuntimeException("GTFO THERE ARE NO TERMINALS!");
 		}
 		
-		if (!s.hasMinDist()) { // If the minDist for s has not yet been computed, compute it
-			UnweightedShortestPath<FSMNode, FSMTransition> pathFinder = new UnweightedShortestPath<FSMNode, FSMTransition>(dfa_);
-			int minDist = Integer.MAX_VALUE;
-			
-			for (FSMNode gt : terminalNodes_) {
-				Map<FSMNode, Number> distanceMap = pathFinder.getDistanceMap(s); 
-				if (distanceMap.containsKey(gt)) {
-					int distance = (Integer) distanceMap.get(gt);
-					minDist = Math.min(distance, minDist);
-				}
-			}
-			
-			if (minDist == Integer.MAX_VALUE) {
-				s.setMinDist(startDist_ + 1); // Transition back to the start state
-			} else {
-				s.setMinDist(minDist);
-			}
+//		if (!s.hasMinDist()) { // If the minDist for s has not yet been computed, compute it
+//			UnweightedShortestPath<FSMNode, FSMTransition> pathFinder = new UnweightedShortestPath<FSMNode, FSMTransition>(dfa_);
+//			int minDist = Integer.MAX_VALUE;
+//			
+//			for (FSMNode gt : terminalNodes_) {
+//				Map<FSMNode, Number> distanceMap = pathFinder.getDistanceMap(s); 
+//				if (distanceMap.containsKey(gt)) {
+//					int distance = (Integer) distanceMap.get(gt);
+//					minDist = Math.min(distance, minDist);
+//				}
+//			}
+//			
+//			if (minDist == Integer.MAX_VALUE) {
+//				s.setMinDist(startDist_ + 1); // Transition back to the start state
+//			} else {
+//				s.setMinDist(minDist);
+//			}
+//		}
+		
+		int minDist = StateMachines.findMinDistToTerminal(dfa_, s);
+		s.setMinDist(minDist);
+		
+		if (s.getType().equals(StateType.INTERIOR) && s.getMinDist() == 0) {
+			throw new RuntimeException("IMPOSSIBLE: Interior node has 0 distance to terminal");
 		}
 		
-		return s.getMinDist();
+//		return s.getMinDist();
+		return minDist;
 	}
 	
 	public void reset() {
-		activeState_ = startState_;
+		activeState_ = startStates_.get(0);
 	}
 	
 	public FSMState getActiveState() {
@@ -218,7 +237,9 @@ public class VerbFSM implements Remappable<VerbFSM> {
 				startNodes.add(state);
 			}
 		}
-		startState_ = new FSMState(startNodes);
+		if (startStates_.isEmpty()) {
+			startStates_.add(new FSMState(startNodes)); // The first one is always the global start
+		}
 		
 		if (dfa_.getVertexCount() == 1) {
 			startDist_ = 0;
@@ -229,9 +250,6 @@ public class VerbFSM implements Remappable<VerbFSM> {
 				startDist_ = Math.min(startDist_, minDistToTerminal);
 			}
 		}
-		
-//		startDist_ = getMinDistToTerminal(startState_);
-//		startDist_ = startState_.
 	}
 	
 	private void populateTerminals() {
@@ -243,28 +261,29 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		}
 	}
 	
-	public TransitionResult simulateDfaTransition(FSMState state, Set<String> activeProps) {
-		FSMNode singleState = null;
+	public TransitionResult simulateDfaHelper(FSMState state, Set<String> activeProps) {
+		FSMNode node = null;
 		if (state.getStates().size() != 1) {
 			throw new IllegalArgumentException("DFA must be in a single state");
 		} else {
-			singleState = state.getStates().first();
+			node = state.getStates().first();
 		}
 		
 		TransitionResult result = new TransitionResult();
 		
 		FSMNode newNode = null;
 		
-		if (singleState.getType().equals(StateType.TERMINAL)) {
-			newNode = singleState; // TERMINAL cannot be escaped
+		if (node.getType().equals(StateType.TERMINAL)) {
+			newNode = node; // TERMINAL cannot be escaped
 			throw new RuntimeException("YOU ARE ALREADY AT A TERMINAL, THERE IS NOWHERE TO GO!");
+			
 		} else {
 			// One edge's active set could be a subset of another's.
 			// That would essentially create nondeterminism whenever the superset is present. 
 			// To ensure determinism, we can take the most specific transition that matches.
 			// That is, simply, the one with the most propositions.
 			List<FSMTransition> possibleTransitions = new Vector<FSMTransition>();
-			for (FSMTransition e : dfa_.getOutEdges(singleState)) {
+			for (FSMTransition e : dfa_.getOutEdges(node)) {
 				if (e.accept(activeProps)) {
 					possibleTransitions.add(e); 
 				}
@@ -274,9 +293,9 @@ public class VerbFSM implements Remappable<VerbFSM> {
 			case 0:
 				// No forward transitions, but...
 				// We might be able to loop on the current state, so we need to check the incoming edges
-				for (FSMTransition e : dfa_.getInEdges(singleState)) {
+				for (FSMTransition e : dfa_.getInEdges(node)) {
 					if (e.accept(activeProps)) {
-						newNode = singleState;
+						newNode = node;
 					}
 				}
 				// If not, we have gone off the graph, go back to start
@@ -300,7 +319,7 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		}
 		
 		if (newNode == null) {
-			result.newState = startState_;
+			result.newState = startStates_.get(node.getVerbSequenceIndex()); // Go back to the right start state
 		} else {
 			result.newState = new FSMState(newNode);
 		}
@@ -310,6 +329,28 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		return result;
 	}
 	
+	public boolean isaStart(FSMState state) {
+		return startStates_.contains(state);
+	}
+	
+	public TransitionResult simulateDfaTransition(FSMState state, Set<String> activeProps) {
+		TransitionResult firstResult = simulateDfaHelper(state, activeProps);
+		
+//		return firstResult;
+		if (isaStart(firstResult.newState)) { // "push through" start states
+			TransitionResult secondResult = simulateDfaHelper(firstResult.newState, activeProps);
+			secondResult.cost = getCost(state, secondResult.newState); // Tricky
+			return secondResult;
+		} else {
+			return firstResult;
+		}
+	}
+	
+	
+	
+	
+	
+	// TODO this doesn't support multiple start states, which is OK for now
 	public TransitionResult simulateNfaTransition(FSMState state, Set<String> activeProps) {
 		TransitionResult result = new TransitionResult();
 		
@@ -335,7 +376,7 @@ public class VerbFSM implements Remappable<VerbFSM> {
 			}
 
 			// The start state is "free"
-			newState.addAll(startState_.getStates());
+			newState.addAll(startStates_.get(0).getStates());
 			
 //			if (!newState.isEmpty()) {
 				// We have gone off the graph, go back to start
@@ -366,6 +407,7 @@ public class VerbFSM implements Remappable<VerbFSM> {
 //	}
 	
 	private void printStateValues() {
+		System.out.println("STATE VALUES: ");
 		for (FSMNode s : dfa_.getVertices()) {
 			System.out.println(s + ": " + computeMinDistToTerminal(new FSMState(s)));
 		}
@@ -409,7 +451,16 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		return new VerbFSM(dfa);
 	}
 	
+	public int getTerminalIndex() {
+		if (terminalNodes_.isEmpty()) {
+			return 0;
+		} else {
+			return terminalNodes_.iterator().next().getVerbSequenceIndex();
+		}
+	}
+	
 	// Concatenation: Returns a new FSM equal to (this)(other)
+	// TODO nested arbitrary concatenation is not supported yet
 	public VerbFSM concatenate(VerbFSM other) {
 		if (terminalNodes_.size() > 1) {
 			throw new RuntimeException("MINIMIZATION FAILED.");
@@ -425,12 +476,12 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		for (FSMTransition ot : dfa_.getEdges()) {
 			FSMNode os = dfa_.getSource(ot);
 			if (!stateMap1.containsKey(os)) {
-				stateMap1.put(os, new FSMNode(os.getType()));
+				stateMap1.put(os, new FSMNode(os.getType(), this.getTerminalIndex()));
 			}
 			
 			FSMNode od = dfa_.getDest(ot);
 			if (!stateMap1.containsKey(od)) {
-				stateMap1.put(od, new FSMNode(od.getType()));
+				stateMap1.put(od, new FSMNode(od.getType(), this.getTerminalIndex()));
 			}
 			
 			combined.addEdge(new FSMTransition(ot.getActiveRelations()), stateMap1.get(os), stateMap1.get(od));
@@ -445,28 +496,34 @@ public class VerbFSM implements Remappable<VerbFSM> {
 				if (os.getType().equals(StateType.START)) {
 					stateMap2.put(os, stateMap1.get(bridge));
 				} else {
-					stateMap2.put(os, new FSMNode(os.getType()));
+					stateMap2.put(os, new FSMNode(os.getType(), this.getTerminalIndex() + 1));
 				}
 			}
 			
 			FSMNode od = other.dfa_.getDest(ot);
 			if (!stateMap2.containsKey(od)) {
-				stateMap2.put(od, new FSMNode(od.getType()));
+				stateMap2.put(od, new FSMNode(od.getType(), this.getTerminalIndex() + 1));
 			}
 			
 			combined.addEdge(new FSMTransition(ot.getActiveRelations()), stateMap2.get(os), stateMap2.get(od));
 		}
 		
 		stateMap1.get(bridge).setType(StateType.INTERIOR);
-		
-		// Add self-loop to bridge
-		Vector<FSMTransition> inEdges = new Vector<FSMTransition>(combined.getInEdges(stateMap1.get(bridge)));
-		for (FSMTransition inEdge : inEdges) {
-			combined.addEdge(new FSMTransition(inEdge.getActiveRelations()), stateMap1.get(bridge), stateMap1.get(bridge));
-		}
+		stateMap1.get(bridge).setVerbSequenceIndex(this.getTerminalIndex() + 1);
 		
 		VerbFSM fusion = new VerbFSM(combined);
 		fusion.populateTerminals();
+		
+		fusion.startStates_.clear();
+		// Add all of my start states
+		for (FSMState start : startStates_) {
+			fusion.startStates_.add(new FSMState(stateMap1.get(Iterables.getOnlyElement(start.getStates()))));
+		}
+		// Then add the new start state
+		fusion.startStates_.add(new FSMState(stateMap1.get(bridge)));
+		
+		System.out.println(fusion.startStates_);
+		
 		fusion.toDot("fusion.dot", false);
 		
 		return fusion; 

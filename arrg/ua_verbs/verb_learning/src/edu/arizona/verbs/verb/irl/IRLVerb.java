@@ -10,6 +10,9 @@ import com.google.common.collect.Lists;
 import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.srv.PerformVerb.Response;
 import edu.arizona.verbs.main.Interface;
+import edu.arizona.verbs.mdp.StateConverter;
+import edu.arizona.verbs.planning.SpecialUCT;
+import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.shared.Relation;
@@ -34,7 +37,7 @@ public class IRLVerb implements Verb {
 	protected int samplesExp;
 	protected Matrix mu;
 	protected Matrix muExp;
-	protected int hor;
+	protected int horizon;
 	protected int dimensions;
 	protected Matrix muBarOne;
 	protected double epsilon;
@@ -47,20 +50,19 @@ public class IRLVerb implements Verb {
 		return tot;
 	}
 
-	// TODO: Have to fix this, arguments is the verb arguments not parameters
 	public IRLVerb(String word, ArrayList<String> arguments) {
 		verb_ = word;
 		arguments_ = arguments;
-		epsilon = Double.parseDouble(arguments.get(0));
-		hor = Integer.parseInt(arguments.get(1));
-		dimensions = Integer.parseInt(arguments.get(2));
-		discount = Integer.parseInt(arguments.get(3));
+		epsilon = 1.2; // Accuracy for weights: 0.01 or 0.001
+		// 0.5 for go
+		horizon = 15; // Horizon: 20/30
+		discount = 0.9; // Discount 0.9
 		samples = 0;
 		learning = true;
 		weights = new double[dimensions];
-		for(int x=0; x < dimensions; x++)
+		for(int x=0; x < dimensions; x++) {
 			weights[x] = 0.0;
-		
+		}
 	}
 	
 	@Override
@@ -69,7 +71,7 @@ public class IRLVerb implements Verb {
 	public void addPositiveInstance(List<OOMDPState> trace) {
 		if (teachingDone) { // This means we are in the autonomous phase
 			throw new RuntimeException("You said you were done teaching! You lied!");
-		} else { // This means we are in the training phase 
+		} else { // This means we are in the training phase
 			teacherTraces.add(trace);
 		}
 	}
@@ -82,6 +84,8 @@ public class IRLVerb implements Verb {
 		}
 		samplesExp = traces.size();
 
+		dimensions = traces.get(0)[0].length;
+		
 		muExp = new Matrix(dimensions,1);
 		for(int x=0; x < samplesExp; x++){
 			double dis = 1.0;
@@ -95,7 +99,6 @@ public class IRLVerb implements Verb {
 		teachingDone = true;
 	}
 
-	
 	protected double[][] toDouble(int [] s){
 		double [][]d = new double[s.length][1];
 		for(int x = 0; x < s.length; x++) {
@@ -132,6 +135,8 @@ public class IRLVerb implements Verb {
 	}
 	
 	private void agentEnd() {
+		System.out.println("THE BEGINNING OF THE END");
+		
 		if(!learning)  //convergence was already reached!
 			return;
 		Matrix realMu = mu; //mu.times(1.0/((double)samples));
@@ -155,17 +160,21 @@ public class IRLVerb implements Verb {
     		weights = muExp.minus(muBarOne).transpose().getArray()[0];
     	}
         double t =  muExp.minus(muBarOne).norm2();
-         ///System.err.println(t);
+        
+        System.out.println(">>>>>>>>> T: " + t);
+        
         if(t <  epsilon){
            System.out.println("DONE");
            learning = false;
            weights = oldWeights;
         }
-     /*   for(int x =0; x < weights.length; x++){
-        	System.out.print(weights[x] + " , ");
+        
+        List<Relation> relations = teacherTraces.get(0).get(0).getRelations();
+        System.out.println("WEIGHTS!");
+        for(int x =0; x < weights.length; x++){
+        	System.out.println(relations.get(x) + ": " + weights[x]);
         }
-        System.out.print("\n");
-	*/	
+//        System.out.print("\n");
 	
 	}
 
@@ -199,11 +208,11 @@ public class IRLVerb implements Verb {
 		
 		OOMDPState currentState = startState;
 		agentBegin(startState);
-		for (int i = 0; i < 30; i++) {
-			String action = null; // TODO: Plan if no action
+		for (int i = 0; i < horizon; i++) {
+			SpecialUCT uct = new SpecialUCT(this, environment, horizon - i);
+			String action = uct.runAlgorithm(currentState);
 			currentState = environment.simulateAction(currentState, action);
 			agentStep(currentState);
-			// TODO Get the next action, etc
 		}
 		agentEnd();
 	}
@@ -211,33 +220,65 @@ public class IRLVerb implements Verb {
 	public void train() {
 		Random r = new Random();
 		
-		for (int i = 0; i < 70; i++) {
+		for (int i = 0; i < 70 && learning; i++) {
 			// Sample a random start state from the teacher traces
 			OOMDPState startState = teacherTraces.get(r.nextInt(teacherTraces.size())).get(0);
-
 			// Run a trajectory from that start state
 			runAutonomousTrajectory(startState);
 		}
+		
+		convergenceAchieved = true;
 	}
 
-	// TODO This wasn't right before, but is it right now?
-	public double getReward(OOMDPState s) {
-		int[] si = stateToArray(s);
-		return dot(weights, toDouble(si)[0]); 
+	public double[] toDoubleArray(int[] ints) {
+		double[] doubles = new double[ints.length];
+		for (int i = 0; i < ints.length; i++) {
+			doubles[i] = ints[i];
+		}
+		
+		return doubles;
 	}
 	
-	public double getHeuristic(OOMDPState s) {
-		return 0.0; // IRL doesn't have one  TODO: But 0 isn't admissible!
+	public double getReward(OOMDPState s) {
+		int[] si = stateToArray(s);
+		return dot(weights, toDoubleArray(si)); 
 	}
 	
 	@Override
 	public Response perform(MDPState startState, int executionLimit) {
-		// TODO I'll fill this in, but I assume it will look basically 
-		// just like runAutonomousTrajectory but without updating anything
+		if (!convergenceAchieved) {
+			System.out.println("BEGIN IRL PERFORM");
+			System.out.println("BEGIN TEACH");
+			teach();
+			System.out.println("BEGIN TRAIN");
+			train();
+		}
+
+		Response response = new Response();
 		
-		// and of course we will do planning
+		Environment environment = Interface.getCurrentEnvironment();
 		
-		return null;
+		response.trace.add(startState);
+		
+		OOMDPState currentState = StateConverter.msgToState(startState);
+		int performHorizon = 15;
+		for (int i = 0; i < performHorizon; i++) {
+			SpecialUCT uct = new SpecialUCT(this, environment, performHorizon - i);
+			String action = uct.runAlgorithm(currentState);
+			currentState = environment.performAction(action);
+
+			response.actions.add(action);
+			response.trace.add(StateConverter.stateToMsg(currentState));
+		}
+		
+		response.actions.add(Action.TERMINATE);
+		
+		response.execution_success = true; 
+		response.execution_length = response.trace.size();
+		
+//		response.planning_time  // We'll do this later
+		
+		return response;
 	}
 
 	public int[][] traceToArray(List<OOMDPState> trace) {
@@ -246,7 +287,7 @@ public class IRLVerb implements Verb {
 		for (int i = 0; i < trace.size(); i++) {
 			List<Relation> relations = trace.get(i).getRelations();
 			for (int j = 0; j < relations.size(); j++) {
-				result[i][j] = (relations.get(i).value ? 1 : 0);
+				result[i][j] = (relations.get(j).value ? 1 : 0); // was an i?
 			}
 		}
 		
@@ -266,7 +307,8 @@ public class IRLVerb implements Verb {
 	
 	@Override
 	public boolean isReady() {
-		return convergenceAchieved;
+//		return convergenceAchieved;
+		return true; // Until we verify that train is working
 	}
 
 	

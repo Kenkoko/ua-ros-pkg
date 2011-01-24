@@ -1,4 +1,4 @@
-package edu.arizona.verbs.planning;
+package edu.arizona.verbs.planning.fsm;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 import com.google.common.collect.Lists;
 
 import edu.arizona.verbs.planning.data.PlanningReport;
-import edu.arizona.verbs.planning.shared.AbstractPlanner;
 import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.planning.shared.Policy.PolicyType;
@@ -25,7 +24,7 @@ import edu.arizona.verbs.verb.vfsm.VerbState;
  * An implementation of LRTDP (Labeled Real-Time Dynamic Programming) from (Bonet and Geffner, 2003)
  * adapted to VFSMs 
  */
-public class LRTDP extends AbstractPlanner {
+public class LRTDP extends FSMPlanner {
 	
 	public LRTDP(FSMVerb verb, Environment environment) {
 		super(verb, environment);

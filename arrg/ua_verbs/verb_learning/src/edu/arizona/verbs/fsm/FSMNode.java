@@ -19,6 +19,7 @@ public class FSMNode implements Comparable<FSMNode> {
 	private int id_;
 	private int minDist_ = -1; // The minimum distance to a good terminal
 	private String toString_;
+	private int verbSequenceIndex_ = 0;
 	
 	public FSMNode(StateType type) { 
 		type_ = type; 
@@ -26,6 +27,16 @@ public class FSMNode implements Comparable<FSMNode> {
 		if (type.equals(StateType.TERMINAL)) {
 			minDist_ = 0;
 		}
+		makeString();
+	}
+	
+	public FSMNode(StateType type, int sequenceIndex) { 
+		type_ = type; 
+		id_ = counter++;
+		if (type.equals(StateType.TERMINAL)) {
+			minDist_ = 0;
+		}
+		verbSequenceIndex_ = sequenceIndex;
 		makeString();
 	}
 	
@@ -63,6 +74,10 @@ public class FSMNode implements Comparable<FSMNode> {
 		return (minDist_ != -1);
 	}
 	
+	public void clearMinDist() {
+		minDist_ = -1;
+	}
+	
 	public void setMinDist(int minDist) {
 		minDist_ = minDist;
 		makeString();
@@ -72,13 +87,21 @@ public class FSMNode implements Comparable<FSMNode> {
 		return minDist_;
 	}
 	
+	public int getVerbSequenceIndex() {
+		return verbSequenceIndex_;
+	}
+	
+	public void setVerbSequenceIndex(int index) {
+		verbSequenceIndex_ = index;
+	}
+	
 	@Override
 	public String toString() {
 		return toString_; // Type is for debugging
 	}
 	
 	public String toDot() {
-		return "\t\"" + this.id_ + "\" [label=\"" + (this.toString() + minDist_)
+		return "\t\"" + this.id_ + "\" [label=\"" + (this.toString() + minDist_ + "_" + verbSequenceIndex_)
 				+ "\",style=\"filled\",color=\"" + getColor()
 				+ "\",fontcolor=\"" + "black" + "\"];\n";
 	}

@@ -63,12 +63,24 @@ public class Policy {
 		case Replan:
 			return Action.REPLAN;
 		case Standard:
-			for (int i = 0; i < mdpStates.size(); i++) {
-				if (mdpState.toString().equals(mdpStates.get(i).toString()) 
-					&& verbState.toString().equals(verbStates.get(i).toString())) {
-					return actions.get(i);
-				} 
+			// THIS IS AN IMPORTANT CHANGE TEST THIS THOROUGHLY
+
+			if (!mdpStates.isEmpty()) {
+				if (mdpState.toString().equals(mdpStates.get(0).toString())) {
+					mdpStates.remove(0);
+					return actions.remove(0);
+				} else {
+					mdpStates.clear(); // Policy is now invalid, replan
+				}
 			}
+			
+//			for (int i = 0; i < mdpStates.size(); i++) {
+//				if (mdpState.toString().equals(mdpStates.get(i).toString()) 
+//					&& verbState.toString().equals(verbStates.get(i).toString())) {
+//					mdpStates.remove(i);
+//					return actions.remove(i);
+//				} 
+//			}
 			return Action.REPLAN; // If agent fell off the path, he should replan
 		default:
 			throw new RuntimeException("IMPOSSIBLE POLICY TYPE");

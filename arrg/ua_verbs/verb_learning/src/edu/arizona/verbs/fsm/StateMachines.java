@@ -426,8 +426,39 @@ public class StateMachines {
 		DirectedGraph<FSMNode, FSMTransition> dfa = convertToDFA(nfa);
 		// And minimize
 		
-//		minimizeSlow(dfa);
+//		minimizeSlow(dfa); // TODO Is there a problem here? If so, why?
 		
 		return dfa;
+	}
+	
+	// TODO Also need to validate that FSM is a DAG somewhere
+	
+	// This is lame but the point is to see if the Jung version is buggy
+	public static int findMinDistToTerminal(DirectedGraph<FSMNode, FSMTransition> fsm, FSMNode s) {
+		
+		if (s.isTerminal()) {
+			return 0;
+		
+		} else if (fsm.getOutEdges(s).isEmpty()) {
+			if (s.getType().equals(StateType.START)) {
+				return Integer.MAX_VALUE; // return the max value
+			} else {
+				throw new RuntimeException("FSM IS MALFORMED: INTERIOR STATE HAS NO OUTGOING EDGES");
+			}
+			
+		} else {
+			int minDist = Integer.MAX_VALUE;
+			
+			for (FSMTransition t : fsm.getOutEdges(s)) {
+				FSMNode dest = fsm.getDest(t);
+				
+				if (!dest.equals(s)) { // Break self-loops
+					int dist = 1 + findMinDistToTerminal(fsm, dest);
+					minDist = Math.min(dist, minDist);
+				}
+			}
+			
+			return minDist;
+		}
 	}
 }
