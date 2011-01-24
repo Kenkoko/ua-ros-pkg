@@ -15,6 +15,7 @@ import ros.pkg.verb_learning.srv.PerformVerb;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
+import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.fsm.core.CorePath;
 import edu.arizona.verbs.main.Interface;
@@ -266,10 +267,12 @@ public abstract class AbstractVerb implements FSMVerb {
 				mdpState = Interface.getCurrentEnvironment().performAction(action);
 				verbState = fsmTransition(verbState, mdpState.getActiveRelations());
 				
-				for (OOMDPObjectState os : mdpState.getObjectStates()) {
-					if (os.getValue("x").startsWith("-")) {
-						System.err.println("SIMULATOR BLEW UP, REDOING THE WHOLE SHIZNIT");
-						return perform(startState, executionLimit);
+				if (Interface.getCurrentEnvironment() instanceof WW2DEnvironment) {
+					for (OOMDPObjectState os : mdpState.getObjectStates()) {
+						if (os.getValue("x").startsWith("-")) {
+							System.err.println("SIMULATOR BLEW UP, REDOING THE WHOLE SHIZNIT");
+							return perform(startState, executionLimit);
+						}
 					}
 				}
 				
