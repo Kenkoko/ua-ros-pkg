@@ -6,8 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Vector;
 
-import edu.arizona.verbs.planning.SearchPlanner;
 import edu.arizona.verbs.planning.data.SimulationResult;
+import edu.arizona.verbs.planning.fsm.SearchPlanner;
 import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.planning.state.PlanningState;
 

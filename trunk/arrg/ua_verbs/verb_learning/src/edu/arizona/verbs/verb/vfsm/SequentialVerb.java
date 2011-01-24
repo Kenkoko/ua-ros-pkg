@@ -16,6 +16,7 @@ import org.yaml.snakeyaml.Yaml;
 import com.google.common.collect.Maps;
 
 import edu.arizona.verbs.fsm.VerbFSM;
+import edu.arizona.verbs.fsm.FSMNode.StateType;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 import edu.arizona.verbs.verb.VerbBinding;
 
@@ -83,14 +84,19 @@ public class SequentialVerb extends AbstractVerb {
 			}
 		}
 		
-		posFSM_.toDot(getBaseVerb().getVerbFolder() + "intermediate.dot", false);
+//		posFSM_.toDot(getBaseVerb().getVerbFolder() + "intermediate.dot", false);
 		
 		// Now need to add in the FSM based on instances specific for this verb
-		if (!posCorePaths_.isEmpty()) {
-			posFSM_ = new VerbFSM(posCorePaths_);
-		}
+		// TODO ADD IN, not replace!!
+//		if (!posCorePaths_.isEmpty()) {
+//			posFSM_ = new VerbFSM(posCorePaths_);
+//		}
 		
 		posFSM_.toDot(getBaseVerb().getVerbFolder() + "final.dot", false);
+		
+		// TODO Need to keep track of which subverb we are doing and use the appropriate neg fsm
+		// For now we will just ignore the subverbs neg fsms and make our own
+		negFSM_ = new VerbFSM(negCorePaths_);
 	}
 
 	@Override
@@ -137,6 +143,7 @@ public class SequentialVerb extends AbstractVerb {
 		return posFSM_.getMinDistToTerminal(verbState.posState);
 	}
 
+	// TODO: We can safely lift this now
 	@Override
 	public VerbState fsmTransition(VerbState verbState, Set<String> activeRelations) {
 		// TODO: This method needs to use the correct negFSM dynamically based on the positive state

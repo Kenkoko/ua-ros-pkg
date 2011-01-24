@@ -23,6 +23,7 @@ import ros.pkg.verb_learning.srv.ForgetVerb;
 import ros.pkg.verb_learning.srv.LoadVerbs;
 import ros.pkg.verb_learning.srv.PerformVerb;
 import ros.pkg.verb_learning.srv.UpdateVerb;
+import edu.arizona.simulator.ww2d.external.SimulatorFailureException;
 import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.environments.GazeboEnvironment;
 import edu.arizona.verbs.mdp.StateConverter;
@@ -32,6 +33,7 @@ import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
 import edu.arizona.verbs.verb.VerbBinding;
 import edu.arizona.verbs.verb.bayes.MaximumLikelihoodVerb;
+import edu.arizona.verbs.verb.irl.IRLVerb;
 import edu.arizona.verbs.verb.vfsm.AtomicVerb;
 import edu.arizona.verbs.verb.vfsm.FSMVerb;
 import edu.arizona.verbs.verb.vfsm.SequentialVerb;
@@ -45,7 +47,7 @@ public class Interface {
 	private static Environment currentEnvironment = null;
 	public static Environment getCurrentEnvironment() { return currentEnvironment; }
 	
-	public enum VerbType { FSM, NaiveBayes };
+	public enum VerbType { FSM, ML, IRL };
 	public static VerbType currentVerbType = VerbType.FSM;
 	
 	// Maps: Binding -> Argument
@@ -95,8 +97,13 @@ public class Interface {
 					case FSM:
 						verb = new AtomicVerb(verbName, request.verb.arguments);
 						break;
-					case NaiveBayes:
+					
+					case ML:
 						verb = new MaximumLikelihoodVerb(verbName, request.verb.arguments);
+						break;
+						
+					case IRL:
+						verb = new IRLVerb(verbName, request.verb.arguments);
 						break;
 					}
 					
@@ -171,14 +178,31 @@ public class Interface {
 				if (verb.isReady()) {
 					Map<String,String> argumentMap = extractNameMap(request.verb);
 					
-					switch (currentVerbType) {
-					case FSM:
-						FSMVerb remapped = ((FSMVerb) verb).remap(argumentMap);
-						return remapped.perform(request.start_state, request.execution_limit);
-					case NaiveBayes:
-						MaximumLikelihoodVerb remapped2 = ((MaximumLikelihoodVerb) verb).remap(argumentMap);
-						return remapped2.perform(request.start_state, request.execution_limit);
-					default:
+					try {
+						System.out.println(currentVerbType);
+					
+						
+						switch (currentVerbType) {
+						case FSM:
+							FSMVerb remapped = ((FSMVerb) verb).remap(argumentMap);
+							return remapped.perform(request.start_state, request.execution_limit);
+						
+						case ML:
+							MaximumLikelihoodVerb remapped2 = ((MaximumLikelihoodVerb) verb).remap(argumentMap);
+							return remapped2.perform(request.start_state, request.execution_limit);
+						
+						case IRL:
+							IRLVerb irl = (IRLVerb) verb;
+							return irl.perform(request.start_state, request.execution_limit);
+							
+						default:
+							return new PerformVerb.Response();
+						}
+					
+					} catch (SimulatorFailureException sfe) {
+						// For now, we just abandon ship
+						// Later we will want to retry
+						sfe.printStackTrace();
 						return new PerformVerb.Response();
 					}
 					
@@ -282,7 +306,9 @@ public class Interface {
 		currentEnvironment = Simulators.valueOf(args[0]).create();
 		
 		if (args[1].equals("nb")) {
-			currentVerbType = VerbType.NaiveBayes;
+			currentVerbType = VerbType.ML;
+		} else if (args[1].equals("irl")) {
+			currentVerbType = VerbType.IRL;
 		}
 		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
@@ -298,6 +324,7 @@ public class Interface {
 		nh.advertiseService("verb_learning/perform_action", new PerformAction(), performAction);
 		
 		logger.info("Initialization Complete, Services Advertised.");
+		logger.info("Environment is " + currentEnvironment.getClass().getSimpleName() + ", Verb Type is " + currentVerbType);
 		
 		ros.spin();
 	}

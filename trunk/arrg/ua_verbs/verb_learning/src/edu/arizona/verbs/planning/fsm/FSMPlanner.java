@@ -1,4 +1,4 @@
-package edu.arizona.verbs.planning.shared;
+package edu.arizona.verbs.planning.fsm;
 
 import java.util.HashMap;
 import java.util.List;
@@ -6,13 +6,15 @@ import java.util.Map;
 import java.util.Vector;
 
 import edu.arizona.verbs.planning.data.SimulationResult;
+import edu.arizona.verbs.planning.shared.Action;
+import edu.arizona.verbs.planning.shared.Planner;
 import edu.arizona.verbs.planning.state.PlanningState;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.vfsm.FSMVerb;
 import edu.arizona.verbs.verb.vfsm.VerbState;
 
-public abstract class AbstractPlanner implements Planner {
+public abstract class FSMPlanner implements Planner {
 
 	protected FSMVerb verb_;
 	protected Environment environment_;
@@ -20,7 +22,7 @@ public abstract class AbstractPlanner implements Planner {
 	
 	protected Map<String, PlanningState> knownStates_ = new HashMap<String, PlanningState>();
 	
-	public AbstractPlanner(FSMVerb verb, Environment environment) {
+	public FSMPlanner(FSMVerb verb, Environment environment) {
 		verb_ = verb;
 		environment_ = environment;
 

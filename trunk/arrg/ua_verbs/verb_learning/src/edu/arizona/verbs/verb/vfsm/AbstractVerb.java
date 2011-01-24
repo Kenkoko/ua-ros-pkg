@@ -19,12 +19,13 @@ import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.fsm.core.CorePath;
 import edu.arizona.verbs.main.Interface;
 import edu.arizona.verbs.mdp.StateConverter;
-import edu.arizona.verbs.planning.Planners;
 import edu.arizona.verbs.planning.data.PlanningReport;
+import edu.arizona.verbs.planning.fsm.Planners;
 import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.planning.shared.Planner;
 import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.planning.shared.Policy.PolicyType;
+import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
 
 public abstract class AbstractVerb implements FSMVerb {
@@ -190,7 +191,7 @@ public abstract class AbstractVerb implements FSMVerb {
 	
 	@Override
 	public VerbState getStartState() {
-		return new VerbState(posFSM_.getStartState(), negFSM_.getStartState());
+		return new VerbState(posFSM_.getGlobalStartState(), negFSM_.getGlobalStartState());
 	}
 	
 	@Override
@@ -216,6 +217,10 @@ public abstract class AbstractVerb implements FSMVerb {
 		long totalPlanningTime = 0;
 		boolean executionSuccess = false;
 		
+		// This is for debugging
+		ArrayList<VerbState> verbStates = new ArrayList<VerbState>();
+		verbStates.add(verbState);
+		
 		// Main loop
 		int numSteps = 0;
 		while (numSteps < executionLimit) {
@@ -237,16 +242,16 @@ public abstract class AbstractVerb implements FSMVerb {
 				PlanningReport report = planner.runAlgorithm(mdpState, verbState); // re-plan
 				totalPlanningTime += report.getElaspedTime();
 				
-				if (totalPlanningTime > 30*60*1000) { // If we've spent over 2 minutes planning, can it
-					action = Action.TERMINATE;
-					executionSuccess = false;
-					break;
-				} else {
+//				if (totalPlanningTime > 30*60*1000) { // If we've spent over 2 minutes planning, can it
+//					action = Action.TERMINATE;
+//					executionSuccess = false;
+//					break;
+//				} else {
 					policy = report.getPolicy();
-					action = policy.getAction(mdpState, verbState);
-					
 					policy.print();
-				}
+					
+					action = policy.getAction(mdpState, verbState);
+//				}
 			}
 			
 			// Record the action that we performed (to make validation easier)
@@ -261,7 +266,17 @@ public abstract class AbstractVerb implements FSMVerb {
 				mdpState = Interface.getCurrentEnvironment().performAction(action);
 				verbState = fsmTransition(verbState, mdpState.getActiveRelations());
 				
-				System.out.println("THIS: " + verbState + " " + mdpState.getActiveRelations());
+				for (OOMDPObjectState os : mdpState.getObjectStates()) {
+					if (os.getValue("x").startsWith("-")) {
+						System.err.println("SIMULATOR BLEW UP, REDOING THE WHOLE SHIZNIT");
+						return perform(startState, executionLimit);
+					}
+				}
+				
+				verbStates.add(verbState);
+				
+				System.out.println("****** STATE after " + numSteps + " steps: " + 
+								   verbState + " " + mdpState);
 				"a".length();
 			}			
 			
@@ -274,6 +289,13 @@ public abstract class AbstractVerb implements FSMVerb {
 		response.execution_success = executionSuccess;
 		response.execution_length = numSteps;
 		response.planning_time = totalPlanningTime;
+		
+		logger.info("VERB STATES: ");
+		int i = 0;
+		for (VerbState vs : verbStates) {
+			logger.debug(i + ": " + vs);
+			i++;
+		}
 		
 		return response;
 	}

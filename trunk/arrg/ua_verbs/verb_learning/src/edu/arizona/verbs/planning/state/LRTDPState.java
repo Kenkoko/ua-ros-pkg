@@ -7,6 +7,7 @@ import java.util.Vector;
 import org.apache.log4j.Logger;
 
 import edu.arizona.verbs.planning.data.SimulationResult;
+import edu.arizona.verbs.planning.fsm.FSMPlanner;
 import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.planning.shared.Planner;
 import edu.arizona.verbs.shared.OOMDPState;
@@ -21,7 +22,7 @@ public class LRTDPState extends PlanningState {
 	
 	private int simulationCount_ = 0; // This is the number of times we have simulated all outgoing transitions from this state
 	
-	public LRTDPState(OOMDPState mdpState, VerbState verbState, Planner planner) {
+	public LRTDPState(OOMDPState mdpState, VerbState verbState, FSMPlanner planner) {
 		super(mdpState, verbState, planner);
 		
 		solved = (isTerminal()); // Goal state are automatically solved

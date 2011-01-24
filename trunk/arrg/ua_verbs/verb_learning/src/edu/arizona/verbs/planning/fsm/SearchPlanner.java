@@ -1,4 +1,4 @@
-package edu.arizona.verbs.planning;
+package edu.arizona.verbs.planning.fsm;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 
 import edu.arizona.verbs.planning.data.PlanningReport;
 import edu.arizona.verbs.planning.search.SearchNode;
-import edu.arizona.verbs.planning.shared.AbstractPlanner;
 import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.planning.shared.Policy.PolicyType;
 import edu.arizona.verbs.planning.state.PlanningState;
@@ -22,7 +21,7 @@ import edu.arizona.verbs.verb.vfsm.VerbState;
 /*
  * An implementation of the A* search algorithm for planning with VFSMs
  */
-public class SearchPlanner extends AbstractPlanner {
+public class SearchPlanner extends FSMPlanner {
 
 	private static Logger logger = Logger.getLogger(SearchPlanner.class);
 	

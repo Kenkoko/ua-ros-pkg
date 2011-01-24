@@ -1,4 +1,4 @@
-package edu.arizona.verbs.planning;
+package edu.arizona.verbs.planning.fsm;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +12,6 @@ import com.google.common.collect.Iterables;
 
 import edu.arizona.verbs.planning.data.PlanningReport;
 import edu.arizona.verbs.planning.data.SimulationResult;
-import edu.arizona.verbs.planning.shared.AbstractPlanner;
 import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.planning.shared.Policy.PolicyType;
@@ -22,10 +21,10 @@ import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.vfsm.FSMVerb;
 import edu.arizona.verbs.verb.vfsm.VerbState;
 
-public class UCT extends AbstractPlanner {
+public class UCT extends FSMPlanner {
 	
 	private static int maxIterations = 500;
-	private static double gamma = 0.9;
+	private static double gamma = 0.9; // 0.8 seemed to work for go
 	
 	private HashMap<String, HashMap<String, Double>> q_ = new HashMap<String, HashMap<String, Double>>();
 	// Map state+depth+action to counts of states
@@ -40,7 +39,7 @@ public class UCT extends AbstractPlanner {
 		super(verb, environment);
 		setMaxDepth(maxDepth);
 	}
-
+	
 	public void setMaxDepth(int maxDepth) {
 		this.maxDepth_ = maxDepth;
 	}
@@ -64,20 +63,34 @@ public class UCT extends AbstractPlanner {
 		// ONLY FOR TESTING DO NOT LEAVE THIS ON NO NO NO NO NO
 //		maxDepth_ = 20;
 		
+		boolean goDeep = false;
+		
 		goalCounter = 0;
 		bestState = Integer.MAX_VALUE;
+		int goalTotal = 0;
 		for (int i = 1; i <= maxIterations; i++) {
 			environment_.reset();
 			
 			if (i % 50 == 0) {
 				System.out.println(">>> BEGIN TRIAL " + i + " (Reached Goal " + goalCounter + " of last 50 trials, got within " + bestState + " of goal)");
+				
+				if (goalCounter == 50) {
+					goDeep = true;
+					break;
+				}
+				
+				goalTotal += goalCounter;
 				goalCounter = 0;
+				bestState = Integer.MAX_VALUE;
 			}
 			
 			uct(start, maxDepth_);
 		}
 		
-		return new PlanningReport(recoverPolicy(start), true, (System.currentTimeMillis() - startTime));
+		return new PlanningReport(recoverPolicy(start, goDeep), true, (System.currentTimeMillis() - startTime));
+		
+//		return new PlanningReport(recoverPolicy(start, goalTotal > 100), true, (System.currentTimeMillis() - startTime));
+//		return new PlanningReport(recoverPolicy(start, false), true, (System.currentTimeMillis() - startTime));
 	}
 
 	public static int goalCounter = 0;
@@ -116,7 +129,8 @@ public class UCT extends AbstractPlanner {
 				double qValue = getQ(s, a.toString(), d);
 				String nasdString = lookupString(s, a, d);
 				if (nasd_.getCount(nasdString) > 0) {
-					qValue += Math.sqrt(2 * Math.log(nsd_.getCount(sdString)) / nasd_.getCount(nasdString));
+					qValue += Math.sqrt(Math.log(nsd_.getCount(sdString)) / nasd_.getCount(nasdString));
+//					qValue += Math.sqrt(2 * Math.log(nsd_.getCount(sdString)) / nasd_.getCount(nasdString));
 				}
 				if (qValue < minQ) {
 					bestActions.clear();
@@ -161,16 +175,44 @@ public class UCT extends AbstractPlanner {
 		}		
 	}
 	
-	public Policy recoverPolicy(PlanningState start) {
+	public Policy recoverPolicy(PlanningState start, boolean goDeep) { // return more than state ahead
 		List<PlanningState> states = new ArrayList<PlanningState>();
 		List<Action> actions = new ArrayList<Action>();
-		
+
 		PlanningState current = start;
+		
+		// This is the traditional UCT behavior
+		if (!goDeep) {
+			List<Action> bestActions = new ArrayList<Action>();
+			double minQ = Double.MAX_VALUE;
+			for (Action a : actions_) {
+				double qValue = getQ(current, a.toString(), maxDepth_);
+				
+				if (qValue < minQ) {
+					bestActions.clear();
+					bestActions.add(a);
+					minQ = qValue;
+				} else if (qValue == minQ) {
+					bestActions.add(a);
+				}
+				
+//				System.out.println(a + ": " + qValue);
+			}
+			
+			states.add(current);
+			
+			Action aStar = bestActions.get(r_.nextInt(bestActions.size()));
+			actions.add(aStar);
+			
+			return new Policy(states, actions);
+		}
+		
+		// Otherwise, cache a policy as deep as we can go while still having tried each action
 		for (int d = maxDepth_; d > 0; d--) {
-			System.out.println("RECOVER POLICY CURRENT STATE: " + current.getVerbState());
+//			System.out.println("RECOVER POLICY CURRENT STATE: " + current.getVerbState());
 			
 			if (current.getVerbState().isGoodTerminal() || d == 0) {
-				System.out.println("TERMINAL REACHED! ");
+//				System.out.println("TERMINAL REACHED! ");
 				
 				states.add(current);
 				actions.add(Action.TERMINATE_ACTION);
@@ -196,7 +238,7 @@ public class UCT extends AbstractPlanner {
 					bestActions.add(a);
 				}
 				
-				System.out.println(a + ": " + qValue);
+//				System.out.println(a + ": " + qValue);
 			}
 			
 			states.add(current);
@@ -207,7 +249,8 @@ public class UCT extends AbstractPlanner {
 			String lookupString = lookupString(current, aStar, d);
 			
 			if (!t_.containsKey(lookupString)) {
-				break; // Why is this happening?
+				throw new RuntimeException("THIS HAPPENED");
+//				break; // Is this still happening?
 			} else {
 				HashBag<String> nextStateCounts = t_.get(lookupString);
 				int max = Integer.MIN_VALUE;
@@ -222,7 +265,7 @@ public class UCT extends AbstractPlanner {
 	
 				String stateString = Iterables.getLast(Splitter.on("|").split(mostLikelyNextState));
 				current = knownStates_.get(stateString);
-				System.out.println(current);
+//				System.out.println(current);
 			}
 		}
 		
