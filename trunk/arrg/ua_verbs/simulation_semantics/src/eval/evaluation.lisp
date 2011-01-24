@@ -1,6 +1,6 @@
 (in-package :simsem)
 
-(defparameter *execution-limit* 50)
+(defparameter *execution-limit* 30)
 
 ;;===================================================================
 
@@ -31,7 +31,8 @@
                  
 ;;===================================================================
 
-(defun make-learning-curve (domain verb-word num-trials &key (min-training-size 1) (max-training-size nil) (scoring-function 'human-scorer))
+(defun make-learning-curve (domain verb-word num-trials 
+                            &key (min-training-size 1) (max-training-size nil) (scoring-function 'human-scorer))
   (let* ((training (make-training domain verb-word)))
     (loop for i from min-training-size upto (if max-training-size max-training-size (length training))
        collect (make-learning-point domain verb-word i num-trials scoring-function))))
@@ -67,12 +68,12 @@
     (format t "Begin Trajectory~%")
     (loop for instance in training-set
        for i from 1
-       ;for student-result = (run-test verb (first instance) scoring-function)
-       ;do (format t "~%============ Teaching Loop Iteration ~a~%" i)
-       ;if (eq :accepted (accepted-of student-result))
-       ;do (update-verb-with-trace verb (trace-of student-result) (argument-names (first instance)))
-       ;else if (eq :rejected (accepted-of student-result))
-       ;do (update-verb-with-negative-trace verb (trace-of student-result) (argument-names (first instance)))
+       for student-result = (run-test verb (first instance) scoring-function)
+       do (format t "~%============ Teaching Loop Iteration ~a~%" i)
+       if (eq :accepted (accepted-of student-result))
+       do (update-verb-with-trace verb (trace-of student-result) (argument-names (first instance)))
+       else if (eq :rejected (accepted-of student-result))
+       do (update-verb-with-negative-trace verb (trace-of student-result) (argument-names (first instance)))
        do (format t "Presenting teacher's demonstration~%") 
          (present-training-instance verb-word instance)
          (format t "Testing robot performance...~%")
@@ -162,32 +163,13 @@
   (format t ">>> Accept student's performance?~%")
   (read-accepted))
 
-#+ignore(defun simple-gz-go-scorer (result)
-  (let* ((trace (verb_learning-srv:trace-val result))
-         (last-state (aref trace (- (length trace) 1))))
-    (format t "=========================~%SCORING~%")
-    (loop with contact-count = 0
-       for relation across (oomdp_msgs-msg:relations-val last-state)
-       do (format t "~a~%" relation)
-       if (string-equal "Contact" (oomdp_msgs-msg:relation-val relation))
-       do (incf contact-count)
-       finally (return (if (eq contact-count 2)
-                           :accepted
-                           :neither)))))
-
 (defun ww2d-go-scorer (result)
   (format t "~%~%+++++++++++++++++++++++++++++++++~%~%")
 
   (loop with trace = (verb_learning-srv:trace-val result)
-     ;with actions = (verb_learning-srv:actions-val result)
      with step = 'approaching
      for state across trace
-     ;for action across actions
      for in-contact? = (contains-relation state "Collision" '("person" "place"))
-
-     ;do ;(format t "~a~%" state) 
-       ;(print-relations state)
-       ;(format t ">>> ACTION: ~a~%" action)
 
      if (eq step 'approaching)
      do (if in-contact?
@@ -200,6 +182,19 @@
      finally (return (if (eq step 'contact)
                          :accepted
                          :neither))))
+
+(defun ww2d-intercept-scorer (result)
+  (format t "~%~%+++++++++++++++++++++++++++++++++~%~%")
+
+  (loop with trace = (verb_learning-srv:trace-val result)
+     for state across trace
+     for met-enemy? = (contains-relation state "Collision" '("person" "enemy"))
+     for enemy-at-goal? = (contains-relation state "Collision" '("enemy" "place"))
+     do (cond (enemy-at-goal?
+               (return-from ww2d-intercept-scorer :rejected))
+              (met-enemy?
+               (return-from ww2d-intercept-scorer :accepted))))
+  :neither)
 
 (defun gz-go-scorer (result)
   (loop with trace = (verb_learning-srv:trace-val result)
@@ -214,7 +209,7 @@
                          :accepted
                          :neither))))
 
-(defun new-gz-deliver-scorer (result)
+(defun gz-deliver-scorer (result)
   (loop with trace = (verb_learning-srv:trace-val result)
      with step = 'approaching
      for state across trace
@@ -231,17 +226,17 @@
                (cond (robot-has-item?
                       (setf step 'carrying))
                      ((not robot-at-item?)
-                      (return-from new-gz-deliver-scorer :rejected)))) ;; left the item without picking it up 
+                      (return-from gz-deliver-scorer :rejected)))) ;; left the item without picking it up 
                                        
               ((eq step 'carrying)
                (if (not robot-has-item?) 
                    (if robot-at-goal?
                        (setf step 'delivered)
-                       (return-from new-gz-deliver-scorer :rejected)))) ;; dropped the item away from the goal
+                       (return-from gz-deliver-scorer :rejected)))) ;; dropped the item away from the goal
                
               ((eq step 'delivered)
                (if (not robot-at-goal?)
-                   (return-from new-gz-deliver-scorer :rejected))) ;; left the goal after delivery
+                   (return-from gz-deliver-scorer :rejected))) ;; left the goal after delivery
               )
      finally (progn
                (format t ">>>>> STEP: ~a~%" step)
@@ -249,57 +244,6 @@
                  (return :accepted)
                  (return :neither))))
 )
-
-;; This has been deprecated
-;; TODO: Is there an issue with the last deliver test?
-;; TODO: What if the robot starts at the object - will our visit-counts work?
-#+ignore(defun gz-deliver-scorer (result)
-  (let* ((trace (vec-to-list (verb_learning-srv:trace-val result)))
-         (actions (vec-to-list (verb_learning-srv:actions-val result))))
-    (format t "~a~%" actions)
-    ;; Reject if more/less than one drop
-    ;; Actually, this is too strong, drop could be performed with nothing in hand
-    ;(unless (eq 1 (count "drop" actions :test 'string-equal))
-    ; (return-from gz-deliver-scorer :rejected))
-    ;; Reject if continues past the drop
-    (unless (string-equal "drop" (nth (- (length actions) 2) actions))
-      (return-from gz-deliver-scorer :rejected))
-    ;; TODO: Check last state is drop at goal state
-    ;; TODO: Check no revisit of object
-    (loop with was-holding = nil
-       with holding-count = 0
-       with was-at-object = nil
-       with object-visit-count = 0
-       with was-at-goal = nil
-       with goal-visit-count = 0
-       for state in trace
-       for action in actions
-       for is-holding = (contains-relation state "Carrying" '("robot_description" "item"))
-       for is-at-object = (contains-relation state "Contact" '("robot_description" "item"))
-       for is-at-goal = (contains-relation state "Contact" '("item" "destination"))
-       do (cond ((and is-holding (not was-holding))
-                 (incf holding-count)
-                 (if (> holding-count 1)
-                     (return-from gz-deliver-scorer :rejected))))
-         (cond ((and is-at-object (not was-at-object))
-                (incf object-visit-count)
-                (if (> object-visit-count 1)
-                    (return-from gz-deliver-scorer :rejected))))
-         (cond ((and (and is-at-goal (not was-at-goal))
-                     (> holding-count 0)) ;; Only count if we have already picked up the object 
-                (incf goal-visit-count)
-                (if (> goal-visit-count 1)
-                    (return-from gz-deliver-scorer :rejected))
-                (unless (string-equal action "drop")
-                  (return-from gz-deliver-scorer :rejected))))
-         (setf was-holding is-holding)
-         (setf was-at-object is-at-object)
-         (setf was-at-goal is-at-goal)
-       finally (if (or (eq goal-visit-count 0)
-                       (eq object-visit-count 0)
-                       (eq holding-count 0))
-                   (return-from gz-deliver-scorer :neither)))
-    :accepted))
 
 ;;==============================================================================
 
