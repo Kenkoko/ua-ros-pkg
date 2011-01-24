@@ -24,7 +24,7 @@ import edu.arizona.verbs.verb.vfsm.VerbState;
 public class UCT extends FSMPlanner {
 	
 	private static int maxIterations = 500;
-	private static double gamma = 0.9; // 0.8 seemed to work for go
+	private static double gamma = 0.85; // 0.8 seemed to work for go
 	
 	private HashMap<String, HashMap<String, Double>> q_ = new HashMap<String, HashMap<String, Double>>();
 	// Map state+depth+action to counts of states
@@ -60,9 +60,6 @@ public class UCT extends FSMPlanner {
 			return new PlanningReport(new Policy(PolicyType.Terminate), true, (System.currentTimeMillis() - startTime));
 		}
 
-		// ONLY FOR TESTING DO NOT LEAVE THIS ON NO NO NO NO NO
-//		maxDepth_ = 20;
-		
 		boolean goDeep = false;
 		
 		goalCounter = 0;
@@ -74,7 +71,7 @@ public class UCT extends FSMPlanner {
 			if (i % 50 == 0) {
 				System.out.println(">>> BEGIN TRIAL " + i + " (Reached Goal " + goalCounter + " of last 50 trials, got within " + bestState + " of goal)");
 				
-				if (goalCounter == 50) {
+				if (goalTotal > 100) {
 					goDeep = true;
 					break;
 				}

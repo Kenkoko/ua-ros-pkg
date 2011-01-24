@@ -242,16 +242,16 @@ public abstract class AbstractVerb implements FSMVerb {
 				PlanningReport report = planner.runAlgorithm(mdpState, verbState); // re-plan
 				totalPlanningTime += report.getElaspedTime();
 				
-//				if (totalPlanningTime > 30*60*1000) { // If we've spent over 2 minutes planning, can it
-//					action = Action.TERMINATE;
-//					executionSuccess = false;
-//					break;
-//				} else {
+				if (totalPlanningTime > 2*60*1000) { // If we've spent over 2 minutes planning, can it
+					action = Action.TERMINATE;
+					executionSuccess = false;
+					break;
+				} else {
 					policy = report.getPolicy();
 					policy.print();
 					
 					action = policy.getAction(mdpState, verbState);
-//				}
+				}
 			}
 			
 			// Record the action that we performed (to make validation easier)
