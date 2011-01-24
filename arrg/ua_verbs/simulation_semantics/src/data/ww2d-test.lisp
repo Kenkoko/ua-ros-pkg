@@ -1,5 +1,137 @@
 (in-package :simsem)
 
+(defparameter *ww2d-intercept-tests*
+  (list 
+   ;; Test 1: Below, facing enemy
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("55" "55" "-3" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "enemy"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("40" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 2: Above, facing enemy
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("55" "45" "3" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "enemy"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("40" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 3: In line, facing the enemy (easy!) 
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("55" "50" "4" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "enemy"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("40" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 4: Below, facing due north 
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("55" "55" "-2" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "enemy"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("40" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 5: Above, facing due south 
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("55" "45" "2" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "enemy"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("40" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 6: Behind at an angle
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("45" "45" "1" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "enemy"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 7: Behind
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("47" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "enemy"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("53" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
+    ;; Test 8: near the goal
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("65" "40" "3" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "enemy"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("40" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
+))
+
 (defparameter *ww2d-go-via-tests*
   (list 
    ;; Training 1: Both ahead, close together
@@ -269,4 +401,5 @@
 
 (defun get-ww2d-tests (verb)
   (cond ((string-equal verb "go") *ww2d-go-tests*)
-        ((string-equal verb "go-via") *ww2d-go-via-tests*)))
+        ((string-equal verb "go-via") *ww2d-go-via-tests*)
+        ((string-equal verb "intercept") *ww2d-intercept-tests*)))
