@@ -230,14 +230,17 @@ public class MaximumLikelihoodVerb implements Verb, Remappable<MaximumLikelihood
 				if (end <= min) { // It seems that we get 1 a lot
 					action = "TERMINATE";
 					maxFound = true;
+					break;
 				}
 			}
 
 			// Perform the action
-			OOMDPState nextState = environment.performAction(action);
-			response.actions.add(action);
-			response.trace.add(StateConverter.stateToMsg(nextState));
-			numSteps++;
+			if (!action.equals("REPLAN")) {
+				OOMDPState nextState = environment.performAction(action);
+				response.actions.add(action);
+				response.trace.add(StateConverter.stateToMsg(nextState));
+				numSteps++;
+			}
 		}
 		
 		response.actions.add("TERMINATE");
