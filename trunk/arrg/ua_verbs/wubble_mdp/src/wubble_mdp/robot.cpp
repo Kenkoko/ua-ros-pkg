@@ -150,22 +150,22 @@ vector<Relation> Robot::computePredicates()
   names.push_back(name_);
 
   bool forward = (x_ != last_x_ || y_ != last_y_);
-  result.push_back(wubble_mdp::makeRelation("Forward", names, forward));
+//  result.push_back(wubble_mdp::makeRelation("Forward", names, forward));
   bool turned = (orientation_ != last_orientation_);
   result.push_back(wubble_mdp::makeRelation("Turned", names, turned));
   result.push_back(wubble_mdp::makeRelation("Moved", names, (forward || turned)));
-  if (turned)
-  {
-    double delta_angle = wubble_mdp::deltaAngle(orientation_, last_orientation_);
-    bool left = (delta_angle > 0);
-    result.push_back(wubble_mdp::makeRelation("Left", names, left));
-    result.push_back(wubble_mdp::makeRelation("Right", names, !left));
-  }
-  else
-  {
-    result.push_back(wubble_mdp::makeRelation("Left", names, false));
-    result.push_back(wubble_mdp::makeRelation("Right", names, false));
-  }
+//  if (turned)
+//  {
+//    double delta_angle = wubble_mdp::deltaAngle(orientation_, last_orientation_);
+//    bool left = (delta_angle > 0);
+//    result.push_back(wubble_mdp::makeRelation("Left", names, left));
+//    result.push_back(wubble_mdp::makeRelation("Right", names, !left));
+//  }
+//  else
+//  {
+//    result.push_back(wubble_mdp::makeRelation("Left", names, false));
+//    result.push_back(wubble_mdp::makeRelation("Right", names, false));
+//  }
 
   // TEMPORARILY DISABLED
   //  vector<string> directions;
