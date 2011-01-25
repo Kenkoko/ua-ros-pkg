@@ -12,6 +12,7 @@ import ros.pkg.verb_learning.srv.PerformVerb.Response;
 import edu.arizona.verbs.main.Interface;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.planning.SpecialUCT;
+import edu.arizona.verbs.planning.ValueIteration;
 import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
@@ -53,14 +54,14 @@ public class IRLVerb implements Verb {
 	public IRLVerb(String word, ArrayList<String> arguments) {
 		verb_ = word;
 		arguments_ = arguments;
-		epsilon = 1.2; // Accuracy for weights: 0.01 or 0.001
-		// 0.5 for go
-		horizon = 15; // Horizon: 20/30
+//		epsilon = 3.0; // deliver
+		epsilon = 3.0; // go
+		horizon = 10; // Horizon: 
 		discount = 0.9; // Discount 0.9
 		samples = 0;
 		learning = true;
 		weights = new double[dimensions];
-		for(int x=0; x < dimensions; x++) {
+		for(int x = 0; x < dimensions; x++) {
 			weights[x] = 0.0;
 		}
 	}
@@ -208,9 +209,15 @@ public class IRLVerb implements Verb {
 		
 		OOMDPState currentState = startState;
 		agentBegin(startState);
+		
+		ValueIteration vi = new ValueIteration(environment, this, 0.9);
+		vi.populate(startState, horizon);
+		vi.iterate(0.0001, 100000);
+		
 		for (int i = 0; i < horizon; i++) {
-			SpecialUCT uct = new SpecialUCT(this, environment, horizon - i);
-			String action = uct.runAlgorithm(currentState);
+//			SpecialUCT uct = new SpecialUCT(this, environment, horizon - i);
+//			String action = uct.runAlgorithm(currentState);
+			String action = vi.getAction(currentState);
 			currentState = environment.simulateAction(currentState, action);
 			agentStep(currentState);
 		}
@@ -261,10 +268,15 @@ public class IRLVerb implements Verb {
 		response.trace.add(startState);
 		
 		OOMDPState currentState = StateConverter.msgToState(startState);
-		int performHorizon = 15;
-		for (int i = 0; i < performHorizon; i++) {
-			SpecialUCT uct = new SpecialUCT(this, environment, performHorizon - i);
-			String action = uct.runAlgorithm(currentState);
+		
+		ValueIteration vi = new ValueIteration(environment, this, 0.9);
+		vi.populate(currentState, horizon);
+		vi.iterate(0.0001, 100000);
+		
+		for (int i = 0; i < horizon; i++) {
+//			SpecialUCT uct = new SpecialUCT(this, environment, horizon - i);
+//			String action = uct.runAlgorithm(currentState);
+			String action = vi.getAction(currentState);
 			currentState = environment.performAction(action);
 
 			response.actions.add(action);

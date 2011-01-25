@@ -179,9 +179,6 @@ public class Interface {
 					Map<String,String> argumentMap = extractNameMap(request.verb);
 					
 					try {
-						System.out.println(currentVerbType);
-					
-						
 						switch (currentVerbType) {
 						case FSM:
 							FSMVerb remapped = ((FSMVerb) verb).remap(argumentMap);
