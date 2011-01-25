@@ -31,6 +31,7 @@ public abstract class FSMPlanner implements Planner {
 		for (String action : environment_.getActions()) {
 			actions_.add(new Action(action));
 		}
+//		actions_ = Lists.newArrayList(new Action("person 1000")); //, new Action("person 0100"), new Action("person 0010"));
 		System.out.println(actions_);
 	}
 	
