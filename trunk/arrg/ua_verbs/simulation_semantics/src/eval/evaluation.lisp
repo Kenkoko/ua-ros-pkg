@@ -1,6 +1,6 @@
 (in-package :simsem)
 
-(defparameter *execution-limit* 30)
+(defparameter *execution-limit* 40)
 
 ;;===================================================================
 
@@ -164,8 +164,6 @@
   (read-accepted))
 
 (defun ww2d-go-scorer (result)
-  (format t "~%~%+++++++++++++++++++++++++++++++++~%~%")
-
   (loop with trace = (verb_learning-srv:trace-val result)
      with step = 'approaching
      for state across trace
@@ -183,10 +181,41 @@
                          :accepted
                          :neither))))
 
-(defun ww2d-intercept-scorer (result)
-  (format t "~%~%+++++++++++++++++++++++++++++++++~%~%")
-
+(defun ww2d-go-via-scorer (result)
   (loop with trace = (verb_learning-srv:trace-val result)
+     with step = 'approaching-waypoint
+     for state across trace
+     for at-waypoint? = (contains-relation state "Collision" '("person" "waypoint"))
+     for at-goal? = (contains-relation state "Collision" '("person" "place"))
+
+     if (eq step 'approaching-waypoint)
+     do (cond (at-waypoint?
+               (setf step 'reached-waypoint))
+              (at-goal?
+               (return-from ww2d-go-via-scorer :rejected)))
+
+     else if (eq step 'reached-waypoint)
+     do (cond (at-goal?
+               (setf step 'reached-goal))
+              ((not at-waypoint?)
+               (setf step 'approaching-goal)))
+
+     else if (eq step 'approaching-goal)
+     do (cond (at-goal?
+               (setf step 'reached-goal))
+              (at-waypoint?
+               (return-from ww2d-go-via-scorer :rejected)))
+       
+     else if (eq step 'reached-goal)
+     do (if (not at-goal?)
+            (return-from ww2d-go-via-scorer :rejected))
+
+     finally (return (if (eq step 'reached-goal)
+                         :accepted
+                         :neither))))
+
+(defun ww2d-intercept-scorer (result)
+   (loop with trace = (verb_learning-srv:trace-val result)
      for state across trace
      for met-enemy? = (contains-relation state "Collision" '("person" "enemy"))
      for enemy-at-goal? = (contains-relation state "Collision" '("enemy" "place"))
