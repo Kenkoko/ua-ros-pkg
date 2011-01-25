@@ -3,11 +3,22 @@
 ;;=============================================================================
 ;; Training
 
+;; REMEMBER TO TURN OFF PADDING LATER
 (defun make-training (domain verb)
-  (cond ((eq domain 'gazebo)
-         (get-gazebo-training verb))
-        ((eq domain 'ww2d)
-         (get-ww2d-training verb))))
+   (cond ((eq domain 'gazebo)
+          ;(pad-training
+          ; (get-gazebo-training verb)))
+          (get-gazebo-training verb))
+         ((eq domain 'ww2d)
+          (get-ww2d-training verb))))
+
+(defun pad-training (training)
+  (loop with limit = 15
+     for instance in training
+     for actions = (second instance)
+     for padded-actions = (append actions (loop for i below (- limit (length actions)) collect "drop"))
+     collect (list (first instance) padded-actions)))
+                                            
 
 ;;=============================================================================
 ;; Testing
