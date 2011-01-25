@@ -161,12 +161,12 @@
 <pathentry kind="mac" name="__GXX_RTTI" path="" value="1"/>
 <pathentry kind="mac" name="__EXCEPTIONS" path="" value="1"/>
 <pathentry kind="mac" name="_GNU_SOURCE" path="" value="1"/>
-<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/wubble_mdp/include" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/simulator_state/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/simulator_state/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/simulator_state/srv_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/oomdp_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/oomdp_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_verbs/wubble_mdp/include" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_verbs/simulator_state/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_verbs/simulator_state/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_verbs/simulator_state/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_verbs/oomdp_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_verbs/oomdp_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/geometry/bullet/include" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_robots/wubble_description/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/ua-ros-pkg/wubble_world/wubble_environments/srv_gen/cpp/include" kind="inc" path="" system="true"/>
@@ -207,62 +207,39 @@
 <pathentry include="/opt/ros/cturtle/stacks/navigation/navfn/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/navigation/clear_costmap_recovery/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/navigation/rotate_recovery/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/base_local_planner/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/base_local_planner/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/base_local_planner/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/costmap_2d/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/costmap_2d/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/costmap_2d/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/voxel_grid/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/nav_core/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/map_server/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/image_pipeline/stereo_image_proc/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/image_pipeline/stereo_msgs/msg/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/image_pipeline/stereo_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/image_pipeline/image_proc/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/vision_opencv/image_geometry/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/image_common/camera_calibration_parsers/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common/yaml_cpp/yaml-cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/msg/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/srv/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/driver_common/dynamic_reconfigure/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/motion_planning_common/robot_self_filter/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/visualization_common/visualization_msgs/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/visualization_common/visualization_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/motion_planning_common/geometric_shapes/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/robot_model/resource_retriever/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/laser_pipeline/laser_filters/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common/filters/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/laser_pipeline/laser_geometry/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/laser_pipeline/laser_geometry/msg/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_controllers/wubble_actions/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/move_base_msgs/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/navigation/move_base_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common/actionlib/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common/actionlib/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common/actionlib/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_controllers/smart_arm_kinematics/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/jsk-ros-pkg/openrave_planning/openrave/include" kind="inc" path="" system="true"/>
 <pathentry include="/usr/include" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/jsk-ros-pkg/openrave_planning/soqt/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/pr2_controllers_msgs/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/pr2_controllers_msgs/srv/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/pr2_controllers_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/pr2_controllers_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/actionlib_msgs/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/actionlib_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/trajectory_msgs/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/trajectory_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_controllers/ax12_controller_core/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_drivers/ax12_driver_core/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_controllers/ua_controller_msgs/msg/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_controllers/ua_controller_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/pr2_simulator/pr2_gazebo_plugins/include" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/pr2_simulator/pr2_gazebo_plugins/srv/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/pr2_simulator/pr2_gazebo_plugins/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/pr2_simulator/pr2_gazebo_plugins/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/pr2_controllers_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/pr2_controllers_msgs/srv/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/pr2_controllers_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/pr2_controllers_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/trajectory_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/pr2_controllers/trajectory_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/pr2_simulator/pr2_gazebo_plugins/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/pr2_simulator/pr2_gazebo_plugins/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/pr2_simulator/pr2_gazebo_plugins/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo_tools/include" kind="inc" path="" system="true"/>
 <pathentry include="/usr/include/libxml2" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/simulator_gazebo/gazebo/gazebo/include" kind="inc" path="" system="true"/>
@@ -271,14 +248,11 @@
 <pathentry include="/opt/ros/cturtle/stacks/visualization_common/ogre/ogre/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/visualization_common/ogre/ogre/include/OGRE" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/visualization_common/ogre/ogre/include/OGRE/RTShaderSystem" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/physics_ode/parallel_quickstep/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/robot_model/assimp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/std_srvs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/physics_ode/opende/opende/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/physics_ode/opende/threadpool" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/srv/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/pr2_common/pr2_msgs/msg/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/pr2_common/pr2_msgs/srv/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/pr2_common/pr2_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
@@ -293,8 +267,6 @@
 <pathentry include="/opt/ros/cturtle/stacks/pr2_mechanism/pr2_mechanism_msgs/srv/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/pr2_mechanism/pr2_mechanism_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/pr2_mechanism/pr2_mechanism_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/diagnostic_msgs/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/diagnostic_msgs/srv/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/common_msgs/diagnostic_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/common_msgs/diagnostic_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/robot_model/robot_state_publisher/include" kind="inc" path="" system="true"/>
@@ -303,52 +275,69 @@
 <pathentry include="/opt/ros/cturtle/stacks/pr2_mechanism/pr2_mechanism_model/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/pr2_mechanism/pr2_hardware_interface/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/robot_model/kdl_parser/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/robot_model/kdl_parser/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/robot_model/kdl_parser/srv/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/geometry/kdl/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/geometry/eigen/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/robot_model/urdf/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/robot_model/urdf/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/robot_model/urdf/srv/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/image_common/polled_camera/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/image_common/polled_camera/srv/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/image_common/polled_camera/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/image_common/image_transport/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common/pluginlib/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common/pluginlib" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common/tinyxml/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/geometry_msgs/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/geometry_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation_experimental/assisted_teleop/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/move_base_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/move_base_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/actionlib/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/actionlib/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/actionlib/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/actionlib_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/base_local_planner/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/base_local_planner/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/base_local_planner/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/costmap_2d/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/costmap_2d/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/costmap_2d/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/laser_pipeline/laser_geometry/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/laser_pipeline/laser_geometry/msg/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/geometry/tf/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/geometry/tf/msg/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/geometry/tf/srv/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/geometry/tf/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/geometry/tf/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/ros/core/message_filters/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/map_server/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/nav_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/yaml_cpp/yaml-cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/voxel_grid/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/visualization_common/visualization_msgs/msg/cpp" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/visualization_common/visualization_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/navigation/nav_core/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common_msgs/geometry_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/geometry/angles/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/geometry/eigen/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/msg/cpp" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/srv/cpp" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/stacks/common_msgs/sensor_msgs/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/tools/rosrecord/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/stacks/geometry/angles/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/tools/rosbag/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/tools/topic_tools/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/tools/topic_tools/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/std_msgs/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/std_msgs/msg_gen/cpp/include" kind="inc" path="" system="true"/>
-<pathentry include="/opt/ros/cturtle/ros/core/message_filters/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/test/rostest/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/filters/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/core/roscpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/core/roscpp/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/core/roscpp/srv_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/3rdparty/xmlrpcpp/src" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/pluginlib/include" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/pluginlib" kind="inc" path="" system="true"/>
+<pathentry include="/opt/ros/cturtle/stacks/common/tinyxml/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/core/rosconsole/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/core/roslib/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/core/roslib/msg_gen/cpp/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/tools/rospack" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/tools/rospack/include" kind="inc" path="" system="true"/>
 <pathentry include="/opt/ros/cturtle/ros/3rdparty/gtest/gtest/include" kind="inc" path="" system="true"/>
-<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_experimental/wubble_mdp/src" kind="inc" path="" system="true"/>
+<pathentry include="/home/dhewlett/ros/ua-ros-pkg/ua_verbs/wubble_mdp/src" kind="inc" path="" system="true"/>
 <pathentry include="/usr/local/include" kind="inc" path="" system="true"/>
 <pathentry include="/usr/lib/gcc/x86_64-linux-gnu/4.4.3/include" kind="inc" path="" system="true"/>
 <pathentry include="/usr/lib/gcc/x86_64-linux-gnu/4.4.3/include-fixed" kind="inc" path="" system="true"/>
@@ -365,24 +354,10 @@
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 </target>
-<target name=": ROSBUILD_genmsg_java" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
-<buildCommand>/usr/bin/make</buildCommand>
-<buildArguments/>
-<buildTarget>ROSBUILD_genmsg_java</buildTarget>
-<stopOnError>true</stopOnError>
-<useDefaultCommand>false</useDefaultCommand>
-</target>
 <target name=": ROSBUILD_genmsg_lisp" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
 <buildCommand>/usr/bin/make</buildCommand>
 <buildArguments/>
 <buildTarget>ROSBUILD_genmsg_lisp</buildTarget>
-<stopOnError>true</stopOnError>
-<useDefaultCommand>false</useDefaultCommand>
-</target>
-<target name=": ROSBUILD_genmsg_oct" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
-<buildCommand>/usr/bin/make</buildCommand>
-<buildArguments/>
-<buildTarget>ROSBUILD_genmsg_oct</buildTarget>
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 </target>
@@ -393,24 +368,10 @@
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 </target>
-<target name=": ROSBUILD_gensrv_java" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
-<buildCommand>/usr/bin/make</buildCommand>
-<buildArguments/>
-<buildTarget>ROSBUILD_gensrv_java</buildTarget>
-<stopOnError>true</stopOnError>
-<useDefaultCommand>false</useDefaultCommand>
-</target>
 <target name=": ROSBUILD_gensrv_lisp" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
 <buildCommand>/usr/bin/make</buildCommand>
 <buildArguments/>
 <buildTarget>ROSBUILD_gensrv_lisp</buildTarget>
-<stopOnError>true</stopOnError>
-<useDefaultCommand>false</useDefaultCommand>
-</target>
-<target name=": ROSBUILD_gensrv_oct" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
-<buildCommand>/usr/bin/make</buildCommand>
-<buildArguments/>
-<buildTarget>ROSBUILD_gensrv_oct</buildTarget>
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 </target>
@@ -421,17 +382,17 @@
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 </target>
-<target name="[exe] environment_node" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<target name="[exe] environment" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
 <buildCommand>/usr/bin/make</buildCommand>
 <buildArguments/>
-<buildTarget>environment_node</buildTarget>
+<buildTarget>environment</buildTarget>
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 </target>
-<target name="[exe] environment_node/fast" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<target name="[exe] environment/fast" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
 <buildCommand>/usr/bin/make</buildCommand>
 <buildArguments/>
-<buildTarget>environment_node/fast</buildTarget>
+<buildTarget>environment/fast</buildTarget>
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 </target>
@@ -600,6 +561,27 @@
 <buildCommand>/usr/bin/make</buildCommand>
 <buildArguments/>
 <buildTarget>src/wubble_mdp/environment.s</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name="[obj] src/wubble_mdp/item.o" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>src/wubble_mdp/item.o</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name="[pre] src/wubble_mdp/item.i" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>src/wubble_mdp/item.i</buildTarget>
+<stopOnError>true</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
+<target name="[to asm] src/wubble_mdp/item.s" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>/usr/bin/make</buildCommand>
+<buildArguments/>
+<buildTarget>src/wubble_mdp/item.s</buildTarget>
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 </target>

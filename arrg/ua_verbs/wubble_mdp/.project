@@ -47,7 +47,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildLocation</key>
-					<value>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/wubble_mdp</value>
+					<value>/home/dhewlett/ros/ua-ros-pkg/ua_verbs/wubble_mdp</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.useDefaultBuildCmd</key>
@@ -55,7 +55,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.environment</key>
-					<value>VERBOSE=1|ROS_ROOT=/opt/ros/cturtle/ros|ROS_PACKAGE_PATH=/home/dhewlett/ros/roslisp_support:/home/dhewlett/ros/roslisp_common:/home/dhewlett/ros/pr2_simulator:/home/dhewlett/ros/ros_experimental:/home/dhewlett/ros/jsk-ros-pkg/openrave_planning:/home/dhewlett/ros/bosch-ros-pkg/bosch_drivers:/home/dhewlett/ros/foote-ros-pkg/phidgets/phidgetspp_c_api:/home/dhewlett/ros/ua-cs665-ros-pkg:/home/dhewlett/ros/ua-ros-pkg:/opt/ros/cturtle/stacks|PYTHONPATH=/opt/ros/cturtle/ros/core/roslib/src:|PATH=/opt/ros/cturtle/ros/bin:/home/dhewlett/programs/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games|</value>
+					<value>VERBOSE=1|ROS_ROOT=/opt/ros/cturtle/ros|ROS_PACKAGE_PATH=/home/dhewlett/ros/tum-ros-pkg/client_rosjava:/home/dhewlett/ros/jsk-ros-pkg/openrave_planning:/home/dhewlett/ros/bosch-ros-pkg/bosch_drivers:/home/dhewlett/ros/foote-ros-pkg/phidgets/phidgetspp_c_api:/home/dhewlett/ros/ua-cs665-ros-pkg:/home/dhewlett/ros/stacks/erratic_robot:/home/dhewlett/ros/ua-ros-pkg:/home/dhewlett/ros/stacks/roslisp_common:/home/dhewlett/ros/stacks/ros_experimental:/opt/ros/cturtle/stacks|PYTHONPATH=/opt/ros/cturtle/ros/core/roslib/src:|PATH=/opt/ros/cturtle/ros/bin:/home/dhewlett/programs/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games|</value>
 					<value></value>
 				</dictionary>
 				<dictionary>
@@ -84,7 +84,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.build.location</key>
-					<value>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/wubble_mdp</value>
+					<value>/home/dhewlett/ros/ua-ros-pkg/ua_verbs/wubble_mdp</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.autoBuildTarget</key>
