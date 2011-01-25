@@ -8,7 +8,12 @@
     <!-- spawn stock gazebo with a slightly customized empty world -->
     <node name="gazebo" pkg="gazebo" type="gazebo" 
           args="-u $(find simulation_semantics)/worlds/empty.world" 
-          respawn="false" output="screen" />
+          respawn="false" output="screen" />    
+
+    <!-- Use this instead for headless -->
+    <!-- <node name="gazebo" pkg="gazebo" type="gazebo" 
+          args="-u -n -r -g $(find simulation_semantics)/worlds/empty.world" 
+          respawn="false" output="screen" /> -->
 
     <!-- node with services to spawn the wubble robot base -->
     <node pkg="wubble_description" type="wubble_spawner.py" name="wubble_spawner" />
