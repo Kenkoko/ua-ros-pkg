@@ -82,12 +82,12 @@
                      :class_name "obstacle"
                      :attributes *agent-attributes*
                      :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
-   ;; Test 6: Behind at an angle
+   ;; Test 6: Enemy behind
    (vector (make-msg "oomdp_msgs/MDPObjectState"
                      :name "person"
                      :class_name "agent"
                      :attributes *agent-attributes*
-                     :values #("45" "45" "1" "0" "0" "0" "circle" "0.25"))
+                     :values #("60" "50" "1" "0" "0" "0" "circle" "0.25"))
            (make-msg "oomdp_msgs/MDPObjectState"
                      :name "enemy"
                      :class_name "agent"
@@ -134,8 +134,8 @@
 
 (defparameter *ww2d-go-via-tests*
   (list 
-   ;; Training 1: Both ahead, close together
-   #+ignore(vector (make-msg "oomdp_msgs/MDPObjectState"
+   ;; Test 1: Both ahead 1
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
                      :name "person"
                      :class_name "agent"
                      :attributes *agent-attributes*
@@ -144,28 +144,14 @@
                      :name "waypoint"
                      :class_name "obstacle"
                      :attributes *agent-attributes*
-                     :values #("55" "50" "0" "0" "0" "0" "circle" "0.5"))
+                     :values #("57" "50" "0" "0" "0" "0" "circle" "0.5"))
            (make-msg "oomdp_msgs/MDPObjectState"
                      :name "place"
                      :class_name "obstacle"
                      :attributes *agent-attributes*
-                     :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
+                     :values #("68" "50" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 2: Both ahead 2
    (vector (make-msg "oomdp_msgs/MDPObjectState"
-                           :name "person"
-                           :class_name "agent"
-                           :attributes *agent-attributes*
-                           :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
-                 (make-msg "oomdp_msgs/MDPObjectState"
-                           :name "waypoint"
-                           :class_name "obstacle"
-                           :attributes *agent-attributes*
-                           :values #("54" "50" "0" "0" "0" "0" "circle" "0.5"))
-                 (make-msg "oomdp_msgs/MDPObjectState"
-                           :name "place"
-                           :class_name "obstacle"
-                           :attributes *agent-attributes*
-                           :values #("60" "60" "0" "0" "0" "0" "circle" "0.5")))
-   #+ignore(vector (make-msg "oomdp_msgs/MDPObjectState"
                            :name "person"
                            :class_name "agent"
                            :attributes *agent-attributes*
@@ -180,136 +166,118 @@
                            :class_name "obstacle"
                            :attributes *agent-attributes*
                            :values #("73" "50" "0" "0" "0" "0" "circle" "0.5")))
-
-  ;;  ;; Training 2: Both ahead, further apart
-  ;;  (vector (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "person"
-  ;;                    :class_name "agent"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "waypoint"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("54" "50" "0" "0" "0" "0" "circle" "0.3"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "place"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("65" "50" "0" "0" "0" "0" "circle" "0.3")))
-  ;; ;; Training 3: ahead then right (close)
-  ;;  (vector (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "person"
-  ;;                    :class_name "agent"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "waypoint"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("54" "50" "0" "0" "0" "0" "circle" "0.3"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "place"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("55" "55" "0" "0" "0" "0" "circle" "0.3")))
-  ;;  ;; Training 4: ahead then left (close)
-  ;;  (vector (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "person"
-  ;;                    :class_name "agent"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "waypoint"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("54" "50" "0" "0" "0" "0" "circle" "0.3"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "place"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("55" "45" "0" "0" "0" "0" "circle" "0.3")))
-  ;;  ;; Training 5: ahead then right (far)
-  ;;  (vector (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "person"
-  ;;                    :class_name "agent"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "waypoint"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("55" "50" "0" "0" "0" "0" "circle" "0.3"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "place"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("60" "60" "0" "0" "0" "0" "circle" "0.3")))
-  ;;  ;; Training 6: ahead then left (far)
-  ;;  (vector (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "person"
-  ;;                    :class_name "agent"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "waypoint"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("55" "50" "0" "0" "0" "0" "circle" "0.3"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "place"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("62" "41" "0" "0" "0" "0" "circle" "0.3")))
-  ;;  ;; Training 7: behind then in front 
-  ;;  (vector (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "person"
-  ;;                    :class_name "agent"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "waypoint"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("45" "50" "0" "0" "0" "0" "circle" "0.3"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "place"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("54" "50" "0" "0" "0" "0" "circle" "0.3")))         
-  ;;  ;; Training 8: both right ahead
-  ;;  (vector (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "person"
-  ;;                    :class_name "agent"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "waypoint"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("54" "54" "0" "0" "0" "0" "circle" "0.3"))
-  ;;          (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                    :name "place"
-  ;;                    :class_name "obstacle"
-  ;;                    :attributes *agent-attributes*
-  ;;                    :values #("60" "56" "0" "0" "0" "0" "circle" "0.3")))
-  ;;  ;; Training 9: both left ahead
-  ;;  (vector (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                          :name "person"
-  ;;                          :class_name "agent"
-  ;;                          :attributes *agent-attributes*
-  ;;                          :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
-  ;;                (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                          :name "waypoint"
-  ;;                          :class_name "obstacle"
-  ;;                          :attributes *agent-attributes*
-  ;;                          :values #("55" "47" "0" "0" "0" "0" "circle" "0.3"))
-  ;;                (make-msg "oomdp_msgs/MDPObjectState"
-  ;;                          :name "place"
-  ;;                          :class_name "obstacle"
-  ;;                          :attributes *agent-attributes*
-  ;;                          :values #
-  ;;                         ("62" "43" "0" "0" "0" "0" "circle" "0.3")))
+   ;; Test 3: Both ahead 3
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "waypoint"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("57" "50" "0" "0" "0" "0" "circle" "0.5"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("62" "50" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 4: Ahead then right
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "waypoint"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("57" "50" "0" "0" "0" "0" "circle" "0.5"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("63" "55" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 5: Ahead then left
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "waypoint"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("57" "50" "0" "0" "0" "0" "circle" "0.5"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("64" "43" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 6: right more right
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "waypoint"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("56" "56" "0" "0" "0" "0" "circle" "0.5"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("66" "59" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 7: left more left
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "person"
+                     :class_name "agent"
+                     :attributes *agent-attributes*
+                     :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "waypoint"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("57" "45" "0" "0" "0" "0" "circle" "0.5"))
+           (make-msg "oomdp_msgs/MDPObjectState"
+                     :name "place"
+                     :class_name "obstacle"
+                     :attributes *agent-attributes*
+                     :values #("67" "40" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 8: right right
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "person"
+                           :class_name "agent"
+                           :attributes *agent-attributes*
+                           :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "waypoint"
+                           :class_name "obstacle"
+                           :attributes *agent-attributes*
+                           :values #("50" "57" "0" "0" "0" "0" "circle" "0.5"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "place"
+                           :class_name "obstacle"
+                           :attributes *agent-attributes*
+                           :values #("50" "65" "0" "0" "0" "0" "circle" "0.5")))
+   ;; Test 9: left left (tight)
+   (vector (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "person"
+                           :class_name "agent"
+                           :attributes *agent-attributes*
+                           :values #("50" "50" "0" "0" "0" "0" "circle" "0.25"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "waypoint"
+                           :class_name "obstacle"
+                           :attributes *agent-attributes*
+                           :values #("50" "42" "0" "0" "0" "0" "circle" "0.5"))
+                 (make-msg "oomdp_msgs/MDPObjectState"
+                           :name "place"
+                           :class_name "obstacle"
+                           :attributes *agent-attributes*
+                           :values #("50" "37" "0" "0" "0" "0" "circle" "0.5")))
 ))
 
 
