@@ -243,7 +243,7 @@ public abstract class AbstractVerb implements FSMVerb {
 				PlanningReport report = planner.runAlgorithm(mdpState, verbState); // re-plan
 				totalPlanningTime += report.getElaspedTime();
 				
-				if (totalPlanningTime > 2*60*1000) { // If we've spent over 2 minutes planning, can it
+				if (totalPlanningTime > 1*60*1000) { // If we've spent over 2 minutes planning, can it
 					action = Action.TERMINATE;
 					executionSuccess = false;
 					break;
@@ -270,6 +270,7 @@ public abstract class AbstractVerb implements FSMVerb {
 				if (Interface.getCurrentEnvironment() instanceof WW2DEnvironment) {
 					for (OOMDPObjectState os : mdpState.getObjectStates()) {
 						if (os.getValue("x").startsWith("-")) {
+							System.out.println(os);
 							System.err.println("SIMULATOR BLEW UP, REDOING THE WHOLE SHIZNIT");
 							return perform(startState, executionLimit);
 						}

@@ -24,7 +24,7 @@ import edu.arizona.verbs.verb.vfsm.VerbState;
 public class UCT extends FSMPlanner {
 	
 	private static int maxIterations = 500;
-	private static double gamma = 0.85; // 0.8 seemed to work for go
+	private static double gamma = 0.8; // 0.8 seemed to work for go, 0.9 for go-via
 	
 	private HashMap<String, HashMap<String, Double>> q_ = new HashMap<String, HashMap<String, Double>>();
 	// Map state+depth+action to counts of states
@@ -71,14 +71,14 @@ public class UCT extends FSMPlanner {
 			if (i % 50 == 0) {
 				System.out.println(">>> BEGIN TRIAL " + i + " (Reached Goal " + goalCounter + " of last 50 trials, got within " + bestState + " of goal)");
 				
+				goalTotal += goalCounter;
+				goalCounter = 0;
+				bestState = Integer.MAX_VALUE;
+
 				if (goalTotal > 100) {
 					goDeep = true;
 					break;
 				}
-				
-				goalTotal += goalCounter;
-				goalCounter = 0;
-				bestState = Integer.MAX_VALUE;
 			}
 			
 			uct(start, maxDepth_);
@@ -94,7 +94,8 @@ public class UCT extends FSMPlanner {
 	public static int bestState = Integer.MAX_VALUE;
 	public double uct(PlanningState s, int d) {
 		
-//		System.out.println(s.getHeuristic());
+//		System.out.println("STATE AT DEPTH " + d + ": " + s.getVerbState());
+//		System.out.println("RELATIONS: " + s.getMdpState().getActiveRelations());
 		bestState = Math.min(bestState, (int) s.getHeuristic());
 		
 		if (s.getVerbState().isGoodTerminal()) {
@@ -163,10 +164,16 @@ public class UCT extends FSMPlanner {
 			nasd_.add(nasdString);
 
 			// Update Q value
-			double oldQ = getQ(s, aStar.toString(), d);
+			
 			double nasdCount = nasd_.getCount(nasdString);
-			double newQ = (oldQ * (nasdCount - 1) + v) / nasdCount;
-			setQ(s, aStar.toString(), d, newQ);
+			double oldQ = getQ(s, aStar.toString(), d);
+			if (nasdCount == 1) {
+				double newQ = v;
+				setQ(s, aStar.toString(), d, newQ);
+			} else {
+				double newQ = (oldQ * (nasdCount - 1) + v) / nasdCount;
+				setQ(s, aStar.toString(), d, newQ);
+			}
 			
 			return v;
 		}		
@@ -288,8 +295,7 @@ public class UCT extends FSMPlanner {
 			// If this is a new state, initialize
 			HashMap<String, Double> qTable = new HashMap<String, Double>();
 			for (Action action : actions_) {
-				qTable.put(action.toString(), 0.0); 
-//				qTable.put(action.toString(), s.getHeuristic()); // TODO: Is it OK to use heuristic here? 
+				qTable.put(action.toString(), Double.NEGATIVE_INFINITY); 
 			}
 			q_.put(lookupString, qTable);
 			return q_.get(lookupString).get(a);
@@ -324,6 +330,9 @@ public class UCT extends FSMPlanner {
 	
 	public double getCost(PlanningState s, PlanningState next) {
 //		return (gamma * next.getHeuristic()) - s.getHeuristic() + 1.0;
-		return (gamma * next.getHeuristic()) - s.getHeuristic() + next.getVerbState().getCost();
+		
+		double cost = (gamma * (1.0 * next.getHeuristic())) - (1.0 * s.getHeuristic()) + 1.0 * next.getVerbState().getCost();
+//		System.out.println(s.getVerbState().posState + " --> " + next.getVerbState().posState + " = " + cost);
+		return cost;
 	}
 }
