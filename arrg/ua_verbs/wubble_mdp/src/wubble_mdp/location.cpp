@@ -109,9 +109,9 @@ string Location::getClassString()
 
 void Location::update(simulator_state::ObjectInfo new_info)
 {
-  // TODO: Should this ever happen?
-  x_ = new_info.pose.position.x;
-  y_ = new_info.pose.position.y;
+  // TODO: Should this ever happen? - NO!
+//  x_ = new_info.pose.position.x;
+//  y_ = new_info.pose.position.y;
 }
 
 vector<oomdp_msgs::Relation> Location::computePredicates()
