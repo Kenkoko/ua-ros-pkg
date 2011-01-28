@@ -117,7 +117,7 @@
                            :attributes *agent-attributes*
                            :values #("70" "50" "0" "0" "0" "0" "circle" "0.5")))
          '("person 1000" "person 1000" "person 1000" "person 1000"
-           "person 1000" "person 1000" "person 1000" "person 1000"))
+           "person 1000" "person 1000" "person 1000" "person 1000" "person 1000"))
    ;; Training 7: near the goal
    (list (vector (make-msg "oomdp_msgs/MDPObjectState"
                            :name "person"
