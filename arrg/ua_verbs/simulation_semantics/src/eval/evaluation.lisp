@@ -1,6 +1,6 @@
 (in-package :simsem)
 
-(defparameter *execution-limit* 40)
+(defparameter *execution-limit* 30)
 
 ;;===================================================================
 
@@ -155,6 +155,52 @@
     result))                                        
 
 ;;============================================================================
+
+(defun test-go-via (training-size)
+  (let* ((training (make-training 'ww2d "go"))
+         (verb (find-verb "go")))
+    (format t "Begin Evaluation for Training Size ~d...~%"  training-size) 
+    (loop for j from 1 upto 1 
+       for training-set = (sample-random-subset training training-size)  ;(nth (- j 1) training-sets)
+       do (clear-verb-meaning verb) ;; Reset the signature, FSM 
+         (format t "Begin Trial ~d of ~d with Training Size ~d~%" j 1 training-size)
+         (loop for instance in training-set
+            for student-result = (run-test verb (first instance) 'ww2d-go-scorer)
+            if (eq :accepted (accepted-of student-result))
+            do (update-verb-with-trace verb (trace-of student-result) (argument-names (first instance)))
+            else if (eq :rejected (accepted-of student-result))
+            do (update-verb-with-negative-trace verb (trace-of student-result) (argument-names (first instance)))
+            do (format t "Presenting teacher's demonstration~%") 
+              (present-training-instance "go" instance))
+         (define-sequential-verb "go-via" '(agent waypoint place)
+           '(("go" agent waypoint) ("go" agent place)))
+         (format t "Testing robot performance...~%")
+       collect (run-tests "go-via" (make-tests 'ww2d "go-via") 'ww2d-go-via-scorer))))
+  
+  
+(defun make-go-via-trajectory ()
+  (let* ((training (get-ww2d-training "go"))
+         (verb (find-verb "go"))
+         (training-set (sample-random-subset training 5))) ;(length training))))
+    (format t "Clearing verb meaning...~%")
+    (clear-verb-meaning verb)
+    (format t "Begin Trajectory~%")
+    (loop for instance in training-set
+       for i from 1
+       for student-result = (run-test verb (first instance) 'ww2d-go-scorer)
+       do (format t "~%============ Teaching Loop Iteration ~a~%" i)
+       if (eq :accepted (accepted-of student-result))
+       do (update-verb-with-trace verb (trace-of student-result) (argument-names (first instance)))
+       else if (eq :rejected (accepted-of student-result))
+       do (update-verb-with-negative-trace verb (trace-of student-result) (argument-names (first instance)))
+       do (format t "Presenting teacher's demonstration~%") 
+         (present-training-instance "go" instance)
+         (define-sequential-verb "go-via" '(agent waypoint place)
+           '(("go" agent waypoint) ("go" agent place)))
+         (format t "Testing robot performance...~%")
+       collect (run-tests "go-via" (make-tests 'ww2d "go-via") 'ww2d-go-via-scorer))))
+
+;;============================================================================
 ;; Automatic Scorers - TODO: Move these to a separate file
 
 (defun human-scorer (result)
@@ -215,7 +261,7 @@
                          :neither))))
 
 (defun ww2d-intercept-scorer (result)
-   (loop with trace = (verb_learning-srv:trace-val result)
+  (loop with trace = (verb_learning-srv:trace-val result)
      for state across trace
      for met-enemy? = (contains-relation state "Collision" '("person" "enemy"))
      for enemy-at-goal? = (contains-relation state "Collision" '("enemy" "place"))
@@ -223,7 +269,7 @@
                (return-from ww2d-intercept-scorer :rejected))
               (met-enemy?
                (return-from ww2d-intercept-scorer :accepted))))
-  :neither)
+   :neither)
 
 (defun gz-go-scorer (result)
   (loop with trace = (verb_learning-srv:trace-val result)

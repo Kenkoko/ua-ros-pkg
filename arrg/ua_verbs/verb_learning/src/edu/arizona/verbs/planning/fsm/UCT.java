@@ -53,6 +53,7 @@ public class UCT extends FSMPlanner {
 		t_ = new HashMap<String, HashBag<String>>();
 		nsd_ = new HashBag<String>();
 		nasd_ = new HashBag<String>();
+		knownStates_ = new HashMap<String, PlanningState>();
 		
 		PlanningState start = lookupState(startState, verbState);
 		
