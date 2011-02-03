@@ -52,6 +52,11 @@ class JointFreespinControllerAX12(JointControllerAX12):
     def __init__(self, out_cb, param_path, port_name):
         JointControllerAX12.__init__(self, out_cb, param_path, port_name)
         self.motor_id = rospy.get_param(self.topic_name + '/motor/id')
+        self.initial_position_raw = rospy.get_param(self.topic_name + '/motor/init')
+        self.min_angle_raw = rospy.get_param(self.topic_name + '/motor/min')
+        self.max_angle_raw = rospy.get_param(self.topic_name + '/motor/max')
+        
+        self.flipped = self.min_angle_raw > self.max_angle_raw
         
         self.joint_state = JointState(name=self.joint_name, motor_ids=[self.motor_id])
 
@@ -63,6 +68,16 @@ class JointFreespinControllerAX12(JointControllerAX12):
             rospy.logwarn('Available ids: %s' % str(available_ids))
             rospy.logwarn('Specified id: %d' % self.motor_id)
             return False
+            
+        self.radians_per_encoder_tick = rospy.get_param('dynamixel/%s/%d/radians_per_encoder_tick' % (self.port_namespace, self.motor_id))
+        self.encoder_ticks_per_radian = rospy.get_param('dynamixel/%s/%d/encoder_ticks_per_radian' % (self.port_namespace, self.motor_id))
+        
+        if self.flipped:
+            self.min_angle = (self.initial_position_raw - self.min_angle_raw) * self.radians_per_encoder_tick
+            self.max_angle = (self.initial_position_raw - self.max_angle_raw) * self.radians_per_encoder_tick
+        else:
+            self.min_angle = (self.min_angle_raw - self.initial_position_raw) * self.radians_per_encoder_tick
+            self.max_angle = (self.max_angle_raw - self.initial_position_raw) * self.radians_per_encoder_tick
             
         self.encoder_resolution = rospy.get_param('dynamixel/%s/%d/encoder_resolution' % (self.port_namespace, self.motor_id))
         self.max_position = self.encoder_resolution - 1
@@ -120,7 +135,7 @@ class JointFreespinControllerAX12(JointControllerAX12):
             if state:
                 state = state[0]
                 self.joint_state.goal_pos = 0.0
-                self.joint_state.current_pos = 0.0
+                self.joint_state.current_pos = self.raw_to_rad(state.position, self.initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.error = 0.0
                 self.joint_state.velocity = (state.speed / DMXL_MAX_SPEED_TICK) * DMXL_MAX_SPEED_RAD
                 self.joint_state.load = state.load
