@@ -9,7 +9,7 @@
 
     <!-- Start the low-level driver manager with parameters -->
     <node name="wubble_head_pan_manager" pkg="ax12_controller_core" type="controller_manager.py" required="true" output="screen">
-        <param name="port_name" type="str" value="/dev/ttyUSB0"/>
+        <param name="port_name" type="str" value="/dev/wubble2Head2"/>
         <param name="baud_rate" type="int" value="1000000"/>
         <param name="max_motor_id" type="int" value="25"/>
         <param name="update_rate" type="int" value="50"/>
@@ -25,7 +25,7 @@
     <!-- Start head pan joint controller -->
     <rosparam file="$(find wubble2_robot)/config/wubble_head.yaml" command="load"/>
     <node name="wubble_head_pan_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="--port /dev/ttyUSB0
+          args="--port /dev/wubble2Head2
                 head_pan_controller
                 head_tilt_controller"
           output="screen"/>

@@ -1,3 +1,5 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <!-- Start the Dynamixel servo manager to control Lower Arm (wrist and fingers) -->
     <node name="lower_arm_motor_manager" pkg="ax12_controller_core" type="controller_manager.py" output="screen">
