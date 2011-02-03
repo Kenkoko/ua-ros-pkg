@@ -14,7 +14,7 @@ rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/cturtle.rosco
 }}}
   # Update your .bashrc
 {{{
-echo "source ~/ros/setup.sh" >> ~/.bashrc
+echo "source ~/ros/setup.bash" >> ~/.bashrc
 echo "export ROBOT=sim" >> ~/.bashrc
 source ~/.bashrc
 }}}
