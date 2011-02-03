@@ -1,0 +1,25 @@
+gripper_left_finger_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_freespin_controller
+        type: JointFreespinControllerAX12
+    joint_name: left_finger_joint
+    joint_speed: 1.17
+    motor:
+        id: 8
+        init: 512
+        min: 450
+        max: 680
+
+gripper_right_finger_controller:
+    controller:
+        package: ax12_controller_core
+        module: joint_freespin_controller
+        type: JointFreespinControllerAX12
+    joint_name: right_finger_joint
+    joint_speed: 1.17
+    motor:
+        id: 9
+        init: 512
+        min: 330
+        max: 560
