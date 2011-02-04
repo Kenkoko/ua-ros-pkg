@@ -39,6 +39,7 @@ public class RecognitionExperiment {
 		
 		_pOut = new BufferedWriter(new FileWriter(inputDir + _prefix + "-recognition-performance.csv"));
 		_pOut.write("batch_id,split_pct,id,name,r_name,accepted,tp,fp,tn,fn\n");
+		_pOut.flush();
 		
 		if (writeSample) {
 			_sOut = new BufferedWriter(new FileWriter(inputDir + _prefix + "-recognition-samples.csv"));
@@ -65,8 +66,10 @@ public class RecognitionExperiment {
 			return;
 
 		}
-		inputDir = "data/input/";
-		RecognitionExperiment exp = new RecognitionExperiment("ww3d", 80, false);
+		
+		System.out.println("Running: " + args[0] + " -- " + args[1]);
+		inputDir = args[0];
+		RecognitionExperiment exp = new RecognitionExperiment(args[1], 80, false);
 		exp.recognitionLearningCurve(100);
 		exp.done();
 		
