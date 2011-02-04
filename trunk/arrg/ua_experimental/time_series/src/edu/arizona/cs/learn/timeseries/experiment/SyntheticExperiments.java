@@ -3,6 +3,7 @@ package edu.arizona.cs.learn.timeseries.experiment;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,6 +15,8 @@ import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyParams;
+import edu.arizona.cs.learn.timeseries.clustering.kmeans.ClusterInit;
+import edu.arizona.cs.learn.timeseries.clustering.kmeans.KMeans;
 import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
 import edu.arizona.cs.learn.timeseries.evaluation.SplitAndTest;
 import edu.arizona.cs.learn.timeseries.model.Instance;
@@ -26,7 +29,7 @@ import edu.arizona.cs.learn.util.Utils;
 //    The number of examples... 60
 //    The number of folds....   5
 
-public class SyntheticClassification {
+public class SyntheticExperiments {
 	public static final int FOLDS = 6;
 	public static final int N = 60;
 	
@@ -50,6 +53,7 @@ public class SyntheticClassification {
 		
 		EXPERIMENTS = Integer.parseInt(args[0]);
 		String experiment = args[1];
+		System.out.println("Experiment: " + experiment);
 		
 		List<Double> means = new ArrayList<Double>();
 		String[] meanTokens = args[2].split("[,]");
@@ -68,11 +72,14 @@ public class SyntheticClassification {
 		
 		if ("curve".equals(experiment)) 
 			learningCurve(lengths, means, pcts);
+		else if ("cluster".equals(experiment))
+			cluster(lengths, means, pcts);
 		else
 			experiment(lengths, means, pcts);
+		
 //		expectedSequenceSizes(lengths,means);
 	}
-	
+		
 	public static void learningCurve(List<Integer> lengths, List<Double> means, List<Double> pcts) throws Exception { 
 		String pid = RandomFile.getPID();
 		String dir = "/tmp/niall-" + pid + "/";
@@ -118,6 +125,57 @@ public class SyntheticClassification {
 		SymbolicData.convert(prefix + className, prefix + "niall-" + className +".lisp", N);
 	}
 
+	/**
+	 * Run clustering algorithm for all of the values across the means, lengths, and pct to vary
+	 * the covariance between no covariance and an easy covariance structure.
+	 * @param episodeLengths
+	 * @param means
+	 * @param pcts
+	 * @throws Exception
+	 */
+	public static void cluster(List<Integer> episodeLengths, List<Double> means, List<Double> pcts) throws Exception { 
+		String pid = RandomFile.getPID();
+		System.out.println("Means: " + means);
+		System.out.println("Lengths: " + episodeLengths);
+		System.out.println("Pcts: " + pcts);
+		
+		String key = System.currentTimeMillis() + "";
+		
+		PrintStream out = new PrintStream(new File("logs/synthetic-clustering-" + key + ".csv"));
+		
+		// Total number of experiments equals 25
+		for (double pct : pcts) { 
+			for (double mean : means) { 
+				for (int length : episodeLengths) { 
+					System.out.println("Mean: " + mean + " Length: " + length);
+
+					generateClass(pid, "f", 0, 0, length);
+					generateClass(pid, "g", mean, pct, length);
+					
+					Map<String,List<Instance>> data = Utils.load("/tmp/niall-" + pid + "/", "niall", SequenceType.allen);
+					List<Instance> all = new ArrayList<Instance>();
+					for (String name : data.keySet()) { 
+						all.addAll(data.get(name));
+					}
+
+					KMeans kmeans = new KMeans(data.keySet().size(), 20);
+
+					out.println("KMeans: Random");
+					kmeans.cluster(out, all, ClusterInit.random, 0);
+					
+					out.println("KMeans: Supervised 1");
+					kmeans.cluster(out, all, ClusterInit.supervised, 1);
+					
+					out.println("KMeans: Supervised 5");
+					kmeans.cluster(out, all, ClusterInit.supervised, 5);
+
+					out.println("KMeans: Supervised 10");
+					kmeans.cluster(out, all, ClusterInit.supervised, 10);
+				}
+			}
+		}
+	}	
+	
 	/**
 	 * Run the for all of the values across the means, lengths, and pct to vary
 	 * the covariance between no covariance and an easy covariance structure.
