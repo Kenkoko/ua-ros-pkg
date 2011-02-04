@@ -17,7 +17,7 @@ public class FSMRecognizer {
 	private BPPNode _startNode;
 	
 	/** Timeout is a parameter that determines how long we can spend in an off state. */
-	private int _timeOut = 0;
+	private int _timeOut = Integer.MAX_VALUE;
 
 	public FSMRecognizer(String className, DirectedGraph<BPPNode, Edge> graph) {
 		this._key = className;
@@ -160,8 +160,7 @@ public class FSMRecognizer {
 	 * @return
 	 */
 	public boolean test(List<Interval> intervals, int start, int end) {
-		List<BPPNode> active = new ArrayList<BPPNode>();
-		active.add(_startNode);
+		reset();
 
 		for (int i = start; i < end; i++) {
 			Set<String> props = new HashSet<String>();
@@ -170,7 +169,7 @@ public class FSMRecognizer {
 					props.add(interval.name);
 			}
 
-			if (update(active, props)) {
+			if (update(props)) {
 				return true;
 			}
 		}
