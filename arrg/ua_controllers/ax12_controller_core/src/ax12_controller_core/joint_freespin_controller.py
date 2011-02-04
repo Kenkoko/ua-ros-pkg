@@ -57,6 +57,7 @@ class JointFreespinControllerAX12(JointControllerAX12):
         self.max_angle_raw = rospy.get_param(self.topic_name + '/motor/max')
         
         self.flipped = self.min_angle_raw > self.max_angle_raw
+        self.last_commanded_torque = 0.0
         
         self.joint_state = JointState(name=self.joint_name, motor_ids=[self.motor_id])
 
@@ -96,6 +97,7 @@ class JointFreespinControllerAX12(JointControllerAX12):
     def set_speed(self, speed):
         if speed < -self.joint_max_speed: speed = -self.joint_max_speed
         elif speed > self.joint_max_speed: speed = self.joint_max_speed
+        self.last_commanded_torque = speed
         speed_raw = int(round(speed / DMXL_SPEED_RAD_SEC_PER_TICK))
         mcv = (self.motor_id, speed_raw)
         self.send_packet_callback((DMXL_SET_GOAL_SPEED, [mcv]))
@@ -134,7 +136,8 @@ class JointFreespinControllerAX12(JointControllerAX12):
             state = filter(lambda state: state.id == self.motor_id, state_list.motor_states)
             if state:
                 state = state[0]
-                self.joint_state.goal_pos = 0.0
+                self.joint_state.motor_temps = [state.temperature]
+                self.joint_state.goal_pos = self.last_commanded_torque
                 self.joint_state.current_pos = self.raw_to_rad(state.position, self.initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.error = 0.0
                 self.joint_state.velocity = (state.speed / DMXL_MAX_SPEED_TICK) * DMXL_MAX_SPEED_RAD
