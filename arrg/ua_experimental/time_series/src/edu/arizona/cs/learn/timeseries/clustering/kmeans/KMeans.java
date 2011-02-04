@@ -1,5 +1,6 @@
 package edu.arizona.cs.learn.timeseries.clustering.kmeans;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,7 @@ public class KMeans {
 	 * to select initial clusters.
 	 * @param instances
 	 */
-	public void cluster(final List<Instance> instances, ClusterInit init, int seedAmt) { 
+	public void cluster(PrintStream out, final List<Instance> instances, ClusterInit init, int seedAmt) { 
 		_execute = Executors.newFixedThreadPool(Utils.numThreads);
 
 		// Make ground truth clusters....
@@ -113,8 +114,8 @@ public class KMeans {
 		}
 		
 		// now we can measure performance
-		System.out.println("Performance: " + performance(groundTruth, clusters));
-		oatesPerformance(instances, groundTruth, clusters);
+		performance(out, groundTruth, clusters);
+		oatesPerformance(out, instances, groundTruth, clusters);
 
 		_execute.shutdown();
 	}
@@ -140,7 +141,7 @@ public class KMeans {
 	}
 	
 	
-	public static void oatesPerformance(List<Instance> instances, List<Cluster> groundTruth, List<Cluster> clusters) { 
+	public static void oatesPerformance(PrintStream out, List<Instance> instances, List<Cluster> groundTruth, List<Cluster> clusters) { 
 		double n1 = 0;
 		double n2 = 0;
 		double n3 = 0;
@@ -192,15 +193,15 @@ public class KMeans {
 		}
 		
 		// print out things for the time being, since I'm unsure if I want to dump it to a file
-		System.out.println("Oates table:");
-		System.out.println("---- " + n1 + "\t" + n2);
-		System.out.println("---- " + n3 + "\t" + n4);
+		out.println("Oates table:");
+		out.println("---- " + n1 + "\t" + n2);
+		out.println("---- " + n3 + "\t" + n4);
 
-		System.out.println("Accordance Ratio 1 (n1) " + (n1 / (n1+n2)));
-		System.out.println("Accordance Ratio 2 (n4) " + (n4 / (n3+n4)));
+		out.println("Accordance Ratio 1 (n1) " + (n1 / (n1+n2)));
+		out.println("Accordance Ratio 2 (n4) " + (n4 / (n3+n4)));
 	}
 	
-	public static double performance(List<Cluster> groundTruth, List<Cluster> clusters) { 
+	public static double performance(PrintStream out, List<Cluster> groundTruth, List<Cluster> clusters) { 
 		double total = 0;
 		for (Cluster gt : groundTruth) { 
 			// find the cluster that maximizes the overlap with this one
@@ -215,7 +216,7 @@ public class KMeans {
 				}
 			}
 			
-			System.out.println("...Cluster " + gt.name() + " -- closest: " + closest.id() + " -- " + max);
+			out.println("...Cluster " + gt.name() + " -- closest: " + closest.id() + " -- " + max);
 			total += max;
 			
 		}
@@ -249,7 +250,7 @@ public class KMeans {
 //		all.addAll(set6);
 
 		KMeans kmeans = new KMeans(5, 20);
-		kmeans.cluster(all, ClusterInit.supervised, 5);
+		kmeans.cluster(System.out, all, ClusterInit.supervised, 5);
 	}
 
 	

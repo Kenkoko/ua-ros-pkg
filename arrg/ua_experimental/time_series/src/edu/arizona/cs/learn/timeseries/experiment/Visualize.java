@@ -53,8 +53,8 @@ public class Visualize {
 		String pid = RandomFile.getPID();
 		String dir = "/tmp/niall-" + pid + "/";
 
-		SyntheticClassification.generateClass(pid, "f", 0, 0, 25);
-		SyntheticClassification.generateClass(pid, "g", 1.0, 0, 25);
+		SyntheticExperiments.generateClass(pid, "f", 0, 0, 25);
+		SyntheticExperiments.generateClass(pid, "g", 1.0, 0, 25);
 
 		makeImages(dir, dir, "niall-f");
 		makeImages(dir, dir, "niall-g");
