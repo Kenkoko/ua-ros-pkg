@@ -163,6 +163,9 @@ public class SyntheticExperiments {
 					out.println("KMeans: Random");
 					kmeans.cluster(out, all, ClusterInit.random, 0);
 					
+					out.println("KMeans: KMeans++");
+					kmeans.cluster(out, all, ClusterInit.kPlusPlus, 0);
+					
 					out.println("KMeans: Supervised 1");
 					kmeans.cluster(out, all, ClusterInit.supervised, 1);
 					
