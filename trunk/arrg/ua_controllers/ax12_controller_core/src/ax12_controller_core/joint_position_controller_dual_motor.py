@@ -61,7 +61,7 @@ class JointPositionControllerDualAX12(JointControllerAX12):
         
         self.flipped = self.master_min_angle_raw > self.master_max_angle_raw
         
-        self.joint_state = JointState(name=self.joint_name, motor_ids=[self.master_id])
+        self.joint_state = JointState(name=self.joint_name, motor_ids=[self.master_id, self.slave_id])
 
     def initialize(self):
         # verify that the expected motor is connected and responding
@@ -141,9 +141,10 @@ class JointPositionControllerDualAX12(JointControllerAX12):
 
     def process_motor_states(self, state_list):
         if self.running:
-            state = filter(lambda state: state.id == self.master_id, state_list.motor_states)
-            if state:
-                state = state[0]
+            states = [{state.id: state} for state in state_list.motor_states if state.id in [self.master_id, self.slave_id]]
+            if states:
+                state = states[self.master_id]
+                self.joint_state.motor_temps = [state.temperature, states[self.slave_id].temperature]
                 self.joint_state.goal_pos = self.raw_to_rad(state.goal, self.master_initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.current_pos = self.raw_to_rad(state.position, self.master_initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.error = state.error * self.radians_per_encoder_tick

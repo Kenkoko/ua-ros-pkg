@@ -134,6 +134,7 @@ class JointPositionControllerAX12(JointControllerAX12):
             state = filter(lambda state: state.id == self.motor_id, state_list.motor_states)
             if state:
                 state = state[0]
+                self.joint_state.motor_temps = [state.temperature]
                 self.joint_state.goal_pos = self.raw_to_rad(state.goal, self.initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.current_pos = self.raw_to_rad(state.position, self.initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.error = state.error * self.radians_per_encoder_tick
