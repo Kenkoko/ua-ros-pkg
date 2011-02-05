@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 
 import edu.arizona.cs.learn.timeseries.clustering.Distance;
 import edu.arizona.cs.learn.timeseries.model.Instance;
@@ -54,15 +55,39 @@ public enum ClusterInit {
 			centers.add(indexes.remove(0));
 			
 			while (centers.size() < clusters.size()) { 
+				// sum up all of the weights.
+				double sum = 0;
+				Map<Integer,Double> weight = new TreeMap<Integer,Double>();
 				for (int index : indexes) { 
 					double minD = Double.POSITIVE_INFINITY;
 					for (int center : centers) { 
 						minD = Math.min(distances[index][center], minD);
 					}
+					
+					weight.put(index, minD*minD);
+					sum += weight.get(index);
 				}
+				
+				int center = -1;
+				double random = r.nextDouble();
+				double lower = 0;
+				for (Integer key : weight.keySet()) { 
+					double pct = weight.get(key) / sum;
+					double upper = lower + pct;
+					if (random < upper) {
+						center = key;
+						break;
+					} else { 
+						lower = upper;
+					}
+				}
+				
+				centers.add(center);
 			}
 
-			throw new RuntimeException("Not yet implemented!");
+			for (int i = 0; i < centers.size(); ++i) { 
+				clusters.get(i).add(instances.get(centers.get(i)));
+			}
 		}
 	},
 	supervised {
