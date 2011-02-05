@@ -84,7 +84,7 @@ public class Cluster {
 		p.setMin(0,0);
 		p.setBonus(1, 1);
 		p.setPenalty(-1, -1);
-		p.normalize = Normalize.signature;
+		p.normalize = Normalize.none;
 		p.similarity = Similarity.strings;
 		
 		Report report = GeneralAlignment.align(p);

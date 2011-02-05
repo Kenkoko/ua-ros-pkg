@@ -50,7 +50,7 @@ public class KMeans {
 		
 		// assign uniqueIds to each of the instances....
 		for (int i = 0; i < instances.size(); ++i) { 
-			instances.get(i).uniqueId(i+1000);
+			instances.get(i).uniqueId(i+100);
 		}
 		
 		final List<Cluster> clusters = new ArrayList<Cluster>();
@@ -60,11 +60,16 @@ public class KMeans {
 		// Initialize the first clusters according to the method given.
 		init.pickCenters(clusters, instances, seedAmt);
 		
+		out.println("Initialization");
+		printClusters(out, clusters);
+		
 		int iteration = 1;
 		boolean changing = true;
 		while (changing && iteration <= _maxIter) {
+			changing = false;
+			
 //			if (iteration % 10 == 0) 
-				System.out.println("Iteration: " + iteration);
+			System.out.println("Iteration: " + iteration);
 
 			finishClusters(clusters);
 			
@@ -90,10 +95,13 @@ public class KMeans {
 					tmp.get(dc.clusterId).add(dc.instance);
 					
 					Integer newId = clusterMap.get(dc.instance.uniqueId());
-					if (newId == null)
+					if (newId == null) {
 						changing = true;
-					else if (dc.clusterId != newId)
+						System.out.println("\t\tNew Assignment " + dc.instance.uniqueId());
+					} else if (dc.clusterId != newId) {
 						changing = true;
+						System.out.println("\t\tChanged cluster: " + dc.instance.uniqueId() + " -- " + dc.clusterId + " -- " + newId);
+					}
 				} catch (Exception e) { 
 					e.printStackTrace();
 				}
@@ -101,23 +109,30 @@ public class KMeans {
 
 			clusters.clear();
 			clusters.addAll(tmp);
+			printClusters(out, clusters);
+			
 			++iteration;
 		}
 		
-		for (Cluster c : clusters) { 
-			System.out.println("Cluster: " + c.id());
-			System.out.print("\t[");
-			for (Instance instance : c.instances()) { 
-				System.out.print(instance.name()+ "-" + instance.id() + ",");
-			}
-			System.out.println("]");
-		}
+		printClusters(out, clusters);
 		
 		// now we can measure performance
 		performance(out, groundTruth, clusters);
 		oatesPerformance(out, instances, groundTruth, clusters);
 
 		_execute.shutdown();
+	}
+	
+	public void printClusters(PrintStream out, List<Cluster> clusters) {
+		out.println("Clusters...");
+		for (Cluster c : clusters) { 
+			out.println("  Cluster: " + c.id());
+			out.print("  \t[");
+			for (Instance instance : c.instances()) { 
+				out.print(instance.name()+ "-" + instance.id() + ",");
+			}
+			out.println("]");
+		}
 	}
 	
 	/**
@@ -220,7 +235,10 @@ public class KMeans {
 			total += max;
 			
 		}
-		return total / (double) groundTruth.size();
+		
+		double average = total / (double) groundTruth.size();
+		out.println("Average Performance: " + average);
+		return average;
 	}
 	
 	public static void main(String[] args) { 
@@ -233,21 +251,21 @@ public class KMeans {
 		List<Instance> set5 = Utils.sequences("E", "data/input/ww3d-push.lisp", SequenceType.allen);
 //		List<Instance> set6 = Utils.sequences("F", "data/input/ww3d-approach.lisp", SequenceType.allen);
 
-//		for (int i = 0; i < 10; ++i) { 
-//			all.add(set1.get(i));
-//			all.add(set2.get(i));
-//			all.add(set3.get(i));
-//			all.add(set4.get(i));
-//			all.add(set5.get(i));
-////			all.add(set6.get(i));
-//		}
+		for (int i = 0; i < 10; ++i) { 
+			all.add(set1.get(i));
+			all.add(set2.get(i));
+			all.add(set3.get(i));
+			all.add(set4.get(i));
+			all.add(set5.get(i));
+//			all.add(set6.get(i));
+		}
 		
-		all.addAll(set1);
-		all.addAll(set2);
-		all.addAll(set3);
-		all.addAll(set4);
-		all.addAll(set5);
-//		all.addAll(set6);
+//		all.addAll(set1);
+//		all.addAll(set2);
+//		all.addAll(set3);
+//		all.addAll(set4);
+//		all.addAll(set5);
+////		all.addAll(set6);
 
 		KMeans kmeans = new KMeans(5, 20);
 		kmeans.cluster(System.out, all, ClusterInit.supervised, 5);
