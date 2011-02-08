@@ -4,5 +4,9 @@ int32 CLOSE_GRIPPER=1
 int32 OPEN_GRIPPER=2
 
 float64 torque_limit
+
+bool dynamic_torque_control
+float64 pressure_lower
+float64 pressure_upper
 ---
 ---

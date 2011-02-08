@@ -30,10 +30,17 @@
           args="--port /dev/wubble2LowerArm
                 wrist_roll_controller
                 wrist_pitch_controller
-                wrist_yaw_controller
+                wrist_yaw_controller"
+          output="screen"/>
+
+    <rosparam file="$(find wubble2_robot)/config/wubble_gripper.yaml" command="load"/>
+    <node name="wubble_gripper_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
+          args="--port /dev/wubble2LowerArm
                 gripper_left_finger_controller
                 gripper_right_finger_controller"
           output="screen"/>
+
+    <node name="gripper_freespin_controller" pkg="wubble2_robot" type="gripper_freespin_controller.py" output="screen" />
 
     <!-- Load joint trajectory controller configuration from YAML file to parameter server -->
     <rosparam file="$(find wubble2_robot)/config/arm_trajectory_controller.yaml" command="load"/>

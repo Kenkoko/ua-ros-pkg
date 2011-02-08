@@ -91,32 +91,3 @@ wrist_yaw_controller:
         min: 185
         max: 830
 
-gripper_left_finger_controller:
-    controller:
-        package: ax12_controller_core
-        module: joint_position_controller
-        type: JointPositionControllerAX12
-    joint_name: left_finger_joint
-    joint_speed: 1.17
-    joint_compliance_margin: 5
-    joint_compliance_slope: 64
-    motor:
-        id: 8
-        init: 512
-        min: 450
-        max: 680
-
-gripper_right_finger_controller:
-    controller:
-        package: ax12_controller_core
-        module: joint_position_controller
-        type: JointPositionControllerAX12
-    joint_name: right_finger_joint
-    joint_speed: 1.17
-    joint_compliance_margin: 5
-    joint_compliance_slope: 64
-    motor:
-        id: 9
-        init: 512
-        min: 330
-        max: 560
