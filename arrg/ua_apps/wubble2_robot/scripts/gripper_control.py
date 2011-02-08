@@ -53,7 +53,10 @@ class ObjectSoundCollector:
     def close_gripper(self):
         goal = WubbleGripperGoal()
         goal.command = WubbleGripperGoal.CLOSE_GRIPPER
-        goal.torque_limit = 0.5
+        goal.torque_limit = 0.0
+        goal.dynamic_torque_control = True
+        goal.pressure_upper = 1500.0
+        goal.pressure_lower = 1300.0
         
         self.gripper_client.send_goal(goal)
         self.gripper_client.wait_for_result()
@@ -61,7 +64,7 @@ class ObjectSoundCollector:
     def open_gripper(self):
         goal = WubbleGripperGoal()
         goal.command = WubbleGripperGoal.OPEN_GRIPPER
-        goal.torque_limit = 1.0
+        goal.torque_limit = 0.4
         
         self.gripper_client.send_goal(goal)
         self.gripper_client.wait_for_result()

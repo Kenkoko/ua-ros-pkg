@@ -1,6 +1,14 @@
 <!-- -*- mode: XML -*- -->
 
 <launch>
+    <node name="relay_arm_sensor_interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
+        <param name="serial_number" type="int" value="124427"/>
+    </node>
+
+    <node name="top_interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
+        <param name="serial_number" type="int" value="106950"/>
+    </node>
+
     <!-- Start the Dynamixel servo manager to control Lower Arm (wrist and fingers) -->
     <node name="lower_arm_motor_manager" pkg="ax12_controller_core" type="controller_manager.py" output="screen">
         <param name="port_name" type="str" value="/dev/wubble2LowerArm"/>
