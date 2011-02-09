@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
-import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
 import edu.arizona.cs.learn.timeseries.model.Interval;
@@ -114,7 +114,7 @@ public class CompareFSMandSequences {
 					params.seq1 = s.signature();
 					params.min1 = (int) Math.round(s.trainingSize() * 0.80);
 					params.seq2 = SequenceType.allen.getSequence(runningEpisode);
-					distance = SequenceAlignment.distance(params);
+					distance = GeneralAlignment.distance(params);
 				}
 				
 				// now add the distance multiple times to the list

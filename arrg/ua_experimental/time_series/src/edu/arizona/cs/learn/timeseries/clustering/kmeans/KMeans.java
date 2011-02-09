@@ -1,5 +1,6 @@
 package edu.arizona.cs.learn.timeseries.clustering.kmeans;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import edu.arizona.cs.learn.timeseries.clustering.ClusteringResults;
 import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.util.Utils;
@@ -22,9 +24,15 @@ public class KMeans {
 	private int _k;
 	private int _maxIter;
 	
-	public KMeans(int k, int maxIter) { 
+	private ClusterInit _init;
+	private ClusterType _type;
+	
+	public KMeans(int k, int maxIter, ClusterInit init, ClusterType type) { 
 		_k = k;
 		_maxIter = maxIter;
+		
+		_init = init;
+		_type = type;
 	}
 	
 	/**
@@ -32,15 +40,15 @@ public class KMeans {
 	 * to select initial clusters.
 	 * @param instances
 	 */
-	public void cluster(PrintStream out, final List<Instance> instances, ClusterInit init, int seedAmt) { 
+	public ClusteringResults cluster(final List<Instance> instances) { 
 		_execute = Executors.newFixedThreadPool(Utils.numThreads);
-
+		
 		// Make ground truth clusters....
 		Map<String,Cluster> gtClusters = new HashMap<String,Cluster>();
 		for (Instance instance : instances) { 
 			Cluster c = gtClusters.get(instance.name());
 			if (c == null) { 
-				c = new Cluster(instance.name(), gtClusters.size());
+				c = _type.make(instance.name(), gtClusters.size());
 				gtClusters.put(instance.name(), c);
 			}
 			c.add(instance);
@@ -55,20 +63,16 @@ public class KMeans {
 		
 		final List<Cluster> clusters = new ArrayList<Cluster>();
 		for (int i = 0; i < _k; ++i) 
-			clusters.add(new Cluster(i));
+			clusters.add(_type.make(i));
 		
 		// Initialize the first clusters according to the method given.
-		init.pickCenters(clusters, instances, seedAmt);
-		
-		out.println("Initialization");
-		printClusters(out, clusters);
+		_init.pickCenters(clusters, instances);
 		
 		int iteration = 1;
 		boolean changing = true;
 		while (changing && iteration <= _maxIter) {
 			changing = false;
 			
-//			if (iteration % 10 == 0) 
 			System.out.println("Iteration: " + iteration);
 
 			finishClusters(clusters);
@@ -83,7 +87,7 @@ public class KMeans {
 			// Initialize the new clusters.
 			List<Cluster> tmp = new ArrayList<Cluster>();
 			for (int i = 0; i < _k; ++i) 
-				tmp.add(new Cluster(i));
+				tmp.add(_type.make(i));
 			
 			List<Future<ClusterDistance>> futureList = new ArrayList<Future<ClusterDistance>>();
 			for (int i = 0; i < instances.size(); ++i) 
@@ -109,18 +113,15 @@ public class KMeans {
 
 			clusters.clear();
 			clusters.addAll(tmp);
-			printClusters(out, clusters);
 			
 			++iteration;
 		}
-		
-		printClusters(out, clusters);
+		_execute.shutdown();
 		
 		// now we can measure performance
-		performance(out, groundTruth, clusters);
-		oatesPerformance(out, instances, groundTruth, clusters);
-
-		_execute.shutdown();
+		ClusteringResults results = new ClusteringResults(groundTruth, clusters);
+		results.accordance(instances);
+		return results;
 	}
 	
 	public void printClusters(PrintStream out, List<Cluster> clusters) {
@@ -155,93 +156,7 @@ public class KMeans {
 		}
 	}
 	
-	
-	public static void oatesPerformance(PrintStream out, List<Instance> instances, List<Cluster> groundTruth, List<Cluster> clusters) { 
-		double n1 = 0;
-		double n2 = 0;
-		double n3 = 0;
-		double n4 = 0;
-		
-		for (int i = 0; i < instances.size(); ++i) { 
-			// figure out which cluster this instance is part of in the
-			// ground truth as well as the found clusters
-			Instance i1 = instances.get(i);
-			int true1 = -1;
-			for (Cluster c : groundTruth) {
-				if (c.contains(i1))
-					true1 = c.id();
-			}
-			
-			int found1 = -1;
-			for (Cluster c : clusters) { 
-				if (c.contains(i1))
-					found1 = c.id();
-			}
-			
-			for (int j = i+1; j < instances.size(); ++j) { 
-				Instance i2 = instances.get(j);
-				int true2 = -1;
-				for (Cluster c : groundTruth) {
-					if (c.contains(i2))
-						true2 = c.id();
-				}
-				
-				int found2 = -1;
-				for (Cluster c : clusters) {
-					if (c.contains(i2))
-						found2 = c.id();
-				}
-				
-				// Now classify... 
-				boolean k = true1 == true2;
-				boolean f = found1 == found2;
-				
-				if (k && f) 
-					++n1;
-				else if (k && !f)
-					++n3;
-				else if (!k && f)
-					++n2;
-				else if (!k && !f)
-					++n4;
-			}
-		}
-		
-		// print out things for the time being, since I'm unsure if I want to dump it to a file
-		out.println("Oates table:");
-		out.println("---- " + n1 + "\t" + n2);
-		out.println("---- " + n3 + "\t" + n4);
-
-		out.println("Accordance Ratio 1 (n1) " + (n1 / (n1+n2)));
-		out.println("Accordance Ratio 2 (n4) " + (n4 / (n3+n4)));
-	}
-	
-	public static double performance(PrintStream out, List<Cluster> groundTruth, List<Cluster> clusters) { 
-		double total = 0;
-		for (Cluster gt : groundTruth) { 
-			// find the cluster that maximizes the overlap with this one
-			double max = 0;
-			Cluster closest = null;
-			
-			for (Cluster c : clusters) {
-				double d = gt.sim(c);
-				if (d > max) { 
-					max = d;
-					closest = c;
-				}
-			}
-			
-			out.println("...Cluster " + gt.name() + " -- closest: " + closest.id() + " -- " + max);
-			total += max;
-			
-		}
-		
-		double average = total / (double) groundTruth.size();
-		out.println("Average Performance: " + average);
-		return average;
-	}
-	
-	public static void main(String[] args) { 
+	public static void main(String[] args) throws Exception { 
 		// perform a test with a small subset of the total problem.
 		List<Instance> all = new ArrayList<Instance>();
 		List<Instance> set1 = Utils.sequences("A", "data/input/ww3d-jump-over.lisp", SequenceType.allen);
@@ -251,24 +166,29 @@ public class KMeans {
 		List<Instance> set5 = Utils.sequences("E", "data/input/ww3d-push.lisp", SequenceType.allen);
 //		List<Instance> set6 = Utils.sequences("F", "data/input/ww3d-approach.lisp", SequenceType.allen);
 
-		for (int i = 0; i < 10; ++i) { 
-			all.add(set1.get(i));
-			all.add(set2.get(i));
-			all.add(set3.get(i));
-			all.add(set4.get(i));
-			all.add(set5.get(i));
-//			all.add(set6.get(i));
-		}
+//		for (int i = 0; i < 10; ++i) { 
+//			all.add(set1.get(i));
+//			all.add(set2.get(i));
+//			all.add(set3.get(i));
+//			all.add(set4.get(i));
+//			all.add(set5.get(i));
+////			all.add(set6.get(i));
+//		}
 		
-//		all.addAll(set1);
-//		all.addAll(set2);
-//		all.addAll(set3);
-//		all.addAll(set4);
-//		all.addAll(set5);
-////		all.addAll(set6);
+		all.addAll(set1);
+		all.addAll(set2);
+		all.addAll(set3);
+		all.addAll(set4);
+		all.addAll(set5);
+//		all.addAll(set6);
 
-		KMeans kmeans = new KMeans(5, 20);
-		kmeans.cluster(System.out, all, ClusterInit.supervised, 5);
+		PrintStream out = new PrintStream(new File("logs/synthetic-clustering-ww3d.csv"));
+		for (ClusterInit init : ClusterInit.values()) { 
+			for (ClusterType type : ClusterType.values()) { 
+				KMeans kmeans = new KMeans(5, 20, init, type);
+				kmeans.cluster(all);
+			}
+		}
 	}
 
 	
@@ -320,7 +240,7 @@ class ClusterFinish implements Callable<ClusterFinish> {
 
 	@Override
 	public ClusterFinish call() throws Exception {
-		_cluster.finish();
+		_cluster.computeCentroid();
 		return this;
 	}
 	

@@ -2,7 +2,7 @@ package edu.arizona.cs.learn.algorithm.alignment;
 
 import java.util.List;
 
-import edu.arizona.cs.learn.algorithm.alignment.model.WeightedObject;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 
 public class LCS {
 
@@ -12,7 +12,7 @@ public class LCS {
 	 * @param seq2
 	 * @return
 	 */
-	public static double lcs(List<WeightedObject> seq1, List<WeightedObject> seq2) {
+	public static double lcs(List<Symbol> seq1, List<Symbol> seq2) {
 		int m = seq1.size();
 		int n = seq2.size();
 
@@ -32,11 +32,11 @@ public class LCS {
 		}
 
 		for (int i = 1; i <= n; i++) {
-			WeightedObject item2 = (WeightedObject) seq2.get(i - 1);
+			Symbol item2 = seq2.get(i - 1);
 			nextRow[0] = starterCol[i];
 
 			for (int j = 1; j <= m; j++) {
-				WeightedObject item1 = (WeightedObject) seq1.get(j - 1);
+				Symbol item1 = seq1.get(j - 1);
 
 				double choice1 = lastRow[(j - 1)] - 1000.0D;
 				if (item1.equals(item2)) {

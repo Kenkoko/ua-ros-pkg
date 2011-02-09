@@ -9,7 +9,6 @@ import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import edu.arizona.cs.learn.algorithm.alignment.GeneralAlignment;
 import edu.arizona.cs.learn.algorithm.alignment.Normalize;
 import edu.arizona.cs.learn.algorithm.alignment.Params;
-import edu.arizona.cs.learn.algorithm.alignment.SequenceAlignment;
 import edu.arizona.cs.learn.timeseries.distance.Distances;
 import edu.arizona.cs.learn.timeseries.evaluation.cluster.Clustering;
 import edu.arizona.cs.learn.timeseries.model.Instance;
@@ -66,7 +65,7 @@ public class RandomStarts {
 					params.seq1 = i1.sequence();
 					params.seq2 = i2.sequence();
 					
-					double d = SequenceAlignment.distance(params);
+					double d = GeneralAlignment.distance(params);
 					listSS.get(j).addValue(d);
 				}
 			}

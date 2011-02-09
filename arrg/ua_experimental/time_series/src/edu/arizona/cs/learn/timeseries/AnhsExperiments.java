@@ -77,10 +77,11 @@ public class AnhsExperiments {
 
 	private static void runRecognitionExperiment() {
 		try {
-			int experiments = 1;
+			int experiments = 15;
 			String prefix = "ww3d";
-			int[] folds = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-			int[] pcts = { 95 };
+//			int[] folds = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+			int[] folds = { 6 };
+			int[] pcts = { 80 };
 			boolean[] prunes = { true };
 			boolean[] optimizeRecognizers = { true };
 

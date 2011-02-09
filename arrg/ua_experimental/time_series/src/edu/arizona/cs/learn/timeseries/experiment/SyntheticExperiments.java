@@ -15,7 +15,9 @@ import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import edu.arizona.cs.learn.timeseries.classification.Classifier;
 import edu.arizona.cs.learn.timeseries.classification.Classify;
 import edu.arizona.cs.learn.timeseries.classification.ClassifyParams;
+import edu.arizona.cs.learn.timeseries.clustering.ClusteringResults;
 import edu.arizona.cs.learn.timeseries.clustering.kmeans.ClusterInit;
+import edu.arizona.cs.learn.timeseries.clustering.kmeans.ClusterType;
 import edu.arizona.cs.learn.timeseries.clustering.kmeans.KMeans;
 import edu.arizona.cs.learn.timeseries.evaluation.BatchStatistics;
 import edu.arizona.cs.learn.timeseries.evaluation.SplitAndTest;
@@ -74,6 +76,8 @@ public class SyntheticExperiments {
 			learningCurve(lengths, means, pcts);
 		else if ("cluster".equals(experiment))
 			cluster(lengths, means, pcts);
+		else if ("knn".equals(experiment))
+			knn(lengths, means, pcts);
 		else
 			experiment(lengths, means, pcts);
 		
@@ -135,20 +139,13 @@ public class SyntheticExperiments {
 	 */
 	public static void cluster(List<Integer> episodeLengths, List<Double> means, List<Double> pcts) throws Exception { 
 		String pid = RandomFile.getPID();
-		System.out.println("Means: " + means);
-		System.out.println("Lengths: " + episodeLengths);
-		System.out.println("Pcts: " + pcts);
-		
 		String key = System.currentTimeMillis() + "";
-		
-		PrintStream out = new PrintStream(new File("logs/synthetic-clustering-" + key + ".csv"));
-		
-		// Total number of experiments equals 25
+
+		PrintStream out = new PrintStream(new File("logs/synthetic-kmeans-" + key));
+		out.println("cluster_type,cluster_init,pct,mean,length,run,tp,fp,fn,tn,accuracy");
 		for (double pct : pcts) { 
 			for (double mean : means) { 
 				for (int length : episodeLengths) { 
-					System.out.println("Mean: " + mean + " Length: " + length);
-
 					generateClass(pid, "f", 0, 0, length);
 					generateClass(pid, "g", mean, pct, length);
 					
@@ -157,23 +154,21 @@ public class SyntheticExperiments {
 					for (String name : data.keySet()) { 
 						all.addAll(data.get(name));
 					}
-
-					KMeans kmeans = new KMeans(data.keySet().size(), 20);
-
-					out.println("KMeans: Random");
-					kmeans.cluster(out, all, ClusterInit.random, 0);
 					
-					out.println("KMeans: KMeans++");
-					kmeans.cluster(out, all, ClusterInit.kPlusPlus, 0);
-					
-					out.println("KMeans: Supervised 1");
-					kmeans.cluster(out, all, ClusterInit.supervised, 1);
-					
-					out.println("KMeans: Supervised 5");
-					kmeans.cluster(out, all, ClusterInit.supervised, 5);
-
-					out.println("KMeans: Supervised 10");
-					kmeans.cluster(out, all, ClusterInit.supervised, 10);
+					// Now perform *all* of the experiments.
+					for (ClusterInit init : ClusterInit.values()) { 
+						for (ClusterType type : ClusterType.values()) { 
+							
+							// now we repeat the experiment x number of times....
+							for (int i = 0; i < EXPERIMENTS; ++i) { 
+								KMeans kmeans = new KMeans(data.keySet().size(), 20, init, type);
+								ClusteringResults result = kmeans.cluster(all);
+								out.println(type + "," + init + "," + pct + "," + mean + "," + length + "," + i + 
+										"," + result.tp + "," + result.fp + "," + result.fn + "," + result.tn + 
+										"," + result.accuracy);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -261,6 +256,66 @@ public class SyntheticExperiments {
 			}
 		}
 	}	
+	
+	/**
+	 * Run the for all of the values across the means, lengths, and pct to vary
+	 * the covariance between no covariance and an easy covariance structure.
+	 * @param episodeLengths
+	 * @param means
+	 * @param pcts
+	 * @throws Exception
+	 */
+	public static void knn(List<Integer> episodeLengths, List<Double> means, List<Double> pcts) throws Exception { 
+		String pid = RandomFile.getPID();
+		System.out.println("Means: " + means);
+		System.out.println("Lengths: " + episodeLengths);
+		System.out.println("Pcts: " + pcts);
+		
+		String key = System.currentTimeMillis() + "";
+		
+		BufferedWriter out = new BufferedWriter(new FileWriter("logs/synthetic-knn-" + key + ".csv"));
+		out.write("classifier,elength,mean,pct,test," + BatchStatistics.csvHeader() + "\n");
+		
+		for (double pct : pcts) { 
+			for (double mean : means) { 
+				for (int length : episodeLengths) { 
+					System.out.println("Mean: " + mean + " Length: " + length);
+
+					generateClass(pid, "f", 0, 0, length);
+					generateClass(pid, "g", mean, pct, length);
+
+					Map<String,List<Instance>> data = Utils.load("/tmp/niall-" + pid + "/", "niall", SequenceType.allen);
+					List<String> classNames = new ArrayList<String>(data.keySet());
+					Collections.sort(classNames);
+
+					int[] ks = { 1, 10 };
+					for (int k : ks) { 
+						ClassifyParams params = new ClassifyParams();
+						params.type = SequenceType.allen;
+						params.k = k;
+						params.weighted = true;
+						Classifier c = Classify.knn.getClassifier(params);
+
+						SplitAndTest sat = new SplitAndTest(EXPERIMENTS, 2.0/3.0);
+						List<BatchStatistics> stats = sat.run(System.currentTimeMillis(), classNames, data, c);
+
+						SummaryStatistics perf = new SummaryStatistics();
+						// append to the file the results of this latest run...
+						for (int i = 0; i < stats.size(); ++i) { 
+							BatchStatistics batch = stats.get(i);
+							out.write(batch.toCSV("knn" + k + "," + length + "," + mean + "," + pct + "," + i + ",", ""));
+
+							perf.addValue(batch.accuracy());
+						}
+						out.flush();
+						System.out.println("[pct:" + pct + ",mean:" + mean + ",length:" + length + "] " +
+								"performance: " + perf.getMean() + " sd -- " + perf.getStandardDeviation());
+					}
+				}
+			}
+		}
+	}	
+
 	
 	public static void expectedSequenceSizes(List<Integer> episodeLengths, List<Double> means) throws Exception { 
 		String pid = RandomFile.getPID();
