@@ -141,7 +141,7 @@ public class SyntheticExperiments {
 		String pid = RandomFile.getPID();
 		String key = System.currentTimeMillis() + "";
 
-		PrintStream out = new PrintStream(new File("logs/synthetic-kmeans-" + key));
+		PrintStream out = new PrintStream(new File("logs/synthetic-kmeans-" + key + ".csv"));
 		out.println("cluster_type,cluster_init,pct,mean,length,run,tp,fp,fn,tn,accuracy");
 		for (double pct : pcts) { 
 			for (double mean : means) { 
