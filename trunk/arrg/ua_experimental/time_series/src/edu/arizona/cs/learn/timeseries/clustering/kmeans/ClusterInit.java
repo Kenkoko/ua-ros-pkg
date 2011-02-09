@@ -16,28 +16,23 @@ public enum ClusterInit {
 
 	random {
 		@Override
-		public void pickCenters(List<Cluster> clusters, List<Instance> instances, int seedAmt) {
+		public void pickCenters(List<Cluster> clusters, List<Instance> instances) {
 			Random r = new Random(System.currentTimeMillis());
 			LinkedList<Instance> copy = new LinkedList<Instance>(instances);
 			Collections.shuffle(copy, r);
-			
-			// for each cluster randomly select seedAmt instances from instances and add them
-			// to the cluster.
-			for (int i = 0; i < clusters.size(); ++i) { 
-				Cluster cluster = clusters.get(i);
-				for (int j = 0; j < seedAmt; ++j) { 
-					cluster.add(copy.removeFirst());
-				}
+			for (int i = 0; i < copy.size(); ++i) { 
+				Cluster c = clusters.get(i%clusters.size());
+				c.add(copy.get(i));
 			}
 		}
 	},
 	
 	kPlusPlus {
 		@Override
-		public void pickCenters(List<Cluster> clusters, List<Instance> instances, int seedAmt) {
+		public void pickCenters(List<Cluster> clusters, List<Instance> instances) {
 			System.out.print("Calculating distances....");
 			System.out.flush();
-			double[][] distances = Distance.distancesA(instances);
+			double[][] distances = Distance.distances(instances);
 			System.out.println("done");
 
 			Random r = new Random(System.currentTimeMillis());
@@ -90,48 +85,61 @@ public enum ClusterInit {
 			}
 		}
 	},
-	supervised {
+	supervised1 {
 		@Override
-		public void pickCenters(List<Cluster> clusters, List<Instance> instances, int seedAmt) {
-			// This is a supervised method to initialize the clusters.  First we
-			// need to create a mapping from className to List<Instance> instances.
-			Random r = new Random(System.currentTimeMillis());
-			Map<String,List<Instance>> map = new HashMap<String,List<Instance>>();
-			for (Instance instance : instances) { 
-				List<Instance> tmp = map.get(instance.name());
-				if (tmp == null) { 
-					tmp = new ArrayList<Instance>();
-					map.put(instance.name(), tmp);
-				}
-				tmp.add(instance);
-			}
-			
-			if (map.keySet().size() != clusters.size()) 
-				throw new RuntimeException("Supervised so the number of clusters should equal the number of classes");
-			
-			System.out.println("Clusters: " + clusters.size());
-			int index = 0;
-			for (String className : map.keySet()) { 
-				List<Instance> tmp = map.get(className);
-				Collections.shuffle(tmp, r);
-				
-				System.out.println("\tTmp: " + className + " - " + tmp.size());
-				for (int i = 0; i < seedAmt; ++i) 
-					clusters.get(index).add(tmp.get(i));
-
-				++index;
-			}
+		public void pickCenters(List<Cluster> clusters, List<Instance> instances) {
+			supervised(clusters, instances, 1);
+		}
+	},
+	supervised5 {
+		@Override
+		public void pickCenters(List<Cluster> clusters, List<Instance> instances) { 
+			supervised(clusters, instances, 5);
+		}
+	},
+	supervised10 { 
+		@Override
+		public void pickCenters(List<Cluster> clusters, List<Instance> instances) { 
+			supervised(clusters, instances, 10);
 		}
 	};
 	
 	/**
-	 * Initialize the clusters with potential centers.  In many cases this will be 
-	 * a single instance, but by varying the seed amount we can change the number of
-	 * instances that occur within the seeding of the clusters.
+	 * Initialize the clusters with potential centers.  
 	 * @param clusters
 	 * @param instances
-	 * @param seedAmt
 	 */
-	public abstract void pickCenters(List<Cluster> clusters, List<Instance> instances, int seedAmt);
+	public abstract void pickCenters(List<Cluster> clusters, List<Instance> instances);
+	
+	private static void supervised(List<Cluster> clusters, List<Instance> instances, int seedAmt) { 
+		// This is a supervised method to initialize the clusters.  First we
+		// need to create a mapping from className to List<Instance> instances.
+		Random r = new Random(System.currentTimeMillis());
+		Map<String,List<Instance>> map = new HashMap<String,List<Instance>>();
+		for (Instance instance : instances) { 
+			List<Instance> tmp = map.get(instance.name());
+			if (tmp == null) { 
+				tmp = new ArrayList<Instance>();
+				map.put(instance.name(), tmp);
+			}
+			tmp.add(instance);
+		}
+		
+		if (map.keySet().size() != clusters.size()) 
+			throw new RuntimeException("Supervised so the number of clusters should equal the number of classes");
+		
+		System.out.println("Clusters: " + clusters.size());
+		int index = 0;
+		for (String className : map.keySet()) { 
+			List<Instance> tmp = map.get(className);
+			Collections.shuffle(tmp, r);
+			
+			System.out.println("\tTmp: " + className + " - " + tmp.size());
+			for (int i = 0; i < seedAmt; ++i) 
+				clusters.get(index).add(tmp.get(i));
+
+			++index;
+		}
+	}
 }
 

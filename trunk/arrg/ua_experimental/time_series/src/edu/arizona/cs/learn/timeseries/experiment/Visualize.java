@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import edu.arizona.cs.learn.algorithm.bpp.BPPFactory;
 import edu.arizona.cs.learn.algorithm.heatmap.HeatmapImage;
 import edu.arizona.cs.learn.algorithm.render.Paint;
+import edu.arizona.cs.learn.timeseries.evaluation.BatchSignatures;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
@@ -19,12 +22,21 @@ public class Visualize {
 
 	
 	public static void main(String[] args) { 
-		List<Interval> set1 = new ArrayList<Interval>();
-		set1.add(Interval.make("F", 0, 15));
-		set1.add(Interval.make("D", 1, 20));
-		set1.add(Interval.make("S", 15, 20));
-
-		Paint.render(set1, "/Users/wkerr/Desktop/example1.png");
+		Map<String,List<Instance>> map = Utils.load("data/input/", "global-ww2d", SequenceType.allen);
+		BatchSignatures bs = new BatchSignatures(map);
+		bs.makeSignatures();
+		
+		makeImages(bs.signatures().get("global-ww2d-collide"), map.get("global-ww2d-pass"), "/tmp/output/", 
+				"global-ww2d-pass", true);
+		
+//		List<Interval> set1 = new ArrayList<Interval>();
+//		set1.add(Interval.make("F", 0, 15));
+//		set1.add(Interval.make("D", 1, 20));
+//		set1.add(Interval.make("S", 15, 20));
+//
+//		Paint.render(set1, "/Users/wkerr/Desktop/example1.png");
+		
+		
 //		System.out.println(SequenceType.allen.getSequence(set1));
 //		
 //		List<Interval> set2 = new ArrayList<Interval>();
@@ -56,12 +68,20 @@ public class Visualize {
 		SyntheticExperiments.generateClass(pid, "f", 0, 0, 25);
 		SyntheticExperiments.generateClass(pid, "g", 1.0, 0, 25);
 
-		makeImages(dir, dir, "niall-f");
-		makeImages(dir, dir, "niall-g");
+		makeImages(dir, dir, "niall-f", false);
+		makeImages(dir, dir, "niall-g", false);
 	}
 	
-	public static void makeImages(String dataDir, String outputDir, String prefix) { 
+	public static void makeImages(String dataDir, String outputDir, String prefix, boolean compress) { 
 		Map<Integer,List<Interval>> map = Utils.load(new File(dataDir + prefix + ".lisp"));
+		if (compress) { 
+			Map<Integer,List<Interval>> compressedMap = new TreeMap<Integer,List<Interval>>();
+			for (Integer key : map.keySet()) { 
+				compressedMap.put(key, BPPFactory.compress(map.get(key), Interval.eff));
+			}
+			map = compressedMap;
+		}
+		
 		Map<Integer,List<Symbol>> instances = new TreeMap<Integer,List<Symbol>>();
 		for (Integer key : map.keySet())  
 			instances.put(key, SequenceType.allen.getSequence(map.get(key)));
@@ -87,4 +107,17 @@ public class Visualize {
 			HeatmapImage.makeHeatmap(pre + "-hm.png", s.signature(), 0, map.get(id), SequenceType.allen);
 		}
 	}
+	
+	public static void makeImages(Signature s, List<Instance> instances, 
+			String outputDir, String prefix, boolean compress) { 
+
+		for (Instance instance : instances) { 
+			String file = outputDir + prefix + "-" + instance.id() + ".png";
+			List<Interval> intervals = instance.intervals();
+			if (compress) 
+				intervals = BPPFactory.compress(intervals, Interval.eff);
+			
+			HeatmapImage.makeHeatmap(file, s.signature(), 0, intervals, SequenceType.allen);
+		}
+	}	
 }

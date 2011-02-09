@@ -39,7 +39,6 @@ import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.SequenceType;
 import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.cs.learn.timeseries.recognizer.RecognizeCallable;
-import edu.arizona.cs.learn.timeseries.recognizer.RecognizeResults;
 import edu.arizona.cs.learn.timeseries.recognizer.Recognizer;
 import edu.arizona.cs.learn.timeseries.recognizer.RecognizerStatistics;
 import edu.arizona.cs.learn.util.Utils;
@@ -260,7 +259,8 @@ public class Experiments {
 			boolean prune, boolean onlyStart, boolean outputRecognizers,
 			boolean optimizeRecognizers) {
 
-		_execute = Executors.newFixedThreadPool(Utils.numThreads);
+		_execute = Executors.newFixedThreadPool(1);
+//		_execute = Executors.newFixedThreadPool(Utils.numThreads);
 
 		List<String> classes = Utils.getActivityNames(dataset);
 		Map<String,Map<Integer,List<Interval>>> data = new HashMap<String,Map<Integer,List<Interval>>>();
@@ -309,6 +309,8 @@ public class Experiments {
 			List<Future<RecognizeCallable>> future = new ArrayList<Future<RecognizeCallable>>();
 			for (String className : testMap.keySet()) {
 				for (Integer id : testMap.get(className)) {
+					System.out.println("Test: " + className + " -- " + id);
+					
 					List<Interval> testItem = data.get(className).get(id);
 					RecognizeCallable rc = new RecognizeCallable(recognizers, id, className, testItem);
 					future.add(_execute.submit(rc));
@@ -537,6 +539,7 @@ public class Experiments {
 					System.out.println("..Building signature for " + activity);
 					File dataFile = new File("data/input/" + activity + ".lisp");
 					List<Instance> instances = Utils.sequences(activity, dataFile.getAbsolutePath(), type);
+					Collections.shuffle(instances);
 					
 					String f = "data/cross-validation/k" + folds + "/fold-" + _fold + "/" + type + "/";
 					File file = new File(f);
@@ -552,6 +555,7 @@ public class Experiments {
 						if (testSet.contains(instance.id()))  
 							continue;
 
+						System.out.println("\t" + activity + " " + _fold + " Training: " + instance.id());
 						s.update(instance.sequence());
 						if (prune && (i % 10 == 0)) 
 							s = s.prune(3);
@@ -574,6 +578,7 @@ public class Experiments {
 		}
 		
 		ExecutorService execute = Executors.newFixedThreadPool(Utils.numThreads);
+//		ExecutorService execute = Executors.newFixedThreadPool(1);
 		List<Future<Object>> list = new ArrayList<Future<Object>>();
 		for (int  fold = 0; fold < folds; ++fold) { 			
 			list.add(execute.submit(new SignatureCallable(fold)));

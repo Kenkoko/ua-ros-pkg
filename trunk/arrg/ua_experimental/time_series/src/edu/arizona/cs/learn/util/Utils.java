@@ -51,6 +51,7 @@ public class Utils {
 	static { 
 		random = new Random();
 		numThreads = Runtime.getRuntime().availableProcessors();
+		numThreads = Math.min(4, numThreads);
 
 		nf = NumberFormat.getInstance();
 		nf.setMinimumFractionDigits(2);

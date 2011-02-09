@@ -61,7 +61,7 @@ public class Agglomerative {
 
 		System.out.print("Calculating distances....");
 		System.out.flush();
-		final double[][] distances = Distance.distancesA(instances);
+		final double[][] distances = Distance.distances(instances);
 		System.out.println("done");
 		
 		List<AgglomerativeNode> nodes = new ArrayList<AgglomerativeNode>();

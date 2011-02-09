@@ -18,7 +18,7 @@ import edu.arizona.cs.learn.util.Utils;
 
 public class Distance {
 
-	public static double[][] distancesA(final List<Instance> instances) { 
+	public static double[][] distances(final List<Instance> instances) { 
 		final double[][] results = new double[instances.size()][instances.size()];
 
 		ExecutorService execute = Executors.newFixedThreadPool(Utils.numThreads);
@@ -37,33 +37,6 @@ public class Distance {
 			try { 
 				DistanceCallable dc = future.get();
 //				System.out.println("distance: " + dc.i() + " -- " + dc.j() + " score: " + dc.score());
-				results[dc.i()][dc.j()] = dc.score();
-				results[dc.j()][dc.i()] = dc.score();
-			} catch (Exception e) { 
-				e.printStackTrace();
-			}
-		}
-		
-		execute.shutdown();
-		return results;
-	}
-	
-	public static double[][] distances(final List<List<Symbol>> sequences) {
-		final double[][] results = new double[sequences.size()][sequences.size()];
-
-		ExecutorService execute = Executors.newFixedThreadPool(Utils.numThreads);
-		
-		List<Future<DistanceCallable>> futureList = new ArrayList<Future<DistanceCallable>>();
-		for (int i = 0; i < sequences.size(); ++i) { 
-			for (int j = i+1; j < sequences.size(); ++j) { 
-				futureList.add(execute.submit(new DistanceCallable(i, j, sequences.get(i), sequences.get(j))));
-			}
-		}
-		
-		for (Future<DistanceCallable> future : futureList) { 
-			try { 
-				DistanceCallable dc = future.get();
-				System.out.println("distance: " + dc.i() + " -- " + dc.j() + " score: " + dc.score());
 				results[dc.i()][dc.j()] = dc.score();
 				results[dc.j()][dc.i()] = dc.score();
 			} catch (Exception e) { 
