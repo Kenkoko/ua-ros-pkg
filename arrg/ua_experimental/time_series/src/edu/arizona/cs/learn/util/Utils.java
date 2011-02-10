@@ -28,6 +28,8 @@ import edu.arizona.cs.learn.timeseries.model.values.Binary;
 import edu.arizona.cs.learn.timeseries.model.values.Value;
 
 public class Utils {
+	public static int EXPERIMENTS = 50;
+
 	public static Random random;
 	public static int numThreads;
 	public static NumberFormat nf;

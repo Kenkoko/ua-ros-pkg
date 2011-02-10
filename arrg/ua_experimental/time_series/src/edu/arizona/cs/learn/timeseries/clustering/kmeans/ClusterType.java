@@ -13,7 +13,7 @@ public enum ClusterType {
 			return new SignatureCluster(name, id);
 		}
 	},
-	mediod {
+	medoid {
 		@Override
 		public Cluster make(int id) {
 			return new InstanceCluster(id);

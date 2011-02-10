@@ -35,8 +35,6 @@ public class SyntheticExperiments {
 	public static final int FOLDS = 6;
 	public static final int N = 60;
 	
-	public static int EXPERIMENTS = 50;
-
 	public static void main(String[] args) throws Exception { 
 		Utils.LIMIT_RELATIONS = true;
 		Utils.WINDOW = 2;
@@ -53,7 +51,7 @@ public class SyntheticExperiments {
 			return;
 		}
 		
-		EXPERIMENTS = Integer.parseInt(args[0]);
+		Utils.EXPERIMENTS = Integer.parseInt(args[0]);
 		String experiment = args[1];
 		System.out.println("Experiment: " + experiment);
 		
@@ -160,7 +158,7 @@ public class SyntheticExperiments {
 						for (ClusterType type : ClusterType.values()) { 
 							
 							// now we repeat the experiment x number of times....
-							for (int i = 0; i < EXPERIMENTS; ++i) { 
+							for (int i = 0; i < Utils.EXPERIMENTS; ++i) { 
 								KMeans kmeans = new KMeans(data.keySet().size(), 20, init, type);
 								ClusteringResults result = kmeans.cluster(all);
 								out.println(type + "," + init + "," + pct + "," + mean + "," + length + "," + i + 
@@ -212,7 +210,7 @@ public class SyntheticExperiments {
 					Classifier c = Classify.prune.getClassifier(params);
 
 					//				CrossValidation cv = new CrossValidation(FOLDS);
-					SplitAndTest sat = new SplitAndTest(EXPERIMENTS, 2.0/3.0);
+					SplitAndTest sat = new SplitAndTest(Utils.EXPERIMENTS, 2.0/3.0);
 					List<BatchStatistics> stats = sat.run(System.currentTimeMillis(), classNames, data, c);
 
 					// print out the summary information for now.  Later we will need to 
@@ -296,7 +294,7 @@ public class SyntheticExperiments {
 						params.weighted = true;
 						Classifier c = Classify.knn.getClassifier(params);
 
-						SplitAndTest sat = new SplitAndTest(EXPERIMENTS, 2.0/3.0);
+						SplitAndTest sat = new SplitAndTest(Utils.EXPERIMENTS, 2.0/3.0);
 						List<BatchStatistics> stats = sat.run(System.currentTimeMillis(), classNames, data, c);
 
 						SummaryStatistics perf = new SummaryStatistics();
