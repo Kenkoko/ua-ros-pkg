@@ -102,7 +102,8 @@ class PhidgetsInterfaceKit:
         rospy.loginfo(msg)
 
     def interfaceKitError(self, error):
-        rospy.logerr('Phidget Error %i: %s' % (error.eCode, error.description))
+        if error.eCode not in (36866, ):    # sample overrun, looks harmless, but annoying
+            rospy.logerr('Phidget Error %i: %s' % (error.eCode, error.description))
 
     def interfaceKitSensorChanged(self, event):
         fs_msg = Float64Stamped()
