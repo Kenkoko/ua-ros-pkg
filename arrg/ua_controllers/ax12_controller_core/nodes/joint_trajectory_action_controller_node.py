@@ -193,7 +193,14 @@ class JointTrajectoryActionController():
 
         # ensure that the joints in the goal match the joints of the controller
         if set(self.joint_names) != set(traj.joint_names):
-            msg = "Joints on incoming goal don't match our joints"
+            msg = "Incoming trajectory joints don't match our joints"
+            rospy.logerr(msg)
+            self.action_server.set_aborted(text=msg)
+            return
+
+        # make sure trajectory is not empty
+        if not traj:
+            msg = "Incoming trajectory is empty"
             rospy.logerr(msg)
             self.action_server.set_aborted(text=msg)
             return
