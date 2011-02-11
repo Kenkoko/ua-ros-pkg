@@ -146,7 +146,7 @@ class GripperActionController():
         start_angles = msg.actual.positions
         approachpos = [0.0, 0.0, 0.0]
         approachquat = [0.00000, 0.00000, 0.70711, -0.70711]
-        grasppos = [0.0, -0.4, 0.0]
+        grasppos = [0.0, -0.5, 0.0]
         graspquat = approachquat[:]
         frame_id = 'L7_wrist_yaw_link'
         self.check_cartesian_path_lists(approachpos, approachquat, grasppos, graspquat, start_angles, frame=frame_id)
@@ -181,7 +181,7 @@ class GripperActionController():
                                              rot_spacing = 0.1, consistent_angle = math.pi/9, collision_aware = 1, \
                                              collision_check_resolution = 1, steps_before_abort = -1, num_steps = 0, \
                                              ordered_collision_operations = None, frame = 'base_footprint', start_from_end = 0, \
-                                             max_joint_vels = [2.0]*7, max_joint_accs = [1.0]*7):
+                                             max_joint_vels = [0.75]*7, max_joint_accs = [8.0]*7):
         print "waiting for l_interpolated_ik_motion_plan service"
         rospy.wait_for_service("l_interpolated_ik_motion_plan")
         print "l_interpolated_ik_motion_plan service found"

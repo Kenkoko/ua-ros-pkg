@@ -82,8 +82,8 @@ class GripperActionController():
         self.upper_pressure = 1000.0
         
         # IR sensor
-        rospy.Subscriber('/interface_kit/106950/sensor/7', Float64Stamped, self.process_ir_sensor)
-        self.ir_distance = 0.0
+        #rospy.Subscriber('/interface_kit/106950/sensor/7', Float64Stamped, self.process_ir_sensor)
+        #self.ir_distance = 0.0
         
         # Make sure we receive current joint states before starting threads
         rospy.loginfo('Waiting to receive gripper joints state...')
@@ -117,9 +117,9 @@ class GripperActionController():
             l_temp = self.left_finger_joint_state.motor_temps[0]
             r_temp = self.right_finger_joint_state.motor_temps[0]
             
-            # halve the current torque to get temps under control
-            l_goal = self.left_finger_joint_state.goal_pos * 0.5
-            r_goal = self.right_finger_joint_state.goal_pos * 0.5
+            # lower torque to let the motors cool down
+            l_goal = -0.2 * DMXL_MAX_SPEED_RAD
+            r_goal = 0.2 * DMXL_MAX_SPEED_RAD
             
             if l_temp >= 76 or r_temp >= 76:
                 if not overheat_trigger:
@@ -216,15 +216,14 @@ class GripperActionController():
             if not self.dynamic_torque_control:
                 start_time = rospy.Time.now()
                 while (not self.within_tolerance(self.left_finger_joint_state.load, -req.torque_limit, 0.01) or
-                       not self.within_tolerance(self.right_finger_joint_state.load, -req.torque_limit, 0.01) or
-                       rospy.Time.now() - start_time < timeout) and \
+                       not self.within_tolerance(self.right_finger_joint_state.load, -req.torque_limit, 0.01)) and \
+                       rospy.Time.now() - start_time < timeout and \
                       not rospy.is_shutdown():
                     r.sleep()
             else:
                 if desired_torque > 1e-3: rospy.sleep(1.0 / desired_torque)
                 
             self.close_gripper = True
-            
             self.action_server.set_succeeded()
         elif req.command == WubbleGripperGoal.OPEN_GRIPPER:
             self.close_gripper = False
@@ -234,8 +233,8 @@ class GripperActionController():
             
             start_time = rospy.Time.now()
             while (self.left_finger_joint_state.current_pos < 0.8 or
-                   self.right_finger_joint_state.current_pos > -0.8 or
-                   rospy.Time.now() - start_time > timeout) and \
+                   self.right_finger_joint_state.current_pos > -0.8) and \
+                   rospy.Time.now() - start_time < timeout and \
                   not rospy.is_shutdown():
                 r.sleep()
                 
