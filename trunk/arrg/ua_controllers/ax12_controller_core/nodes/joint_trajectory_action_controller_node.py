@@ -326,7 +326,7 @@ class JointTrajectoryActionController():
                     t = durations[seg] - (seg_end_times[seg] - time).to_sec()
 
                     q[j] = trajectory[seg].positions[j]
-                    qd[j] = abs(dest_position-start_position)/(seg_end_times[seg]-time).to_sec() + 0.1
+                    qd[j] = abs(dest_position-start_position)/((seg_end_times[seg]-time).to_sec() + 1e-3)
                     
                     # evaluate spline and derivatives
                     #vals = spalde(t, trajectory[seg].splines_tck[j])
