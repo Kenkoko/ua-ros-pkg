@@ -33,7 +33,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Antons Rebguns
-# Author: Cody Jorgensen
 #
 
 from __future__ import division
@@ -46,43 +45,46 @@ from ax12_driver_core.ax12_const import *
 from ax12_driver_core.ax12_user_commands import *
 from ax12_controller_core.joint_controller import JointControllerAX12
 from ua_controller_msgs.msg import JointState
-from std_msgs.msg import Float64
 
-class JointFreespinControllerAX12(JointControllerAX12):
+class JointTorqueControllerDualMotor(JointControllerAX12):
     def __init__(self, out_cb, param_path, port_name):
         JointControllerAX12.__init__(self, out_cb, param_path, port_name)
         
-        self.motor_id = rospy.get_param(self.topic_name + '/motor/id')
-        self.initial_position_raw = rospy.get_param(self.topic_name + '/motor/init')
-        self.min_angle_raw = rospy.get_param(self.topic_name + '/motor/min')
-        self.max_angle_raw = rospy.get_param(self.topic_name + '/motor/max')
+        self.master_id = rospy.get_param(self.topic_name + '/motor_master/id')
+        self.master_initial_position_raw = rospy.get_param(self.topic_name + '/motor_master/init')
+        self.master_min_angle_raw = rospy.get_param(self.topic_name + '/motor_master/min')
+        self.master_max_angle_raw = rospy.get_param(self.topic_name + '/motor_master/max')
         
-        self.flipped = self.min_angle_raw > self.max_angle_raw
+        self.slave_id = rospy.get_param(self.topic_name + '/motor_slave/id')
+        self.slave_offset = rospy.get_param(self.topic_name + '/motor_slave/calibration_offset', 0)
+        
+        self.flipped = self.master_min_angle_raw > self.master_max_angle_raw
         self.last_commanded_torque = 0.0
         
-        self.joint_state = JointState(name=self.joint_name, motor_ids=[self.motor_id])
+        self.joint_state = JointState(name=self.joint_name, motor_ids=[self.master_id, self.slave_id])
+
 
     def initialize(self):
         # verify that the expected motor is connected and responding
         available_ids = rospy.get_param('dynamixel/%s/connected_ids' % self.port_namespace, [])
-        
-        if not self.motor_id in available_ids:
+        if not (self.master_id in available_ids and
+                self.slave_id in available_ids):
             rospy.logwarn('The specified motor id is not connected and responding.')
             rospy.logwarn('Available ids: %s' % str(available_ids))
-            rospy.logwarn('Specified id: %d' % self.motor_id)
+            rospy.logwarn('Specified ids: %d %d' % (self.master_id, self.slave_id))
             return False
             
-        self.radians_per_encoder_tick = rospy.get_param('dynamixel/%s/%d/radians_per_encoder_tick' % (self.port_namespace, self.motor_id))
-        self.encoder_ticks_per_radian = rospy.get_param('dynamixel/%s/%d/encoder_ticks_per_radian' % (self.port_namespace, self.motor_id))
+        self.radians_per_encoder_tick = rospy.get_param('dynamixel/%s/%d/radians_per_encoder_tick' % (self.port_namespace, self.master_id))
+        self.encoder_ticks_per_radian = rospy.get_param('dynamixel/%s/%d/encoder_ticks_per_radian' % (self.port_namespace, self.master_id))
         
         if self.flipped:
-            self.min_angle = (self.initial_position_raw - self.min_angle_raw) * self.radians_per_encoder_tick
-            self.max_angle = (self.initial_position_raw - self.max_angle_raw) * self.radians_per_encoder_tick
+            self.master_min_angle = (self.master_initial_position_raw - self.master_min_angle_raw) * self.radians_per_encoder_tick
+            self.master_max_angle = (self.master_initial_position_raw - self.master_max_angle_raw) * self.radians_per_encoder_tick
         else:
-            self.min_angle = (self.min_angle_raw - self.initial_position_raw) * self.radians_per_encoder_tick
-            self.max_angle = (self.max_angle_raw - self.initial_position_raw) * self.radians_per_encoder_tick
+            self.master_min_angle = (self.master_min_angle_raw - self.master_initial_position_raw) * self.radians_per_encoder_tick
+            self.master_max_angle = (self.master_max_angle_raw - self.master_initial_position_raw) * self.radians_per_encoder_tick
             
-        self.encoder_resolution = rospy.get_param('dynamixel/%s/%d/encoder_resolution' % (self.port_namespace, self.motor_id))
+        self.encoder_resolution = rospy.get_param('dynamixel/%s/%d/encoder_resolution' % (self.port_namespace, self.master_id))
         self.max_position = self.encoder_resolution - 1
         self.set_speed(0.0)
         
@@ -92,55 +94,68 @@ class JointFreespinControllerAX12(JointControllerAX12):
         if self.torque_limit is not None: self.set_torque_limit(self.torque_limit)
         return True
 
+
     def set_torque_enable(self, torque_enable):
-        mcv = (self.motor_id, torque_enable)
-        self.send_packet_callback((DMXL_SET_TORQUE_ENABLE, [mcv]))
+        mcv_master = (self.master_id, torque_enable)
+        mcv_slave = (self.slave_id, torque_enable)
+        self.send_packet_callback((DMXL_SET_TORQUE_ENABLE, [mcv_master, mcv_slave]))
+
 
     def set_speed(self, speed):
-        if speed < -self.joint_max_speed: speed = -self.joint_max_speed
-        elif speed > self.joint_max_speed: speed = self.joint_max_speed
+        if speed < DMXL_MIN_SPEED_RAD: speed = DMXL_MIN_SPEED_RAD
+        elif speed > DMXL_MAX_SPEED_RAD: speed = DMXL_MAX_SPEED_RAD
         self.last_commanded_torque = speed
         speed_raw = int(round(speed / DMXL_SPEED_RAD_SEC_PER_TICK))
-        mcv = (self.motor_id, speed_raw)
-        self.send_packet_callback((DMXL_SET_GOAL_SPEED, [mcv]))
+        mcv_master = (self.master_id, speed_raw if speed_raw > 0 else 1)
+        mcv_slave = (self.slave_id, mcv_master[1])
+        self.send_packet_callback((DMXL_SET_GOAL_SPEED, [mcv_master, mcv_slave]))
+
 
     def set_compliance_slope(self, slope):
         if slope < DMXL_MIN_COMPLIANCE_SLOPE: slope = DMXL_MIN_COMPLIANCE_SLOPE
         elif slope > DMXL_MAX_COMPLIANCE_SLOPE: slope = DMXL_MAX_COMPLIANCE_SLOPE
         slope2 = (slope << 8) + slope
-        mcv = (self.motor_id, slope2)
-        self.send_packet_callback((DMXL_SET_COMPLIANCE_SLOPES, [mcv]))
+        mcv_master = (self.master_id, slope2)
+        mcv_slave = (self.slave_id, slope2)
+        self.send_packet_callback((DMXL_SET_COMPLIANCE_SLOPES, [mcv_master, mcv_slave]))
+
 
     def set_compliance_margin(self, margin):
         if margin < DMXL_MIN_COMPLIANCE_MARGIN: margin = DMXL_MIN_COMPLIANCE_MARGIN
         elif margin > DMXL_MAX_COMPLIANCE_MARGIN: margin = DMXL_MAX_COMPLIANCE_MARGIN
         else: margin = int(margin)
         margin2 = (margin << 8) + margin    # pack margin_cw and margin_ccw into 2 bytes
-        mcv = (self.motor_id, margin2)
-        self.send_packet_callback((DMXL_SET_COMPLIANCE_MARGINS, [mcv]))
+        mcv_master = (self.master_id, margin2)
+        mcv_slave = (self.slave_id, margin2)
+        self.send_packet_callback((DMXL_SET_COMPLIANCE_MARGINS, [mcv_master, mcv_slave]))
+
 
     def set_compliance_punch(self, punch):
         if punch < DMXL_MIN_PUNCH: punch = DMXL_MIN_PUNCH
         elif punch > DMXL_MAX_PUNCH: punch = DMXL_MAX_PUNCH
         else: punch = int(punch)
-        mcv = (self.motor_id, punch)
-        self.send_packet_callback((DMXL_SET_PUNCH, [mcv]))
+        mcv_master = (self.master_id, punch)
+        mcv_slave = (self.slave_id, punch)
+        self.send_packet_callback((DMXL_SET_PUNCH, [mcv_master, mcv_slave]))
+
 
     def set_torque_limit(self, max_torque):
-        if max_torque > 1: max_torque = 1.0         # use all torque motor can provide
-        elif max_torque < 0: max_torque = 0.0       # turn off motor torque
+        if max_torque > 1: max_torque = 1.0
+        elif max_torque < 0: max_torque = 0.0     # turn off motor torque
         raw_torque_val = int(DMXL_MAX_TORQUE_TICK * max_torque)
-        mcv = (self.motor_id, raw_torque_val)
-        self.send_packet_callback((DMXL_SET_TORQUE_LIMIT, [mcv]))
+        mcv_master = (self.master_id, raw_torque_val)
+        mcv_slave = (self.slave_id, raw_torque_val)
+        self.send_packet_callback((DMXL_SET_TORQUE_LIMIT, [mcv_master, mcv_slave]))
+
 
     def process_motor_states(self, state_list):
         if self.running:
-            state = filter(lambda state: state.id == self.motor_id, state_list.motor_states)
-            if state:
-                state = state[0]
-                self.joint_state.motor_temps = [state.temperature]
+            states = [{state.id: state} for state in state_list.motor_states if state.id in [self.master_id, self.slave_id]]
+            if states:
+                state = states[self.master_id]
+                self.joint_state.motor_temps = [state.temperature, states[self.slave_id].temperature]
                 self.joint_state.goal_pos = self.last_commanded_torque
-                self.joint_state.current_pos = self.raw_to_rad(state.position, self.initial_position_raw, self.flipped, self.radians_per_encoder_tick)
+                self.joint_state.current_pos = self.raw_to_rad(state.position, self.master_initial_position_raw, self.flipped, self.radians_per_encoder_tick)
                 self.joint_state.error = 0.0
                 self.joint_state.velocity = (state.speed / DMXL_MAX_SPEED_TICK) * DMXL_MAX_SPEED_RAD
                 self.joint_state.load = state.load
@@ -148,6 +163,7 @@ class JointFreespinControllerAX12(JointControllerAX12):
                 self.joint_state.header.stamp = rospy.Time.from_sec(state.timestamp)
                 
                 self.joint_state_pub.publish(self.joint_state)
+
 
     def process_command(self, msg):
         self.set_speed(msg.data)
