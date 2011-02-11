@@ -50,11 +50,11 @@ class ObjectSoundCollector:
         self.gripper_client = SimpleActionClient('wubble_gripper_action', WubbleGripperAction)
         self.gripper_client.wait_for_server()
 
-    def close_gripper(self):
+    def close_gripper(self, torque_limit, dynamic_torque_control):
         goal = WubbleGripperGoal()
         goal.command = WubbleGripperGoal.CLOSE_GRIPPER
-        goal.torque_limit = 0.0
-        goal.dynamic_torque_control = True
+        goal.torque_limit = torque_limit
+        goal.dynamic_torque_control = dynamic_torque_control
         goal.pressure_upper = 1500.0
         goal.pressure_lower = 1300.0
         
@@ -75,7 +75,9 @@ if __name__ == '__main__':
         osc = ObjectSoundCollector()
         rospy.sleep(2)
         rospy.loginfo('Closing gripper')
-        osc.close_gripper()
+        osc.close_gripper(0.2, False)
+        osc.close_gripper(0.05, False)
+        #osc.open_gripper()
     except rospy.ROSInterruptException:
         pass
 

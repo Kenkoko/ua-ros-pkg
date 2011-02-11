@@ -127,75 +127,64 @@ class GripperActionController():
         self.__copy_state(self.right_finger_joint_state, msg)
 
     def process_gripper_shake_action(self, req):
-        desired_velocity = 3.0
-        distance = 0.5
+        ############## SHAKE SIDE2SIDE ################################
+        desired_velocity = 11.0
+        distance = 0.75
         self.wrist_yaw_joint_velocity_srv(desired_velocity)
         
-        ############## SHAKE SIDE2SIDE ################################
-        # set current position as goal so motors won't overload, maybe?
-        lf_old_state = self.left_finger_joint_state.current_pos
-        rf_old_state = self.right_finger_joint_state.current_pos
-        
-        self.left_finger_joint_position_pub.publish(lf_old_state - 0.2)
-        self.right_finger_joint_position_pub.publish(rf_old_state + 0.2)
-        
+        rospy.loginfo('Shake A')
         for i in range(req.shake_number):
+            rospy.loginfo('\tshake number: %d' % i)
             self.wrist_yaw_joint_position_pub.publish(-distance)
-            rospy.sleep(distance/desired_velocity + 0.05)
+            rospy.loginfo('\t1. position: %.4f, time: %.4f' % (-distance, 2*distance/desired_velocity))
+            rospy.sleep(2*distance/(desired_velocity*0.75))
             self.wrist_yaw_joint_position_pub.publish(distance)
-            rospy.sleep(distance/desired_velocity + 0.05)
+            rospy.loginfo('\t2. position: %.4f, time: %.4f' % (distance, 2*distance/desired_velocity))
+            rospy.sleep(2*distance/(desired_velocity*0.75))
             
-        self.wrist_yaw_joint_velocity_srv(2.0)
+        self.wrist_yaw_joint_velocity_srv(desired_velocity)
         self.wrist_yaw_joint_position_pub.publish(0.0)
-        self.left_finger_joint_position_pub.publish(lf_old_state - 0.01)
-        self.right_finger_joint_position_pub.publish(rf_old_state + 0.01)
+        rospy.sleep(0.5)
         
-        ############# SHAKE ROLLEMSIDE2SIDE ############################
-        desired_velocity = 4.0
-        distance = 1.0
-        self.wrist_roll_joint_velocity_srv(desired_velocity)
-        
-        # set current position as goal so motors won't overload, maybe?
-        roll_old_state = self.wrist_roll_joint_state.current_pos
-        lf_old_state = self.left_finger_joint_state.current_pos
-        rf_old_state = self.right_finger_joint_state.current_pos
-        
-        self.left_finger_joint_position_pub.publish(lf_old_state - 0.2)
-        self.right_finger_joint_position_pub.publish(rf_old_state + 0.2)
-        
-        for i in range(req.shake_number):
-            self.wrist_roll_joint_position_pub.publish(roll_old_state - distance)
-            rospy.sleep(distance/desired_velocity + 0.05)
-            self.wrist_roll_joint_position_pub.publish(roll_old_state + distance)
-            rospy.sleep(distance/desired_velocity + 0.05)
-            
-        self.wrist_roll_joint_velocity_srv(2.0)
-        self.wrist_roll_joint_position_pub.publish(roll_old_state)
-        self.left_finger_joint_position_pub.publish(lf_old_state - 0.01)
-        self.right_finger_joint_position_pub.publish(rf_old_state + 0.01)
-        
-        ############## SHAKE SIDE2SIDE ################################
-        desired_velocity = 3.0
-        distance = 0.5
-        self.wrist_pitch_joint_velocity_srv(desired_velocity)
-        
-        # set current position as goal so motors won't overload, maybe?
-        lf_old_state = self.left_finger_joint_state.current_pos
-        rf_old_state = self.right_finger_joint_state.current_pos
-        
-        self.left_finger_joint_position_pub.publish(lf_old_state - 0.2)
-        self.right_finger_joint_position_pub.publish(rf_old_state + 0.2)
-        
-        for i in range(req.shake_number):
-            self.wrist_pitch_joint_position_pub.publish(-distance)
-            rospy.sleep(distance/desired_velocity + 0.05)
-            self.wrist_pitch_joint_position_pub.publish(distance)
-            rospy.sleep(distance/desired_velocity + 0.05)
-            
-        self.wrist_pitch_joint_velocity_srv(2.0)
-        self.wrist_pitch_joint_position_pub.publish(0.0)
-        self.left_finger_joint_position_pub.publish(lf_old_state - 0.01)
-        self.right_finger_joint_position_pub.publish(rf_old_state + 0.01)
+#        ############# SHAKE ROLLEMSIDE2SIDE ############################
+#        desired_velocity = 4.0
+#        distance = 1.0
+#        self.wrist_roll_joint_velocity_srv(desired_velocity)
+#        
+#        roll_old_state = self.wrist_roll_joint_state.current_pos
+#        
+#        rospy.loginfo('Shake B')
+#        for i in range(req.shake_number):
+#            rospy.loginfo('\tshake number: %d' % i)
+#            self.wrist_roll_joint_position_pub.publish(roll_old_state - distance)
+#            rospy.loginfo('\t1. position: %.4f, time: %.4f' % (roll_old_state - distance, 2*distance/desired_velocity))
+#            rospy.sleep(2*distance/desired_velocity)
+#            self.wrist_roll_joint_position_pub.publish(roll_old_state + distance)
+#            rospy.loginfo('\t2. position: %.4f, time: %.4f' % (roll_old_state + distance, 2*distance/desired_velocity))
+#            rospy.sleep(2*distance/desired_velocity)
+#            
+#        self.wrist_roll_joint_velocity_srv(2.0)
+#        self.wrist_roll_joint_position_pub.publish(roll_old_state)
+#        rospy.sleep(distance/desired_velocity)
+#        
+#        ############## SHAKE SIDE2SIDE ################################
+#        desired_velocity = 6.0
+#        distance = 0.5
+#        self.wrist_pitch_joint_velocity_srv(desired_velocity)
+#        
+#        rospy.loginfo('Shake C')
+#        for i in range(req.shake_number):
+#            rospy.loginfo('\tshake number: %d' % i)
+#            self.wrist_pitch_joint_position_pub.publish(-distance)
+#            rospy.loginfo('\t1. position: %.4f, time: %.4f' % (-distance, 2*distance/desired_velocity))
+#            rospy.sleep(distance/desired_velocity + 0.05)
+#            self.wrist_pitch_joint_position_pub.publish(distance)
+#            rospy.loginfo('\t2. position: %.4f, time: %.4f' % (distance, 2*distance/desired_velocity))
+#            rospy.sleep(distance/desired_velocity + 0.05)
+#            
+#        self.wrist_pitch_joint_velocity_srv(2.0)
+#        self.wrist_pitch_joint_position_pub.publish(0.0)
+#        rospy.sleep(2*distance/desired_velocity)
         
         self.action_server.set_succeeded()
 

@@ -73,11 +73,11 @@ class ObjectSoundCollector:
         f.write(str(self.sound))
         f.close()
 
-    def close_gripper(self):
+    def close_gripper(self, torque, dynamic):
         goal = WubbleGripperGoal()
         goal.command = WubbleGripperGoal.CLOSE_GRIPPER
-        goal.torque_limit = 0.5
-        goal.dynamic_torque_control = False
+        goal.torque_limit = torque
+        goal.dynamic_torque_control = dynamic
         goal.pressure_upper = 2100.0
         goal.pressure_lower = 1900.0
         
@@ -126,11 +126,15 @@ class ObjectSoundCollector:
         self.save_sound_flag = False
         self.save_sound('push')
         self.sound = []
+        
+        result = self.push_client.get_result()
+        return result.success
+
 
     def pick(self):
         self.save_sound_flag = True
         
-        self.close_gripper()
+        self.close_gripper(0.5, True)
         self.lift()
         
         self.save_sound_flag = False
@@ -139,7 +143,7 @@ class ObjectSoundCollector:
 
     def shake(self):
         goal = WubbleGripperShakeGoal()
-        goal.shake_number = 5
+        goal.shake_number = 8
         
         self.save_sound_flag = True
         
@@ -165,7 +169,8 @@ if __name__ == '__main__':
         rospy.init_node(NAME, anonymous=True)
         osc = ObjectSoundCollector()
         rospy.loginfo('Doing a Push action')
-        osc.push()
+        if not osc.push(): exit(1)
+        
         rospy.loginfo('Doing a PickUp action')
         osc.pick()
         rospy.loginfo('Doing a Shake action')
@@ -175,7 +180,8 @@ if __name__ == '__main__':
         
         rospy.sleep(2)
         rospy.loginfo('Closing gripper')
-        osc.close_gripper()
+        osc.close_gripper(0.2, False)
+        osc.close_gripper(0.05, False)
     except rospy.ROSInterruptException:
         pass
 
