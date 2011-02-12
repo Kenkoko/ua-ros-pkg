@@ -525,6 +525,7 @@ bool VidereStereoDriver::getImage(int ms)
         stIm->left_raw.header.stamp = stamp;
         stIm->right_info.header.stamp = stamp;
         stIm->right_raw.header.stamp = stamp;
+        stIm->img_disp.header.stamp = stamp;
         stIm->img_disp.image.header.stamp = stamp;
 
         stIm->setSize(camFrame->size[0], camFrame->size[1]);
