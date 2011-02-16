@@ -247,10 +247,10 @@
     uri: https://code.ros.org/svn/ros-pkg/stacks/point_cloud_perception/trunk
     local-name: stacks/point_cloud_perception
 - svn:
-    uri: https://code.ros.org/svn/ros-pkg/stacks/perception_pcl/tags/unstable
+    uri: https://code.ros.org/svn/ros-pkg/stacks/perception_pcl/tags/perception_pcl-0.8.0
     local-name: stacks/perception_pcl
 - svn:
-    uri: https://code.ros.org/svn/ros-pkg/stacks/perception_pcl_addons/tags/unstable
+    uri: https://code.ros.org/svn/ros-pkg/stacks/perception_pcl_addons/tags/perception_pcl_addons-0.3.0
     local-name: stacks/perception_pcl_addons
 
 - svn:
