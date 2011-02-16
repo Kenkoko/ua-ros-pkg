@@ -1,0 +1,14 @@
+<package>
+  <description brief="scikits">
+
+     scikits
+
+  </description>
+  <author>Antons Rebguns</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/scikits</url>
+
+</package>
+
+
