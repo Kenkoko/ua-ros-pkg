@@ -64,7 +64,7 @@
         
         <!-- Shoulder yaw joint -->
         <joint name="shoulder_yaw_joint" type="revolute" >
-            <origin xyz="0.02899 0.06312 0" rpy="0 0 0" />
+            <origin xyz="0.029 0.063 0" rpy="0 0 0" />
             <parent link="L1_shoulder_pitch_link" />
             <child link="L2_shoulder_yaw_link"/>
             
@@ -76,7 +76,7 @@
         
         <!-- Shoulder roll joint -->
         <joint name="shoulder_roll_joint" type="revolute" >
-            <origin xyz="0 0.10582 0" rpy="0 0 0" />
+            <origin xyz="0 0.106 0" rpy="0 0 0" />
             <parent link="L2_shoulder_yaw_link" />
             <child link="L3_shoulder_roll_link"/>
             
@@ -100,7 +100,7 @@
         
         <!-- Wrist roll joint -->
         <joint name="wrist_roll_joint" type="revolute" >
-            <origin xyz="0.03308 0.02899 0" rpy="0 0 0" />
+            <origin xyz="0.033 0.029 0" rpy="0 0 0" />
             <parent link="L4_elbow_pitch_link" />
             <child link="L5_wrist_roll_link"/>
             
@@ -124,7 +124,7 @@
         
         <!-- Wrist yaw joint -->
         <joint name="wrist_yaw_joint" type="revolute" >
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0.091 0 -0.002" rpy="0 0 0" />
             <parent link="L6_wrist_pitch_link" />
             <child link="L7_wrist_yaw_link"/>
             
@@ -136,7 +136,7 @@
         
         <!-- Left finger joint -->
         <joint name="left_finger_joint" type="revolute" >
-            <origin xyz="0.0791 0.021 -0.002" rpy="0 0 0" />
+            <origin xyz="-0.012 0.021 0" rpy="0 0 0" />
             <parent link="L7_wrist_yaw_link" />
             <child link="L8_left_finger_link"/>
             
@@ -148,7 +148,7 @@
         
         <!-- Right finger joint -->
         <joint name="right_finger_joint" type="revolute" >
-            <origin xyz="0.0791 -0.021 -0.002" rpy="0 0 0" />
+            <origin xyz="-0.012 -0.021 0" rpy="0 0 0" />
             <parent link="L7_wrist_yaw_link" />
             <child link="L9_right_finger_link"/>
             
@@ -164,13 +164,13 @@
             <inertial>
                 <mass value="0.325" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
             <visual>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L0_base_link.stl"/>
                 </geometry>
@@ -178,7 +178,7 @@
             </visual>
             
             <collision>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L0_base_link.stl"/>
                 </geometry>
@@ -189,13 +189,13 @@
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
             <visual>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L1_shoulder_pitch_link.stl"/>
                 </geometry>
@@ -203,7 +203,7 @@
             </visual>
             
             <collision>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L1_shoulder_pitch_link.stl"/>
                 </geometry>
@@ -214,13 +214,13 @@
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
             <visual>
-                <origin xyz="0.0 0.0545 0.0" rpy="0 0 0" />
+                <origin xyz="0 0.055 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_yaw_link.stl"/>
                 </geometry>
@@ -228,7 +228,7 @@
             </visual>
             
             <collision>
-                <origin xyz="0.0 0.0545 0.0" rpy="0 0 0" />
+                <origin xyz="0 0.0545 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_yaw_link.stl"/>
                 </geometry>
@@ -239,13 +239,13 @@
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
             <visual>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L3_shoulder_roll_link.stl"/>
                 </geometry>
@@ -253,7 +253,7 @@
             </visual>
             
             <collision>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L3_shoulder_roll_link.stl"/>
                 </geometry>
@@ -264,13 +264,13 @@
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
             <visual>
-                <origin xyz="0.03458 0.04399 0.026" rpy="0 0 0" />
+                <origin xyz="0.035 0.044 0.026" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L4_elbow_pitch_link.stl"/>
                 </geometry>
@@ -278,7 +278,7 @@
             </visual>
             
             <collision>
-                <origin xyz="0.03458 0.04399 0.026" rpy="0 0 0" />
+                <origin xyz="0.035 0.044 0.026" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L4_elbow_pitch_link.stl"/>
                 </geometry>
@@ -289,13 +289,13 @@
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
             <visual>
-                <origin xyz="0.025 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0.025 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L5_wrist_roll_link.stl"/>
                 </geometry>
@@ -303,7 +303,7 @@
             </visual>
             
             <collision>
-                <origin xyz="0.025 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0.025 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L5_wrist_roll_link.stl"/>
                 </geometry>
@@ -314,13 +314,13 @@
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
             <visual>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L6_wrist_pitch_link.stl"/>
                 </geometry>
@@ -328,7 +328,7 @@
             </visual>
             
             <collision>
-                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L6_wrist_pitch_link.stl"/>
                 </geometry>
@@ -339,13 +339,13 @@
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
             <visual>
-                <origin xyz="0.0751 0 -0.002" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L7_wrist_yaw_link.stl"/>
                 </geometry>
@@ -353,7 +353,7 @@
             </visual>
             
             <collision>
-                <origin xyz="0.0751 0 -0.002" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L7_wrist_yaw_link.stl"/>
                 </geometry>
@@ -364,8 +364,8 @@
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
@@ -389,8 +389,8 @@
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
-                <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                         iyy="1.0" iyz="0.0" 
+                <inertia ixx="1.0" ixy="0" ixz="0"
+                         iyy="1.0" iyz="0" 
                          izz="1.0" />
             </inertial>
             
