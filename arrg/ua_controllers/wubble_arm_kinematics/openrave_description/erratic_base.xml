@@ -1,0 +1,136 @@
+<robot name="erratic_base">
+    <kinbody>
+        <body name="base_link" type="dynamic">
+            <translation>0 0 0.1285</translation>
+            
+            <!-- base_link -->
+            <geom type="box">
+                <extents>0.1085 0.14 0.0775</extents>
+                <diffuseColor>0.36 0.36 0.36</diffuseColor>
+            </geom>
+            
+            <!-- base_caster_box_link -->
+            <geom type="box">
+                <extents>0.043 0.01 0.05475</extents>
+                <translation>-0.1515 0 0.02275</translation>
+                <diffuseColor>0.36 0.36 0.36</diffuseColor>
+            </geom>
+            
+            <!-- base_link_left_motor_link -->
+            <geom type="cylinder">
+                <radius>0.0127</radius>
+                <height>0.025</height>
+                <translation>0.075 0.1525 -0.0539</translation>
+                <diffuseColor>0.36 0.36 0.36</diffuseColor>
+            </geom>
+            
+            <!-- base_link_right_motor_link -->
+            <geom type="cylinder">
+                <radius>0.0127</radius>
+                <height>0.025</height>
+                <translation>0.075 -0.1525 -0.0539</translation>
+                <rotation>1 0 0 90</rotation>
+                <diffuseColor>0.36 0.36 0.36</diffuseColor>
+            </geom>
+        </body>
+        
+        <body name="base_top_link" type="dynamic">
+            <offsetfrom>base_link</offsetfrom>
+            <translation>0 0 0.0785</translation>
+            
+            <geom type="trimesh">
+                <data>erratic_top.iv</data>
+                <diffuseColor>0.36 0.46 0.36</diffuseColor>
+            </geom>
+        </body>
+        
+        <Joint name="base_top_joint" type="hinge" enabled="false">
+            <body>base_link</body>
+            <body>base_top_link</body>
+            <limits>0 0</limits>
+        </Joint>
+        
+        <body name="base_caster_support_link" type="dynamic">
+            <offsetfrom>base_link</offsetfrom>
+            <translation>-0.1795 0 -0.0635</translation>
+            
+            <geom type="box">
+                <extents>0.015 0.01 0.0315</extents>
+                <diffuseColor>0.66 0.36 0.36</diffuseColor>
+            </geom>
+        </body>
+        
+        <Joint name="base_caster_support_joint" type="hinge" circular="true">
+            <body>base_link</body>
+            <body>base_caster_support_link</body>
+            <offsetfrom>base_caster_support_link</offsetfrom>
+            <weight>1</weight>
+            <axis>0 0 1</axis>
+            <maxvel>1</maxvel>
+            <resolution>0.06</resolution>
+        </Joint>
+        
+        <body name="caster_wheel_link" type="dynamic">
+            <offsetfrom>base_link</offsetfrom>
+            <translation>-0.1645 0 -0.095</translation>
+            
+            <geom type="cylinder">
+                <radius>0.035</radius>
+                <height>0.01</height>
+                <diffuseColor>0.36 0.36 0.46</diffuseColor>
+            </geom>
+        </body>
+        
+        <Joint name="caster_wheel_joint" type="hinge" circular="true">
+            <body>base_caster_support_link</body>
+            <body>caster_wheel_link</body>
+            <offsetfrom>caster_wheel_link</offsetfrom>
+            <weight>1</weight>
+            <axis>0 1 0</axis>
+            <maxvel>1</maxvel>
+            <resolution>0.06</resolution>
+        </Joint>
+        
+        <body name="base_link_left_wheel_link" type="dynamic">
+            <offsetfrom>base_link</offsetfrom>
+            <translation>0.075 0.165 -0.0539</translation>
+            
+            <geom type="trimesh">
+                <data>erratic_wheel.iv</data>
+                <rotationaxis>0 0 1 90</rotationaxis>
+                <diffuseColor>0.36 0.36 0.46</diffuseColor>
+            </geom>
+        </body>
+        
+        <Joint name="base_link_left_wheel_joint" type="hinge" circular="true">
+            <body>base_link</body>
+            <body>base_link_left_wheel_link</body>
+            <offsetfrom>base_link_left_wheel_link</offsetfrom>
+            <weight>1</weight>
+            <axis>0 1 0</axis>
+            <maxvel>1</maxvel>
+            <resolution>0.06</resolution>
+        </Joint>
+        
+        <body name="base_link_right_wheel_link" type="dynamic">
+            <offsetfrom>base_link</offsetfrom>
+            <translation>0.075 -0.165 -0.0539</translation>
+            
+            <geom type="trimesh">
+                <data>erratic_wheel.iv</data>
+                <rotationaxis>0 0 1 90</rotationaxis>
+                <diffuseColor>0.36 0.36 0.46</diffuseColor>
+            </geom>
+        </body>
+        
+        <Joint name="base_link_right_wheel_joint" type="hinge" circular="true">
+            <body>base_link</body>
+            <body>base_link_right_wheel_link</body>
+            <offsetfrom>base_link_right_wheel_link</offsetfrom>
+            <weight>1</weight>
+            <axis>0 1 0</axis>
+            <maxvel>1</maxvel>
+            <resolution>0.06</resolution>
+        </Joint>
+    </kinbody>
+</robot>

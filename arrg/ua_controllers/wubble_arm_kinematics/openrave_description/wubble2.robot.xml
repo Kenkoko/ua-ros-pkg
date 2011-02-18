@@ -1,0 +1,95 @@
+<robot name="wubble2">
+    <robot file="erratic_base.xml"/>
+    
+    <!-- Wubble2 Platform Attachment-->
+    <kinbody>
+        <body name="platform_link" type="dynamic">
+            <offsetfrom>base_top_link</offsetfrom>
+            <translation>0 0 0</translation>
+            
+            <geom type="trimesh">
+                <data>wubble2_platform.iv</data>
+                <diffuseColor>0.36 0.46 0.36</diffuseColor>
+            </geom>
+        </body>
+        
+        <Joint name="platform_support_joint" type="hinge" enabled="false">
+            <body>base_top_link</body>
+            <body>platform_link</body>
+            <limits>0 0</limits>
+        </Joint>
+    </kinbody>
+    
+    <robot file="wubble_arm_robot.xml"/>
+    
+    <!-- Wubble2 Arm Attachment-->
+    <kinbody>
+        <body name="L0_base_link" type="dynamic">
+            <offsetfrom>base_top_link</offsetfrom>
+            <translation>0.16281 0.0825 0.11</translation>
+        </body>
+        
+        <Joint name="arm_base_joint" type="hinge" enabled="false">
+            <body>base_top_link</body>
+            <body>L0_base_link</body>
+            <limits>0 0</limits>
+        </Joint>
+    </kinbody>
+    
+    <!-- Wubble2 Head Attachment-->
+    <kinbody>
+        <body name="head_base_link" type="dynamic">
+            <offsetfrom>platform_link</offsetfrom>
+            <translation>0.0264 0 0.7811</translation>
+            
+            <geom type="trimesh">
+                <data>head_base_link.iv</data>
+                <diffuseColor>0.36 0.46 0.36</diffuseColor>
+            </geom>
+        </body>
+        
+        <Joint name="head_base_joint" type="hinge" enabled="false">
+            <body>platform_link</body>
+            <body>head_base_link</body>
+            <limits>0 0</limits>
+        </Joint>
+        
+        <body name="head_pan_link" type="dynamic">
+            <offsetfrom>head_base_link</offsetfrom>
+            <translation>0.052 0 0.025</translation>
+            
+            <geom type="trimesh">
+                <data>head_pan_link.iv</data>
+                <diffuseColor>0.36 0.46 0.36</diffuseColor>
+            </geom>
+        </body>
+        
+        <Joint name="head_pan_joint" type="hinge">
+            <body>head_base_link</body>
+            <body>head_pan_link</body>
+            <offsetfrom>head_pan_link</offsetfrom>
+            <axis>0 0 1</axis>
+            <limitsdeg>-150 150</limitsdeg>
+            <resolution>0.29</resolution>
+        </Joint>
+        
+        <body name="head_tilt_link" type="dynamic">
+            <offsetfrom>head_pan_link</offsetfrom>
+            <translation>0.02899 0 0.03458</translation>
+            
+            <geom type="trimesh">
+                <data>head_tilt_link.iv</data>
+                <diffuseColor>0.36 0.46 0.36</diffuseColor>
+            </geom>
+        </body>
+        
+        <Joint name="head_tilt_joint" type="hinge">
+            <body>head_pan_link</body>
+            <body>head_tilt_link</body>
+            <offsetfrom>head_tilt_link</offsetfrom>
+            <axis>0 1 0</axis>
+            <limitsdeg>-90 90</limitsdeg>
+            <resolution>0.06</resolution>
+        </Joint>
+    </kinbody>
+</robot>
