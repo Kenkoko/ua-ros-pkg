@@ -63,7 +63,7 @@
     
     <Body name="L2_shoulder_yaw_link" type="dynamic">
         <offsetfrom>L1_shoulder_pitch_link</offsetfrom>
-        <translation>0.02899 0.11762 0</translation>
+        <translation>0.029 0.118 0</translation>
         <Geom type="trimesh">
             <data>L2_shoulder_yaw_link.iv</data>
             <diffuseColor>0.36 0.46 0.36</diffuseColor>
@@ -74,7 +74,7 @@
         <Body>L1_shoulder_pitch_link</Body>
         <Body>L2_shoulder_yaw_link</Body>
         <offsetfrom>L2_shoulder_yaw_link</offsetfrom>
-        <anchor>0 -0.0545 0</anchor>
+        <anchor>0 -0.055 0</anchor>
         <weight>1</weight>
         <limitsdeg>-109 109</limitsdeg>
         <axis>0 0 1</axis>
@@ -84,7 +84,7 @@
     
     <Body name="L3_shoulder_roll_link" type="dynamic">
         <offsetfrom>L2_shoulder_yaw_link</offsetfrom>
-        <translation>0 0.05132 0</translation>
+        <translation>0 0.051 0</translation>
         <Geom type="trimesh">
             <data>L3_shoulder_roll_link.iv</data>
             <diffuseColor>0.36 0.36 0.46</diffuseColor>
@@ -104,7 +104,7 @@
     
     <Body name="L4_elbow_pitch_link" type="dynamic">
         <offsetfrom>L3_shoulder_roll_link</offsetfrom>
-        <translation>0.06358 0.22799 0.026</translation>
+        <translation>0.064 0.228 0.026</translation>
         <Geom type="trimesh">
             <data>L4_elbow_pitch_link.iv</data>
             <diffuseColor>0.56 0.36 0.36</diffuseColor>
@@ -115,7 +115,7 @@
         <Body>L3_shoulder_roll_link</Body>
         <Body>L4_elbow_pitch_link</Body>
         <offsetfrom>L4_elbow_pitch_link</offsetfrom>
-        <anchor>-0.03458 -0.04399 0.005</anchor>
+        <anchor>-0.035 -0.044 -0.026</anchor>
         <weight>1</weight>
         <limitsdeg>-88 103</limitsdeg>
         <axis>0 0 1</axis>
@@ -125,7 +125,7 @@
     
     <Body name="L5_wrist_roll_link" type="dynamic">
         <offsetfrom>L4_elbow_pitch_link</offsetfrom>
-        <translation>0.0235 -0.015 -0.026</translation>
+        <translation>0.024 -0.015 -0.026</translation>
         <Geom type="trimesh">
             <data>L5_wrist_roll_link.iv</data>
             <diffuseColor>0.36 0.56 0.36</diffuseColor>
@@ -157,7 +157,6 @@
         <Body>L5_wrist_roll_link</Body>
         <Body>L6_wrist_pitch_link</Body>
         <offsetfrom>L6_wrist_pitch_link</offsetfrom>
-        <anchor>0 0.028 0</anchor>
         <weight>1</weight>
         <limitsdeg>-35 130</limitsdeg>
         <axis>0 1 0</axis>
@@ -167,7 +166,7 @@
     
     <Body name="L7_wrist_yaw_link" type="dynamic">
         <offsetfrom>L6_wrist_pitch_link</offsetfrom>
-        <translation>0.0751 0 -0.002</translation>
+        <translation>0.091 0 -0.002</translation>
         <Geom type="trimesh">
             <data>L7_wrist_yaw_link.iv</data>
             <diffuseColor>0.66 0.36 0.36</diffuseColor>
@@ -178,9 +177,9 @@
         <Body>L6_wrist_pitch_link</Body>
         <Body>L7_wrist_yaw_link</Body>
         <offsetfrom>L7_wrist_yaw_link</offsetfrom>
-        <anchor>-0.0751 0 0.07</anchor>
+        <anchor>-0.091 0 0.002</anchor>
         <weight>1</weight>
-        <limitsdeg>-95 93</limitsdeg>
+        <limitsdeg>-95 95</limitsdeg>
         <axis>0 0 1</axis>
         <maxvel>1</maxvel>
         <resolution>0.29</resolution>
@@ -188,7 +187,7 @@
     
     <Body name="L8_gripper_left_finger" type="dynamic">
         <offsetfrom>L7_wrist_yaw_link</offsetfrom>
-        <translation>0.004 0.021 0</translation>
+        <translation>-0.012 0.021 0</translation>
         <Geom type="trimesh">
             <data>L8_gripper_left_finger.iv</data>
             <diffuseColor>0.36 0.66 0.36</diffuseColor>
@@ -208,7 +207,7 @@
     
     <Body name="L9_gripper_right_finger" type="dynamic">
         <offsetfrom>L7_wrist_yaw_link</offsetfrom>
-        <translation>0.004 -0.021 0</translation>
+        <translation>-0.012 -0.021 0</translation>
         <Geom type="trimesh">
             <data>L9_gripper_right_finger.iv</data>
             <diffuseColor>0.36 0.36 0.66</diffuseColor>
