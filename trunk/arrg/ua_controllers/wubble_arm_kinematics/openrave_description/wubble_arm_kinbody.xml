@@ -34,15 +34,15 @@
 -->
 
 <KinBody name="WubbleArm">
-    <Body name="ArmBaseLink" type="dynamic">
+    <Body name="L0_base_link" type="dynamic">
         <Geom type="trimesh">
             <data>L0_base_link.iv</data>
             <diffuseColor>0.36 0.36 0.36</diffuseColor>
         </Geom>
     </Body>
     
-    <Body name="ShoulderPitchLink" type="dynamic">
-        <offsetfrom>ArmBaseLink</offsetfrom>
+    <Body name="L1_shoulder_pitch_link" type="dynamic">
+        <offsetfrom>L0_base_link</offsetfrom>
         <translation>0.029 0.029 0</translation>
         <Geom type="trimesh">
             <data>L1_shoulder_pitch_link.iv</data>
@@ -50,10 +50,10 @@
         </Geom>
     </Body>
     
-    <Joint name="ShoulderPitchJoint" type="hinge">
-        <Body>ArmBaseLink</Body>
-        <Body>ShoulderPitchLink</Body>
-        <offsetfrom>ShoulderPitchLink</offsetfrom>
+    <Joint name="shoulder_pitch_joint" type="hinge">
+        <Body>L0_base_link</Body>
+        <Body>L1_shoulder_pitch_link</Body>
+        <offsetfrom>L1_shoulder_pitch_link</offsetfrom>
         <weight>1</weight>
         <limitsdeg>-122 80</limitsdeg>
         <axis>0 1 0</axis>
@@ -61,8 +61,8 @@
         <resolution>0.06</resolution>
     </Joint>
     
-    <Body name="ShoulderYawLink" type="dynamic">
-        <offsetfrom>ShoulderPitchLink</offsetfrom>
+    <Body name="L2_shoulder_yaw_link" type="dynamic">
+        <offsetfrom>L1_shoulder_pitch_link</offsetfrom>
         <translation>0.02899 0.11762 0</translation>
         <Geom type="trimesh">
             <data>L2_shoulder_yaw_link.iv</data>
@@ -70,10 +70,10 @@
         </Geom>
     </Body>
     
-    <Joint name="ShoulderYawJoint" type="hinge">
-        <Body>ShoulderPitchLink</Body>
-        <Body>ShoulderYawLink</Body>
-        <offsetfrom>ShoulderYawLink</offsetfrom>
+    <Joint name="shoulder_yaw_joint" type="hinge">
+        <Body>L1_shoulder_pitch_link</Body>
+        <Body>L2_shoulder_yaw_link</Body>
+        <offsetfrom>L2_shoulder_yaw_link</offsetfrom>
         <anchor>0 -0.0545 0</anchor>
         <weight>1</weight>
         <limitsdeg>-109 109</limitsdeg>
@@ -82,8 +82,8 @@
         <resolution>0.06</resolution>
     </Joint>
     
-    <Body name="ShoulderRollLink" type="dynamic">
-        <offsetfrom>ShoulderYawLink</offsetfrom>
+    <Body name="L3_shoulder_roll_link" type="dynamic">
+        <offsetfrom>L2_shoulder_yaw_link</offsetfrom>
         <translation>0 0.05132 0</translation>
         <Geom type="trimesh">
             <data>L3_shoulder_roll_link.iv</data>
@@ -91,10 +91,10 @@
         </Geom>
     </Body>
     
-    <Joint name="ShoulderRollJoint" type="hinge">
-        <Body>ShoulderYawLink</Body>
-        <Body>ShoulderRollLink</Body>
-        <offsetfrom>ShoulderRollLink</offsetfrom>
+    <Joint name="shoulder_roll_joint" type="hinge">
+        <Body>L2_shoulder_yaw_link</Body>
+        <Body>L3_shoulder_roll_link</Body>
+        <offsetfrom>L3_shoulder_roll_link</offsetfrom>
         <weight>1</weight>
         <limitsdeg>-125 125</limitsdeg>
         <axis>0 1 0</axis>
@@ -102,8 +102,8 @@
         <resolution>0.06</resolution>
     </Joint>
     
-    <Body name="ElbowPitchLink" type="dynamic">
-        <offsetfrom>ShoulderRollLink</offsetfrom>
+    <Body name="L4_elbow_pitch_link" type="dynamic">
+        <offsetfrom>L3_shoulder_roll_link</offsetfrom>
         <translation>0.06358 0.22799 0.026</translation>
         <Geom type="trimesh">
             <data>L4_elbow_pitch_link.iv</data>
@@ -111,10 +111,10 @@
         </Geom>
     </Body>
     
-    <Joint name="ElbowPitchJoint" type="hinge">
-        <Body>ShoulderRollLink</Body>
-        <Body>ElbowPitchLink</Body>
-        <offsetfrom>ElbowPitchLink</offsetfrom>
+    <Joint name="elbow_pitch_joint" type="hinge">
+        <Body>L3_shoulder_roll_link</Body>
+        <Body>L4_elbow_pitch_link</Body>
+        <offsetfrom>L4_elbow_pitch_link</offsetfrom>
         <anchor>-0.03458 -0.04399 0.005</anchor>
         <weight>1</weight>
         <limitsdeg>-88 103</limitsdeg>
@@ -123,8 +123,8 @@
         <resolution>0.06</resolution>
     </Joint>
     
-    <Body name="WristRollLink" type="dynamic">
-        <offsetfrom>ElbowPitchLink</offsetfrom>
+    <Body name="L5_wrist_roll_link" type="dynamic">
+        <offsetfrom>L4_elbow_pitch_link</offsetfrom>
         <translation>0.0235 -0.015 -0.026</translation>
         <Geom type="trimesh">
             <data>L5_wrist_roll_link.iv</data>
@@ -132,10 +132,10 @@
         </Geom>
     </Body>
     
-    <Joint name="WristRollJoint" type="hinge">
-        <Body>ElbowPitchLink</Body>
-        <Body>WristRollLink</Body>
-        <offsetfrom>WristRollLink</offsetfrom>
+    <Joint name="wrist_roll_joint" type="hinge">
+        <Body>L4_elbow_pitch_link</Body>
+        <Body>L5_wrist_roll_link</Body>
+        <offsetfrom>L5_wrist_roll_link</offsetfrom>
         <anchor>-0.025 0 0</anchor>
         <weight>1</weight>
         <limitsdeg>-150 150</limitsdeg>
@@ -144,8 +144,8 @@
         <resolution>0.29</resolution>
     </Joint>
     
-    <Body name="WristPitchLink" type="dynamic">
-        <offsetfrom>WristRollLink</offsetfrom>
+    <Body name="L6_wrist_pitch_link" type="dynamic">
+        <offsetfrom>L5_wrist_roll_link</offsetfrom>
         <translation>0.203 0 0</translation>
         <Geom type="trimesh">
             <data>L6_wrist_pitch_link.iv</data>
@@ -153,10 +153,10 @@
         </Geom>
     </Body>
     
-    <Joint name="WristPitchJoint" type="hinge">
-        <Body>WristRollLink</Body>
-        <Body>WristPitchLink</Body>
-        <offsetfrom>WristPitchLink</offsetfrom>
+    <Joint name="wrist_pitch_joint" type="hinge">
+        <Body>L5_wrist_roll_link</Body>
+        <Body>L6_wrist_pitch_link</Body>
+        <offsetfrom>L6_wrist_pitch_link</offsetfrom>
         <anchor>0 0.028 0</anchor>
         <weight>1</weight>
         <limitsdeg>-35 130</limitsdeg>
@@ -165,8 +165,8 @@
         <resolution>0.29</resolution>
     </Joint>
     
-    <Body name="WristYawLink" type="dynamic">
-        <offsetfrom>WristPitchLink</offsetfrom>
+    <Body name="L7_wrist_yaw_link" type="dynamic">
+        <offsetfrom>L6_wrist_pitch_link</offsetfrom>
         <translation>0.0751 0 -0.002</translation>
         <Geom type="trimesh">
             <data>L7_wrist_yaw_link.iv</data>
@@ -174,10 +174,10 @@
         </Geom>
     </Body>
     
-    <Joint name="WristYawJoint" type="hinge">
-        <Body>WristPitchLink</Body>
-        <Body>WristYawLink</Body>
-        <offsetfrom>WristYawLink</offsetfrom>
+    <Joint name="wrist_yaw_joint" type="hinge">
+        <Body>L6_wrist_pitch_link</Body>
+        <Body>L7_wrist_yaw_link</Body>
+        <offsetfrom>L7_wrist_yaw_link</offsetfrom>
         <anchor>-0.0751 0 0.07</anchor>
         <weight>1</weight>
         <limitsdeg>-95 93</limitsdeg>
@@ -186,8 +186,8 @@
         <resolution>0.29</resolution>
     </Joint>
     
-    <Body name="LeftFingerLink" type="dynamic">
-        <offsetfrom>WristYawLink</offsetfrom>
+    <Body name="L8_gripper_left_finger" type="dynamic">
+        <offsetfrom>L7_wrist_yaw_link</offsetfrom>
         <translation>0.004 0.021 0</translation>
         <Geom type="trimesh">
             <data>L8_gripper_left_finger.iv</data>
@@ -195,10 +195,10 @@
         </Geom>
     </Body>
     
-    <Joint name="LeftFingerJoint" type="hinge">
-        <Body>WristYawLink</Body>
-        <Body>LeftFingerLink</Body>
-        <offsetfrom>LeftFingerLink</offsetfrom>
+    <Joint name="left_finger_joint" type="hinge">
+        <Body>L7_wrist_yaw_link</Body>
+        <Body>L8_gripper_left_finger</Body>
+        <offsetfrom>L8_gripper_left_finger</offsetfrom>
         <weight>1</weight>
         <limitsdeg>-16 45</limitsdeg>
         <axis>0 0 1</axis>
@@ -206,8 +206,8 @@
         <resolution>0.29</resolution>
     </Joint>
     
-    <Body name="RightFingerLink" type="dynamic">
-        <offsetfrom>WristYawLink</offsetfrom>
+    <Body name="L9_gripper_right_finger" type="dynamic">
+        <offsetfrom>L7_wrist_yaw_link</offsetfrom>
         <translation>0.004 -0.021 0</translation>
         <Geom type="trimesh">
             <data>L9_gripper_right_finger.iv</data>
@@ -215,10 +215,10 @@
         </Geom>
     </Body>
     
-    <Joint name="RightFingerJoint" type="hinge">
-        <Body>WristYawLink</Body>
-        <Body>RightFingerLink</Body>
-        <offsetfrom>RightFingerLink</offsetfrom>
+    <Joint name="right_finger_joint" type="hinge">
+        <Body>L7_wrist_yaw_link</Body>
+        <Body>L9_gripper_right_finger</Body>
+        <offsetfrom>L9_gripper_right_finger</offsetfrom>
         <weight>1</weight>
         <limitsdeg>-45 16</limitsdeg>
         <axis>0 0 1</axis>
