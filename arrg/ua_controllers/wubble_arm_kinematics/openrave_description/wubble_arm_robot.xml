@@ -38,18 +38,18 @@
     <KinBody file="wubble_arm_kinbody.xml"/>
     
     <Manipulator name="arm_finger_tips">
-        <base>ArmBaseLink</base>
-        <effector>WristYawLink</effector>
-        <joints>LeftFingerJoint RightFingerJoint</joints>
+        <base>L0_base_link</base>
+        <effector>L7_wrist_yaw_link</effector>
+        <joints>left_finger_joint right_finger_joint</joints>
         <closingdirection>-1 1</closingdirection>
         <direction>1 0 0</direction>
         <translation>0.103 0 -0.025</translation>
     </Manipulator>
 
     <Manipulator name="arm_wrist_yaw">
-        <base>ArmBaseLink</base>
-        <effector>WristYawLink</effector>
-        <joints>LeftFingerJoint RightFingerJoint</joints>
+        <base>L0_base_link</base>
+        <effector>L7_wrist_yaw_link</effector>
+        <joints>left_finger_joint right_finger_joint</joints>
         <closingdirection>-1 1</closingdirection>
         <direction>1 0 0</direction>
     </Manipulator>
