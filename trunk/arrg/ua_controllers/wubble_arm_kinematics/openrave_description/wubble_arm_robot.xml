@@ -43,7 +43,7 @@
         <joints>left_finger_joint right_finger_joint</joints>
         <closingdirection>-1 1</closingdirection>
         <direction>1 0 0</direction>
-        <translation>0.103 0 -0.025</translation>
+        <translation>0.087 0 0</translation>
     </Manipulator>
 
     <Manipulator name="arm_wrist_yaw">
