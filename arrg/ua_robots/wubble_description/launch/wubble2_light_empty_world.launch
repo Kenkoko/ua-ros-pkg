@@ -1,0 +1,60 @@
+<launch>
+    <param name="/use_sim_time" value="true" />
+
+    <node name="gazebo" pkg="gazebo" type="gazebo" 
+          args="$(find wubble_environments)/worlds/empty_with_blocks.world"
+          respawn="false" output="screen" />
+
+    <!-- send wubble robot XML to param server -->
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find wubble_description)/urdf/wubble2.urdf.xacro'" />
+
+    <!-- push robot_description to factory and spawn robot in gazebo -->
+    <node name="spawn_robot" pkg="gazebo" type="spawn_model"
+          args="-unpause
+                -param robot_description
+                -urdf
+                -z 0.01
+                -model wubble2"
+          respawn="false" output="screen" />
+
+    <!-- Controller Manager configuration -->
+    <param name="pr2_controller_manager/joint_state_publish_rate" value="100.0" />
+
+    <!-- Laser Controllers -->
+    <rosparam file="$(find wubble_description)/controllers/wubble2_laser_controllers.yaml" command="load" />
+    <node name="laser_controllers_spawner" pkg="pr2_controller_manager" type="spawner"
+          args="neck_laser_tilt_controller
+                neck_laser_traj_controller"
+          respawn="false" output="screen" />
+
+    <!-- set laser tilt rate -->
+    <node pkg="pr2_mechanism_controllers" type="send_periodic_cmd_srv.py" name="laser_tilt_controller_3dnav_params"
+          args="neck_laser_traj_controller linear 3 0.9 0.6" />
+
+    <!-- Head Controllers -->
+    <rosparam file="$(find wubble_description)/controllers/wubble2_head_controllers.yaml" command="load" />
+    <node name="head_controllers_spawner" pkg="pr2_controller_manager" type="spawner"
+          args="head_pan_controller
+                head_tilt_controller"
+          respawn="false" output="screen" />
+
+    <!-- Arm Trajectory Controller -->
+    <rosparam command="load" file="$(find wubble_description)/params/w2_arm_controllers.yaml" />
+    <node name="default_controllers_spawner" pkg="pr2_controller_manager" type="spawner" args="l_arm_controller" />
+
+    <!-- start robot state publisher -->
+    <node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher" respawn="true" output="screen" >
+        <param name="publish_frequency" type="double" value="50.0" />
+        <param name="tf_prefix" type="string" value="" />
+    </node>
+
+    <node pkg="fake_localization" type="fake_localization" name="fake_localization" respawn="true" output="screen" >
+        <param name="odom_frame_id" value="odom"/>
+    </node>
+
+    <!-- an empty map so navigation will still work -->
+    <node name="map_node" pkg="map_server" type="map_server" 
+          args="$(find wubble_environments)/Media/materials/textures/empty_map.yaml"
+          respawn="true" output="screen" />
+</launch>
+
