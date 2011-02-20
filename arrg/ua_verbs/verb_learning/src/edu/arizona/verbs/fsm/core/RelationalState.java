@@ -1,7 +1,6 @@
 package edu.arizona.verbs.fsm.core;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.TreeSet;
 
 import edu.arizona.verbs.shared.Relation;
@@ -12,7 +11,7 @@ public class RelationalState {
 	
 	public RelationalState(Collection<Relation> relations) {
 		for (Relation r : relations) {
-			if (r.value) {
+			if (r.getValue()) {
 				relations_.add(r);
 			}
 		}

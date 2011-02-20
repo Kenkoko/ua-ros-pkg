@@ -299,7 +299,7 @@ public class IRLVerb implements Verb {
 		for (int i = 0; i < trace.size(); i++) {
 			List<Relation> relations = trace.get(i).getRelations();
 			for (int j = 0; j < relations.size(); j++) {
-				result[i][j] = (relations.get(j).value ? 1 : 0); // was an i?
+				result[i][j] = (relations.get(j).getValue() ? 1 : 0); // was an i?
 			}
 		}
 		
@@ -311,7 +311,7 @@ public class IRLVerb implements Verb {
 		int[] result = new int[relations.size()];
 
 		for (int i = 0; i < relations.size(); i++) {
-			result[i] = (relations.get(i).value ? 1 : 0);
+			result[i] = (relations.get(i).getValue() ? 1 : 0);
 		}
 		
 		return result;

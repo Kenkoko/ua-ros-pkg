@@ -86,7 +86,7 @@ public class MaximumLikelihoodVerb implements Verb, Remappable<MaximumLikelihood
 		for (OOMDPState state : trace) {
 			for (int i = 0; i < avgs.length; i++) {
 				Relation relation = state.getRelations().get(i);
-				avgs[i] += (relation.value ? 1.0 : 0.0);
+				avgs[i] += (relation.getValue() ? 1.0 : 0.0);
 			}
 		}
 		// ...compute the average for each relation
@@ -143,7 +143,7 @@ public class MaximumLikelihoodVerb implements Verb, Remappable<MaximumLikelihood
 			for (OOMDPState state : trace) {
 				for (int i = 0; i < avgs.length; i++) {
 					Relation relation = state.getRelations().get(i);
-					avgs[i] += (relation.value ? 1.0 : 0.0);
+					avgs[i] += (relation.getValue() ? 1.0 : 0.0);
 				}
 			}
 			// ...compute the average for each relation

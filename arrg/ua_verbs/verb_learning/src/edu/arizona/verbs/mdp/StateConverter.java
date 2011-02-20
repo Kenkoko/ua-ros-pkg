@@ -109,9 +109,9 @@ public class StateConverter {
 	
 	public static ros.pkg.oomdp_msgs.msg.Relation deconvertRelation(Relation relation) {
 		ros.pkg.oomdp_msgs.msg.Relation relMsg = new ros.pkg.oomdp_msgs.msg.Relation();
-		relMsg.relation = relation.relation;
-		relMsg.obj_names = relation.objectNames;
-		relMsg.value = relation.value;
+		relMsg.relation = relation.getRelation();
+		relMsg.obj_names = relation.getArguments();
+		relMsg.value = relation.getValue();
 		return relMsg;
 	}
 	
@@ -129,14 +129,14 @@ public class StateConverter {
 				String relString = remapped.toString();
 				
 				if (openIntervals.containsKey(relString)) {
-					if (!relation.value) { // Close an existing interval
+					if (!relation.getValue()) { // Close an existing interval
 						Interval open = openIntervals.get(relString);
 						open.end = i;
 						closedIntervals.add(open);
 						openIntervals.remove(relString);
 					}
 				} else { 
-					if (relation.value) { // Open a new interval
+					if (relation.getValue()) { // Open a new interval
 						Interval open = new Interval();
 						open.name = relString;
 						open.start = i;

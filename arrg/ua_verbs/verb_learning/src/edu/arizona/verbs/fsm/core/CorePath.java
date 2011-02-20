@@ -1,7 +1,7 @@
 package edu.arizona.verbs.fsm.core;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.Vector;
 
 import edu.arizona.verbs.shared.OOMDPState;
@@ -64,8 +64,10 @@ public class CorePath {
 	}
 	
 	public void print() {
-		int[] widths = new int[states_.size()];
+		int[] widths = new int[states_.size()]; 
 		int height = 0;
+		
+		Arrays.fill(widths, 1); // No zero-length array cells
 		
 		for (int i = 0; i < states_.size(); i++) {
 			height = Math.max(height, states_.get(i).getRelations().size());

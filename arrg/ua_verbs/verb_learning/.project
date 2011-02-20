@@ -16,19 +16,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>client_rosjava</name>
+			<name>rosjava</name>
 			<type>2</type>
-			<location>/home/dhewlett/ros/tum-ros-pkg/client_rosjava/rosjava/src</location>
-		</link>
-		<link>
-			<name>oomdp_msgs.msg</name>
-			<type>2</type>
-			<location>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/oomdp_msgs/msg/java</location>
-		</link>
-		<link>
-			<name>oomdp_msgs.srv</name>
-			<type>2</type>
-			<location>/home/dhewlett/ros/ua-ros-pkg/ua_experimental/oomdp_msgs/srv/java</location>
+			<location>/opt/ros/cturtle/stacks/client_rosjava/rosjava/src</location>
 		</link>
 	</linkedResources>
 </projectDescription>

@@ -1,0 +1,34 @@
+verb: scanBoat
+arguments:
+   - agent
+   - place
+   - object
+   - scenario
+traces:
+    - label: positive
+      bindings: 
+        agent: uav1
+        object: Boat11
+        place: dest0
+        scenario: ClearLake1
+      states:
+        - relations:
+            - relation: AltAboveLimit
+              arguments:
+                - uav1
+              value: true
+            - relation: DistanceConstant
+              arguments:
+                - uav1
+                - dest0
+              value: false
+        - relations:
+            - relation: AltAboveLimit
+              arguments:
+                - uav1
+              value: true
+            - relation: DistanceConstant
+              arguments:
+                - uav1
+                - dest0
+              value: true

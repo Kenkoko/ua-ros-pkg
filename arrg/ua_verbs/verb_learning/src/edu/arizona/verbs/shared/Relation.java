@@ -7,22 +7,22 @@ import java.util.Map;
 
 public class Relation implements Remappable<Relation>, Comparable<Relation>{
 	// Treating this as a data container, so public members
-	// However, it is immutable, so should probably enforce that
-	public String relation;
-	public ArrayList<String> objectNames;
-	public boolean value;
+	// However, it is immutable, so should probably enforce that // TODO Not exactly true
+	private String relation;
+	private ArrayList<String> arguments;
+	private boolean value;
 	private String cachedString = null;
 	
 	public Relation() {
 		relation = new String();
-		objectNames = new ArrayList<String>();
+		arguments = new ArrayList<String>();
 		value = false;
 		toString();
 	}
 	
 	public Relation(String relation, ArrayList<String> objectNames, boolean value) {
 		this.relation = relation;
-		this.objectNames = objectNames;
+		this.arguments = objectNames;
 		this.value = value;
 		toString();
 	}
@@ -30,27 +30,54 @@ public class Relation implements Remappable<Relation>, Comparable<Relation>{
 	@Deprecated
 	public Relation(String relation, String[] objectNames, boolean value) {
 		this.relation = relation;
-		this.objectNames = new ArrayList<String>(Arrays.asList(objectNames));
+		this.arguments = new ArrayList<String>(Arrays.asList(objectNames));
 		this.value = value;
 		toString();
 	}
 	
 	public String[] getObjectNameArray() {
-		return objectNames.toArray(new String[0]);
+		return arguments.toArray(new String[0]);
 	}
 	
 	public ArrayList<String> getObjectNames() {
-		return objectNames;
+		return arguments;
 	}
 	
+	public String getRelation() {
+		return relation;
+	}
+
+	public void setRelation(String relation) {
+		this.relation = relation;
+		this.cachedString = null;
+	}
+
+	public ArrayList<String> getArguments() {
+		return arguments;
+	}
+
+	public void setArguments(ArrayList<String> arguments) {
+		this.arguments = arguments;
+		this.cachedString = null;
+	}
+
+	public boolean getValue() {
+		return value;
+	}
+
+	public void setValue(boolean value) {
+		this.value = value;
+		this.cachedString = null;
+	}
+
 	@Override
 	public String toString() {
 		if (cachedString == null) { 
 			StringBuffer result = new StringBuffer(relation);
 			result.append("(");
-			for (int i = 0; i < objectNames.size(); i++) {
-				result.append(objectNames.get(i));
-				if (i < objectNames.size() - 1) {
+			for (int i = 0; i < arguments.size(); i++) {
+				result.append(arguments.get(i));
+				if (i < arguments.size() - 1) {
 					result.append(",");
 				}
 			}
@@ -64,7 +91,7 @@ public class Relation implements Remappable<Relation>, Comparable<Relation>{
 	@Override
 	public Relation remap(Map<String, String> nameMap) {
 		ArrayList<String> remappedNames = new ArrayList<String>();
-		for (String oldName : objectNames) {
+		for (String oldName : arguments) {
 			if (nameMap.containsKey(oldName)) {
 				remappedNames.add(nameMap.get(oldName));
 			} else {

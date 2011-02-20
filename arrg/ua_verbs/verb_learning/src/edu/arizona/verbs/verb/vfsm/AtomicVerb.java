@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.arizona.cs.learn.timeseries.model.Signature;
-import edu.arizona.verbs.fsm.FSMNode.StateType;
 import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 
@@ -22,9 +21,9 @@ public class AtomicVerb extends AbstractVerb {
 		makeVerbFolder();
 	}
 	
-	public AtomicVerb(String word, ArrayList<String> arguments) {
+	public AtomicVerb(String word, List<String> arguments) {
 		lexicalForm_ = word;
-		arguments_ = arguments;
+		arguments_ = new ArrayList<String>(arguments);
 		makeVerbFolder();
 	}
 	

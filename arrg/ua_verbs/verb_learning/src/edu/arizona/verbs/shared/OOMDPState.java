@@ -31,7 +31,7 @@ public class OOMDPState implements Remappable<OOMDPState> {
 		Set<String> result = new HashSet<String>();
 		
 		for (Relation rel : relations_) {
-			if (rel.value) { // It's actually boolean
+			if (rel.getValue()) { 
 				result.add(rel.toString());
 			}
 		}
@@ -53,7 +53,7 @@ public class OOMDPState implements Remappable<OOMDPState> {
 			}
 			
 			for (Relation rel : relations_) {
-				if (rel.value) {
+				if (rel.getValue()) {
 					hashString_ += rel;
 				}
 			}
@@ -71,10 +71,13 @@ public class OOMDPState implements Remappable<OOMDPState> {
 		Vector<Relation> newRelations = new Vector<Relation>();
 		for (Relation rel : relations_) {
 			Relation newRel = new Relation();
-			newRel.relation = rel.relation;
-			newRel.value = rel.value;
-			for (int i = 0; i < rel.objectNames.size(); i++) {
-				newRel.objectNames.add((nameMap.containsKey(rel.objectNames.get(i)) ? nameMap.get(rel.objectNames.get(i)) : rel.objectNames.get(i))); 
+			newRel.setRelation(rel.getRelation());
+			newRel.setValue(rel.getValue());
+			for (int i = 0; i < rel.getArguments().size(); i++) {
+				newRel.getArguments().add(
+						(nameMap.containsKey(rel.getArguments().get(i)) 
+								? nameMap.get(rel.getArguments().get(i)) 
+								: rel.getArguments().get(i))); 
 			}
 			newRelations.add(newRel);
 		}

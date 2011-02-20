@@ -5,9 +5,9 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/home/dhewlett/ros/ros_experimental/rosjava/bin"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="src" path="rosjava"/>
 	<classpathentry kind="src" path="msg_gen/java"/>
 	<classpathentry kind="src" path="srv_gen/java"/>
-	<classpathentry kind="src" path="client_rosjava"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/time_series"/>
 	<classpathentry kind="lib" path="/time_series/lib/collections-generic-4.01.jar"/>
