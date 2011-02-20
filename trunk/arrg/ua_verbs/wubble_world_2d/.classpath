@@ -43,5 +43,5 @@
 	<classpathentry kind="lib" path="wubble_svn/lib/xpp3-1.1.4c.jar"/>
 	<classpathentry kind="lib" path="wubble_svn/lib/xuggle-xuggler.jar"/>
 	<classpathentry kind="lib" path="wubble_svn/lib/guava-r07.jar"/>
-	<classpathentry kind="output" path="src"/>
+	<classpathentry kind="output" path="wubble_svn/src"/>
 </classpath>
