@@ -16,7 +16,6 @@ import org.yaml.snakeyaml.Yaml;
 import com.google.common.collect.Maps;
 
 import edu.arizona.verbs.fsm.VerbFSM;
-import edu.arizona.verbs.fsm.FSMNode.StateType;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 import edu.arizona.verbs.verb.VerbBinding;
 
