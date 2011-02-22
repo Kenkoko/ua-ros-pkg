@@ -23,14 +23,14 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://swissranger_camera_description/meshes/SR4000.stl"/>
+                    <mesh filename="package://swissranger_camera_description/meshes/collada/SR4000.dae"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://swissranger_camera_description/meshes/convex/SR4000_convex.stlb"/>
+                    <mesh filename="package://swissranger_camera_description/meshes/collada/SR4000.dae"/>
                 </geometry>
             </collision>
         </link>
