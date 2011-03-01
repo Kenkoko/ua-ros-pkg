@@ -1,28 +1,33 @@
 <package>
-  <description brief="a simple audio capture node which streams raw audio">
+    <description brief="a simple audio capture node which streams raw audio">
+        This package grabs a live audio stream from PortAudio and ships it across the
+        ROS botnet. The program grabs the "default" audio stream. I can't speak for
+        other distros, but on Ubuntu the default stream is settable via the GNOME
+        "System->Preferences->Sound" box. I set the "Sound Capture" field to "ALSA" and
+        use "alsamixer" on the command line to poke around until I get the microphone
+        jack working. Each motherboard seems to be a little different in how the
+        various jacks come up in ALSA.
 
-This package grabs a live audio stream from PortAudio and ships it across the
-ROS botnet. The program grabs the "default" audio stream. I can't speak for
-other distros, but on Ubuntu the default stream is settable via the GNOME
-"System->Preferences->Sound" box. I set the "Sound Capture" field to "ALSA" and
-use "alsamixer" on the command line to poke around until I get the microphone
-jack working. Each motherboard seems to be a little different in how the
-various jacks come up in ALSA.
+        In XFCE (xubuntu), I couldn't find it in the GUI, but either right-click the
+        speaker icon in the taskbar, or type "gnome-volume-control" in the console. 
+        This will bring up a handy window which lets you select the input device and
+        set the volume.
 
-In XFCE (xubuntu), I couldn't find it in the GUI, but either right-click the
-speaker icon in the taskbar, or type "gnome-volume-control" in the console. 
-This will bring up a handy window which lets you select the input device and
-set the volume.
+        I assume there is a way to do this all on headless boxen, but I haven't tried.
+        If someone is sufficiently motivated to figure it out, let me know.
+    </description>
 
-I assume there is a way to do this all on headless boxen, but I haven't tried.
-If someone is sufficiently motivated to figure it out, let me know.
+    <author>Morgan Quigley</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
 
-  </description>
-  <author>Morgan Quigley</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <depend package="roscpp"/>
-  <depend package="ua_audio_msgs"/>
-  <rosdep name="portaudio"/>
-  <rosdep name="libsndfile"/>
+    <depend package="roscpp"/>
+    <depend package="rospy"/>
+    <depend package="ua_audio_msgs"/>
+    <depend package="std_srvs"/>
+    <depend package="scikits"/>
+    <depend package="pybrain"/>
+
+    <rosdep name="portaudio"/>
+    <rosdep name="libsndfile"/>
 </package>
