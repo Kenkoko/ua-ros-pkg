@@ -94,7 +94,7 @@ class SerialProxy():
         self.motors = []
 
         try:
-            for i in xrange(self.min_motor_id, self.max_motor_id):
+            for i in xrange(self.min_motor_id, self.max_motor_id + 1):
                 result = self.__serial_bus.ping(i)
                 if result: self.motors.append(i)
 
