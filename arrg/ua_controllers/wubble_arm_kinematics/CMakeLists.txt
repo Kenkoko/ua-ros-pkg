@@ -38,6 +38,8 @@ rosbuild_add_executable(wubble_arm_kinematics_node src/main.cpp)
 target_link_libraries(wubble_arm_kinematics_node wubble_arm_kinematics_lib)
 
 rosbuild_add_executable(wubble_arm_ik_gen_f0 include/wubble_arm_kinematics/wubble_arm_ik_gen_f0.cpp)
+rosbuild_add_executable(wubble_arm_ik_gen_f1 include/wubble_arm_kinematics/wubble_arm_ik_gen_f1.cpp)
+rosbuild_add_executable(wubble_arm_ik_gen_f2 include/wubble_arm_kinematics/wubble_arm_ik_gen_f2.cpp)
 
 rosbuild_add_executable(wubble_ik_single_test src/test/test_single_ik.cpp)
 
