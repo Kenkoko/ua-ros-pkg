@@ -63,11 +63,11 @@ public:
   bool init(const urdf::Model &robot_model, const std::string &root_name, const std::string &tip_name);
 
   /**
-     @brief compute IK based on an initial guess for the shoulder pitch angle.
+     @brief compute IK based on an initial guess for the upperarm roll angle.
      @param Input pose for end-effector
-     @param Initial guess for shoulder pitch angle
+     @param Initial guess for upperarm roll angle
   */
-  void computeIKShoulderPitch(const KDL::Frame &g_in, const double &shoulder_pitch_initial_guess);
+  void computeIKUpperArmRoll(const KDL::Frame &g_in, const double &upperarm_roll_initial_guess);
 
   std::vector<std::vector<double> > solution_ik_;/// a vector of ik solutions
 

@@ -35,7 +35,7 @@
 #include <wubble_arm_kinematics/wubble_arm_ik.h>
 
 #define IKFAST_NO_MAIN
-#include <wubble_arm_kinematics/wubble_arm_ik_gen_f0.cpp>
+#include <wubble_arm_kinematics/wubble_arm_ik_gen_f2.cpp>
 
 using namespace angles;
 using namespace wubble_arm_kinematics;
@@ -136,12 +136,12 @@ void WubbleArmIK::getSolverInfo(kinematics_msgs::KinematicSolverInfo &info)
   info = solver_info_;
 }
 
-void WubbleArmIK::computeIKShoulderPitch(const KDL::Frame& g_in, const double& shoulder_pitch_initial_guess)
+void WubbleArmIK::computeIKUpperArmRoll(const KDL::Frame& g_in, const double& upperarm_roll_initial_guess)
 {
-  //t1 = shoulder pitch is specified
+  //t1 = upperarm roll is specified
   solution_ik_.clear();
 
-  double t1 = angles::normalize_angle(shoulder_pitch_initial_guess);
+  double t1 = angles::normalize_angle(upperarm_roll_initial_guess);
   if (!checkJointLimits(t1, 0)) { return; }
 
   IKReal translation[3];

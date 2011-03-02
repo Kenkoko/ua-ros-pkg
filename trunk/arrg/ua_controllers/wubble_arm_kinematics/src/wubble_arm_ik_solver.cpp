@@ -55,8 +55,8 @@ int WubbleArmIKSolver::CartToJnt(const KDL::JntArray& q_init,
                                  const KDL::Frame& p_in,
                                  KDL::JntArray &q_out)
 {
-  ROS_DEBUG("Solving with %f",q_init(0));
-  wubble_arm_ik_.computeIKShoulderPitch(p_in, q_init(0));
+  ROS_DEBUG("Solving with %f",q_init(2));
+  wubble_arm_ik_.computeIKUpperArmRoll(p_in, q_init(2));
   if (wubble_arm_ik_.solution_ik_.empty()) { return -1; }
 
   double min_distance = 1e6;
@@ -106,7 +106,7 @@ int WubbleArmIKSolver::CartToJnt(const KDL::JntArray& q_init,
 {
   KDL::JntArray q;
 
-  wubble_arm_ik_.computeIKShoulderPitch(p_in, q_init(0));
+  wubble_arm_ik_.computeIKUpperArmRoll(p_in, q_init(2));
   if(wubble_arm_ik_.solution_ik_.empty()) { return -1; }
 
   q.resize(NUM_JOINTS_ARM7DOF);
@@ -169,7 +169,7 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
                                        const double &timeout)
 {
   KDL::JntArray q_init = q_in;
-  const int free_angle = 0; // shoulder_pitch
+  const int free_angle = 2; // upperarm roll
   double initial_guess = q_init(free_angle);
 
   ros::Time start_time = ros::Time::now();
@@ -210,7 +210,7 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
                                        const double &timeout)
 {
   KDL::JntArray q_init = q_in;
-  const int free_angle = 0; // shoulder_pitch
+  const int free_angle = 2; // upperarm roll
   double initial_guess = q_init(free_angle);
 
   ros::Time start_time = ros::Time::now();
@@ -254,7 +254,7 @@ int WubbleArmIKSolver::CartToJntSearch(const KDL::JntArray& q_in,
                                        const boost::function<void(const KDL::JntArray&, const KDL::Frame&, motion_planning_msgs::ArmNavigationErrorCodes&)> &solution_callback)
 {
   KDL::JntArray q_init = q_in;
-  const int free_angle = 0; // shoulder_pitch
+  const int free_angle = 2; // upperarm roll
   double initial_guess = q_init(free_angle);
 
   ros::Time start_time = ros::Time::now();

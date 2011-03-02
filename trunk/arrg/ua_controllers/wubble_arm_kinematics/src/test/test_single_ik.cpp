@@ -40,7 +40,7 @@ int main(int argc, char **argv){
   kinematics_msgs::GetPositionIK::Response gpik_res;
 
   gpik_req.timeout = ros::Duration(5.0);
-  gpik_req.ik_request.ik_link_name = "L7_wrist_yaw_link";
+  gpik_req.ik_request.ik_link_name = "L7_wrist_roll_link";
 
   gpik_req.ik_request.pose_stamped.header.frame_id = "L0_base_link";
   gpik_req.ik_request.pose_stamped.pose.position.x = 0.60;
@@ -65,7 +65,7 @@ int main(int argc, char **argv){
   gpik_req.ik_request.ik_seed_state.joint_state.position[2] = 0;
   gpik_req.ik_request.ik_seed_state.joint_state.position[3] = 0;
   gpik_req.ik_request.ik_seed_state.joint_state.position[4] = 0;
-  gpik_req.ik_request.ik_seed_state.joint_state.position[5] = 0; 
+  gpik_req.ik_request.ik_seed_state.joint_state.position[5] = 0;
   gpik_req.ik_request.ik_seed_state.joint_state.position[6] = 0;
 
   if(ik_client.call(gpik_req, gpik_res))
@@ -83,7 +83,7 @@ int main(int argc, char **argv){
   kinematics_msgs::GetPositionFK::Response fk_response;
   fk_request.header.frame_id = "base_footprint";
   fk_request.fk_link_names.resize(1);
-  fk_request.fk_link_names[0] = "L7_wrist_yaw_link";
+  fk_request.fk_link_names[0] = "L7_wrist_roll_link";
 
   fk_request.robot_state.joint_state.position = gpik_res.solution.joint_state.position;
   fk_request.robot_state.joint_state.name = gpik_res.solution.joint_state.name;
@@ -95,16 +95,16 @@ int main(int argc, char **argv){
       for(unsigned int i=0; i < fk_response.pose_stamped.size(); i ++)
       {
         ROS_INFO_STREAM("Link: " << fk_response.fk_link_names[i].c_str());
-        ROS_INFO_STREAM("Position: " << 
-          fk_response.pose_stamped[i].pose.position.x << "," <<  
-          fk_response.pose_stamped[i].pose.position.y << "," << 
+        ROS_INFO_STREAM("Position: " <<
+          fk_response.pose_stamped[i].pose.position.x << "," <<
+          fk_response.pose_stamped[i].pose.position.y << "," <<
           fk_response.pose_stamped[i].pose.position.z);
         ROS_INFO("Orientation: %f %f %f %f",
           fk_response.pose_stamped[i].pose.orientation.x,
           fk_response.pose_stamped[i].pose.orientation.y,
           fk_response.pose_stamped[i].pose.orientation.z,
           fk_response.pose_stamped[i].pose.orientation.w);
-      } 
+      }
     }
     else
     {
