@@ -1,44 +1,44 @@
 joint_limits:
   shoulder_pitch_joint:
     has_position_limits: true
-    min_position: -2.13
-    max_position: 1.39
+    min_position: -2.523
+    max_position: 1.048
     has_velocity_limits: true
     max_velocity: 1.8
     has_acceleration_limits: true
     max_acceleration: 0.5
     angle_wraparound: false
-  shoulder_yaw_joint:
+  shoulder_pan_joint:
     has_position_limits: true
-    min_position: -1.90
-    max_position: 1.90
+    min_position: -3.351
+    max_position: 0.905
     has_velocity_limits: true
     max_velocity: 1.82
     has_acceleration_limits: true
     max_acceleration: 0.5
     angle_wraparound: false
-  shoulder_roll_joint:
+  upperarm_roll_joint:
     has_position_limits: true
-    min_position: -2.18
-    max_position: 2.18
+    min_position: -0.629
+    max_position: 3.75
     has_velocity_limits: true
     max_velocity: 1.27
     has_acceleration_limits: true
     max_acceleration: 0.5
     angle_wraparound: false
-  elbow_pitch_joint:
+  elbow_flex_joint:
     has_position_limits: true
-    min_position: -1.53
-    max_position: 1.80
+    min_position: -1.652
+    max_position: 1.846
     has_velocity_limits: true
     max_velocity: 2.0
     has_acceleration_limits: true
     max_acceleration: 0.5
     angle_wraparound: false
-  wrist_roll_joint:
+  forearm_roll_joint:
     has_position_limits: false
-    min_position: -2.61
-    max_position: 2.61
+    min_position: -2.521
+    max_position: 2.71
     has_velocity_limits: true
     max_velocity: 2.0
     has_acceleration_limits: true
@@ -46,17 +46,17 @@ joint_limits:
     angle_wraparound: false
   wrist_pitch_joint:
     has_position_limits: true
-    min_position: -0.61
-    max_position: 2.27
+    min_position: -2.158
+    max_position: 2.613
     has_velocity_limits: true
     max_velocity: 2.0
     has_acceleration_limits: true
     max_acceleration: 0.5
     angle_wraparound: false
-  wrist_yaw_joint:
+  wrist_roll_joint:
     has_position_limits: false
-    min_position: -1.66
-    max_position: 1.62
+    min_position: -2.597
+    max_position: 2.633
     has_velocity_limits: true
     max_velocity: 2.0
     has_acceleration_limits: true

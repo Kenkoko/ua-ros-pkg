@@ -17,19 +17,19 @@ default_collision_operations:
     object2: robot_body
     operation: disable
 
-  - object1: L2_shoulder_yaw_link
-    object2: L3_shoulder_roll_link
+  - object1: L2_shoulder_pan_link
+    object2: L3_upperarm_roll_link
     operation: disable
 
-  - object1: L4_elbow_pitch_link
-    object2: L5_wrist_roll_link
+  - object1: L4_elbow_flex_link
+    object2: L5_forearm_roll_link
     operation: disable
 
-  - object1: L7_wrist_yaw_link
+  - object1: L7_wrist_roll_link
     object2: L8_left_finger_link
     operation: disable
 
-  - object1: L7_wrist_yaw_link
+  - object1: L7_wrist_roll_link
     object2: L9_right_finger_link
     operation: disable
 
@@ -38,10 +38,10 @@ default_collision_operations:
     operation: disable
 
   - object1: L8_left_finger_link
-    object2: L5_wrist_roll_link
+    object2: L5_forearm_roll_link
     operation: disable
 
   - object1: L9_right_finger_link
-    object2: L5_wrist_roll_link
+    object2: L5_forearm_roll_link
     operation: disable
 
