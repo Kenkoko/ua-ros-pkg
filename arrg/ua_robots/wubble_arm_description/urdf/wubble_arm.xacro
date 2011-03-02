@@ -57,87 +57,87 @@
             <child link="L1_shoulder_pitch_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-2.595" upper="1.025" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.595}" soft_upper_limit="${1.025}" />
+            <limit  lower="-2.523" upper="1.048" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.523}" soft_upper_limit="${1.048}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
-        <!-- Shoulder yaw joint -->
-        <joint name="shoulder_yaw_joint" type="revolute" >
+        <!-- Shoulder pan joint -->
+        <joint name="shoulder_pan_joint" type="revolute" >
             <origin xyz="0.069 0.029 -0.029" rpy="0 0 0" />
             <parent link="L1_shoulder_pitch_link" />
-            <child link="L2_shoulder_yaw_link"/>
+            <child link="L2_shoulder_pan_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-3.24" upper="1.03" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-3.24}" soft_upper_limit="${1.03}" />
+            <limit  lower="-3.351" upper="0.905" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-3.351}" soft_upper_limit="${0.905}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
-        <!-- Shoulder roll joint -->
-        <joint name="shoulder_roll_joint" type="revolute" >
+        <!-- Uppperarm roll joint -->
+        <joint name="upperarm_roll_joint" type="revolute" >
             <origin xyz="0 0.1074 0" rpy="0 0 0" />
-            <parent link="L2_shoulder_yaw_link" />
-            <child link="L3_shoulder_roll_link"/>
+            <parent link="L2_shoulder_pan_link" />
+            <child link="L3_upperarm_roll_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-0.61" upper="3.77" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.19}" soft_upper_limit="${2.19}" />
+            <limit  lower="-0.629" upper="3.75" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.629}" soft_upper_limit="${3.75}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
-        <!-- Elbow pitch joint -->
-        <joint name="elbow_pitch_joint" type="revolute" >
+        <!-- Elbow flex joint -->
+        <joint name="elbow_flex_joint" type="revolute" >
             <origin xyz="0.029 0.132 0" rpy="0 0 0" />
-            <parent link="L3_shoulder_roll_link" />
-            <child link="L4_elbow_pitch_link"/>
+            <parent link="L3_upperarm_roll_link" />
+            <child link="L4_elbow_flex_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-1.53" upper="1.80" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.53}" soft_upper_limit="${1.80}" />
+            <limit  lower="-1.652" upper="1.846" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.652}" soft_upper_limit="${1.846}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
-        <!-- Wrist roll joint -->
-        <joint name="wrist_roll_joint" type="revolute" >
+        <!-- Forearm roll joint -->
+        <joint name="forearm_roll_joint" type="revolute" >
             <origin xyz="0.034 0.029 0" rpy="0 0 0" />
-            <parent link="L4_elbow_pitch_link" />
-            <child link="L5_wrist_roll_link"/>
+            <parent link="L4_elbow_flex_link" />
+            <child link="L5_forearm_roll_link"/>
             
             <axis xyz="1 0 0"/>
-            <limit  lower="-2.61" upper="2.61" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.61}" soft_upper_limit="${2.61}" />
+            <limit  lower="-2.521" upper="2.71" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.521}" soft_upper_limit="${2.71}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
         <!-- Wrist pitch joint -->
         <joint name="wrist_pitch_joint" type="revolute" >
             <origin xyz="0.119 0 0" rpy="0 0 0" />
-            <parent link="L5_wrist_roll_link" />
+            <parent link="L5_forearm_roll_link" />
             <child link="L6_wrist_pitch_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-2.115" upper="2.61" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.61}" soft_upper_limit="${2.27}" />
+            <limit  lower="-2.158" upper="2.613" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.158}" soft_upper_limit="${2.613}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
-        <!-- Wrist yaw joint -->
-        <joint name="wrist_yaw_joint" type="revolute" >
+        <!-- Wrist roll joint -->
+        <joint name="wrist_roll_joint" type="revolute" >
             <origin xyz="0.0925 0 0" rpy="0 0 0" />
             <parent link="L6_wrist_pitch_link" />
-            <child link="L7_wrist_yaw_link"/>
+            <child link="L7_wrist_roll_link"/>
             
             <axis xyz="1 0 0"/>
-            <limit  lower="-2.61" upper="2.61" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.66}" soft_upper_limit="${1.62}" />
+            <limit  lower="-2.597" upper="2.633" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.597}" soft_upper_limit="${2.633}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
         <!-- Left finger joint -->
         <joint name="left_finger_joint" type="revolute" >
             <origin xyz="0.0421 0.021 0" rpy="0 0 0" />
-            <parent link="L7_wrist_yaw_link" />
+            <parent link="L7_wrist_roll_link" />
             <child link="L8_left_finger_link"/>
             
             <axis xyz="0 0 1"/>
@@ -149,7 +149,7 @@
         <!-- Right finger joint -->
         <joint name="right_finger_joint" type="revolute" >
             <origin xyz="0.0421 -0.021 0" rpy="0 0 0" />
-            <parent link="L7_wrist_yaw_link" />
+            <parent link="L7_wrist_roll_link" />
             <child link="L9_right_finger_link"/>
             
             <axis xyz="0 0 1"/>
@@ -210,7 +210,7 @@
             </collision>
         </link>
         
-        <link name="L2_shoulder_yaw_link">
+        <link name="L2_shoulder_pan_link">
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
@@ -222,7 +222,7 @@
             <visual>
                 <origin xyz="0 0.055 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_yaw_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_pan_link.stl"/>
                 </geometry>
                 <material name="Blue" />
             </visual>
@@ -230,12 +230,12 @@
             <collision>
                 <origin xyz="0 0.0545 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_yaw_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_pan_link.stl"/>
                 </geometry>
             </collision>
         </link>
         
-        <link name="L3_shoulder_roll_link">
+        <link name="L3_upperarm_roll_link">
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
@@ -247,7 +247,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L3_shoulder_roll_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L3_upperarm_roll_link.stl"/>
                 </geometry>
                 <material name="Green" />
             </visual>
@@ -255,12 +255,12 @@
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L3_shoulder_roll_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L3_upperarm_roll_link.stl"/>
                 </geometry>
             </collision>
         </link>
         
-        <link name="L4_elbow_pitch_link">
+        <link name="L4_elbow_flex_link">
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
@@ -272,7 +272,7 @@
             <visual>
                 <origin xyz="0.035 0.044 0.026" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L4_elbow_pitch_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L4_elbow_flex_link.stl"/>
                 </geometry>
                 <material name="Grey" />
             </visual>
@@ -280,12 +280,12 @@
             <collision>
                 <origin xyz="0.035 0.044 0.026" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L4_elbow_pitch_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L4_elbow_flex_link.stl"/>
                 </geometry>
             </collision>
         </link>
         
-        <link name="L5_wrist_roll_link">
+        <link name="L5_forearm_roll_link">
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
@@ -297,7 +297,7 @@
             <visual>
                 <origin xyz="0.025 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L5_wrist_roll_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L5_forearm_roll_link.stl"/>
                 </geometry>
                 <material name="Blue" />
             </visual>
@@ -305,7 +305,7 @@
             <collision>
                 <origin xyz="0.025 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L5_wrist_roll_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L5_forearm_roll_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -335,7 +335,7 @@
             </collision>
         </link>
         
-        <link name="L7_wrist_yaw_link">
+        <link name="L7_wrist_roll_link">
             <inertial>
                 <mass value="0.030" />
                 <origin xyz="0 0 0" rpy="0 0 0" />
@@ -347,7 +347,7 @@
             <visual>
                 <origin xyz="0.0541 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L7_wrist_yaw_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L7_wrist_roll_link.stl"/>
                 </geometry>
                 <material name="Grey" />
             </visual>
@@ -355,7 +355,7 @@
             <collision>
                 <origin xyz="-0.0541 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L7_wrist_yaw_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L7_wrist_roll_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -418,27 +418,27 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_yaw_trans">
-            <actuator name="shoulder_yaw_motor" />
-            <joint name="shoulder_yaw_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_pan_trans">
+            <actuator name="shoulder_pan_motor" />
+            <joint name="shoulder_pan_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_roll_trans">
-            <actuator name="shoulder_roll_motor" />
-            <joint name="shoulder_roll_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="upperarm_roll_trans">
+            <actuator name="upperarm_roll_motor" />
+            <joint name="upperarm_roll_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="elbow_pitch_trans">
-            <actuator name="elbow_pitch_motor" />
-            <joint name="elbow_pitch_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="elbow_flex_trans">
+            <actuator name="elbow_flex_motor" />
+            <joint name="elbow_flex_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wrist_roll_trans">
-            <actuator name="wrist_roll_motor" />
-            <joint name="wrist_roll_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="forearm_roll_trans">
+            <actuator name="forearm_roll_motor" />
+            <joint name="forearm_roll_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
@@ -448,9 +448,9 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wrist_yaw_trans">
-            <actuator name="wrist_yaw_motor" />
-            <joint name="wrist_yaw_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wrist_roll_trans">
+            <actuator name="wrist_roll_motor" />
+            <joint name="wrist_roll_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
@@ -478,22 +478,22 @@
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
-        <gazebo reference="L2_shoulder_yaw_link">
+        <gazebo reference="L2_shoulder_pan_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
-        <gazebo reference="L3_shoulder_roll_link">
+        <gazebo reference="L3_upperarm_roll_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
-        <gazebo reference="L4_elbow_pitch_link">
+        <gazebo reference="L4_elbow_flex_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
-        <gazebo reference="L5_wrist_roll_link">
+        <gazebo reference="L5_forearm_roll_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
@@ -503,7 +503,7 @@
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
-        <gazebo reference="L7_wrist_yaw_link">
+        <gazebo reference="L7_wrist_roll_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
@@ -524,25 +524,25 @@
             <fudgeFactor value="0.5" />
         </gazebo>
         
-        <gazebo reference="shoulder_yaw_joint">
+        <gazebo reference="shoulder_pan_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="0.5" />
         </gazebo>
         
-        <gazebo reference="shoulder_roll_joint">
+        <gazebo reference="upperarm_roll_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="0.5" />
         </gazebo>
         
-        <gazebo reference="elbow_pitch_joint">
+        <gazebo reference="elbow_flex_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="0.5" />
         </gazebo>
         
-        <gazebo reference="wrist_roll_joint">
+        <gazebo reference="forearm_roll_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="0.5" />
@@ -554,7 +554,7 @@
             <fudgeFactor value="0.5" />
         </gazebo>
         
-        <gazebo reference="wrist_yaw_joint">
+        <gazebo reference="wrist_roll_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="0.5" />

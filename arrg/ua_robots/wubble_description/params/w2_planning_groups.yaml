@@ -17,40 +17,40 @@ groups:
   - name: left_arm
     joints:
       shoulder_pitch_joint
-      shoulder_yaw_joint
-      shoulder_roll_joint
-      elbow_pitch_joint
-      wrist_roll_joint
+      shoulder_pan_joint
+      upperarm_roll_joint
+      elbow_flex_joint
+      forearm_roll_joint
       wrist_pitch_joint
-      wrist_yaw_joint
+      wrist_roll_joint
     links:
       L1_shoulder_pitch_link
-      L2_shoulder_yaw_link
-      L3_shoulder_roll_link
-      L4_elbow_pitch_link
-      L5_wrist_roll_link
+      L2_shoulder_pan_link
+      L3_upperarm_roll_link
+      L4_elbow_flex_link
+      L5_forearm_roll_link
       L6_wrist_pitch_link
-      L7_wrist_yaw_link
+      L7_wrist_roll_link
       L8_left_finger_link
       L9_right_finger_link
 
   - name: arms
     joints:
       shoulder_pitch_joint
-      shoulder_yaw_joint
-      shoulder_roll_joint
-      elbow_pitch_joint
-      wrist_roll_joint
+      shoulder_pan_joint
+      upperarm_roll_joint
+      elbow_flex_joint
+      forearm_roll_joint
       wrist_pitch_joint
-      wrist_yaw_joint
+      wrist_roll_joint
     links:
       L1_shoulder_pitch_link
-      L2_shoulder_yaw_link
-      L3_shoulder_roll_link
-      L4_elbow_pitch_link
-      L5_wrist_roll_link
+      L2_shoulder_pan_link
+      L3_upperarm_roll_link
+      L4_elbow_flex_link
+      L5_forearm_roll_link
       L6_wrist_pitch_link
-      L7_wrist_yaw_link
+      L7_wrist_roll_link
     planner_configs:
       RRTkConfig2 SBLkConfig2 
 

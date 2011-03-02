@@ -63,7 +63,7 @@ planner_configs:
   
   KPIECEkConfig2l:
     type: kinematic::KPIECE
-    projection: link L7_wrist_yaw_link
+    projection: link L7_wrist_roll_link
     celldim: 0.1 0.1 0.1
 
   LBKPIECEkConfig1:
@@ -73,7 +73,7 @@ planner_configs:
 
   LBKPIECEkConfig2l:
     type: kinematic::LBKPIECE
-    projection: link L7_wrist_yaw_link
+    projection: link L7_wrist_roll_link
     celldim: 0.1 0.1 0.1
 
 ## the definition of the planners that go in each group
