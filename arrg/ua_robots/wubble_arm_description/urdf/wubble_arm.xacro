@@ -57,38 +57,38 @@
             <child link="L1_shoulder_pitch_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-2.13" upper="1.40" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.13}" soft_upper_limit="${1.40}" />
+            <limit  lower="-2.595" upper="1.025" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.595}" soft_upper_limit="${1.025}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
         <!-- Shoulder yaw joint -->
         <joint name="shoulder_yaw_joint" type="revolute" >
-            <origin xyz="0.029 0.063 0" rpy="0 0 0" />
+            <origin xyz="0.069 0.029 -0.029" rpy="0 0 0" />
             <parent link="L1_shoulder_pitch_link" />
             <child link="L2_shoulder_yaw_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-1.84" upper="1.58" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.84}" soft_upper_limit="${1.58}" />
+            <limit  lower="-3.24" upper="1.03" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-3.24}" soft_upper_limit="${1.03}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
         <!-- Shoulder roll joint -->
         <joint name="shoulder_roll_joint" type="revolute" >
-            <origin xyz="0 0.106 0" rpy="0 0 0" />
+            <origin xyz="0 0.1074 0" rpy="0 0 0" />
             <parent link="L2_shoulder_yaw_link" />
             <child link="L3_shoulder_roll_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-2.19" upper="2.19" effort="300" velocity="1.17" />
+            <limit  lower="-0.61" upper="3.77" effort="300" velocity="1.17" />
             <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.19}" soft_upper_limit="${2.19}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
         <!-- Elbow pitch joint -->
         <joint name="elbow_pitch_joint" type="revolute" >
-            <origin xyz="0.029 0.184 0" rpy="0 0 0" />
+            <origin xyz="0.029 0.132 0" rpy="0 0 0" />
             <parent link="L3_shoulder_roll_link" />
             <child link="L4_elbow_pitch_link"/>
             
@@ -100,7 +100,7 @@
         
         <!-- Wrist roll joint -->
         <joint name="wrist_roll_joint" type="revolute" >
-            <origin xyz="0.033 0.029 0" rpy="0 0 0" />
+            <origin xyz="0.034 0.029 0" rpy="0 0 0" />
             <parent link="L4_elbow_pitch_link" />
             <child link="L5_wrist_roll_link"/>
             
@@ -112,31 +112,31 @@
         
         <!-- Wrist pitch joint -->
         <joint name="wrist_pitch_joint" type="revolute" >
-            <origin xyz="0.228 0 0" rpy="0 0 0" />
+            <origin xyz="0.119 0 0" rpy="0 0 0" />
             <parent link="L5_wrist_roll_link" />
             <child link="L6_wrist_pitch_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-0.61" upper="2.27" effort="300" velocity="1.17" />
+            <limit  lower="-2.115" upper="2.61" effort="300" velocity="1.17" />
             <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.61}" soft_upper_limit="${2.27}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
         <!-- Wrist yaw joint -->
         <joint name="wrist_yaw_joint" type="revolute" >
-            <origin xyz="0 0 -0.002" rpy="0 0 0" />
+            <origin xyz="0.0925 0 0" rpy="0 0 0" />
             <parent link="L6_wrist_pitch_link" />
             <child link="L7_wrist_yaw_link"/>
             
-            <axis xyz="0 0 1"/>
-            <limit  lower="-1.66" upper="1.62" effort="300" velocity="1.17" />
+            <axis xyz="1 0 0"/>
+            <limit  lower="-2.61" upper="2.61" effort="300" velocity="1.17" />
             <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.66}" soft_upper_limit="${1.62}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
         <!-- Left finger joint -->
         <joint name="left_finger_joint" type="revolute" >
-            <origin xyz="${0.091-0.012} 0.021 0" rpy="0 0 0" />
+            <origin xyz="0.0421 0.021 0" rpy="0 0 0" />
             <parent link="L7_wrist_yaw_link" />
             <child link="L8_left_finger_link"/>
             
@@ -148,7 +148,7 @@
         
         <!-- Right finger joint -->
         <joint name="right_finger_joint" type="revolute" >
-            <origin xyz="${0.091-0.012} -0.021 0" rpy="0 0 0" />
+            <origin xyz="0.0421 -0.021 0" rpy="0 0 0" />
             <parent link="L7_wrist_yaw_link" />
             <child link="L9_right_finger_link"/>
             
@@ -172,15 +172,15 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L0_base_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L0_base_link.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Green" />
             </visual>
             
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L0_base_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L0_base_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -197,15 +197,15 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L1_shoulder_pitch_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L1_shoulder_pitch_link.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Grey" />
             </visual>
             
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L1_shoulder_pitch_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L1_shoulder_pitch_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -222,15 +222,15 @@
             <visual>
                 <origin xyz="0 0.055 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L2_shoulder_yaw_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_yaw_link.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Blue" />
             </visual>
             
             <collision>
                 <origin xyz="0 0.0545 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L2_shoulder_yaw_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_yaw_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -247,15 +247,15 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L3_shoulder_roll_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L3_shoulder_roll_link.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Green" />
             </visual>
             
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L3_shoulder_roll_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L3_shoulder_roll_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -272,15 +272,15 @@
             <visual>
                 <origin xyz="0.035 0.044 0.026" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L4_elbow_pitch_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L4_elbow_pitch_link.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Grey" />
             </visual>
             
             <collision>
                 <origin xyz="0.035 0.044 0.026" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L4_elbow_pitch_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L4_elbow_pitch_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -297,15 +297,15 @@
             <visual>
                 <origin xyz="0.025 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L5_wrist_roll_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L5_wrist_roll_link.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Blue" />
             </visual>
             
             <collision>
                 <origin xyz="0.025 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L5_wrist_roll_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L5_wrist_roll_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -322,15 +322,15 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L6_wrist_pitch_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L6_wrist_pitch_link.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Green" />
             </visual>
             
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L6_wrist_pitch_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L6_wrist_pitch_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -345,17 +345,17 @@
             </inertial>
             
             <visual>
-                <origin xyz="0.091 0 0" rpy="0 0 0" />
+                <origin xyz="0.0541 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L7_wrist_yaw_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L7_wrist_yaw_link.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Grey" />
             </visual>
             
             <collision>
-                <origin xyz="0.091 0 0" rpy="0 0 0" />
+                <origin xyz="-0.0541 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L7_wrist_yaw_link.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L7_wrist_yaw_link.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -372,15 +372,15 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L8_gripper_left_finger.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L8_gripper_left_finger.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Blue" />
             </visual>
             
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L8_gripper_left_finger.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L8_gripper_left_finger.stl"/>
                 </geometry>
             </collision>
         </link>
@@ -397,15 +397,15 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L9_gripper_right_finger.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L9_gripper_right_finger.stl"/>
                 </geometry>
-                <material name="GunMetalBrushedAluminum" />
+                <material name="Green" />
             </visual>
             
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/collada/L9_gripper_right_finger.dae"/>
+                    <mesh filename="package://wubble_arm_description/meshes/L9_gripper_right_finger.stl"/>
                 </geometry>
             </collision>
         </link>
