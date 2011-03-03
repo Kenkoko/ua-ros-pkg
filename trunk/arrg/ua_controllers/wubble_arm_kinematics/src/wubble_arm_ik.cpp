@@ -142,7 +142,7 @@ void WubbleArmIK::computeIKUpperArmRoll(const KDL::Frame& g_in, const double& up
   solution_ik_.clear();
 
   double t1 = angles::normalize_angle(upperarm_roll_initial_guess);
-  if (!checkJointLimits(t1, 0)) { return; }
+  if (!checkJointLimits(t1, 2)) { return; }
 
   IKReal translation[3];
   translation[0] = g_in.p.x();
