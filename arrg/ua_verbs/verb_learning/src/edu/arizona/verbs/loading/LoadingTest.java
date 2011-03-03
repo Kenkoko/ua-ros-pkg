@@ -16,8 +16,8 @@ public class LoadingTest {
 	 * @throws FileNotFoundException 
 	 */
 	public static void main(String[] args) throws FileNotFoundException {
-//		FileInputStream fis = new FileInputStream("scanBoat.yaml");
-		FileInputStream fis = new FileInputStream("example.yaml");
+		FileInputStream fis = new FileInputStream("scanBoat.yaml");
+//		FileInputStream fis = new FileInputStream("example.yaml");
 		
 		Constructor constructor = new Constructor(VerbData.class);
 		Yaml yaml = new Yaml(constructor);
@@ -30,15 +30,15 @@ public class LoadingTest {
 		AtomicVerb verb = new AtomicVerb(vd.getVerb(), vd.getArguments());
 		
 		for (Trace t : vd.getTraces()) {
-			for (SimpleRelationalState s : t.getStates()) {
-				System.out.println("STATE:");
-				for (Relation r : s.getRelations()) {
-					System.out.println("\t" + r + "=" + r.getValue());
+//			for (SimpleRelationalState s : t.getStates()) {
+//				System.out.println("STATE:");
+//				for (Relation r : s.getRelations()) {
+//					System.out.println("\t" + r + "=" + r.getValue());
 //					System.out.println(r.getRelation());
 //					System.out.println(r.getArguments());
 //					System.out.println(r.getValue());
-				}
-			}
+//				}
+//			}
 			
 			if (t.getLabel().equals("positive")) {
 				verb.addPositiveInstance(t.convert());
@@ -46,6 +46,10 @@ public class LoadingTest {
 				verb.addNegativeInstance(t.convert());
 			}
 		}
+		
+		// Why is there a problem with minimize for this data?
+//		verb.getPositiveFSM().minimize();
+//		verb.getPositiveFSM().toDot("min.dot", false);
 	}
 
 }

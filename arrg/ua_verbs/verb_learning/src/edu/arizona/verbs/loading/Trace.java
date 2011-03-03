@@ -1,5 +1,6 @@
 package edu.arizona.verbs.loading;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,10 @@ public class Trace {
 	}
 	
 	public void setBindings(Map<String, String> bindings) {
-		this.bindings = bindings;
+		this.bindings = new HashMap<String, String>();
+		for (Map.Entry<String, String> e : bindings.entrySet()) {
+			this.bindings.put(e.getValue(), e.getKey());
+		}
 	}
 	
 	public String getLabel() {
@@ -41,7 +45,7 @@ public class Trace {
 		return Lists.transform(states, new Function<SimpleRelationalState, OOMDPState>() {
 			@Override
 			public OOMDPState apply(SimpleRelationalState s) {
-				return s.convert();
+				return s.convert(bindings);
 			}});
 	}
 }
