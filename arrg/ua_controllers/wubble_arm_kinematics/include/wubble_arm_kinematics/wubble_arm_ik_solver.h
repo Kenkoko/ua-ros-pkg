@@ -161,7 +161,6 @@ namespace wubble_arm_kinematics
 
     bool getCount(int &count, const int &max_count, const int &min_count);
     double search_discretization_angle_;
-    int free_angle_;
     std::string root_frame_name_;
   };
 }
