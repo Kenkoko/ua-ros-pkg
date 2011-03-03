@@ -49,7 +49,7 @@ public class VerbFSM implements Remappable<VerbFSM> {
 	
 	public VerbFSM(Set<CorePath> corePaths) {
 		dfa_ = StateMachines.createFSM(corePaths);
-		// This distances are potentially invalid because we don't know how the FSM was made
+		// The distances are potentially invalid because we don't know how the FSM was made
 		for (FSMNode n : dfa_.getVertices()) { 
 			n.clearMinDist();
 		}
@@ -138,11 +138,19 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		return new VerbFSM(newDFA);
 	}
 
+	public void minimize() {
+		StateMachines.minimizeSlow(dfa_);
+		init();
+	}
+	
 	public void toDot(String file, boolean edgeProb) {
 		try {
 			BufferedWriter out = new BufferedWriter(new FileWriter(file));
 			out.write("digraph G { \n");
 			out.write("\tgraph [ rankdir=LR ]; \n");
+			
+			out.write("null [shape = plaintext label=\"\"]");
+			out.write("null -> \"" + Iterables.getOnlyElement(getStartState(0).getStates()).getID() + "\"");
 
 			for (FSMNode vertex : dfa_.getVertices()) {
 				out.write(vertex.toDot());

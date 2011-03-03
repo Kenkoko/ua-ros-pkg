@@ -101,11 +101,25 @@ public class FSMNode implements Comparable<FSMNode> {
 	}
 	
 	public String toDot() {
-		return "\t\"" + this.id_ + "\" [label=\"" + (this.toString() + minDist_ + "_" + verbSequenceIndex_)
-				+ "\",style=\"filled\",color=\"" + getColor()
-				+ "\",fontcolor=\"" + "black" + "\"];\n";
+		return "\t\"" + this.id_ + "\" [label=\"" + (this.toString() + minDist_ + "_" + verbSequenceIndex_) + "\""
+				+ getDotString() + "];\n";
 	}
 
+	private String getDotString() {
+		switch (type_) {
+		case START:
+			return ",shape=\"circle\",fontcolor=\"" + "black" + "\"";
+		case INTERIOR:
+			return ",shape=\"circle\",fontcolor=\"" + "black" + "\"";
+		case TERMINAL:
+			return ",shape=\"doublecircle\",fontcolor=\"" + "black" + "\"";
+		default:
+			return "magenta"; // Because magenta is never the right color
+		}
+		
+		
+	}
+	
 	@Override
 	public int compareTo(FSMNode other) {
 		return toString().compareTo(other.toString());
