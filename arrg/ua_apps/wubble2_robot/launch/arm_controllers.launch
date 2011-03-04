@@ -22,27 +22,27 @@
     <node name="wubble_upper_arm_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
           args="--port /dev/wubble2UpperArm
                 shoulder_pitch_controller
-                shoulder_yaw_controller
-                shoulder_roll_controller
-                elbow_pitch_controller"
+                shoulder_pan_controller
+                upperarm_roll_controller
+                elbow_flex_controller"
           output="screen"/>
     <node name="wubble_lower_arm_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
           args="--port /dev/wubble2LowerArm
-                wrist_roll_controller
+                forearm_roll_controller
                 wrist_pitch_controller
-                wrist_yaw_controller"
+                wrist_roll_controller"
           output="screen"/>
 
     <rosparam file="$(find wubble2_robot)/config/wubble_gripper.yaml" command="load"/>
     <node name="wubble_gripper_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
           args="--port /dev/wubble2LowerArm
-                gripper_left_finger_controller
-                gripper_right_finger_controller"
+                left_finger_controller
+                right_finger_controller"
           output="screen"/>
 
     <node name="gripper_freespin_controller" pkg="wubble2_robot" type="gripper_freespin_controller.py" output="screen" />
 
     <!-- Load joint trajectory controller configuration from YAML file to parameter server -->
     <rosparam file="$(find wubble2_robot)/config/arm_trajectory_controller.yaml" command="load"/>
-    <node name="wubble_arm_trajectory_action" pkg="ax12_controller_core" type="joint_trajectory_action_controller_node.py" output="screen"/>
+<!--    <node name="wubble_arm_trajectory_action" pkg="ax12_controller_core" type="joint_trajectory_action_controller_node.py" output="screen"/>-->
 </launch>
