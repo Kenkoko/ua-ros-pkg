@@ -94,12 +94,12 @@ class ObjectSoundCollector:
 
         # First, the joint names, which apply to all waypoints
         goal.trajectory.joint_names.append('shoulder_pitch_joint')
-        goal.trajectory.joint_names.append('shoulder_yaw_joint')
-        goal.trajectory.joint_names.append('shoulder_roll_joint')
-        goal.trajectory.joint_names.append('elbow_pitch_joint')
-        goal.trajectory.joint_names.append('wrist_roll_joint')
+        goal.trajectory.joint_names.append('shoulder_pan_joint')
+        goal.trajectory.joint_names.append('upperarm_roll_joint')
+        goal.trajectory.joint_names.append('elbow_flex_joint')
+        goal.trajectory.joint_names.append('forearm_roll_joint')
         goal.trajectory.joint_names.append('wrist_pitch_joint')
-        goal.trajectory.joint_names.append('wrist_yaw_joint')
+        goal.trajectory.joint_names.append('wrist_roll_joint')
 
         point = JointTrajectoryPoint()
         point.positions  = [-1.10, -1.58, 0.53, -0.76, -1.13, -0.31, -0.18]
