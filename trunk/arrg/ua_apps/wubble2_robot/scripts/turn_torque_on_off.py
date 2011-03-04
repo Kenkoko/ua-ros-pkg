@@ -57,17 +57,17 @@ if __name__ == '__main__':
     rospy.init_node('torque_on_off')
     
     joint_controllers = ['shoulder_pitch_controller',
-                         'shoulder_yaw_controller',
-                         'shoulder_roll_controller',
-                         'elbow_pitch_controller',
-                         'wrist_roll_controller',
+                         'shoulder_pan_controller',
+                         'upperarm_roll_controller',
+                         'elbow_flex_controller',
+                         'forearm_roll_controller',
                          'wrist_pitch_controller',
-                         'wrist_yaw_controller',
-                         'gripper_left_finger_controller',
-                         'gripper_right_finger_controller']
+                         'wrist_roll_controller',
+                         'left_finger_controller',
+                         'right_finger_controller']
                          
     joint_torque_srvs = [rospy.ServiceProxy(controller + '/torque_enable', TorqueEnable) for controller in joint_controllers]
     
     for srv in joint_torque_srvs:
-        srv(True)
+        srv(False)
 
