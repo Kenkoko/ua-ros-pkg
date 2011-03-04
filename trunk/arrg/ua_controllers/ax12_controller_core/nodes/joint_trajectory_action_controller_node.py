@@ -287,6 +287,9 @@ class JointTrajectoryActionController():
                 q[j] = trajectory[seg].positions[j]
                 qd[j] = max(self.min_velocity, abs(q[j] - start_position) / durations[seg])
                 
+                self.msg.desired.positions[j] = q[j]
+                self.msg.desired.velocities[j] = qd[j]
+                
                 self.set_joint_velocity(joint, qd[j])
                 self.set_joint_angle(joint, q[j])
                 
@@ -297,22 +300,14 @@ class JointTrajectoryActionController():
                     
                     for j in range(self.num_joints):
                         cur_pos = self.joint_states[self.joint_names[j]].current_pos
-                        self.set_joint_angle(self.joint_names[j], q[j])
+                        self.set_joint_angle(self.joint_names[j], cur_pos)
                         
                     self.action_server.set_preempted(text=msg)
                     rospy.logwarn(msg)
                     return
                     
-                time = rospy.Time.now()
-                
-                for j, joint in enumerate(self.joint_names):
-                    cur_pos = self.joint_states[joint].current_pos
-                    cur_vel = self.joint_states[joint].velocity
-                    
-                    self.msg.desired.positions[j] = q[j]
-                    self.msg.desired.velocities[j] = qd[j]
-                    
                 rate.sleep()
+                time = rospy.Time.now()
                 
             # Verifies trajectory constraints
             for j, joint in enumerate(self.joint_names):
@@ -330,23 +325,20 @@ class JointTrajectoryActionController():
         # let motors roll for specified amount of time
         rospy.sleep(self.goal_time_constraint)
         
-        # Checks that we have ended inside the goal constraints
-        inside_goal_constraints = True
-        
-        i = 0
-        while i < self.num_joints and inside_goal_constraints:
-            if self.goal_constraints[i] > 0 and self.msg.error.positions[j] > self.goal_constraints[i]:
-                inside_goal_constraints = False
-            i += 1
+        for i, j in enumerate(self.joint_names):
+            rospy.logdebug('desired pos was %f, actual pos is %f, error is %f' % (trajectory[-1].positions[i], self.joint_states[j].current_pos, self.joint_states[j].current_pos - trajectory[-1].positions[i]))
             
-        if inside_goal_constraints:
+        # Checks that we have ended inside the goal constraints
+        for (joint, pos_error, pos_constraint) in zip(self.joint_names, self.msg.error.positions, self.goal_constraints):
+            if pos_constraint > 0 and abs(pos_error) > pos_constraint:
+                msg = 'Aborting because %s joint wound up outside the goal constraints, %f is larger than %f' % \
+                      (joint, pos_error, pos_constraint)
+                rospy.logwarn(msg)
+                self.action_server.set_aborted(text=msg)
+                break
+        else:
             rospy.loginfo('Trajectory execution successfully completed')
             self.action_server.set_succeeded()
-        else:
-            msg = 'Aborting because we wound up outside the goal constraints, %f is larger than %f' % \
-                  (self.msg.error.positions[j], self.goal_constraints[i])
-            rospy.logwarn(msg)
-            self.action_server.set_aborted(text=msg)
 
 
 
