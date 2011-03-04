@@ -51,8 +51,8 @@ class GripperActionController():
     def __init__(self):
         rospy.init_node('gripper_action_controller', anonymous=True)
         
-        self.left_finger_controller = 'gripper_left_finger_controller'
-        self.right_finger_controller = 'gripper_right_finger_controller'
+        self.left_finger_controller = 'left_finger_controller'
+        self.right_finger_controller = 'right_finger_controller'
         
         self.left_finger_joint = rospy.get_param(self.left_finger_controller + '/joint_name')
         self.right_finger_joint = rospy.get_param(self.right_finger_controller + '/joint_name')
