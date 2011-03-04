@@ -7,59 +7,59 @@ shoulder_pitch_controller:
     joint_speed: 1.17
     motor:
         id: 1
-        init: 2048
-        min: 50
-        max: 3360
+        init: 2360
+        min: 0
+        max: 3340
 
-shoulder_yaw_controller:
+shoulder_pan_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
         type: JointPositionControllerAX12
-    joint_name: shoulder_yaw_joint
+    joint_name: shoulder_pan_joint
     joint_speed: 1.17
     motor:
         id: 2
-        init: 1720
+        init: 3134
         min: 0
-        max: 3200
+        max: 3980
 
-shoulder_roll_controller:
+upperarm_roll_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
         type: JointPositionControllerAX12
-    joint_name: shoulder_roll_joint
+    joint_name: upperarm_roll_joint
     joint_speed: 1.17
     motor:
         id: 3
-        init: 2048
+        init: 588
         min: 0
         max: 4095
 
-elbow_pitch_controller:
+elbow_flex_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
         type: JointPositionControllerAX12
-    joint_name: elbow_pitch_joint
+    joint_name: elbow_flex_joint
     joint_speed: 1.17
     motor:
         id: 4
-        init: 2400
-        min: 960
+        init: 2368
+        min: 823
         max: 4095
 
-wrist_roll_controller:
+forearm_roll_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
         type: JointPositionControllerAX12
-    joint_name: wrist_roll_joint
+    joint_name: forearm_roll_joint
     joint_speed: 1.17
     motor:
         id: 5
-        init: 512
+        init: 493
         min: 0
         max: 1023
 
@@ -70,24 +70,22 @@ wrist_pitch_controller:
         type: JointPositionControllerAX12
     joint_name: wrist_pitch_joint
     joint_speed: 1.17
-    joint_compliance_slope: 64
     motor:
         id: 6
-        init: 200
-        min: 80
-        max: 645
+        init: 512
+        min: 90
+        max: 1023
 
-wrist_yaw_controller:
+wrist_roll_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
         type: JointPositionControllerAX12
-    joint_name: wrist_yaw_joint
+    joint_name: wrist_roll_joint
     joint_speed: 1.17
-    joint_compliance_slope: 64
     motor:
         id: 7
         init: 508
-        min: 185
-        max: 830
+        min: 0
+        max: 1023
 

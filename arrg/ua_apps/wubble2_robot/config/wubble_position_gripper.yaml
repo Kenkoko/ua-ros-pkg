@@ -1,4 +1,4 @@
-gripper_left_finger_controller:
+left_finger_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
@@ -13,7 +13,7 @@ gripper_left_finger_controller:
         min: 450
         max: 680
 
-gripper_right_finger_controller:
+right_finger_controller:
     controller:
         package: ax12_controller_core
         module: joint_position_controller
