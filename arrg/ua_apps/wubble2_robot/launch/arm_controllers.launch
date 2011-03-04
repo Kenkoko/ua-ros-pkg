@@ -44,5 +44,5 @@
 
     <!-- Load joint trajectory controller configuration from YAML file to parameter server -->
     <rosparam file="$(find wubble2_robot)/config/arm_trajectory_controller.yaml" command="load"/>
-<!--    <node name="wubble_arm_trajectory_action" pkg="ax12_controller_core" type="joint_trajectory_action_controller_node.py" output="screen"/>-->
+    <node name="wubble_arm_trajectory_action" pkg="ax12_controller_core" type="joint_trajectory_action_controller_node.py" output="screen"/>
 </launch>
