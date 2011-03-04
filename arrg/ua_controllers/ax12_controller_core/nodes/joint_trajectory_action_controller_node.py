@@ -38,28 +38,19 @@
 
 from __future__ import division
 
-from math import fabs
-from math import fmod
-from math import pi
-
-from threading import Thread
-
 import roslib
 roslib.load_manifest('ax12_controller_core')
 
 import rospy
 import actionlib
 
-from ax12_driver_core.ax12_const import *
-from ax12_driver_core.ax12_user_commands import *
-from ax12_controller_core.joint_controller import JointControllerAX12
+from ax12_driver_core.ax12_const import DMXL_MIN_SPEED_RAD
 
 from std_msgs.msg import Float64
 from trajectory_msgs.msg import JointTrajectory
 from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 from pr2_controllers_msgs.msg import JointTrajectoryAction
 from ua_controller_msgs.msg import JointState
-from ax12_driver_core.msg import MotorStateList
 
 from pr2_controllers_msgs.srv import QueryTrajectoryState
 from ax12_controller_core.srv import SetSpeed
@@ -72,12 +63,11 @@ class Segment():
         self.velocities = [0.0] * num_joints
 
 class JointTrajectoryActionController():
-    def __init__(self, param_path):
-        self.running = False
-        self.controller_namespace = param_path
+    def __init__(self):
         self.update_rate = 1000
-
-    def initialize(self):
+        self.trajectory = []
+        
+        self.controller_namespace = rospy.get_param('~controller_namespace', 'l_arm_controller')
         self.joint_controllers = rospy.get_param(self.controller_namespace + '/joint_controllers', [])
         self.joint_names = []
         
@@ -129,16 +119,6 @@ class JointTrajectoryActionController():
         self.last_commanded = {}
         for joint in self.joint_names:
             self.last_commanded[joint] = { 'position': None, 'velocity': None }
-            
-        return True
-
-    def start(self):
-        self.running = True
-        self.last_time = rospy.Time.now()
-        self.trajectory = []
-
-    def stop(self):
-        self.running = False
 
     def process_command(self, msg):
         if self.action_server.is_active(): self.action_server.set_preempted()
@@ -347,20 +327,19 @@ class JointTrajectoryActionController():
     ################################################################################
 
     def process_joint_states(self, msg):
-        if self.running:
-            self.msg.header.stamp = rospy.Time.now()
+        self.msg.header.stamp = rospy.Time.now()
+        
+        self.joint_states[msg.name] = msg
+        
+        # Publish current joint state
+        for i, joint in enumerate(self.joint_names):
+            state = self.joint_states[joint]
+            self.msg.actual.positions[i] = state.current_pos
+            self.msg.actual.velocities[i] = abs(state.velocity)
+            self.msg.error.positions[i] = self.msg.actual.positions[i] - self.msg.desired.positions[i]
+            self.msg.error.velocities[i] = self.msg.actual.velocities[i] - self.msg.desired.velocities[i]
             
-            self.joint_states[msg.name] = msg
-            
-            # Publish current joint state
-            for i, joint in enumerate(self.joint_names):
-                state = self.joint_states[joint]
-                self.msg.actual.positions[i] = state.current_pos
-                self.msg.actual.velocities[i] = abs(state.velocity)
-                self.msg.error.positions[i] = self.msg.actual.positions[i] - self.msg.desired.positions[i]
-                self.msg.error.velocities[i] = self.msg.actual.velocities[i] - self.msg.desired.velocities[i]
-                
-            self.state_pub.publish(self.msg)
+        self.state_pub.publish(self.msg)
 
     def command_will_update(self, command, joint, value):
         current_state = None
@@ -397,12 +376,8 @@ class JointTrajectoryActionController():
 
 if __name__ == '__main__':
     try:
-        rospy.init_node('joint_trajectory_action_controller_simple', anonymous=True)
-        
-        c = JointTrajectoryActionController('l_arm_controller')
-        c.initialize()
-        c.start()
+        rospy.init_node('joint_trajectory_action_controller', anonymous=True)
+        traj_controller = JointTrajectoryActionController()
         rospy.spin()
-        c.stop()
     except rospy.ROSInterruptException: pass
 
