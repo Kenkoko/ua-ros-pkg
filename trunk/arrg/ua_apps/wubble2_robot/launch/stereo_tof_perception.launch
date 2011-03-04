@@ -2,6 +2,9 @@
     <include file="$(find videre_stereo_cam)/launch/videre_image_proc.launch" />
     <include file="$(find wubble2_robot)/launch/swissranger.launch" />
     
+    <node pkg="topic_tools" type="throttle" name="swissranger_raw_throttle" args="messages /swissranger/pointcloud_raw 10 swiss_raw_slow" output="screen"/>
+    <node pkg="topic_tools" type="throttle" name="swissranger_filt_throttle" args="messages /swissranger/self_filtered 10 swiss_filt_slow" output="screen"/>
+    
     <node pkg="point_cloud_filters" type="cloud_to_cloud_filter_chain" output="screen" name="swissranger_intensity_filter" >
           <remap from="cloud_in" to="swissranger/pointcloud_raw" />
           <remap from="cloud_out" to="swissranger/intensity_filtered" />
