@@ -82,12 +82,12 @@ class GripperActionController():
     def __init__(self):
         rospy.init_node('arm_push_action_controller', anonymous=True)
         self.arm_joints = ( 'shoulder_pitch_joint',
-                            'shoulder_yaw_joint',
-                            'shoulder_roll_joint',
-                            'elbow_pitch_joint',
-                            'wrist_roll_joint',
+                            'shoulder_pan_joint',
+                            'upperarm_roll_joint',
+                            'elbow_flex_joint',
+                            'forearm_roll_joint',
                             'wrist_pitch_joint',
-                            'wrist_yaw_joint' )
+                            'wrist_roll_joint' )
                             
         self.arm_ready_pos = (0.40, -0.98, -0.11, 0.61, 0.21, -0.47, 0.18)
         
@@ -197,7 +197,7 @@ class GripperActionController():
         req.motion_plan_request.start_state.joint_state.name = joint_names
         req.motion_plan_request.start_state.joint_state.position = start_angles
         req.motion_plan_request.start_state.multi_dof_joint_state.pose = start_pose.pose
-        req.motion_plan_request.start_state.multi_dof_joint_state.child_frame_id = 'L7_wrist_yaw_link'
+        req.motion_plan_request.start_state.multi_dof_joint_state.child_frame_id = 'L7_wrist_roll_link'
         req.motion_plan_request.start_state.multi_dof_joint_state.frame_id = start_pose.header.frame_id
         
         pos_constraint = PositionConstraint()
