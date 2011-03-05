@@ -1,0 +1,18 @@
+<Robot name="wubble2" file="wubble_arm_robot.zae">
+   <Manipulator name="fingertips">
+       <base>L0_base_link</base>
+       <effector>L7_wrist_roll_link</effector>
+       <joints>left_finger_joint right_finger_joint</joints>
+       <closingdirection>-1 1</closingdirection>
+       <direction>1 0 0</direction>
+       <translation>0.14 0 0</translation>
+   </Manipulator>
+   <Manipulator name="wrist_roll">
+       <base>L0_base_link</base>
+       <effector>L7_wrist_roll_link</effector>
+       <joints>left_finger_joint right_finger_joint</joints>
+       <closingdirection>-1 1</closingdirection>
+       <direction>1 0 0</direction>
+       <translation>0.054 0 0</translation>
+   </Manipulator>
+</Robot>
