@@ -21,8 +21,16 @@ default_collision_operations:
     object2: L3_upperarm_roll_link
     operation: disable
 
+  - object1: L3_upperarm_roll_link
+    object2: L4_elbow_flex_link
+    operation: disable
+
   - object1: L4_elbow_flex_link
     object2: L5_forearm_roll_link
+    operation: disable
+
+  - object1: L5_forearm_roll_link
+    object2: L6_wrist_pitch_link
     operation: disable
 
   - object1: L7_wrist_roll_link
@@ -35,14 +43,6 @@ default_collision_operations:
 
   - object1: L8_left_finger_link
     object2: L9_right_finger_link
-    operation: disable
-
-  - object1: L8_left_finger_link
-    object2: L5_forearm_roll_link
-    operation: disable
-
-  - object1: L9_right_finger_link
-    object2: L5_forearm_roll_link
     operation: disable
 
   - object1: L8_left_finger_link
