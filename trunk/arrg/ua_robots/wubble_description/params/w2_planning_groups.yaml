@@ -4,8 +4,16 @@
 groups:
 
   - name: robot_body
+    joints:
+      head_pan_joint
+      head_tilt_joint
+      neck_tilt_joint
     links:
       base_link
+      base_top_link
+      base_caster_support_link
+      caster_wheel_link
+      platform_link
       head_base_link
       head_pan_link
       head_tilt_link
@@ -13,6 +21,8 @@ groups:
       neck_tilt_link
       neck_scan_mount_link
       base_scan_mount_link
+      swissranger_mount_link
+      stoc_camera_link
 
   - name: left_arm
     joints:
@@ -24,6 +34,7 @@ groups:
       wrist_pitch_joint
       wrist_roll_joint
     links:
+      L0_base_link
       L1_shoulder_pitch_link
       L2_shoulder_pan_link
       L3_upperarm_roll_link
@@ -31,8 +42,6 @@ groups:
       L5_forearm_roll_link
       L6_wrist_pitch_link
       L7_wrist_roll_link
-      L8_left_finger_link
-      L9_right_finger_link
 
   - name: arms
     joints:
@@ -44,6 +53,7 @@ groups:
       wrist_pitch_joint
       wrist_roll_joint
     links:
+      L0_base_link
       L1_shoulder_pitch_link
       L2_shoulder_pan_link
       L3_upperarm_roll_link
