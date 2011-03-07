@@ -52,7 +52,8 @@ class InfoMaxAgent():
 			obs_pre = self.task.getObservation()
 
 			print "State pre"
-			print self.task.showBeliefs()		# use formatted print beliefs function
+			#print self.task.showBeliefs()		# use formatted print beliefs function
+			print self.task.getObservation()
 
 			# send observation to net for an action vector
 			action = self.params.activate(obs_pre)	
@@ -61,7 +62,8 @@ class InfoMaxAgent():
 			self.task.performAction(action) 
 
 			print "State post"
-			print self.task.showBeliefs()
+			#print self.task.showBeliefs()
+			print self.task.getObservation()
 
 			# calculate and show reward
 			print "reward",self.task.getReward()

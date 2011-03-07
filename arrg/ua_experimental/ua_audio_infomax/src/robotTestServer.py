@@ -26,7 +26,7 @@ class robotTestServer():
 		# init services
 		request = rospy.Service('InfoMax', InfoMax, self._handleSvcRequest)
 		print "Ready to run the robot"
-		self.loc = 2
+		self.loc = 0
 
 		self.PDFsCreated = False
 
@@ -36,7 +36,7 @@ class robotTestServer():
 
 	# reset robot and variables
 	def _reset(self):
-		self.loc = 2
+		self.loc = 0
 		self.PDFsCreated = False
 
 	# callback for service request
@@ -108,7 +108,7 @@ class robotTestServer():
 			self.database = PDF_library(self.actionNames, self.numObjects, numSamples)
 			self.PDFsCreated = True
 
-		print req.actionID
+		#print req.actionID
 		PDF = self.database.samplePDF(self.loc, req.actionID)
 
 		#PDF_instance = PDF(self.numObjects, self.loc, req.actionID)

@@ -26,12 +26,11 @@ class InfoMaxEnv(Environment, Named):
 		self.randomizeWorld = randomizeWorld        
 
 		# initialize lists of objects and actions
-		#self.objectNames = [String(s) for s in ("Obj 1", "Obj 2", "Obj 3", "Obj 4", "Obj 5", \
-		#					"Obj 6", "Obj 7")]
-		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3", "Obj 4", \
-		#					"Obj 5", "Obj 6"]
-		self.objectNames = ["Obj 0", "Obj 1", "Obj 2"]
-		#self.objectID = 2
+		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3", "Obj 4", "Obj 5", "Obj 6"]
+		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3", "Obj 4"]
+		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2"]
+		self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3"]
+		
 		self.numObjects = len(self.objectNames)
 		#self.actionNames = [String(s) for s in ("pick up", "drop", "push", "squeeze", "move left", "move right", "reset")]
 		self.actionNames = ["pick up", "drop", "push", "squeeze", "move left", "move right", "reset"]
@@ -170,6 +169,7 @@ class worldObject(Named):
 
 	# update joint probabilities
 	def _updateJointProbs(self):
+		self.jointProb = []  # But use NumPy np.ones(self.numCategories)sum(self.jointProb)
 		# initialize joint probabilities
 		for i in range(self.numObjects):
 			prod = 1.
@@ -177,8 +177,10 @@ class worldObject(Named):
 				prod *= self.objProbs[j][i]
 			self.jointProb.append(prod)
 		# normalize
+		s = sum(self.jointProb)
 		for i in range(len(self.jointProb)):
-			self.jointProb[i] /= sum(self.jointProb)
+			self.jointProb[i] /= s
+			
 	
 	# will need to reset all object probabilities
 	def reset(self):
