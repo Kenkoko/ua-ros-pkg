@@ -1,0 +1,15 @@
+<package>
+<description brief="ua_audio_infomax">
+
+     ua_audio_infomax
+
+  </description>
+<author>Daniel Ford</author>
+<license>BSD</license>
+<review status="unreviewed" notes=""/>
+<url>http://ros.org/wiki/ua_audio_infomax</url>
+<depend package="rospy"/>
+<depend package="std_msgs"/>
+</package>
+
+
