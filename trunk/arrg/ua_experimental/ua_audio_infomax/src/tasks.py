@@ -19,6 +19,7 @@ class InfoMaxTask(EpisodicTask, Named):
 		self.uniformInitialBeliefs = uniformInitialBeliefs
 		self.maxSteps = maxSteps
 		self.rewardscale = 1.0 #/self.maxSteps
+
 		# remember what type of reward is requested
 		self.rewardType = rewardType
 		self.inittask()
@@ -36,14 +37,23 @@ class InfoMaxTask(EpisodicTask, Named):
 		self.steps = 0
 		self.initbeliefs()
 		self.loc = 0	
+		reset = 6
+		location = self.env.performAction(reset)
+		self.loc = location
 
 	# initialize uniform beliefs	
 	def inituniformbeliefs(self):
 
 		beliefs = []
+
+		for obj in self.env.objects:
+			beliefs.append(obj.objProbs)
+
+		"""
 		for i in range(self.env.numObjects):
 			beliefs.append(self.env.objects[i].jointProb)	# assume that jointProbs are currently uniform
 			#print self.env.objects[i].objProbs				# (will be the case upon initialization)
+		"""
 
 		beliefs = array(beliefs)
 		self.beliefs = beliefs
@@ -62,17 +72,24 @@ class InfoMaxTask(EpisodicTask, Named):
 
 	# reset task
 	def reset(self):
-		reset = 6
 		self.stepCount = 0
 		EpisodicTask.reset(self)
-		self.inittask()
-		self.env.performAction(reset)			
+		self.inittask()			
+		print "************************************"
 
 	# returns current belief vector
 	def getObservation(self):
 	
+		# sort object PDFs so the data for the object at our current location is first
+		currLoc = self.beliefs[self.loc:self.loc+1].copy()		# extract conditional PDFs for current object
+		otherLocPre = self.beliefs[0:self.loc].copy()			# slice out PDFs before current object
+		otherLocPost = self.beliefs[self.loc+1:].copy()			# slice out PDFs after current object
+		otherLoc = concatenate((otherLocPre,otherLocPost))		# rebuild belief vector	
+		beliefs = concatenate((currLoc,otherLoc))				
+
 		# flatten list of PDFs for input into the network
-		self.beliefs = self.beliefs.flatten()
+		#print "unflat", self.beliefs
+		self.beliefs = beliefs.flatten()
 		return self.beliefs
 	
 	# send chosen task to environment to be performed
@@ -89,6 +106,7 @@ class InfoMaxTask(EpisodicTask, Named):
 
 		# Get sensors and do belief updates before calling reward
 		sensors = self.env.getSensors(action)
+		#print sensors
 		self.update_beliefs(sensors, action)
 
 		# Below two lines were cut and paste from EpisodicTask.performAction()
@@ -140,12 +158,22 @@ class InfoMaxTask(EpisodicTask, Named):
 			self.env.objects[sensors.location].updateProbs(action, sensors.beliefs)
 
 		# construct belief list from individual object PDFs
+
+		"""
 		k = 0
-		beliefs = zeros(self.env.numObjects**2)
+		beliefs = zeros(self.env.numObjects * self.env.numActions) # Note: numObjects \ne numCategories
 		for i in range(self.env.numObjects):
-			for j in range(self.env.numObjects):
-				beliefs[k] = self.env.objects[i].jointProb[j]
+			for j in range(self.env.numActions):
+				#beliefs[k] = self.env.objects[i].jointProb[j]
+				beliefs[k] = self.env.objects[i].objProbs[j]
 				k += 1
+		"""
+
+		beliefs = []
+		for obj in self.env.objects:
+			beliefs.append(obj.objProbs)
+		beliefs = array(beliefs)
+
 		self.beliefs = beliefs
 
 	# calculate entropy of beliefs				

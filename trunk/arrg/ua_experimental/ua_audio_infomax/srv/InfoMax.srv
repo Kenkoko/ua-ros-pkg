@@ -1,11 +1,8 @@
 # request
 
-#std_msgs/String[] objectNames		# names of all objects
 string[] objectNames				# names of all objects
-#int32 objectID						# index of chosen object
-#std_msgs/String[] actionNames		
 string[] actionNames				# names of all actions: move left, move right, pick up, drop, push, squeeze, reset
-int32 actionID 						# index of action to take
+int32 actionID 					# index of action to take
 
 ---
 # response
