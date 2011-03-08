@@ -1,0 +1,22 @@
+<launch>
+
+  <node pkg="camera1394" name="monocam" type="camera1394_node">
+    <remap from="camera" to="monocam"/>
+    <param name="guid" type="string" value="0055050400033409"/>
+    <param name="video_mode" value="640x480_mono8"/>
+    <param name="iso_speed" value="400"/>
+    <param name="frame_rate" value="30"/>
+    <param name="bayer_pattern" value="grbg"/>
+  </node>
+
+  <group ns="monocam">
+    <node pkg="image_proc" name="image_proc_mono" type="image_proc"/>
+    <node pkg="image_view" name="image_view_mono" type="image_view"> 
+      <remap from="image" to="image_color"/>
+    </node>
+    <node pkg="ultraspeech" name="monocam_capture" type="video_writer" args="monocam">
+      <remap from="image" to="image_color"/>
+    </node>
+  </group>
+
+</launch>
