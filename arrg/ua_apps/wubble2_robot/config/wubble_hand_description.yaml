@@ -8,5 +8,5 @@ hand_description:
     arm_group_name: left_arm
     hand_joints: [left_finger_joint, right_finger_joint]
     hand_touch_links: [L7_wrist_roll_link, L8_left_finger_link, L9_right_finger_link]
-    hand_fingertip_links: [L8_left_finger_link, L9_right_finger_link]
+    hand_fingertip_links: [L7_wrist_roll_link, L8_left_finger_link, L9_right_finger_link]
     hand_approach_direction: [1.0, 0.0, 0.0]
