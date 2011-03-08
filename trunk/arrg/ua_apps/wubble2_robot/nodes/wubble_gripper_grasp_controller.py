@@ -32,30 +32,34 @@
 
 import roslib; roslib.load_manifest('wubble2_robot')
 import rospy
+from rospy.exceptions import ROSException
 
 from actionlib import SimpleActionClient
 from actionlib import SimpleActionServer
 
 from std_msgs.msg import Float64
 from object_manipulation_msgs.msg import GraspHandPostureExecutionAction
+from object_manipulation_msgs.msg import GraspHandPostureExecutionGoal
 from object_manipulation_msgs.srv import GraspStatus
+from wubble2_robot.msg import WubbleGripperAction
+from wubble2_robot.msg import WubbleGripperGoal
 
 class WubbleGripperGraspController:
     def __init__(self):
         self.object_presence_pressure_threshold = rospy.get_param('object_presence_pressure_threshold', 200.0)
         
         gripper_action_name = rospy.get_param('gripper_action_name', 'wubble_gripper_command_action')
-        self.gripper_action_client = SimpleActionClient(gripper_action_name, WubbleGripperAction)
-        
-        while not rospy.is_shutdown:
-            try:
-                self.gripper_action_client.wait_for_server(timeout=2.0)
-                break
-            except ROSException as e:
-                rospy.loginfo('Waiting for %s action' % gripper_action_name)
-            except:
-                rospy.logerr('Unexpected error')
-                raise
+        self.gripper_action_client = SimpleActionClient('wubble_gripper_action', WubbleGripperAction)
+#        
+#        while not rospy.is_shutdown():
+#            try:
+#                self.gripper_action_client.wait_for_server(timeout=rospy.Duration(2.0))
+#                break
+#            except ROSException as e:
+#                rospy.loginfo('Waiting for %s action' % gripper_action_name)
+#            except:
+#                rospy.logerr('Unexpected error')
+#                raise
                 
         rospy.loginfo('Using gripper action client on topic %s' % gripper_action_name)
         
@@ -70,22 +74,25 @@ class WubbleGripperGraspController:
     def process_grasp_action(self, msg):
         gripper_command = WubbleGripperGoal()
         
-        if msg.goal == GraspHandPostureExecutionAction.GRASP:
-            if not msg.goal.grasp.position:
-                msg = 'wubble gripper grasp execution: position vector empty in requested grasp'
-                rospy.logerr(msg)
-                self.action_server.set_aborted(text=msg)
-                return
-                
+        if msg.goal == GraspHandPostureExecutionGoal.GRASP:
+            rospy.loginfo('Received GRASP request')
+#            if not msg.goal.grasp.position:
+#                msg = 'wubble gripper grasp execution: position vector empty in requested grasp'
+#                rospy.logerr(msg)
+#                self.action_server.set_aborted(text=msg)
+#                return
+#                
             gripper_command.command = WubbleGripperGoal.CLOSE_GRIPPER
             gripper_command.torque_limit = 0.4
             gripper_command.dynamic_torque_control = True
             gripper_command.pressure_upper = 1500.0
             gripper_command.pressure_lower = 1300.0
-        elif msg.goal == GraspHandPostureExecutionAction.PRE_GRASP:
+        elif msg.goal == GraspHandPostureExecutionGoal.PRE_GRASP:
+            rospy.loginfo('Received PRE_GRASP request')
             gripper_command.command = WubbleGripperGoal.OPEN_GRIPPER
             gripper_command.torque_limit = 0.4
-        elif msg.goal == GraspHandPostureExecutionAction.RELEASE:
+        elif msg.goal == GraspHandPostureExecutionGoal.RELEASE:
+            rospy.loginfo('Received RELEASE request')
             gripper_command.command = WubbleGripperGoal.OPEN_GRIPPER
             gripper_command.torque_limit = 0.4
         else:
@@ -103,17 +110,18 @@ class WubbleGripperGraspController:
         
         if pressure_msg.data < self.object_presence_pressure_threshold:
             rospy.loginfo('Gripper grasp query false: gripper total pressure %.2f below threshold %.2f' % (pressure_msg.data, self.object_presence_pressure_threshold))
-            result.is_hand_occupied = False
+            return False
         else:
             rospy.loginfo('Gripper grasp query true: gripper total pressure %.2f above threshold %.2f' % (pressure_msg.data, self.object_presence_pressure_threshold))
-            result.is_hand_occupied = True
+            return True
             
-        return result
+        #return result
 
 if __name__ == '__main__':
     try:
         rospy.init_node('wubble_gripper_grasp_controller', anonymous=True)
         grasp_controller = WubbleGripperGraspController()
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
 

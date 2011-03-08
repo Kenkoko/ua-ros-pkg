@@ -69,5 +69,5 @@ if __name__ == '__main__':
     joint_torque_srvs = [rospy.ServiceProxy(controller + '/torque_enable', TorqueEnable) for controller in joint_controllers]
     
     for srv in joint_torque_srvs:
-        srv(False)
+        srv(True)
 
