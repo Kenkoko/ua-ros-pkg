@@ -66,6 +66,7 @@ groups:
 
   - name: l_end_effector
     links: 
+      L7_wrist_roll_link
       L8_left_finger_link
       L9_right_finger_link
 
