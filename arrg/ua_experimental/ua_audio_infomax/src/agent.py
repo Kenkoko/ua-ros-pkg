@@ -33,12 +33,13 @@ class InfoMaxAgent():
 		else: self._PGPE = True
 
 		# objects and their categories
+		self.numCategories = 4
 
 		# tuples are name, category
-		self.objectNames = [	("Obj 0",1)	]
-		self.numCategories = 3
-		#self.actionNames = ["pick up", "drop", "push", "squeeze", "move left", "move right", "reset"]
+		self.objectNames = [	("Obj 0",3)	]
 		self.actionNames = ["pick up", "drop", "push", "squeeze"]
+
+		#self.actionNames = ["pick up", "drop", "push", "squeeze", "move left", "move right", "reset"]
 
 	# run trained network in our environment
 	def run(self, maxSteps):

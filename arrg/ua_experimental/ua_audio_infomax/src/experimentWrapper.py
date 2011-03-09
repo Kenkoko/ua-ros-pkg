@@ -13,10 +13,9 @@ from agent import InfoMaxAgent
 if __name__ == '__main__':
 
 	# max number of steps to run
-	# note both sensing and moving the robot count toward this total
 	maxSteps = 10
 
-	episodes = 1000		# number of learning episodes to run
+	episodes = 500		# number of learning episodes to run
 
 	# main learning code that instantiates an agent
 	# and communicates with the robot controller node to learn in the environment
