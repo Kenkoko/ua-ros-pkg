@@ -18,24 +18,28 @@ from ua_audio_infomax.srv import *
 
 class InfoMaxEnv(Environment, Named):
 
-	def __init__(self, objDict, actionDict, numCategories):
+	def __init__(self, objNames, actionNames, numCategories):
 
 		self.numCategories = numCategories
-		self.objDict = objDict
-		self.actionDict = actionDict
-		self.catNames = objDict.values()
-		self.objectNames = objDict.keys()
-		#self.actionNames = actionDict.keys()
-		self.actionNames = ["pick up", "drop", "push", "squeeze", "move left", "move right", "reset"]
+		self.actionNames = actionNames
+
+		# extract object names and categories from tuple list
+		self.objectNames = []
+		self.objCats = []
+		for obj in range(len(objNames)):
+			self.objectNames.append(objNames[obj][0])
+			self.objCats.append(objNames[obj][1])
 
 		# set up "request action" client here
 		rospy.init_node('infomaxAgent')
 
 	# get observation from environment
-	def getSensors(self, action, location):
+	def getSensors(self, action):
+
+		location = 0
 
 		# get category of the object in front of the robot
-		catID = int(self.objDict[self.objectNames[location]])
+		catID = self.objCats[location]
 
 		# send "sense" service request 
 		rospy.wait_for_service('InfoMax')	
@@ -51,7 +55,8 @@ class InfoMaxEnv(Environment, Named):
 		# if service fails, exit
 		except rospy.ServiceException, e:
 			print "Service call failed: %s"%e
-
+	
+	"""
 	# perform action selected by the network
 	def performAction(self, action):
 
@@ -68,3 +73,5 @@ class InfoMaxEnv(Environment, Named):
 		# service failure handler
 		except rospy.ServiceException, e:
 			print "Service call failed: %s"%e  
+	"""
+

@@ -33,33 +33,17 @@ class InfoMaxAgent():
 		else: self._PGPE = True
 
 		# objects and their categories
-		self.objDict = {	"Obj 0":"1",
-							"Obj 1":"2",
-							"Obj 2":"2",
-							"Obj 3":"1",
-							"Obj 4":"3",
-							"Obj 5":"1",
-							"Obj 6":"1",
-							"Obj 7":"3"		}		
 
+		# tuples are name, category
+		self.objectNames = [	("Obj 0",1)	]
 		self.numCategories = 3
-
-		# possible actions
-		self.actionDict = {"pick up":0, "drop":1, "push":2, "squeeze":3, "move left":4, "move right":5, "reset":6}
-		
-		#self.catNames = ["Cat 1", "Cat 2", "Cat 3", "Cat 4"]
-		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3", "Obj 4", "Obj 5", "Obj 6"]
-		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3", "Obj 4"]
-		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3"]
-		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2"]
-		#self.objectNames = ["Obj 0","Obj 1"]
 		#self.actionNames = ["pick up", "drop", "push", "squeeze", "move left", "move right", "reset"]
+		self.actionNames = ["pick up", "drop", "push", "squeeze"]
 
 	# run trained network in our environment
 	def run(self, maxSteps):
 
-		#self.env = InfoMaxEnv(self.catNames, self.objectNames, self.actionNames)
-		self.env = InfoMaxEnv(self.objDict, self.actionDict, self.numCategories)
+		self.env = InfoMaxEnv(self.objectNames, self.actionNames, self.numCategories)
 		self.task = InfoMaxTask(self.env, maxSteps=maxSteps, \
 					do_decay_beliefs = True, uniformInitialBeliefs = True)
 		self.task.reset()
@@ -100,17 +84,16 @@ class InfoMaxAgent():
 	def train(self, episodes, maxSteps):
  	
 		avgReward = 0
-		numHidden = 16
 
 		# set up environment and task
-		#self.env = InfoMaxEnv(self.catNames, self.objectNames, self.actionNames)
-		self.env = InfoMaxEnv(self.objDict, self.actionDict, self.numCategories)
+		self.env = InfoMaxEnv(self.objectNames, self.actionNames, self.numCategories)
 		self.task = InfoMaxTask(self.env, maxSteps=maxSteps, \
 					do_decay_beliefs = True, uniformInitialBeliefs = True)
 
 		# create neural net and learning agent
-		self.params = buildNetwork(self.task.outdim, numHidden, self.task.indim, \
+		self.params = buildNetwork(self.task.outdim, self.task.indim, \
 						bias=True, outclass=SoftmaxLayer)
+
 		if self._PGPE:
 			self.agent = OptimizationAgent(self.params, PGPE(minimize=True,verbose=False))
 		elif self._CMAES:

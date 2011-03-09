@@ -9,7 +9,7 @@ class PDF_library():
 		self.numObjects = numObjects
 		self.numCategories = numCategories
 		self.numSamples = numSamples	
-		self.numActions = len(actionNames)-3	# subtract move and reset actions
+		self.numActions = len(actionNames)
 		self.PDF_database = []
 
 		# create PDF database for all categories and actions
@@ -35,8 +35,8 @@ class PDF():
 	def __init__(self, numCategories, catID, actionType):
 
 		# set probabilities of sensor returning the correct value
-		pickUpProb = 85; dropProb = 80
-		pushProb = 90; squeezeProb = 73 
+		pickUpProb = 52; dropProb = 83
+		pushProb = 90; squeezeProb = 67 
 		probs = [pickUpProb, dropProb, pushProb, squeezeProb]
 
 		# create blank PDF
@@ -45,9 +45,11 @@ class PDF():
 		# populate PDF according to object ID and action type
 		actProb = (probs[actionType]/100.) - 0.1*random.random()
 
+		# initialize PDF with small value to avoid zeros
 		for i in range(len(self.PDF)):
 			self.PDF[i] = 0.05 / len(self.PDF)	
 
+		# create a crudely peaked PDF around the known category
 		if (catID+1) > (numCategories-1):
 			self.PDF[catID-1] += (1.-actProb-0.05)/2
 			self.PDF[catID] += actProb

@@ -16,7 +16,7 @@ if __name__ == '__main__':
 	# note both sensing and moving the robot count toward this total
 	maxSteps = 10
 
-	episodes = 10		# number of learning episodes to run
+	episodes = 1000		# number of learning episodes to run
 
 	# main learning code that instantiates an agent
 	# and communicates with the robot controller node to learn in the environment
@@ -38,9 +38,7 @@ if __name__ == '__main__':
 		# train network
 		else:
 			agent = InfoMaxAgent(option)
-			
 			agent.train(episodes, maxSteps)
-
 			agent.run(maxSteps)
 
 	except rospy.ROSInterruptException: pass
