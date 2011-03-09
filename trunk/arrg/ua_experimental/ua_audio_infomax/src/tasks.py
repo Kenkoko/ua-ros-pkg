@@ -15,7 +15,6 @@ class InfoMaxTask(EpisodicTask, Named):
 		self.listActions = False    
 
 		# initialize lists of objects and actions
-		self.catNames = environment.catNames
 		self.objectNames = environment.objectNames
 		self.actionNames = environment.actionNames
 		self.numObjects = len(self.objectNames)
@@ -38,10 +37,6 @@ class InfoMaxTask(EpisodicTask, Named):
 		self.NORM_ENTROPY = 1
 		self.AVERAGE_ENTROPY = 2  
 
-		# need to figure out whether these are needed
-		#self.sort_beliefs = sort_beliefs
-		self.do_decay_beliefs = do_decay_beliefs  
-
 		self.inittask()
 
 	def inittask(self):
@@ -49,7 +44,7 @@ class InfoMaxTask(EpisodicTask, Named):
 		self.steps = 0
 		self.createObjects()
 		self.initbeliefs()
-		self.loc = self.env.performAction(self.env.actionDict["reset"])
+		self.loc = 0
 
 	def createObjects(self):
 
@@ -61,7 +56,7 @@ class InfoMaxTask(EpisodicTask, Named):
 			# Create random objects
 			self.objects = []
 			for i in range(self.numObjects):
-				self.objects.append(worldObject(self.objectNames[i], self.numCategories, self.numActions-3, self.numObjects))
+				self.objects.append(worldObject(self.objectNames[i], self.numCategories, self.numActions, self.numObjects))
 			
 		else:
 			
@@ -79,12 +74,13 @@ class InfoMaxTask(EpisodicTask, Named):
 
 	# initialize beliefs and entropy
 	def initbeliefs(self):
+
 		self.inituniformbeliefs()
 		self.maxentropy = self.entropy()
 		if not self.uniformInitialBeliefs:		# non-random beliefs won't work at the moment
 			self.initnonrandombeliefs()
 
-	# need to update...        
+	# need to update... if this is needed        
 	def initnonrandombeliefs(self):
 
 		pass
@@ -98,17 +94,35 @@ class InfoMaxTask(EpisodicTask, Named):
 
 	# returns current belief vector
 	def getObservation(self):
-	
+		
+		"""	
 		# sort object PDFs so the data for the object at our current location is first
 		currLoc = self.beliefs[self.loc:self.loc+1].copy()		# extract conditional PDFs for current object
 		otherLocPre = self.beliefs[0:self.loc].copy()			# slice out PDFs before current object
 		otherLocPost = self.beliefs[self.loc+1:].copy()			# slice out PDFs after current object
 		otherLoc = concatenate((otherLocPre,otherLocPost))		# rebuild belief vector	
 		beliefs = concatenate((currLoc,otherLoc))				
+		"""
 
-		# flatten list of PDFs for input into the network
-		self.beliefs = beliefs.flatten()
-		return self.beliefs
+		# create RBFs to encode time to completion
+		numRBFs = 6
+		sigma = self.maxSteps/numRBFs
+		centers = linspace(0,self.maxSteps,numRBFs)	# will space centers in reals, need to cast to ints
+		RBFs = zeros(numRBFs)
+		for rbf in range(numRBFs):
+			RBFs[rbf] = exp(-((self.steps-int(centers[rbf]))**2)/sigma)					
+
+		# flatten list of conditional PDFs for input into the network
+		self.beliefs = self.beliefs.flatten()
+
+		# add RBF measures to beliefs
+		beliefs = zeros(self.numObjects*self.numActions+numRBFs)
+		beliefs = concatenate((self.beliefs,RBFs))
+		#self.beliefs = beliefs	
+
+		#print shape(beliefs),shape(self.beliefs)
+
+		return beliefs
 	
 	# send chosen task to environment to be performed
 	def performAction(self, action):
@@ -116,18 +130,18 @@ class InfoMaxTask(EpisodicTask, Named):
 		if type(action) == ndarray:
 			# Take the max, or random among them if there are several equal maxima
 			action = drawGibbs(action, temperature=0)
+
 		self.steps += 1
 
 		""" Important to note that we immediately update beliefs after performing action
 		 (maybe not needed but it would make credit-assignment harder) """
-		self.loc = self.env.performAction(action)
+		#self.loc = self.env.performAction(action)
 
 		# Get sensors and do belief updates before calling reward
-		sensors = self.env.getSensors(action, self.loc)
-
+		sensors = self.env.getSensors(action)
 		self.update_beliefs(sensors, action)
 
-		# Below two lines were cut and paste from EpisodicTask.performAction()
+		# Below two lines were cut and pasted from EpisodicTask.performAction()
 		self.addReward()
 		self.samples += 1
 
@@ -143,28 +157,14 @@ class InfoMaxTask(EpisodicTask, Named):
 	# compute and return the current reward (i.e. corresponding to the last action performed)
 	def getReward(self):
 
-		# possible values are bounded between maxentropy and 0.
-		# We can try to minimize the 
-		#return self.maxentropy - self.entropy()
 		if self.rewardType == self.AVERAGE_ENTROPY:
 			reward = self.entropy()/self.numObjects
 		else:
 			reward = (self.maxentropy - self.entropy())/self.maxentropy
-		# return norm_reward
-		return reward; #*norm_reward
 
-	"""
-	# needs to be updated
-	def decay_beliefs(self):
+		return -reward
 
-		self.beliefs *= 0.95 + (1.0/self.numObjects)*0.05
-		for loc in range(len(self.beliefs)):
-			for prop in range(len(self.beliefs[loc])):
-				self.beliefs[loc][prop] = self.beliefs[loc][prop]\
-										/ self.beliefs[loc][prop].sum()
-	"""
-
-	#def update_beliefs(self, sensors=robot_sensor()):
+	# update beliefs on each object, then compose individual beliefs into the full array
 	def update_beliefs(self, sensors, action):
 
 		# send PDF from sensor to update object PDF
@@ -178,8 +178,6 @@ class InfoMaxTask(EpisodicTask, Named):
 
 		self.beliefs = beliefs
 
-		#if self.do_decay_beliefs: self.decay_beliefs()
-
 	# calculate entropy of beliefs				
 	def entropy(self):
 		ent=0;
@@ -187,19 +185,9 @@ class InfoMaxTask(EpisodicTask, Named):
 			ent -= (log(objbelief) * objbelief).sum()
 		return ent
 
-	"""
-	# print beliefs showing one object PDF per line 
-	def showBeliefs(self):
-	
-		for idx in range(self.numObjects):
-			for i in range(self.numObjects):
-				print self.beliefs[i+idx*self.numObjects],
-			print "\r"
-	"""
-
 	@property
 	def indim(self):
-		return len(self.actionNames)-1	# number of actions we can take (minus reset)
+		return len(self.actionNames)		# number of actions we can take (minus reset)
     
 	@property
 	def outdim(self):
@@ -231,18 +219,22 @@ class worldObject(Named):
 	# takes the type of the last sensing action performed (integer) and the element of the returned PDF corresponding to that action type (float) 
 	def updateProbs(self, actionType, currentPDF):
 
+		"""
 		# if we sensed instead of moved or reset, also update beliefs
 		if actionType < 4:
+		"""
 
-			self.objProbs[actionType] *= self.actionCount[actionType]
-			self.objProbs[actionType] += currentPDF
-			self.objProbs[actionType] /= self.actionCount[actionType]+1
+		#print "action ", actionType
 
-			# increment action list for that type of action		
-			self.actionCount[actionType] += 1
-	
-			# update joint probabilities
-			self._updateJointProbs()
+		self.objProbs[actionType] *= self.actionCount[actionType]
+		self.objProbs[actionType] += currentPDF
+		self.objProbs[actionType] /= self.actionCount[actionType]+1
+
+		# increment action list for that type of action		
+		self.actionCount[actionType] += 1
+
+		# update joint probabilities
+		self._updateJointProbs()
 
 	# update joint probabilities
 	def _updateJointProbs(self):
@@ -256,13 +248,6 @@ class worldObject(Named):
 		s = sum(self.jointProb)
 		self.jointProb /= s
 
-	"""
-	# decay beliefs
-	def decayBeliefs(self):
-
-		self.objProbs *= 0.95 + (1.0/self.numObjects)*0.05
-	"""		
-
 	# will need to reset all object probabilities
 	def reset(self):
 		
@@ -273,34 +258,30 @@ if __name__ == "__main__":
 
 	# just some code for testing...
 	PDF1 = [0.9, 0.05, 0.05]
-	PDF2 = [0.6, 0.13, 0.27]
+	PDF2 = [0.12, 0.71, 0.17]
 
 	cats = 3
 	actions = 4
-	objs = 4
+	objs = 1
 
 	actionType = 3
 
 	testObject0 = worldObject("Obj 1", cats, actions, objs)
-	testObject1 = worldObject("Obj 2", cats, actions, objs)
 
 	print "Obj 0"
 	print testObject0.objProbs
-	print "Obj 1"
-	print testObject1.objProbs
 
 	testObject0.updateProbs(actionType,PDF1)
 	print testObject0.actionCount[actionType]
 
 	print "Obj 0"
 	print testObject0.objProbs
-	print "Obj 1"
-	print testObject1.objProbs
+
+	actionType = 1
 
 	testObject0.updateProbs(actionType,PDF2)
 	print testObject0.actionCount[actionType]
 
 	print "Obj 0"
 	print testObject0.objProbs
-	print "Obj 1"
-	print testObject1.objProbs
+	print testObject0.jointProb

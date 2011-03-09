@@ -57,6 +57,7 @@ class robotTestServer():
 	# instruct the robot to move to or sense the selected object
 	def _performAction(self,req):
 
+		"""
 		# move, reset, or sense object
 		if self.actionNames[req.actionID] == "move left":
 
@@ -94,6 +95,14 @@ class robotTestServer():
 			print "Performed ", self.actionNames[req.actionID]
 			print "Sensed ", PDF
 			return PDF, self.loc
+		"""
+
+		PDF = self._getSensors(req)
+		print "\n"
+		print "At ", self.objectNames[self.loc]
+		print "Performed ", self.actionNames[req.actionID]
+		print "Sensed ", PDF
+		return PDF, self.loc		
 
 	# simulate sensing by sampling from a database of previously sensed PDFs over objects and categories 
 	def _getSensors(self,req):
