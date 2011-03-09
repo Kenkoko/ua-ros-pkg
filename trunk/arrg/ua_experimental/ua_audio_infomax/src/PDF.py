@@ -1,35 +1,38 @@
 from random import *
+from scipy import *
+from numpy import *
 
 class PDF_library():
 			
-	def __init__(self, actionNames, numObjects, numSamples):
+	def __init__(self, actionNames, numCategories, numObjects, numSamples):
 
 		self.numObjects = numObjects
+		self.numCategories = numCategories
 		self.numSamples = numSamples	
 		self.numActions = len(actionNames)-3	# subtract move and reset actions
 		self.PDF_database = []
 
-		# create PDF database for all objects and actions
-		for action in range(self.numActions):
-			self._createPDFs(action)
+		# create PDF database for all categories and actions
+		self._createPDFs()
 	
-	# create numSamples PDFs per object and possible
-	def _createPDFs(self, actionType):
+	# create numSamples PDFs per category and possible action
+	def _createPDFs(self):
 
-		for obj in range(self.numObjects):
-			for sample in range(self.numSamples):
-				self.PDF_database.append(PDF(self.numObjects, obj, actionType))
+		for action in range(self.numActions):
+			for cat in range(self.numCategories):
+				for sample in range(self.numSamples):
+					self.PDF_database.append(PDF(self.numCategories, cat, action))
 
 	# sample randomly from PDFs for given object and action
-	def samplePDF(self, objectID, actionType):
+	def samplePDF(self, catID, actionType):
 
-		PDF = self.PDF_database[actionType*self.numObjects*self.numSamples+objectID*self.numSamples+randint(0,self.numSamples-1)].PDF
+		PDF = self.PDF_database[actionType*self.numCategories*self.numSamples + catID*self.numSamples + randint(0,self.numSamples-1)].PDF
 
 		return PDF
 
 class PDF():
 
-	def __init__(self, numObjects, objectID, actionType):
+	def __init__(self, numCategories, catID, actionType):
 
 		# set probabilities of sensor returning the correct value
 		pickUpProb = 85; dropProb = 80
@@ -37,24 +40,25 @@ class PDF():
 		probs = [pickUpProb, dropProb, pushProb, squeezeProb]
 
 		# create blank PDF
-		self.PDF = []
-		for i in range(numObjects):
-			self.PDF.append(0)
+		self.PDF = zeros(numCategories)
 
 		# populate PDF according to object ID and action type
-		actProb = (probs[actionType]/100.) - 0.1*random()
+		actProb = (probs[actionType]/100.) - 0.1*random.random()
 
-		if (objectID+1) > (numObjects-1):
-			self.PDF[objectID-1] = (1.-actProb)/2
-			self.PDF[objectID] = actProb
-			self.PDF[0] = (1.-actProb)/2 			
+		for i in range(len(self.PDF)):
+			self.PDF[i] = 0.05 / len(self.PDF)	
+
+		if (catID+1) > (numCategories-1):
+			self.PDF[catID-1] += (1.-actProb-0.05)/2
+			self.PDF[catID] += actProb
+			self.PDF[0] += (1.-actProb-0.05)/2 			
 		
-		elif (objectID-1) < 0:
-			self.PDF[objectID+1] = (1.-actProb)/2
-			self.PDF[objectID] = actProb
-			self.PDF[numObjects-1] = (1.-actProb)/2 
+		elif (catID-1) < 0:
+			self.PDF[catID+1] += (1.-actProb-0.05)/2
+			self.PDF[catID] += actProb
+			self.PDF[numCategories-1] += (1.-actProb-0.05)/2 
 
 		else:
-			self.PDF[objectID-1] = (1.-actProb)/2
-			self.PDF[objectID] = actProb
-			self.PDF[objectID+1] = (1.-actProb)/2 
+			self.PDF[catID-1] += (1.-actProb-0.05)/2
+			self.PDF[catID] += actProb
+			self.PDF[catID+1] += (1.-actProb-0.05)/2 

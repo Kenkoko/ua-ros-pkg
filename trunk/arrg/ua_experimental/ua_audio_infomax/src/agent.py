@@ -32,10 +32,34 @@ class InfoMaxAgent():
 			self._PGPE = False; self._CMAES = True
 		else: self._PGPE = True
 
+		# objects and their categories
+		self.objDict = {	"Obj 0":"1",
+							"Obj 1":"2",
+							"Obj 2":"2",
+							"Obj 3":"1",
+							"Obj 4":"3",
+							"Obj 5":"1",
+							"Obj 6":"1",
+							"Obj 7":"3"		}		
+
+		self.numCategories = 3
+
+		# possible actions
+		self.actionDict = {"pick up":0, "drop":1, "push":2, "squeeze":3, "move left":4, "move right":5, "reset":6}
+		
+		#self.catNames = ["Cat 1", "Cat 2", "Cat 3", "Cat 4"]
+		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3", "Obj 4", "Obj 5", "Obj 6"]
+		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3", "Obj 4"]
+		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3"]
+		#self.objectNames = ["Obj 0", "Obj 1", "Obj 2"]
+		#self.objectNames = ["Obj 0","Obj 1"]
+		#self.actionNames = ["pick up", "drop", "push", "squeeze", "move left", "move right", "reset"]
+
 	# run trained network in our environment
 	def run(self, maxSteps):
 
-		self.env = InfoMaxEnv(randomizeWorld=True)
+		#self.env = InfoMaxEnv(self.catNames, self.objectNames, self.actionNames)
+		self.env = InfoMaxEnv(self.objDict, self.actionDict, self.numCategories)
 		self.task = InfoMaxTask(self.env, maxSteps=maxSteps, \
 					do_decay_beliefs = True, uniformInitialBeliefs = True)
 		self.task.reset()
@@ -79,7 +103,8 @@ class InfoMaxAgent():
 		numHidden = 16
 
 		# set up environment and task
-		self.env = InfoMaxEnv()
+		#self.env = InfoMaxEnv(self.catNames, self.objectNames, self.actionNames)
+		self.env = InfoMaxEnv(self.objDict, self.actionDict, self.numCategories)
 		self.task = InfoMaxTask(self.env, maxSteps=maxSteps, \
 					do_decay_beliefs = True, uniformInitialBeliefs = True)
 

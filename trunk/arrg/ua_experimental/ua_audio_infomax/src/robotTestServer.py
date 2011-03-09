@@ -19,14 +19,15 @@ class robotTestServer():
 
 	def __init__(self):
 
-		self.objectNames = None; self.actionNames = None
+		self.objectNames = None
+		self.actionNames = None
 		self.numObjects = None
+		self.loc = 0
 
 		rospy.init_node('robotTestServer')		# init node
 		# init services
 		request = rospy.Service('InfoMax', InfoMax, self._handleSvcRequest)
 		print "Ready to run the robot"
-		self.loc = 0
 
 		self.PDFsCreated = False
 
@@ -42,6 +43,7 @@ class robotTestServer():
 	# callback for service request
 	def _handleSvcRequest(self,req):
 
+		self.numCategories = req.numCats
 		self.objectNames = req.objectNames
 		self.numObjects = len(req.objectNames)
 		self.actionNames = req.actionNames
@@ -76,7 +78,7 @@ class robotTestServer():
 			print "Moved right to ", self.objectNames[self.loc]
 			return None, self.loc
 
-		elif self.actionNames[req.actionID] == "reset":
+		elif self.actionNames[req.actionID] == 'reset':
 
 			print "\n"
 			print "************ RESET ************"
@@ -85,6 +87,7 @@ class robotTestServer():
 
 		else:
 
+			print self.actionNames[req.actionID]
 			PDF = self._getSensors(req)
 			print "\n"
 			print "At ", self.objectNames[self.loc]
@@ -95,24 +98,14 @@ class robotTestServer():
 	# simulate sensing by sampling from a database of previously sensed PDFs over objects and categories 
 	def _getSensors(self,req):
 
-		"""
-		# create random test array
-		PDF = []
-		for i in range(self.numObjects):
-			PDF.append(random())
-		"""
-
 		if not self.PDFsCreated:
 			# create database of PDF samples
 			numSamples = 10
-			self.database = PDF_library(self.actionNames, self.numObjects, numSamples)
+			self.database = PDF_library(self.actionNames, self.numCategories, self.numObjects, numSamples)
 			self.PDFsCreated = True
 
 		#print req.actionID
-		PDF = self.database.samplePDF(self.loc, req.actionID)
-
-		#PDF_instance = PDF(self.numObjects, self.loc, req.actionID)
-		#print PDF_instance.PDF
+		PDF = self.database.samplePDF(req.catID, req.actionID)
 
 		return PDF
 
