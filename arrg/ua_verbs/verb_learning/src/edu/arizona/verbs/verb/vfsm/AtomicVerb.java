@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.arizona.cs.learn.timeseries.model.Signature;
-import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 
 public class AtomicVerb extends AbstractVerb {
@@ -40,8 +39,8 @@ public class AtomicVerb extends AbstractVerb {
 	}
 	
 	private void makeFSM() {
-		posFSM_ = new VerbFSM(posCorePaths_);
-		negFSM_ = new VerbFSM(negCorePaths_);
+		posFSM_ = posLearner_.getFSM();
+		negFSM_ = negLearner_.getFSM();
 		
 		posFSM_.toDot(getVerbFolder() + "pos.dot", false);
 		negFSM_.toDot(getVerbFolder() + "neg.dot", false);

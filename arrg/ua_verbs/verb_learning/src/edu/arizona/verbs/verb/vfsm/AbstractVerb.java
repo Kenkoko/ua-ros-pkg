@@ -2,9 +2,7 @@ package edu.arizona.verbs.verb.vfsm;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -17,7 +15,6 @@ import com.google.common.collect.Lists;
 
 import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.fsm.VerbFSM;
-import edu.arizona.verbs.fsm.core.CorePath;
 import edu.arizona.verbs.main.Interface;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.planning.data.PlanningReport;
@@ -28,6 +25,7 @@ import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.planning.shared.Policy.PolicyType;
 import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
+import edu.arizona.verbs.verb.vfsm.learner.VFSMLearner;
 
 public abstract class AbstractVerb implements FSMVerb {
 	private static Logger logger = Logger.getLogger(AbstractVerb.class);
@@ -37,60 +35,28 @@ public abstract class AbstractVerb implements FSMVerb {
 	
 	AbstractVerb baseVerb_ = null;
 	
-	// NEW STUFF
-	
-	Set<CorePath> posCorePaths_ = new HashSet<CorePath>();
-	Set<CorePath> negCorePaths_ = new HashSet<CorePath>();
+	VFSMLearner posLearner_ = Interface.getVFSMLearner();
+	VFSMLearner negLearner_ = Interface.getVFSMLearner();
 	
 	protected VerbFSM posFSM_ = null;
 	protected VerbFSM negFSM_ = null;
 	
-	/* Core Path methods */
-	
-	// Utility method for updating core paths
-	protected void updateCorePathSet(List<OOMDPState> trace, Set<CorePath> pathSet) {
-		CorePath seq = new CorePath(trace);
-		
-		boolean addPath = true;
-		HashSet<CorePath> deadPaths = new HashSet<CorePath>();
-		for (CorePath core : pathSet) {
-			if (core.contains(seq)) {
-				deadPaths.add(core);
-			} else if (seq.contains(core) || seq.equals(core)) {
-				addPath = false;
-			}
-		}
-		
-		if (addPath) {
-			pathSet.add(seq);
-		}
-		
-		for (CorePath dead : deadPaths) {
-			pathSet.remove(dead);
-		}
-		
-		System.out.println("CORE PATHS:");
-		for (CorePath cp : pathSet) {
-			cp.print();
-		}
-	}
-	
 	@Override
 	public void addPositiveInstance(List<OOMDPState> trace) {
-		updateCorePathSet(trace, posCorePaths_);
+		posLearner_.addTrace(trace);
 		postInstance();
 	}
 	
 	@Override
 	public void addNegativeInstance(List<OOMDPState> trace) {
-		updateCorePathSet(trace, negCorePaths_);
+		negLearner_.addTrace(trace);
 		postInstance();
 	}
 
 	@Override
 	public void addPositiveInstances(List<List<OOMDPState>> traces) {
 		for (List<OOMDPState> trace : traces) {
-			updateCorePathSet(trace, posCorePaths_);
+			posLearner_.addTrace(trace);
 		}
 		postInstance();
 	}
@@ -98,18 +64,17 @@ public abstract class AbstractVerb implements FSMVerb {
 	@Override
 	public void addNegativeInstances(List<List<OOMDPState>> traces) {
 		for (List<OOMDPState> trace : traces) {
-			updateCorePathSet(trace, negCorePaths_);
+			negLearner_.addTrace(trace);
 		}
 		postInstance();
 	}
 	
 	@Override
 	public void forgetInstances() {
-		posCorePaths_ = new HashSet<CorePath>();
-		negCorePaths_ = new HashSet<CorePath>();
+		posLearner_.forgetTraces();
+		negLearner_.forgetTraces();
 		posFSM_ = null;
 		negFSM_ = null;
-//		postInstance();
 	}
 	
 	abstract void postInstance();
