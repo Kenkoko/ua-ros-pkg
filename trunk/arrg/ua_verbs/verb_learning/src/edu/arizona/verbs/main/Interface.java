@@ -37,6 +37,9 @@ import edu.arizona.verbs.verb.irl.IRLVerb;
 import edu.arizona.verbs.verb.vfsm.AtomicVerb;
 import edu.arizona.verbs.verb.vfsm.FSMVerb;
 import edu.arizona.verbs.verb.vfsm.SequentialVerb;
+import edu.arizona.verbs.verb.vfsm.learner.CorePathLearner;
+import edu.arizona.verbs.verb.vfsm.learner.SignatureLearner;
+import edu.arizona.verbs.verb.vfsm.learner.VFSMLearner;
 
 public class Interface {
 	private static Logger logger = Logger.getLogger(Interface.class);
@@ -49,6 +52,21 @@ public class Interface {
 	
 	public enum VerbType { FSM, ML, IRL };
 	public static VerbType currentVerbType = VerbType.FSM;
+	
+	public enum LearnerType { CorePath, Signature };
+	public static LearnerType currentLearnerType = LearnerType.Signature;
+//	public static LearnerType currentLearnerType = LearnerType.CorePath;
+	
+	public static VFSMLearner getVFSMLearner() {
+		switch (currentLearnerType) {
+		case CorePath:
+			return new CorePathLearner();
+		case Signature:
+			return new SignatureLearner(0.8);
+		default:
+			return null;
+		}
+	}
 	
 	// Maps: Binding -> Argument
 	public static Map<String, String> extractReverseNameMap(VerbInstance vi) {
@@ -285,7 +303,7 @@ public class Interface {
 	 * @throws RosException
 	 */
 	public static void main(String[] args) throws RosException {
-		if (args.length < 2) {
+		if (args.length < 3) {
 			System.out.println("Please choose an environment:");
 			for (Simulators s : Simulators.values()) {
 				System.out.println("\t" + s.toString());
@@ -294,19 +312,21 @@ public class Interface {
 			for (VerbType v : VerbType.values()) {
 				System.out.println("\t" + v.toString());
 			}
+			System.out.println("and choose a VFSM learning method:");
+			for (LearnerType l : LearnerType.values()) {
+				System.out.println("\t" + l.toString());
+			}
+			
+			System.exit(1);
 		}
 		
 		final Ros ros = Ros.getInstance();
 		ros.init("verb_learning");
 		NodeHandle nh = ros.createNodeHandle();
 
-		currentEnvironment = Simulators.valueOf(args[0]).create();
-		
-		if (args[1].equals("nb")) {
-			currentVerbType = VerbType.ML;
-		} else if (args[1].equals("irl")) {
-			currentVerbType = VerbType.IRL;
-		}
+		currentEnvironment = Simulators.valueOf(args[0]).create();		
+		currentVerbType = VerbType.valueOf(args[1]);
+		currentLearnerType = LearnerType.valueOf(args[2]);
 		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
 		nh.advertiseService("verb_learning/forget_verb", new ForgetVerb(), forgetVerb);

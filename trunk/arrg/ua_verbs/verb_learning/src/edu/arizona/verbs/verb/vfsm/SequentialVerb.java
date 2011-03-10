@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
 import com.google.common.collect.Maps;
@@ -21,7 +20,7 @@ import edu.arizona.verbs.verb.VerbBinding;
 
 // TODO: This isn't quite right anymore since the core paths change, fix it
 public class SequentialVerb extends AbstractVerb {
-	private static Logger logger = Logger.getLogger(SequentialVerb.class);
+//	private static Logger logger = Logger.getLogger(SequentialVerb.class);
 	
 	private Vector<VerbBinding> verbBindings_ = new Vector<VerbBinding>();
 	
@@ -95,7 +94,7 @@ public class SequentialVerb extends AbstractVerb {
 		
 		// TODO Need to keep track of which subverb we are doing and use the appropriate neg fsm
 		// For now we will just ignore the subverbs neg fsms and make our own
-		negFSM_ = new VerbFSM(negCorePaths_);
+		negFSM_ = negLearner_.getFSM();
 	}
 
 	@Override

@@ -13,9 +13,10 @@ import ros.pkg.oomdp_msgs.msg.MDPState;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 
-import edu.arizona.cs.learn.algorithm.alignment.factory.SequenceFactory;
-import edu.arizona.cs.learn.algorithm.alignment.model.Instance;
+import edu.arizona.cs.learn.timeseries.model.Instance;
 import edu.arizona.cs.learn.timeseries.model.Interval;
+import edu.arizona.cs.learn.timeseries.model.SequenceType;
+import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.shared.Relation;
@@ -117,7 +118,11 @@ public class StateConverter {
 	
 	/* Traces (Lists of States) */
 	
-	public static Instance convertTrace(List<OOMDPState> trace, String verb, Map<String, String> nameMap) {
+	/**
+	 * This method converts a trace (list of OOMDPStates) to a sequence of Allen relations stored in an
+	 * Instance object. It will remap names if given a non-empty nameMap. 
+	 */
+	public static List<Symbol> convertTrace(List<OOMDPState> trace, Map<String, String> nameMap) {
 		ArrayList<Interval> closedIntervals = new ArrayList<Interval>();
 		Map<String, Interval> openIntervals = new HashMap<String, Interval>();
 
@@ -154,8 +159,12 @@ public class StateConverter {
 		}
 		
 		Collections.sort(closedIntervals, Interval.eff);
-		// NOTE: Does "id" matter here?
-		Instance result = new Instance(verb, 0, SequenceFactory.allenSequence(closedIntervals));
-		return result;
+
+		// Old version
+//		Instance result = new Instance(verb, 0, SequenceFactory.allenSequence(closedIntervals));
+		
+		// New Version
+		List<Symbol> sequence = SequenceType.allen.getSequence(closedIntervals);
+		return sequence;
 	}
 }
