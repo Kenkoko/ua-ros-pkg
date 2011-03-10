@@ -19,10 +19,12 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import edu.arizona.cs.learn.algorithm.markov.BPPNode;
+import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
+import edu.arizona.cs.learn.util.graph.Edge;
 import edu.arizona.verbs.fsm.FSMNode.StateType;
 import edu.arizona.verbs.fsm.core.CorePath;
 import edu.arizona.verbs.shared.Remappable;
-import edu.uci.ics.jung.algorithms.shortestpath.UnweightedShortestPath;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 
@@ -47,16 +49,37 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		init();
 	}
 	
+	/**
+	 * Empty constructor that makes an empty VFSM
+	 */
+	public VerbFSM() {
+		this(new HashSet<CorePath>());
+	}
+	
+	/**
+	 * Construct a VFSM directly from a set of core paths
+	 * @param corePaths
+	 */
 	public VerbFSM(Set<CorePath> corePaths) {
 		dfa_ = StateMachines.createFSM(corePaths);
-		// The distances are potentially invalid because we don't know how the FSM was made
-		for (FSMNode n : dfa_.getVertices()) { 
-			n.clearMinDist();
-		}
 		init();
 	}
 
+	/**
+	 * Construct a VFSM by converting the state machine in an FSMRecognizer 
+	 * @param recognizer
+	 */
+	public VerbFSM(FSMRecognizer recognizer) {
+		DirectedGraph<BPPNode,Edge> graph = recognizer.getGraph();
+		dfa_ = StateMachines.convertToDFA(graph);
+		init();
+	}
+	
 	private void init() {
+		for (FSMNode n : dfa_.getVertices()) { 
+			n.clearMinDist();
+		}
+		
 		populateTerminals(); 	
 		populateStartState();
 		
