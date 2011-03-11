@@ -44,7 +44,9 @@ class InfoMaxTask(EpisodicTask, Named):
 		self.steps = 0
 		self.createObjects()
 		self.initbeliefs()
+		self.initRBFs()
 		self.loc = 0
+		self.beliefsAreNew = True
 
 	def createObjects(self):
 
@@ -92,6 +94,19 @@ class InfoMaxTask(EpisodicTask, Named):
 		self.inittask()			
 		print "************************************"
 
+	def initRBFs(self):
+
+		# create RBFs to encode time to completion
+		self.numRBFs = 6
+		self.sigma = self.maxSteps/self.numRBFs
+		self.RBFcenters = linspace(0,self.maxSteps,self.numRBFs)	# will space centers in reals, need to cast to ints
+		self.RBFs = zeros(self.numRBFs)		
+
+	def updateRBFs(self):
+	
+		for rbf in range(self.numRBFs):
+			self.RBFs[rbf] = exp(-((self.steps-int(self.RBFcenters[rbf]))**2)/self.sigma)
+	
 	# returns current belief vector
 	def getObservation(self):
 		
@@ -104,25 +119,23 @@ class InfoMaxTask(EpisodicTask, Named):
 		beliefs = concatenate((currLoc,otherLoc))				
 		"""
 
-		# create RBFs to encode time to completion
-		numRBFs = 6
-		sigma = self.maxSteps/numRBFs
-		centers = linspace(0,self.maxSteps,numRBFs)	# will space centers in reals, need to cast to ints
-		RBFs = zeros(numRBFs)
-		for rbf in range(numRBFs):
-			RBFs[rbf] = exp(-((self.steps-int(centers[rbf]))**2)/sigma)					
+		# update RBF activations
+		self.updateRBFs()
 
 		# flatten list of conditional PDFs for input into the network
 		self.beliefs = self.beliefs.flatten()
 
-		# add RBF measures to beliefs
-		beliefs = zeros(self.numObjects*self.numActions+numRBFs)
-		beliefs = concatenate((self.beliefs,RBFs))
-		#self.beliefs = beliefs	
+		# otherwise, chop off old activations
+		if self.beliefsAreNew == False:
+			self.beliefs = self.beliefs[:self.numCategories*self.numActions]
+		# if this is the first step in the episode, just set that flag
+		elif self.beliefsAreNew:
+			self.beliefsAreNew = False
 
-		#print shape(beliefs),shape(self.beliefs)
+		# append RBF activations to self.beliefs		
+		self.beliefs = concatenate((self.beliefs,self.RBFs)) 
 
-		return beliefs
+		return self.beliefs
 	
 	# send chosen task to environment to be performed
 	def performAction(self, action):

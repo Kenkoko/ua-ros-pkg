@@ -36,7 +36,7 @@ class InfoMaxAgent():
 		self.numCategories = 4
 
 		# tuples are name, category
-		self.objectNames = [	("Obj 0",3)	]
+		self.objectNames = [	("Obj 0",2)	]
 		self.actionNames = ["pick up", "drop", "push", "squeeze"]
 
 		#self.actionNames = ["pick up", "drop", "push", "squeeze", "move left", "move right", "reset"]
