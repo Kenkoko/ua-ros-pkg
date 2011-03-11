@@ -76,7 +76,7 @@
         
         <!-- Uppperarm roll joint -->
         <joint name="upperarm_roll_joint" type="revolute" >
-            <origin xyz="0 0.1074 0" rpy="0 0 0" />
+            <origin xyz="0 0.108 0" rpy="0 0 0" />
             <parent link="L2_shoulder_pan_link" />
             <child link="L3_upperarm_roll_link"/>
             
@@ -88,7 +88,7 @@
         
         <!-- Elbow flex joint -->
         <joint name="elbow_flex_joint" type="revolute" >
-            <origin xyz="0.029 0.132 0" rpy="0 0 0" />
+            <origin xyz="0.029 0.133 0" rpy="0 0 0" />
             <parent link="L3_upperarm_roll_link" />
             <child link="L4_elbow_flex_link"/>
             
@@ -100,7 +100,7 @@
         
         <!-- Forearm roll joint -->
         <joint name="forearm_roll_joint" type="revolute" >
-            <origin xyz="0.034 0.029 0" rpy="0 0 0" />
+            <origin xyz="0.036 0.029 0" rpy="0 0 0" />
             <parent link="L4_elbow_flex_link" />
             <child link="L5_forearm_roll_link"/>
             
@@ -112,7 +112,7 @@
         
         <!-- Wrist pitch joint -->
         <joint name="wrist_pitch_joint" type="revolute" >
-            <origin xyz="0.119 0 0" rpy="0 0 0" />
+            <origin xyz="0.120 0 0" rpy="0 0 0" />
             <parent link="L5_forearm_roll_link" />
             <child link="L6_wrist_pitch_link"/>
             
@@ -124,7 +124,7 @@
         
         <!-- Wrist roll joint -->
         <joint name="wrist_roll_joint" type="revolute" >
-            <origin xyz="0.0925 0 0" rpy="0 0 0" />
+            <origin xyz="0.093 0 0" rpy="0 0 0" />
             <parent link="L6_wrist_pitch_link" />
             <child link="L7_wrist_roll_link"/>
             
