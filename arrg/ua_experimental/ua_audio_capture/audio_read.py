@@ -957,8 +957,8 @@ if __name__ == '__main__':
               
     data_path = '/tmp/sounds'
     
-    #run_batch_training_classification(data_path, actions, objects)
-    run_batch_training_classification_loadNet(data_path, actions, objects)	# perform classification using SOM and KNN model loaded from pkl files
+    run_batch_training_classification(data_path, actions, objects)
+    #run_batch_training_classification_loadNet(data_path, actions, objects)	# perform classification using SOM and KNN model loaded from pkl files
     test_affinity(data_path, actions, objects)
     run_dbn(data_path, actions, objects)
     #seq_actions(data_path, actions, objects)
