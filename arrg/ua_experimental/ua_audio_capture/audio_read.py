@@ -542,8 +542,8 @@ def run_batch_training_classification(data_path, actions, objects):
         som, knn_model = train_model(train_set, train_labels)
 
         # save som and knn_model off for later use
-        pickle.dump(som, open('/tmp/som.pkl','w'))
         pickle.dump(knn_model, open('/tmp/knn_model.pkl','w'))
+        pickle.dump(som, open('/tmp/som.pkl','w'))
         
         correct = 0
         for idx, seq in enumerate(test_set):
@@ -631,7 +631,7 @@ def run_batch_training_classification_loadNet(data_path, actions, objects):
         
         #som, knn_model = train_model(train_set, train_labels)
 
-        # load som and knn_model from pkl files for later use
+        # load som and knn_model from pkl files
         som = pickle.load(open('/tmp/som.pkl'))
         knn_model = pickle.load(open('/tmp/knn_model.pkl'))
         
@@ -957,9 +957,9 @@ if __name__ == '__main__':
               
     data_path = '/tmp/sounds'
     
-    run_batch_training_classification(data_path, actions, objects)
-    #run_batch_training_classification_loadNet(data_path, actions, objects)	# perform classification using SOM and KNN model loaded from pkl files
-    test_affinity(data_path, actions, objects)
-    run_dbn(data_path, actions, objects)
+    #run_batch_training_classification(data_path, actions, objects)
+    run_batch_training_classification_loadNet(data_path, actions, objects)	# perform classification using SOM and KNN model loaded from pkl files
+    #test_affinity(data_path, actions, objects)
+    #run_dbn(data_path, actions, objects)
     #seq_actions(data_path, actions, objects)
 
