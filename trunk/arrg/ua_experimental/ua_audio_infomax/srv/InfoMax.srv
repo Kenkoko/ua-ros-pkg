@@ -4,7 +4,7 @@ string[] objectNames				# names of all objects
 string[] actionNames				# names of all actions: move left, move right, pick up, drop, push, squeeze, reset
 int32 numCats						# number of categories
 int32 catID						# category index for object at current location
-int32 actionID 					# index of action to take
+ua_audio_infomax/Action actionID 					# index of action to take
 
 ---
 # response
