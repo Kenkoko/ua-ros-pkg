@@ -175,7 +175,8 @@ class InfoMaxTask(EpisodicTask, Named):
 		else:
 			reward = (self.maxentropy - self.entropy())/self.maxentropy
 
-		return -reward		# needs to be negative to allow PGPE to minimize as designed
+		#return -reward		# needs to be negative to allow PGPE to minimize as designed
+		return reward
 
 	# update beliefs on each object, then compose individual beliefs into the full array
 	def update_beliefs(self, sensors, action):
