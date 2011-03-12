@@ -1,0 +1,7 @@
+int32 val
+
+int32 GRASP
+int32 LIFT
+int32 DROP
+int32 SHAKE_ROLL
+int32 PLACE
