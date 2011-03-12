@@ -2,6 +2,7 @@
 
 import roslib; roslib.load_manifest('ua_audio_capture')
 
+import pickle
 import math
 import os
 from array import array
@@ -69,7 +70,12 @@ def matrix():
     result += '-10  ' * (map_side * map_side)
     result += '1\n'
     
-    print result
+    print result		# write this to a file called /tmp/som.costs
+
+    outfile = open('/tmp/som.costs', 'w')
+    outfile.write(result)
+    outfile.close()	
+
     return result
 
 def sound_seq_distance_str(seq1_str, seq2_str):
@@ -534,6 +540,10 @@ def run_batch_training_classification(data_path, actions, objects):
         print test_labels
         
         som, knn_model = train_model(train_set, train_labels)
+
+        # save som and knn_model off for later use
+        pickle.dump(som, open('/tmp/som.pkl','w'))
+        pickle.dump(knn_model, open('/tmp/knn_model.pkl','w'))
         
         correct = 0
         for idx, seq in enumerate(test_set):
@@ -565,6 +575,91 @@ from pybrain.datasets import UnsupervisedDataSet
 from pybrain.unsupervised.trainers.deepbelief import DeepBeliefTrainer
 from pybrain.tools.shortcuts import buildNetwork
 from pybrain.structure import TanhLayer, SigmoidLayer, SoftmaxLayer
+
+def run_batch_training_classification_loadNet(data_path, actions, objects):
+    processed_ffts, labels = calculate_fft(data_path, actions[0], objects)
+    act_lab = [actions[0]]*len(labels)
+    
+    p, l = calculate_fft(data_path, actions[1], objects)
+    processed_ffts.extend(p)
+    labels.extend(l)
+    act_lab.extend([actions[1]]*len(l))
+    
+    p, l = calculate_fft(data_path, actions[2], objects)
+    processed_ffts.extend(p)
+    labels.extend(l)
+    act_lab.extend([actions[2]]*len(l))
+    
+    p, l = calculate_fft(data_path, actions[3], objects)
+    processed_ffts.extend(p)
+    labels.extend(l)
+    act_lab.extend([actions[3]]*len(l))
+
+    #labels = act_lab
+    #objects = actions
+    print labels
+    print 'len(processed_ffts)', len(processed_ffts)
+    print 'len(labels)', len(labels)
+    
+    labels = np.asarray(labels)
+    
+    num_samplings = 1
+    corr_arr = np.zeros(num_samplings)
+    incorr_arr = np.zeros(num_samplings)
+    confusion_matrix = np.zeros((len(objects), len(objects)), dtype=int)
+    
+    # can get rid of this loop...
+    for sampling in range(num_samplings):
+        print 'Sampling', sampling
+        inds = range(len(processed_ffts))
+        np.random.shuffle(inds)
+
+        num_tot = len(processed_ffts)
+        num_train = int(0.8 * num_tot)
+        num_test = num_tot - num_train
+        print 'Number of training instances', num_train
+        print 'Number of testing instances', num_test
+        
+        train_set = [processed_ffts[idx] for idx in inds[:num_train]]
+        test_set = [processed_ffts[idx] for idx in inds[num_train:]]
+        
+        train_labels = labels[inds][:num_train]
+        test_labels = labels[inds][num_train:]
+        print train_labels
+        print '*'*100
+        print test_labels
+        
+        #som, knn_model = train_model(train_set, train_labels)
+
+        # load som and knn_model from pkl files for later use
+        som = pickle.load(open('/tmp/som.pkl'))
+        knn_model = pickle.load(open('/tmp/knn_model.pkl'))
+        
+        correct = 0
+        for idx, seq in enumerate(test_set):
+            label, probs = classify(seq, som, knn_model)
+            pretty_print_knn_probs(test_labels[idx], label, probs)
+            true_id = objects.index(test_labels[idx])
+            pred_id = objects.index(label)
+            confusion_matrix[true_id][pred_id] += 1
+            if label == test_labels[idx]: correct += 1
+        pct_correct = float(correct) / len(test_set)
+        print 'Result: %.2f%% correct, %.2f%% incorrect' % (pct_correct*100, (1.0-pct_correct)*100)
+        
+        corr_arr[sampling] = pct_correct
+        incorr_arr[sampling] = 1.0-pct_correct
+        corr_sub = corr_arr[:sampling+1]
+        incorr_sub = incorr_arr[:sampling+1]
+        print 'Current correct mean/std/var   %.2f %.2f %.3f' % (corr_sub.mean(), corr_sub.std(), corr_sub.var())
+        print 'Current incorrect mean/std/var %.2f %.2f %.3f\n' % (incorr_sub.mean(), incorr_sub.std(), incorr_sub.var())
+        
+    print '  Correct mean/std/var', corr_arr.mean(), corr_arr.std(), corr_arr.var()
+    print 'Incorrect mean/std/var', incorr_arr.mean(), incorr_arr.std(), incorr_arr.var()
+    
+    print_confusion_matrix(objects, confusion_matrix)
+    
+    for idx, obj in enumerate(objects):
+        print '%4d --- %s' % (idx, obj)
 
 def run_dbn(data_path, actions, objects):
     processed_ffts, labels = calculate_fft(data_path, actions[0], objects)
@@ -754,7 +849,7 @@ def seq_actions(data_path, actions, objects):
         print test_labels
         
         som, knn_model = train_model(train_set, train_labels)
-        
+     
         correct = 0
         total = 0
         for test_obj in test_labels:#objects:
@@ -839,7 +934,8 @@ def seq_actions(data_path, actions, objects):
 
 
 if __name__ == '__main__':
-    #matrix()
+
+    matrix()					# now creates a som.costs file in /tmp
     #exit(1)
     
     actions = ('drop', 'push', 'tap', 'shake')
@@ -862,7 +958,8 @@ if __name__ == '__main__':
     data_path = '/tmp/sounds'
     
     #run_batch_training_classification(data_path, actions, objects)
-    #test_affinity(data_path, actions, objects)
-    #run_dbn(data_path, actions, objects)
-    seq_actions(data_path, actions, objects)
+    run_batch_training_classification_loadNet(data_path, actions, objects)	# perform classification using SOM and KNN model loaded from pkl files
+    test_affinity(data_path, actions, objects)
+    run_dbn(data_path, actions, objects)
+    #seq_actions(data_path, actions, objects)
 
