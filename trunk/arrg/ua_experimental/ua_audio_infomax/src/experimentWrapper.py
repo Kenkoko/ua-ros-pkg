@@ -8,7 +8,7 @@ import rospy, sys
 
 __author__ = 'Daniel Ford, dford@email.arizona.edu'
 
-from agent import InfoMaxAgent
+from agents import InfoMaxAgent
 
 if __name__ == '__main__':
 
