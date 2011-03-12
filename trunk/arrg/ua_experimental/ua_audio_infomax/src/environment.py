@@ -9,6 +9,7 @@ from scipy import zeros
 from numpy import *
 from math import *
 from std_msgs.msg import String
+import ua_audio_infomax.msg as InfomaxAction
 
 from pybrain.utilities import Named, drawIndex
 from pybrain.rl.environments.environment import Environment
@@ -46,8 +47,12 @@ class InfoMaxEnv(Environment, Named):
 		try:
 			# create service definition
 			sense = rospy.ServiceProxy('InfoMax',InfoMax)
+
+			InfomaxAction.val = action	# write correct value		
+	
 			# call service, which returns PDF corresponding to action we requested
-			obs = sense(self.objectNames, self.actionNames, self.numCategories, catID, action)	
+			#obs = sense(self.objectNames, self.actionNames, self.numCategories, catID, action)	
+			obs = sense(self.objectNames, self.actionNames, self.numCategories, catID, InfomaxAction)
 
 			# return only the PDF from the robot
 			return obs	

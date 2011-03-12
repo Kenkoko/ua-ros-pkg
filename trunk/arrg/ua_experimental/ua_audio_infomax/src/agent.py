@@ -37,7 +37,8 @@ class InfoMaxAgent():
 
 		# tuples are name, category
 		self.objectNames = [	("Obj 0",2)	]
-		self.actionNames = ["pick up", "drop", "push", "squeeze"]
+		#self.actionNames = ["pick up", "drop", "push", "squeeze"]
+		self.actionNames = ["grasp", "lift", "drop", "shake/roll", "place"]
 
 		#self.actionNames = ["pick up", "drop", "push", "squeeze", "move left", "move right", "reset"]
 
@@ -96,9 +97,9 @@ class InfoMaxAgent():
 						bias=True, outclass=SoftmaxLayer)
 
 		if self._PGPE:
-			self.agent = OptimizationAgent(self.params, PGPE(minimize=True,verbose=False))
+			self.agent = OptimizationAgent(self.params, PGPE(minimize=False,verbose=False))
 		elif self._CMAES:
-			self.agent = OptimizationAgent(self.params, CMAES(minimize=True,verbose=False))
+			self.agent = OptimizationAgent(self.params, CMAES(minimize=False,verbose=False))
 
 		# init and perform experiment
 		exp = EpisodicExperiment(self.task, self.agent)

@@ -9,6 +9,7 @@ from math import *
 
 # import services and messages
 from ua_audio_infomax.srv import *
+import ua_audio_infomax.msg as InfomaxAction
 
 import rospy
 from random import *
@@ -100,7 +101,7 @@ class robotTestServer():
 		PDF = self._getSensors(req)
 		print "\n"
 		print "At ", self.objectNames[self.loc]
-		print "Performed ", self.actionNames[req.actionID]
+		print "Performed ", self.actionNames[req.actionID.val]
 		print "Sensed ", PDF
 		return PDF, self.loc		
 
@@ -114,8 +115,8 @@ class robotTestServer():
 			self.PDFsCreated = True
 
 		#print req.actionID
-		PDF = self.database.samplePDF(req.catID, req.actionID)
-
+		PDF = self.database.samplePDF(req.catID, req.actionID.val)
+		
 		return PDF
 
 if __name__ == "__main__":
