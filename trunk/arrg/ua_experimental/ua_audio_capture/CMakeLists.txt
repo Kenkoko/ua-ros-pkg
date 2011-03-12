@@ -9,3 +9,6 @@ target_link_libraries(audio_capture portaudio)
 rosbuild_add_executable(audio_clip_writer audio_clip_writer.cpp)
 target_link_libraries(audio_clip_writer sndfile)
 
+rosbuild_genmsg()
+rosbuild_gensrv()
+

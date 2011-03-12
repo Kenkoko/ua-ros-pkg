@@ -1,0 +1,6 @@
+float64[] rawAudio		# audio data
+
+---
+
+string[] objectNames	# names (categories) of possible objects
+float64[] beliefs		# probability distribution over object categories
