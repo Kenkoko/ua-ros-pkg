@@ -35,9 +35,9 @@ class PDF():
 	def __init__(self, numCategories, catID, actionType):
 
 		# set probabilities of sensor returning the correct value
-		pickUpProb = 52; dropProb = 83
-		pushProb = 90; squeezeProb = 67 
-		probs = [pickUpProb, dropProb, pushProb, squeezeProb]
+		graspProb = 52; liftProb = 51; dropProb = 83
+		shakeProb = 90; placeProb = 67 
+		probs = [graspProb, liftProb, dropProb, shakeProb, placeProb]
 
 		# create blank PDF
 		self.PDF = zeros(numCategories)
