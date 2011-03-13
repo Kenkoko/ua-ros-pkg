@@ -182,7 +182,7 @@ class ObjectCategorizer():
 
     def tuck_arm(self):
         retries = 3
-        joint_positions = (-1.9715, -1.7406, 0.0213, -0.1807, -1.8408, 1.0840, 0.1483)
+        joint_positions = (-1.650, -1.465, 3.13, -0.970, -1.427, 0.337, 0.046)
         
         for trial in range(retries):
             rospy.loginfo('tucking left arm: trial #%d', trial+1)
@@ -210,7 +210,7 @@ class ObjectCategorizer():
 
     def ready_arm(self):
         retries = 3
-        joint_positions = (-1.760, -1.760, 0.659, -0.795, -2.521, 0.619, -0.148)
+        joint_positions = (-1.650, -1.465, 3.172, -0.970, -1.427, 0.337, 0.046)
         
         for trial in range(retries):
             rospy.loginfo('readying left arm: trial #%d', trial+1)
@@ -573,7 +573,7 @@ class ObjectCategorizer():
         for act in actions:
             beliefs = act(tcmpr)
             
-            if beliefs is None:
+            if not beliefs:
                 self.reset_robot()
                 return None
             
