@@ -1,0 +1,3 @@
+bool dump_to_file
+---
+float64[] recorded_sound
