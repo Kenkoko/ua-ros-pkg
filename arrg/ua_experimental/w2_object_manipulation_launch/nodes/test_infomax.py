@@ -22,13 +22,13 @@ if __name__ == '__main__':
     infomax_srv = rospy.ServiceProxy('/get_category_distribution', InfoMax)
     rospy.loginfo('connected to get_category_distribution service')
     
-    actions = [InfomaxAction.GRASP, InfomaxAction.LIFT, InfomaxAction.DROP, InfomaxAction.SHAKE_ROLL, InfomaxAction.PLACE]
+    actions = [InfomaxAction.DROP, InfomaxAction.SHAKE_ROLL, InfomaxAction.PLACE]
     
     req = InfoMaxRequest()
-    req.objectNames = ['obj1', 'obj2', 'obj3']
+    req.objectNames = ['pink_glass', 'german_ball', 'obj3']
     req.actionNames = map(str, actions)
     req.numCats = len(req.objectNames)
-    req.catID = 2
+    req.catID = 1
 
 
     for action in actions:
