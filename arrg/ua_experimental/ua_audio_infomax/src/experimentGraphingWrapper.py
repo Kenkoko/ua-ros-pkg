@@ -29,32 +29,35 @@ from tasks import InfoMaxTask
 from environment import InfoMaxEnv
 
 # math and plotting imports
-from matplotlib.pyplot import show, figure, xlabel, ylabel, errorbar
+from matplotlib.pyplot import show, figure, xlabel, ylabel, errorbar, legend
 from scipy import mean, size, std
-from numpy import arange, multiply
+from numpy import arange, multiply, zeros
+from PlotInfoMaxExample import *
 
 if __name__ == '__main__':
 
 	try:
 
-		maxSteps = 30
+		maxSteps = 10
 
 		# objects and their categories
 		numCategories = 4
 
 		# tuples are name, category
 		objectNames = [	("Obj 0",2)	]
-		actionNames = ["pick up", "drop", "push", "squeeze"]
+		actionNames = ["grasp", "lift", "drop", "shake/roll", "place"]
 
 		ets = []
 
-		batch = 25  			# number of samples per learning step, 50
-		prnts = 10 			# number of times we perform learning, 100
-		numbExp = 10 			# number of experiments, 16
-		numTestingEps = 8; 		# in this case there isn't *that* much variance, so 5-10 will do
+		batch = 5  			# number of samples per learning step, was 50
+		prnts = 5 			# number of times we perform learning, was 100
+		numbExp = 5 		# number of experiments, was 16
+		numTestingEps = 5; 	# in this case there isn't *that* much variance, so 5-10 will do, was 8
+		numTestRunEps= 5;	# was 50
 
 		lrn_rewards = []
 		best_params = []
+		totalJointProbs = []
 
 		best_reward = -1000;
 		for runs in range(numbExp):
@@ -63,23 +66,28 @@ if __name__ == '__main__':
 			env = InfoMaxEnv(objectNames, actionNames, numCategories)
 			task = InfoMaxTask(env, maxSteps=maxSteps, do_decay_beliefs=True, uniformInitialBeliefs=True)
 			net = buildNetwork(task.outdim, task.indim, bias =True, outclass=SoftmaxLayer)
-			#agent = OptimizationAgent(net, PGPE(storeAllEvaluations=True,minimize=True,verbose=False))
 			agent = OptimizationAgent(net, PGPE(storeAllEvaluations=True,minimize=False,verbose=False))
 			experiment = EpisodicExperiment(task, agent)
 
 			agent_rewards = []
 
-			#Do the experiment
 			# Learn in batches
 			for i in range(prnts):
 
+				########################## learn policy
+ 
 				# Have the agent learn for 100 episodes
 				task.env.listActions = True
-				experiment.doEpisodes(batch)
+				jointProbsList = []
+				for bat in range(batch):
+					experiment.doEpisodes(1)								# do one episode
+					print "reward learning episode",bat,task.getReward()	# get reward for this episode
+					#print task.objects[0].jointProb
+					jointProbsList.append(task.objects[0].jointProb)
 
-				#print
-				#print('Last 50 evaluations: ' + repr(agent.learner._allEvaluations[-50:-1]))
-				#print('Actions after learning ' + repr(task.env.action_list))
+				totalJointProbs.append(jointProbsList)						# save joint probs from learning
+
+				########################## test learned policy
 
 				# When a batch is done, evaluate so we can see progress and show learning curves
 				curparams = agent.learner.current;
@@ -87,22 +95,22 @@ if __name__ == '__main__':
 
 				# Evaluate the current learned policy for numTestingEps episodes
 				rewards = []
+				#testingJointProbs = []
 				for dummy in range(numTestingEps):
 					agent.newEpisode()
 					# Execute the agent in the environment without learning for one episode.
 					# This uses the current set of parameters
 					r = agent.learner._BlackBoxOptimizer__evaluator(agent.learner.wrappingEvaluable)
+					print "reward testing episode",dummy,r
 					rewards.append(r)
-
-				#print ('interim rewards: ' + repr(rewards))
-				#print('Actions after evaluating ' + repr(task.env.action_list))
+					#testingJointProbs.append(task.objects[0].jointProb)
 
 				# save the average of all the rewards that the evaluation did in its runs
 				total_rewards = mean(a=rewards);
+				print "\naverage testing reward batch",i,total_rewards
+				print "\n"
 				# put this average reward for this agent onto a list so we can plot it later
 				agent_rewards.append(total_rewards)
-
-				#print ('After step ' + repr(i*batch) + ', Mean reward: ' + repr(total_rewards) + ' test# ' + repr(i))
 				
 				# compare the average reward for this evaluation of the learned policy. If it is better on average than
 				# a previous one, then save off the parameters that make up the neural network so we can use it to 
@@ -116,58 +124,85 @@ if __name__ == '__main__':
 			best_params2 = bestparams.copy();
 			# All Batches done.  
 
-		# Now save off the contents of the lrn_rewards lists so we can plot it later
-		outfile = "PGPE-learning.pkl"
+		# save and plot rewards per episode during learning
+		outfile = "./data/RewardsPerEpisode-learning.pkl"
 		print outfile
 		f = open(outfile, 'w')
 		pickle.dump(lrn_rewards,f)    
 		f.close()
 
-		# display rewards per episode
-		x_vals = multiply(arange(size(lrn_rewards, axis=1)),batch)
-		stds = std(lrn_rewards,axis=0)
-		figure()
-		xlabel('Episode #')
-		ylabel('-H')
-		line1 = errorbar(x_vals, mean(lrn_rewards,axis=0), stds, fmt='-')
-		#legend((line1[0]),('Learning'), 'upper left') 		# looks like a legend 
-		  
-		# Now do 50 Episodes with the best agent
-		numEps= 50;
+		fig1 = figure()
+		filename = "./data/RewardsPerEpisode-learning.pkl"
+		line1 = plot_rewards(filename,'gx-','green')
+		xlabel("Episode #")
+		ylabel("-H")
+  
+		# Now run the best agent
 		Ep_rewards = []
-		#net._setParameters(bestparams);
 		agent.learner.wrappingEvaluable._setParameters(best_params2)
-		for dummy in range(numEps):
+		for dummy in range(numTestRunEps):
 			agent.newEpisode()
 			task.reset()
 			task.env.verbose = False
-			#task.env.listActions = True
 			rewards = []
+			Ep_jointProbs = []
+
 			# perform one episode
 			while not task.isFinished():
-				# task.performAction(best_params[0].activate(task.getObservation()))
+				Ep_jointProbs.append(task.objects[0].jointProb)
 				task.performAction(agent.learner.wrappingEvaluable.activate(task.getObservation()))
 				rewards.append(task.getReward())
-			#print('Total reward: ' + repr(sum(rewards)))
 
 			Ep_rewards.append(rewards)
-			#print('Actions ' + repr(task.env.action_list))
 
-		outfile = "PGPE-learned-Ep.pkl"
+		# save and plot rewards per step with the best agent
+		outfile = "./data/RewardsPerStep-trained.pkl"
 		f = open(outfile, 'w')
-		pickle.dump(Ep_rewards,f)
-		#pickle.dump(task.env.action_list,f)    
+		pickle.dump(Ep_rewards,f)   
 		f.close()
 
-		# disply average reward per step in an episode
-		# To display the average reward as a function of timestep in an episode,
-		# we need to average the lists in all_rewards.
-		x_vals = arange(size(Ep_rewards, axis=1))
-		stds = std(Ep_rewards,axis=0)
+		fig1 = figure()
+		filename = "./data/RewardsPerStep-trained.pkl"
+		line1 = plot_rewards(filename,'r+-','red')
+		xlabel("Step #")
+		ylabel("-H")
+
+		# save and plot joint probs per episode
+		outfile = "./data/JointProbsPerStep-learned.pkl"
+		f = open(outfile, 'w')
+
+		catList = []
+		for catidx in range(numCategories):
+			#catidx = 2
+			cat = []
+			for tup in range(size(Ep_jointProbs,axis=0)):
+				cat.append(Ep_jointProbs[tup][catidx])
+			catList.append(cat)
+
+		pickle.dump(catList,f)   
+		f.close()
+
+		fig1 = figure()
+		filename = "./data/JointProbsPerStep-learned.pkl"
+		x_vals, jointProbs = plot_jointProbs(filename, numCategories)
+	
+		line = plot(x_vals[0], jointProbs[0], "red")
+		line = plot(x_vals[1], jointProbs[1], "green")
+		line = plot(x_vals[2], jointProbs[2], "blue")
+		line = plot(x_vals[3], jointProbs[3], "yellow")
+
+		xlabel("Step #")
+		ylabel("Category Joint Probabilities")	
+	
+		"""			
+		x_vals = arange(length)			# number of joint prob tuples in the list
+		stds = std(placehold)			# std dev of one category across entire list
 		figure()
 		xlabel('Step #')
-		ylabel('-H')
-		errorbar(x_vals, mean(Ep_rewards,axis=0), stds, fmt='-')  
+		ylabel('Joint Prob: 2')
+		errorbar(x_vals, placehold, stds, fmt='-') 
+		"""
+
 		show()
 
 	except rospy.ROSInterruptException: pass

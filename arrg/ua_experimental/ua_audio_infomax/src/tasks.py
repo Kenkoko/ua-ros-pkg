@@ -92,7 +92,7 @@ class InfoMaxTask(EpisodicTask, Named):
 
 		EpisodicTask.reset(self)
 		self.inittask()			
-		print "************************************"
+		print "******************************"
 
 	def initRBFs(self):
 
@@ -207,6 +207,7 @@ class InfoMaxTask(EpisodicTask, Named):
 	def outdim(self):
 		return len(self.getObservation()) 	# belief vector
 
+#####################################################################################
 # class definitions for objects in the world and object properties that can be sensed     
 class worldObject(Named):    
 
