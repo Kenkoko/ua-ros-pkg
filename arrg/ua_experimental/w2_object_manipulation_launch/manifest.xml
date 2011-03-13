@@ -1,0 +1,26 @@
+<package>
+  <description brief="w2_object_manipulation_launch">
+
+     w2_object_manipulation_launch
+
+  </description>
+  <author>Antons Rebguns</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/w2_object_manipulation_launch</url>
+  <depend package="rospy"/>
+  <depend package="tabletop_object_detector"/>
+  <depend package="tabletop_collision_map_processing"/>
+  <depend package="object_manipulation_msgs"/>
+  <depend package="kinematics_msgs"/>
+  <depend package="move_arm_msgs"/>
+  <depend package="mapping_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="ua_audio_capture"/>
+  <depend package="ua_audio_infomax"/>
+  <depend package="ua_controller_msgs"/>
+  <depend package="ax12_controller_core"/>
+
+</package>
+
+

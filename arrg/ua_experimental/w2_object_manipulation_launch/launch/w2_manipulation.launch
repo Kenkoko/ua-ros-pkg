@@ -1,0 +1,36 @@
+<launch>
+    <!-- hand description -->
+    <rosparam command="load" file="$(find wubble2_robot)/config/wubble_hand_description.yaml"/>
+
+    <!-- joint trajectory normalization -->
+    <include file="$(find trajectory_filter_server)/launch/trajectory_unnormalize.launch"/>
+
+    <!-- grasp planner -->
+    <node pkg="orrosplanning"
+          type="graspplanning_openrave.py"
+          name="grasp_planner_cluster"
+          args="--scene=$(find openrave)/share/openrave/robots/wubble2.xml --mapframe=base_footprint --graspframe=base_link --viewer="
+          respawn="false"
+          output="screen" />
+
+    <!-- object manipulator -->
+    <node pkg="object_manipulator" type="object_manipulator_node" name="object_manipulator" respawn="false" output="screen">
+        <remap from="left_arm/constraint_aware_ik" to="/wubble_left_arm_kinematics/get_constraint_aware_ik" />
+        <remap from="left_arm/interpolated_ik" to="/l_interpolated_ik_motion_plan" />
+        <remap from="left_arm/interpolated_ik_set_params" to="/l_interpolated_ik_motion_plan_set_params" />
+        <remap from="left_arm/get_ik_solver_info" to="/wubble_left_arm_kinematics/get_ik_solver_info" />
+        <remap from="left_arm/get_state_validity" to="/environment_server_left_arm/get_state_validity" />
+        <remap from="left_arm/move_arm" to="/move_left_arm" />
+        <remap from="left_arm/joint_trajectory" to="/l_arm_controller/joint_trajectory_action" />
+        <remap from="left_arm/hand_posture_execution" to="/wubble_gripper_grasp_action" />
+        <remap from="left_arm/grasp_status" to="/wubble_grasp_status" />
+        
+        <param name="default_cluster_planner" value="/GraspPlanning" />
+    </node>
+
+    <!-- cluster bounding box finder-->
+    <node pkg="object_manipulator" type="cluster_bounding_box_finder_server.py" name="cluster_bounding_box_finder" output="screen" respawn="false" />
+    
+    <node pkg="tabletop_collision_map_processing" name="tabletop_collision_map_processing" 
+        type="tabletop_collision_map_processing_node" respawn="false" output="screen"/>
+</launch>
