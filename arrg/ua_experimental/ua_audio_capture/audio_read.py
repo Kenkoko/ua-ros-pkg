@@ -933,6 +933,32 @@ def seq_actions(data_path, actions, objects):
 #        print '%4d --- %s' % (idx, obj)
 
 
+def load_sounds(datapath, numActions, numObjects):
+
+    actions = numActions
+    objects = numObjects    
+    audio = 4
+
+    # want to input actionID, objID, trialID and have the code read the filename, start, and duration info, then grab the audio
+
+    # should return an array with dimensions [action][object][trial][sound] ?
+
+    # need to create a mapping from actionID and objID to .desc filename, then assemble these mappings into a list of trials
+    # then given an actionID, objID, and trialID, will know the rawsound's filename and can read the start and duration info
+    # from the .desc file
+
+    # loop over all .desc files in directory to build initial mapping?
+    # then stack in an array of some kind
+
+    # check out fnmatch, fseek
+
+    # get all file names in dir
+    dirList = os.listdir(datapath)
+    for fname in dirList:
+        print fname
+
+    return actions,objects,audio
+
 if __name__ == '__main__':
 
     matrix()					# now creates a som.costs file in /tmp
@@ -957,9 +983,22 @@ if __name__ == '__main__':
               
     data_path = '/tmp/sounds'
     
-    #run_batch_training_classification(data_path, actions, objects)
-    run_batch_training_classification_loadNet(data_path, actions, objects)	# perform classification using SOM and KNN model loaded from pkl files
+    run_batch_training_classification(data_path, actions, objects)
+
+    # perform classification using SOM and KNN model loaded from pkl files
+    #run_batch_training_classification_loadNet(data_path, actions, objects)	
+
     #test_affinity(data_path, actions, objects)
     #run_dbn(data_path, actions, objects)
     #seq_actions(data_path, actions, objects)
+    
 
+    """
+    datapath = '/tmp/sounds/newGood'
+    actionNames = ["grasp", "lift", "drop", "shake/roll", "place"]
+    objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3", "Obj 4", "Obj 5", \
+                    "Obj 6", "Obj 7", "Obj 8", "Obj 9", "Obj 10", "Obj 11" ]
+    numActions = len(actionNames)
+    numObjects = len(objectNames)
+    """
+    actions, objects, audio = load_sounds(datapath, numActions, numObjects)
