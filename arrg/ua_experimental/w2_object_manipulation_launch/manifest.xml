@@ -20,6 +20,9 @@
   <depend package="ua_audio_infomax"/>
   <depend package="ua_controller_msgs"/>
   <depend package="ax12_controller_core"/>
+  <depend package="pr2_controllers_msgs"/>
+  <depend package="interpolated_ik_motion_planner"/>
+  <depend package="wubble2_robot"/>
 
 </package>
 

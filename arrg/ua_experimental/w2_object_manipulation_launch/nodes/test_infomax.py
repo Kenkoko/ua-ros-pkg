@@ -25,7 +25,15 @@ if __name__ == '__main__':
     actions = [InfomaxAction.DROP, InfomaxAction.SHAKE_ROLL, InfomaxAction.PLACE]
     
     req = InfoMaxRequest()
-    req.objectNames = ['pink_glass', 'german_ball', 'obj3']
+    req.objectNames = ['pink_glass',
+                       'german_ball',
+                       'blue_cup',
+                       'blue_spiky_ball',
+                       'screw_box',
+                       'wire_spool',
+                       'sqeaky_ball',
+                       'duck_tape_roll',
+                       'ace_terminals']
     req.actionNames = map(str, actions)
     req.numCats = len(req.objectNames)
     req.catID = 1
