@@ -47,8 +47,8 @@ if __name__ == '__main__':
 
 		ets = []
 
-		numbExp = 10 			# number of learning experiments, was 16
-		prnts = 10	 			# number of batches per experiment, was 100
+		numbExp = 2 			# number of learning experiments, was 16
+		prnts = 100				# number of batches per experiment, was 100
 
 		batch = 50  					# number of learning episodes per batch, was 50
 		numTestingEps = 15; 			# number of testing episodes per batch, was 8
@@ -131,18 +131,22 @@ if __name__ == '__main__':
 					bestparams = agent.learner.current.copy();
 				  
 			# list of list of average rewards per batch
-			#lrn_rewards.append(agent_rewards)
+			lrn_rewards.append(agent_rewards)
 
 			# list of lists of rewards per episode in each batch
-			lrn_rewards.append(ep_rewards)
+			#lrn_rewards.append(ep_rewards)
 
 			# saving parameters of the best policy
 			best_params2 = bestparams.copy();
 			# All Batches done.  
 
+		"""
 		# reshape reward array to plot total number of episodes (batches * testing episodes)
-		mult = prnts * numTestingEps
+		mult = prnts * batch
 		lrn_rewards = array(lrn_rewards).reshape(numbExp,mult)
+		"""
+
+		#print lrn_rewards
 
 		# save and plot rewards per batch during learning
 		outfile = "./data/RewardsPerEpisode-learning.pkl"
@@ -153,7 +157,8 @@ if __name__ == '__main__':
 
 		fig1 = figure()
 		filename = "./data/RewardsPerEpisode-learning.pkl"
-		line1 = plot_rewards(filename, 'gx-','green')
+		line1 = plot_rewards(filename, batch, 'gx-','green')
+		#line1 = plot_episode(filename, 'gx-','green')
 		xlabel("Episode #")
 		ylabel("Reward(-H)")
   

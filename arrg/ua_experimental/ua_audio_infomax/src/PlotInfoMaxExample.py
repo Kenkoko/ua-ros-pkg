@@ -33,12 +33,12 @@ def plot_jointProbs(filename, numCats):
 
     return x_vals, jointProbs
 
-def plot_rewards(filename, colorhash, stdcolor):
+def plot_rewards(filename, batch, colorhash, stdcolor):
     f = open(filename)
     lrn_rewards = pickle.load(f)
     f.close()
 
-    x_vals = arange(size(lrn_rewards, axis=1))
+    x_vals = arange(size(lrn_rewards, axis=1))*(batch)
     means = mean(lrn_rewards,axis=0)
     stds = std(lrn_rewards,axis=0)
     
