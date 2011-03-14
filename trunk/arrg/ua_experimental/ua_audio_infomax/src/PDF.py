@@ -35,8 +35,8 @@ class PDF():
 	def __init__(self, numCategories, catID, actionType):
 
 		# set probabilities of sensor returning the correct value
-		graspProb = 52; liftProb = 51; dropProb = 83
-		shakeProb = 90; placeProb = 67 
+		graspProb = 52; liftProb = 58; dropProb = 70
+		shakeProb = 73; placeProb = 67 
 		probs = [graspProb, liftProb, dropProb, shakeProb, placeProb]
 
 		# create blank PDF
@@ -63,4 +63,11 @@ class PDF():
 		else:
 			self.PDF[catID-1] += (1.-actProb-0.05)/2
 			self.PDF[catID] += actProb
-			self.PDF[catID+1] += (1.-actProb-0.05)/2 
+			self.PDF[catID+1] += (1.-actProb-0.05)/2
+
+		# add some randomness and renormalize PDF
+		for prob in range(len(self.PDF)):
+			self.PDF[prob] += 0.08*random.random()
+		sumtot = sum(self.PDF)
+		for prob in range(len(self.PDF)):
+			self.PDF[prob] /= sumtot 
