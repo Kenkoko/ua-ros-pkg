@@ -31,17 +31,15 @@ from environment import InfoMaxEnv
 # math and plotting imports
 from matplotlib.pyplot import show, figure, xlabel, ylabel, errorbar, legend
 from scipy import mean, size, std
-from numpy import arange, multiply, zeros
+from numpy import arange, multiply, zeros, shape
 from PlotInfoMaxExample import *
 
 if __name__ == '__main__':
 
 	try:
 
-		maxSteps = 10
-
 		# objects and their categories
-		numCategories = 4
+		numCategories = 6
 
 		# tuples are name, category
 		objectNames = [	("Obj 0",2)	]
@@ -49,11 +47,14 @@ if __name__ == '__main__':
 
 		ets = []
 
-		batch = 5  			# number of samples per learning step, was 50
-		prnts = 5 			# number of times we perform learning, was 100
-		numbExp = 5 		# number of experiments, was 16
-		numTestingEps = 5; 	# in this case there isn't *that* much variance, so 5-10 will do, was 8
-		numTestRunEps= 5;	# was 50
+		numbExp = 10 			# number of learning experiments, was 16
+		prnts = 10	 			# number of batches per experiment, was 100
+
+		batch = 50  					# number of learning episodes per batch, was 50
+		numTestingEps = 15; 			# number of testing episodes per batch, was 8
+		maxSteps = 10						# number of steps per episode
+		
+		numTestRunEps= 10;		# number of episodes to test the best overall agent, was 50
 
 		lrn_rewards = []
 		best_params = []
@@ -61,6 +62,8 @@ if __name__ == '__main__':
 
 		best_reward = -1000;
 		for runs in range(numbExp):
+
+			print "\n///////////// STARTING EXPERIMENT",runs
 
 			# set up environment, task, neural net, agent, and experiment
 			env = InfoMaxEnv(objectNames, actionNames, numCategories)
@@ -70,18 +73,21 @@ if __name__ == '__main__':
 			experiment = EpisodicExperiment(task, agent)
 
 			agent_rewards = []
-
+			ep_rewards = []
 			# Learn in batches
 			for i in range(prnts):
 
+				print "\n\t@@@@@@@@@@@@@@ STARTING LEARNING BATCH",i
+
 				########################## learn policy
  
-				# Have the agent learn for 100 episodes
+				# Have the agent learn
 				task.env.listActions = True
 				jointProbsList = []
 				for bat in range(batch):
+					print "\t\tLEARNING EP",bat
 					experiment.doEpisodes(1)								# do one episode
-					print "reward learning episode",bat,task.getReward()	# get reward for this episode
+					print "\t\t\treward learning episode",bat,task.getReward()	# get reward for this episode
 					#print task.objects[0].jointProb
 					jointProbsList.append(task.objects[0].jointProb)
 
@@ -97,20 +103,25 @@ if __name__ == '__main__':
 				rewards = []
 				#testingJointProbs = []
 				for dummy in range(numTestingEps):
+					print "\t\tTESTING EP",dummy
 					agent.newEpisode()
 					# Execute the agent in the environment without learning for one episode.
 					# This uses the current set of parameters
 					r = agent.learner._BlackBoxOptimizer__evaluator(agent.learner.wrappingEvaluable)
-					print "reward testing episode",dummy,r
+					print "\t\t\treward testing episode",dummy,r
 					rewards.append(r)
 					#testingJointProbs.append(task.objects[0].jointProb)
 
-				# save the average of all the rewards that the evaluation did in its runs
+				# average of all rewards earned by the current policy running numTestingEps episodes
 				total_rewards = mean(a=rewards);
-				print "\naverage testing reward batch",i,total_rewards
+
+				print "\n\taverage testing reward batch",i,total_rewards
 				print "\n"
-				# put this average reward for this agent onto a list so we can plot it later
+
+				# list of average rewards per batch 
 				agent_rewards.append(total_rewards)
+				# list of reward per episode in this batch
+				ep_rewards.append(rewards)
 				
 				# compare the average reward for this evaluation of the learned policy. If it is better on average than
 				# a previous one, then save off the parameters that make up the neural network so we can use it to 
@@ -119,12 +130,21 @@ if __name__ == '__main__':
 					best_reward = total_rewards;
 					bestparams = agent.learner.current.copy();
 				  
-			# put the rewards from the last agent onto a total list
-			lrn_rewards.append(agent_rewards)
+			# list of list of average rewards per batch
+			#lrn_rewards.append(agent_rewards)
+
+			# list of lists of rewards per episode in each batch
+			lrn_rewards.append(ep_rewards)
+
+			# saving parameters of the best policy
 			best_params2 = bestparams.copy();
 			# All Batches done.  
 
-		# save and plot rewards per episode during learning
+		# reshape reward array to plot total number of episodes (batches * testing episodes)
+		mult = prnts * numTestingEps
+		lrn_rewards = array(lrn_rewards).reshape(numbExp,mult)
+
+		# save and plot rewards per batch during learning
 		outfile = "./data/RewardsPerEpisode-learning.pkl"
 		print outfile
 		f = open(outfile, 'w')
@@ -133,14 +153,15 @@ if __name__ == '__main__':
 
 		fig1 = figure()
 		filename = "./data/RewardsPerEpisode-learning.pkl"
-		line1 = plot_rewards(filename,'gx-','green')
+		line1 = plot_rewards(filename, 'gx-','green')
 		xlabel("Episode #")
-		ylabel("-H")
+		ylabel("Reward(-H)")
   
 		# Now run the best agent
 		Ep_rewards = []
 		agent.learner.wrappingEvaluable._setParameters(best_params2)
 		for dummy in range(numTestRunEps):
+			print "RUNNING EP",dummy
 			agent.newEpisode()
 			task.reset()
 			task.env.verbose = False
@@ -163,9 +184,10 @@ if __name__ == '__main__':
 
 		fig1 = figure()
 		filename = "./data/RewardsPerStep-trained.pkl"
-		line1 = plot_rewards(filename,'r+-','red')
+		#line1 = plot_rewards(filename,'r+-','red')
+		line1 = plot_episode(filename,'r+-','red')
 		xlabel("Step #")
-		ylabel("-H")
+		ylabel("Reward(-H)")
 
 		# save and plot joint probs per episode
 		outfile = "./data/JointProbsPerStep-learned.pkl"
@@ -173,7 +195,6 @@ if __name__ == '__main__':
 
 		catList = []
 		for catidx in range(numCategories):
-			#catidx = 2
 			cat = []
 			for tup in range(size(Ep_jointProbs,axis=0)):
 				cat.append(Ep_jointProbs[tup][catidx])
@@ -190,6 +211,8 @@ if __name__ == '__main__':
 		line = plot(x_vals[1], jointProbs[1], "green")
 		line = plot(x_vals[2], jointProbs[2], "blue")
 		line = plot(x_vals[3], jointProbs[3], "yellow")
+		line = plot(x_vals[4], jointProbs[4], "black")
+		line = plot(x_vals[5], jointProbs[5], "cyan")
 
 		xlabel("Step #")
 		ylabel("Category Joint Probabilities")	

@@ -8,6 +8,7 @@ def plot_episode(filename, colorhash, stdcolor):
     f = open(filename)
     all_rewards = pickle.load(f)
     f.close()
+
     x_vals = arange(size(all_rewards, axis=1))
     means = mean(all_rewards,axis=0)
     stds = std(all_rewards,axis=0)
@@ -36,8 +37,10 @@ def plot_rewards(filename, colorhash, stdcolor):
     f = open(filename)
     lrn_rewards = pickle.load(f)
     f.close()
-    
-    x_vals, means, stds = get_top_rewards(lrn_rewards)
+
+    x_vals = arange(size(lrn_rewards, axis=1))
+    means = mean(lrn_rewards,axis=0)
+    stds = std(lrn_rewards,axis=0)
     
     line = plot(x_vals, means, colorhash)
     plt.fill_between(x_vals, means+stds, y2=means-stds, alpha=0.2, facecolor=stdcolor)
@@ -73,13 +76,15 @@ def get_top_rewards(rewards):
 
 if __name__ == '__main__':
     fig1 = figure()
- 
+
+    """ 
     filename = 'data/totalReward_learning.pkl'
     line1 = plot_rewards(filename,'r+-','red')
 
     filename = 'data/Reward_learning.pkl'
     line2 = plot_rewards(filename,'gx-','green')
-        
+    """       
+ 
     show()
 
 

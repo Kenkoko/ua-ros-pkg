@@ -92,7 +92,7 @@ class InfoMaxTask(EpisodicTask, Named):
 
 		EpisodicTask.reset(self)
 		self.inittask()			
-		print "******************************"
+		#print "******************************"
 
 	def initRBFs(self):
 
