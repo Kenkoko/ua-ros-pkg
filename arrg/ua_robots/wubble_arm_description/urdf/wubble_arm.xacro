@@ -141,8 +141,8 @@
             <child link="L8_left_finger_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-0.28" upper="0.785" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.28}" soft_upper_limit="${0.785}" />
+            <limit  lower="-0.317" upper="0.859" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.317}" soft_upper_limit="${0.859}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -153,21 +153,21 @@
             <child link="L9_right_finger_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-0.785" upper="0.28" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.785}" soft_upper_limit="${0.28}" />
+            <limit  lower="-0.859" upper="0.317" effort="300" velocity="1.17" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.859}" soft_upper_limit="${0.317}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
         <!-- Left fingertip dummy joint -->
         <joint name="left_fingertip_joint" type="fixed" >
-            <origin xyz="0.095 0.005 0" rpy="0 0 0" />
+            <origin xyz="0.095 -0.002 0" rpy="0 0 0" />
             <parent link="L8_left_finger_link" />
             <child link="left_fingertip_link"/>
         </joint>
         
         <!-- Right fingertip dummy joint -->
         <joint name="right_fingertip_joint" type="fixed" >
-            <origin xyz="0.095 -0.005 0" rpy="0 0 0" />
+            <origin xyz="0.095 0.002 0" rpy="0 0 0" />
             <parent link="L9_right_finger_link" />
             <child link="right_fingertip_link"/>
         </joint>
