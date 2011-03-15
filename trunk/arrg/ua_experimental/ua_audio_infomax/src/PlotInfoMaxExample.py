@@ -12,12 +12,31 @@ def plot_episode(filename, colorhash, stdcolor):
     x_vals = arange(size(all_rewards, axis=1))
     means = mean(all_rewards,axis=0)
     stds = std(all_rewards,axis=0)
-    xlabel('Episode #')
-    ylabel('-H')
+    #xlabel('Episode #')
+    #ylabel('-H')
         
     line = plot(x_vals, means, colorhash)
     plt.fill_between(x_vals, means+stds, y2=means-stds, alpha=0.2, facecolor=stdcolor)
     return line
+
+def plot_accuracy(filename, colorhash1, stdcolor1, colorhash2, stdcolor2):
+    f = open(filename)
+    all_rewards = pickle.load(f)
+    all_rewardsHand = pickle.load(f)
+    f.close()
+
+    x_vals = arange(size(all_rewards, axis=1))
+    means = mean(all_rewards,axis=0)
+    stds = std(all_rewards,axis=0)
+
+    means2 = mean(all_rewardsHand,axis=0)
+    stds2 = std(all_rewardsHand,axis=0)
+        
+    line1 = plot(x_vals, means*100, colorhash1)
+    #plt.fill_between(x_vals, means+stds, y2=means-stds, alpha=0.2, facecolor=stdcolor1)
+    line2 = plot(x_vals, means2*100, colorhash2)
+    #plt.fill_between(x_vals, means2+stds2, y2=means2-stds2, alpha=0.2, facecolor=stdcolor2)
+    return line1, line2
 
 def plot_jointProbs(filename, numCats):
 
