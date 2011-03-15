@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import roslib; roslib.load_manifest('ua_audio_infomax')
-import rospy, sys, pickle, copy
+import rospy, sys, pickle, copy, datetime, os
 
 ############################################################################
 #
@@ -26,37 +26,55 @@ from pybrain.structure.modules import SoftmaxLayer
 from tasks import InfoMaxTask
 from environment import InfoMaxEnv
 
-# math and plotting imports
-from matplotlib.pyplot import show, figure, xlabel, ylabel, errorbar, legend, axis, xlim
-from scipy import mean, size, std
-from numpy import arange, multiply, zeros, shape, argmax
-from PlotInfoMaxExample import *
+# plotting import
+from graphExperiment import *
+
+###################### initialize experiment
+
+# categories and objects 
+numCategories = 6
+objectNames = [	("Obj 0",3)	]		# tuples are name, category
+catID = objectNames[0][1]
+actionNames = ["grasp", "lift", "drop", "shake/roll", "place"]
+
+# experiment parameters
+numbExp = 2 			# number of learning experiments, was 16
+prnts = 100					# number of batches per experiment, was 100
+batch = 50	  					# number of learning episodes per batch, was 50
+numTestingEps = 10; 			# number of testing episodes per batch, was 8
+numTestRunEps = 25;				# number of episodes to run the best overall agent, was 50
+maxSteps = 10						# number of steps per episode
+
+# init structures for rewards and network parameters
+lrn_rewards = []
+best_params = []
+totalJointProbs = []
+best_reward = -1000;
+
+# save off experiment parameters for each run
+def pickle_metadata(filename, timestamp, netparams):
+
+	f = open(filename, 'w')
+
+	pickle.dump(timestamp,f)					# timestamp
+	pickle.dump(numCategories,f)				# number of categories
+	pickle.dump(objectNames,f)					# object name and category
+	pickle.dump(actionNames,f)					# action names
+
+	pickle.dump(numbExp,f)						# number of experiments
+	pickle.dump(prnts,f)						# number of learning batches per experiment
+	pickle.dump(batch,f)						# number of episodes per batch
+	pickle.dump(numTestingEps,f)				# number of testing episodes per batch
+	pickle.dump(numTestRunEps,f)				# number of episodes to run the best agent
+	pickle.dump(maxSteps,f)						# number of steps per episode 
+
+	pickle.dump(netparams,f)					# parameters of trained policy
+
+	f.close()
 
 if __name__ == '__main__':
 
 	try:
-
-		###################### initialize experiment
-		
-		# categories and objects 
-		numCategories = 6
-		objectNames = [	("Obj 0",2)	]		# tuples are name, category
-		catID = objectNames[0][1]
-		actionNames = ["grasp", "lift", "drop", "shake/roll", "place"]
-
-		# experiment parameters
-		numbExp = 2 			# number of learning experiments, was 16
-		prnts = 25				# number of batches per experiment, was 100
-		batch = 50  					# number of learning episodes per batch, was 50
-		numTestingEps = 5; 				# number of testing episodes per batch, was 8
-		numTestRunEps= 10;				# number of episodes to run the best overall agent, was 50
-		maxSteps = 10						# number of steps per episode
-
-		# init structures for rewards and network parameters
-		lrn_rewards = []
-		best_params = []
-		totalJointProbs = []
-		best_reward = -1000;
 
 		###################### run [numbExp] experiments, each with [prnts] batches
 		###################### each batch has [batch] episodes with [maxSteps] per episode 
@@ -74,6 +92,7 @@ if __name__ == '__main__':
 			agent_rewards = []
 			ep_rewards = []
 			# Learn in batches
+			agent_rewards.append(0)
 			for i in range(prnts):
 
 				print "\n\t@@@@@@@@@@@@@@ STARTING LEARNING BATCH",i
@@ -139,20 +158,25 @@ if __name__ == '__main__':
 			best_params2 = bestparams.copy();
 			# All Batches done.  
 
-		###################### save and plot rewards per batch during learning
-		outfile = "./data/RewardsPerEpisode-learning.pkl"
-		print outfile
+		print "\n///////////// LEARNING DONE"
+
+		###################### set path to save experiment files and metadata
+		path = ""
+		#path = "data"	
+		#os.system("cd .."); os.system("chmod -R 777 data")	# brute-force method to ensure we have the right permissions
+		timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+		#path = "./" + path + "/" + timestamp + "/"
+		#os.mkdir(path)
+		filename = "experiment.desc"
+		# save metadata, including trained policy parameters
+		pickle_metadata(path+filename, timestamp, best_params2)
+
+		###################### save rewards per batch during learning
+		outfile = path+"RewardsPerEpisode-learning.pkl"
 		f = open(outfile, 'w')
 		pickle.dump(lrn_rewards,f)    
 		f.close()
 
-		fig1 = figure()
-		filename = "./data/RewardsPerEpisode-learning.pkl"
-		line1 = plot_rewards(filename, batch, 'gx-','green')
-		#line1 = plot_episode(filename, 'gx-','green')
-		xlabel("Episode #")
-		ylabel("Reward(-H)")
-  
 		###################### now run the best agent
 		# need to save action trace, also a good place to insert hand-coded policy for running
 		Ep_rewards = []
@@ -172,6 +196,7 @@ if __name__ == '__main__':
 			PrCorrect = []
 			correctCount = 0
 
+			#Ep_rewards.append(zeros(maxSteps))
 			while not task.isFinished():
 				Ep_jointProbs.append(task.objects[0].jointProb)
 				task.performAction(agent.learner.wrappingEvaluable.activate(task.getObservation()))
@@ -192,6 +217,7 @@ if __name__ == '__main__':
 			PrCorrectHand = []
 			correctCountHand = 0
 			
+			#Ep_rewardsHand.append(zeros(maxSteps))
 			actionIdx = len(actionNames)-1
 			while not task.isFinished():
 				Ep_jointProbsHand.append(task.objects[0].jointProb)
@@ -206,41 +232,21 @@ if __name__ == '__main__':
 			Ep_rewardsHand.append(rewardsHand)
 			probCorrectHand.append(PrCorrectHand)
 
-		#print probCorrect
-		#print probCorrectHand
-
-		###################### save and plot rewards per step with the best agent
-		outfile = "./data/RewardsPerStep-trained.pkl"
+		###################### save rewards per step with the best agent
+		outfile = path+"RewardsPerStep-trained.pkl"
 		f = open(outfile, 'w')
 		pickle.dump(Ep_rewards,f)   
 		f.close()
 
-		# reload pkl file and plot
-		fig1 = figure()
-		filename = "./data/RewardsPerStep-trained.pkl"
-		line1 = plot_episode(filename,'r+-','red')
-		xlim(0,maxSteps-1)
-		xlabel("Step #")
-		ylabel("Reward(-H)")
-
-		###################### save and plot accuracy per step with the best agent and hand-coded policy
-		outfile = "./data/AccuracyPerStep.pkl"
+		###################### save accuracy per step with the best agent and hand-coded policy
+		outfile = path+"AccuracyPerStep.pkl"
 		f = open(outfile, 'w')
 		pickle.dump(probCorrect,f)  
 		pickle.dump(probCorrectHand,f)  
 		f.close()
 
-		# reload pkl files and plot
-		fig1 = figure()
-		filename = "./data/AccuracyPerStep.pkl"
-		line1, line2 = plot_accuracy(filename,'r+-','red','gx-','green')
-		axis([0,maxSteps-1,0,110])
-		xlabel("Step #")
-		ylabel("Accuracy (%)")
-		legend( ('trained policy', 'hand-coded policy'), loc='best')
-
-		###################### save and plot joint probs per step with the best agent
-		outfile = "./data/JointProbsPerStep-learned.pkl"
+		###################### save joint probs per step with the best agent
+		outfile = path+"JointProbsPerStep-learned.pkl"
 		f = open(outfile, 'w')
 
 		# pull out individual probabilities to save
@@ -254,17 +260,9 @@ if __name__ == '__main__':
 		pickle.dump(catList,f)   
 		f.close()
 
-		# reload pkl file and plot individual probabilities
-		fig1 = figure()
-		filename = "./data/JointProbsPerStep-learned.pkl"
-		x_vals, jointProbs = plot_jointProbs(filename, numCategories)
-		for cat in range(numCategories):
-			plot(x_vals[cat], jointProbs[cat])
-		axis([0,maxSteps-1,0,1])
-		xlabel("Step #")
-		ylabel("Category Joint Probabilities")	
-
-		###################### show all plots
-		show()
+		###################### print metadata and plot figures
+		grapher = graph(path)
+		grapher.print_data()
+		grapher.plot_all()
 
 	except rospy.ROSInterruptException: pass

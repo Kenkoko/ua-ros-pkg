@@ -1,8 +1,9 @@
+import pickle
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import show, figure, plot, xlabel, ylabel, errorbar, legend
 from scipy import mean, size, std, array, nonzero, multiply, array, argsort, sum
 from numpy import arange
-import pickle
+from PlotInfoMaxExample import *
 
 def plot_episode(filename, colorhash, stdcolor):
     f = open(filename)
@@ -12,8 +13,6 @@ def plot_episode(filename, colorhash, stdcolor):
     x_vals = arange(size(all_rewards, axis=1))
     means = mean(all_rewards,axis=0)
     stds = std(all_rewards,axis=0)
-    #xlabel('Episode #')
-    #ylabel('-H')
         
     line = plot(x_vals, means, colorhash)
     plt.fill_between(x_vals, means+stds, y2=means-stds, alpha=0.2, facecolor=stdcolor)
@@ -33,9 +32,7 @@ def plot_accuracy(filename, colorhash1, stdcolor1, colorhash2, stdcolor2):
     stds2 = std(all_rewardsHand,axis=0)
         
     line1 = plot(x_vals, means*100, colorhash1)
-    #plt.fill_between(x_vals, means+stds, y2=means-stds, alpha=0.2, facecolor=stdcolor1)
     line2 = plot(x_vals, means2*100, colorhash2)
-    #plt.fill_between(x_vals, means2+stds2, y2=means2-stds2, alpha=0.2, facecolor=stdcolor2)
     return line1, line2
 
 def plot_jointProbs(filename, numCats):
@@ -65,35 +62,10 @@ def plot_rewards(filename, batch, colorhash, stdcolor):
     plt.fill_between(x_vals, means+stds, y2=means-stds, alpha=0.2, facecolor=stdcolor)
     return line
 
-def get_top_rewards(rewards):        
-    # Simple outlier rejection
-    # Get learning curves where at least half the points on the curve 
-    # are above one standard deviation below the mean at that point.
-    rarr = array(rewards)
-    #print rarr
-    stds = std(rarr,axis=0)
-    means = mean(rarr,axis=0)
-    
-    aboves = mean(rarr > means-stds, axis=1)
-	# aboves = mean(rarr > means+1.2*stds, axis=1)
-    # If you get errors, try
-	# aboves = mean(rarr > means-2*stds, axis=1)
-    inds = nonzero(aboves > 0.5)
-    # If you get errors, also may try if above doesn't help
-	# inds = nonzero(aboves > 0.25)
-    #print size(inds)
-
-    top_rewards = rarr[inds[0]]
-
-    x_vals = arange(size(top_rewards, axis=1))
-    stds = std(top_rewards,axis=0)
-    means = mean(top_rewards,axis=0);
-        
-    return x_vals, means, stds
-
 ####################################
 
 if __name__ == '__main__':
+
     fig1 = figure()
 
     """ 
