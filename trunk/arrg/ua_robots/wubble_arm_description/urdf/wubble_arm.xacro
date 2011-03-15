@@ -158,6 +158,20 @@
             <dynamics damping="50" friction="1"/>
         </joint>
         
+        <!-- Left fingertip dummy joint -->
+        <joint name="left_fingertip_joint" type="fixed" >
+            <origin xyz="0.095 0.005 0" rpy="0 0 0" />
+            <parent link="L8_left_finger_link" />
+            <child link="left_fingertip_link"/>
+        </joint>
+        
+        <!-- Right fingertip dummy joint -->
+        <joint name="right_fingertip_joint" type="fixed" >
+            <origin xyz="0.095 -0.005 0" rpy="0 0 0" />
+            <parent link="L9_right_finger_link" />
+            <child link="right_fingertip_link"/>
+        </joint>
+        
         <!-- ****** LINK DEFINITIONS ****** -->
         
         <link name="L0_base_link">
@@ -406,6 +420,54 @@
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <mesh filename="package://wubble_arm_description/meshes/L9_gripper_right_finger.stl"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="left_fingertip_link">
+            <inertial>
+                <mass value="0.001" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="0.001" ixy="0.0" ixz="0.0"
+                         iyy="0.001" iyz="0.0"
+                         izz="0.001" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+        </link>
+        
+        <link name="right_fingertip_link">
+            <inertial>
+                <mass value="0.001" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="0.001" ixy="0.0" ixz="0.0"
+                         iyy="0.001" iyz="0.0"
+                         izz="0.001" />
+            </inertial>
+            
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.001 0.001 0.001" />
                 </geometry>
             </collision>
         </link>
