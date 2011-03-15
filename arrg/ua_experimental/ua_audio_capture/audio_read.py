@@ -1,13 +1,48 @@
 #!/usr/bin/env python
 
-import roslib; roslib.load_manifest('ua_audio_capture')
+#
+# Software License Agreement (BSD License)
+#
+# Copyright (c) 2010, Antons Rebguns. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#  * Neither the name of University of Arizona nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# Author: Antons Rebguns
+#
 
 import pickle
 import math
 import os
+from fnmatch import fnmatch
 from array import array
 from operator import itemgetter
 
+import roslib; roslib.load_manifest('ua_audio_capture')
 import rospy
 
 import pylab as pl
@@ -33,7 +68,7 @@ def stringify_sequence(seq):
         result.append(chr(ascii_idx))
     return ''.join(result)
 
-def matrix():
+def generate_cost_matrix():
     map_side = 6
     result = '   '
 
@@ -70,13 +105,11 @@ def matrix():
     result += '-10  ' * (map_side * map_side)
     result += '1\n'
     
-    print result		# write this to a file called /tmp/som.costs
+    #print result    # write this to a file called /tmp/som.costs
 
     outfile = open('/tmp/som.costs', 'w')
     outfile.write(result)
-    outfile.close()	
-
-    return result
+    outfile.close()
 
 def sound_seq_distance_str(seq1_str, seq2_str):
     seq1_str = np.asanyarray(seq1_str)
@@ -571,11 +604,6 @@ def run_batch_training_classification(data_path, actions, objects):
     for idx, obj in enumerate(objects):
         print '%4d --- %s' % (idx, obj)
 
-from pybrain.datasets import UnsupervisedDataSet
-from pybrain.unsupervised.trainers.deepbelief import DeepBeliefTrainer
-from pybrain.tools.shortcuts import buildNetwork
-from pybrain.structure import TanhLayer, SigmoidLayer, SoftmaxLayer
-
 def run_batch_training_classification_loadNet(data_path, actions, objects):
     processed_ffts, labels = calculate_fft(data_path, actions[0], objects)
     act_lab = [actions[0]]*len(labels)
@@ -660,68 +688,6 @@ def run_batch_training_classification_loadNet(data_path, actions, objects):
     
     for idx, obj in enumerate(objects):
         print '%4d --- %s' % (idx, obj)
-
-def run_dbn(data_path, actions, objects):
-    processed_ffts, labels = calculate_fft(data_path, actions[0], objects)
-    act_lab = [actions[0]]*len(labels)
-    
-#    p, l = calculate_fft(data_path, actions[1], objects)
-#    processed_ffts.extend(p)
-#    labels.extend(l)
-#    act_lab.extend([actions[1]]*len(l))
-#    
-#    p, l = calculate_fft(data_path, actions[2], objects)
-#    processed_ffts.extend(p)
-#    labels.extend(l)
-#    act_lab.extend([actions[2]]*len(l))
-#    
-#    p, l = calculate_fft(data_path, actions[3], objects)
-#    processed_ffts.extend(p)
-#    labels.extend(l)
-#    act_lab.extend([actions[3]]*len(l))
-
-    #labels = act_lab
-    #objects = actions
-    
-    print labels
-    print 'len(processed_ffts)', len(processed_ffts)
-    print 'len(labels)', len(labels)
-    
-    labels = np.asarray(labels)
-    
-    inds = range(len(processed_ffts))
-    np.random.shuffle(inds)
-
-    num_tot = len(processed_ffts)
-    num_train = int(0.8 * num_tot)
-    num_test = num_tot - num_train
-    print 'Number of training instances', num_train
-    print 'Number of testing instances', num_test
-    
-    train_set = [processed_ffts[idx] for idx in inds[:num_train]]
-    test_set = [processed_ffts[idx] for idx in inds[num_train:]]
-    
-    train_labels = labels[inds][:num_train]
-    test_labels = labels[inds][num_train:]
-    print train_labels
-    print '*'*100
-    print test_labels
-    
-    ds = UnsupervisedDataSet(33)
-    column_vectors = np.hstack(train_set).T
-    np.random.shuffle(column_vectors)
-    
-    for vec in column_vectors:
-        ds.addSample(vec)
-    
-    print len(ds)
-    
-    net = buildNetwork(33, 100, 10, hiddenclass=TanhLayer, outclass=SoftmaxLayer, bias=True)
-    trainer = DeepBeliefTrainer(net, ds)
-    print 'Training DBN net'
-    trainer.train()
-    print 'Done'
-    #som, knn_model = train_model(train_set, train_labels)
 
 
 #def run_multi_action(data_path, actions, objects):
@@ -933,37 +899,266 @@ def seq_actions(data_path, actions, objects):
 #        print '%4d --- %s' % (idx, obj)
 
 
-def load_sounds(datapath, numActions, numObjects):
 
-    actions = numActions
-    objects = numObjects    
-    audio = 4
 
-    # want to input actionID, objID, trialID and have the code read the filename, start, and duration info, then grab the audio
+def index_where(seq, f):
+    """Return the index of the first item in seq where f(item) == True."""
+    return next((i for i in xrange(len(seq)) if f(seq[i])), None)
 
-    # should return an array with dimensions [action][object][trial][sound] ?
 
-    # need to create a mapping from actionID and objID to .desc filename, then assemble these mappings into a list of trials
-    # then given an actionID, objID, and trialID, will know the rawsound's filename and can read the start and duration info
-    # from the .desc file
+def find_sound_start_new(data_paths, actions, objects):
+    window = int(0.125*44100)
+    
+    counter = {}
+    total = {}
+    
+    for action_str in actions:
+        counter[action_str] = 0.0
+        total[action_str] = 0
+        
+    start_times_by_action = {}
+    
+    for action_str in actions:
+        start_times_by_action[action_str] = {}
+        for object_str in objects:
+            start_times_by_action[action_str][object_str] = []
+            
+    for path in data_paths:
+        print 'Processing sound descriptor files in %s' % path
+        
+        for fname in os.listdir(path):
+            if fnmatch(fname, '*.desc'):
+                name = os.path.splitext(fname)[0]
+                desc_file = open(os.path.join(path, fname), 'r')
+                data_file = open(os.path.join(path, name + '.rawsound'), 'r')
+                
+                descriptors = desc_file.read().split('\n')
+                arr = array('d')
+                arr.fromstring(data_file.read())
+                audio_blob = arr.tolist()
+                
+                desc_file.close()
+                data_file.close()
+                
+                for descriptor in descriptors:
+                    if not descriptor: continue
+                    
+                    action_id, object_id, offset, length = descriptor.split()
+                    
+                    # grab string labels for current action and object
+                    action_str = actions[int(action_id)]
+                    object_str = objects[int(object_id)]
+                    
+                    sound = np.asarray(audio_blob[int(offset):int(offset)+int(length)])
+                    sound = np.abs(sound)
+                    sound = rebin_time_fixed_width(sound, window)
+                    maximum = max(sound)
+                    
+                    start = index_where(sound, (lambda x: x > maximum / 2.0))
+                    
+                    if start is not None:
+                        start *= window
+                        start = max(0, start - 0.1*44100)
+                        total[action_str] += start
+                        counter[action_str] += 1
+                        start_times_by_action[action_str][object_str].append(start)
+                    else:
+                        start_times_by_action[action_str][object_str].append(-1)
+                        
+    average_start_time = {}
+    
+    for action_str in actions:
+        average_start_time[action_str] = int(total[action_str] / counter[action_str])
+        
+    for action_str in actions:
+        for object_str in objects:
+            for i in range(len(start_times_by_action[action_str][object_str])):
+                if start_times_by_action[action_str][object_str][i] == -1:
+                    start_times_by_action[action_str][object_str][i] = average_start_time[action_str]
+                    
+    return start_times_by_action
 
-    # loop over all .desc files in directory to build initial mapping?
-    # then stack in an array of some kind
 
-    # check out fnmatch, fseek
+def find_sound_end_new(data_paths, actions, objects, start_times):
+    window = int(0.125*44100)
+    
+    counter = {}
+    total = {}
+    
+    for action_str in actions:
+        counter[action_str] = 0.0
+        total[action_str] = 0
+        
+    end_times_by_action = {}
+    
+    for action_str in actions:
+        end_times_by_action[action_str] = {}
+        for object_str in objects:
+            end_times_by_action[action_str][object_str] = []
+            
+    for path in data_paths:
+        print 'Processing sound descriptor files in %s' % path
+        
+        for fname in os.listdir(path):
+            if fnmatch(fname, '*.desc'):
+                name = os.path.splitext(fname)[0]
+                desc_file = open(os.path.join(path, fname), 'r')
+                data_file = open(os.path.join(path, name + '.rawsound'), 'r')
+                
+                descriptors = desc_file.read().split('\n')
+                arr = array('d')
+                arr.fromstring(data_file.read())
+                audio_blob = arr.tolist()
+                
+                desc_file.close()
+                data_file.close()
+                
+                for descriptor in descriptors:
+                    if not descriptor: continue
+                    
+                    action_id, object_id, offset, length = descriptor.split()
+                    
+                    # grab string labels for current action and object
+                    action_str = actions[int(action_id)]
+                    object_str = objects[int(object_id)]
+                    
+                    sound = np.asarray(audio_blob[int(offset):int(offset)+int(length)])
+                    sound = np.abs(sound)
+                    last_index = len(sound)
+                    sound = rebin_time_fixed_width(sound, window)
+                    minimum = min(sound)
+                    sample_idx = len(end_times_by_action[action_str][object_str])
+                    start = int((start_times[action_str][object_str][sample_idx]+0.1*44100)/window)
+                    sound = sound[start:]
+                    end = index_where(sound, (lambda x: x < minimum * 2.0))
+                    
+                    if end is not None:
+                        end = (start + end) * window
+                        end = min(end + 0.1*44100, last_index)
+                        total[action_str] += end
+                        counter[action_str] += 1
+                        end_times_by_action[action_str][object_str].append(end)
+                    else:
+                        end_times_by_action[action_str][object_str].append(-1)
+                        
+                    sample_idx += 1
+                    
+    average_end_time = {}
+    
+    for action_str in actions:
+        average_end_time[action_str] = int(total[action_str] / counter[action_str])
+        
+    for action_str in actions:
+        for object_str in objects:
+            for i in range(len(end_times_by_action[action_str][object_str])):
+                if end_times_by_action[action_str][object_str][i] == -1:
+                    end_times_by_action[action_str][object_str][i] = average_end_time[action_str]
+                    
+    return end_times_by_action
 
-    # get all file names in dir
-    dirList = os.listdir(datapath)
-    for fname in dirList:
-        print fname
 
-    return actions,objects,audio
-
-if __name__ == '__main__':
-
-    matrix()					# now creates a som.costs file in /tmp
+def calculate_fft_newdata(data_paths, actions, objects):
+    """
+    Given a path to the data, a list of actions and a list objects reads raw
+    sound waves from files and computes FFTs. Returns a list of FFTs with a list
+    of corresponding labels.
+    """
+    ####### Parameters ######
+    sampling_rate = 44100
+    fft_n = 512
+    fft_overlap = 256
+    fft_time_after_peak = 2.0
+    fft_freq_bins = 33
+    #########################
+    
+    object_count_by_actions = {}
+    for action_str in actions:
+        object_count_by_actions[action_str] = {}
+        for object_str in objects:
+            object_count_by_actions[action_str][object_str] = 0
+    
+    processed_ffts = []
+    object_labels = []
+    action_labels = []
+    
+    print 'Calculating start times...'
+    start_times = find_sound_start_new(data_paths, actions, objects)
+    print start_times
+    
+    #print 'Calculating end times...'
+    #end_times = find_sound_end_new(data_paths, actions, objects, start_times)
+    #print end_times
     #exit(1)
     
+    sample_idx = 0
+    
+    for path in data_paths:
+        print 'Processing sound descriptor files in %s' % path
+        
+        for fname in os.listdir(path):
+            if fnmatch(fname, '*.desc'):
+                name = os.path.splitext(fname)[0]
+                desc_file = open(os.path.join(path, fname), 'r')
+                data_file = open(os.path.join(path, name + '.rawsound'), 'r')
+                
+                descriptors = desc_file.read().split('\n')
+                arr = array('d')
+                arr.fromstring(data_file.read())
+                audio_blob = arr.tolist()
+                
+                desc_file.close()
+                data_file.close()
+                
+                for descriptor in descriptors:
+                    if not descriptor: continue
+                    
+                    action_id, object_id, offset, length = descriptor.split()
+                    
+                    # grab string labels for current action and object
+                    action_str = actions[int(action_id)]
+                    object_str = objects[int(object_id)]
+                    
+                    action_labels.append(action_str)
+                    object_labels.append(object_str)
+                    
+                    sound = np.asarray(audio_blob[int(offset):int(offset)+int(length)])
+                    idx = object_count_by_actions[action_str][object_str]
+                    start = int(start_times[action_str][object_str][idx])
+                    end = start + int(fft_time_after_peak * sampling_rate)
+                    sound = sound[start:end]
+                    
+                    Pxx,freqs,t = matplotlib.mlab.specgram(sound, NFFT=fft_n, Fs=sampling_rate, noverlap=fft_overlap)
+                    Pxx = 20 * np.log10(Pxx)
+                    freqs /= 1000.0
+                    
+                    # bin resulting FFT into fft_freq_bins number of frequency bins
+                    l = np.linspace(0, Pxx.shape[0], fft_freq_bins+1)
+                    fft_binned = np.empty((fft_freq_bins,Pxx.shape[1]))
+                    
+                    for i in range(len(l)-1):
+                        lis = int(l[i])
+                        lie = int(l[i+1])
+                        t = Pxx[lis:lie,:]
+                        fft_binned[i] = t.mean(axis=0)
+                        
+                    processed_ffts.append(fft_binned)
+                    print '[Sample %d] calculated FFT for action %s on object %s' % (sample_idx, action_str, object_str)
+                    object_count_by_actions[action_str][object_str] += 1
+                    sample_idx += 1
+                    
+                    f = pl.figure()
+                    ax = f.add_subplot(111)
+                    im = ax.pcolormesh(fft_binned)
+                    pl.draw()
+                    pl.show()
+                    
+    print object_count_by_actions
+    return action_labels, object_labels, processed_ffts
+
+
+if __name__ == '__main__':
+    generate_cost_matrix()
+    """
     actions = ('drop', 'push', 'tap', 'shake')
     
     objects = ('pen',                       # 0
@@ -994,11 +1189,24 @@ if __name__ == '__main__':
     
 
     """
-    datapath = '/tmp/sounds/newGood'
-    actionNames = ["grasp", "lift", "drop", "shake/roll", "place"]
-    objectNames = ["Obj 0", "Obj 1", "Obj 2", "Obj 3", "Obj 4", "Obj 5", \
-                    "Obj 6", "Obj 7", "Obj 8", "Obj 9", "Obj 10", "Obj 11" ]
-    numActions = len(actionNames)
-    numObjects = len(objectNames)
-    """
-    actions, objects, audio = load_sounds(datapath, numActions, numObjects)
+    data_paths = ['/tmp/good', '/tmp/verygood']
+    
+    action_names = ['grasp',
+                    'lift',
+                    'drop',
+                    'shake_roll',
+                    'place']
+                    
+    object_names = ['pink_glass',
+                    'german_ball',
+                    'blue_cup',
+                    'blue_spiky_ball',
+                    'screw_box',
+                    'wire_spool',
+                    'sqeaky_ball',
+                    'duck_tape_roll',
+                    'ace_terminals']
+                    
+    calculate_fft_newdata(data_paths, action_names, object_names)
+    #actions, objects, audio = load_sounds(datapaths, numActions, numObjects)
+
