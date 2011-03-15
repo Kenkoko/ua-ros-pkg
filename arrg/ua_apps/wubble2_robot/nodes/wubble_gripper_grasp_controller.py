@@ -114,8 +114,6 @@ class WubbleGripperGraspController:
         else:
             rospy.loginfo('Gripper grasp query true: gripper total pressure %.2f above threshold %.2f' % (pressure_msg.data, self.object_presence_pressure_threshold))
             return True
-            
-        #return result
 
 if __name__ == '__main__':
     try:
