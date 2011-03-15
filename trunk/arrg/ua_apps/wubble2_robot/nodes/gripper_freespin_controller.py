@@ -30,8 +30,15 @@
 # Author: Antons Rebguns
 #
 
+import math
+from threading import Thread
+
 import roslib; roslib.load_manifest('wubble2_robot')
 import rospy
+
+from tf import TransformListener
+from tf import LookupException
+from tf import ConnectivityException
 
 from ax12_driver_core.ax12_const import DMXL_MAX_SPEED_RAD
 from ax12_driver_core.ax12_const import DMXL_SPEED_RAD_SEC_PER_TICK
@@ -45,7 +52,6 @@ from std_msgs.msg import Float64
 from wubble2_robot.msg import WubbleGripperAction
 from wubble2_robot.msg import WubbleGripperGoal
 
-from threading import Thread
 
 class GripperActionController():
     def __init__(self):
@@ -57,12 +63,16 @@ class GripperActionController():
         self.left_finger_joint = rospy.get_param(self.left_finger_controller + '/joint_name')
         self.right_finger_joint = rospy.get_param(self.right_finger_controller + '/joint_name')
         
+        self.tf_listener = TransformListener()
+        
         # Publishers and Subscribers for all gripper joint controllers
         self.left_finger_joint_torque_pub = rospy.Publisher(self.left_finger_controller + '/command', Float64)
         self.right_finger_joint_torque_pub = rospy.Publisher(self.right_finger_controller + '/command', Float64)
         
         self.left_finger_joint_state_sub = rospy.Subscriber(self.left_finger_controller + '/state', JointState, self.process_left_finger_joint_state)
         self.right_finger_joint_state_sub = rospy.Subscriber(self.right_finger_controller + '/state', JointState, self.process_right_finger_joint_state)
+        
+        self.gripper_opening_pub = rospy.Publisher('gripper_opening', Float64)
         
         # Pressure sensors
         # 0-3 - left finger
@@ -82,8 +92,9 @@ class GripperActionController():
         self.upper_pressure = 1000.0
         
         # IR sensor
-        #rospy.Subscriber('/interface_kit/106950/sensor/7', Float64Stamped, self.process_ir_sensor)
-        #self.ir_distance = 0.0
+        self.gripper_ir_pub = rospy.Publisher('gripper_distance_sensor', Float64)
+        self.ir_distance = 0.0
+        rospy.Subscriber('/interface_kit/106950/sensor/7', Float64Stamped, self.process_ir_sensor)
         
         # Make sure we receive current joint states before starting threads
         rospy.loginfo('Waiting to receive gripper joints state...')
@@ -92,6 +103,9 @@ class GripperActionController():
         
         # Temperature monitor and torque control thread
         Thread(target=self.gripper_monitor).start()
+        
+        # Start gripper opening monitoring thread
+        Thread(target=self.calculate_gripper_opening).start()
         
         self.action_server = actionlib.SimpleActionServer('wubble_gripper_action', WubbleGripperAction, execute_cb=self.process_gripper_action)
         
@@ -177,6 +191,37 @@ class GripperActionController():
             r.sleep()
 
 
+    def calculate_gripper_opening(self):
+        r = rospy.Rate(50)
+        
+        while not rospy.is_shutdown():
+            try:
+                gripper_palm_frame_id = 'L7_wrist_roll_link'
+                left_fingertip_frame_id = 'left_fingertip_link'
+                right_fingertip_frame_id = 'right_fingertip_link'
+                
+                self.tf_listener.waitForTransform(gripper_palm_frame_id, left_fingertip_frame_id, rospy.Time(0), rospy.Duration(0.2))
+                self.tf_listener.waitForTransform(gripper_palm_frame_id, right_fingertip_frame_id, rospy.Time(0), rospy.Duration(0.2))
+                
+                l_pos, _ = self.tf_listener.lookupTransform(gripper_palm_frame_id, left_fingertip_frame_id, rospy.Time(0))
+                r_pos, _ = self.tf_listener.lookupTransform(gripper_palm_frame_id, right_fingertip_frame_id, rospy.Time(0))
+                
+                dx = l_pos[0] - r_pos[0]
+                dy = l_pos[1] - r_pos[1]
+                dz = l_pos[2] - r_pos[2]
+                
+                dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+                self.gripper_opening_pub.publish(dist)
+            except LookupException as le:
+                rospy.logerr(le)
+            except ConnectivityException as ce:
+                rospy.logerr(ce)
+            except Exception as e:
+                rospy.logerr('Uknown error occured: %s' % str(e))
+                
+            r.sleep()
+
+
     def process_left_finger_joint_state(self, msg):
         self.left_finger_joint_state = msg
 
@@ -194,9 +239,11 @@ class GripperActionController():
         Given a raw sensor value from Sharp IR sensor (4-30cm model)
         returns an actual distance in meters.
         """
-        if msg.data >= 80: self.ir_distance = 1.0           # too far
-        elif msg.data <= 530: self.ir_distance = 0.0        # too close
+        if msg.data < 80: self.ir_distance = 1.0           # too far
+        elif msg.data > 530: self.ir_distance = 0.0        # too close
         else: self.ir_distance =  20.76 / (msg.data - 11)   # just right
+        
+        self.gripper_ir_pub.publish(self.ir_distance)
 
 
     def process_gripper_action(self, req):
