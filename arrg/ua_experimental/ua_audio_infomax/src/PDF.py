@@ -11,6 +11,7 @@ class PDF_library():
 		self.numSamples = numSamples	
 		self.numActions = len(actionNames)
 		self.PDF_database = []
+		self.randomCount = 0
 
 		# create PDF database for all categories and actions
 		self._createPDFs()
@@ -26,7 +27,16 @@ class PDF_library():
 	# sample randomly from PDFs for given object and action
 	def samplePDF(self, catID, actionType):
 
-		PDF = self.PDF_database[actionType*self.numCategories*self.numSamples + catID*self.numSamples + randint(0,self.numSamples-1)].PDF
+		randomMeasure = 5
+
+		# select a PDF at random from the correct category
+		if self.randomCount < randomMeasure: 
+			PDF = self.PDF_database[actionType*self.numCategories*self.numSamples + catID*self.numSamples + randint(0,self.numSamples-1)].PDF
+			self.randomCount += 1
+		# except every 10 draws, select a PDF from a random category
+		else:
+			PDF = self.PDF_database[actionType*self.numCategories*self.numSamples + randint(0,self.numCategories-1)*self.numSamples + randint(0,self.numSamples-1)].PDF
+			self.randomCount = 0
 
 		return PDF
 
