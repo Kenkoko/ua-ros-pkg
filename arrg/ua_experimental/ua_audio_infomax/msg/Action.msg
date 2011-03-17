@@ -5,3 +5,4 @@ int32 LIFT=1
 int32 DROP=2
 int32 SHAKE_ROLL=3
 int32 PLACE=4
+int32 PUSH=5
