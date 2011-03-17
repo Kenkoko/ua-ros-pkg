@@ -22,27 +22,34 @@ if __name__ == '__main__':
     infomax_srv = rospy.ServiceProxy('/get_category_distribution', InfoMax)
     rospy.loginfo('connected to get_category_distribution service')
     
-    actions = [InfomaxAction.DROP, InfomaxAction.SHAKE_ROLL, InfomaxAction.PLACE]
+    actions = [InfomaxAction.PUSH]
     
     req = InfoMaxRequest()
-    req.objectNames = ['pink_glass',
-                       'german_ball',
-                       'blue_cup',
-                       'blue_spiky_ball',
-                       'screw_box',
-                       'wire_spool',
-                       'sqeaky_ball',
-                       'duck_tape_roll',
-                       'ace_terminals']
+    req.objectNames = ['pink_glass',        #0
+                       'german_ball',       #1
+                       'blue_cup',          #2
+                       'blue_spiky_ball',   #3
+                       'screw_box',         #4
+                       'wire_spool',        #5
+                       'sqeaky_ball',       #6
+                       'duck_tape_roll',    #7
+                       'ace_terminals',     #8
+                       'chalkboard_eraser', #9
+                       ]
     req.actionNames = map(str, actions)
     req.numCats = len(req.objectNames)
-    req.catID = 1
+    req.catID = 4
 
-
-    for action in actions:
-        req.actionID.val = action
+    for trial in range(1):
+        rospy.loginfo('Trial number %d' % trial)
         
-        infomax_srv(req)
-        rospy.loginfo('infomax test done action %d' % action)
+        for action in actions:
+            req.actionID.val = action
+            
+            try:
+                infomax_srv(req)
+                rospy.loginfo('infomax test done action %d' % action)
+            except Exception as e:
+                rospy.logerr('Something happened: %s' % str(e))
 
 

@@ -7,6 +7,8 @@ import math
 import roslib; roslib.load_manifest('w2_object_manipulation_launch')
 import rospy
 
+from rospy.exceptions import ROSException
+
 from ua_audio_infomax.msg import Action as InfomaxAction
 from ua_audio_infomax.srv import InfoMax
 from ua_audio_infomax.srv import InfoMaxResponse
@@ -97,6 +99,9 @@ class ObjectCategorizer():
         self.READY_POSITION = (-1.650, -1.465, 3.130, -0.970, -1.427,  0.337,  0.046)
         self.LIFT_POSITION  = (-1.049, -1.241, 0.669, -0.960, -0.409, -0.072, -0.143)
         self.PLACE_POSITION = ( 0.261, -0.704, 1.470,  0.337,  0.910, -1.667, -0.026)
+        
+        self.GRIPPER_LINK_FRAME = 'L7_wrist_roll_link'
+        self.GRIPPER_GROUP_NAME = 'l_end_effector'
         
         # connect to tabletop segmentation service
         rospy.loginfo('waiting for tabletop_segmentation service')
@@ -222,27 +227,25 @@ class ObjectCategorizer():
         
         if not finished_within_time:
             self.move_arm_client.cancel_goal()
-            rospy.loginfo('timed out trying to achieve a joint goal')
+            rospy.loginfo('timed out trying to achieve joint goal')
             return False
         else:
             state = self.move_arm_client.get_state()
             
             if state == GoalStatus.SUCCEEDED:
-                rospy.loginfo('action finished: %s' % str(state))
                 return True
             else:
-                rospy.loginfo('action failed: %s' % str(state))
+                rospy.loginfo('failed to achieve joint goal (returned status code %s)' % str(state))
                 return False
 
 
-    def tuck_arm(self):
+    def tuck_arm(self, collision_operations=OrderedCollisionOperations()):
         """
         Moves the arm to the side out of the view of all sensors and fully
         opens a gripper. In this position the arm is ready to perform a grasp
         action.
         """
-        if self.move_arm_joint_goal(self.ARM_JOINTS, self.READY_POSITION):
-#            self.open_gripper()
+        if self.move_arm_joint_goal(self.ARM_JOINTS, self.READY_POSITION, collision_operations=collision_operations):
             return True
         else:
             rospy.logerr('failed to tuck arm, aborting')
@@ -340,7 +343,7 @@ class ObjectCategorizer():
         
         req = GetPositionIKRequest()
         req.timeout = rospy.Duration(5.0)
-        req.ik_request.ik_link_name = 'L7_wrist_roll_link';
+        req.ik_request.ik_link_name = self.GRIPPER_LINK_FRAME;
         req.ik_request.pose_stamped = pose_stamped
         
         rospy.loginfo('waiting for current joint states')
@@ -355,7 +358,7 @@ class ObjectCategorizer():
         if ik_result.error_code.val == ArmNavigationErrorCodes.SUCCESS:
             return ik_result.solution
         else:
-            rospy.logerr('Inverse kinematics failed')
+            rospy.logerr('failed to find an IK for requested grasping pose, aborting')
             return None
 
 
@@ -396,51 +399,49 @@ class ObjectCategorizer():
         ik_solution = self.find_grasp_pose(target, collision_object_name, collision_support_surface_name)
         
         if ik_solution:
+            # disable collisions between gripper and target object
             ordered_collision_operations = OrderedCollisionOperations()
             collision_operation = CollisionOperation()
-            collision_operation.object1 = CollisionOperation.COLLISION_SET_OBJECTS
-            collision_operation.object2 = 'l_end_effector'
+            collision_operation.object1 = collision_object_name
+            collision_operation.object2 = self.GRIPPER_GROUP_NAME
             collision_operation.operation = CollisionOperation.DISABLE
-            collision_operation.penetration_distance = 0.01
             ordered_collision_operations.collision_operations = [collision_operation]
             
+            # set gripper padding to 0
             gripper_paddings = [LinkPadding(l,0.0) for l in self.GRIPPER_LINKS]
             
-            if not self.move_arm_joint_goal(ik_solution.joint_state.name, ik_solution.joint_state.position, link_padding=gripper_paddings, collision_operations=ordered_collision_operations):
-                rospy.logerr('failed to move arm to grasping position, aborting')
+            # move into pre-grasp pose
+            if not self.move_arm_joint_goal(ik_solution.joint_state.name,
+                                            ik_solution.joint_state.position,
+                                            link_padding=gripper_paddings,
+                                            collision_operations=ordered_collision_operations):
+                rospy.logerr('InfomaxAction.GRASP: attempted grasp failed')
                 return None
                 
-            rospy.sleep(0.5)
-            
             # record grasping sound with 0.5 second padding before and after
             self.start_audio_recording_srv(InfomaxAction.GRASP, self.category_id)
             rospy.sleep(0.5)
             grasp_successful = self.close_gripper()
             rospy.sleep(0.5)
             
+            # if grasp was successful, attach it to the gripper
             if grasp_successful:
-                sound = self.stop_audio_recording_srv(True)
-                resp = self.classification_srv(sound.recorded_sound)
-                print 'GRASP RESULT'
-                print resp
+                sound_msg = self.stop_audio_recording_srv(True)
                 
                 obj = AttachedCollisionObject()
                 obj.object.header.stamp = rospy.Time.now()
-                obj.object.header.frame_id = 'L7_wrist_roll_link'
+                obj.object.header.frame_id = self.GRIPPER_LINK_FRAME
                 obj.object.operation.operation = CollisionObjectOperation.ATTACH_AND_REMOVE_AS_OBJECT
                 obj.object.id = collision_object_name
-                obj.link_name = 'L7_wrist_roll_link'
+                obj.link_name = self.GRIPPER_LINK_FRAME
                 obj.touch_links = self.GRIPPER_LINKS
                 
                 self.attached_object_pub.publish(obj)
-                rospy.sleep(2)
-                return resp.beliefs
-            else:
-                self.stop_audio_recording_srv(False)
-                return None
-        else:
-            rospy.logerr('failed to find an IK for requested grasping pose, aborting')
-            return None
+                return sound_msg.recorded_sound
+                
+        self.stop_audio_recording_srv(False)
+        rospy.logerr('InfomaxAction.GRASP: attempted grasp failed')
+        return None
 
 
     def create_pose_stamped(self, pose, frame_id='base_link'):
@@ -478,12 +479,12 @@ class ObjectCategorizer():
                                               start_from_end,
                                               max_joint_vels,
                                               max_joint_accs)
-                                       
+                                              
         req = GetMotionPlanRequest()
         req.motion_plan_request.start_state.joint_state.name = joint_names
         req.motion_plan_request.start_state.joint_state.position = start_angles
         req.motion_plan_request.start_state.multi_dof_joint_state.pose = start_pose.pose
-        req.motion_plan_request.start_state.multi_dof_joint_state.child_frame_id = 'L7_wrist_roll_link'
+        req.motion_plan_request.start_state.multi_dof_joint_state.child_frame_id = self.GRIPPER_LINK_FRAME
         req.motion_plan_request.start_state.multi_dof_joint_state.frame_id = start_pose.header.frame_id
         
         pos_constraint = PositionConstraint()
@@ -502,7 +503,234 @@ class ObjectCategorizer():
             req.motion_plan_request.ordered_collision_operations = ordered_collision_operations
             
         res = self.interpolated_ik_srv(req)
+        return res
+
+
+    def check_cartesian_path_lists(self, approachpos, approachquat, grasppos, graspquat, start_angles, pos_spacing=0.03,
+                                   rot_spacing=0.1, consistent_angle=math.pi/9.0, collision_aware=True,
+                                   collision_check_resolution=1, steps_before_abort=1, num_steps=0,
+                                   ordered_collision_operations=None, frame='base_link'):
+                                   
+        start_pose = self.create_pose_stamped(approachpos+approachquat, frame)
+        goal_pose = self.create_pose_stamped(grasppos+graspquat, frame)
         
+        return self.get_interpolated_ik_motion_plan(start_pose, goal_pose, start_angles, self.ARM_JOINTS, pos_spacing, rot_spacing,
+                                                    consistent_angle, collision_aware, collision_check_resolution,
+                                                    steps_before_abort, num_steps, ordered_collision_operations, frame)
+
+
+    # needs grasp action to be performed first
+    def lift(self, tabletop_collision_map_processing_result):
+        collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
+        
+        # disable collisions between grasped object and table
+        collision_operation1 = CollisionOperation()
+        collision_operation1.object1 = CollisionOperation.COLLISION_SET_ATTACHED_OBJECTS
+        collision_operation1.object2 = collision_support_surface_name
+        collision_operation1.operation = CollisionOperation.DISABLE
+        
+        # disable collisions between gripper and table
+        collision_operation2 = CollisionOperation()
+        collision_operation2.object1 = self.GRIPPER_GROUP_NAME
+        collision_operation2.object2 = collision_support_surface_name
+        collision_operation2.operation = CollisionOperation.DISABLE
+        
+        ordered_collision_operations = OrderedCollisionOperations()
+        ordered_collision_operations.collision_operations = [collision_operation1, collision_operation2]
+        
+        gripper_paddings = [LinkPadding(l,0.0) for l in self.GRIPPER_LINKS]
+        
+        # this is a hack to make arm lift an object faster
+        obj = AttachedCollisionObject()
+        obj.object.header.stamp = rospy.Time.now()
+        obj.object.header.frame_id = self.GRIPPER_LINK_FRAME
+        obj.object.operation.operation = CollisionObjectOperation.REMOVE
+        obj.object.id = collision_support_surface_name
+        obj.link_name = self.GRIPPER_LINK_FRAME
+        obj.touch_links = self.GRIPPER_LINKS
+        self.attached_object_pub.publish(obj)
+        
+        self.start_audio_recording_srv(InfomaxAction.LIFT, self.category_id)
+        
+        if self.move_arm_joint_goal(self.ARM_JOINTS,
+                                    self.LIFT_POSITION,
+                                    link_padding=gripper_paddings,
+                                    collision_operations=ordered_collision_operations):
+            # check if are still holding an object after lift is done
+            grasp_status = self.get_grasp_status_srv()
+            
+            # if the object is still in hand after lift is done we are good
+            if grasp_status.is_hand_occupied:
+                sound_msg = self.stop_audio_recording_srv(True)
+                return sound_msg.recorded_sound
+                
+        self.stop_audio_recording_srv(False)
+        rospy.logerr('InfomaxAction.LIFT: attempted lift failed')
+        return None
+
+
+    # needs grasp and lift to be performed first
+    def drop(self, tabletop_collision_map_processing_result):
+        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
+        
+        # check that we have something in hand before dropping it
+        grasp_status = self.get_grasp_status_srv()
+        
+        # if the object is still in hand after lift is done we are good
+        if not grasp_status.is_hand_occupied:
+            rospy.logerr('InfomaxAction.DROP: gripper empty, nothing to drop')
+            return None
+            
+        # record sound padded by 0.5 seconds from start and 1.5 seconds from the end
+        self.start_audio_recording_srv(InfomaxAction.DROP, self.category_id)
+        rospy.sleep(0.5)
+        self.open_gripper()
+        rospy.sleep(1.5)
+        sound_msg = self.stop_audio_recording_srv(True)
+        
+        # delete the object that we just dropped, we don't really know where it will land
+        obj = AttachedCollisionObject()
+        obj.object.header.stamp = rospy.Time.now()
+        obj.object.header.frame_id = self.GRIPPER_LINK_FRAME
+        obj.object.operation.operation = CollisionObjectOperation.REMOVE
+        obj.object.id = collision_object_name
+        obj.link_name = self.GRIPPER_LINK_FRAME
+        obj.touch_links = self.GRIPPER_LINKS
+        
+        self.attached_object_pub.publish(obj)
+        
+        return sound_msg.recorded_sound
+
+
+    def place(self, tabletop_collision_map_processing_result):
+        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
+        collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
+        
+        # check that we have something in hand before placing it
+        grasp_status = self.get_grasp_status_srv()
+        
+        # if the object is still in hand after lift is done we are good
+        if not grasp_status.is_hand_occupied:
+            rospy.logerr('InfomaxAction.PLACE: gripper empty, nothing to place')
+            return None
+            
+        gripper_paddings = [LinkPadding(l,0.0) for l in self.GRIPPER_LINKS]
+        
+        # disable collisions between attached object and table
+        collision_operation1 = CollisionOperation()
+        collision_operation1.object1 = CollisionOperation.COLLISION_SET_ATTACHED_OBJECTS
+        collision_operation1.object2 = collision_support_surface_name
+        collision_operation1.operation = CollisionOperation.DISABLE
+        
+        # disable collisions between gripper and table
+        collision_operation2 = CollisionOperation()
+        collision_operation2.object1 = collision_support_surface_name
+        collision_operation2.object2 = self.GRIPPER_GROUP_NAME
+        collision_operation2.operation = CollisionOperation.DISABLE
+        collision_operation2.penetration_distance = 0.01
+        
+        ordered_collision_operations = OrderedCollisionOperations()
+        ordered_collision_operations.collision_operations = [collision_operation1, collision_operation2]
+        
+        self.start_audio_recording_srv(InfomaxAction.PLACE, self.category_id)
+        
+        if self.move_arm_joint_goal(self.ARM_JOINTS,
+                                    self.PLACE_POSITION,
+                                    link_padding=gripper_paddings,
+                                    collision_operations=ordered_collision_operations):
+            self.open_gripper()
+            rospy.sleep(0.5)
+            sound_msg = self.stop_audio_recording_srv(True)
+            
+            obj = AttachedCollisionObject()
+            obj.object.header.stamp = rospy.Time.now()
+            obj.object.header.frame_id = self.GRIPPER_LINK_FRAME
+            obj.object.operation.operation = CollisionObjectOperation.DETACH_AND_ADD_AS_OBJECT
+            obj.object.id = collision_object_name
+            obj.link_name = self.GRIPPER_LINK_FRAME
+            obj.touch_links = self.GRIPPER_LINKS
+            self.attached_object_pub.publish(obj)
+            
+            return sound_msg.recorded_sound
+            
+        self.stop_audio_recording_srv(False)
+        rospy.logerr('InfomaxAction.PLACE: attempted place failed')
+        return None
+
+
+    def push(self, tabletop_collision_map_processing_result):
+        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
+        collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
+        
+        current_state = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState)
+        start_angles = current_state.actual.positions
+        
+        full_state = rospy.wait_for_message('/joint_states', JointState)
+        
+#        req = GetPositionFKRequest()
+#        req.header.frame_id = 'base_link'
+#        req.fk_link_names = [self.GRIPPER_LINK_FRAME]
+#        req.robot_state.joint_state = full_state
+#        pose = self.get_fk_srv(req).pose_stamped[0].pose
+#        
+#        frame_id = 'base_link'
+#        
+#        approachpos =  [pose.position.x, pose.position.y, pose.position.z]
+#        approachquat = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
+#        
+#        push_distance = 0.55
+#        grasppos =  [pose.position.x, pose.position.y-push_distance, pose.position.z]
+#        graspquat = [0.00000, 0.00000, 0.70711, -0.70711]
+        
+        req = GetPositionFKRequest()
+        req.header.frame_id = self.GRIPPER_LINK_FRAME
+        req.fk_link_names = [self.GRIPPER_LINK_FRAME]
+        req.robot_state.joint_state = full_state
+        pose = self.get_fk_srv(req).pose_stamped[0].pose
+        
+        frame_id = self.GRIPPER_LINK_FRAME
+        
+        approachpos =  [0, 0, 0]
+        approachquat = [0, 0, 0, 1]
+        
+        push_distance = 0.45
+        grasppos =  [push_distance, 0, 0]
+        graspquat = approachquat[:]
+        
+        # attach object to gripper, they will move together
+        obj = AttachedCollisionObject()
+        obj.object.header.stamp = rospy.Time.now()
+        obj.object.header.frame_id = self.GRIPPER_LINK_FRAME
+        obj.object.operation.operation = CollisionObjectOperation.ATTACH_AND_REMOVE_AS_OBJECT
+        obj.object.id = collision_object_name
+        obj.link_name = self.GRIPPER_LINK_FRAME
+        obj.touch_links = self.GRIPPER_LINKS
+        
+        self.attached_object_pub.publish(obj)
+        
+        # disable collisions between attached object and table
+        collision_operation1 = CollisionOperation()
+        collision_operation1.object1 = CollisionOperation.COLLISION_SET_ATTACHED_OBJECTS
+        collision_operation1.object2 = collision_support_surface_name
+        collision_operation1.operation = CollisionOperation.DISABLE
+        
+        collision_operation2 = CollisionOperation()
+        collision_operation2.object1 = collision_support_surface_name
+        collision_operation2.object2 = self.GRIPPER_GROUP_NAME
+        collision_operation2.operation = CollisionOperation.DISABLE
+        collision_operation2.penetration_distance = 0.02
+        
+        ordered_collision_operations = OrderedCollisionOperations()
+        ordered_collision_operations.collision_operations = [collision_operation1, collision_operation2]
+        
+        res = self.check_cartesian_path_lists(approachpos,
+                                              approachquat,
+                                              grasppos,
+                                              graspquat,
+                                              start_angles,
+                                              frame=frame_id,
+                                              ordered_collision_operations=ordered_collision_operations)
+                                              
         error_code_dict = { ArmNavigationErrorCodes.SUCCESS: 0,
                             ArmNavigationErrorCodes.COLLISION_CONSTRAINTS_VIOLATED: 1,
                             ArmNavigationErrorCodes.PATH_CONSTRAINTS_VIOLATED: 2,
@@ -515,232 +743,138 @@ class ObjectCategorizer():
         times = [res.trajectory.joint_trajectory.points[i].time_from_start for i in range(trajectory_len)]
         error_codes = [error_code_dict[error_code.val] for error_code in res.trajectory_error_codes]
         
-        rospy.loginfo("trajectory:")
-        
-        for ind in range(len(trajectory)):
-            rospy.loginfo("error code "+ str(error_codes[ind]) + " pos : " + self.pplist(trajectory[ind]))
-        
-        rospy.loginfo("")
-        
-        for ind in range(len(trajectory)):
-            rospy.loginfo("time: " + "%5.3f  "%times[ind].to_sec() + "vels: " + self.pplist(vels[ind]))
+        # if even one code is not 0, abort
+        if sum(error_codes) != 0:
+            for ind in range(len(trajectory)):
+                rospy.loginfo("error code "+ str(error_codes[ind]) + " pos : " + self.pplist(trajectory[ind]))
+                
+            rospy.loginfo("")
+            
+            for ind in range(len(trajectory)):
+                rospy.loginfo("time: " + "%5.3f  "%times[ind].to_sec() + "vels: " + self.pplist(vels[ind]))
+                
+            rospy.logerr('InfomaxAction.PUSH: attempted push failed')
+            return None
             
         goal = JointTrajectoryGoal()
-        for i, p in enumerate(res.trajectory.joint_trajectory.points):
-            if res.trajectory_error_codes[i].val == ArmNavigationErrorCodes.SUCCESS:
-                goal.trajectory.points.append(p)
+        
+        goal.trajectory.points = res.trajectory.joint_trajectory.points
         goal.trajectory.joint_names = res.trajectory.joint_trajectory.joint_names
-        goal.trajectory.points = goal.trajectory.points[1:] # skip the 0 velocity point
-        goal.trajectory.header.stamp = rospy.Time.now() + rospy.Duration(1.0)
+        goal.trajectory.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
+        
+        self.start_audio_recording_srv(InfomaxAction.PUSH, self.category_id)
         
         self.trajectory_controller.send_goal(goal)
         self.trajectory_controller.wait_for_result()
-
-
-    def check_cartesian_path_lists(self, approachpos, approachquat, grasppos, graspquat, start_angles, pos_spacing=0.01,
-                                   rot_spacing=0.1, consistent_angle=math.pi/6.0, collision_aware=True,
-                                   collision_check_resolution=1, steps_before_abort=-1, num_steps=0,
-                                   ordered_collision_operations=None, frame='base_link'):
-                                   
-        start_pose = self.create_pose_stamped(approachpos+approachquat, frame)
-        goal_pose = self.create_pose_stamped(grasppos+graspquat, frame)
         
-        self.get_interpolated_ik_motion_plan(start_pose, goal_pose, start_angles, self.ARM_JOINTS, pos_spacing, rot_spacing,
-                                             consistent_angle, collision_aware, collision_check_resolution,
-                                             steps_before_abort, num_steps, ordered_collision_operations, frame)
-
-    def pre_lift(self, ordered_collision_operations):
-        current_state = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState)
-        start_angles = current_state.actual.positions
+        state = self.trajectory_controller.get_state()
         
-        full_state = rospy.wait_for_message('/joint_states', JointState)
-        
-        req = GetPositionFKRequest()
-        req.header.frame_id = 'base_link'
-        req.fk_link_names = ['L7_wrist_roll_link']
-        req.robot_state.joint_state = full_state
-        pose = self.get_fk_srv(req).pose_stamped[0].pose
-        
-        frame_id = 'base_link'
-        
-        approachpos =  [pose.position.x, pose.position.y, pose.position.z]
-        approachquat = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
-        
-        grasppos = [0.0, 0.0, 0.1]
-        graspquat = approachquat[:]
-        
-        self.check_cartesian_path_lists(approachpos, approachquat, grasppos, graspquat, start_angles, frame=frame_id, ordered_collision_operations=ordered_collision_operations)
-
-
-    # needs grasp action to be performed first
-    def lift(self, tabletop_collision_map_processing_result):
-        collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
-        
-        ordered_collision_operations = OrderedCollisionOperations()
-        
-        collision_operation = CollisionOperation()
-        collision_operation.object1 = CollisionOperation.COLLISION_SET_ATTACHED_OBJECTS
-        collision_operation.object2 = collision_support_surface_name
-        collision_operation.operation = CollisionOperation.DISABLE
-        ordered_collision_operations.collision_operations = [collision_operation]
-        
-        collision_operation = CollisionOperation()
-        collision_operation.object1 = 'l_end_effector'
-        collision_operation.object2 = collision_support_surface_name
-        collision_operation.operation = CollisionOperation.DISABLE
-        ordered_collision_operations.collision_operations.append(collision_operation)
-        
-        gripper_paddings = [LinkPadding(l,0.0) for l in self.GRIPPER_LINKS]
-        
-        obj = AttachedCollisionObject()
-        obj.object.header.stamp = rospy.Time.now()
-        obj.object.header.frame_id = 'L7_wrist_roll_link'
-        obj.object.operation.operation = CollisionObjectOperation.REMOVE
-        obj.object.id = collision_support_surface_name
-        obj.link_name = 'L7_wrist_roll_link'
-        obj.touch_links = self.GRIPPER_LINKS
-        
-        self.attached_object_pub.publish(obj)
-        rospy.sleep(2)
-        
-        self.start_audio_recording_srv(InfomaxAction.LIFT, self.category_id)
-        #self.pre_lift(ordered_collision_operations)
-        
-        if self.move_arm_joint_goal(self.ARM_JOINTS, self.LIFT_POSITION, link_padding=gripper_paddings, collision_operations=ordered_collision_operations):
-            sound = self.stop_audio_recording_srv(True)
-            resp = self.classification_srv(sound.recorded_sound)
+        if state == GoalStatus.SUCCEEDED:
+            sound_msg = self.stop_audio_recording_srv(True)
+            return sound_msg.recorded_sound
             
-            print 'LIFT RESULT'
-            print resp
-            return resp.beliefs
-        else:
-            self.stop_audio_recording_srv(False)
-            rospy.logerr('failed to lift arm')
-            return None
-
-
-    # needs grasp and lift to be performed first
-    def drop(self, tabletop_collision_map_processing_result):
-        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
-        
-        self.start_audio_recording_srv(InfomaxAction.DROP, self.category_id)
-        rospy.sleep(0.5)
-        self.open_gripper()
-        rospy.sleep(1.5)
-        sound = self.stop_audio_recording_srv(True)
-        resp = self.classification_srv(sound.recorded_sound)
-        print 'DROP RESULT'
-        print resp
-        
-        # delete the object that we just dropped since don't really know where it will land
-        obj = AttachedCollisionObject()
-        obj.object.header.stamp = rospy.Time.now()
-        obj.object.header.frame_id = 'L7_wrist_roll_link'
-        obj.object.operation.operation = CollisionObjectOperation.REMOVE
-        obj.object.id = collision_object_name
-        obj.link_name = 'L7_wrist_roll_link'
-        obj.touch_links = self.GRIPPER_LINKS
-        
-        self.attached_object_pub.publish(obj)
-        rospy.sleep(2)
-        
-        return resp.beliefs
-
-
-    def place(self, tabletop_collision_map_processing_result):
-        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
-        collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
-        
-        gripper_paddings = [LinkPadding(l,0.0) for l in self.GRIPPER_LINKS]
-        
-        # move arm to target pose and disable collisions between the object an the table
-        ordered_collision_operations = OrderedCollisionOperations()
-        collision_operation = CollisionOperation()
-        collision_operation.object1 = CollisionOperation.COLLISION_SET_ATTACHED_OBJECTS
-        collision_operation.object2 = collision_support_surface_name
-        collision_operation.operation = CollisionOperation.DISABLE
-        ordered_collision_operations.collision_operations = [collision_operation]
-        
-        self.start_audio_recording_srv(InfomaxAction.PLACE, self.category_id)
-        
-        if self.move_arm_joint_goal(self.ARM_JOINTS, self.PLACE_POSITION, link_padding=gripper_paddings, collision_operations=ordered_collision_operations):
-            self.open_gripper()
-            rospy.sleep(0.5)
-            sound = self.stop_audio_recording_srv(True)
-            resp = self.classification_srv(sound.recorded_sound)
-            print 'PLACE RESULT'
-            print resp
-            
-            obj = AttachedCollisionObject()
-            obj.object.header.stamp = rospy.Time.now()
-            obj.object.header.frame_id = 'L7_wrist_roll_link'
-            obj.object.operation.operation = CollisionObjectOperation.DETACH_AND_ADD_AS_OBJECT
-            obj.object.id = collision_object_name
-            obj.link_name = 'L7_wrist_roll_link'
-            obj.touch_links = self.GRIPPER_LINKS
-            
-            self.attached_object_pub.publish(obj)
-            
-            rospy.sleep(2)
-            return resp.beliefs
-        else:
-            self.stop_audio_recording_srv(False)
-            rospy.logerr('failed to place arm')
-            return None
+        rospy.logerr('InfomaxAction.PUSH: attempted push failed')
+        self.stop_audio_recording_srv(False)
+        return None
 
 
     def shake_roll(self, tabletop_collision_map_processing_result):
+        wrist_roll_state = 'wrist_roll_controller/state'
         desired_velocity = 11.0
         distance = 2.5
         threshold = 0.2
-        self.wrist_roll_velocity_srv(2.0)
-        self.wrist_roll_command_pub.publish(distance)
+        timeout = 2.0
         
-        while rospy.wait_for_message('wrist_roll_controller/state', DynamixelJointState).current_pos < distance-threshold:
-            rospy.sleep(10e-3)
+        try:
+            msg = rospy.wait_for_message(wrist_roll_state, DynamixelJointState, timeout)
+            current_pos = msg.current_pos
+            start_pos = current_pos
             
-        self.wrist_roll_velocity_srv(desired_velocity)
-        self.start_audio_recording_srv(InfomaxAction.SHAKE_ROLL, self.category_id)
-        rospy.sleep(0.5)
-        
-        for i in range(2):
-            self.wrist_roll_command_pub.publish(-distance)
-            while rospy.wait_for_message('wrist_roll_controller/state', DynamixelJointState).current_pos > -distance+threshold:
-                rospy.sleep(10e-3)
-                
+            # set wrist to initial position
+            self.wrist_roll_velocity_srv(3.0)
             self.wrist_roll_command_pub.publish(distance)
-            while rospy.wait_for_message('wrist_roll_controller/state', DynamixelJointState).current_pos < distance-threshold:
+            end_time = rospy.Time.now() + rospy.Duration(timeout)
+            
+            while current_pos < distance-threshold and rospy.Time.now() < end_time:
+                msg = rospy.wait_for_message(wrist_roll_state, DynamixelJointState, timeout)
+                current_pos = msg.current_pos
                 rospy.sleep(10e-3)
                 
-        rospy.sleep(0.5)
-        sound = self.stop_audio_recording_srv(True)
-        resp = self.classification_srv(sound.recorded_sound)
-        print 'SHAKE_ROLL RESULT'
-        print resp
-        
-        self.wrist_roll_velocity_srv(2.0)
-        self.wrist_roll_command_pub.publish(0.0)
-        
-        rospy.sleep(2)
-        return resp.beliefs
+            self.wrist_roll_velocity_srv(desired_velocity)
+            
+            # start recording sound and shaking
+            self.start_audio_recording_srv(InfomaxAction.SHAKE_ROLL, self.category_id)
+            rospy.sleep(0.5)
+            
+            for i in range(2):
+                self.wrist_roll_command_pub.publish(-distance)
+                end_time = rospy.Time.now() + rospy.Duration(timeout)
+                
+                while current_pos > -distance+threshold and rospy.Time.now() < end_time:
+                    msg = rospy.wait_for_message(wrist_roll_state, DynamixelJointState, timeout)
+                    current_pos = msg.current_pos
+                    rospy.sleep(10e-3)
+                    
+                self.wrist_roll_command_pub.publish(distance)
+                end_time = rospy.Time.now() + rospy.Duration(timeout)
+                
+                while current_pos < distance-threshold and rospy.Time.now() < end_time:
+                    msg = rospy.wait_for_message(wrist_roll_state, DynamixelJointState, timeout)
+                    current_pos = msg.current_pos
+                    rospy.sleep(10e-3)
+                    
+            rospy.sleep(0.5)
+            sound_msg = self.stop_audio_recording_srv(True)
+            
+            # reset wrist to starting position
+            self.wrist_roll_velocity_srv(3.0)
+            self.wrist_roll_command_pub.publish(start_pos)
+            end_time = rospy.Time.now() + rospy.Duration(timeout)
+            
+            while current_pos < distance-threshold and rospy.Time.now() < end_time:
+                msg = rospy.wait_for_message(wrist_roll_state, DynamixelJointState, timeout)
+                current_pos = msg.current_pos
+                rospy.sleep(10e-3)
+                
+            return sound_msg.recorded_sound
+        except ROSException as e:
+            rospy.logerr('InfomaxAction.SHAKE_ROLL: attempted roll failed - %s' % str(e))
+            self.stop_audio_recording_srv(False)
+            return None
 
 
     def reset_robot(self, tabletop_collision_map_processing_result=None):
+        ordered_collision_operations = OrderedCollisionOperations()
+        
         if tabletop_collision_map_processing_result:
-            obj = AttachedCollisionObject()
-            obj.object.header.stamp = rospy.Time.now()
-            obj.object.header.frame_id = 'L7_wrist_roll_link'
-            obj.object.operation.operation = CollisionObjectOperation.REMOVE
-            obj.object.id = tabletop_collision_map_processing_result.collision_object_names[0]
-            obj.link_name = 'L7_wrist_roll_link'
-            obj.touch_links = self.GRIPPER_LINKS
+            collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
+            collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
             
-            self.attached_object_pub.publish(obj)
-            rospy.sleep(2)
+            collision_operation = CollisionOperation()
+            collision_operation.object1 = collision_support_surface_name
+            collision_operation.object2 = 'left_arm'
+            collision_operation.operation = CollisionOperation.DISABLE
+            collision_operation.penetration_distance = 0.02
+            ordered_collision_operations.collision_operations = [collision_operation]
+            
+            collision_operation = CollisionOperation()
+            collision_operation.object1 = collision_support_surface_name
+            collision_operation.object2 = self.GRIPPER_GROUP_NAME
+            collision_operation.operation = CollisionOperation.DISABLE
+            collision_operation.penetration_distance = 0.02
+            ordered_collision_operations.collision_operations.append(collision_operation)
+            
+            collision_operation = CollisionOperation()
+            collision_operation.object1 = collision_object_name
+            collision_operation.object2 = self.GRIPPER_GROUP_NAME
+            collision_operation.operation = CollisionOperation.DISABLE
+            collision_operation.penetration_distance = 0.02
+            ordered_collision_operations.collision_operations.append(collision_operation)
+        else:
+            self.reset_collision_map()
             
         self.open_gripper()
-        self.reset_collision_map()
-        if not self.tuck_arm(): return False
+        if not self.tuck_arm(ordered_collision_operations): return False
         self.gentle_close_gripper()
         return True
 
@@ -756,7 +890,8 @@ class ObjectCategorizer():
                    InfomaxAction.LIFT:       [self.grasp, self.lift],
                    InfomaxAction.SHAKE_ROLL: [self.grasp, self.lift, self.shake_roll],
                    InfomaxAction.DROP:       [self.grasp, self.lift, self.drop],
-                   InfomaxAction.PLACE:      [self.grasp, self.lift, self.place]}
+                   InfomaxAction.PLACE:      [self.grasp, self.lift, self.place],
+                   InfomaxAction.PUSH:       [self.grasp, self.lift, self.place, self.push]}
                    
         if not self.reset_robot(): return None
         
@@ -774,12 +909,15 @@ class ObjectCategorizer():
         actions = prereqs[req.actionID.val]
         
         for act in actions:
-            beliefs = act(tcmpr)
+            sound = act(tcmpr)
             
-            if not beliefs:
-                self.reset_robot()
+            if not sound:
+                self.reset_robot(tcmpr)
                 return None
-            
+            else:
+                resp = self.classification_srv(sound)
+                beliefs = resp.beliefs
+                
         if not self.reset_robot(tcmpr): return None
         
         res = InfoMaxResponse()
