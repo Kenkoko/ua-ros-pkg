@@ -22,7 +22,7 @@ if __name__ == '__main__':
     infomax_srv = rospy.ServiceProxy('/get_category_distribution', InfoMax)
     rospy.loginfo('connected to get_category_distribution service')
     
-    actions = [InfomaxAction.PUSH]
+    actions = [InfomaxAction.SHAKE_ROLL]
     
     req = InfoMaxRequest()
     req.objectNames = ['pink_glass',        #0
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     req.numCats = len(req.objectNames)
     req.catID = 4
 
-    for trial in range(1):
+    for trial in range(5):
         rospy.loginfo('Trial number %d' % trial)
         
         for action in actions:

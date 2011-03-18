@@ -102,6 +102,7 @@ class ObjectCategorizer():
         
         self.GRIPPER_LINK_FRAME = 'L7_wrist_roll_link'
         self.GRIPPER_GROUP_NAME = 'l_end_effector'
+        self.ARM_GROUP_NAME = 'left_arm'
         
         # connect to tabletop segmentation service
         rospy.loginfo('waiting for tabletop_segmentation service')
@@ -176,6 +177,11 @@ class ObjectCategorizer():
         self.wrist_roll_velocity_srv = rospy.ServiceProxy('/wrist_roll_controller/set_speed', SetSpeed)
         rospy.loginfo('connected to wrist_roll_controller service')
         
+        rospy.loginfo('waiting for wrist_pitch_controller service')
+        rospy.wait_for_service('/wrist_pitch_controller/set_speed')
+        self.wrist_pitch_velocity_srv = rospy.ServiceProxy('/wrist_pitch_controller/set_speed', SetSpeed)
+        rospy.loginfo('connected to wrist_pitch_controller service')
+        
         # connect to interpolated IK services
         rospy.loginfo('waiting for l_interpolated_ik_motion_plan_set_params service')
         rospy.wait_for_service('/l_interpolated_ik_motion_plan_set_params')
@@ -199,6 +205,7 @@ class ObjectCategorizer():
         
         # will publish to wrist roll joint controller for roll action
         self.wrist_roll_command_pub = rospy.Publisher('wrist_roll_controller/command', Float64)
+        self.wrist_pitch_command_pub = rospy.Publisher('wrist_pitch_controller/command', Float64)
         
         # will publish when objects are attached or detached to/from the gripper
         self.attached_object_pub = rospy.Publisher('/attached_collision_object', AttachedCollisionObject)
@@ -213,7 +220,7 @@ class ObjectCategorizer():
         goal = MoveArmGoal()
         goal.planner_service_name = 'ompl_planning/plan_kinematic_path'
         goal.motion_plan_request.planner_id = ''
-        goal.motion_plan_request.group_name = 'left_arm'
+        goal.motion_plan_request.group_name = self.ARM_GROUP_NAME
         goal.motion_plan_request.num_planning_attempts = 3
         goal.motion_plan_request.allowed_planning_time = rospy.Duration(5.0)
         goal.motion_plan_request.goal_constraints.joint_constraints = [JointConstraint(j, p, 0.1, 0.1, 0.0) for (j,p) in zip(joint_names,joint_positions)]
@@ -346,21 +353,21 @@ class ObjectCategorizer():
         req.ik_request.ik_link_name = self.GRIPPER_LINK_FRAME;
         req.ik_request.pose_stamped = pose_stamped
         
-        rospy.loginfo('waiting for current joint states')
-        current_state = rospy.wait_for_message('/joint_states', JointState)
-        rospy.loginfo('recevied current joint states')
-        
-        req.ik_request.ik_seed_state.joint_state.name = arm_joints
-        req.ik_request.ik_seed_state.joint_state.position = [current_state.position[current_state.name.index(j)] for j in arm_joints]
-        
-        ik_result = self.get_ik_srv(req)
-        
-        if ik_result.error_code.val == ArmNavigationErrorCodes.SUCCESS:
-            return ik_result.solution
-        else:
-            rospy.logerr('failed to find an IK for requested grasping pose, aborting')
-            return None
-
+        try:
+            current_state = rospy.wait_for_message('/joint_states', JointState, 2.0)
+            
+            req.ik_request.ik_seed_state.joint_state.name = arm_joints
+            req.ik_request.ik_seed_state.joint_state.position = [current_state.position[current_state.name.index(j)] for j in arm_joints]
+            
+            ik_result = self.get_ik_srv(req)
+            
+            if ik_result.error_code.val == ArmNavigationErrorCodes.SUCCESS:
+                return ik_result.solution
+            else:
+                rospy.logerr('failed to find an IK for requested grasping pose, aborting')
+                return None
+        except Exception as e:
+            rospy.logerr('error occured: %s' % str(e))
 
     def find_grasp_pose(self, target, collision_object_name='', collision_support_surface_name=''):
         """
@@ -370,7 +377,7 @@ class ObjectCategorizer():
         """
         
         req = GraspPlanningRequest()
-        req.arm_name = 'left_arm'
+        req.arm_name = self.ARM_GROUP_NAME
         req.target = target
         req.collision_object_name = collision_object_name
         req.collision_support_surface_name = collision_support_surface_name
@@ -779,7 +786,7 @@ class ObjectCategorizer():
 
 
     def shake_roll(self, tabletop_collision_map_processing_result):
-        wrist_roll_state = 'wrist_roll_controller/state'
+        wrist_roll_state = '/wrist_roll_controller/state'
         desired_velocity = 11.0
         distance = 2.5
         threshold = 0.2
@@ -836,9 +843,75 @@ class ObjectCategorizer():
                 current_pos = msg.current_pos
                 rospy.sleep(10e-3)
                 
+            rospy.sleep(0.5)
             return sound_msg.recorded_sound
         except ROSException as e:
             rospy.logerr('InfomaxAction.SHAKE_ROLL: attempted roll failed - %s' % str(e))
+            self.stop_audio_recording_srv(False)
+            return None
+
+
+    def shake_pitch(self, tabletop_collision_map_processing_result):
+        wrist_pitch_state = '/wrist_pitch_controller/state'
+        desired_velocity = 6.0
+        distance = 1.0
+        threshold = 0.1
+        timeout = 2.0
+        
+        try:
+            msg = rospy.wait_for_message(wrist_pitch_state, DynamixelJointState, timeout)
+            current_pos = msg.current_pos
+            start_pos = current_pos
+            
+            # set wrist to initial position
+            self.wrist_pitch_velocity_srv(3.0)
+            self.wrist_pitch_command_pub.publish(distance)
+            end_time = rospy.Time.now() + rospy.Duration(timeout)
+            
+            while current_pos < distance-threshold and rospy.Time.now() < end_time:
+                msg = rospy.wait_for_message(wrist_pitch_state, DynamixelJointState, timeout)
+                current_pos = msg.current_pos
+                rospy.sleep(10e-3)
+                
+            self.wrist_pitch_velocity_srv(desired_velocity)
+            
+            # start recording sound and shaking
+            self.start_audio_recording_srv(InfomaxAction.SHAKE_PITCH, self.category_id)
+            rospy.sleep(0.5)
+            
+            for i in range(2):
+                self.wrist_pitch_command_pub.publish(-distance)
+                end_time = rospy.Time.now() + rospy.Duration(timeout)
+                
+                while current_pos > -distance+threshold and rospy.Time.now() < end_time:
+                    msg = rospy.wait_for_message(wrist_pitch_state, DynamixelJointState, timeout)
+                    current_pos = msg.current_pos
+                    rospy.sleep(10e-3)
+                    
+                self.wrist_pitch_command_pub.publish(distance)
+                end_time = rospy.Time.now() + rospy.Duration(timeout)
+                
+                while current_pos < distance-threshold and rospy.Time.now() < end_time:
+                    msg = rospy.wait_for_message(wrist_pitch_state, DynamixelJointState, timeout)
+                    current_pos = msg.current_pos
+                    rospy.sleep(10e-3)
+                    
+            rospy.sleep(0.5)
+            sound_msg = self.stop_audio_recording_srv(True)
+            
+            # reset wrist to starting position
+            self.wrist_pitch_velocity_srv(3.0)
+            self.wrist_pitch_command_pub.publish(start_pos)
+            end_time = rospy.Time.now() + rospy.Duration(timeout)
+            
+            while current_pos < distance-threshold and rospy.Time.now() < end_time:
+                msg = rospy.wait_for_message(wrist_pitch_state, DynamixelJointState, timeout)
+                current_pos = msg.current_pos
+                rospy.sleep(10e-3)
+                
+            return sound_msg.recorded_sound
+        except ROSException as e:
+            rospy.logerr('InfomaxAction.SHAKE_PITCH: attempted pitch failed - %s' % str(e))
             self.stop_audio_recording_srv(False)
             return None
 
@@ -852,7 +925,7 @@ class ObjectCategorizer():
             
             collision_operation = CollisionOperation()
             collision_operation.object1 = collision_support_surface_name
-            collision_operation.object2 = 'left_arm'
+            collision_operation.object2 = self.ARM_GROUP_NAME
             collision_operation.operation = CollisionOperation.DISABLE
             collision_operation.penetration_distance = 0.02
             ordered_collision_operations.collision_operations = [collision_operation]
@@ -886,12 +959,13 @@ class ObjectCategorizer():
         self.num_categories = req.numCats
         self.category_id = req.catID
         
-        prereqs = {InfomaxAction.GRASP:      [self.grasp],
-                   InfomaxAction.LIFT:       [self.grasp, self.lift],
-                   InfomaxAction.SHAKE_ROLL: [self.grasp, self.lift, self.shake_roll],
-                   InfomaxAction.DROP:       [self.grasp, self.lift, self.drop],
-                   InfomaxAction.PLACE:      [self.grasp, self.lift, self.place],
-                   InfomaxAction.PUSH:       [self.grasp, self.lift, self.place, self.push]}
+        prereqs = {InfomaxAction.GRASP:       [self.grasp],
+                   InfomaxAction.LIFT:        [self.grasp, self.lift],
+                   InfomaxAction.SHAKE_ROLL:  [self.grasp, self.lift, self.shake_roll],
+                   InfomaxAction.DROP:        [self.grasp, self.lift, self.drop],
+                   InfomaxAction.PLACE:       [self.grasp, self.lift, self.place],
+                   InfomaxAction.PUSH:        [self.grasp, self.lift, self.place, self.push],
+                   InfomaxAction.SHAKE_PITCH: [self.grasp, self.lift, self.shake_pitch]}
                    
         if not self.reset_robot(): return None
         
