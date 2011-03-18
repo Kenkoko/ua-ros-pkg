@@ -3,13 +3,13 @@
     <rosparam command="load" file="$(find wubble2_robot)/config/wubble_hand_description.yaml"/>
 
     <!-- joint trajectory normalization -->
-    <include file="$(find trajectory_filter_server)/launch/trajectory_unnormalize.launch"/>
+<!--    <include file="$(find trajectory_filter_server)/launch/trajectory_unnormalize.launch"/>-->
 
     <!-- grasp planner -->
     <node pkg="orrosplanning"
           type="graspplanning_openrave.py"
           name="grasp_planner_cluster"
-          args="--scene=$(find openrave)/share/openrave/robots/wubble2.xml --mapframe=base_footprint --graspframe=base_link --viewer="
+          args="--scene=$(find wubble_description)/openrave/wubble2.xml --mapframe=base_footprint --graspframe=base_link --viewer="
           respawn="false"
           output="screen" />
 
