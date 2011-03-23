@@ -49,6 +49,7 @@ import pylab as pl
 import numpy as np
 import matplotlib
 from scipy.ndimage.filters import gaussian_filter1d
+from scikits.audiolab import Format, Sndfile
 
 import nwalign as nw
 from scikits.learn.cluster import SelfOrganizingMap
@@ -905,9 +906,12 @@ def index_where(seq, f):
     """Return the index of the first item in seq where f(item) == True."""
     return next((i for i in xrange(len(seq)) if f(seq[i])), None)
 
+def reverse_index_where(seq, f):
+    """Return the index of the last item in seq where f(item) == True."""
+    return next((i for i in xrange(len(seq) - 1, -1, -1) if f(seq[i])), None)
 
 def find_sound_start_new(data_paths, actions, objects):
-    window = int(0.125*44100)
+    window = int(0.1*44100)
     
     counter = {}
     total = {}
@@ -954,11 +958,18 @@ def find_sound_start_new(data_paths, actions, objects):
                     sound = rebin_time_fixed_width(sound, window)
                     maximum = max(sound)
                     
-                    start = index_where(sound, (lambda x: x > maximum / 2.0))
+                    start = index_where(sound, (lambda x: x > 0.02))#maximum / 2.0))
+                    
+#                    f = pl.figure()
+#                    ax = f.add_subplot(111)
+#                    im = pl.plot(sound)
+#                    pl.draw()
+#                    pl.show()
+                    
                     
                     if start is not None:
                         start *= window
-                        start = max(0, start - 0.1*44100)
+                        start = max(0, start - 0.15*44100)
                         total[action_str] += start
                         counter[action_str] += 1
                         start_times_by_action[action_str][object_str].append(start)
@@ -980,7 +991,7 @@ def find_sound_start_new(data_paths, actions, objects):
 
 
 def find_sound_end_new(data_paths, actions, objects, start_times):
-    window = int(0.125*44100)
+    window = int(0.1*44100)
     
     counter = {}
     total = {}
@@ -1028,13 +1039,14 @@ def find_sound_end_new(data_paths, actions, objects, start_times):
                     sound = rebin_time_fixed_width(sound, window)
                     minimum = min(sound)
                     sample_idx = len(end_times_by_action[action_str][object_str])
-                    start = int((start_times[action_str][object_str][sample_idx]+0.1*44100)/window)
+                    start = int((start_times[action_str][object_str][sample_idx]+0.15*44100)/window)
                     sound = sound[start:]
-                    end = index_where(sound, (lambda x: x < minimum * 2.0))
+                    maximum = max(sound)
+                    end = reverse_index_where(sound, (lambda x: x > 0.02))#maximum / 2.0))
                     
                     if end is not None:
                         end = (start + end) * window
-                        end = min(end + 0.1*44100, last_index)
+                        end = min(end + 0.15*44100, last_index)
                         total[action_str] += end
                         counter[action_str] += 1
                         end_times_by_action[action_str][object_str].append(end)
@@ -1057,6 +1069,28 @@ def find_sound_end_new(data_paths, actions, objects, start_times):
     return end_times_by_action
 
 
+import time
+def save_wav(sound, action_label, object_label):
+    wav_path = '/tmp/new_wav'
+    filename = os.path.join(wav_path, action_label + '-' + object_label + '-' + str(time.time()) + '.wav')
+    format = Format('wav')
+
+    print 'writing', filename, '...',
+
+    f = Sndfile(filename, 'w', format, 1, 44100)
+    f.write_frames(sound)
+    f.close()
+    print 'DONE'
+
+
+def pretty_print_totals(object_count_by_actions):
+    for act in object_count_by_actions:
+        print act
+        for obj in object_count_by_actions[act]:
+            print '\t', obj, '---', object_count_by_actions[act][obj]
+        print '\n'
+
+
 def calculate_fft_newdata(data_paths, actions, objects):
     """
     Given a path to the data, a list of actions and a list objects reads raw
@@ -1067,8 +1101,8 @@ def calculate_fft_newdata(data_paths, actions, objects):
     sampling_rate = 44100
     fft_n = 512
     fft_overlap = 256
-    fft_time_after_peak = 2.0
-    fft_freq_bins = 33
+    fft_time_after_peak = 0.5
+    fft_freq_bins = 17
     #########################
     
     object_count_by_actions = {}
@@ -1076,17 +1110,17 @@ def calculate_fft_newdata(data_paths, actions, objects):
         object_count_by_actions[action_str] = {}
         for object_str in objects:
             object_count_by_actions[action_str][object_str] = 0
-    
+            
     processed_ffts = []
     object_labels = []
     action_labels = []
     
-    print 'Calculating start times...'
+    #print 'Calculating start times...'
     start_times = find_sound_start_new(data_paths, actions, objects)
-    print start_times
+    #print start_times
     
     #print 'Calculating end times...'
-    #end_times = find_sound_end_new(data_paths, actions, objects, start_times)
+    end_times = find_sound_end_new(data_paths, actions, objects, start_times)
     #print end_times
     #exit(1)
     
@@ -1124,8 +1158,14 @@ def calculate_fft_newdata(data_paths, actions, objects):
                     sound = np.asarray(audio_blob[int(offset):int(offset)+int(length)])
                     idx = object_count_by_actions[action_str][object_str]
                     start = int(start_times[action_str][object_str][idx])
-                    end = start + int(fft_time_after_peak * sampling_rate)
+                    end = int(end_times[action_str][object_str][idx]) #start + int(fft_time_after_peak * sampling_rate)
                     sound = sound[start:end]
+                    
+#                    f = pl.figure()
+#                    ax = f.add_subplot(111)
+#                    im = pl.plot(sound)
+#                    pl.draw()
+#                    pl.show()
                     
                     Pxx,freqs,t = matplotlib.mlab.specgram(sound, NFFT=fft_n, Fs=sampling_rate, noverlap=fft_overlap)
                     Pxx = 20 * np.log10(Pxx)
@@ -1146,18 +1186,173 @@ def calculate_fft_newdata(data_paths, actions, objects):
                     object_count_by_actions[action_str][object_str] += 1
                     sample_idx += 1
                     
-                    f = pl.figure()
-                    ax = f.add_subplot(111)
-                    im = ax.pcolormesh(fft_binned)
-                    pl.draw()
-                    pl.show()
+#                    f = pl.figure()
+#                    ax = f.add_subplot(111)
+#                    im = ax.pcolormesh(fft_binned)
+#                    pl.draw()
+#                    pl.show()
                     
-    print object_count_by_actions
+    pretty_print_totals(object_count_by_actions)
     return action_labels, object_labels, processed_ffts
+
+
+def filter_by_action(action_labels, object_labels, processed_ffts, needed):
+    res_action_labels = []
+    res_object_labels = []
+    res_processed_ffts = []
+    
+    for idx,act in enumerate(action_labels):
+        if act in needed:
+            res_action_labels.append(act)
+            res_object_labels.append(object_labels[idx])
+            res_processed_ffts.append(processed_ffts[idx])
+            
+    return res_action_labels, res_object_labels, res_processed_ffts
+
+
+def run_batch_training_classification_new(data_paths, action_names, object_names):
+    action_labels, object_labels, processed_ffts = calculate_fft_newdata(data_paths, action_names, object_names)
+    
+    action_labels, object_labels, processed_ffts = filter_by_action(action_labels, object_labels, processed_ffts, ['shake_roll'])
+    
+    print 'len(processed_ffts)', len(processed_ffts)
+    print 'len(action_labels)', len(action_labels)
+    print 'len(object_labels)', len(object_labels)
+    
+    labels = np.asarray(object_labels)
+    act_labels = np.asarray(action_labels)
+    
+    num_samplings = 10
+    corr_arr = np.zeros(num_samplings)
+    incorr_arr = np.zeros(num_samplings)
+    confusion_matrix = np.zeros((len(object_names), len(object_names)), dtype=int)
+    
+    for sampling in range(num_samplings):
+        print 'Sampling', sampling
+        inds = range(len(processed_ffts))
+        np.random.shuffle(inds)
+        
+        num_tot = len(processed_ffts)
+        num_train = int(0.8 * num_tot)
+        num_test = num_tot - num_train
+        print 'Number of training instances', num_train
+        print 'Number of testing instances', num_test
+        
+        train_set = [processed_ffts[idx] for idx in inds[:num_train]]
+        test_set = [processed_ffts[idx] for idx in inds[num_train:]]
+        
+        train_labels = labels[inds][:num_train]
+        test_labels = labels[inds][num_train:]
+#        print train_labels
+#        print '*'*100
+#        print test_labels
+        
+        act_train_labels = act_labels[inds][:num_train]
+        act_test_labels = act_labels[inds][num_train:]
+        print act_train_labels
+        print '*'*100
+        print act_test_labels
+        
+        l = {}
+        for act in action_names:
+            l[act] = []
+            
+        for idx,act in enumerate(act_train_labels):
+            l[act].append(idx)
+            
+        soms = {}
+        knns = {}
+        for act in action_names:
+            ts = [train_set[i] for i in l[act]]
+            tl = [train_labels[i] for i in l[act]]
+            
+            if ts and tl:
+                som, knn_model = train_model(ts, tl)
+                soms[act] = som
+                knns[act] = knn_model
+            
+        # save som and knn_model off for later use
+#        pickle.dump(knn_model, open('/tmp/knn_model.pkl','w'))
+#        pickle.dump(som, open('/tmp/som.pkl','w'))
+        
+        correct = 0
+        for idx, seq in enumerate(test_set):
+            act = act_test_labels[idx]
+            label, probs = classify(seq, soms[act], knns[act])
+            pretty_print_knn_probs(test_labels[idx], label, probs)
+            true_id = object_names.index(test_labels[idx])
+            pred_id = object_names.index(label)
+            confusion_matrix[true_id][pred_id] += 1
+            if label == test_labels[idx]: correct += 1
+        pct_correct = float(correct) / len(test_set)
+        print 'Result: %.2f%% correct, %.2f%% incorrect' % (pct_correct*100, (1.0-pct_correct)*100)
+        
+        corr_arr[sampling] = pct_correct
+        incorr_arr[sampling] = 1.0-pct_correct
+        corr_sub = corr_arr[:sampling+1]
+        incorr_sub = incorr_arr[:sampling+1]
+        print 'Current correct mean/std/var   %.2f %.2f %.3f' % (corr_sub.mean(), corr_sub.std(), corr_sub.var())
+        print 'Current incorrect mean/std/var %.2f %.2f %.3f\n' % (incorr_sub.mean(), incorr_sub.std(), incorr_sub.var())
+        
+    print '  Correct mean/std/var/max/min', corr_arr.mean(), corr_arr.std(), corr_arr.var(), corr_arr.max(), corr_arr.min()
+    print 'Incorrect mean/std/var/max/min', incorr_arr.mean(), incorr_arr.std(), incorr_arr.var(), incorr_arr.max(), incorr_arr.min()
+    
+    print_confusion_matrix(object_names, confusion_matrix)
+    
+    for idx, obj in enumerate(object_names):
+        print '%4d --- %s' % (idx, obj)
+
+
+def generate_fake_pdfs(data_paths, action_names, object_names):
+    action_labels, object_labels, processed_ffts = calculate_fft_newdata(data_paths, action_names, object_names)
+    
+    # do leave-one-out cross validation
+    # also change the neighborhood a bit each time by randomly removing
+    # some other objects
+    
+    n = 10
+    
+    # find object indicies first
+    obj_inds = {}
+    for obj in object_names:
+        obj_inds[obj] = [idx for idx,label in enumerate(object_labels) if label == obj]
+        
+    for obj in obj_inds:
+        pdf = None
+        print 'processing %s' % obj
+        rest_inds = []
+        [rest_inds.extend(obj_inds[label]) for label in obj_inds if obj != label]
+        rest_inds = np.asarray(rest_inds)
+        
+        # skip object with index ind
+        for ind in obj_inds[obj]:
+            # remove n random samples from other objects
+            to_remove = np.random.permutation(rest_inds)[:n]
+            to_remove = np.append(to_remove, ind)
+            
+            # this contains indices of all objects except the one we are leaving out and
+            # random sample that we removed in order to perturb neighborhoods a bit
+            train_inds = [idx for idx in range(len(object_labels)) if idx not in to_remove]
+            
+            train_action_labels = [action_labels[idx] for idx in train_inds]
+            train_object_labels = [object_labels[idx] for idx in train_inds]
+            train_processed_fft = [processed_ffts[idx] for idx in train_inds]
+            
+            # training
+            som, knn_model = train_model(train_processed_fft, train_object_labels)
+            
+            # validation
+            label, probs = classify(processed_ffts[ind], som, knn_model)
+            pretty_print_knn_probs(object_labels[ind], label, probs)
+            true_id = object_names.index(object_labels[ind])
+            pred_id = object_names.index(label)
+            #confusion_matrix[true_id][pred_id] += 1
+            #if label == test_labels[idx]: correct += 1
 
 
 if __name__ == '__main__':
     generate_cost_matrix()
+    
     """
     actions = ('drop', 'push', 'tap', 'shake')
     
@@ -1186,27 +1381,49 @@ if __name__ == '__main__':
     #test_affinity(data_path, actions, objects)
     #run_dbn(data_path, actions, objects)
     #seq_actions(data_path, actions, objects)
-    
-
     """
-    data_paths = ['/tmp/good', '/tmp/verygood']
-    
-    action_names = ['grasp',
-                    'lift',
-                    'drop',
-                    'shake_roll',
-                    'place']
-                    
-    object_names = ['pink_glass',
-                    'german_ball',
-                    'blue_cup',
-                    'blue_spiky_ball',
-                    'screw_box',
-                    'wire_spool',
-                    'sqeaky_ball',
-                    'duck_tape_roll',
-                    'ace_terminals']
-                    
-    calculate_fft_newdata(data_paths, action_names, object_names)
-    #actions, objects, audio = load_sounds(datapaths, numActions, numObjects)
+    model_params = {'som_size':             6,
+                    'som_iterations':       10000,
+                    'som_learning_rate':    0.05,
+                    'nw_gap_open':          0,
+                    'nw_gap_extend':        -5,
+                    'knn_k':                5,
+                    'fft_n':                512,
+                    'fft_overlap':          256,
+                    'fft_freq_bins':        17,
+                    'rebin_window':         0.1,
+                    'start_offset':         0.15,
+                    'end_offset':           0.15,
+                   }
+                   
+    data_paths = [#'/tmp/good',
+                  '/tmp/verygood',
+                  '/tmp/allactions/pink_cup',
+                  '/tmp/allactions/german_ball',
+                  '/tmp/robot_sounds/shake_roll',
+                 ]
+                 
+    action_names = ['grasp',        # 0
+                    'lift',         # 1
+                    'drop',         # 2
+                    'shake_roll',   # 3
+                    'place',        # 4
+                    'push',         # 5
+                    'shake_pitch',  # 6
+                   ]
+                   
+    object_names = ['pink_glass',           # 0
+                    'german_ball',          # 1
+                    'blue_cup',             # 2
+                    'blue_spiky_ball',      # 3
+                    'screw_box',            # 4
+                    'wire_spool',           # 5
+                    'sqeaky_ball',          # 6
+                    'duck_tape_roll',       # 7
+                    'ace_terminals',        # 8
+                    'chalkboard_eraser',    # 9
+                   ]
+                   
+    run_batch_training_classification_new(data_paths, action_names, object_names)
+    #generate_fake_pdfs(data_paths, action_names, object_names)
 
