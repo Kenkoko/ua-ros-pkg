@@ -77,7 +77,7 @@ def relaxed_cobra_pose():
     right_finger.publish( math.radians(-30.0) )
     elbow.publish( math.radians(-135.0) )
     shoulder.publish( math.radians(135.0) )
-    pan.publish( math.radians(90.0) )
+    pan.publish( math.radians(0.0) )
 
 def custom_pose(p, s, e, w, l, r):
     wrist.publish( math.radians(w) )
@@ -117,9 +117,10 @@ if __name__ == '__main__':
 ##        print getLeft()
 #        print templeft
 
-    squeeze(10, 250, -5.0, 5.0)
+#    squeeze(10, 250, -5.0, 5.0)
     rospy.sleep(1)
+    
+#    custom_pose(0.0, 90.0, -90.0, 0.0, 30.0, -30.0)
     relaxed_cobra_pose()
-#    custom_pose(90.0, 0.0, 0.0, 0.0, 30.0, -30.0)
 #    time.sleep(1)
     #relaxed_cobra_pose()
