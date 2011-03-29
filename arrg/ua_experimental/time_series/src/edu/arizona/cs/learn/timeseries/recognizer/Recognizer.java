@@ -33,7 +33,8 @@ public enum Recognizer {
 		public FSMRecognizer build(String key, Signature s, int minPct, boolean onlyStart) {
 			double pct = minPct / 100.0D;
 
-			int minSeen = (int) Math.round(s.trainingSize() * pct);
+			// Daniel: I changed this to a floor to avoid getting empty FSMs
+			int minSeen = (int) Math.floor(s.trainingSize() * pct);
 			s = s.prune(minSeen);
 
 			// Assumption is that you will only build FSMRecognizer on 
