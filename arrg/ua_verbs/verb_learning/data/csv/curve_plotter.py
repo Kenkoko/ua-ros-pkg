@@ -37,6 +37,9 @@ def get_data(verb, condition):
     row_count = 0
     row_count_2 = 0
     for file_name in os.listdir(folder):
+        if file_name.startswith('.'):
+            continue
+
         if file_name.startswith('r'):
             file_reader = csv.reader(open(folder + "/" + file_name))
             for row in file_reader:
