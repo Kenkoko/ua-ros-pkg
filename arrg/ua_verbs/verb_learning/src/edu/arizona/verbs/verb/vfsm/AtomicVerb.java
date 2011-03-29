@@ -5,33 +5,41 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.arizona.cs.learn.timeseries.model.Signature;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
+import edu.arizona.verbs.verb.vfsm.learner.LearnerType;
+import edu.arizona.verbs.verb.vfsm.learner.VFSMLearner;
 
 public class AtomicVerb extends AbstractVerb {
 //	private static Logger logger = Logger.getLogger(AtomicVerb.class);
+	
+	private LearnerType learnerType_;
 	
 	// Used internally for making a remapped verb
 	private AtomicVerb() {
 	}
 	
-	public AtomicVerb(String word) {
+//	public AtomicVerb(String word) {
+//		lexicalForm_ = word;
+//		makeVerbFolder();
+//	}
+	
+	public AtomicVerb(String word, List<String> arguments, LearnerType learnerType) {
 		lexicalForm_ = word;
+		arguments_ = new ArrayList<String>(arguments);
+		learnerType_ = learnerType;
+		
+		posLearner_ = learnerType_.create();
+		negLearner_ = learnerType_.create();
+		
 		makeVerbFolder();
 	}
 	
-	public AtomicVerb(String word, List<String> arguments) {
-		lexicalForm_ = word;
-		arguments_ = new ArrayList<String>(arguments);
-		makeVerbFolder();
-	}
-	
-	public AtomicVerb(String word, List<String> arguments, Signature signature, Signature negSignature) {
-		lexicalForm_ = word;
-		arguments_ = new ArrayList<String>(arguments);
-		makeVerbFolder();
-		postInstance();
-	}
+//	public AtomicVerb(String word, List<String> arguments, Signature signature, Signature negSignature) {
+//		lexicalForm_ = word;
+//		arguments_ = new ArrayList<String>(arguments);
+//		makeVerbFolder();
+//		postInstance();
+//	}
 	
 	@Override
 	protected void postInstance() {
@@ -79,8 +87,8 @@ public class AtomicVerb extends AbstractVerb {
 
 	@Override
 	public VerbState fsmTransition(VerbState verbState, Set<String> activeRelations) {
-		TransitionResult posResult = posFSM_.simulateDfaTransition(verbState.posState, activeRelations);
-//		TransitionResult posResult = posFSM_.simulateNfaTransition(verbState.posState, activeRelations);
+//		TransitionResult posResult = posFSM_.simulateDfaTransition(verbState.posState, activeRelations);
+		TransitionResult posResult = posFSM_.simulateNfaTransition(verbState.posState, activeRelations);
 		
 		TransitionResult negResult = negFSM_.simulateNfaTransition(verbState.negState, activeRelations);
 		

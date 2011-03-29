@@ -72,6 +72,10 @@ public class UCT extends FSMPlanner {
 			if (i % 50 == 0) {
 				System.out.println(">>> BEGIN TRIAL " + i + " (Reached Goal " + goalCounter + " of last 50 trials, got within " + bestState + " of goal)");
 				
+				if (i == 250 && goalCounter == 0) { // Reset
+					break;
+				}
+				
 				goalTotal += goalCounter;
 				goalCounter = 0;
 				bestState = Integer.MAX_VALUE;

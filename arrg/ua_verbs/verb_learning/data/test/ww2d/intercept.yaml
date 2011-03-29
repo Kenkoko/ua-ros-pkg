@@ -1,0 +1,10 @@
+start: 
+  - name: "person"
+    className: "agent"
+    attributes: {x: "50", y: "55", heading: "-3", vx: "0", vy: "0", vtheta: "0", shape-type: "circle", radius: "0.25"}
+  - name: "enemy"
+    className: "agent"
+    attributes: {x: "40", y: "50", heading: "0", vx: "0", vy: "0", vtheta: "0", shape-type: "circle", radius: "0.25"}
+  - name: "place"
+    className: "obstacle"
+    attributes: {x: "70", y: "50", heading: "0", vx: "0", vy: "0", vtheta: "0", shape-type: "circle", radius: "0.5"}

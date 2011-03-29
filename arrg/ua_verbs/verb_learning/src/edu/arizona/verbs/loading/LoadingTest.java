@@ -8,6 +8,8 @@ import org.yaml.snakeyaml.constructor.Constructor;
 
 import edu.arizona.verbs.shared.Relation;
 import edu.arizona.verbs.verb.vfsm.AtomicVerb;
+import edu.arizona.verbs.verb.vfsm.learner.CorePathLearner;
+import edu.arizona.verbs.verb.vfsm.learner.LearnerType;
 
 public class LoadingTest {
 	
@@ -27,7 +29,7 @@ public class LoadingTest {
 		System.out.println(vd.getVerb());
 		System.out.println(vd.getArguments());
 		
-		AtomicVerb verb = new AtomicVerb(vd.getVerb(), vd.getArguments());
+		AtomicVerb verb = new AtomicVerb(vd.getVerb(), vd.getArguments(), LearnerType.corepath);
 		
 		for (Trace t : vd.getTraces()) {
 //			for (SimpleRelationalState s : t.getStates()) {

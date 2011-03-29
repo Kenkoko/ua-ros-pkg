@@ -26,6 +26,7 @@ import ros.pkg.verb_learning.srv.UpdateVerb;
 import edu.arizona.simulator.ww2d.external.SimulatorFailureException;
 import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.environments.GazeboEnvironment;
+import edu.arizona.verbs.environments.Simulators;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPObjectState;
@@ -38,6 +39,7 @@ import edu.arizona.verbs.verb.vfsm.AtomicVerb;
 import edu.arizona.verbs.verb.vfsm.FSMVerb;
 import edu.arizona.verbs.verb.vfsm.SequentialVerb;
 import edu.arizona.verbs.verb.vfsm.learner.CorePathLearner;
+import edu.arizona.verbs.verb.vfsm.learner.LearnerType;
 import edu.arizona.verbs.verb.vfsm.learner.SignatureLearner;
 import edu.arizona.verbs.verb.vfsm.learner.VFSMLearner;
 
@@ -53,20 +55,9 @@ public class Interface {
 	public enum VerbType { FSM, ML, IRL };
 	public static VerbType currentVerbType = VerbType.FSM;
 	
-	public enum LearnerType { CorePath, Signature };
-	public static LearnerType currentLearnerType = LearnerType.Signature;
+//	public enum LearnerType { CorePath, Signature };
+	public static LearnerType currentLearnerType = LearnerType.signature;
 //	public static LearnerType currentLearnerType = LearnerType.CorePath;
-	
-	public static VFSMLearner getVFSMLearner() {
-		switch (currentLearnerType) {
-		case CorePath:
-			return new CorePathLearner();
-		case Signature:
-			return new SignatureLearner(0.8);
-		default:
-			return null;
-		}
-	}
 	
 	// Maps: Binding -> Argument
 	public static Map<String, String> extractReverseNameMap(VerbInstance vi) {
@@ -113,7 +104,7 @@ public class Interface {
 					logger.info("VERB NOT FOUND: " + request.verb + ", creating it");
 					switch (currentVerbType) {
 					case FSM:
-						verb = new AtomicVerb(verbName, request.verb.arguments);
+						verb = new AtomicVerb(verbName, request.verb.arguments, currentLearnerType);
 						break;
 					
 					case ML:
@@ -200,15 +191,15 @@ public class Interface {
 						switch (currentVerbType) {
 						case FSM:
 							FSMVerb remapped = ((FSMVerb) verb).remap(argumentMap);
-							return remapped.perform(request.start_state, request.execution_limit);
+							return remapped.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
 						
 						case ML:
 							MaximumLikelihoodVerb remapped2 = ((MaximumLikelihoodVerb) verb).remap(argumentMap);
-							return remapped2.perform(request.start_state, request.execution_limit);
+							return remapped2.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
 						
 						case IRL:
 							IRLVerb irl = (IRLVerb) verb;
-							return irl.perform(request.start_state, request.execution_limit);
+							return irl.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
 							
 						default:
 							return new PerformVerb.Response();
@@ -280,24 +271,6 @@ public class Interface {
 			}
 		};
 
-	enum Simulators {
-		gazebo {
-			@Override
-			public Environment create() {
-				return new GazeboEnvironment();
-			}
-		},
-		
-		ww2d {
-			@Override
-			public Environment create() {
-				return new WW2DEnvironment(true);
-			}
-		};
-		
-		public abstract Environment create();
-	}
-		
 	/**
 	 * @param args
 	 * @throws RosException

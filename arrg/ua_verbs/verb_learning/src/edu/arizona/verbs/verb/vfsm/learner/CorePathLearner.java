@@ -1,11 +1,16 @@
 package edu.arizona.verbs.verb.vfsm.learner;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
+import edu.arizona.cs.learn.timeseries.model.Signature;
+import edu.arizona.cs.learn.timeseries.recognizer.Recognizer;
 import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.fsm.core.CorePath;
+import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.shared.OOMDPState;
 
 public class CorePathLearner implements VFSMLearner {
@@ -55,5 +60,22 @@ public class CorePathLearner implements VFSMLearner {
 		for (CorePath cp : corePaths_) {
 			cp.print();
 		}
+	}
+	
+	@Override
+	public FSMRecognizer getRecognizer() {
+		Signature signature = new Signature("corepath");
+		
+		for (CorePath cp : corePaths_) {
+			signature.update(StateConverter.convertTrace(cp.toStateList(), new HashMap<String, String>()));
+		}
+		
+		FSMRecognizer recognizer = Recognizer.cave.build("corepath", signature, 0, false);
+		return recognizer;
+	}
+
+	@Override
+	public boolean isReady() {
+		return !corePaths_.isEmpty();
 	}
 }

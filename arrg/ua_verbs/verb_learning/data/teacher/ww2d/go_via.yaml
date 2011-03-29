@@ -1,0 +1,206 @@
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 60, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 70, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 1000, person 1000, person 1000, person 1000, 
+          person 1000, person 1000, person 1000, person 1000, person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 60, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 73, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 1000, person 1000, person 1000, person 1000, 
+          person 1000, person 1000, person 1000, person 1000, person 1000, person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 54, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 60, y: 60, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 0010, person 0010, person 1000, 
+          person 0010, person 0010, person 1000, person 1000, 
+          person 1000, person 1000, person 1000, person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 54, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 55, y: 45, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 0100, person 0100, person 1000, 
+          person 0100, person 0100, person 1000, person 1000, 
+          person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 55, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 60, y: 60, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 0010, person 1000, person 1000,
+          person 0010, person 0010, person 0010, person 1000,
+          person 1000, person 1000, person 1000, person 1000,
+          person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 55, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 62, y: 41, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 0100, person 1000, person 0100, person 1000, 
+          person 0100, person 0100, person 1000, person 1000, person 1000, 
+          person 1000, person 1000, person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 45, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 54, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 0100, person 0100, person 0100, person 0100, 
+          person 0100, person 1000, person 0100, person 1000,
+          person 0100, person 0100, person 0100, person 0100,
+          person 0100, person 1000, person 0100, person 1000,
+          person 1000, person 1000, person 1000, person 1000,
+          person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 54, y: 54, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 60, y: 56, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 0010, person 0010, person 1000, person 1000,
+          person 0100, person 1000, person 1000, person 1000, 
+          person 1000, person 0010]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 55, y: 47, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 62, y: 43, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 0100, person 0100, person 1000, person 1000, 
+          person 0100, person 1000, person 1000, person 1000, 
+          person 1000, person 0010, person 0010, person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 55, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 60, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 1000, person 1000, person 1000, person 1000, person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 57, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 68, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 1000, person 1000, person 1000, 
+          person 1000, person 1000, person 1000, person 1000,
+          person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 60, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 73, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 1000, person 1000, person 1000, 
+          person 1000, person 1000, person 1000, person 1000,
+          person 1000, person 1000, person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 57, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 62, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 1000, person 1000, person 1000, person 1000,
+          person 1000, person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 57, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 63, y: 55, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 1000, person 1000, person 1010, person 1010,
+          person 1010, person 1000, person 1000]
+---
+start: 
+  - name: person
+    className: agent
+    attributes: {x: 50, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.25}
+  - name: waypoint
+    className: obstacle
+    attributes: {x: 57, y: 50, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+  - name: place
+    className: obstacle
+    attributes: {x: 64, y: 43, heading: 0, vx: 0, vy: 0, vtheta: 0, shape-type: circle, radius: 0.5}
+actions: [person 1000, person 1000, person 1000, person 1100, person 1100,
+          person 1100, person 1000, person 1000, person 1000]

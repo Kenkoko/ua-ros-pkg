@@ -63,7 +63,7 @@ public class StateConverter {
 		
 		message.class_name = state.getClassName();
 		message.name = state.getName();
-		message.attributes = state.getAttributes();
+		message.attributes = state.getAttributeNames();
 		message.values = state.getValues();
 		
 		return message;
@@ -118,11 +118,7 @@ public class StateConverter {
 	
 	/* Traces (Lists of States) */
 	
-	/**
-	 * This method converts a trace (list of OOMDPStates) to a sequence of Allen relations stored in an
-	 * Instance object. It will remap names if given a non-empty nameMap. 
-	 */
-	public static List<Symbol> convertTrace(List<OOMDPState> trace, Map<String, String> nameMap) {
+	public static List<Interval> traceToIntervals(List<OOMDPState> trace, Map<String, String> nameMap) {
 		ArrayList<Interval> closedIntervals = new ArrayList<Interval>();
 		Map<String, Interval> openIntervals = new HashMap<String, Interval>();
 
@@ -159,12 +155,22 @@ public class StateConverter {
 		}
 		
 		Collections.sort(closedIntervals, Interval.eff);
+		
+		return closedIntervals;
+	}
+	
+	/**
+	 * This method converts a trace (list of OOMDPStates) to a sequence of Allen relations stored in an
+	 * Instance object. It will remap names if given a non-empty nameMap. 
+	 */
+	public static List<Symbol> convertTrace(List<OOMDPState> trace, Map<String, String> nameMap) {
+		List<Interval> intervals = traceToIntervals(trace, nameMap);
 
 		// Old version
 //		Instance result = new Instance(verb, 0, SequenceFactory.allenSequence(closedIntervals));
 		
 		// New Version
-		List<Symbol> sequence = SequenceType.allen.getSequence(closedIntervals);
+		List<Symbol> sequence = SequenceType.allen.getSequence(intervals);
 		return sequence;
 	}
 }

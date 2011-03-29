@@ -4,57 +4,70 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 // TODO: We may have to remap attribute values if they refer to other objects
 public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappable<OOMDPObjectState> {
 	
-	private String className_;
-	private String name_;
-	private Map<String,String> attributeMap_; 
-	private ArrayList<String> attributeList_;
+	// These need to be public for YAML Loading
+	public String name;
+	public String className;
+	
+	private TreeMap<String,String> attributes_; 
 	private String hashString_ = null;
+	
+	public OOMDPObjectState() {
+	}
 	
 	// This constructor assumes the attributes will be set using setAttribute 
 	public OOMDPObjectState(String name, String className)
 	{
-		className_ = className;
-		name_ = name;
-		attributeMap_ = new HashMap<String, String>();
-		attributeList_ = new ArrayList<String>(); 
+		this.className = className;
+		this.name = name;
+		this.attributes_ = new TreeMap<String, String>();
 	}
-
+	
 	public void setAttribute(String attribute, String value) {
-		attributeMap_.put(attribute, value);
-		attributeList_ = new ArrayList<String>(attributeMap_.keySet());
-		Collections.sort(attributeList_);
+		attributes_.put(attribute, value);
+		
 		hashString_ = null; // To regenerate it
 	}
 	
-	public void setAttributes(ArrayList<String> attributes, ArrayList<String> values) {
+	public void setAttributes(Map<String,String> attributes) {
+		attributes_ = new TreeMap<String, String>();
+		attributes_.putAll(attributes);
+		
+		hashString_ = null; // To regenerate it
+	}
+	
+	public void setAttributes(ArrayList<String> attributeNames, ArrayList<String> attributeValues) {
 		// Populate the attributes
-		if (attributes.size() != values.size()) {
+		if (attributeNames.size() != attributeValues.size()) {
 			throw new RuntimeException("ATTRIBUTE NAMES AND VALUES DO NOT MATCH!");
 		}
 		
-		attributeList_ = new ArrayList<String>();
-		attributeMap_ = new HashMap<String, String>();
-		for (int i = 0; i < attributes.size(); i++) {
-			attributeList_.add(attributes.get(i));
-			attributeMap_.put(attributes.get(i), values.get(i));
+		attributes_ = new TreeMap<String, String>();
+		for (int i = 0; i < attributeNames.size(); i++) {
+			attributes_.put(attributeNames.get(i), attributeValues.get(i));
 		}
-		Collections.sort(attributeList_); // To ensure a consistent ordering
+		
+		hashString_ = null;
 	}
 	
 	public String getName() {
-		return name_;
+		return name;
 	}
 	
 	public String getClassName() {
-		return className_;
+		return className;
 	}
 	
-	public ArrayList<String> getAttributes() {
-		return attributeList_;
+	public ArrayList<String> getAttributeNames() {
+		return new ArrayList<String>(attributes_.keySet());
+	}
+	
+	public Map<String,String> getAttributes() {
+		return attributes_;
 	}
 	
 	/**
@@ -63,13 +76,13 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappabl
 	 * @return
 	 */
 	public String getValue(String key) { 
-		return attributeMap_.get(key);
+		return attributes_.get(key);
 	}
 	
 	public ArrayList<String> getValues() {
 		ArrayList<String> result = new ArrayList<String>();
-		for (String a : attributeList_) {
-			result.add(attributeMap_.get(a));
+		for (String a : attributes_.keySet()) {
+			result.add(attributes_.get(a));
 		}
 		return result;
 	}
@@ -82,9 +95,9 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappabl
 	@Override
 	public String toString() {
 		if (hashString_ == null) {
-			hashString_ = className_ + "<" + name_ + ">";
-			for (String attribute : attributeList_) {
-				hashString_ += attribute + "={" + attributeMap_.get(attribute) + "}";
+			hashString_ = className + "<" + name + ">";
+			for (String attribute : attributes_.keySet()) {
+				hashString_ += attribute + "={" + attributes_.get(attribute) + "}";
 			}
 		}
 		return hashString_;
@@ -92,9 +105,9 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappabl
 
 	@Override
 	public OOMDPObjectState remap(Map<String, String> nameMap) {
-		if (nameMap.containsKey(name_)) {
-			OOMDPObjectState newObject = new OOMDPObjectState(nameMap.get(name_), className_);
-			for (Map.Entry<String, String> entry : attributeMap_.entrySet()) {
+		if (nameMap.containsKey(name)) {
+			OOMDPObjectState newObject = new OOMDPObjectState(nameMap.get(name), className);
+			for (Map.Entry<String, String> entry : attributes_.entrySet()) {
 				newObject.setAttribute(entry.getKey(), entry.getValue()); // TODO: Do this faster
 			}
 			return newObject;
@@ -102,4 +115,6 @@ public class OOMDPObjectState implements Comparable<OOMDPObjectState>, Remappabl
 			return this; // If the object isn't an argument, don't remap
 		}
 	}
+	
+	
 }

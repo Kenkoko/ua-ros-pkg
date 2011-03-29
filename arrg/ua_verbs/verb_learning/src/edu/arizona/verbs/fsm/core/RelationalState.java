@@ -1,7 +1,10 @@
 package edu.arizona.verbs.fsm.core;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.TreeSet;
+
+import com.google.common.collect.Lists;
 
 import edu.arizona.verbs.shared.Relation;
 
@@ -9,16 +12,24 @@ public class RelationalState {
 
 	private TreeSet<Relation> relations_ = new TreeSet<Relation>();
 	
+	private List<Relation> allRelations_;
+	
 	public RelationalState(Collection<Relation> relations) {
 		for (Relation r : relations) {
 			if (r.getValue()) {
 				relations_.add(r);
 			}
 		}
+		
+		allRelations_ = Lists.newArrayList(relations);
 	}
 
 	public TreeSet<Relation> getRelations() {
 		return relations_;
+	}
+	
+	public List<Relation> getAllRelations() {
+		return allRelations_;
 	}
 	
 	public boolean isSuperset(RelationalState other) {

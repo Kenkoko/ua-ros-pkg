@@ -3,8 +3,8 @@ package edu.arizona.verbs.verb;
 import java.util.ArrayList;
 import java.util.List;
 
-import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.srv.PerformVerb.Response;
+import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 
 // TODO: What to do about remapping?
@@ -19,7 +19,7 @@ public interface Verb {
 	public void forgetInstances();
 	
 	// Perform the verb
-	public Response perform(MDPState startState, int executionLimit);
+	public Response perform(Environment env, OOMDPState startState, int executionLimit);
 	public boolean isReady();
 	
 	// Getters/Setters
