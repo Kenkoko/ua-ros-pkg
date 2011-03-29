@@ -1,9 +1,13 @@
 package edu.arizona.verbs.fsm.core;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
+import com.google.common.collect.Lists;
+
+import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.shared.Relation;
 
@@ -100,6 +104,16 @@ public class CorePath {
 	
 	public Vector<RelationalState> getPath() {
 		return states_;
+	}
+	
+	public List<OOMDPState> toStateList() {
+		List<OOMDPState> trace = Lists.newArrayList();
+		
+		for (RelationalState rs : states_) {
+			trace.add(new OOMDPState(new ArrayList<OOMDPObjectState>(), rs.getAllRelations()));
+		}
+		
+		return trace;
 	}
 
 	@Override

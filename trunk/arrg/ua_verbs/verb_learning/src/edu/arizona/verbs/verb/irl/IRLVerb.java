@@ -7,9 +7,7 @@ import java.util.Random;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
-import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.srv.PerformVerb.Response;
-import edu.arizona.verbs.main.Interface;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.planning.SpecialUCT;
 import edu.arizona.verbs.planning.ValueIteration;
@@ -204,9 +202,7 @@ public class IRLVerb implements Verb {
 	}
 	
 	
-	private void runAutonomousTrajectory(OOMDPState startState) {
-		Environment environment = Interface.getCurrentEnvironment();
-		
+	private void runAutonomousTrajectory(OOMDPState startState, Environment environment) {
 		OOMDPState currentState = startState;
 		agentBegin(startState);
 		
@@ -224,14 +220,14 @@ public class IRLVerb implements Verb {
 		agentEnd();
 	}
 	
-	public void train() {
+	public void train(Environment env) {
 		Random r = new Random();
 		
 		for (int i = 0; i < 70 && learning; i++) {
 			// Sample a random start state from the teacher traces
 			OOMDPState startState = teacherTraces.get(r.nextInt(teacherTraces.size())).get(0);
 			// Run a trajectory from that start state
-			runAutonomousTrajectory(startState);
+			runAutonomousTrajectory(startState, env);
 		}
 		
 		convergenceAchieved = true;
@@ -252,22 +248,22 @@ public class IRLVerb implements Verb {
 	}
 	
 	@Override
-	public Response perform(MDPState startState, int executionLimit) {
+	public Response perform(Environment env, OOMDPState startState, int executionLimit) {
 		if (!convergenceAchieved) {
 			System.out.println("BEGIN IRL PERFORM");
 			System.out.println("BEGIN TEACH");
 			teach();
 			System.out.println("BEGIN TRAIN");
-			train();
+			train(env);
 		}
 
 		Response response = new Response();
 		
-		Environment environment = Interface.getCurrentEnvironment();
+		Environment environment = env;
 		
-		response.trace.add(startState);
+		response.trace.add(StateConverter.stateToMsg(startState));
 		
-		OOMDPState currentState = StateConverter.msgToState(startState);
+		OOMDPState currentState = startState;
 		
 		ValueIteration vi = new ValueIteration(environment, this, 0.9);
 		vi.populate(currentState, horizon);

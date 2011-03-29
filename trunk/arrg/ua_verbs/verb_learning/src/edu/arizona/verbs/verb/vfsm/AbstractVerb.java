@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import ros.pkg.oomdp_msgs.msg.MDPState;
 import ros.pkg.verb_learning.msg.VerbDescription;
 import ros.pkg.verb_learning.srv.PerformVerb;
 
@@ -15,7 +14,6 @@ import com.google.common.collect.Lists;
 
 import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.fsm.VerbFSM;
-import edu.arizona.verbs.main.Interface;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.planning.data.PlanningReport;
 import edu.arizona.verbs.planning.fsm.Planners;
@@ -23,6 +21,7 @@ import edu.arizona.verbs.planning.shared.Action;
 import edu.arizona.verbs.planning.shared.Planner;
 import edu.arizona.verbs.planning.shared.Policy;
 import edu.arizona.verbs.planning.shared.Policy.PolicyType;
+import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.vfsm.learner.VFSMLearner;
@@ -35,8 +34,8 @@ public abstract class AbstractVerb implements FSMVerb {
 	
 	AbstractVerb baseVerb_ = null;
 	
-	VFSMLearner posLearner_ = Interface.getVFSMLearner();
-	VFSMLearner negLearner_ = Interface.getVFSMLearner();
+	VFSMLearner posLearner_; // = Interface.getVFSMLearner();
+	VFSMLearner negLearner_; // = Interface.getVFSMLearner();
 	
 	protected VerbFSM posFSM_ = null;
 	protected VerbFSM negFSM_ = null;
@@ -120,6 +119,17 @@ public abstract class AbstractVerb implements FSMVerb {
 	public boolean isReady() {
 		return hasPositiveFSM();
 	}
+	
+	/* Learners */
+	
+	public VFSMLearner getPosLearner() {
+		return posLearner_;
+	}
+	
+	public VFSMLearner getNegLearner() {
+		return negLearner_;
+	}
+	
 
 	/* Folders and ROS */
 	
@@ -161,17 +171,17 @@ public abstract class AbstractVerb implements FSMVerb {
 	}
 	
 	@Override
-	public PerformVerb.Response perform(MDPState startState, int executionLimit) {
+	public PerformVerb.Response perform(Environment env, OOMDPState mdpState, int executionLimit) {
 		PerformVerb.Response response = new PerformVerb.Response();
 		
 		if (!hasPositiveFSM()) {
 			return response; // Automatic failure
 		}
 		
-		Planner planner = Planners.getPlanner(this, executionLimit);
+		Planner planner = Planners.getPlanner(env, this, executionLimit);
 		
 		// MDP starts at the given start state
-		OOMDPState mdpState = StateConverter.msgToState(startState);
+//		OOMDPState mdpState = StateConverter.msgToState(startState);
 		
 		// Create initial verb state (transition on initial relations if possible
 		VerbState verbState = getStartState();
@@ -229,15 +239,15 @@ public abstract class AbstractVerb implements FSMVerb {
 				break;
 			} else {
 				// Update to the new states
-				mdpState = Interface.getCurrentEnvironment().performAction(action);
+				mdpState = env.performAction(action);
 				verbState = fsmTransition(verbState, mdpState.getActiveRelations());
 				
-				if (Interface.getCurrentEnvironment() instanceof WW2DEnvironment) {
+				if (env instanceof WW2DEnvironment) {
 					for (OOMDPObjectState os : mdpState.getObjectStates()) {
 						if (os.getValue("x").startsWith("-")) {
 							System.out.println(os);
 							System.err.println("SIMULATOR BLEW UP, REDOING THE WHOLE SHIZNIT");
-							return perform(startState, executionLimit);
+							return perform(env, mdpState, executionLimit);
 						}
 					}
 				}

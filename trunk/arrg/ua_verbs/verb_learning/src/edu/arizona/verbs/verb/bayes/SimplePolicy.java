@@ -19,7 +19,8 @@ public class SimplePolicy {
 		mdpStates.add(state);
 	}
 	
-	public void addActionState(OOMDPState state, String action) {
+	// This means you took action "action" and it took you to state "state"
+	public void addActionState(String action, OOMDPState state) {
 		actions.add(action);
 		mdpStates.add(state);
 	}

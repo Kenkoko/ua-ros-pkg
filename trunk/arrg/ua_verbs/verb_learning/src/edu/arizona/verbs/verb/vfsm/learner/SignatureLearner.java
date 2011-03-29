@@ -2,19 +2,15 @@ package edu.arizona.verbs.verb.vfsm.learner;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.Map;
 
-import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
+import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.cs.learn.timeseries.model.Signature;
-import edu.arizona.cs.learn.timeseries.model.symbols.Symbol;
 import edu.arizona.cs.learn.timeseries.recognizer.Recognizer;
-import edu.arizona.cs.learn.util.graph.Edge;
 import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.shared.OOMDPState;
-import edu.uci.ics.jung.graph.DirectedGraph;
 
 public class SignatureLearner implements VFSMLearner {
 
@@ -52,5 +48,16 @@ public class SignatureLearner implements VFSMLearner {
 		FSMRecognizer recognizer = Recognizer.cave.build(key_, signature_, (int) Math.round(percentage_ * 100), false);
 
 		vfsm_ = new VerbFSM(recognizer);
+	}
+	
+	@Override
+	public FSMRecognizer getRecognizer() {
+		FSMRecognizer recognizer = Recognizer.cave.build(key_, signature_, (int) Math.round(percentage_ * 100), false);
+		return recognizer;
+	}
+
+	@Override
+	public boolean isReady() {
+		return signature_.trainingSize() > 0;
 	}
 }

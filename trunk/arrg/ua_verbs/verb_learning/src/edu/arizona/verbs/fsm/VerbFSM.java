@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Vector;
 
@@ -17,7 +18,6 @@ import org.apache.log4j.Logger;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import edu.arizona.cs.learn.algorithm.markov.BPPNode;
 import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
@@ -85,7 +85,7 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		
 		activeState_ = startStates_.get(0);
 		
-		printStateValues();
+//		printStateValues();
 	}
 	
 	public double transitionDFA(Set<String> activeProps) {
@@ -144,18 +144,28 @@ public class VerbFSM implements Remappable<VerbFSM> {
 		DirectedGraph<FSMNode, FSMTransition> newDFA = new DirectedSparseGraph<FSMNode, FSMTransition>();
 		
 		HashMap<FSMNode, FSMNode> stateMap = Maps.newHashMap();
-		for (FSMTransition ot : dfa_.getEdges()) {
-			FSMNode os = dfa_.getSource(ot);
-			if (!stateMap.containsKey(os)) {
-				stateMap.put(os, new FSMNode(os.getType()));
+		
+		if (dfa_.getEdgeCount() == 0) {
+			if (dfa_.getVertexCount() != 1) {
+				throw new RuntimeException("WATCH YOSELF");
 			}
-			
-			FSMNode od = dfa_.getDest(ot);
-			if (!stateMap.containsKey(od)) {
-				stateMap.put(od, new FSMNode(od.getType()));
+			for (FSMNode os : dfa_.getVertices()) {
+				newDFA.addVertex(new FSMNode(os.getType()));
 			}
-			
-			newDFA.addEdge(ot.remap(nameMap), stateMap.get(os), stateMap.get(od));
+		} else {
+			for (FSMTransition ot : dfa_.getEdges()) {
+				FSMNode os = dfa_.getSource(ot);
+				if (!stateMap.containsKey(os)) {
+					stateMap.put(os, new FSMNode(os.getType()));
+				}
+				
+				FSMNode od = dfa_.getDest(ot);
+				if (!stateMap.containsKey(od)) {
+					stateMap.put(od, new FSMNode(od.getType()));
+				}
+				
+				newDFA.addEdge(ot.remap(nameMap), stateMap.get(os), stateMap.get(od));
+			}
 		}
 		
 		return new VerbFSM(newDFA);
@@ -173,8 +183,12 @@ public class VerbFSM implements Remappable<VerbFSM> {
 			out.write("\tgraph [ rankdir=LR ]; \n");
 			
 			out.write("null [shape = plaintext label=\"\"]");
-			out.write("null -> \"" + Iterables.getOnlyElement(getStartState(0).getStates()).getID() + "\"");
-
+			try {
+				out.write("null -> \"" + Iterables.getOnlyElement(getStartState(0).getStates()).getID() + "\"");
+			} catch (NoSuchElementException e) {
+				e.printStackTrace();
+			}
+			
 			for (FSMNode vertex : dfa_.getVertices()) {
 				out.write(vertex.toDot());
 
