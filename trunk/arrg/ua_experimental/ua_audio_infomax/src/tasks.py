@@ -1,302 +1,308 @@
-__author__ = 'Daniel Ford, dford@email.arizona.edu'
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2011, Daniel Ford, Antons Rebguns
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+# 
+# Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+# 
+# Neither the name of the <ORGANIZATION> nor the names of its contributors may
+# be used to endorse or promote products derived from this software without
+# specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+
+import numpy as np
 
 from pybrain.rl.environments import EpisodicTask
-from pybrain.utilities import Named, drawIndex, drawGibbs
-from scipy import array, clip, linspace, sort, append, exp, ndarray, minimum, maximum, sum, log
-from numpy import *
-import math
+from pybrain.utilities import Named
+from pybrain.utilities import drawGibbs
+
+import roslib; roslib.load_manifest('ua_audio_infomax')
+import rospy
+
+
+__author__ = 'Daniel Ford, Antons Rebguns'
+__copyright__ = 'Copyright (c) 2011 Daniel Ford, Antons Rebguns'
+__credits__ = 'Ian Fasel'
+
+__license__ = 'BSD'
+__maintainer__ = 'Daniel Ford'
+__email__ = 'dford@email.arizona.edu'
+
 
 class InfoMaxTask(EpisodicTask, Named):
+    def __init__(self, environment,
+                       sort_beliefs=True,
+                       do_decay_beliefs=True,
+                       uniform_initial_beliefs=True,
+                       max_steps=30):
+        EpisodicTask.__init__(self, environment)
+        self.verbose = False
+        self.listActions = False
+        
+        self.env = environment
+        
+        self.uniform_initial_beliefs = uniform_initial_beliefs
+        self.max_steps = max_steps
+        self.rewardscale = 1.0 #/self.max_steps
+        
+        self.initialize()
 
-	def __init__(self, environment, sort_beliefs=True, do_decay_beliefs=True, randomizeWorld=True, uniformInitialBeliefs=True, \
-						maxSteps=30, rewardType=1):
 
-		self.verbose = False
-		self.listActions = False    
+    def initialize(self):
+        self.steps = 0
+        self.location = 0
+        self.beliefs_are_new = True
+        
+        self.env.reset()
+        self.objects = [BeliefObject(self.env.num_categories, len(self.env.action_names)) for _ in self.env.objects]
+        
+        self.initialize_beliefs()
+        self.initialize_RBFs()
 
-		# initialize lists of objects and actions
-		self.objectNames = environment.objectNames
-		self.actionNames = environment.actionNames
-		self.numObjects = len(self.objectNames)
-		self.numActions = len(self.actionNames)
 
-		self.env = environment
-		EpisodicTask.__init__(self, self.env)
+    def initialize_uniform_beliefs(self):
+        self.beliefs = np.array([obj.category_probs for obj in self.objects])
 
-		self.numCategories = self.env.numCategories
 
-		self.randomizeWorld = randomizeWorld
-		self.uniformInitialBeliefs = uniformInitialBeliefs
-		self.maxSteps = maxSteps
-		self.rewardscale = 1.0 #/self.maxSteps
+    def initialize_beliefs(self):
+        """
+        initialize beliefs and entropy
+        """
+        self.initialize_uniform_beliefs()
+        self.maxentropy = self.entropy()
 
-		# remember what type of reward is requested
-		self.rewardType = rewardType
 
-		# probably need to update these
-		self.NORM_ENTROPY = 1
-		self.AVERAGE_ENTROPY = 2  
+    def initialize_RBFs(self):
+        """
+        create RBFs to encode time to completion
+        """
+        self.numRBFs = 6
+        self.sigma = self.max_steps / self.numRBFs
+        self.RBFcenters = np.linspace(0, self.max_steps, self.numRBFs)    # will space centers in reals, need to cast to ints
+        self.RBFs = np.zeros(self.numRBFs)
 
-		self.inittask()
 
-	def inittask(self):
+    def update_RBFs(self):
+        for rbf in range(self.numRBFs):
+            self.RBFs[rbf] = np.exp(-((self.steps - int(self.RBFcenters[rbf]))**2) / self.sigma)
 
-		self.steps = 0
-		self.createObjects()
-		self.initbeliefs()
-		self.initRBFs()
-		self.loc = 0
-		self.beliefsAreNew = True
 
-	def createObjects(self):
+    def update_beliefs(self, sensors, action):
+        """
+        update beliefs on each object, then compose individual beliefs into the
+        full array
+        """
+        # send PDF from sensor to update object PDF
+        self.objects[sensors.location].update_probs(action, sensors.beliefs)
+        
+        # construct belief list from individual object PDFs
+        self.beliefs = np.array([obj.category_probs for obj in self.objects])
 
-		# create random world objects
-		if self.randomizeWorld:
-			if self.verbose:
-				print "Resetting to " + repr(self.numObjects) + " random objects"
-    
-			# Create random objects
-			self.objects = []
-			for i in range(self.numObjects):
-				self.objects.append(worldObject(self.objectNames[i], self.numCategories, self.numActions, self.numObjects))
-			
-		else:
-			
-			if self.verbose:
-				print "Resetting to " + repr(self.numObjects) + " NOT random objects"		
 
-	# initialize uniform beliefs	
-	def inituniformbeliefs(self):
+    # calculate entropy of beliefs
+    def entropy(self):
+        ent = 0
+        
+        for obj_belief in self.beliefs:
+            ent -= (np.log(obj_belief) * obj_belief).sum()
+            
+        return ent
 
-		beliefs = []
-		for obj in self.objects:
-			beliefs.append(obj.objProbs)
-		beliefs = array(beliefs)
-		self.beliefs = beliefs		
 
-	# initialize beliefs and entropy
-	def initbeliefs(self):
+    def reset(self):
+        EpisodicTask.reset(self)
+        self.initialize()
 
-		self.inituniformbeliefs()
-		self.maxentropy = self.entropy()
-		if not self.uniformInitialBeliefs:		# non-random beliefs won't work at the moment
-			self.initnonrandombeliefs()
 
-	# need to update... if this is needed        
-	def initnonrandombeliefs(self):
+    def getObservation(self):
+        """
+        returns current belief vector
+        """
+        # sort object PDFs so the data for the object at our current location is first
+        #currLoc = self.beliefs[self.location:self.location+1].copy()        # extract conditional PDFs for current object
+        #otherLocPre = self.beliefs[0:self.location].copy()            # slice out PDFs before current object
+        #otherLocPost = self.beliefs[self.location+1:].copy()            # slice out PDFs after current object
+        #otherLoc = concatenate((otherLocPre,otherLocPost))        # rebuild belief vector    
+        #beliefs = concatenate((currLoc,otherLoc))                
+        
+        # update RBF activations
+        self.update_RBFs()
+        
+        # otherwise, chop off old activations
+#        if self.beliefs_are_new == False:
+#            self.beliefs = self.beliefs[:self.env.num_categories*len(self.env.action_names)]
+#        # if this is the first step in the episode, just set that flag
+#        elif self.beliefs_are_new:
+#            self.beliefs_are_new = False
+            
+        # append RBF activations to self.beliefs
+        return np.concatenate((self.beliefs.flatten(),self.RBFs))
 
-		pass
 
-	# reset task
-	def reset(self):
+    def performAction(self, action):
+        """
+        send chosen task to environment to be performed
+        """
+        if type(action) == np.ndarray:
+            # Take the max, or random among them if there are several equal maxima
+            action = drawGibbs(action, temperature=0)
+            
+        self.steps += 1
+        
+        #Important to note that we immediately update beliefs after performing action
+        # (maybe not needed but it would make credit-assignment harder) """
+        #self.location = self.env.performAction(action)
+        
+        # Get sensors and do belief updates before calling reward
+        location_beliefs = self.env.sense(action)
+        self.update_beliefs(location_beliefs, action)
+        
+        # Below two lines were cut and pasted from EpisodicTask.performAction()
+        self.addReward()
+        self.samples += 1
 
-		EpisodicTask.reset(self)
-		self.inittask()			
-		#print "******************************"
 
-	def initRBFs(self):
+    def isFinished(self):
+        """
+        set task completion criteria:
+        max info reached, max number of actions performed, or failure condition
+        """
+        if self.steps >= self.max_steps: return True
+        else: return False
 
-		# create RBFs to encode time to completion
-		self.numRBFs = 6
-		self.sigma = self.maxSteps/self.numRBFs
-		self.RBFcenters = linspace(0,self.maxSteps,self.numRBFs)	# will space centers in reals, need to cast to ints
-		self.RBFs = zeros(self.numRBFs)		
 
-	def updateRBFs(self):
-	
-		for rbf in range(self.numRBFs):
-			self.RBFs[rbf] = exp(-((self.steps-int(self.RBFcenters[rbf]))**2)/self.sigma)
-	
-	# returns current belief vector
-	def getObservation(self):
-		
-		"""	
-		# sort object PDFs so the data for the object at our current location is first
-		currLoc = self.beliefs[self.loc:self.loc+1].copy()		# extract conditional PDFs for current object
-		otherLocPre = self.beliefs[0:self.loc].copy()			# slice out PDFs before current object
-		otherLocPost = self.beliefs[self.loc+1:].copy()			# slice out PDFs after current object
-		otherLoc = concatenate((otherLocPre,otherLocPost))		# rebuild belief vector	
-		beliefs = concatenate((currLoc,otherLoc))				
-		"""
+    def getReward(self):
+        """
+        compute and return the current reward (i.e. corresponding to the last
+        action performed)
+        """
+        return (self.maxentropy - self.entropy()) / self.maxentropy
 
-		# update RBF activations
-		self.updateRBFs()
 
-		# flatten list of conditional PDFs for input into the network
-		self.beliefs = self.beliefs.flatten()
+    @property
+    def indim(self):
+        return len(self.env.action_names)     # number of actions we can take (minus reset)
 
-		# otherwise, chop off old activations
-		if self.beliefsAreNew == False:
-			self.beliefs = self.beliefs[:self.numCategories*self.numActions]
-		# if this is the first step in the episode, just set that flag
-		elif self.beliefsAreNew:
-			self.beliefsAreNew = False
 
-		# append RBF activations to self.beliefs		
-		self.beliefs = concatenate((self.beliefs,self.RBFs)) 
+    @property
+    def outdim(self):
+        return len(self.getObservation())     # belief vector
 
-		return self.beliefs
-	
-	# send chosen task to environment to be performed
-	def performAction(self, action):
-
-		if type(action) == ndarray:
-			# Take the max, or random among them if there are several equal maxima
-			action = drawGibbs(action, temperature=0)
-
-		self.steps += 1
-
-		""" Important to note that we immediately update beliefs after performing action
-		 (maybe not needed but it would make credit-assignment harder) """
-		#self.loc = self.env.performAction(action)
-
-		# Get sensors and do belief updates before calling reward
-		sensors = self.env.getSensors(action)
-		self.update_beliefs(sensors, action)
-
-		# Below two lines were cut and pasted from EpisodicTask.performAction()
-		self.addReward()
-		self.samples += 1
-
-	# set task completion criteria
-	def isFinished(self):
-
-		# max info reached, max number of actions performed, or failure condition
-		if self.steps >= self.maxSteps:
-			return True
-		else:
-			return False
-
-	# compute and return the current reward (i.e. corresponding to the last action performed)
-	def getReward(self):
-
-		if self.rewardType == self.AVERAGE_ENTROPY:
-			reward = self.entropy()/self.numObjects
-		else:
-			reward = (self.maxentropy - self.entropy())/self.maxentropy
-
-		#return -reward		# needs to be negative to allow PGPE to minimize as designed
-		return reward
-
-	# update beliefs on each object, then compose individual beliefs into the full array
-	def update_beliefs(self, sensors, action):
-
-		# send PDF from sensor to update object PDF
-		self.objects[sensors.location].updateProbs(action, sensors.beliefs)
-
-		# construct belief list from individual object PDFs
-		beliefs = []
-		for obj in self.objects:
-			beliefs.append(obj.objProbs)
-		beliefs = array(beliefs)
-
-		self.beliefs = beliefs
-
-	# calculate entropy of beliefs				
-	def entropy(self):
-		ent=0;
-		for objbelief in self.beliefs:
-			ent -= (log(objbelief) * objbelief).sum()
-		return ent
-
-	@property
-	def indim(self):
-		return len(self.actionNames)		# number of actions we can take (minus reset)
-    
-	@property
-	def outdim(self):
-		return len(self.getObservation()) 	# belief vector
 
 #####################################################################################
-# class definitions for objects in the world and object properties that can be sensed     
-class worldObject(Named):    
+# class definitions for objects in the world and object properties that can be sensed
+class BeliefObject(Named):
+    def __init__(self, num_categories, num_actions, prob_calc_type='average'):
+        self.num_categories = num_categories    # number of object categories
+        self.num_actions = num_actions          # number of possible actions
+        self.prob_calc_type = prob_calc_type
+        
+        self.action_count = np.zeros(self.num_actions)
+        self._initialize_uniform_beliefs()      # PDF over object names
 
-	# initialize object class
-	def __init__(self, name, numCategories, numActions, numObjects):
 
-		self.objName = name					# this object's name
-		self.numCategories = numCategories	# number of object categories
-		self.numObjects = numObjects		# number of objects
-		self.numActions = numActions		# number of possible actions
-		self.actionCount = zeros(self.numActions)
-		self._initUniformBeliefs()			# PDF over object names
-	
-	# initialize probabilities to be uniform
-	def _initUniformBeliefs(self):
+    def _initialize_uniform_beliefs(self):
+        """
+        initialize probabilities to be uniform
+        """
+        self.category_probs = np.tile(1.0 / self.num_categories, (self.num_actions,self.num_categories))
+        self._update_joint_probs()
 
-		# initialize conditional probabilities to uniform 
-		self.objProbs = tile(1./self.numCategories, (self.numActions,self.numCategories))
 
-		# update joint probabilities
-		self._updateJointProbs()
+    def _update_joint_probs(self):
+        # create joint probabilities from conditional probs
+        if self.prob_calc_type == 'product':
+            self.joint_prob = np.ones(self.num_categories)
+            
+            for cond_prob in self.category_probs:
+                self.joint_prob *= cond_prob
+                
+        elif self.prob_calc_type == 'average':
+            self.joint_prob = (self.action_count + 1) * np.asmatrix(self.category_probs)
+            self.joint_prob = np.asarray(self.joint_prob[0])
+            self.joint_prob = np.reshape(self.joint_prob, self.joint_prob.shape[1])
+#            print type(self.action_count), self.action_count.shape
+#            print type(self.joint_prob), self.joint_prob.shape
+#            print 'action count', self.action_count
+#            print 'category_probs', self.category_probs
+#            print 'joint prob', self.joint_prob
+            
+        # normalize
+        self.joint_prob /= self.joint_prob.sum()
+#        print 'after divide', self.joint_prob
 
-	# update conditional probabilities and joint probability
-	# takes the type of the last sensing action performed (integer) and the element of the returned PDF corresponding to that action type (float) 
-	def updateProbs(self, actionType, currentPDF):
 
-		"""
-		# if we sensed instead of moved or reset, also update beliefs
-		if actionType < 4:
-		"""
+    def update_probs(self, action_id, current_pdf):
+        """
+        update conditional probabilities and joint probability
+        takes the type of the last sensing action performed (integer) and the
+        element of the returned PDF corresponding to that action type (float) 
+        if we sensed instead of moved or reset, also update beliefs
+        """
+        self.category_probs[action_id] *= self.action_count[action_id]
+        self.category_probs[action_id] += current_pdf
+        self.category_probs[action_id] /= self.action_count[action_id] + 1
+        
+        self.action_count[action_id] += 1
+        self._update_joint_probs()
 
-		#print "action ", actionType
 
-		self.objProbs[actionType] *= self.actionCount[actionType]
-		self.objProbs[actionType] += currentPDF
-		self.objProbs[actionType] /= self.actionCount[actionType]+1
+    def reset(self):
+        """
+        resets all object probabilities
+        """
+        self._initialize_uniform_beliefs()
+        self.action_count = np.zeros(self.num_actions)
 
-		# increment action list for that type of action		
-		self.actionCount[actionType] += 1
-
-		# update joint probabilities
-		self._updateJointProbs()
-
-	# update joint probabilities
-	def _updateJointProbs(self):
-
-		# create joint probabilities from conditional probs
-		self.jointProb = ones((self.numCategories))
-		for condprob in self.objProbs:	
-			self.jointProb *= condprob
-
-		# normalize
-		s = sum(self.jointProb)
-		self.jointProb /= s
-
-	# will need to reset all object probabilities
-	def reset(self):
-		
-		self._initUniformBeliefs()
-		self.actionCount = zeros(self.numActions)						
 
 if __name__ == "__main__":
+    # just some code for testing...
+    PDF1 = [0.9, 0.05, 0.05]
+    PDF2 = [0.12, 0.71, 0.17]
+    
+    cats = 3
+    actions = 4
+    objs = 1
+    
+    actionType = 3
+    
+    testObject0 = BeliefObject("Obj 1", cats, actions, objs)
+    
+    print "Obj 0"
+    print testObject0.objProbs
+    
+    testObject0.update_probs(actionType,PDF1)
+    print testObject0.actionCount[actionType]
+    
+    print "Obj 0"
+    print testObject0.objProbs
+    
+    actionType = 1
+    
+    testObject0.update_probs(actionType,PDF2)
+    print testObject0.actionCount[actionType]
+    
+    print "Obj 0"
+    print testObject0.objProbs
+    print testObject0.jointProb
 
-	# just some code for testing...
-	PDF1 = [0.9, 0.05, 0.05]
-	PDF2 = [0.12, 0.71, 0.17]
-
-	cats = 3
-	actions = 4
-	objs = 1
-
-	actionType = 3
-
-	testObject0 = worldObject("Obj 1", cats, actions, objs)
-
-	print "Obj 0"
-	print testObject0.objProbs
-
-	testObject0.updateProbs(actionType,PDF1)
-	print testObject0.actionCount[actionType]
-
-	print "Obj 0"
-	print testObject0.objProbs
-
-	actionType = 1
-
-	testObject0.updateProbs(actionType,PDF2)
-	print testObject0.actionCount[actionType]
-
-	print "Obj 0"
-	print testObject0.objProbs
-	print testObject0.jointProb
