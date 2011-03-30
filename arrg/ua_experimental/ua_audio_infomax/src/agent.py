@@ -32,13 +32,30 @@ class InfoMaxAgent():
 			self._PGPE = False; self._CMAES = True
 		else: self._PGPE = True
 
-		# objects and their categories
-		self.numCategories = 4
-
 		# tuples are name, category
-		self.objectNames = [	("Obj 0",2)	]
+		self.objectNames = [('pink_glass',0),           # 0
+                            ('german_ball',1),          # 1
+                            ('blue_cup',2),             # 2
+                            ('blue_spiky_ball',3),      # 3
+                            ('screw_box',4),            # 4
+                            ('wire_spool',5),           # 5
+                            ('sqeaky_ball',6),          # 6
+                            ('duck_tape_roll',7),       # 7
+                            ('ace_terminals',8),        # 8
+                            ('chalkboard_eraser',9),    # 9
+                           ]
 		#self.actionNames = ["pick up", "drop", "push", "squeeze"]
-		self.actionNames = ["grasp", "lift", "drop", "shake/roll", "place"]
+		self.actionNames = ['grasp',        # 0
+                            'lift',         # 1
+                            'drop',         # 2
+                            'shake_roll',   # 3
+                            'place',        # 4
+                            'push',         # 5
+                            'shake_pitch',  # 6
+                           ]
+
+		# objects and their categories
+		self.numCategories = 10
 
 		#self.actionNames = ["pick up", "drop", "push", "squeeze", "move left", "move right", "reset"]
 
