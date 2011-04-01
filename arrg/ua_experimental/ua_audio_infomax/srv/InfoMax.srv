@@ -1,13 +1,9 @@
-# request
-
-string[] objectNames				# names of all objects
-string[] actionNames				# names of all actions: move left, move right, pick up, drop, push, squeeze, reset
-int32 numCats						# number of categories
-int32 catID						# category index for object at current location
-ua_audio_infomax/Action actionID 		# index of action to take
-
+uint8 num_objects                   # number of objects in the world that the robot will interact with
+string[] objectNames                # names of all objects
+string[] actionNames                # names of all actions: move left, move right, pick up, drop, push, squeeze, reset
+int32 numCats                       # number of categories
+int32 catID                         # category index for object at current location
+ua_audio_infomax/Action actionID    # index of action to take
 ---
-# response
-
-float64[] beliefs	# PDF over classes and objects, conditioned on action
-int32 location		# current location of robot (integer index, should be the same as the object index)
+float64[] beliefs                   # PDF over classes and objects, conditioned on action
+int32 location                      # current location of robot (integer index, should be the same as the object index)

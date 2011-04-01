@@ -32,14 +32,17 @@
 
 import numpy as np
 
+import roslib; roslib.load_manifest('ua_audio_infomax')
+import rospy
+
+from std_srvs.srv import Empty
+
 from pybrain.utilities import Named
 from pybrain.rl.environments.environment import Environment
 
+from ua_audio_infomax.msg import Action as InfomaxAction
 from ua_audio_infomax.srv import InfoMax
 from ua_audio_infomax.srv import InfoMaxRequest
-
-import roslib; roslib.load_manifest('ua_audio_infomax')
-import rospy
 
 
 __author__ = 'Daniel Ford, Antons Rebguns'
@@ -53,20 +56,23 @@ __email__ = 'dford@email.arizona.edu'
 
 class InfoMaxEnv(Environment, Named):
     def __init__(self, category_names, action_names, num_objects):
-        rospy.init_node('infomax_environment_node', anonymous=True)
-        
         self.category_names = category_names
         self.action_names = action_names
         
         self.num_categories = len(category_names)
         self.num_objects = num_objects
         
-        self.reset()
-        
         rospy.loginfo('waiting for InfoMax service...')
         rospy.wait_for_service('InfoMax')
         rospy.loginfo('connected to InfoMax service')
         self.get_belief_distribution = rospy.ServiceProxy('InfoMax', InfoMax)
+        
+        rospy.loginfo('waiting for reset_current_location service...')
+        rospy.wait_for_service('reset_current_location')
+        rospy.loginfo('connected to reset_current_location service')
+        self.reset_current_location = rospy.ServiceProxy('reset_current_location', Empty)
+        
+        self.reset()
 
 
     def reset(self):
@@ -74,6 +80,8 @@ class InfoMaxEnv(Environment, Named):
         Shuffles objects at all environment locations.
         """
         self.objects = np.random.randint(0, self.num_categories, self.num_objects)
+        self.reset_current_location()
+        self.current_location = 0
 
 
     def sense(self, action):
@@ -81,20 +89,22 @@ class InfoMaxEnv(Environment, Named):
         Perform an action at current location and get the belief distribution
         over all categories.
         """
-        location = 0
-        
         try:
             req = InfoMaxRequest()
+            req.num_objects = self.num_objects
             req.objectNames = self.category_names
             req.actionNames = self.action_names
             req.numCats = self.num_categories
-            req.catID = self.objects[location]
+            req.catID = self.objects[self.current_location]
             req.actionID.val = action
             
             rospy.logdebug('calling sense service with action %d (%s) on object %d(%s)' %
                            (req.actionID.val, self.action_names[req.actionID.val], req.catID, self.category_names[req.catID]))
                            
-            return self.get_belief_distribution(req)
+            res = self.get_belief_distribution(req)
+            self.current_location = res.location
+            
+            return res
         except rospy.ServiceException as e:
             rospy.logerr('Service call failed: %s' % e)
             return None
