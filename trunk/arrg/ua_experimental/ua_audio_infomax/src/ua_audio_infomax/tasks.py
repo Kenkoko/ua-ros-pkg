@@ -36,9 +36,6 @@ from pybrain.rl.environments import EpisodicTask
 from pybrain.utilities import Named
 from pybrain.utilities import drawGibbs
 
-import roslib; roslib.load_manifest('ua_audio_infomax')
-import rospy
-
 
 __author__ = 'Daniel Ford, Antons Rebguns'
 __copyright__ = 'Copyright (c) 2011 Daniel Ford, Antons Rebguns'
@@ -70,7 +67,7 @@ class InfoMaxTask(EpisodicTask, Named):
 
     def initialize(self):
         self.steps = 0
-        self.location = 0
+        self.current_location = 0
         self.beliefs_are_new = True
         
         self.env.reset()
@@ -112,6 +109,8 @@ class InfoMaxTask(EpisodicTask, Named):
         update beliefs on each object, then compose individual beliefs into the
         full array
         """
+        self.current_location = sensors.location
+        
         # send PDF from sensor to update object PDF
         self.objects[sensors.location].update_probs(action, sensors.beliefs)
         
@@ -139,11 +138,10 @@ class InfoMaxTask(EpisodicTask, Named):
         returns current belief vector
         """
         # sort object PDFs so the data for the object at our current location is first
-        #currLoc = self.beliefs[self.location:self.location+1].copy()        # extract conditional PDFs for current object
-        #otherLocPre = self.beliefs[0:self.location].copy()            # slice out PDFs before current object
-        #otherLocPost = self.beliefs[self.location+1:].copy()            # slice out PDFs after current object
-        #otherLoc = concatenate((otherLocPre,otherLocPost))        # rebuild belief vector    
-        #beliefs = concatenate((currLoc,otherLoc))                
+        currLoc = self.beliefs[self.current_location:self.current_location+1]        # extract conditional PDFs for current object
+        otherLocPre = self.beliefs[0:self.current_location]            # slice out PDFs before current object
+        otherLocPost = self.beliefs[self.current_location+1:]            # slice out PDFs after current object
+        beliefs = np.concatenate((currLoc,otherLocPost,otherLocPre))
         
         # update RBF activations
         self.update_RBFs()
@@ -156,7 +154,7 @@ class InfoMaxTask(EpisodicTask, Named):
 #            self.beliefs_are_new = False
             
         # append RBF activations to self.beliefs
-        return np.concatenate((self.beliefs.flatten(),self.RBFs))
+        return np.concatenate((beliefs.flatten(),self.RBFs))
 
 
     def performAction(self, action):
@@ -171,7 +169,7 @@ class InfoMaxTask(EpisodicTask, Named):
         
         #Important to note that we immediately update beliefs after performing action
         # (maybe not needed but it would make credit-assignment harder) """
-        #self.location = self.env.performAction(action)
+        #self.current_location = self.env.performAction(action)
         
         # Get sensors and do belief updates before calling reward
         location_beliefs = self.env.sense(action)
@@ -259,6 +257,8 @@ class BeliefObject(Named):
         element of the returned PDF corresponding to that action type (float) 
         if we sensed instead of moved or reset, also update beliefs
         """
+        if not current_pdf: return
+        
         self.category_probs[action_id] *= self.action_count[action_id]
         self.category_probs[action_id] += current_pdf
         self.category_probs[action_id] /= self.action_count[action_id] + 1
