@@ -199,8 +199,9 @@ class graph():
             for object_location,object_idx in enumerate(learned_true[test_run_idx]):
                 ax = fig1.add_subplot(1,len(learned_true[test_run_idx])+1,object_location+1)
                 ax.plot(joint_probs_learned[test_run_idx,object_location])
-                ax.xaxis.set_ticklabels(learned_steps[test_run_idx])
-                plt.xticks(rotation='vertical')
+                #ax.xaxis.set_ticklabels(learned_steps[test_run_idx])
+                #plt.xticks(rotation='vertical')
+                plt.xticks(np.arange(len(learned_steps[test_run_idx])), learned_steps[test_run_idx], rotation='vertical')
                 
                 plt.axis([0, self.maxSteps - 1, 0, 1])
                 
