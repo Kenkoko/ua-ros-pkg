@@ -72,6 +72,7 @@ class InfoMaxTask(EpisodicTask, Named):
         
         self.env.reset()
         self.objects = [BeliefObject(self.env.num_categories, len(self.env.action_names)) for _ in self.env.objects]
+        self.action_counts = np.zeros((len(self.objects),len(self.env.action_names)))
         
         self.initialize_beliefs()
         self.initialize_RBFs()
@@ -129,6 +130,7 @@ class InfoMaxTask(EpisodicTask, Named):
 
 
     def reset(self):
+        #print self.action_counts
         EpisodicTask.reset(self)
         self.initialize()
 
@@ -154,7 +156,7 @@ class InfoMaxTask(EpisodicTask, Named):
 #            self.beliefs_are_new = False
             
         # append RBF activations to self.beliefs
-        return np.concatenate((beliefs.flatten(),self.RBFs))
+        return np.concatenate((beliefs.flatten(),self.action_counts.flatten(),self.RBFs))
 
 
     def performAction(self, action):
@@ -166,6 +168,8 @@ class InfoMaxTask(EpisodicTask, Named):
             action = drawGibbs(action, temperature=0)
             
         self.steps += 1
+        self.action_counts[self.env.current_location,action] = min(4, self.action_counts[self.env.current_location,action]+1)
+        #print 'selected action: %s' % self.env.action_names[action]
         
         #Important to note that we immediately update beliefs after performing action
         # (maybe not needed but it would make credit-assignment harder) """
