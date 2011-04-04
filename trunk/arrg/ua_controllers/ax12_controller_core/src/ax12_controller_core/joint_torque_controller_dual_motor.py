@@ -150,7 +150,11 @@ class JointTorqueControllerDualMotor(JointControllerAX12):
 
     def process_motor_states(self, state_list):
         if self.running:
-            states = [{state.id: state} for state in state_list.motor_states if state.id in [self.master_id, self.slave_id]]
+            states = {}
+            
+            for state in state_list.motor_states:
+                if state.id in [self.master_id, self.slave_id]: states[state.id] = state
+                
             if states:
                 state = states[self.master_id]
                 self.joint_state.motor_temps = [state.temperature, states[self.slave_id].temperature]
