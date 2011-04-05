@@ -33,6 +33,7 @@ import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
 import edu.arizona.verbs.verb.VerbBinding;
+import edu.arizona.verbs.verb.Verbs;
 import edu.arizona.verbs.verb.bayes.MaximumLikelihoodVerb;
 import edu.arizona.verbs.verb.irl.IRLVerb;
 import edu.arizona.verbs.verb.vfsm.AtomicVerb;
@@ -52,12 +53,7 @@ public class Interface {
 	private static Environment currentEnvironment = null;
 	public static Environment getCurrentEnvironment() { return currentEnvironment; }
 	
-	public enum VerbType { FSM, ML, IRL };
-	public static VerbType currentVerbType = VerbType.FSM;
-	
-//	public enum LearnerType { CorePath, Signature };
-	public static LearnerType currentLearnerType = LearnerType.signature;
-//	public static LearnerType currentLearnerType = LearnerType.CorePath;
+	public static Verbs currentVerbType = Verbs.signature;
 	
 	// Maps: Binding -> Argument
 	public static Map<String, String> extractReverseNameMap(VerbInstance vi) {
@@ -102,25 +98,13 @@ public class Interface {
 					verb = verbs.get(verbName); 
 				} else {
 					logger.info("VERB NOT FOUND: " + request.verb + ", creating it");
-					switch (currentVerbType) {
-					case FSM:
-						verb = new AtomicVerb(verbName, request.verb.arguments, currentLearnerType);
-						break;
-					
-					case ML:
-						verb = new MaximumLikelihoodVerb(verbName, request.verb.arguments);
-						break;
-						
-					case IRL:
-						verb = new IRLVerb(verbName, request.verb.arguments);
-						break;
-					}
-					
+					verb = currentVerbType.create(verbName, request.verb.arguments);
 					verbs.put(verbName, verb);
 				}
 
 				// Update it with the trace
 				Map<String, String> nameMap = extractReverseNameMap(request.verb);
+				// TODO: What about nameMap?
 				List<OOMDPState> trace = StateConverter.msgArrayListToStates(request.trace);
 				if (request.is_positive) {
 					verb.addPositiveInstance(trace);
@@ -188,23 +172,26 @@ public class Interface {
 					Map<String,String> argumentMap = extractNameMap(request.verb);
 					
 					try {
-						switch (currentVerbType) {
-						case FSM:
-							FSMVerb remapped = ((FSMVerb) verb).remap(argumentMap);
-							return remapped.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
-						
-						case ML:
-							MaximumLikelihoodVerb remapped2 = ((MaximumLikelihoodVerb) verb).remap(argumentMap);
-							return remapped2.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
-						
-						case IRL:
-							IRLVerb irl = (IRLVerb) verb;
-							return irl.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
-							
-						default:
-							return new PerformVerb.Response();
-						}
+//						switch (currentVerbType) {
+//						case FSM:
+//							FSMVerb remapped = ((FSMVerb) verb).remap(argumentMap);
+//							return remapped.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
+//						
+//						case ML:
+//							MaximumLikelihoodVerb remapped2 = ((MaximumLikelihoodVerb) verb).remap(argumentMap);
+//							return remapped2.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
+//						
+//						case IRL:
+//							IRLVerb irl = (IRLVerb) verb;
+//							return irl.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
+//							
+//						default:
+//							return new PerformVerb.Response();
+//						}
 					
+						// TODO: Add argumentMap as a parameter, or add back re-mapping
+						return verb.perform(currentEnvironment, StateConverter.msgToState(request.start_state), request.execution_limit);
+						
 					} catch (SimulatorFailureException sfe) {
 						// For now, we just abandon ship
 						// Later we will want to retry
@@ -276,18 +263,14 @@ public class Interface {
 	 * @throws RosException
 	 */
 	public static void main(String[] args) throws RosException {
-		if (args.length < 3) {
+		if (args.length < 2) {
 			System.out.println("Please choose an environment:");
 			for (Simulators s : Simulators.values()) {
 				System.out.println("\t" + s.toString());
 			}
-			System.out.println("and choose a verb representation:");
-			for (VerbType v : VerbType.values()) {
+			System.out.println("and choose a verb type:");
+			for (Verbs v : Verbs.values()) {
 				System.out.println("\t" + v.toString());
-			}
-			System.out.println("and choose a VFSM learning method:");
-			for (LearnerType l : LearnerType.values()) {
-				System.out.println("\t" + l.toString());
 			}
 			
 			System.exit(1);
@@ -298,8 +281,7 @@ public class Interface {
 		NodeHandle nh = ros.createNodeHandle();
 
 		currentEnvironment = Simulators.valueOf(args[0]).create();		
-		currentVerbType = VerbType.valueOf(args[1]);
-		currentLearnerType = LearnerType.valueOf(args[2]);
+		currentVerbType = Verbs.valueOf(args[1]);
 		
 		nh.advertiseService("verb_learning/load_verbs", new LoadVerbs(), loadVerbs);
 		nh.advertiseService("verb_learning/forget_verb", new ForgetVerb(), forgetVerb);
