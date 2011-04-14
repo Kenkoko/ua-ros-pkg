@@ -35,12 +35,13 @@ class GFConsoleController:
         self.texttag.set_property("weight", pango.WEIGHT_BOLD)
         self.texttag.set_property("size-points", 36)
         self.texttag.set_property("justification", gtk.JUSTIFY_CENTER)
-        texttagtable.add(self.texttag)
+	texttagtable.add(self.texttag)
 
         self.text_buffer = gtk.TextBuffer(texttagtable)        
         self.textview = gtk.TextView(self.text_buffer)
         self.textview.set_editable(False)
         self.textview.set_cursor_visible(False)
+	self.textview.set_wrap_mode(gtk.WRAP_WORD)
         self.scrollview = gtk.ScrolledWindow()
         self.scrollview.add_with_viewport(self.textview)
         self.scrollview.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -85,7 +86,7 @@ class SubjectUI:
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.connect("destroy", self.onDestroy)
         self.window.set_title("Experiment")
-        self.window.resize(800, 500)
+        self.window.resize(1200, 500)
 
         self.content_vbox = gtk.VBox(False, 8)
         self.content_vbox.set_border_width(10)
