@@ -41,7 +41,9 @@
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
 
+#include <cv_bridge/cv_bridge.h>
 #include <cv_bridge/CvBridge.h>
+#include <sensor_msgs/image_encodings.h>
 #include <image_transport/image_transport.h>
 
 #include <sensor_msgs/Image.h>
@@ -54,7 +56,7 @@
 #include <boost/thread/mutex.hpp>
 
 #include <nmpt/BlockTimer.h>
-#include <nmpt/FastSaliency.h>
+#include <nmpt/FastSalience.h>
 
 typedef driver_base::SensorLevels Levels;
 
@@ -62,7 +64,6 @@ class SaliencyTracker
 {
 private:
     image_transport::Subscriber sub;
-    sensor_msgs::CvBridge cv_bridge;
     ros::Publisher saliency_poi_pub;
     ros::Publisher saliency_img_pub;
 
@@ -73,14 +74,10 @@ private:
     Config current_config;
 
     std::string window_name;
-    CvFont font;
-
-    IplImage* small_color_image;
-    IplImage* small_float_image;
 
     //The timer is used to track the frame rate
     BlockTimer timer;
-    FastSaliency* saltracker;
+    FastSalience* saltracker;
 
     // FastSUN saliency tracker parameters
     int saliencyMapWidth;
@@ -98,12 +95,9 @@ public:
         std::string topic = nh.resolveName("image");
 
         window_name = topic;
-        cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, .33, .33);
 
         window_exists = false;
         initialized = false;
-        small_color_image = NULL;
-        small_float_image = NULL;
         saltracker = NULL;
 
         cvStartWindowThread();
@@ -118,8 +112,6 @@ public:
     ~SaliencyTracker()
     {
         cvDestroyWindow(window_name.c_str());
-        cvReleaseImage(&small_color_image);
-        cvReleaseImage(&small_float_image);
         delete saltracker;
     }
 
@@ -134,24 +126,7 @@ public:
             saliencyMapHeight = imheight / config.img_scale;
 
             //Make some intermediate image representations:
-            if (small_color_image != NULL)
-            {
-                cvReleaseImage(&small_color_image);
-                small_color_image = NULL;
-            }
 
-            if (small_float_image != NULL)
-            {
-                cvReleaseImage(&small_float_image);
-                small_float_image = NULL;
-            }
-
-            //(1) The downsized representation of the original image frame
-            small_color_image = cvCreateImage(cvSize(saliencyMapWidth, saliencyMapHeight), IPL_DEPTH_8U, 3);
-
-            //(2) The floating point image that is passed to the saliency algorithm; this also
-            //doubles as an intermediate representation for the output.
-            small_float_image = cvCreateImage(cvSize(saliencyMapWidth, saliencyMapHeight), IPL_DEPTH_32F, 3);
 
             int nspatial = config.spatial_scales + 1;               // [2 3 4 5 ...]
             int ntemporal = config.temporal_scales + 2;             // [2 3 4 5 ...]
@@ -164,7 +139,8 @@ public:
                 saltracker = NULL;
             }
 
-            saltracker = new FastSaliency(saliencyMapWidth, saliencyMapHeight, ntemporal, nspatial, first_tau, first_rad);
+            //saltracker = new FastSalience(saliencyMapWidth, saliencyMapHeight, ntemporal, nspatial, first_tau, first_rad);
+	    saltracker = new FastSalience(ntemporal, nspatial, first_tau, first_rad);
 
             ROS_INFO_STREAM("Created new FastSaliency object with the following parameters.");
             ROS_INFO_STREAM("  Width:                                   " << saliencyMapWidth);
@@ -195,12 +171,12 @@ public:
         current_config = config;
     }
 
-    void initialize(IplImage* current_frame)
+    void initialize(cv::Mat current_frame)
     {
         ROS_INFO("Initializing saliency tracker");
 
-        imwidth = current_frame->width;
-        imheight = current_frame->height;
+        imwidth = current_frame.cols;
+        imheight = current_frame.rows;
 
         dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(&SaliencyTracker::reconfig, this, _1, _2);
         srv.setCallback(f);
@@ -211,25 +187,31 @@ public:
 
     void image_cb(const sensor_msgs::ImageConstPtr& msg)
     {
-        if (cv_bridge.fromImage(*msg, "bgr8"))
+        cv_bridge::CvImagePtr cv_ptr;
+        try
         {
-            IplImage* current_frame = cv_bridge.toIpl();
+	  cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+	    cv::Mat current_frame = cv_ptr->image;
             if (!initialized) { initialize(current_frame); }
 
             boost::mutex::scoped_lock lock(st_mutex);
 
             //Put the current frame into the format expected by the saliency algorithm
-            cvResize(current_frame, small_color_image, CV_INTER_LINEAR);
-            cvConvert(small_color_image, small_float_image);
+            double ratio = saliencyMapWidth * 1.0 / current_frame.cols;
+	    cv::Mat small_float_image;
+
+	    cv::resize(current_frame, small_float_image, cv::Size(0,0), ratio, ratio, cv::INTER_LINEAR);
 
             //Call the "updateSaliency" method, and time how long it takes to run
             timer.blockStart(1);
-            saltracker->updateSaliency(small_float_image);
+            saltracker->updateSalience(small_float_image);
             timer.blockStop(1);
 
             // Find and publish poi
-            CvPoint p_max;
-            cvMinMaxLoc(saltracker->salImageFloat, NULL, NULL, NULL, &p_max);
+	    cv::Point p_max;
+	    cv::Mat sal_float_image;
+	    saltracker->getSalImage(sal_float_image);
+	    cv::minMaxLoc(sal_float_image, NULL, NULL, NULL, &p_max);
 
             geometry_msgs::Point poi;
             poi.x = p_max.x * current_config.img_scale;
@@ -245,7 +227,10 @@ public:
             timer.blockReset(1);
             timer.blockStart(0);
 
-            sensor_msgs::Image::Ptr saliency_msg = sensor_msgs::CvBridge::cvToImgMsg(saltracker->salImageFloat);
+	    // Publish the image.
+	    IplImage out_msg = sal_float_image;
+	    sensor_msgs::CvBridge bridge_;
+	    sensor_msgs::Image::Ptr saliency_msg = bridge_.cvToImgMsg(&out_msg, "passthrough");
             saliency_msg->header.stamp = msg->header.stamp;
 
             saliency_poi_pub.publish(poi);
@@ -253,21 +238,18 @@ public:
 
             if (current_config.display_img)
             {
-                // Normalize saliency map image for display
-                cvNormalize(saltracker->salImageFloat, saltracker->salImageFloat, 0, 1, CV_MINMAX, NULL);
-
                 //Print the timing information to the display image
                 char str[1000] = {'\0'};
                 sprintf(str,"s: %03.1f ms; t: %03.1f ms", 1000.0 * fastsun_time, 1000.0 * total_time);
-                cvPutText(saltracker->salImageFloat, str, cvPoint(5, 10), &font, CV_RGB(255, 0, 255));
+		cv::putText(sal_float_image, str, cv::Point(5, 10), CV_FONT_HERSHEY_SIMPLEX, 0.33, cv::Scalar(255, 0, 255), 1.0);
 
                 if (!window_exists)
                 {
-                    cvNamedWindow(window_name.c_str(), CV_WINDOW_AUTOSIZE);
+		    cv::namedWindow(window_name.c_str(), CV_WINDOW_AUTOSIZE);
                     window_exists = true;
                 }
 
-                cvShowImage(window_name.c_str(), saltracker->salImageFloat);
+		cv::imshow(window_name.c_str(), sal_float_image);
             }
             else
             {
@@ -278,7 +260,7 @@ public:
                 }
             }
         }
-        else
+        catch (cv_bridge::Exception& e)
         {
             ROS_ERROR("Unable to convert %s image to bgr8", msg->encoding.c_str());
         }
