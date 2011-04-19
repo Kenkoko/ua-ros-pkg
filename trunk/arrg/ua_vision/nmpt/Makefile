@@ -10,7 +10,6 @@ BIN_DIR     = bin
 DATA_DIR    = data
 DOC_DIR     = doc
 PATCH_FILE1 = nmpt_ros.patch
-PATCH_FILE2 = nmpt_box_filter_bug.patch
 
 include $(shell rospack find mk)/cmake.mk
 
@@ -26,7 +25,6 @@ build:
 		wget $(ZIP_URL); \
 		unzip $(ZIP_FILE); \
 		patch -d NMPT -p1 --verbose < $(PATCH_FILE1); \
-		patch -d NMPT/src -p2 --verbose < $(PATCH_FILE2); \
 		mv NMPT/src/*.h $(INCLUDE_DIR)/nmpt; \
 		mv NMPT/src/*.cpp $(SRC_DIR)/nmpt; \
 		mv NMPT/doc/* $(DOC_DIR); \
