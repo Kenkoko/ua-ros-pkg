@@ -10,19 +10,28 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 rosbuild_add_library(nmpt
     src/nmpt/BlockTimer.cpp 
     src/nmpt/BoxFeature.cpp 
+    src/nmpt/BoxFeature2.cpp 
     src/nmpt/ConvolutionalLogisticPolicy.cpp 
     src/nmpt/DetectionEvaluator.cpp 
+    src/nmpt/DetectionEvaluator2.cpp 
     src/nmpt/EstimateInternalMotion.cpp 
     src/nmpt/FastPatchList.cpp 
-    src/nmpt/FastSaliency.cpp 
+    src/nmpt/FastPatchList2.cpp 
+    src/nmpt/FastSalience.cpp 
     src/nmpt/Feature.cpp 
+    src/nmpt/Feature2.cpp 
     src/nmpt/FeatureRegressor.cpp 
+    src/nmpt/FeatureRegressor2.cpp 
     src/nmpt/GentleBoostCascadedClassifier.cpp 
     src/nmpt/GentleBoostClassifier.cpp 
+    src/nmpt/GentleBoostClassifier2.cpp 
     src/nmpt/HaarFeature.cpp 
+    src/nmpt/HaarFeature2.cpp 
     src/nmpt/ImageDataSet.cpp 
+    src/nmpt/ImageDataSet2.cpp 
     src/nmpt/ImageKalmanFilter.cpp 
     src/nmpt/ImagePatch.cpp 
+    src/nmpt/ImagePatch2.cpp 
     src/nmpt/ImagePatchPyramid.cpp 
     src/nmpt/InternalMotionModel.cpp 
     src/nmpt/KF.cpp 
@@ -35,11 +44,13 @@ rosbuild_add_library(nmpt
     src/nmpt/MultiObjectTrackingState.cpp 
     src/nmpt/NMPTUtils.cpp 
     src/nmpt/ObjectDetector.cpp 
-    src/nmpt/OpenCVBoxFilter.cpp 
+    src/nmpt/OpenCV2BoxFilter.cpp 
     src/nmpt/OpenCVHaarDetector.cpp 
     src/nmpt/OpenLoopPolicies.cpp 
     src/nmpt/PatchDataset.cpp 
+    src/nmpt/PatchDataset2.cpp 
     src/nmpt/PatchList.cpp 
+    src/nmpt/PatchList2.cpp 
     src/nmpt/StructTypes.cpp 
 )
 
@@ -70,8 +81,8 @@ target_link_libraries(FoveatedFaceTrackerImage nmpt)
 rosbuild_add_executable(SimpleFaceTracker src/nmpt/SimpleFaceTracker.cpp)
 target_link_libraries(SimpleFaceTracker nmpt)
 
-rosbuild_add_executable(SimpleSaliencyExample src/nmpt/SimpleSaliencyExample.cpp)
-target_link_libraries(SimpleSaliencyExample nmpt)
+rosbuild_add_executable(SimpleSalienceExample src/nmpt/SimpleSalienceExample.cpp)
+target_link_libraries(SimpleSalienceExample nmpt)
 
 rosbuild_add_executable(TrainNarrowFOVModel src/nmpt/TrainNarrowFOVModel.cpp)
 target_link_libraries(TrainNarrowFOVModel nmpt)
