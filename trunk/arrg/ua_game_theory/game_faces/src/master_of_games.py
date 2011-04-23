@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import roslib; roslib.load_manifest('game_faces')
 from game_faces.srv import *
 from game_faces.msg import TwoPersonGame
@@ -35,7 +36,7 @@ def roundRobin(units, sets=None):
 class game_summary:
     def __init__(self):
         self.player_id = 0; self.game_type = 0; self.game_topic = 0; self.is_first_player = 0; 
-        self.frame = [0,0,0,0]; self.time = [0,0,0,0]; 
+        self.frame = [0,0,0,0,0]; self.time = [0,0,0,0]; 
         self.amount = [0,0,0,0];
         self.actionP1 = 0; self.actionP2 = 0; 
         self.payoff = 0;
@@ -54,7 +55,7 @@ class game_summary:
       
     def output(self):
         return str(self.player_id) + '\t' + str(self.game_type) + '\t' + str(self.game_topic) + '\t' + str(self.is_first_player) + '\t' + \
-               str(self.frame[0]) + '\t' + str(self.frame[1]) + '\t' + str(self.frame[2]) + '\t' + str(self.frame[3]) + '\t' + \
+               str(self.frame[0]) + '\t' + str(self.frame[1]) + '\t' + str(self.frame[2]) + '\t' + str(self.frame[3]) + '\t' + str(self.frame[4]) + '\t' + \
                str(self.time[0]) + '\t' + str(self.time[1]) + '\t' + str(self.time[2]) + '\t' + str(self.time[3]) + '\t' + \
                str(self.amount[0]) + '\t' + str(self.amount[1]) + '\t' + str(self.amount[2]) + '\t' + str(self.amount[3]) + '\t' + \
                str(self.actionP1) + '\t' + str(self.actionP2) + '\t' + str(self.payoff) + '\n'
@@ -66,13 +67,13 @@ class game_summary:
 class game_summaries:
     def __init__(self):
         self.data = {}
-        
+        self.home = os.path.expanduser('~')
         self.starttime = rospy.Time.now().secs
         
         # choose a file to log to
         filenum = 0
         while True:
-            self.filename = "gamelog_" + str(datetime.date.today()) + "_" + str(filenum) + ".csv"
+            self.filename = self.home + "/ros/ua-ros-pkg/ua_game_theory/Data/Info_session/Session_" + str(datetime.date.today()) + "_" + str(filenum) + ".csv"
             filenum += 1
             if not os.path.exists(self.filename): break
         print "Logging to ", self.filename
@@ -80,7 +81,7 @@ class game_summaries:
         FILE.write("Game Faces playing log ")
         FILE.write(time.asctime( time.localtime(time.time()) ))
         FILE.write("\n\n")
-        FILE.write("PID\tGame Type\tTopic\t1st?\tf0\tf1\tf2\tf3\tt0\tt1\tt2\tt3\ta0\ta1\ta2\ta3\tact1\tact2\tpayoff\n")
+        FILE.write("PID\tGame\tTopic\t1st?\tf0\tf1\tf2\tf3\tf4\tt0\tt1\tt2\tt3\ta0\ta1\ta2\ta3\tact1\tact2\tpayoff\n")
         FILE.close()
     
     def processInit(self, game_topic, player_id1, player_id2, game_type):
@@ -168,8 +169,8 @@ class game_observer:
                 self.turns.add(msg.play_number)
             if self.turns == set(range(4)):
                 self.still_playing = False
-                #gamelog.writeToLog(self.the_topic, self.player1)
-                #gamelog.writeToLog(self.the_topic, self.player2)
+                gamelog.writeToLog(self.the_topic, self.player1)	# Not sure here is nathan stuff
+                gamelog.writeToLog(self.the_topic, self.player2)
                 if single_subject:  gamelog.writeToLog(self.the_topic, self.computerplayer)
                 self.sub.unregister()
                 
@@ -195,14 +196,15 @@ class game_observer:
 
 
 class game_master:
-    def __init__(self, num_players, num_runs, single_subject):
+    def __init__(self, num_players, num_runs):
         self.num_players = num_players
         self.num_registered_players = 0
-        self.single_subject = single_subject
+        self.single_subject = False
         self.num_runs = num_runs
         self.registration_service = []
         self.humanplayer = -1
         self.computerplayer = -1
+
 
     def handle_video_msg(msg):
         pass
@@ -210,13 +212,14 @@ class game_master:
     def handle_summary_msg(msg):
         pass
 
-    def call_autonomous_agent(self, needed):
+#    def call_autonomous_agent(self, needed):
 # This does not work yet.....
-        self.needed = needed
-        if self.needed:
-            pid = subprocess.Popen(args =["gnome-terminal", "--command=./src/autonomous_player.py"]).pid
-            #pid = subprocess.Popen(args =["gnome-terminal", "--command='rosrun game_faces autonomous_player.py'"]).pid
-            print pid
+#        self.needed = needed
+#        if self.needed:
+#            pid = subprocess.Popen(args =["gnome-terminal", "--command=/home/robotlab/ros/ua-ros-pkg/ua_game_theory/game_faces/src/autonomous_player.py"]).pid
+#            # THIS WORKS pid = subprocess.Popen(args =["gnome-terminal", "--command=./src/autonomous_player.py"]).pid
+#            #pid = subprocess.Popen(args =["gnome-terminal", "--command='rosrun game_faces autonomous_player.py'"]).pid
+#            print pid
         
 
     def register_game_player(self,req):
@@ -288,7 +291,7 @@ class game_master:
         global gamelog;
         gamelog = game_summaries()
 
-        self.call_autonomous_agent(self.single_subject)
+#        self.call_autonomous_agent(self.single_subject)
         self.registration_service = rospy.Service('register_game_player',RegisterGamePlayer,self.register_game_player)
         print "Waiting for " + str(self.num_players) + " machines to check in."
 
@@ -298,47 +301,21 @@ class game_master:
         # We are currently hand-coding in the three types of games
 
         game_topic = 0
-        num_blocks = 10
+        num_blocks = 1
+#        num_blocks = numpy.loadtxt(self.design)
 # num_blocks should be an iput argument: an array so that you
 # select both the order and the tasks to be done by your subjects
 # can do this with the gui and a check box
+
         game_observers = []
         for i in range(0,num_blocks):
             print i
-            if i == 7:
-                pairs = self.create_block(1, True)
-                game_type = "Instructions"
-            elif i == 1:
-                pairs = self.create_block(1, True)
-                game_type = "Demographic"
-            elif i == 2:
-                pairs = self.create_block(1, True)
-                game_type = "UltimatumTutorial"
-            elif i == 3:
+            if i == 0:
                 pairs = self.create_block(1, False)
                 game_type = "Ultimatum"
-            elif i == 4:
+            elif i == 1:
                 pairs = self.create_block(1, True)
-                game_type = "TrustTutorial"
-                #game_type = "PaymentScreen" # debugging only
-            elif i == 5:
-                pairs = self.create_block(1, False)
-                game_type = "TrustGame"
-            elif i == 6:
-                pairs = self.create_block(1, True)
-                game_type = "PrisonersTutorial"
-            elif i == 0:
-                pairs = self.create_block(0, False)
-                game_type = "Prisoners"
-            elif i == 8:
-                pairs = self.create_block(1, True)
-                game_type = "ArmBanditTutorial"
-            elif i == 9:
-                pairs = self.create_block(2, True) # Should be (10, True)
-                game_type = "ArmBandit"
-            #elif i == 10:
-            #    pairs = self.create_block(1, True)
-            #    game_type = "PaymentScreen"
+                game_type = "PaymentScreen"
             for block_round in pairs:
                 # Serve up all the games
                 for pair in block_round:
@@ -350,6 +327,7 @@ class game_master:
                     # Create an object for handling this game
                     observer = game_observer(msg, the_topic, self.single_subject, self.humanplayer, self.computerplayer)
                     game_observers.append(observer)
+                    time.sleep(0.1)
                     gameTopic.publish(msg)
                 # Wait until all pairs are finished.
                 while len(game_observers) > 0 and not rospy.is_shutdown():
@@ -365,19 +343,8 @@ class game_master:
 import sys
 import os
 import subprocess
+
 if __name__ == '__main__':
-
-    # Start a logger to record events and timestamps
-#    log = logger()
-
-#    filenum = 0
-#    while True:
-#        filename = "gamelog_" + str(datetime.date.today()) + "_" + str(filenum) + ".txt"
-#        filenum += 1
-#        # this is making some problem with the autonomous agent ....
-#        if not os.path.exists(filename):
-#            break
-#    log.openlog(filename)
 
     try:
         single_subject = False
@@ -385,14 +352,11 @@ if __name__ == '__main__':
             print "Usage: rosrun game_faces game_master.py <num_players> <num_rounds>"
             raise rospy.ROSInterruptException()
         elif int(sys.argv[1])==1:
-# This set the parameters for the game in the case of single subjects experiment:
-# i.e. whether it is single subject or not, how many runs per game
-# Note that for now the autonomous player should be lounched first - this can be solved
-# by making sure that the launcher first runs it
+
             single_subject = True
-            gm = game_master(2, int(sys.argv[2]), single_subject)
+            gm = game_master(2, single_subject)
         else:
-            gm = game_master(int(sys.argv[1]),int(sys.argv[2]), single_subject)
+            gm = game_master(int(sys.argv[1]),single_subject)
 
         gm.start_games()
     except rospy.ROSInterruptException:

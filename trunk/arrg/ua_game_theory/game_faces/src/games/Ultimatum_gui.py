@@ -18,10 +18,11 @@ TIME_BETWEEN_GAMES = 2 #seconds
 
 
 # NOTE on video_wrapper - the play_numbers are all shifted down by one:
-#  0 - player 1 sends an offer
-#  1 - player 2 receives offer
-#  2 - player 2 accepts or rejects
-#  3 - player 1 receives accept or reject
+#  0 - game start (player 2)
+#  1 - player 1 sends an offer
+#  2 - player 2 receives offer
+#  3 - player 2 accepts or rejects
+#  4 - player 1 receives accept or reject
 
 
 class GtkThreadSafe:
@@ -89,7 +90,7 @@ class UltimatumGameController:
         
         # Player 1 as they send their offer
         if self.video is not None:
-            self.video.send_msg(play_number=0, amount=offer, msgtime=timenow)
+            self.video.send_msg(play_number=1, amount=offer, msgtime=timenow)
         
         self.set_balance(10 - offer)
         gp = GamePlay(play_number=1,amount=offer, player_id=self.player.player_id)
@@ -108,14 +109,18 @@ class UltimatumGameController:
         self.box_control.set_sensitive(self.enabled)
     
     def take_first_turn(self):
+        
+# NOTE: CAN AVOID CRASH BY SKIPPINGH THIS IF SENTENCE: THE LOGIC THOUGH MAY MAKE PROBLEM WITH MULTIPLE PLAYERS AND WE NEED TO WORK MORE ON THIS POINT
+
         if not self.player.is_first:
-            ## This is not an interesting event for the video - start of game
-            #if self.video is not None:
-            #    self.video.send_msg(play_number=0,amount=-1, msgtime = time.time())
-            
             gp = GamePlay(play_number=0,amount=-1, player_id=self.player.player_id)
             gp.header.stamp = rospy.Time.now()
             self.play_pub.publish(gp)
+        
+        time.sleep(0.1)     # This is necessary to make sure the video thread has had time to update the game topic by now; otherwise it will publish on old topic
+        if self.video is not None:      # This will send duplicate message for Player 1 and 2, but master will keep the most recent
+            self.video.send_msg(play_number=0,amount=-1, msgtime = time.time())
+        
         
     def take_turn(self, game_play):
         gts = GtkThreadSafe()
@@ -145,7 +150,7 @@ class UltimatumGameController:
 
                     # Reaction as Player 2 receives Player 1's offer
                     if self.video is not None:
-                        self.video.send_msg(play_number=1,amount=game_play.amount, msgtime = time.time())
+                        self.video.send_msg(play_number=2,amount=game_play.amount, msgtime = time.time())
 
                     dialog.connect("delete_event", lambda w, e : None)
                     response = gtk.RESPONSE_DELETE_EVENT
@@ -159,7 +164,7 @@ class UltimatumGameController:
                     
                     # Player 2 as they accept or reject
                     if self.video is not None:
-                        self.video.send_msg(play_number=2,amount=new_balance, msgtime = time.time())
+                        self.video.send_msg(play_number=3,amount=new_balance, msgtime = time.time())
 
                     if response == gtk.RESPONSE_REJECT:
                         self.log.log("Player rejected offer of %d" %game_play.amount)
@@ -188,7 +193,7 @@ class UltimatumGameController:
                         
                     # Reaction upon receiving player 2's acceptance or rejection
                     if self.video is not None:
-                        self.video.send_msg(play_number=3,amount=-2, msgtime = time.time())
+                        self.video.send_msg(play_number=4,amount=-2, msgtime = time.time())
 
                 gp = GamePlay(play_number=3,amount=-2, player_id=self.player.player_id)
                 gp.header.stamp = rospy.Time.now()

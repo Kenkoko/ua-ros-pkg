@@ -4,6 +4,7 @@ import sys
 import time
 import socket
 import threading
+import os
 
 import pygtk
 pygtk.require('2.0')
@@ -23,8 +24,8 @@ import datetime
 
 from game_faces.srv import *
 from game_faces.msg import TwoPersonGame, GamePlay, GameSummary
-from games import UltimatumGameController, TrustGameController, PrisonersGameController, ArmBanditController
-from games import GeneralInstructions, TrustTutorial, UltimatumTutorial, PrisonersTutorial, ArmBanditTutorial, Demographic, PaymentScreen
+from games import UltimatumGameController
+from games import PaymentScreen
 
 from video_wrapper import videowrapper
 
@@ -107,6 +108,8 @@ class GameFacesUI:
         self.results = []      
         self.last_game_type = ''
 
+        self.log = logger()
+
         self.window.show_all()
         self.register_player()
         
@@ -139,32 +142,16 @@ class GameFacesUI:
             self.video.start_video()
 
         # Start a log for this player
-        self.log = logger()
-        filename = "playerlog_" + str(self.player.player_id) + "_" + str(datetime.date.today()) + ".txt"
+        home = os.path.expanduser('~')
+        filename = home + "/ros/ua-ros-pkg/ua_game_theory/Data/Info_Players/playerlog_" + str(self.player.player_id) + "_" + str(datetime.date.today()) + ".txt"
         self.log.openlog(filename)
 
         self.console.append_text("Ready to play.\nWaiting for your opponent...\n")
 
-# here the gaussian
-
-    def my_gaussian_process(self, lamb, theta, sigma_o, sigma, size):
-        "This creates a multidimensional gaussian process"
-        gp = []
-        mi_0=(theta, theta, theta)
-        for j in range(size[1]):
-            rnd_mi_1 = []
-            mi_1 = []
-            for i in range(size[0]):
-                mi=lamb*mi_0[i] + (1-lamb)*theta+numpy.random.normal(0,sigma)
-                rnd_mi = round(numpy.random.normal(mi, sigma_o))
-                mi_1.append(mi)
-                rnd_mi_1.append(rnd_mi)
-            mi_0=mi_1
-            gp.append(rnd_mi_1)
-        return gp
 
     def play_game(self, gamedata):
         gts = GtkThreadSafe()
+        stopvideo = False
         if gamedata.game_type == 'NO_MORE_GAMES':
             self.console.append_text('\n\nNo more games!\n')
             with gts:
@@ -177,7 +164,6 @@ class GameFacesUI:
             return
         
         self.player.game_topic_lock.acquire()
-        lottery = self.my_gaussian_process(.9836, 50, 4, 2.8,[3, 125])
         if self.player.game_topic is '':
             is_first_player = (gamedata.first_player == self.player.player_id)
             is_second_player = (gamedata.second_player == self.player.player_id)
@@ -219,51 +205,20 @@ class GameFacesUI:
                 self.player.game_topic = game_topic
                 game_type = str(gamedata.game_type)
                 print "Starting: ", game_type
-                if game_type == "Instructions":
+                if game_type == "Ultimatum":
                     with gts:
-                       self.the_game_controller = GeneralInstructions(self.window, self.console, self.player, self.log)
-                       self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-                elif game_type == "Demographic":
-                    with gts:
-                       self.the_game_controller = Demographic(self.window, self.console, self.player, self.log)
-                       self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-                elif game_type == "TrustGame":
-                    with gts:
-                        self.the_game_controller = TrustGameController(self.window, self.console, self.player, self.log, self.video)
-                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-                elif game_type == "Prisoners":
-                    with gts:
-                        self.the_game_controller = PrisonersGameController(self.window, self.console, self.player, self.log, self.video)
-                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-                elif game_type == "Ultimatum":
-                    with gts:
-                        self.the_game_controller = UltimatumGameController(self.window, self.console, self.player, self.log, self.video)
-                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-                elif game_type == "ArmBandit":
-                    with gts:
-                        self.the_game_controller = ArmBanditController(self.window, self.console, self.player, lottery.pop(0), self.log, self.video)
-                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-                elif game_type == "TrustTutorial":
-                    with gts:
-                        self.the_game_controller = TrustTutorial(self.window, self.console, self.player, self.log)
-                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-                elif game_type == "PrisonersTutorial":
-                    with gts:
-                        self.the_game_controller = PrisonersTutorial(self.window, self.console, self.player, self.log)
-                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-                elif game_type == "UltimatumTutorial":
-                    with gts:
-                        self.the_game_controller = UltimatumTutorial(self.window, self.console, self.player, self.log)
-                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-                elif game_type == "ArmBanditTutorial":
-                    with gts:
-                        self.the_game_controller = ArmBanditTutorial(self.window, self.console, self.player, self.log)
-                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
-#                elif game_type == "PaymentScreen":
-                elif game_type == "NO_MORE_GAMES":
+			if capture_video:
+				self.the_game_controller = UltimatumGameController(self.window, self.console, self.player, self.log, self.video)
+		                self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+			else:
+		                self.the_game_controller = UltimatumGameController(self.window, self.console, self.player, self.log)
+		                self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+                elif game_type == "PaymentScreen":
+#                elif game_type == "NO_MORE_GAMES":
                     with gts:
                        self.the_game_controller = PaymentScreen(self.window, self.console, self.player, self.results, self.log)
                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+                       stopvideo = True
 #                elif game_type == "NO_MORE_GAMES":
 #                    with gts:
 #                        self.the_game_controller = ThanksController(self.window, self.console, self.player)
@@ -280,6 +235,13 @@ class GameFacesUI:
                 self.last_game_type = game_type
                 self.the_game_controller.take_first_turn()
                 # after this, get the results of the game from the controller
+                
+                # Maybe a better way to do this
+                if stopvideo:
+                    time.sleep(5) # Grab 5 more seconds
+                    if capture_video:
+                        self.video.end_video()
+            
         else:
             with gts:
                 print "skipped a game message from master, because I'm already in a game. Topic: ", self.player.game_topic
