@@ -6,6 +6,7 @@ import sys
 import time
 import socket
 import threading
+import numpy
 
 import random
 
@@ -27,7 +28,7 @@ class GtkThreadSafe:
         # error, True if handled here
         gtk.gdk.threads_leave()
 
-class GeneralInstructions:
+class GeneralInstructions1:
     def __init__(self, parent, shared_console, player, log):
         self.parent = parent
         self.shared_console = shared_console
@@ -79,15 +80,18 @@ class GeneralInstructions:
 
     def take_turn(self,game_play):
 
-        rs_1 = "Thank you for coming.  The instructions you will read are meant to be self-explanatory.  If, after you have read through the instructions, you still have questions, please raise your hand and someone will come by to help you.  Now that the study has begun, we ask that you do not talk, at all, during the experiment. "
+        rs_1 = "Thank you for coming.  The instructions you will read are meant to be self-explanatory.  If, after you have read through the instructions, you still have questions, please raise your hand and someone will come by to help you. "
 
-        rs_2 = "You will complete three experiments.  We will explain the detailed rules for each experiment at the beginning of the experiment.  "
+        rs_2 = "You will complete four tasks.  We will explain the detailed rules for each of them as the experiment proceeds. If you follow the instructions carefully and make good decisions, you can earn some money. The rules for payment are explained next."
 
-        rs_3 = "If you follow the instructions carefully and make good decisions, you can earn a notable amount of money.  Two rounds from each experiment will be randomly selected for payment, and you will receive 10%, in real money, of the experimental money you earned on those rounds.  You will be paid in private and in cash at the end of the study."
+        rs_3 = "The experiment will be divided in two blocks. First you will play the 'Arm Bandit Task'. At the end, a payment screen will pop up, and the experimenter will award you the payment. Next you will play three economic games. At the end of the games a new payment screen will pop up. The experimenter will award you the payment. You will then be debriefed on the experiment, and you will be free to go. "
+        
+        rs_4 = "When you are rady, hit the OK button and the first block of the experiment will start." 
 
         s_1=textwrap.fill(rs_1,70)
         s_2=textwrap.fill(rs_2,70)
         s_3=textwrap.fill(rs_3,70)
+        s_4=textwrap.fill(rs_4,70)
 
         gts = GtkThreadSafe()
         if self.play_number == 0:
@@ -98,6 +102,8 @@ class GeneralInstructions:
                     self.shared_console.append_text(s_2)
                     self.shared_console.append_text("\n\n")
                     self.shared_console.append_text(s_3)
+                    self.shared_console.append_text("\n\n")
+                    self.shared_console.append_text(s_4)
                     self.toggle_user_interaction()
         elif self.play_number == 1:
             if self.player.is_first:
@@ -120,6 +126,106 @@ class GeneralInstructions:
         self.play_sub.unregister()
         self.player.game_topic = ""
         self.player.game_topic_lock.release()
+
+class GeneralInstructions2:
+    def __init__(self, parent, shared_console, player, log):
+        self.parent = parent
+        self.shared_console = shared_console
+        self.player = player
+        self.play_number = 0
+
+        self.log = log
+        
+        self.enabled = True
+        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
+        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
+
+        self.title = "Instruction"
+        self.view = gtk.Frame(self.title)
+        game_vbox = gtk.VBox(False, 8)
+        self.view.add(game_vbox)
+
+        self.box_status = gtk.HBox(False, 8)
+        game_vbox.pack_start(self.box_status, expand=False, fill=False)
+
+        self.box_control = gtk.HBox(False, 8)
+        game_vbox.pack_start(self.box_control, expand=False, fill=False)
+
+        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
+        self.button_bid.set_size_request(80, 30)
+        self.button_bid.connect("clicked", self.ok_button_clicked)
+        self.box_control.add(self.button_bid)
+
+        self.view.show_all()
+        self.toggle_user_interaction()
+        
+
+    def ok_button_clicked(self, widget, data=None):
+        self.play_number +=1
+        self.toggle_user_interaction()
+        gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
+        gp.header.stamp = rospy.Time.now()
+        self.play_pub.publish(gp)
+
+    def toggle_user_interaction(self):
+        self.enabled = not self.enabled
+        self.box_control.set_sensitive(self.enabled)
+
+    def take_first_turn(self):
+        if self.player.is_first:
+            gp = GamePlay(play_number=0,amount=-1, player_id=self.player.player_id)
+            gp.header.stamp = rospy.Time.now()
+            self.play_pub.publish(gp)
+
+    def take_turn(self,game_play):
+
+        rs_1 = "Welcome to the second block of the experiment. We hope you enjoied the first part. "
+
+        rs_2 = "You will play three economic games now.  "
+
+        rs_3 = "If you follow the instructions carefully and make good decisions, you can earn some money.  Two rounds from each experiment will be randomly selected for payment, and you will receive 5%, in real money, of the experimental money you earned on those rounds."
+        
+        rs_4 = "When you are rady, hit the OK button and the second block of the experiment will start." 
+
+        s_1=textwrap.fill(rs_1,70)
+        s_2=textwrap.fill(rs_2,70)
+        s_3=textwrap.fill(rs_3,70)
+        s_4=textwrap.fill(rs_4,70)
+
+        gts = GtkThreadSafe()
+        if self.play_number == 0:
+            if self.player.is_first:
+                with gts:
+                    self.shared_console.append_text(s_1)
+                    self.shared_console.append_text("\n\n")
+                    self.shared_console.append_text(s_2)
+                    self.shared_console.append_text("\n\n")
+                    self.shared_console.append_text(s_3)
+                    self.shared_console.append_text("\n\n")
+                    self.shared_console.append_text(s_4)
+                    self.toggle_user_interaction()
+        elif self.play_number == 1:
+            if self.player.is_first:
+                self.shared_console.clear()
+                self.play_number = 2
+                gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
+                gp.header.stamp = rospy.Time.now()
+                self.play_pub.publish(gp)
+        elif self.play_number == 2:
+            if self.player.is_first:
+                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
+                gp.header.stamp = rospy.Time.now()
+                self.play_pub.publish(gp)
+            self.unregister_game()
+
+
+    def unregister_game(self):
+        self.player.game_topic_lock.acquire()
+        self.play_pub.unregister()
+        self.play_sub.unregister()
+        self.player.game_topic = ""
+        self.player.game_topic_lock.release()
+
 
 class Demographic:
     def __init__(self, parent, shared_console, player, log):
@@ -408,18 +514,15 @@ class UltimatumTutorial:
         
         rs_3 = "Once Player 1 has made a proposal, Player 2 will be given the chance to accept or reject the proposal.  If Player 2 accepts the proposal, then the amount of money will be divided as specified by Player 1.  If Player 2 rejects the proposal, both Player 1 and Player 2's payoff will be zero.  After Player 2's decision, the interaction is over."
         
-        rs_4 = "This experiment consists of eighteen rounds.  You will be paired with a different person for each round.  You will never interact with the same person in the same role twice.   "
+        rs_4 = "This experiment consists of 14 rounds. Remember that two rounds will be randomly selected for real payment, and you will receive 5%, in real money, of the experimental money you earned on those round."
         
-        rs_5 = "This experiment consists of eighteen rounds. Remember that two rounds will be randomly selected for real payment, and you will receive 10%, in real money, of the experimental money you earned on those round."
-        
-        rs_6 = "By using the control above, please tell us what you expect to receive on average when you are the second player in the game. Remember that the first player can give you between $0 and $10, therefore select a number between 0 and 10. Once you made your estimation, please press the OK button."
+        rs_5 = "By using the control above, please tell us what you expect to receive on average when you are the second player in the game. Remember that the first player can give you between $0 and $10, therefore select a number between 0 and 10. Once you made your estimation, please press the OK button."
         
         s_1=textwrap.fill(rs_1,65)
         s_2=textwrap.fill(rs_2,65)
         s_3=textwrap.fill(rs_3,65)
         s_4=textwrap.fill(rs_4,65)
         s_5=textwrap.fill(rs_5,65)
-        s_6=textwrap.fill(rs_6,65)
 
         gts = GtkThreadSafe()
         play_number = game_play.play_number
@@ -434,14 +537,13 @@ class UltimatumTutorial:
                     self.shared_console.append_text("\n\n")
                     self.shared_console.append_text(s_4)
                     self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_5)
                     self.toggle_user_interaction()
         elif play_number == 1:
             if self.player.is_first:
                 self.shared_console.clear()
                 with gts:
                     self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_6)
+                    self.shared_console.append_text(s_5)
                     self.toggle_user_interaction()
         elif play_number == 2:
             if self.player.is_first:
@@ -524,11 +626,11 @@ class TrustTutorial:
         
         rs_4 = "The final payoff for Player 1 is $10, minus however much he or she transferred to Player 2, plus however much Player 2 sent back.  The final payoff for Player 2 is the (tripled) amount transferred to him or her by Player 1, minus however much he or she sends back to Player 1. For example, if Player 1 sent $3, and Player 2 sent back $2, then Player 1 would end up with $10 - $3 + $2 = $9 and Player 2 would end up with $9 - $2 = $7; if Player 1 had sent $7, and Player 2 sent back $9, then Player 1 would end up with $10 - $7 + $9 = $12 and Player 2 would end up with $21 - $9 = $12."
         
-        rs_5 = "This experiment consists of eighteen rounds."
+        rs_5 = "This experiment consists of 14 rounds."
         
-        rs_6 = "Remember that two rounds will be randomly selected for real payment, and you will receive 10%, in real money, of the experimental money you earned on those rounds."
+        rs_6 = "Remember that two rounds will be randomly selected for real payment, and you will receive 5%, in real money, of the experimental money you earned on those rounds."
         
-        rs_7 = "By using the control above, please tell us what you expect to receive on average when you are the first player in the game. Remember that this depends on the ammount that you are going to send to the second player, therfore, rather than in terms of dollar, please express you estimation in percentage - that is choose a number between 0% and 100%. Once you made your estimation, please press the OK button."
+        rs_7 = "By using the control above, please tell us what you expect to receive on average when you are the first player in the game. Remember that this depends on the ammount that you are going to send to the second player, therfore, rather than in terms of dollars, please express your estimation in percentage - that is choose a number between 0% and 100%. Once you made your estimation, please press the OK button."
         
         rs_8 = "By using the control above, please tell us what you expect to receive on average when you are the second player in the game. Remember that the first player can give you between $0 and $10, therefore choose a number between 0 and 10. Once you made your estimation, please press the OK button."
 
@@ -697,9 +799,9 @@ class PrisonersTutorial:
         
         rs_3 = "For example, if Player 1 chooses the TOP row and Player 2 chooses the LEFT column then both players will receive 10 units of payoff. Likewise, if Player 2 choose LEFT but Player 1 chooses the BOTTOM row, Player 1 will get nothing and Player 2 will get $12."
         
-        rs_4 = "This experiment consists of nine rounds. "
+        rs_4 = "This experiment consists of 7 rounds. "
         
-        rs_5 = "Remember that two rounds will be randomly selected for real payment, and you will receive 10%, in real money, of the experimental money you earned on those rounds."
+        rs_5 = "Remember that two rounds will be randomly selected for real payment, and you will receive 5%, in real money, of the experimental money you earned on those rounds."
         
         rs_6 = "By using the check boxes above, please tell us what you expect to be the most frequently visited cell. Once you made your estimation, please press the OK button."
         
@@ -850,11 +952,11 @@ class ArmBanditTutorial:
         
         rs_2 = "Each slot machine provides a reward between 1 and 100. Your objective for this game is to win as much as possible."
 
-        rs_3 = "This experiment consists of 125 rounds. "
+        rs_3 = "This experiment consists of 35 rounds. "
         
-        rs_4 = "This game will be paid in accordance with the following procedure. We will sum the payoff of each play and then divide it by the number of rounds played (i.e. 125) and the median payoff (which is 50)."
+        rs_4 = "This game will be paid in accordance with the following procedure. We will sum the payoff of each play and then divide it by the number of rounds played (i.e. 35) and the median payoff (which is 50)."
         
-        rs_5 = "For example, suppose that you always received 100 from your plays, your overall earning in payoff units will be 12,500. The conversion in Dollars is: Total payoff/(number of rounds * median payoff) = 12500/(125*50) = $2."
+        rs_5 = "For example, suppose that you always received 100 from your plays, your overall earning in payoff units will be 3,500. The conversion in Dollars is: Total payoff/(number of rounds * median payoff) = 3500/(35*50) = $2."
         
         s_1=textwrap.fill(rs_1,70)
         s_2=textwrap.fill(rs_2,70)
@@ -912,8 +1014,8 @@ class PaymentScreen:
         self.results = results
         
         self.enabled = True
-#        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
-#        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
+        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
+        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
 
         self.title = "Payment"
         self.view = gtk.Frame(self.title)
@@ -961,10 +1063,10 @@ class PaymentScreen:
 
     def take_first_turn(self):
         self.log.log("Starting Payment module")
-        #if self.player.is_first:
-        #    gp = GamePlay(play_number=0,amount=0, player_id=self.player.player_id)
-        #    gp.header.stamp = rospy.Time.now()
-        #    self.play_pub.publish(gp)
+        if self.player.is_first:
+            gp = GamePlay(play_number=0,amount=0, player_id=self.player.player_id)
+            gp.header.stamp = rospy.Time.now()
+            self.play_pub.publish(gp)
 
     def take_turn(self,game_play):
 
@@ -976,7 +1078,7 @@ class PaymentScreen:
         res = {}
         for result in self.results:
             if result[0] in res:
-                if (len(res[result[0]]) < 2):
+                if (len(res[result[0]]) < 2 or result[0] == "ArmBandit"):
                     res[result[0]].append(result[1])
             else:
                 res[result[0]] = [result[1]]
@@ -986,9 +1088,20 @@ class PaymentScreen:
         total = 0
         for game_name in res.keys():
             ressum[game_name] = sum(res[game_name])
-            total += ressum[game_name]	# Here, change payment values for various games ("if game_name == 'one armed'...)
+            print "RESSUM",ressum
+            if game_name == "ArmBandit":
+                banditpay = res[game_name]
+                banditpay = sorted(banditpay)
+                #lower = banditpay[len(banditpay)/2-1]
+                #upper = banditpay[len(banditpay)/2]
+                #median = (float(lower + upper)) / 2  
+                total += ressum[game_name]/(len(banditpay) * 50)
+            else:
+                total += 0.05*ressum[game_name]  # Here, change payment values for various games ("if game_name == 'one armed'...)
         
         print ressum
+        
+        total = int(numpy.ceil(total+0.01))  # Round total to a dollar amount?
         
         rs_1 = "Your payment has been calculated by picking two rounds randomly from each game.\n"
         rs_2 = "Here are the games and the associated payoffs: " + str(res) + "\n"
@@ -1004,7 +1117,7 @@ class PaymentScreen:
         if self.play_number == 0:
             if self.player.is_first:
                 self.set_balance(total)
-                self.log.log("Monetasry payof is %d" %total)
+                self.log.log("Monetary payof is %d" %total)
                 with gts:
                     self.shared_console.append_text(s_1)
                     self.shared_console.append_text("\n\n")

@@ -151,12 +151,14 @@ void VideoCaptureThread(){
             
             char filetime[36];
             char filename[64];
+	    char filehdr[64];
             time_t rawtime;
             time( &rawtime );
             struct tm* timenow = localtime( &rawtime );
             strftime(filetime,32,"%Y-%m-%d_%H:%M:%S", timenow);
 
             sprintf(filename,"videolog_p%d_%s.avi", player_id, filetime);
+	    sprintf(filehdr,"videolog_p%d_%s", player_id, filetime);
             
             // supported codecs according to cap_gstreamer (line 449):
             // (run gst-inspect-0.10 to see if you have this codec installed)
@@ -165,7 +167,7 @@ void VideoCaptureThread(){
             // CV_FOURCC('X','V','I','D') => "xvidenc";
             // CV_FOURCC('X','2','6','4') => "x264enc";
             // CV_FOURCC('M','P','1','V') => "mpeg2enc";
-            
+            cout << imgSize.width << ' ' << imgSize.height << ' ' << fps << ' ' << filename << ' ' << CV_FOURCC('X', 'V', 'I', 'D') << endl;
             CvVideoWriter *writer = cvCreateVideoWriter(filename,
                                                         //CV_FOURCC('H', 'F', 'Y', 'U'),  // works on ubuntu hd (ffenc_huffyuv) (lossless)
                                                         //CV_FOURCC('M', 'P', '1', 'V'), // (mpeg2enc)
@@ -191,6 +193,10 @@ void VideoCaptureThread(){
                     {
                         frame_number++;
                         cvWriteFrame(writer, frame);
+
+			// This saves the images to files
+			//sprintf(filename, "%s_%d.jpg", filehdr, frame_number);
+			//if (!cvSaveImage(filename, frame)) printf("Could not save: %s\n", filename);
                     }
                     //Check if any keys have been pressed, for quitting.
                     // Note:  This is only for the GUI interface, and we don't have one.
