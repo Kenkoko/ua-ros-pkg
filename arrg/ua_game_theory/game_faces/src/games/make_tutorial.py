@@ -743,7 +743,7 @@ class GFPlayer:
 
 class multiplayer():
     def __init__(self, parent, console, mainvbox, filename, log, condition):
-        self.capture_video = None
+        self.capture_video = True
         self.player = GFPlayer()
         self.condition = condition
         self.filename = filename
