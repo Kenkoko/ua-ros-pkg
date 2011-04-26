@@ -1,7 +1,8 @@
-import roslib
-import rospy
-from game_faces.msg import GamePlay
+#!/usr/bin/env python
 
+
+#from game_faces.msg import GamePlay
+#from game_faces.msg import TwoPersonGame, GamePlay, GameSummary
 import sys
 import time
 import socket
@@ -17,7 +18,28 @@ import gtk
 import textwrap
 from Tkinter import *
 
-from logger import logger
+import roslib
+roslib.load_manifest('game_faces')
+import rospy
+
+import os
+
+# Import functions for starting the video thread
+import shlex, subprocess
+
+#from logger import logger
+import datetime
+
+from game_faces.srv import *
+from game_faces.msg import TwoPersonGame, GamePlay, GameSummary
+from games import UltimatumGameController #,UltimatumGameController_computer, UltimatumGameController_mix, Payment
+#from games import Welcome
+
+from video_wrapper import videowrapper
+
+#from logger import logger
+
+gtk.gdk.threads_init()
 
 class GtkThreadSafe:
     def __enter__(self):
@@ -28,23 +50,23 @@ class GtkThreadSafe:
         # error, True if handled here
         gtk.gdk.threads_leave()
 
-class GeneralInstructions1:
-    def __init__(self, parent, shared_console, player, log):
-        self.parent = parent
-        self.shared_console = shared_console
-        self.player = player
-        self.play_number = 0
-
+class Welcome():
+    def __init__(self, parent, console, mainvbox, filename, log, condition):
+        self.condition = condition
+        self.filename = filename
         self.log = log
-        
+        self.content_vbox = mainvbox
         self.enabled = True
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
+        self.playing = True
+        self.window = parent
+        self.console = console
+        self.window.set_title("Beliefs and Expectations in Strategic Interaction")
 
-        self.title = "Instruction"
+        self.title = "Welcome"
         self.view = gtk.Frame(self.title)
         game_vbox = gtk.VBox(False, 8)
         self.view.add(game_vbox)
+        self.content_vbox.pack_end(self.console.view)
 
         self.box_status = gtk.HBox(False, 8)
         game_vbox.pack_start(self.box_status, expand=False, fill=False)
@@ -52,263 +74,148 @@ class GeneralInstructions1:
         self.box_control = gtk.HBox(False, 8)
         game_vbox.pack_start(self.box_control, expand=False, fill=False)
 
-        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
-        self.button_bid.set_size_request(80, 30)
+        self.button_bid = gtk.Button('Next')
+        self.button_bid.set_size_request(80, 40)
         self.button_bid.connect("clicked", self.ok_button_clicked)
-        self.box_control.add(self.button_bid)
-
+        self.box_control.pack_end(self.button_bid, False, False)
         self.view.show_all()
         self.toggle_user_interaction()
-        
+        self.take_turn()
+
+    def step_forward(self):
+        self.content_vbox.remove(self.view)
+        self.content_vbox.remove(self.console.view)
+        self.the_game_controller = Demographic(self.window, self.console, self.content_vbox, self.filename, self.log, self.condition)
+        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+    
+    def observer(self,status):
+        while status == True:
+            print status
 
     def ok_button_clicked(self, widget, data=None):
-        self.play_number +=1
+        self.game_type = 'Demopgraphic'
         self.toggle_user_interaction()
-        gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-        gp.header.stamp = rospy.Time.now()
-        self.play_pub.publish(gp)
+        self.console.clear()
+        self.playing = False
+        self.is_playing = False
+        self.step_forward()
+        return self.game_type
 
     def toggle_user_interaction(self):
         self.enabled = not self.enabled
         self.box_control.set_sensitive(self.enabled)
 
-    def take_first_turn(self):
-        if self.player.is_first:
-            gp = GamePlay(play_number=0,amount=-1, player_id=self.player.player_id)
-            gp.header.stamp = rospy.Time.now()
-            self.play_pub.publish(gp)
+    def take_turn(self):
+        rs_1 = "Thank you for coming to this experiment!"
+        rs_2 = "You will be asked to complete a simple task.  We will explain the detailed rules as the experiment proceeds. If you follow the instructions carefully and make good decisions, you can earn some money. The rules for payment are explained next."
+        rs_3 = "After leaving this 'Welcome' page, you will be asked to answer some  questions. The instructions for the experiment will then pop up. Please, read the instructions carefully and make sure that you've understood them fully. If needed, feel free to ask the experimenter for further explanation, as subjects who ask for further clarifications usually earn more money. Finally, the experiment will start and last for about 1 hour."
+        rs_4 = "At the end of the experiment you will be asked to answer a few more questions and then you will be directed to the payment screen, which summarizes your performance on the task as well as the amount of money you won."
+        rs_5 = "When you are ready, hit the 'Next' button and the experiment will start." 
 
-    def take_turn(self,game_play):
+        s_1=textwrap.fill(rs_1,125)
+        s_2=textwrap.fill(rs_2,125)
+        s_3=textwrap.fill(rs_3,125)
+        s_4=textwrap.fill(rs_4,125)
+        s_5=textwrap.fill(rs_5,125)
 
-        rs_1 = "Thank you for coming.  The instructions you will read are meant to be self-explanatory.  If, after you have read through the instructions, you still have questions, please raise your hand and someone will come by to help you. "
-
-        rs_2 = "You will complete four tasks.  We will explain the detailed rules for each of them as the experiment proceeds. If you follow the instructions carefully and make good decisions, you can earn some money. The rules for payment are explained next."
-
-        rs_3 = "The experiment will be divided in two blocks. First you will play the 'Arm Bandit Task'. At the end, a payment screen will pop up, and the experimenter will award you the payment. Next you will play three economic games. At the end of the games a new payment screen will pop up. The experimenter will award you the payment. You will then be debriefed on the experiment, and you will be free to go. "
-        
-        rs_4 = "When you are rady, hit the OK button and the first block of the experiment will start." 
-
-        s_1=textwrap.fill(rs_1,70)
-        s_2=textwrap.fill(rs_2,70)
-        s_3=textwrap.fill(rs_3,70)
-        s_4=textwrap.fill(rs_4,70)
-
-        gts = GtkThreadSafe()
-        if self.play_number == 0:
-            if self.player.is_first:
-                with gts:
-                    self.shared_console.append_text(s_1)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_2)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_3)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_4)
-                    self.toggle_user_interaction()
-        elif self.play_number == 1:
-            if self.player.is_first:
-                self.shared_console.clear()
-                self.play_number = 2
-                gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-        elif self.play_number == 2:
-            if self.player.is_first:
-                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-            self.unregister_game()
-
-
-    def unregister_game(self):
-        self.player.game_topic_lock.acquire()
-        self.play_pub.unregister()
-        self.play_sub.unregister()
-        self.player.game_topic = ""
-        self.player.game_topic_lock.release()
-
-class GeneralInstructions2:
-    def __init__(self, parent, shared_console, player, log):
-        self.parent = parent
-        self.shared_console = shared_console
-        self.player = player
-        self.play_number = 0
-
-        self.log = log
-        
-        self.enabled = True
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
-
-        self.title = "Instruction"
-        self.view = gtk.Frame(self.title)
-        game_vbox = gtk.VBox(False, 8)
-        self.view.add(game_vbox)
-
-        self.box_status = gtk.HBox(False, 8)
-        game_vbox.pack_start(self.box_status, expand=False, fill=False)
-
-        self.box_control = gtk.HBox(False, 8)
-        game_vbox.pack_start(self.box_control, expand=False, fill=False)
-
-        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
-        self.button_bid.set_size_request(80, 30)
-        self.button_bid.connect("clicked", self.ok_button_clicked)
-        self.box_control.add(self.button_bid)
-
-        self.view.show_all()
+        self.console.append_text("\n\n")
+        self.console.append_text(s_1)
+        self.console.append_text("\n\n")
+        self.console.append_text(s_2)
+        self.console.append_text("\n\n")
+        self.console.append_text(s_3)
+        self.console.append_text("\n\n")
+        self.console.append_text(s_4)
+        self.console.append_text("\n\n")
+        self.console.append_text(s_5)
+        self.console.append_text("\n\n")
         self.toggle_user_interaction()
-        
 
-    def ok_button_clicked(self, widget, data=None):
-        self.play_number +=1
-        self.toggle_user_interaction()
-        gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-        gp.header.stamp = rospy.Time.now()
-        self.play_pub.publish(gp)
-
-    def toggle_user_interaction(self):
-        self.enabled = not self.enabled
-        self.box_control.set_sensitive(self.enabled)
-
-    def take_first_turn(self):
-        if self.player.is_first:
-            gp = GamePlay(play_number=0,amount=-1, player_id=self.player.player_id)
-            gp.header.stamp = rospy.Time.now()
-            self.play_pub.publish(gp)
-
-    def take_turn(self,game_play):
-
-        rs_1 = "Welcome to the second block of the experiment. We hope you enjoied the first part. "
-
-        rs_2 = "You will play three economic games now.  "
-
-        rs_3 = "If you follow the instructions carefully and make good decisions, you can earn some money.  Two rounds from each experiment will be randomly selected for payment, and you will receive 5%, in real money, of the experimental money you earned on those rounds."
-        
-        rs_4 = "When you are rady, hit the OK button and the second block of the experiment will start." 
-
-        s_1=textwrap.fill(rs_1,70)
-        s_2=textwrap.fill(rs_2,70)
-        s_3=textwrap.fill(rs_3,70)
-        s_4=textwrap.fill(rs_4,70)
-
-        gts = GtkThreadSafe()
-        if self.play_number == 0:
-            if self.player.is_first:
-                with gts:
-                    self.shared_console.append_text(s_1)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_2)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_3)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_4)
-                    self.toggle_user_interaction()
-        elif self.play_number == 1:
-            if self.player.is_first:
-                self.shared_console.clear()
-                self.play_number = 2
-                gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-        elif self.play_number == 2:
-            if self.player.is_first:
-                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-            self.unregister_game()
-
-
-    def unregister_game(self):
-        self.player.game_topic_lock.acquire()
-        self.play_pub.unregister()
-        self.play_sub.unregister()
-        self.player.game_topic = ""
-        self.player.game_topic_lock.release()
+    def delete_event(self, widget, event, data=None):
+        print "Delete event called. Closing window."
+        return False
 
 
 class Demographic:
-    def __init__(self, parent, shared_console, player, log):
-        self.parent = parent
-        self.shared_console = shared_console
-        self.player = player
-        self.play_number = 0
-        
+    def __init__(self, parent, console, mainvbox, filename, log, condition):
+        self.condition = condition
         self.log = log
+        self.filename = filename
+        self.content_vbox = mainvbox
+        self.parent = parent
+        self.console = console
 
         self.enabled = True
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
 
         self.title = ""
         self.view = gtk.Frame(self.title)
-        question_box = gtk.VBox(False, 8)
+        question_box = gtk.VBox(True, 8)
         self.view.add(question_box)
-        
+
         # Biological Sex
         self.question_one = gtk.HBox(False,8)
         question_box.pack_start(self.question_one, expand=False, fill=False)
-        label = gtk.Label("Biological sex:")
-        self.question_one.pack_start(label, False, False, 0)
+        label = gtk.Label("Biological sex: ")
+        self.question_one.pack_start(label, False, False, 10)
         label.show()
 
         self.malebutton = gtk.RadioButton(None, "male")
         self.malebutton.connect("toggled", self.rb_callback, "male")
-        self.question_one.add(self.malebutton)
+        self.question_one.pack_start(self.malebutton, False, False)
         self.femalebutton = gtk.RadioButton(self.malebutton, "female")
         self.femalebutton.connect("toggled", self.rb_callback, "male")
-        self.question_one.add(self.femalebutton)
+        self.question_one.pack_start(self.femalebutton, False, False)
         
         separator = gtk.HSeparator()
-        question_box.pack_start(separator, False, True, 5)
+        question_box.pack_start(separator, True, True, 5)
         separator.show()
         
         # Date of Birth
         self.question_two = gtk.HBox(False,8)
         question_box.pack_start(self.question_two, expand=False, fill=False)
         label = gtk.Label("Date of birth:")
-        self.question_two.pack_start(label, False, False, 0)
+        self.question_two.pack_start(label, False, False, 10)
         label.show()
 
         b_box = gtk.VBox(False, 0)
-        self.question_two.pack_start(b_box, True, True, 5)
+        self.question_two.pack_start(b_box, False, False, 5)
 
         label = gtk.Label("Day :")
         label.set_alignment(0, 0.5)
-        b_box.pack_start(label, False, True, 0)
+        b_box.pack_start(label, False, False, 0)
   
         adj = gtk.Adjustment(1.0, 1.0, 31.0, 1.0, 5.0, 0.0)
         self.dayspinner = gtk.SpinButton(adj, 0, 0)
         self.dayspinner.set_wrap(True)
-        b_box.pack_start(self.dayspinner, False, True, 0)
+        b_box.pack_start(self.dayspinner, False, False, 0)
         
         b_box = gtk.VBox(False, 0)
-        self.question_two.pack_start(b_box, True, True, 5)
+        self.question_two.pack_start(b_box, False, False, 5)
         
         label = gtk.Label("Month :")
         label.set_alignment(0, 0.5)
-        b_box.pack_start(label, False, True, 0)
+        b_box.pack_start(label, False, False, 0)
 
         adj = gtk.Adjustment(1.0, 1.0, 12.0, 1.0, 5.0, 0.0)
         self.monthspinner = gtk.SpinButton(adj, 0, 0)
         self.monthspinner.set_wrap(True)
-        b_box.pack_start(self.monthspinner, False, True, 0)
+        b_box.pack_start(self.monthspinner, False, False, 0)
   
         b_box = gtk.VBox(False, 0)
-        self.question_two.pack_start(b_box, True, True, 5)
+        self.question_two.pack_start(b_box, False, False, 5)
         
         label = gtk.Label("Year :")
         label.set_alignment(0, 0.5)
-        b_box.pack_start(label, False, True, 0)
+        b_box.pack_start(label, False, False, 0)
   
         adj = gtk.Adjustment(1980.0, 1900.0, 2000.0, 1.0, 100.0, 0.0)
         self.yearspinner = gtk.SpinButton(adj, 0, 0)
         self.yearspinner.set_wrap(False)
-        self.yearspinner.set_size_request(55, -1)
-        b_box.pack_start(self.yearspinner, False, True, 0)
+#        self.yearspinner.set_size_request(55, -1)
+        b_box.pack_start(self.yearspinner, False, False, 0)
 
         separator = gtk.HSeparator()
-        question_box.pack_start(separator, False, True, 5)
+        question_box.pack_start(separator, False, False, 5)
         separator.show()
         
         # Ethnicity
@@ -316,7 +223,7 @@ class Demographic:
         question_box.pack_start(self.question_three, expand=False, fill=False)
         
         self.ethcombobox = gtk.combo_box_new_text()
-        self.question_three.add(self.ethcombobox)
+        self.question_three.pack_start(self.ethcombobox, False, False, 10)
         self.ethcombobox.append_text('Ethnicity:')
         self.ethcombobox.append_text('American Indian/Alaskan Native')
         self.ethcombobox.append_text('Asian/Pacific Islander')
@@ -329,34 +236,32 @@ class Demographic:
         self.ethcombobox.set_active(0)
 
         separator = gtk.HSeparator()
-        question_box.pack_start(separator, False, True, 5)
+        question_box.pack_start(separator, False, False, 5)
         separator.show()
 
         # How many GT
-        
         self.question_four = gtk.HBox(False,8)
         question_box.pack_start(self.question_four, expand=False, fill=False)
         label = gtk.Label("How many courses have you taken that discussed game theory?")
-        self.question_four.pack_start(label, False, False, 0)
+        self.question_four.pack_start(label, False, False, 10)
         label.show()
         
         self.gt_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=20, step_incr=1))
-        self.question_four.add(self.gt_spin_question)
+        self.question_four.pack_start(self.gt_spin_question, False, False)
         
         separator = gtk.HSeparator()
-        question_box.pack_start(separator, False, True, 5)
+        question_box.pack_start(separator, False, False, 5)
         separator.show()
 
         # How many Math
-        
         self.question_five = gtk.HBox(False,8)
         question_box.pack_start(self.question_five, expand=False, fill=False)
         label = gtk.Label("How many mathematics and economics classes have you taken?")
-        self.question_five.pack_start(label, False, False, 0)
+        self.question_five.pack_start(label, False, False, 10)
         label.show()
         
         self.math_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=20, step_incr=1))
-        self.question_five.add(self.math_spin_question)
+        self.question_five.pack_start(self.math_spin_question, False, False)
         
         separator = gtk.HSeparator()
         question_box.pack_start(separator, False, True, 5)
@@ -365,17 +270,18 @@ class Demographic:
         # Go on
         self.question_six = gtk.HBox(False,8)
         question_box.pack_start(self.question_six, expand=False, fill=False)
-        label = gtk.Label("I am ready to start the experiment")
-        self.question_six.pack_start(label, False, False, 0)
+        label = gtk.Label("I am ready to proceeed to the instructions:")
+        self.question_six.pack_start(label, False, False, 10)
         label.show()
         
-        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
-        self.button_bid.set_size_request(80, 30)
+        self.button_bid = gtk.Button('Instructions')
+        self.button_bid.set_size_request(95, 30)
         self.button_bid.connect("clicked", self.ok_button_clicked)
-        self.question_six.add(self.button_bid)
+        self.question_six.pack_start(self.button_bid, False, False)
         
         self.view.show_all()
         self.toggle_user_interaction()
+        self.take_turn()
         
     def rb_callback(self, widget, data=None):
         print "%s was toggled %s"
@@ -386,14 +292,17 @@ class Demographic:
         if index:
             print model[index][0]
         return
-        
+
+    def step_forward(self):
+        self.console.clear()
+        self.content_vbox.remove(self.view)
+        self.the_game_controller = Instructions(self.parent, self.console, self.content_vbox, self.filename, self.log, self.condition)
+        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+
     def ok_button_clicked(self, widget, data=None):
-        self.play_number +=1
         self.log_answers()
         self.toggle_user_interaction()
-        gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-        gp.header.stamp = rospy.Time.now()
-        self.play_pub.publish(gp)
+        self.step_forward()
 
     def log_answers(self):
         # sex, dob, ethnicity, game theory classes, math classes
@@ -402,8 +311,7 @@ class Demographic:
                "Ethnicity: " + str(self.ethcombobox.get_model()[self.ethcombobox.get_active()][0]) + "\n" + \
                "Game theory classes: " + str(self.gt_spin_question.get_value_as_int()) + "\n" + \
                "Math classes: " + str(self.math_spin_question.get_value_as_int()) + "\n"
-
-        self.log.log("Answers to demographic questions:\n" + demo)
+        self.log.writer("Answers to demographic questions:\n" + demo)
 
     def toggle_user_interaction(self):
         self.enabled = not self.enabled
@@ -413,741 +321,590 @@ class Demographic:
         self.question_four.set_sensitive(self.enabled)
         self.question_five.set_sensitive(self.enabled)
         self.question_six.set_sensitive(self.enabled)
-        
-    def take_first_turn(self):
-        if self.player.is_first:
-            gp = GamePlay(play_number=0,amount=-1, player_id=self.player.player_id)
-            gp.header.stamp = rospy.Time.now()
-            self.play_pub.publish(gp)
-    def take_turn(self,game_play):
+
+    def take_turn(self):
         rs_1 = "Please answer to the questions above and then press 'OK'."
         s_1=textwrap.fill(rs_1,70)
-        gts = GtkThreadSafe()
-        if self.play_number == 0:
-            if self.player.is_first:
-                with gts:
-                    self.shared_console.append_text(s_1)
-                    self.toggle_user_interaction()
-        elif self.play_number == 1:
-            if self.player.is_first:
-                self.shared_console.clear()
-                self.play_number = 2
-                gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-        elif self.play_number == 2:
-            if self.player.is_first:
-                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-            self.unregister_game()
+        self.console.append_text(s_1)
+        self.toggle_user_interaction()
 
 
-    def unregister_game(self):
-        self.player.game_topic_lock.acquire()
-        self.play_pub.unregister()
-        self.play_sub.unregister()
-        self.player.game_topic = ""
-        self.player.game_topic_lock.release()
-
-
-class UltimatumTutorial:
-    def __init__(self, parent, shared_console, player, log):
-        self.parent = parent
-        self.shared_console = shared_console
-        self.player = player
-        self.play_number = 0
-        
+class Instructions():
+    def __init__(self, parent, console, mainvbox, filename, log, condition):
+        self.condition = condition
+        self.filename = filename
         self.log = log
+        self.content_vbox = mainvbox
+        self.instruction_step = 0
+        self.window = parent
+        self.console = console
+        self.window.set_title("Beliefs and Expectations in Strategic Interaction")
 
-        self.enabled = True
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
-        self.title = "Ultimatum Game: Tutorial"
+        self.title = "Instructions"
         self.view = gtk.Frame(self.title)
         game_vbox = gtk.VBox(False, 8)
         self.view.add(game_vbox)
-        
+        self.content_vbox.pack_end(self.console.view)
+
         self.box_status = gtk.HBox(False, 8)
         game_vbox.pack_start(self.box_status, expand=False, fill=False)
 
         self.box_control = gtk.HBox(False, 8)
         game_vbox.pack_start(self.box_control, expand=False, fill=False)
 
-        self.spin_bid = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=10, step_incr=1))
-        self.box_control.add(self.spin_bid)
-        
-        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
-        self.button_bid.set_size_request(80, 30)
+        self.button_bid = gtk.Button("Experiment")
+        self.button_bid.set_size_request(90, 30)
         self.button_bid.connect("clicked", self.ok_button_clicked)
-        self.box_control.add(self.button_bid)
+        self.box_control.pack_end(self.button_bid, False, False)
+
+        self.button_previous = gtk.Button('Previous')
+        self.button_previous.set_size_request(80, 30)
+        self.button_previous.connect("clicked", self.previous_button_clicked)
+        self.box_control.pack_start(self.button_previous, False, False)
+
+        self.button_next = gtk.Button('Next')
+        self.button_next.set_size_request(80, 30)
+        self.button_next.connect("clicked", self.next_button_clicked)
+        self.box_control.pack_start(self.button_next, False, False)
 
         self.view.show_all()
-        self.toggle_user_interaction()
+        self.take_turn()
 
+    def step_forward(self):
+        self.content_vbox.remove(self.view)
+        self.content_vbox.remove(self.console.view)
+        self.the_game_controller = ultimatum_questions(self.window, self.console, self.content_vbox, self.filename, self.log, self.condition)
+        self.content_vbox.pack_start(self.the_game_controller.view,True, True)
+
+    def previous_button_clicked(self, widget, data=None):
+        self.console.clear()
+        self.instruction_step = 0
+        self.take_turn()
+
+    def next_button_clicked(self, widget, data=None):
+        self.console.clear()
+        self.instruction_step = 1
+        self.take_turn()
 
     def ok_button_clicked(self, widget, data=None):
-        offer = self.spin_bid.get_value_as_int()
-        self.log.log("Ultimatum expectation is %d" %offer)
-        self.play_number +=1
+        self.console.clear()
+        self.step_forward()
+
+    def take_turn(self):
+        rs_1 = "For each trial of this experiment, you will play an economic game called the 'Ultimatum Game'. Economic games are simplified settings in which 2 or more players interact, and in which the decisions they make can affect the amount of money they win. In the case of the Ultimatum Game: two players, Player 1 and Player 2, bargain on a pre-determined stake. In this experiment you will always be Player 1."
+
+        rs_2 = "In each round of the Ultimatum Game, 10 dollars is provisionally allocated to you, and you can propose how much of this amount you and the other player is to receive.  To do this, you will indicate how much money to give to Player 2.  You can choose any amount between zero and $10.  The amount that you are to receive is simply whatever amount is left (the remaining money not allocated to Player 2)."
+
+        rs_3 = "Once you have made a proposal, Player 2 will be given the chance to accept or reject your proposal.  If Player 2 accepts the proposal, then the amount of money will be divided as specified by you.  If Player 2 rejects the proposal, both you and Player 2 will receive zero dollars. After Player 2's decision, the interaction is over."
+
+        rs_4 = "For instance, suppose that you decide to send $3 to Player 2. Player 2 observes the offer and decides whether to accept or not. Suppose that Player 2 rejects the offer. Then the round ends and both payoffs are $ 0. Otherwise, if Player 2 had accepted the offer, your payoff would have been $ 7 and Player 2's payoff would have been $ 3."
+
+        rs_5 = "After you make your proposal, we will ask you to predict whether your co-player accepted or rejected that proposal. For half of the rounds, you will watch a few seconds of video recordings of your co-player, and you will be able to use the video to assist in your prediction."
+
+        rs_6 = "The videos show 49 subjects, who participated in a similar experiment. Each subject played about 7 rounds as Player 2 (the player who receives the offer and can decide whether to accept or not). You will observe a few seconds of video from some of these rounds. Each video starts when Player 2 received your offer and ends when he/she made a decision. You will be asked to predict what the player in the video did."
+
+        rs_7 = "Your earnings depend on both the payoffs you received in the Ultimatum Game, and the number of correct predictions you made. The maximum possible payoff for this experiment is $5. At the end of the experiment we will tell you how many correct predictions you made. If you correctly predict every decision, you will win $2. Otherwise, we will pay you in proportion to the number of correct answers you made. For instance, suppose that you get 50% of your answers correct, we will pay you $2 * 50% = $1. We will round your earnings to the top."
+
+        rs_8 = "With respect to the Ultimatum Game payoff, we will randomly select 2 trials, sum your payoffs for those trials, and normalize the sum so that the maximum possible earning is $3. In this case we will also round the result to the top."
+
+        rs_9 = "Your final payment will be the sum of the payment from the predictions and the payment from the Ultimatum Game. As mentioned, this payoff range is between $0 and $5."
+
+        rs_10 = "As specified in the consent form, you will also receive 2 academic credits for participating in the experiment."
+
+        rs_11 = "When you are ready to start the experiment, hit the 'Experiment' button. Remember that your earnings will depend on your performance on the task. Therefore, if you need any clarification, this will be the best time to ask. Otherwise, enjoy the experiment!"
+
+        s_1=textwrap.fill(rs_1,125)
+        s_2=textwrap.fill(rs_2,125)
+        s_3=textwrap.fill(rs_3,125)
+        s_4=textwrap.fill(rs_4,125)
+        s_5=textwrap.fill(rs_5,125)
+        s_6=textwrap.fill(rs_6,125)
+        s_7=textwrap.fill(rs_7,125)
+        s_8=textwrap.fill(rs_8,125)
+        s_9=textwrap.fill(rs_9,125)
+        s_10=textwrap.fill(rs_10,125)
+        s_11=textwrap.fill(rs_11,125)
+
+
+        if self.instruction_step == 0:
+            self.console.append_text("\n\n")
+            self.console.append_text(s_1)
+            self.console.append_text("\n\n")
+            self.console.append_text(s_2)
+            self.console.append_text("\n\n")
+            self.console.append_text(s_3)
+            self.console.append_text("\n\n")
+            self.console.append_text(s_4)
+            self.console.append_text("\n\n")
+            self.console.append_text(s_5)
+            self.console.append_text("\n\n")
+            self.console.append_text(s_6)
+
+            self.button_bid.set_sensitive(False)
+            self.button_previous.set_sensitive(False)
+            self.button_next.set_sensitive(True)
+
+        elif self.instruction_step == 1:
+            self.console.append_text("\n\n")
+            self.console.append_text(s_7)
+            self.console.append_text("\n\n")
+            self.console.append_text(s_8)
+            self.console.append_text("\n\n")
+            self.console.append_text(s_9)
+            self.console.append_text("\n\n")
+            self.console.append_text(s_10)
+            self.console.append_text("\n\n")
+            self.console.append_text(s_11)
+            self.console.append_text("\n\n")
+
+            self.button_bid.set_sensitive(True)
+            self.button_previous.set_sensitive(True)
+            self.button_next.set_sensitive(False)
+
+    def delete_event(self, widget, event, data=None):
+        print "Delete event called. Closing window."
+        return False
+
+###
+
+class ultimatum_questions():
+    def __init__(self, parent, console, mainvbox, filename, log, condition):
+        self.condition = condition
+        self.log = log
+        self.filename = filename
+        self.content_vbox = mainvbox
+        self.parent = parent
+        self.console = console
+
+        self.enabled = True
+
+        self.title = ""
+        self.view = gtk.Frame(self.title)
+        question_box = gtk.VBox(True, 8)
+        self.view.add(question_box)
+
+        # Understood
+        self.question_one = gtk.HBox(False,8)
+        question_box.pack_start(self.question_one, expand=False, fill=False)
+        label = gtk.Label("Did you understoon how the ultimatum game works? ")
+        self.question_one.pack_start(label, False, False, 10)
+        label.show()
+
+        self.yesbutton = gtk.RadioButton(None, "yes")
+        self.yesbutton.connect("toggled", self.rb_callback, "yes")
+        self.question_one.pack_start(self.yesbutton, False, False)
+        self.nobutton = gtk.RadioButton(self.yesbutton, "no")
+        self.nobutton.connect("toggled", self.rb_callback, "yes")
+        self.question_one.pack_start(self.nobutton, False, False)
+        
+        separator = gtk.HSeparator()
+        question_box.pack_start(separator, True, True, 5)
+        separator.show()
+
+        # Question 1
+        self.question_two = gtk.HBox(False,8)
+        question_box.pack_start(self.question_two, expand=False, fill=False)
+        label = gtk.Label("If you had to play the Ultimatum Game as Player 1, what would you offer on average?")
+        self.question_two.pack_start(label, False, False, 10)
+        label.show()
+        
+        self.q1_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=10, step_incr=1))
+        self.question_two.pack_start(self.q1_spin_question, False, False)
+        
+        separator = gtk.HSeparator()
+        question_box.pack_start(separator, False, False, 5)
+        separator.show()
+
+        # Question 2
+        self.question_nine = gtk.HBox(False,8)
+        question_box.pack_start(self.question_nine, expand=False, fill=False)
+        label = gtk.Label("If you had to play the Ultimatum Game as Player 2, what would you expect to receive on average?")
+        self.question_nine.pack_start(label, False, False, 10)
+        label.show()
+        
+        self.q2_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=10, step_incr=1))
+        self.question_nine.pack_start(self.q2_spin_question, False, False)
+        
+        separator = gtk.HSeparator()
+        question_box.pack_start(separator, False, False, 5)
+        separator.show()
+
+        # accept 0
+        self.question_three = gtk.HBox(False,8)
+        question_box.pack_start(self.question_three, expand=False, fill=False)
+        label = gtk.Label("If 100 people played the Ultimatum game, and all received an offer of $ 0, how many of them do you believe would have accepted the offer?")
+        self.question_three.pack_start(label, False, False, 10)
+        label.show()
+        
+        self.a0_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
+        self.question_three.pack_start(self.a0_spin_question, False, False)
+        
+        separator = gtk.HSeparator()
+        question_box.pack_start(separator, False, True, 5)
+        separator.show()
+
+        # accept 1
+        self.question_four = gtk.HBox(False,8)
+        question_box.pack_start(self.question_four, expand=False, fill=False)
+        label = gtk.Label("If 100 people played the Ultimatum game, and all received an offer of $ 1, how many of them do you believe would have accepted the offer?")
+        self.question_four.pack_start(label, False, False, 10)
+        label.show()
+        
+        self.a1_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
+        self.question_four.pack_start(self.a1_spin_question, False, False)
+        
+        separator = gtk.HSeparator()
+        question_box.pack_start(separator, False, True, 5)
+        separator.show()
+
+        # accept 2
+        self.question_five = gtk.HBox(False,8)
+        question_box.pack_start(self.question_five, expand=False, fill=False)
+        label = gtk.Label("If 100 people played the Ultimatum game, and all received an offer of $ 2, how many of them do you believe would have accepted the offer?")
+        self.question_five.pack_start(label, False, False, 10)
+        label.show()
+        
+        self.a2_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
+        self.question_five.pack_start(self.a2_spin_question, False, False)
+        
+        separator = gtk.HSeparator()
+        question_box.pack_start(separator, False, True, 5)
+        separator.show()
+
+        # accept 3
+        self.question_six = gtk.HBox(False,8)
+        question_box.pack_start(self.question_six, expand=False, fill=False)
+        label = gtk.Label("If 100 people played the Ultimatum game, and all received an offer of $ 3, how many of them do you believe would have accepted the offer?")
+        self.question_six.pack_start(label, False, False, 10)
+        label.show()
+        
+        self.a3_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
+        self.question_six.pack_start(self.a3_spin_question, False, False)
+        
+        separator = gtk.HSeparator()
+        question_box.pack_start(separator, False, True, 5)
+        separator.show()
+
+        # accept 4
+        self.question_seven = gtk.HBox(False,8)
+        question_box.pack_start(self.question_seven, expand=False, fill=False)
+        label = gtk.Label("If 100 people played the Ultimatum game, and all received an offer of $ 4, how many of them do you believe would have accepted the offer?")
+        self.question_seven.pack_start(label, False, False, 10)
+        label.show()
+        
+        self.a4_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
+        self.question_seven.pack_start(self.a4_spin_question, False, False)
+        
+        separator = gtk.HSeparator()
+        question_box.pack_start(separator, False, True, 5)
+        separator.show()
+
+        # accept 5
+        self.question_eight = gtk.HBox(False,8)
+        question_box.pack_start(self.question_eight, expand=False, fill=False)
+        label = gtk.Label("If 100 people played the Ultimatum game, and all received an offer of $ 5, how many of them do you believe would have accepted the offer?")
+        self.question_eight.pack_start(label, False, False, 10)
+        label.show()
+        
+        self.a5_spin_question = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
+        self.question_eight.pack_start(self.a5_spin_question, False, False)
+        
+        separator = gtk.HSeparator()
+        question_box.pack_start(separator, False, True, 5)
+        separator.show()
+
+        # Go on
+
+        self.question_ten = gtk.HBox(False,8)
+        question_box.pack_start(self.question_ten, expand=False, fill=False)
+        label = gtk.Label("I am ready to start the task: ")
+        self.question_ten.pack_start(label, False, False, 10)
+        label.show()
+        
+        self.button_bid = gtk.Button("Task")
+        self.button_bid.set_size_request(90, 30)
+        self.button_bid.connect("clicked", self.ok_button_clicked)
+        self.question_ten.pack_start(self.button_bid, False, False)
+        
+        self.view.show_all()
         self.toggle_user_interaction()
-        gp = GamePlay(play_number=self.play_number,amount=offer, player_id=self.player.player_id)
-        gp.header.stamp = rospy.Time.now()
-        self.play_pub.publish(gp)
-    
+        self.take_turn()
+        
+    def rb_callback(self, widget, data=None):
+        print "%s was toggled %s"
+
+    def changed_cb(self, combobox):
+        model = combobox.get_model()
+        index = combobox.get_active()
+        if index:
+            print model[index][0]
+        return
+
+    def step_forward(self, condition):
+        self.console.clear()
+        self.content_vbox.remove(self.view)
+        multiplayer(self.parent, self.console, self.content_vbox, self.filename, self.log, self.condition)
+
+    def ok_button_clicked(self, widget, data=None):
+        self.log_answers()
+        self.toggle_user_interaction()
+        self.step_forward(self.condition)
+
+    def log_answers(self):
+        demo = "Understood: " + ( "Yes" if self.yesbutton.get_active() else "No") + "\n" + \
+               "Average offer make: " + str(self.q1_spin_question.get_value_as_int()) + "\n" + \
+               "Expected offer: " + str(self.q2_spin_question.get_value_as_int()) + "\n" + \
+               "How many accept (0, 100): " + str(self.a0_spin_question.get_value_as_int()) + "\n" + \
+               "How many accept (1, 100): " + str(self.a1_spin_question.get_value_as_int()) + "\n" + \
+               "How many accept (2, 100): " + str(self.a2_spin_question.get_value_as_int()) + "\n" + \
+               "How many accept (3, 100): " + str(self.a3_spin_question.get_value_as_int()) + "\n" + \
+               "How many accept (4, 100): " + str(self.a4_spin_question.get_value_as_int()) + "\n" + \
+               "How many accept (5, 100): " + str(self.a5_spin_question.get_value_as_int()) + "\n"
+        self.log.writer("Answers to Questions on the ultimatum:\n" + demo)
+        self.log.header()
+
     def toggle_user_interaction(self):
         self.enabled = not self.enabled
-        self.box_control.set_sensitive(self.enabled)
-    
-    def take_first_turn(self):
-        if self.player.is_first:
-            gp = GamePlay(play_number=0,amount=-1, player_id=self.player.player_id)
-            gp.header.stamp = rospy.Time.now()
-            self.play_pub.publish(gp)
-        
-    def take_turn(self, game_play):
+        self.question_one.set_sensitive(self.enabled)
+        self.question_two.set_sensitive(self.enabled)
+        self.question_three.set_sensitive(self.enabled)
+        self.question_four.set_sensitive(self.enabled)
+        self.question_five.set_sensitive(self.enabled)
+        self.question_six.set_sensitive(self.enabled)
+        self.question_seven.set_sensitive(self.enabled)
+        self.question_eight.set_sensitive(self.enabled)
+        self.question_nine.set_sensitive(self.enabled)
+        self.question_ten.set_sensitive(self.enabled)
 
+    def take_turn(self):
+        self.toggle_user_interaction()
 
-        rs_1 = "For each round of this experiment, you will be paired with a computer player that has been programmed to play the game according to data collected from subjects whom had previously played the game. Your decision will also be used to program the computer for future experimental sessions and therefore will determine other subjects' payoffs."
-        
-        rs_2 = "You will be designated as either Player 1 or Player 2.  A sum of $10 has been provisionally allocated to Player 1, who will propose how much of this each player is to receive.  To do this, Player 1 will indicate how much money to give to Player 2.  He or she may choose any amount between zero and $10.  The amount that Player 1 is to receive is simply the amount to be divided, $10, minus the amount sent to Player 2."
-        
-        rs_3 = "Once Player 1 has made a proposal, Player 2 will be given the chance to accept or reject the proposal.  If Player 2 accepts the proposal, then the amount of money will be divided as specified by Player 1.  If Player 2 rejects the proposal, both Player 1 and Player 2's payoff will be zero.  After Player 2's decision, the interaction is over."
-        
-        rs_4 = "This experiment consists of 14 rounds. Remember that two rounds will be randomly selected for real payment, and you will receive 5%, in real money, of the experimental money you earned on those round."
-        
-        rs_5 = "By using the control above, please tell us what you expect to receive on average when you are the second player in the game. Remember that the first player can give you between $0 and $10, therefore select a number between 0 and 10. Once you made your estimation, please press the OK button."
-        
-        s_1=textwrap.fill(rs_1,65)
-        s_2=textwrap.fill(rs_2,65)
-        s_3=textwrap.fill(rs_3,65)
-        s_4=textwrap.fill(rs_4,65)
-        s_5=textwrap.fill(rs_5,65)
+class Error():
+    def __init__(self, parent, console, mainvbox):
+        self.content_vbox = mainvbox
+        self.window = parent
+        self.console = console
+        self.window.set_title("Beliefs and Expectations in Strategic Interaction")
 
-        gts = GtkThreadSafe()
-        play_number = game_play.play_number
-        if play_number == 0:
-            if self.player.is_first:
-                with gts:
-                    self.shared_console.append_text(s_1)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_2)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_3)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_4)
-                    self.shared_console.append_text("\n\n")
-                    self.toggle_user_interaction()
-        elif play_number == 1:
-            if self.player.is_first:
-                self.shared_console.clear()
-                with gts:
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_5)
-                    self.toggle_user_interaction()
-        elif play_number == 2:
-            if self.player.is_first:
-                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-            self.unregister_game()
-    
-    def unregister_game(self):
-        self.player.game_topic_lock.acquire()
-        self.play_pub.unregister()
-        self.play_sub.unregister()
-        self.player.game_topic = ""
-        self.player.game_topic_lock.release()
-
-class TrustTutorial:
-    def __init__(self, parent, shared_console, player, log):
-        self.parent = parent
-        self.shared_console = shared_console
-        self.player = player
-        self.play_number = 0
-        
-        self.log = log
-        
-        self.enabled = True
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
-        
-        self.title = "Trust Game: Tutorial"
+        self.title = "Wrong Argument"
         self.view = gtk.Frame(self.title)
         game_vbox = gtk.VBox(False, 8)
         self.view.add(game_vbox)
-        
-        self.box_status = gtk.HBox(False, 8)
-        game_vbox.pack_start(self.box_status, expand=False, fill=False)
+        self.content_vbox.pack_end(self.console.view)
 
-        self.box_control = gtk.HBox(False, 8)
-        game_vbox.pack_start(self.box_control, expand=False, fill=False)
-        
-        self.spin_bid = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
-        self.box_control.add(self.spin_bid)
-        
-        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
-        self.button_bid.set_size_request(80, 30)
-        self.button_bid.connect("clicked", self.ok_button_clicked)
-        self.box_control.add(self.button_bid)
-        
-        self.view.show_all()
-        self.toggle_user_interaction()
-    
-    def ok_button_clicked(self, widget, data=None):
-        offer = self.spin_bid.get_value_as_int()
-        self.log.log("Trust game expectations are %d" %offer)
-        self.play_number +=1
-        self.toggle_user_interaction()
-        gp = GamePlay(play_number=self.play_number,amount=offer, player_id=self.player.player_id)
-        gp.header.stamp = rospy.Time.now()
-        self.play_pub.publish(gp)
-        if self.play_number == 3:
-            self.unregister_game()
-
-    
-    def toggle_user_interaction(self):
-        self.enabled = not self.enabled
-        self.box_control.set_sensitive(self.enabled)
-
-    def take_first_turn(self):
-        if self.player.is_first:
-            gp = GamePlay(play_number=0,amount=-1, player_id=self.player.player_id)
-            gp.header.stamp = rospy.Time.now()
-            self.play_pub.publish(gp)
-        
-    def take_turn(self, game_play):
-
-        rs_1 = "For each round of this experiment, you will be paired with a computer player that has been programmed to play the game according to data collected from subjects whom had previously played the game. Your decision will also be used to program the computer for future experimental sessions and therefore will determine other subjects' payoffs."
-        
-        rs_2 = "You will be designated as either Player 1 or Player 2.  A sum of $10 has been provisionally allocated to Player 1 who can then decide to transfer any amount of this to Player 2.  Each dollar Player 1 sends will be tripled, and the product will be delivered to Player 2. For example, if Player 1 sent $3, then 3*3 = $9 would be delivered; if Player 1 had instead sent $7, then 7*3 = $21 would be delivered."
-        
-        rs_3 = "Once Player 1 has made a transfer, Player 2 will be given the chance to send any amount of the transferred money back to Player 1. Player 2 can choose any number between zero and the tripled amount he or she received.  For example, if Player 1 sent $3, then Player 2 could send back any amount between zero and $9; if Player 1 had sent $7, then Player 2 could send back any amount between zero and $21.  After Player 2's decision, the interaction is over."
-        
-        rs_4 = "The final payoff for Player 1 is $10, minus however much he or she transferred to Player 2, plus however much Player 2 sent back.  The final payoff for Player 2 is the (tripled) amount transferred to him or her by Player 1, minus however much he or she sends back to Player 1. For example, if Player 1 sent $3, and Player 2 sent back $2, then Player 1 would end up with $10 - $3 + $2 = $9 and Player 2 would end up with $9 - $2 = $7; if Player 1 had sent $7, and Player 2 sent back $9, then Player 1 would end up with $10 - $7 + $9 = $12 and Player 2 would end up with $21 - $9 = $12."
-        
-        rs_5 = "This experiment consists of 14 rounds."
-        
-        rs_6 = "Remember that two rounds will be randomly selected for real payment, and you will receive 5%, in real money, of the experimental money you earned on those rounds."
-        
-        rs_7 = "By using the control above, please tell us what you expect to receive on average when you are the first player in the game. Remember that this depends on the ammount that you are going to send to the second player, therfore, rather than in terms of dollars, please express your estimation in percentage - that is choose a number between 0% and 100%. Once you made your estimation, please press the OK button."
-        
-        rs_8 = "By using the control above, please tell us what you expect to receive on average when you are the second player in the game. Remember that the first player can give you between $0 and $10, therefore choose a number between 0 and 10. Once you made your estimation, please press the OK button."
-
-        s_1=textwrap.fill(rs_1,65)
-        s_2=textwrap.fill(rs_2,65)
-        s_3=textwrap.fill(rs_3,65)
-        s_4=textwrap.fill(rs_4,65)
-        s_5=textwrap.fill(rs_5,65)
-        s_6=textwrap.fill(rs_6,65)
-        s_7=textwrap.fill(rs_7,65)
-        s_8=textwrap.fill(rs_8,65)
-
-        gts = GtkThreadSafe()
-        play_number = game_play.play_number
-        if play_number == 0:
-            if self.player.is_first:
-                with gts:
-                    self.shared_console.append_text(s_1)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_2)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_3)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_4)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_5)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_6)
-                    self.shared_console.append_text("\n\n")
-                    self.toggle_user_interaction()
-        elif play_number == 1:
-            if self.player.is_first:
-                self.shared_console.clear()
-                with gts:
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_7)
-                    self.toggle_user_interaction()
-        elif play_number == 2:
-            if self.player.is_first:
-                self.shared_console.clear()
-                with gts:
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_8)
-                    self.toggle_user_interaction()
-    
-    def unregister_game(self):
-        self.player.game_topic_lock.acquire()
-        self.play_pub.unregister()
-        self.play_sub.unregister()
-        self.player.game_topic = ""
-        self.player.game_topic_lock.release()
-
-
-class PrisonersTutorial:
-    def __init__(self, parent, shared_console, player, log):
-        self.parent = parent
-        self.shared_console = shared_console
-        self.player = player
-        self.play_number = 0
-        self.row_choice = 4
-        self.col_choice = 4
-        
-        self.log = log
-
-        self.enabled = True
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
-        
-        self.title = "Prisoners"
-        self.view = gtk.Frame(self.title)
-        game_vbox = gtk.VBox(False, 8)
-        self.view.add(game_vbox)
-        
-        self.box_status = gtk.HBox(False, 8)
-        game_vbox.pack_start(self.box_status, expand=False, fill=False)
-
-        self.box_control = gtk.HBox(False, 8)
-        game_vbox.pack_start(self.box_control, expand=False, fill=False)
-        
-        self.button_top = None
-        self.button_bottom = None
-        self.button_left = None
-        self.button_right = None
-
-        nrows = 3
-        ncols = 3
-
-        self.button_top = gtk.CheckButton("Top")
-        self.button_top.connect("toggled", self.checkbox_toggled, "Top")
-        self.button_bottom = gtk.CheckButton("Bottom")
-        self.button_bottom.connect("toggled", self.checkbox_toggled, "Bottom")
-        self.button_left = gtk.CheckButton("Left")
-        self.button_left.connect("toggled", self.checkbox_toggled, "Left")
-        self.button_right = gtk.CheckButton("Right")
-        self.button_right.connect("toggled", self.checkbox_toggled, "Right")
-        self.table = gtk.Table(rows=nrows, columns=ncols, homogeneous=False)
-        self.label_tl = gtk.Label("10 | 10")
-        self.label_tr = gtk.Label("0 | 12")
-        self.label_bl = gtk.Label("12 | 0")
-        self.label_br = gtk.Label("2 | 2")
-
-        self.table.attach(self.button_left, 1, 2, 0, 1, xoptions=gtk.EXPAND)
-        self.table.attach(self.button_right, 2, 3, 0, 1, xoptions=gtk.EXPAND)
-        self.table.attach(self.button_top, 0, 1, 1, 2, xoptions=gtk.EXPAND)
-        self.table.attach(self.button_bottom, 0, 1, 2, 3, xoptions=gtk.EXPAND)
-        self.table.attach(self.label_tl, 1, 2, 1, 2, xoptions=gtk.EXPAND)
-        self.table.attach(self.label_bl, 1, 2, 2, 3, xoptions=gtk.EXPAND)
-        self.table.attach(self.label_tr, 2, 3, 1, 2, xoptions=gtk.EXPAND)
-        self.table.attach(self.label_br, 2, 3, 2, 3, xoptions=gtk.EXPAND)
-        self.box_control.add(self.table)
-
-        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
-        self.button_bid.set_size_request(80, 30)
-        self.button_bid.connect("clicked", self.ok_button_clicked)
-        self.box_control.add(self.button_bid)
-
-        self.view.show_all()
-        self.toggle_user_interaction()
-
-    def checkbox_toggled(self, widget, data=None):
-        if widget == self.button_left:
-            self.col_choice = 0 if widget.get_active() else 4
-            self.button_right.set_sensitive(not widget.get_active())
-        elif widget == self.button_right:
-            self.col_choice = 1 if widget.get_active() else 4
-            self.button_left.set_sensitive(not widget.get_active())
-        elif widget == self.button_top:
-            self.row_choice = 2 if widget.get_active() else 4
-            self.button_bottom.set_sensitive(not widget.get_active())
-        elif widget == self.button_bottom:
-            self.row_choice = 3 if widget.get_active() else 4
-            self.button_top.set_sensitive(not widget.get_active())
-
-    def ok_button_clicked(self, widget, data=None):
-        self.toggle_user_interaction()
-        self.play_number +=1
-        if self.player.is_first:
-            if self.play_number ==1:
-                gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-            else:
-                amt_val_1 = self.row_choice
-                amt_val_2 = self.col_choice
-                self.log.log("Row expected is %d" %amt_val_1)
-                self.log.log("Column expected is %d" %amt_val_2)
-                gp = GamePlay(play_number=self.play_number,amount=10*amt_val_1+amt_val_2, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-    
-    def toggle_user_interaction(self):
-        self.enabled = not self.enabled
-        self.box_control.set_sensitive(self.enabled)
-    
-    def take_first_turn(self):
-        if self.player.is_first:
-            gp = GamePlay(play_number=0,amount=-1, player_id=self.player.player_id)
-            gp.header.stamp = rospy.Time.now()
-            self.play_pub.publish(gp)
-
-    def take_turn(self, game_play):
-
-        rs_1 = "For each round of this experiment, you will be paired with a computer player that has been programmed to play the game according to data collected from subjects whom had previously played the game. Your decision will also be used to program the computer for future experimental sessions and therefore will determine other subjects' payoffs."
-        
-        rs_2 = "You will be designated as either Player 1 or Player 2. Player 1 will be able to choose either the TOP or the BOTTOM row of the table provided. Simultaneously, Player 2 will be able to choose either the LEFT or the RIGHT column of the same table. The numbers in each cell of the table represent payoff amounts. In each cell the number on the left is the possible payoff for Player 1 and the number on the right is the possible payoff for Player 2. "
-        
-        rs_3 = "For example, if Player 1 chooses the TOP row and Player 2 chooses the LEFT column then both players will receive 10 units of payoff. Likewise, if Player 2 choose LEFT but Player 1 chooses the BOTTOM row, Player 1 will get nothing and Player 2 will get $12."
-        
-        rs_4 = "This experiment consists of 7 rounds. "
-        
-        rs_5 = "Remember that two rounds will be randomly selected for real payment, and you will receive 5%, in real money, of the experimental money you earned on those rounds."
-        
-        rs_6 = "By using the check boxes above, please tell us what you expect to be the most frequently visited cell. Once you made your estimation, please press the OK button."
-        
-        s_1=textwrap.fill(rs_1,65)
-        s_2=textwrap.fill(rs_2,65)
-        s_3=textwrap.fill(rs_3,65)
-        s_4=textwrap.fill(rs_4,65)
-        s_5=textwrap.fill(rs_5,65)
-        s_6=textwrap.fill(rs_6,65)
-
-        gts = GtkThreadSafe()
-        play_number = game_play.play_number
-        if play_number == 0:
-            if self.player.is_first:
-                with gts:
-                    self.shared_console.append_text(s_1)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_2)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_3)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_4)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_5)
-                    self.shared_console.append_text("\n\n")
-                    self.toggle_user_interaction()
-        elif play_number == 1:
-            if self.player.is_first:
-                self.shared_console.clear()
-                with gts:
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_6)
-                    self.toggle_user_interaction()
-        elif play_number == 2:
-            if self.player.is_first:
-                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-            self.unregister_game()
-    
-    def unregister_game(self):
-        self.player.game_topic_lock.acquire()
-        self.play_pub.unregister()
-        self.play_sub.unregister()
-        self.player.game_topic = ""
-        self.player.game_topic_lock.release()
-
-class ArmBanditTutorial:
-    def __init__(self, parent, shared_console, player, log):
-        self.parent = parent
-        self.shared_console = shared_console
-        self.player = player
-        self.play_number = 0
-        self.is_choosing = 0
-#        self.lottery = self.lottery_image(self.parent, self.play_number, 5)
-
-        self.log = log
-
-        self.enabled = True
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
-        self.title = "Arm-Bandit Task: Tutorial"
-        self.view = gtk.Frame(self.title)
-        game_vbox = gtk.VBox(False, 8)
-        self.view.add(game_vbox)
-        
         self.box_status = gtk.HBox(False, 8)
         game_vbox.pack_start(self.box_status, expand=False, fill=False)
 
         self.box_control = gtk.HBox(False, 8)
         game_vbox.pack_start(self.box_control, expand=False, fill=False)
 
-        self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
-        self.button_bid.set_size_request(80, 30)
+        self.button_bid = gtk.Button('Quit')
+        self.button_bid.set_size_request(80, 40)
         self.button_bid.connect("clicked", self.ok_button_clicked)
-        self.box_control.add(self.button_bid)
-
-        pixbufanim = gtk.gdk.PixbufAnimation("-2.jpg")
-        image = gtk.Image()
-        image.set_from_animation(pixbufanim)
-        image.set_size_request(100,150)
-        image.show()
-        self.button_bid = gtk.Button()
-        self.button_bid.add(image)
-        self.box_control.add(self.button_bid)
-        self.button_bid.connect("clicked", self.ok_button_clicked, 1)
-        self.spin_bid_1 = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
-        self.box_control.add(self.spin_bid_1)
-
-        image = gtk.Image()
-        image.set_from_file("-3.jpg")
-        image.set_size_request(100,150)
-        image.show()
-        self.button_bid = gtk.Button()
-        self.button_bid.add(image)
-        self.box_control.add(self.button_bid)
-        self.button_bid.connect("clicked", self.ok_button_clicked, 2)
-        self.spin_bid_2 = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
-        self.box_control.add(self.spin_bid_2)
-
-        image = gtk.Image()
-        image.set_from_file("-4.jpg")
-        image.set_size_request(100,150)
-        image.show()
-        self.button_bid = gtk.Button()
-        self.button_bid.add(image)
-        self.box_control.add(self.button_bid)
-        self.button_bid.connect("clicked", self.ok_button_clicked, 3)
-        self.spin_bid_3 = gtk.SpinButton(adjustment=gtk.Adjustment(lower=0, upper=100, step_incr=1))
-        self.box_control.add(self.spin_bid_3)
-
+        self.box_control.pack_end(self.button_bid, False, False)
         self.view.show_all()
-        self.toggle_user_interaction()
+        self.take_turn()
 
     def ok_button_clicked(self, widget, data=None):
-        exp_1 = self.spin_bid_1.get_value_as_int()
-        exp_2 = self.spin_bid_2.get_value_as_int()
-        exp_3 = self.spin_bid_3.get_value_as_int()
-        self.log.log("Expectation for Arm One is %d" %exp_1)
-        self.log.log("Expectation for Arm Two is %d" %exp_2)
-        self.log.log("Expectation for Arm Three is %d" %exp_3)
-        self.toggle_user_interaction()
-        self.play_number +=1
-        if self.player.is_first:
-            gp = GamePlay(play_number=self.play_number,amount=1000000*exp_1+1000*exp_2+exp_3, player_id=self.player.player_id)
-            gp.header.stamp = rospy.Time.now()
-            self.play_pub.publish(gp)
-#        offer = self.spin_bid.get_value_as_int()
-#        self.play_number +=1
-#        self.toggle_user_interaction()
-#        gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-#       gp.header.stamp = rospy.Time.now()
-#        self.play_pub.publish(gp)
-
-    def toggle_user_interaction(self):
-        self.enabled = not self.enabled
-        self.box_control.set_sensitive(self.enabled)
-    
-    def take_first_turn(self):
-        if self.player.is_first:
-            gp = GamePlay(play_number=0,amount=-1, player_id=self.player.player_id)
-            gp.header.stamp = rospy.Time.now()
-            self.play_pub.publish(gp)
-        
-    def take_turn(self, game_play):
-
-        rs_1 = "For each round of this experiment, you will be able to choose between three different slot machines: slot-machine 1, 2, and 3. You can choose which slot machine to bet on and your payoff for the round will be the amount outputted by the chosen slot machine."
-        
-        rs_2 = "Each slot machine provides a reward between 1 and 100. Your objective for this game is to win as much as possible."
-
-        rs_3 = "This experiment consists of 35 rounds. "
-        
-        rs_4 = "This game will be paid in accordance with the following procedure. We will sum the payoff of each play and then divide it by the number of rounds played (i.e. 35) and the median payoff (which is 50)."
-        
-        rs_5 = "For example, suppose that you always received 100 from your plays, your overall earning in payoff units will be 3,500. The conversion in Dollars is: Total payoff/(number of rounds * median payoff) = 3500/(35*50) = $2."
-        
-        s_1=textwrap.fill(rs_1,70)
-        s_2=textwrap.fill(rs_2,70)
-        s_3=textwrap.fill(rs_3,70)
-        s_4=textwrap.fill(rs_4,70)
-        s_5=textwrap.fill(rs_5,70)
-
-        gts = GtkThreadSafe()
-        play_number = game_play.play_number
-        if play_number == 0:
-            if self.player.is_first:
-                with gts:
-                    self.shared_console.append_text(s_1)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_2)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_3)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_4)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_5)
-                    self.shared_console.append_text("\n\n")
-                    self.toggle_user_interaction()
-        elif play_number == 1:
-            if self.player.is_first:
-                self.shared_console.clear()
-                with gts:
-                    self.toggle_user_interaction()
-                    self.shared_console.append_text("\nBy using the control above, please tell us how much you expect\n to receive from each lottery\n\n We know that you do not have enough information, but try to guess anyway. \n\nIndicate the amount in the three box and then press OK")
-        elif play_number == 2:
-            if self.player.is_first:
-                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-                gp.header.stamp = rospy.Time.now()
-                self.play_pub.publish(gp)
-            self.unregister_game()
-    
-    def unregister_game(self):
-        self.player.game_topic_lock.acquire()
-        self.play_pub.unregister()
-        self.play_sub.unregister()
-        self.player.game_topic = ""
-        self.player.game_topic_lock.release()
+        gtk.main_quit()
 
 
+    def take_turn(self):
+        rs_1 = "You entered the wrong argument on the command line."
+        rs_3 = "The valid second argument (optional) are: 'Welcome' (default), 'Demographic', 'Instructions', 'UltimatumQuestion', 'VideoRater', 'FeaturesRater', and 'demo'. Please, press the 'Quit' button and try again."
+        rs_2 = "The valid first argument (optional) are: 'facefirst' and 'facesecond'."
+        rs_4 = "Note, if you run the experiment with no argument, you are prompt to a gui which helps you set up the experiment."
 
-class PaymentScreen:
-    def __init__(self, parent, shared_console, player, results, log):
-        self.parent = parent
-        self.shared_console = shared_console
-        self.player = player
-        self.play_number = 0
+        s_1=textwrap.fill(rs_1,125)
+        s_2=textwrap.fill(rs_2,125)
+        s_3=textwrap.fill(rs_3,125)
+        s_4=textwrap.fill(rs_4,125)
 
+        self.console.append_text("\n\n")
+        self.console.append_text(s_1)
+        self.console.append_text("\n\n")
+        self.console.append_text(s_2)
+        self.console.append_text("\n\n")
+        self.console.append_text(s_3)
+        self.console.append_text("\n\n")
+        self.console.append_text(s_4)
+
+    def delete_event(self, widget, event, data=None):
+        print "Delete event called. Closing window."
+        return False
+
+class GFPlayer:
+    def __init__(self, player_id=-1, is_first=False, game_topic=''):
+        self.player_id = player_id
+        self.is_first = is_first
+        self.game_topic = game_topic
+        self.game_topic_lock = threading.Lock()
+
+
+class multiplayer():
+    def __init__(self, parent, console, mainvbox, filename, log, condition):
+        self.capture_video = None
+        self.player = GFPlayer()
+        self.condition = condition
+        self.filename = filename
         self.log = log
+        self.content_vbox = mainvbox
+        self.the_game_controller = None
+#        self.enabled = True
+#        self.playing = True
+        self.window = parent
+        self.console = console
+        self.window.set_title("Beliefs and Expectations in Strategic Interaction")
+        self.content_vbox.pack_end(self.console.view)
+
+        self.register_player()
+
+    def register_player(self):
+        self.console.append_text("Connecting to Game Master...\n")
+        rospy.init_node('game_faces_ui', anonymous=True)
+        self.game_server_sub = rospy.Subscriber("game_master", TwoPersonGame, self.play_game)
+
+        rospy.wait_for_service('register_game_player')
+        try:
+            reg = rospy.ServiceProxy('register_game_player', RegisterGamePlayer)
+            response = reg(str(roslib.network.get_host_name()), 1)
+            self.player.player_id = response.player_id
+        except rospy.ServiceException, e:
+            print "Could not get a player_id from master"
+            sys.exit(1)
+
+        # Set up video capture
+        video_topic = "Video" + str(self.player.player_id)
+        self.video_pub = rospy.Publisher(video_topic, TwoPersonGame)
         
-        self.results = results
+        # Using rosrun spawns two processes, and the second does not terminate correctly 
+        #run_video_command = 'rosrun game_faces game_video_capture ' + str(self.player.player_id)
         
-        self.enabled = True
-        self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(self.player.is_first))
-        self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
+        #run_video_command = '../bin/game_video_capture ' + str(self.player.player_id)
+        if self.capture_video:
+            #args = shlex.split(run_video_command)
+            #self.video = subprocess.Popen(args)
+            self.video = videowrapper(self.player.player_id)
+            self.video.start_video()
 
-        self.title = "Payment"
-        self.view = gtk.Frame(self.title)
-        game_vbox = gtk.VBox(False, 8)
-        self.view.add(game_vbox)
+        # Start a log for this player
+#        home = os.path.expanduser('~')
+#        filename = home + "/ros/ua-ros-pkg/ua_game_theory/Data/Info_Players/playerlog_" + str(self.player.player_id) + "_" + str(datetime.date.today()) + ".txt"
+#        self.log.openlog(filename)
 
-        self.box_status = gtk.HBox(False, 8)
-        game_vbox.pack_start(self.box_status, expand=False, fill=False)
-        
-        self.label_balance_desc = gtk.Label('Your total payment is')
-        self.box_status.add(self.label_balance_desc)
-        
-        self.label_balance_amt = gtk.Label()
-        self.set_balance(0)
-        self.box_status.add(self.label_balance_amt)
+        self.console.append_text("Ready to play.\nWaiting for your opponent...\n")
 
-        self.box_control = gtk.HBox(False, 8)        
-        game_vbox.pack_start(self.box_control, expand=False, fill=False)
 
-        # No ok button
-        #self.button_bid = gtk.Button(stock=gtk.STOCK_OK)
-        #self.button_bid.set_size_request(80, 30)
-        #self.button_bid.connect("clicked", self.ok_button_clicked)
-        #self.box_control.add(self.button_bid)
-
-        self.view.show_all()
-        #self.toggle_user_interaction()
-
-    def set_balance(self, balance):
-        self.label_balance_amt.set_markup('<span size="20000" weight="bold">%d</span>' %balance)
-        self.payoff = balance
-        
-
-#    def ok_button_clicked(self, widget, data=None):
-#        self.play_number +=1
-#        self.toggle_user_interaction()
-#        gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-#        gp.header.stamp = rospy.Time.now()
-#        self.play_pub.publish(gp)
-#        self.log.log("Ending Payment module")
-
-#    def toggle_user_interaction(self):
-#        self.enabled = not self.enabled
-#        self.box_control.set_sensitive(self.enabled)
-
-    def take_first_turn(self):
-        self.log.log("Starting Payment module")
-        if self.player.is_first:
-            gp = GamePlay(play_number=0,amount=0, player_id=self.player.player_id)
-            gp.header.stamp = rospy.Time.now()
-            self.play_pub.publish(gp)
-
-    def take_turn(self,game_play):
-
-        # Figure out payment amount: select 2 rounds from each experiment
-        print "original results: ", self.results
-        random.shuffle( self.results )
-        print "shuffled results: ", self.results
-        
-        res = {}
-        for result in self.results:
-            if result[0] in res:
-                if (len(res[result[0]]) < 2 or result[0] == "ArmBandit"):
-                    res[result[0]].append(result[1])
-            else:
-                res[result[0]] = [result[1]]
-        print "dictionary: ", res
-        
-        ressum = {}
-        total = 0
-        for game_name in res.keys():
-            ressum[game_name] = sum(res[game_name])
-            print "RESSUM",ressum
-            if game_name == "ArmBandit":
-                banditpay = res[game_name]
-                banditpay = sorted(banditpay)
-                #lower = banditpay[len(banditpay)/2-1]
-                #upper = banditpay[len(banditpay)/2]
-                #median = (float(lower + upper)) / 2  
-                total += ressum[game_name]/(len(banditpay) * 50)
-            else:
-                total += 0.05*ressum[game_name]  # Here, change payment values for various games ("if game_name == 'one armed'...)
-        
-        print ressum
-        
-        total = int(numpy.ceil(total+0.01))  # Round total to a dollar amount?
-        
-        rs_1 = "Your payment has been calculated by picking two rounds randomly from each game.\n"
-        rs_2 = "Here are the games and the associated payoffs: " + str(res) + "\n"
-        rs_3 = "Your total payoff is: $" + str(total) + "\n"
-        rs_4 = "Please wait for the researcher to award payment\n"
-        
-        s_1=textwrap.fill(rs_1,70)
-        s_2=textwrap.fill(rs_2,70)
-        s_3=textwrap.fill(rs_3,70)
-        s_4=textwrap.fill(rs_4,70)
-
+    def play_game(self, gamedata):
         gts = GtkThreadSafe()
-        if self.play_number == 0:
-            if self.player.is_first:
-                self.set_balance(total)
-                self.log.log("Monetary payof is %d" %total)
-                with gts:
-                    self.shared_console.append_text(s_1)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_2)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_3)
-                    self.shared_console.append_text("\n\n")
-                    self.shared_console.append_text(s_4)
-                    self.shared_console.append_text("\n\n")
-#                    self.toggle_user_interaction()
-#        elif self.play_number == 1:
-#            if self.player.is_first:
-#                self.shared_console.clear()
-#                self.play_number = 2
-#                gp = GamePlay(play_number=self.play_number,amount=-1, player_id=self.player.player_id)
-#                gp.header.stamp = rospy.Time.now()
-#                self.play_pub.publish(gp)
-#        elif self.play_number == 2:
-#            if self.player.is_first:
-#                gp = GamePlay(play_number=3,amount=-1, player_id=self.player.player_id)
-#                gp.header.stamp = rospy.Time.now()
-#                self.play_pub.publish(gp)
-#            self.unregister_game()
+        stopvideo = False
+        if gamedata.game_type == 'NO_MORE_GAMES':
+            self.console.append_text('\n\nNo more games!\n')
+            with gts:
+                 self.the_game_controller = PaymentScreen(self.window, self.console, self.player, self.results, self.log)
+                 self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
 
-
-    def unregister_game(self):
+            if capture_video:
+                self.video.end_video()
+                #self.video.terminate()  # is this the correct way to terminate video?
+            return
+        
         self.player.game_topic_lock.acquire()
-        self.play_pub.unregister()
-        self.play_sub.unregister()
-        self.player.game_topic = ""
+        if self.player.game_topic is '':
+            is_first_player = (gamedata.first_player == self.player.player_id)
+            is_second_player = (gamedata.second_player == self.player.player_id)
+            if is_first_player or is_second_player:
+                if self.the_game_controller:
+                    try:
+                        if self.the_game_controller.isgame:
+                            self.results.append( (self.last_game_type, self.the_game_controller.payoff) )
+                            self.totalpayoff += self.the_game_controller.payoff
+                            smsg = GameSummary()
+                            smsg.player_id = self.player.player_id
+                            smsg.payoff = self.the_game_controller.payoff
+                            self.summary_pub.publish(smsg)
+                            self.summary_pub.unregister()
+                            print "Player's total payoff:", self.totalpayoff
+                            print "Results:", self.results
+                        else:
+                            print "not a game"
+                    except AttributeError:  # Non-game objects will not have an 'isgame' member
+                        print "No payoff for this round"
+                        smsg = GameSummary()
+                        smsg.player_id = self.player.player_id
+                        smsg.payoff = 0
+                        self.summary_pub.publish(smsg)
+                        self.summary_pub.unregister()
+                            
+                    self.content_vbox.remove(self.the_game_controller.view)
+                self.console.clear()
+                self.console.append_text("\nStarting game: %s\n\n\n" %gamedata.game_type)
+                
+                # Set up a publisher for the summary at game end
+                self.summary_pub = rospy.Publisher(gamedata.game_topic+"s", GameSummary)
+                
+                # Register the game playing topic
+                game_topic = gamedata.game_topic
+                print game_topic
+                self.player.is_first = is_first_player
+                print "1st player? ", is_first_player
+                self.player.game_topic = game_topic
+                game_type = str(gamedata.game_type)
+                print "Starting: ", game_type
+                if game_type == "Ultimatum":
+                    if self.capture_video:
+                        self.the_game_controller = UltimatumGameController(self.window, self.console, self.player, self.log, self.video)
+                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+                    else:
+                        self.the_game_controller = UltimatumGameController(self.window, self.console, self.player, self.log)
+                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+#                elif game_type == "Ultimatum":
+#                    if self.capture_video:
+#                        self.the_game_controller = UltimatumGameController_computer(self.window, self.console, self.player, self.log, self.video)
+#                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+#                    else:
+#                        self.the_game_controller = UltimatumGameController_computer(self.window, self.console, self.player, self.log)
+#                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+#                elif game_type == "Ultimatum with Humans & Computers":
+#                    if self.capture_video:
+#                        self.the_game_controller = UltimatumGameController_mix(self.window, self.console, self.player, self.log, self.video)
+#                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+#                    else:
+#                        self.the_game_controller = UltimatumGameController_mix(self.window, self.console, self.player, self.log)
+#                        self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+#                elif game_type == "PaymentScreen":
+#                    with gts:
+#                       self.the_game_controller = Payment(self.window, self.console, self.player, self.log)
+#                       self.content_vbox.pack_start(self.the_game_controller.view, expand=False)
+#                       stopvideo = True
+                else:
+                    with gts:
+                        print game_type
+                        print "Didnt match game_type: %s" %game_type
+                        sys.exit(1)
+                
+                if self.capture_video:
+                    self.video_pub.publish(gamedata)
+                        
+                self.last_game_type = game_type
+                self.the_game_controller.take_first_turn()
+                # after this, get the results of the game from the controller
+                
+                # Maybe a better way to do this
+                if stopvideo:
+                    time.sleep(5) # Grab 5 more seconds
+                    if capture_video:
+                        self.video.end_video()
+            
+        else:
+            with gts:
+                print "skipped a game message from master, because I'm already in a game. Topic: ", self.player.game_topic
         self.player.game_topic_lock.release()
 
+    def delete_event(self, widget, event, data=None):
+        print "Delete event called. Closing window."
+        if capture_video:
+            #self.video.terminate()
+            self.video.end_video()
+        return False
 
