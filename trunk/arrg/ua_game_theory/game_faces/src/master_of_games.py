@@ -235,42 +235,34 @@ class game_master:
             self.registration_service.shutdown()
         return RegisterGamePlayerResponse(self.num_registered_players)
 
-    # do twice logic generalized
-    def create_block(self, do_n_times, is_tutorial):
+    def create_block(self, do_n_times):
+        num_pl = self.num_players
         pairs = []
-        if not self.single_subject and not is_tutorial:
-            pairs = roundRobin(range(1,self.num_players+1))
-            for i in range(do_n_times):
-                pc = pairs[:]
-                for p in pc:
-                    rp = []
-                    for game in p:
-                        g = list(game)
-                        if not i%2:
-                            g.reverse()
-                        rp.append(tuple(g))
-                    pairs.append(rp)
-                numpy.random.shuffle(pairs)
-        elif self.single_subject and not is_tutorial:
-            protot = [[(1,2)], [(2,1)]]
-            for i in range(self.num_runs):
-                pairs.append(protot[0])
-            for i in range(do_n_times):
-                for j in range(self.num_runs):
-                    if i%2: pairs.append(protot[0])
-                    else: pairs.append(protot[1])
-            numpy.random.shuffle(pairs)
+        pairs = roundRobin(range(1,num_pl+1))
+        natural = numpy.shape(pairs)[0]
+        if do_n_times == 1:
+            return pairs
         else:
-        # here individual decision making tasks have the same schedule of tutorials but repeated ...
-            for i in range(do_n_times):
-                par = []
-                if not self.single_subject:
-                    for j in range(self.num_players):
-                        par.append((j+1,j+1))
-                else: par.append((2,2))
-                pairs.append(par)
-        # This step above assumes that the real player is run second... 
+            pc = pairs[:]
+            for p in pc:
+                rp = []
+                for game in p:
+                    g = list(game)
+                    g.reverse()
+                    rp.append(tuple(g))
+                pairs.append(rp)
+            if natural < do_n_times:
+                needed = do_n_times-natural
+                select = numpy.random.randint(natural, size=needed)
+                for sel in select:
+                    pairs.append(pairs[sel])
+                select = numpy.random.randint(natural, size=needed)
+                select = select + natural
+                for sel in select:
+                    pairs.append(pairs[sel])
+                numpy.random.shuffle(pairs)
         return pairs
+
 
     def start_games(self):
         """ This runs a set of two player games.  First, each player registers.
@@ -308,14 +300,20 @@ class game_master:
 # can do this with the gui and a check box
 
         game_observers = []
-        for i in range(0,num_blocks):
+        for i in range(num_blocks):
             print i
             if i == 0:
-                pairs = self.create_block(1, False)
+                pairs = self.create_block(self.num_runs)
                 game_type = "Ultimatum"
-            elif i == 1:
-                pairs = self.create_block(1, True)
-                game_type = "PaymentScreen"
+#            elif i == 1:
+#                pairs = self.create_block(self.num_runs)
+#                game_type = "Ultimatum with Humans & Computers"
+#            elif i == 2:
+#                pairs = self.create_block(self.num_runs)
+#                game_type = "Ultimatum with Computers"
+#            else:
+#                pairs = self.create_block(1)
+#                game_type = "PaymentScreen"
             for block_round in pairs:
                 # Serve up all the games
                 for pair in block_round:
@@ -347,16 +345,11 @@ import subprocess
 if __name__ == '__main__':
 
     try:
-        single_subject = False
         if len(sys.argv) < 2:
             print "Usage: rosrun game_faces game_master.py <num_players> <num_rounds>"
             raise rospy.ROSInterruptException()
-        elif int(sys.argv[1])==1:
-
-            single_subject = True
-            gm = game_master(2, single_subject)
         else:
-            gm = game_master(int(sys.argv[1]),single_subject)
+            gm = game_master(int(sys.argv[1]),int(sys.argv[2]))
 
         gm.start_games()
     except rospy.ROSInterruptException:

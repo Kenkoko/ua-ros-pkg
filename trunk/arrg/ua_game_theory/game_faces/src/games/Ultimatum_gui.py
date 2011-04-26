@@ -13,6 +13,8 @@ import threading
 import pygtk
 pygtk.require('2.0')
 import gtk
+import os
+import numpy
 
 TIME_BETWEEN_GAMES = 2 #seconds
 
@@ -30,8 +32,6 @@ class GtkThreadSafe:
         gtk.gdk.threads_enter()
     
     def __exit__(self, _type, value, traceback):
-        # do any error handling, return False to propogate
-        # error, True if handled here
         gtk.gdk.threads_leave()
 
 class UltimatumGameController:
@@ -48,7 +48,7 @@ class UltimatumGameController:
         self.enabled = True
         self.play_pub = rospy.Publisher(self.player.game_topic, GamePlay, subscriber_listener=None, tcp_nodelay=True, latch=(not self.player.is_first))
         self.play_sub = rospy.Subscriber(self.player.game_topic, GamePlay, self.take_turn)
-        self.title = "Ultimatum"
+        self.title = "Ultimatum Game"
         self.view = gtk.Frame(self.title)
         game_vbox = gtk.VBox(False, 8)
         self.view.add(game_vbox)
@@ -77,18 +77,41 @@ class UltimatumGameController:
         self.box_control.add(self.button_bid)
 
         self.view.show_all()
+        which_trial = self.trak_rounds_number()
+        print which_trial
+        rtd = "\n\n For 14 trials you will ONLY play with the participants that are in the room with you. In other words: no computer opponents! \n\n This is Trial number " + str(int(which_trial)) + ".\n\n ----------------------------------------- \n\n"
+        self.shared_console.append_text_instructions(rtd, 0)
+
         self.toggle_user_interaction()
 
-  
-# This is one: def make offer: FIRST CHANGE
 
+    def trak_rounds_number(self):
+        home = os.path.expanduser('~');
+        filename = home + "/ros/ua-ros-pkg/ua_game_theory/Data/tnum.txt"
+        if not os.path.exists(filename):
+            number = 1
+            ttemp = open(filename, "w")
+            ttemp.write(str(1))
+            ttemp.close()
+        else:
+            number = numpy.loadtxt(filename)
+            if number +1 < 14:
+                ttemp = open(filename, "w")
+                ttemp.write(str(number + 1))
+                ttemp.close()
+            else:
+                ttemp = open(filename, "w")
+                ttemp.write(str(1))
+                number = 0
+                ttemp.close()
+        return number
 
     def ok_button_clicked(self, widget, data=None):
         timenow = time.time()
         
         offer = self.spin_bid.get_value_as_int()
-        
-        # Player 1 as they send their offer
+
+
         if self.video is not None:
             self.video.send_msg(play_number=1, amount=offer, msgtime=timenow)
         
@@ -97,8 +120,8 @@ class UltimatumGameController:
         gp.header.stamp = rospy.Time.now()
         self.play_pub.publish(gp)
         self.toggle_user_interaction()
+        self.shared_console.clear()
         self.shared_console.append_text('\n\nYou sent %d.\nWaiting for second player...\n' %offer)
-        self.log.log("Player sent %d" %offer)
     
     def set_balance(self, balance):
         self.label_balance_amt.set_markup('<span size="20000" weight="bold">%d</span>' %balance)
@@ -109,7 +132,7 @@ class UltimatumGameController:
         self.box_control.set_sensitive(self.enabled)
     
     def take_first_turn(self):
-        
+
 # NOTE: CAN AVOID CRASH BY SKIPPINGH THIS IF SENTENCE: THE LOGIC THOUGH MAY MAKE PROBLEM WITH MULTIPLE PLAYERS AND WE NEED TO WORK MORE ON THIS POINT
 
         if not self.player.is_first:
@@ -126,7 +149,7 @@ class UltimatumGameController:
         gts = GtkThreadSafe()
         play_number = game_play.play_number
         if play_number == 0:
-            self.log.log("Starting Ultimatum game")
+
             if self.player.is_first:
                 with gts:
                     self.set_balance(10)
@@ -134,13 +157,13 @@ class UltimatumGameController:
                     self.shared_console.append_text("Choose an amount, between 0 and 10 and press OK\n")
             else:
                 with gts:
-                    self.shared_console.append_text("Waiting for first player...\n")
+                    self.shared_console.append_text("Waiting for first player's offer...\n")
         elif play_number == 1:
             if self.player.is_first:
-                pass   
+                self.shared_console.append_text("Waiting for second player's rensponse...\n")   
             else:
                 with gts:
-                    self.log.log("Player received offer of %d" %game_play.amount)
+                    
                     label_prompt = gtk.Label('Player 1 has sent %d.\nYou can either accept or reject this offer.' %game_play.amount)
                     dialog = gtk.Dialog('Choose One', self.parent, gtk.DIALOG_MODAL,
                                     ('Reject', gtk.RESPONSE_REJECT,
@@ -148,7 +171,6 @@ class UltimatumGameController:
                     dialog.vbox.pack_start(label_prompt, True, True, 0)
                     label_prompt.show()
 
-                    # Reaction as Player 2 receives Player 1's offer
                     if self.video is not None:
                         self.video.send_msg(play_number=2,amount=game_play.amount, msgtime = time.time())
 
@@ -159,46 +181,45 @@ class UltimatumGameController:
                     dialog.destroy()
                     if response == gtk.RESPONSE_REJECT:
                         new_balance = 0
+                        send_info = -1*game_play.amount
+                        reaction = 0
                     elif response == gtk.RESPONSE_ACCEPT:
                         new_balance = game_play.amount
-                    
-                    # Player 2 as they accept or reject
-                    if self.video is not None:
-                        self.video.send_msg(play_number=3,amount=new_balance, msgtime = time.time())
+                        send_info = game_play.amount
+                        reaction = 1
 
-                    if response == gtk.RESPONSE_REJECT:
-                        self.log.log("Player rejected offer of %d" %game_play.amount)
-                    elif response == gtk.RESPONSE_ACCEPT:
-                        self.log.log("Player accepted offer of %d" %game_play.amount)
+                    if self.video is not None:
+                        self.video.send_msg(play_number=3,amount=send_info, msgtime = time.time())
 
                     self.set_balance(new_balance)
                     self.shared_console.append_text('\n\nYour payoff is now: %d' %new_balance)
-                    
-                    gp = GamePlay(play_number=2,amount=new_balance, player_id=self.player.player_id)
+                    self.log.data_writer(self.player.player_id, self.player.is_first, game_play.amount, reaction, new_balance, 0, 1)
+                    gp = GamePlay(play_number=2,amount=send_info, player_id=self.player.player_id)
                     gp.header.stamp = rospy.Time.now()
                     self.play_pub.publish(gp)
+
         elif play_number == 2:
             if self.player.is_first:
                 with gts:
                     self.shared_console.append_text('\n\nYour offer was ')
-                    if game_play.amount == 0:
+                    if game_play.amount < 0:
+                        reaction = 0
                         self.shared_console.append_text('rejected. Your payoff is now 0.\n')
                         self.set_balance(0)
-                        self.log.log("Player 2 rejected the offer")
+                        new_balance = 0;
                     else:
+                        reaction = 1
                         new_balance = 10 - game_play.amount
                         self.shared_console.append_text('accepted. Your payoff is now %d.\n' %new_balance)
                         self.set_balance(new_balance)
-                        self.log.log("Player 2 accepted the offer")
-                        
-                    # Reaction upon receiving player 2's acceptance or rejection
                     if self.video is not None:
                         self.video.send_msg(play_number=4,amount=-2, msgtime = time.time())
-
+                self.log.data_writer(self.player.player_id, self.player.is_first, abs(game_play.amount), reaction, new_balance, 0, 1)
                 gp = GamePlay(play_number=3,amount=-2, player_id=self.player.player_id)
                 gp.header.stamp = rospy.Time.now()
                 time.sleep(TIME_BETWEEN_GAMES)
                 self.play_pub.publish(gp)
+
             else:
                 pass
             with gts:
@@ -211,4 +232,5 @@ class UltimatumGameController:
         self.play_sub.unregister()
         self.player.game_topic = ""
         self.player.game_topic_lock.release()
-        
+
+
