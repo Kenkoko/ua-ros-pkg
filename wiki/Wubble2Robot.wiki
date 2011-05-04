@@ -1,0 +1,4 @@
+#labels wubble
+=Wubble Robot=
+
+<img alt="logo" src="http://ua-ros-pkg.googlecode.com/svn/trunk/arrg/wiki/images/wubble2_description_color_coded.png" />
