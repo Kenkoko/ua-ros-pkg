@@ -11,19 +11,27 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
+import org.jbox2d.dynamics.World;
 
 import com.google.common.collect.Lists;
 
 import edu.arizona.simulator.ww2d.blackboard.Blackboard;
 import edu.arizona.simulator.ww2d.blackboard.spaces.ObjectSpace;
+import edu.arizona.simulator.ww2d.blackboard.spaces.Space;
+import edu.arizona.simulator.ww2d.events.Event;
+import edu.arizona.simulator.ww2d.events.movement.BackwardEvent;
+import edu.arizona.simulator.ww2d.events.movement.ForwardEvent;
+import edu.arizona.simulator.ww2d.events.movement.LeftEvent;
+import edu.arizona.simulator.ww2d.events.movement.RightEvent;
+import edu.arizona.simulator.ww2d.events.spawn.CreatePhysicsObject;
 import edu.arizona.simulator.ww2d.object.PhysicsObject;
 import edu.arizona.simulator.ww2d.system.EventManager;
 import edu.arizona.simulator.ww2d.system.GameSystem;
 import edu.arizona.simulator.ww2d.system.PhysicsSubsystem;
-import edu.arizona.simulator.ww2d.utils.Event;
 import edu.arizona.simulator.ww2d.utils.GameGlobals;
-import edu.arizona.simulator.ww2d.utils.enums.EventType;
 import edu.arizona.simulator.ww2d.utils.enums.ObjectType;
+import edu.arizona.simulator.ww2d.utils.enums.SubsystemType;
+import edu.arizona.simulator.ww2d.utils.enums.Variable;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPObjectState;
 import edu.arizona.verbs.shared.OOMDPState;
@@ -155,17 +163,19 @@ public class WW2DEnvironment implements Environment {
 	@Override
 	public OOMDPState initializeEnvironment(List<OOMDPObjectState> state) {
 		_gameSystem = new GameSystem(800, 800, true);		
-		_gameSystem.addSubsystem(GameSystem.Systems.PhysicsSubystem, new PhysicsSubsystem());
+		_gameSystem.addSubsystem(SubsystemType.PhysicsSubsystem, new PhysicsSubsystem());
 		_gameSystem.loadLevel("data/levels/Room-External.xml", null, null);
 
+		Space systemSpace = Blackboard.inst().getSpace("system");
+		World world = systemSpace.get(Variable.physicsWorld).get(World.class);
+		
 		for (OOMDPObjectState obj : state) { 
 			ClassType type = ClassType.valueOf(obj.getClassName());
 			Element e = type.convert(obj);
 
 //			System.out.println("ELEMENT:\n" + e.asXML());
 			
-			Event event = new Event(EventType.CREATE_PHYSICS_OBJECT);
-			event.addParameter("element", e);
+			Event event = new CreatePhysicsObject(world, e);
 			EventManager.inst().dispatchImmediate(event);
 		}
 
@@ -293,19 +303,17 @@ public class WW2DEnvironment implements Environment {
 		if (render && _container != null)
 			_container.render(_gameSystem);
 		
-		EventType[] types = new EventType[] { 
-				EventType.FORWARD_EVENT, EventType.LEFT_EVENT, 
-				EventType.RIGHT_EVENT, EventType.BACKWARD_EVENT 
-		};
+//		EventType[] types = new EventType[] { 
+//				EventType.FORWARD_EVENT, EventType.LEFT_EVENT, 
+//				EventType.RIGHT_EVENT, EventType.BACKWARD_EVENT 
+//		};
 
 		ObjectSpace objectSpace = Blackboard.inst().getSpace(ObjectSpace.class, "object");
 		for (PhysicsObject obj : objectSpace.getCognitiveAgents()) { 
-			for (EventType evt : types) { 
-				Event event = new Event(evt);
-				event.addRecipient(obj);
-				event.addParameter("state", false);
-				EventManager.inst().dispatchImmediate(event);
-			}
+			EventManager.inst().dispatchImmediate(new ForwardEvent(false, obj));
+			EventManager.inst().dispatchImmediate(new LeftEvent(false, obj));
+			EventManager.inst().dispatchImmediate(new RightEvent(false, obj));
+			EventManager.inst().dispatchImmediate(new BackwardEvent(false, obj));
 		}
 		
 		return specialRelations;
@@ -334,11 +342,11 @@ public class WW2DEnvironment implements Environment {
 	public int backupEnemyCounter = 0;
 	
 	private void parseAction(String action) {
-		EventType[] types = new EventType[] { 
-				EventType.FORWARD_EVENT, EventType.LEFT_EVENT, 
-				EventType.RIGHT_EVENT, EventType.BACKWARD_EVENT 
-		};
-
+//		EventType[] types = new EventType[] { 
+//				EventType.FORWARD_EVENT, EventType.LEFT_EVENT, 
+//				EventType.RIGHT_EVENT, EventType.BACKWARD_EVENT 
+//		};
+//
 		ObjectSpace objectSpace = Blackboard.inst().getSpace(ObjectSpace.class, "object");
 
 		String[] objectActions = action.split("[;]");
@@ -348,12 +356,11 @@ public class WW2DEnvironment implements Environment {
 			String code = tokens[1];
 			
 			PhysicsObject obj = objectSpace.getPhysicsObject(name);
-			for (int i = 0; i < code.length(); ++i) { 
-				Event event = new Event(types[i]);
-				event.addRecipient(obj);
-				event.addParameter("state", code.charAt(i) == '1');
-				EventManager.inst().dispatch(event);
-			}
+			
+			EventManager.inst().dispatch(new ForwardEvent(code.charAt(0) == '1', obj));
+			EventManager.inst().dispatch(new LeftEvent(code.charAt(1) == '1', obj));
+			EventManager.inst().dispatch(new RightEvent(code.charAt(2) == '1', obj));
+			EventManager.inst().dispatch(new BackwardEvent(code.charAt(3) == '1', obj));
 		}
 		
 		// Now for the enemy
@@ -361,21 +368,12 @@ public class WW2DEnvironment implements Environment {
 		if (enemy != null) {
 			if (enemyState.equals(EnemyState.Approaching)) {
 				if (enemyCounter % 4 == 0) {
-					Event event = new Event(EventType.FORWARD_EVENT);
-					event.addRecipient(enemy);
-					event.addParameter("state", true);
-					EventManager.inst().dispatch(event);
+					EventManager.inst().dispatch(new ForwardEvent(true, enemy));
 				} else {
-					Event event = new Event(EventType.FORWARD_EVENT);
-					event.addRecipient(enemy);
-					event.addParameter("state", false);
-					EventManager.inst().dispatch(event);
+					EventManager.inst().dispatch(new ForwardEvent(false, enemy));
 				}
 			} else {
-				Event event = new Event(EventType.FORWARD_EVENT);
-				event.addRecipient(enemy);
-				event.addParameter("state", false);
-				EventManager.inst().dispatch(event);
+				EventManager.inst().dispatch(new ForwardEvent(false, enemy));
 			}
 		}
 		
