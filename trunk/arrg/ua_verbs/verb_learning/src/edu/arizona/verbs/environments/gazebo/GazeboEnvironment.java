@@ -1,4 +1,4 @@
-package edu.arizona.verbs.environments;
+package edu.arizona.verbs.environments.gazebo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +22,9 @@ public class GazeboEnvironment implements Environment {
 	private ros.ServiceClient<PerformAction.Request, PerformAction.Response, PerformAction> performService_;
 	
 	private ArrayList<String> actions_ = null;
+	
+	private OOMDPState trueState_ = null;
+	private OOMDPState fakeState_ = null;
 	
 	public GazeboEnvironment() {
 		try {
@@ -47,6 +50,7 @@ public class GazeboEnvironment implements Environment {
 		try {
 			Response response = simulateService_.call(request);
 			OOMDPState oomdpState = StateConverter.msgToState(response.new_state);
+			fakeState_ = oomdpState;
 			return oomdpState;
 		} catch (RosException e) {
 			e.printStackTrace();
@@ -65,7 +69,10 @@ public class GazeboEnvironment implements Environment {
 		req.action = action;
 		try {
 			ros.pkg.oomdp_msgs.srv.PerformAction.Response response = performService_.call(req);
-			return StateConverter.msgToState(response.new_state);
+			OOMDPState state = StateConverter.msgToState(response.new_state);
+			trueState_ = state;
+			fakeState_ = state;
+			return state;
 		} catch (RosException e) {
 			e.printStackTrace();
 			return null;
@@ -79,20 +86,37 @@ public class GazeboEnvironment implements Environment {
 		try {
 			ros.pkg.oomdp_msgs.srv.InitializeEnvironment.Response response = initializeService_.call(req);
 			actions_ = response.actions;
-			return StateConverter.msgToState(response.start_state);
+			OOMDPState state = StateConverter.msgToState(response.start_state);
+			trueState_ = state;
+			fakeState_ = state;
+			return state;
 		} catch (RosException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
 
+	
+	
 	@Override
 	public OOMDPState simulateAction(String action) {
-		throw new RuntimeException("GazeboEnvironment does not support this form of simulateAction.");
+		if (fakeState_ == null) {
+			throw new RuntimeException("Illegal call to simulateAction before initialize.");
+		}
+		
+		OOMDPState state = simulateAction(fakeState_, action);
+		fakeState_ = state;
+		return state;
 	}
 
 	@Override
 	public void reset() {
-		throw new RuntimeException("GazeboEnvironment does not support reset.");
+		//throw new RuntimeException("GazeboEnvironment does not support reset.");
+		fakeState_ = trueState_;
+	}
+
+	@Override
+	public String getNameString() {
+		return "gazebo";
 	}
 }

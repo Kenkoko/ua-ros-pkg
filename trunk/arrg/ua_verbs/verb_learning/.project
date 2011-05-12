@@ -18,7 +18,7 @@
 		<link>
 			<name>rosjava</name>
 			<type>2</type>
-			<location>/opt/ros/cturtle/stacks/client_rosjava/rosjava/src</location>
+			<location>/opt/ros/diamondback/stacks/client_rosjava/rosjava/src</location>
 		</link>
 	</linkedResources>
 </projectDescription>

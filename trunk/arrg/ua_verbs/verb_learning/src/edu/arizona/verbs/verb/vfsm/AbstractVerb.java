@@ -12,7 +12,7 @@ import ros.pkg.verb_learning.srv.PerformVerb;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
-import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
+import edu.arizona.verbs.environments.ww2d.WW2DEnvironment;
 import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.planning.data.PlanningReport;

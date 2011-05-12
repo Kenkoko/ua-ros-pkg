@@ -23,19 +23,19 @@ import com.google.common.collect.Sets;
 
 import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
 import edu.arizona.cs.learn.timeseries.model.Interval;
-import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.environments.Simulators;
 import edu.arizona.verbs.experiments.evaluation.EvaluationResults;
 import edu.arizona.verbs.experiments.evaluation.Evaluator;
-import edu.arizona.verbs.experiments.evaluation.Label;
-import edu.arizona.verbs.experiments.evaluation.Labeler;
+import edu.arizona.verbs.experiments.label.GazeboLabeler;
+import edu.arizona.verbs.experiments.label.Label;
+import edu.arizona.verbs.experiments.label.Labelers;
+import edu.arizona.verbs.experiments.label.WW2DLabeler;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
 import edu.arizona.verbs.verb.Verbs;
 import edu.arizona.verbs.verb.vfsm.AtomicVerb;
-import edu.arizona.verbs.verb.vfsm.learner.SignatureLearner;
 
 public class Experimenter {
 	public static String teacherFolder = System.getProperty("user.dir") + "/data/teacher/";
@@ -50,6 +50,7 @@ public class Experimenter {
 		
 		for (Object obj : yaml.loadAll(fis)) {
 			Scenario scenario = (Scenario) obj;
+			scenario.verb = verb;
 //			System.out.println("\nSCENARIO:");
 //			
 //			System.out.println(scenario.start);
@@ -73,6 +74,16 @@ public class Experimenter {
 		for (String action : scenario.actions) {
 			OOMDPState nextState = environment.performAction(action);
 			teacherTrace.add(nextState);
+		}
+		
+		// Sanity check
+		Label label = Labelers.valueOf(environment.getNameString()).getLabeler(scenario.verb).label(teacherTrace);
+		if (!label.equals(Label.Success)) {
+			System.out.println(label);
+			System.out.println("IF THEY CAN'T UNDERSTAND, HOW CAN THEY TEACH ME?");
+			System.out.println("I GUESS THEY CAN'T, I GUESS THEY WON'T");
+			System.out.println("THAT'S HOW I KNOW MY LIFE IS OUT OF LUCK, FOOL");
+			System.exit(1);
 		}
 		
 		return teacherTrace;
@@ -100,7 +111,7 @@ public class Experimenter {
 				RecognitionTest test = new RecognitionTest();
 				test.trace = demonstrate(scenario, environment);
 				for (String verb2 : allVerbs) {
-					if (Label.Success == Labeler.valueOf(verb2).label(test.trace)) {
+					if (Label.Success == WW2DLabeler.valueOf(verb2).label(test.trace)) {
 						test.verbs.add(verb2);
 					}
 				}
@@ -123,16 +134,16 @@ public class Experimenter {
 	public static void main(String[] args) throws Exception {
 		// These will become CLI parameters
 		String env = "ww2d";
+//		String env = "gazebo";
 		
-
-		String verb = "go";
-		ArrayList<String> arguments = Lists.newArrayList("agent", "place");
+//		String verb = "go";
+//		ArrayList<String> arguments = Lists.newArrayList("agent", "place");
 
 //		String verb = "go_via";
 //		ArrayList<String> arguments = Lists.newArrayList("agent", "waypoint", "place");
-		
-//		String verb = "intercept";
-//		ArrayList<String> arguments = Lists.newArrayList("agent", "enemy", "place");
+//		
+		String verb = "intercept";
+		ArrayList<String> arguments = Lists.newArrayList("agent", "enemy", "place");
 		
 //		String verb = "follow";
 //		ArrayList<String> arguments = Lists.newArrayList("agent", "enemy", "place");
@@ -140,13 +151,15 @@ public class Experimenter {
 //		String verb = "avoid";
 //		ArrayList<String> arguments = Lists.newArrayList("agent", "enemy", "place");
 		
-
+//		String verb = "deliver";
+//		ArrayList<String> arguments = Lists.newArrayList("agent", "thing", "place");
+		
 
 		String model = "signature";
 //		String model = "naive";
 //		String model = "corepath";
 //		String model = "ml";
-		int numTrajectories = 4;
+		int numTrajectories = 5;
 		
 		// Load the evironment
 //		WW2DEnvironment.visualize = true;
@@ -162,9 +175,9 @@ public class Experimenter {
 		}
 		
 		// Make the recognition corpus (partially redundant with the last step, should probably merge)
-		List<RecognitionTest> corpus = makeRecognitionCorpus(verb, env);
+//		List<RecognitionTest> corpus = makeRecognitionCorpus(verb, env);
 		
-		File dataFolder = new File(System.getProperty("user.dir") + "/data/csv/" + verb + "_" + model);
+		File dataFolder = new File(System.getProperty("user.dir") + "/data/csv/" + env + "_" + verb + "_" + model);
 		if (!dataFolder.isDirectory()) {
 			dataFolder.mkdir();
 		}
@@ -174,8 +187,10 @@ public class Experimenter {
 		CSVWriter writer = new CSVWriter(
 			new FileWriter(dataFolder.getAbsolutePath() + "/" + csvString + ".csv"));
 		
-		CSVWriter recCSV = new CSVWriter(
-				new FileWriter(dataFolder.getAbsolutePath() + "/" + "r2" + csvString + ".csv"));
+//		CSVWriter recCSV = new CSVWriter(
+//				new FileWriter(dataFolder.getAbsolutePath() + "/" + "r2" + csvString + ".csv"));
+		
+		List<List<Integer>> orders = Lists.newArrayList();
 		
 		for (int i = 0; i < numTrajectories; i++) {
 			
@@ -187,76 +202,77 @@ public class Experimenter {
 				randomized.add(n);
 			}
 			Collections.shuffle(randomized);
+			orders.add(randomized);
 			
 			int current = 0;
 //			boolean[] correct = new boolean[randomized.size()];		
 			String[] labels = new String[randomized.size()];
 			String[] times = new String[randomized.size()];
-			String[] precision = new String[randomized.size()];
-			String[] recall = new String[randomized.size()];
-			String[] f = new String[randomized.size()];
+//			String[] precision = new String[randomized.size()];
+//			String[] recall = new String[randomized.size()];
+//			String[] f = new String[randomized.size()];
 			
 			for (int index : randomized) {
 				
 				//////////////////////////////////////////////////////
 				// Step 0: Optional recognition test
-				if (model.equals("signature") || model.equals("naive") || model.equals("corepath")) {
-					if (current != 0) {
-						System.out.println("\n$$$$$$$$ BEGIN RECOGNITION TEST");
-						
-						// 1 held-out instance of the current verb
-						RecognitionTest heldOut = new RecognitionTest();
-						heldOut.trace = demonstrations.get(index);
-						heldOut.verbs.add(verb);
-						
-						List<RecognitionTest> subcorpus = Lists.newArrayList(heldOut);
-						List<RecognitionTest> randomCorpus = new ArrayList<RecognitionTest>(corpus);
-						Random r = new Random();
-						for (int j = 0; j < 19; j++) {
-							subcorpus.add(randomCorpus.remove(r.nextInt(randomCorpus.size())));
-						}
-						
-						boolean[] proposed = new boolean[subcorpus.size()];
-						boolean[] actual = new boolean[subcorpus.size()];
-						
-						for (int j = 0; j < subcorpus.size(); j++) {
-							RecognitionTest test = subcorpus.get(j);
-							Map<String,String> nameMap = Maps.newHashMap(); // Later will need to do real remap
-							List<Interval> intervals = StateConverter.traceToIntervals(test.trace, nameMap);
-							
-							AtomicVerb trueVerb = (AtomicVerb) v;
-							FSMRecognizer recognizer = trueVerb.getPosLearner().getRecognizer();
-							
-							if (trueVerb.getNegLearner().isReady()) {
-								FSMRecognizer negRecognizer = trueVerb.getNegLearner().getRecognizer();
-								boolean posAccept = recognizer.test(intervals);
-								boolean negAccept = negRecognizer.test(intervals);
-								proposed[j] = posAccept && !negAccept;
-								
-								System.out.println(posAccept + " " + negAccept + " " + test.verbs);
-								"a".length();
-							} else {
-								proposed[j] = recognizer.test(intervals);
-							}
-							// TODO: Test the effect of negative on avoid
-							actual[j] = test.verbs.contains(v.getLexicalForm());
-						}
-						
-						EvaluationResults results = Evaluator.evaluate(proposed, actual);
-						results.printResults();
-						
-						precision[current] = String.valueOf(results.precision);
-						recall[current] = String.valueOf(results.recall);
-						f[current] = String.valueOf(results.f());
-						
-						System.out.println("$$$$$$$$$$ END RECOGNITION TEST\n");
-					} else {
-						// Can't run the test on the first cycle
-						precision[current] = String.valueOf(0.0);
-						recall[current] = String.valueOf(0.0);
-						f[current] = String.valueOf(0.0);
-					}
-				}
+//				if (model.equals("signature") || model.equals("naive") || model.equals("corepath")) {
+//					if (current != 0) {
+//						System.out.println("\n$$$$$$$$ BEGIN RECOGNITION TEST");
+//						
+//						// 1 held-out instance of the current verb
+//						RecognitionTest heldOut = new RecognitionTest();
+//						heldOut.trace = demonstrations.get(index);
+//						heldOut.verbs.add(verb);
+//						
+//						List<RecognitionTest> subcorpus = Lists.newArrayList(heldOut);
+//						List<RecognitionTest> randomCorpus = new ArrayList<RecognitionTest>(corpus);
+//						Random r = new Random();
+//						for (int j = 0; j < 19; j++) {
+//							subcorpus.add(randomCorpus.remove(r.nextInt(randomCorpus.size())));
+//						}
+//						
+//						boolean[] proposed = new boolean[subcorpus.size()];
+//						boolean[] actual = new boolean[subcorpus.size()];
+//						
+//						for (int j = 0; j < subcorpus.size(); j++) {
+//							RecognitionTest test = subcorpus.get(j);
+//							Map<String,String> nameMap = Maps.newHashMap(); // Later will need to do real remap
+//							List<Interval> intervals = StateConverter.traceToIntervals(test.trace, nameMap);
+//							
+//							AtomicVerb trueVerb = (AtomicVerb) v;
+//							FSMRecognizer recognizer = trueVerb.getPosLearner().getRecognizer();
+//							
+//							if (trueVerb.getNegLearner().isReady()) {
+//								FSMRecognizer negRecognizer = trueVerb.getNegLearner().getRecognizer();
+//								boolean posAccept = recognizer.test(intervals);
+//								boolean negAccept = negRecognizer.test(intervals);
+//								proposed[j] = posAccept && !negAccept;
+//								
+//								System.out.println(posAccept + " " + negAccept + " " + test.verbs);
+//								"a".length();
+//							} else {
+//								proposed[j] = recognizer.test(intervals);
+//							}
+//							// TODO: Test the effect of negative on avoid
+//							actual[j] = test.verbs.contains(v.getLexicalForm());
+//						}
+//						
+//						EvaluationResults results = Evaluator.evaluate(proposed, actual);
+//						results.printResults();
+//						
+//						precision[current] = String.valueOf(results.precision);
+//						recall[current] = String.valueOf(results.recall);
+//						f[current] = String.valueOf(results.f());
+//						
+//						System.out.println("$$$$$$$$$$ END RECOGNITION TEST\n");
+//					} else {
+//						// Can't run the test on the first cycle
+//						precision[current] = String.valueOf(0.0);
+//						recall[current] = String.valueOf(0.0);
+//						f[current] = String.valueOf(0.0);
+//					}
+//				}
 				
 				//////////////////////////////////////////////////////
 				// Step 1: Agent performs the verb
@@ -267,7 +283,7 @@ public class Experimenter {
 				
 				//////////////////////////////////////////////////////
 				// Step 2: Teacher labels performance
-				Label label = Labeler.valueOf(verb).label(studentTrace);
+				Label label = Labelers.valueOf(env).getLabeler(verb).label(studentTrace);
 				System.out.println(label);
 				switch (label) {
 				case Success:
@@ -296,14 +312,19 @@ public class Experimenter {
 			writer.flush();
 			
 			// Write the recognition CSV file
-			recCSV.writeNext(precision);
-			recCSV.writeNext(recall);
-			recCSV.writeNext(f);
-			recCSV.flush();
+//			recCSV.writeNext(precision);
+//			recCSV.writeNext(recall);
+//			recCSV.writeNext(f);
+//			recCSV.flush();
 		}
 		
 		// Close the CSV file
 		writer.close();
-		recCSV.close();
+//		recCSV.close();
+		
+		System.out.println("\n\nPERMUTATIONS");
+		for (List<Integer> order : orders) {
+			System.out.println(order);
+		}
 	}
 }

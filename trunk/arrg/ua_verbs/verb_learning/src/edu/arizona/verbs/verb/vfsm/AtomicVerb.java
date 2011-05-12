@@ -68,11 +68,14 @@ public class AtomicVerb extends AbstractVerb {
 			newVerb.arguments_.add(nameMap.containsKey(s) ? nameMap.get(s) : s);
 		}
 		newVerb.baseVerb_ = this;
-		newVerb.posFSM_ = posFSM_.remap(nameMap);
-		newVerb.negFSM_ = negFSM_.remap(nameMap);
-		
-		newVerb.posFSM_.toDot("pos-remap.dot", false);
-		newVerb.negFSM_.toDot("neg-remap.dot", false);
+		if (hasPositiveFSM()) {
+			newVerb.posFSM_ = posFSM_.remap(nameMap);
+			newVerb.posFSM_.toDot("pos-remap.dot", false);
+		}
+		if (hasNegativeFSM()) {
+			newVerb.negFSM_ = negFSM_.remap(nameMap);
+			newVerb.negFSM_.toDot("neg-remap.dot", false);
+		}
 		
 		return newVerb;
 	}
@@ -89,7 +92,6 @@ public class AtomicVerb extends AbstractVerb {
 	public VerbState fsmTransition(VerbState verbState, Set<String> activeRelations) {
 //		TransitionResult posResult = posFSM_.simulateDfaTransition(verbState.posState, activeRelations);
 		TransitionResult posResult = posFSM_.simulateNfaTransition(verbState.posState, activeRelations);
-		
 		TransitionResult negResult = negFSM_.simulateNfaTransition(verbState.negState, activeRelations);
 		
 		return new VerbState(posResult.newState, negResult.newState);

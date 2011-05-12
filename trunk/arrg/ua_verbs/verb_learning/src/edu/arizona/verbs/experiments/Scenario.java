@@ -7,6 +7,7 @@ import edu.arizona.verbs.shared.OOMDPObjectState;
 public class Scenario {
 	public List<OOMDPObjectState> start;
 	public List<String> actions;
+	public String verb;
 	
 	public List<OOMDPObjectState> getStart() {
 		return start;

@@ -1,5 +1,6 @@
 package edu.arizona.verbs.fsm;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -426,10 +428,39 @@ public class StateMachines {
 		DirectedGraph<FSMNode, FSMTransition> dfa = convertToDFA(nfa);
 		// And minimize
 		
+		fakeMinimize(dfa);
 //		minimizeSlow(dfa); // TODO Is there a problem here? If so, why?
 		
 		return dfa;
 	}
+	
+	public static void fakeMinimize(DirectedGraph<FSMNode, FSMTransition> dfa) {
+		ArrayList<FSMNode> terminals = Lists.newArrayList();
+		
+		for (FSMNode n : dfa.getVertices()) {
+			if (dfa.getOutEdges(n).isEmpty()) {
+				terminals.add(n);
+			}
+		}
+
+		if (terminals.size() > 1) {
+			FSMNode survivor = terminals.remove(0);
+			
+			for (FSMNode t : terminals) {
+				Collection<FSMTransition> inEdges = dfa.getInEdges(t);
+				for (FSMTransition edge : inEdges) {
+					FSMNode source = dfa.getSource(edge); // Save the old source
+					dfa.removeEdge(edge); // Remove the old edge
+					dfa.addEdge(edge, source, survivor); // re-route to survivor
+				}
+				dfa.removeVertex(t); // Death
+			}
+		}
+	}
+	
+	
+	
+	
 	
 	// TODO Also need to validate that FSM is a DAG somewhere
 	

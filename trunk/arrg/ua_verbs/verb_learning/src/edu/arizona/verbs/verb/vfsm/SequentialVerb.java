@@ -17,6 +17,7 @@ import com.google.common.collect.Maps;
 import edu.arizona.verbs.fsm.VerbFSM;
 import edu.arizona.verbs.fsm.VerbFSM.TransitionResult;
 import edu.arizona.verbs.verb.VerbBinding;
+import edu.arizona.verbs.verb.vfsm.learner.CorePathLearner;
 
 // TODO: This isn't quite right anymore since the core paths change, fix it
 public class SequentialVerb extends AbstractVerb {
@@ -28,6 +29,10 @@ public class SequentialVerb extends AbstractVerb {
 		lexicalForm_ = lexicalForm;
 		arguments_ = new ArrayList<String>(arguments);
 		verbBindings_.addAll(verbs);
+		
+		// TODO: This should not be hardcoded
+		posLearner_ = new CorePathLearner();
+		negLearner_ = new CorePathLearner();
 		
 		makeVerbFolder();
 		
@@ -59,7 +64,7 @@ public class SequentialVerb extends AbstractVerb {
 		// Empty constructor used by remap
 	}
 	
-	private void makeFSM() {
+	public void makeFSM() {
 		if (verbBindings_.isEmpty()) {
 			throw new RuntimeException("Invalid Sequential Verb: No subverbs!");
 		}
@@ -74,12 +79,18 @@ public class SequentialVerb extends AbstractVerb {
 		// positive FSM. The negative FSM needs to be handled differently
 		posFSM_ = null; // Delete the old fsm. One of the subverbs might have been updated
 		for (FSMVerb verb : verbs) {
-			VerbFSM next = verb.getPositiveFSM();
-			if (posFSM_ == null) {
-				posFSM_ = next.duplicate();
-			} else {
-				posFSM_ = posFSM_.concatenate(next);
+			if (verb.hasPositiveFSM()) {
+				VerbFSM next = verb.getPositiveFSM();
+				if (posFSM_ == null) {
+					posFSM_ = next.duplicate();
+				} else {
+					posFSM_ = posFSM_.concatenate(next);
+				}
 			}
+		}
+		
+		if (hasPositiveFSM()) {
+			posFSM_.toDot(getBaseVerb().getVerbFolder() + "final.dot", false);
 		}
 		
 //		posFSM_.toDot(getBaseVerb().getVerbFolder() + "intermediate.dot", false);
@@ -90,7 +101,6 @@ public class SequentialVerb extends AbstractVerb {
 //			posFSM_ = new VerbFSM(posCorePaths_);
 //		}
 		
-		posFSM_.toDot(getBaseVerb().getVerbFolder() + "final.dot", false);
 		
 		// TODO Need to keep track of which subverb we are doing and use the appropriate neg fsm
 		// For now we will just ignore the subverbs neg fsms and make our own
@@ -137,7 +147,9 @@ public class SequentialVerb extends AbstractVerb {
 
 	@Override
 	public int getHeuristic(VerbState verbState) {
-		// TODO: Use the neg state also
+		if (verbState.isBadTerminal()) {
+			return Integer.MAX_VALUE;
+		}
 		return posFSM_.getMinDistToTerminal(verbState.posState);
 	}
 
@@ -146,8 +158,7 @@ public class SequentialVerb extends AbstractVerb {
 	public VerbState fsmTransition(VerbState verbState, Set<String> activeRelations) {
 		// TODO: This method needs to use the correct negFSM dynamically based on the positive state
 		// Probably need to make a map from pos state to neg fsms?
-		
-		TransitionResult posResult = posFSM_.simulateDfaTransition(verbState.posState, activeRelations);
+		TransitionResult posResult = posFSM_.simulateNfaTransition(verbState.posState, activeRelations);
 		TransitionResult negResult = negFSM_.simulateNfaTransition(verbState.negState, activeRelations);
 		
 		return new VerbState(posResult.newState, negResult.newState);

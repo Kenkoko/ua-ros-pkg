@@ -23,10 +23,8 @@ import ros.pkg.verb_learning.srv.ForgetVerb;
 import ros.pkg.verb_learning.srv.LoadVerbs;
 import ros.pkg.verb_learning.srv.PerformVerb;
 import ros.pkg.verb_learning.srv.UpdateVerb;
-import edu.arizona.simulator.ww2d.external.SimulatorFailureException;
-import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
-import edu.arizona.verbs.environments.GazeboEnvironment;
 import edu.arizona.verbs.environments.Simulators;
+import edu.arizona.verbs.environments.ww2d.SimulatorFailureException;
 import edu.arizona.verbs.mdp.StateConverter;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPObjectState;
@@ -34,15 +32,8 @@ import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
 import edu.arizona.verbs.verb.VerbBinding;
 import edu.arizona.verbs.verb.Verbs;
-import edu.arizona.verbs.verb.bayes.MaximumLikelihoodVerb;
-import edu.arizona.verbs.verb.irl.IRLVerb;
-import edu.arizona.verbs.verb.vfsm.AtomicVerb;
 import edu.arizona.verbs.verb.vfsm.FSMVerb;
 import edu.arizona.verbs.verb.vfsm.SequentialVerb;
-import edu.arizona.verbs.verb.vfsm.learner.CorePathLearner;
-import edu.arizona.verbs.verb.vfsm.learner.LearnerType;
-import edu.arizona.verbs.verb.vfsm.learner.SignatureLearner;
-import edu.arizona.verbs.verb.vfsm.learner.VFSMLearner;
 
 public class Interface {
 	private static Logger logger = Logger.getLogger(Interface.class);
