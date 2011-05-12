@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="wubble_svn/src">
+	<classpathentry excluding="edu/arizona/simulator/ww2d/external/SimulatorFailureException.java|edu/arizona/simulator/ww2d/external/State.java|edu/arizona/simulator/ww2d/external/TestHarness.java|edu/arizona/simulator/ww2d/external/VerbGameContainer.java|edu/arizona/simulator/ww2d/external/WW2DEnvironment.java" kind="src" path="wubble_svn/src">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="wubble_world_2d/wubble_svn/natives/linux"/>
 		</attributes>
@@ -25,7 +25,6 @@
 	<classpathentry kind="lib" path="wubble_svn/lib/lwjgl_util.jar"/>
 	<classpathentry kind="lib" path="wubble_svn/lib/lwjgl-debug.jar"/>
 	<classpathentry kind="lib" path="wubble_svn/lib/lwjgl.jar"/>
-	<classpathentry kind="lib" path="wubble_svn/lib/oomdp.jar"/>
 	<classpathentry kind="lib" path="wubble_svn/lib/packulike.jar"/>
 	<classpathentry kind="lib" path="wubble_svn/lib/pedigree.jar"/>
 	<classpathentry kind="lib" path="wubble_svn/lib/QuickTimeDemo.jar"/>
