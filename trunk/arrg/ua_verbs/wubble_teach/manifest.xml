@@ -1,0 +1,17 @@
+<package>
+  <description brief="teaching_interface">
+
+     teaching_interface
+
+  </description>
+  <author>Daniel Hewlett</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/teaching_interface</url>
+
+  <depend package="rosjava"/>
+  <depend package="verb_learning"/>
+
+</package>
+
+
