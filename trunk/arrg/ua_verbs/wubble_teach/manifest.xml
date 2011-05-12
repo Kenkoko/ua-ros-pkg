@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/teaching_interface</url>
 
   <depend package="rosjava"/>
+  <depend package="oomdp_msgs"/>
   <depend package="verb_learning"/>
 
 </package>

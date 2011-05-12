@@ -17,9 +17,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
-rosbuild_genmsg()
+#rosbuild_genmsg()
 #uncomment if you have defined services
-rosbuild_gensrv()
+#rosbuild_gensrv()
 
 rosbuild_find_ros_package(time_series)
 rosbuild_find_ros_package(verb_learning)
@@ -45,6 +45,7 @@ add_jar_dir("${time_series_PACKAGE_PATH}/lib")
 add_jar_dir("${verb_learning_PACKAGE_PATH}/lib")
 add_jar_dir("${wubble_world_2d_PACKAGE_PATH}/wubble_svn/lib")
 add_jar_dir(${PROJECT_SOURCE_DIR}/dist)
+add_jar_dir(${PROJECT_SOURCE_DIR}/lib)
 message("Java build classpath is ${_java_classpath}")
 message("Java runtime classpath is ${_java_runtime_classpath}")
 
@@ -52,6 +53,6 @@ add_ld_lib_path("${wubble_world_2d_PACKAGE_PATH}/wubble_svn/natives/linux")
 message("Java LD_LIBRARY path is ${_ld_lib_path}")
 
 # Add source & executables
-#add_java_source_dir(${PROJECT_SOURCE_DIR}/src)
+add_java_source_dir(${PROJECT_SOURCE_DIR}/src)
 #add_java_source_dir(${wubble_world_2d_PACKAGE_PATH}/src)
 rospack_add_java_executable(wubble_teach edu.arizona.teach.WubbleTeach) 
