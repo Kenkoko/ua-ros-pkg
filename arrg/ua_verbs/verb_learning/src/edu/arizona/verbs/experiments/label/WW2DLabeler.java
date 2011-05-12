@@ -1,10 +1,10 @@
-package edu.arizona.verbs.experiments.evaluation;
+package edu.arizona.verbs.experiments.label;
 
 import java.util.List;
 
 import edu.arizona.verbs.shared.OOMDPState;
 
-public enum Labeler {
+public enum WW2DLabeler implements Labeler {
 	go {
 		@Override
 		public Label label(List<OOMDPState> trace) {

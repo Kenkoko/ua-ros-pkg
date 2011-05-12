@@ -44,4 +44,5 @@ message("Java LD_LIBRARY path is ${_ld_lib_path}")
 # Add source & executables
 add_java_source_dir(${PROJECT_SOURCE_DIR}/src)
 #add_java_source_dir(${wubble_world_2d_PACKAGE_PATH}/src)
-rospack_add_java_executable(interface edu.arizona.verbs.main.Interface) 
+rospack_add_java_executable(interface edu.arizona.verbs.main.Interface)
+rospack_add_java_executable(experimenter edu.arizona.verbs.experiments.Interface)  

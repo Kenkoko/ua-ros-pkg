@@ -38,6 +38,10 @@ public class CorePathLearner implements VFSMLearner {
 	protected void updateCorePathSet(List<OOMDPState> trace) {
 		CorePath seq = new CorePath(trace);
 		
+//		System.out.println("\n\n\n\n");
+//		seq.print();
+//		System.out.println("\n\n\n\n");
+		
 		boolean addPath = true;
 		HashSet<CorePath> deadPaths = new HashSet<CorePath>();
 		for (CorePath core : corePaths_) {
@@ -56,10 +60,10 @@ public class CorePathLearner implements VFSMLearner {
 			corePaths_.remove(dead);
 		}
 		
-		System.out.println("CORE PATHS:");
-		for (CorePath cp : corePaths_) {
-			cp.print();
-		}
+//		System.out.println("CORE PATHS:");
+//		for (CorePath cp : corePaths_) {
+//			cp.print();
+//		}
 	}
 	
 	@Override

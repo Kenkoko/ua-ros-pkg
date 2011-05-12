@@ -25,4 +25,6 @@ public interface Environment {
 	
 	public void reset();
 	
+	public String getNameString();
+	
 }

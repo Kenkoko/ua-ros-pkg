@@ -186,7 +186,7 @@ public class MaximumLikelihoodVerb implements Verb, Remappable<MaximumLikelihood
 		///////////////////////////////////////////////////////////////////
 		// This part follows the (Kollar et al. 2010) paper
 
-		int t = 4; // The depth to explore each replan step
+		int t = 6; // The depth to explore each replan step
 		int k = 1; // The number of previous plans to consider in evaluating termination condition
 		
 		// For go tests, t = 4, k = 1
@@ -207,7 +207,7 @@ public class MaximumLikelihoodVerb implements Verb, Remappable<MaximumLikelihood
 			if (action.equals("REPLAN")) {
 				logger.debug(">> REPLANNING!");
 				
-				ReplanResult result = replan(environment, h, t);
+				ReplanResult result = oldReplan(environment, h, t);
 				if (result == null) {
 					break;
 				}
@@ -357,72 +357,72 @@ public class MaximumLikelihoodVerb implements Verb, Remappable<MaximumLikelihood
 	
 	
 	// This is the BFS up to depth T to find the max likelihood path given the history
-//	private ReplanResult replan(Environment environment, SimplePolicy h, int t) {
+	private ReplanResult oldReplan(Environment environment, SimplePolicy h, int t) {
 //		List<String> actions = Lists.newArrayList("person 0000", "person 1000", "person 0100", "person 0010");
-////		List<String> actions = environment.getActions();
-//
-//		long startTime = System.currentTimeMillis();
-//		
-//		HashSet<SimplePolicy> bestPolicies = new HashSet<SimplePolicy>();
-//		
-//		h.stripLast(); // Remove the "REPLAN"
-//		ArrayList<SimplePolicy> lastDepth = new ArrayList<SimplePolicy>();
-//		lastDepth.add(h);
-//		
-//		double maxLikelihood = Double.NEGATIVE_INFINITY;
-//		
-//		for (int j = 0; j < t; j++) { 
-//			
-//			ArrayList<SimplePolicy> currentDepth = new ArrayList<SimplePolicy>();
-//			
-//			for (SimplePolicy path : lastDepth) {
-//				
-//				for (String action : actions) {
-//					OOMDPState endState = path.getMdpStates().get(path.getMdpStates().size()- 1);
-//					OOMDPState nextState = environment.simulateAction(endState, action);
-//					
-//					SimplePolicy newPath = new SimplePolicy(path);
-//					newPath.addActionState(nextState, action);
-//					
-//					double likelihood = getLikelihood(newPath.getMdpStates());
-//					if (likelihood > maxLikelihood) {						
-//						if (!bestPolicies.isEmpty()) {
-//							System.out.println("A BEST: " + bestPolicies.iterator().next().getActions());
-//							System.out.println("THIS  : " + newPath.getActions());
-//							System.out.println("STATS : " + likelihood + " " + maxLikelihood);
-//						}
-//						
-//						bestPolicies.clear();
-//						bestPolicies.add(newPath);
-//						
-//						maxLikelihood = likelihood;
-//						
-//					} else if (likelihood == maxLikelihood) {
-//						bestPolicies.add(newPath);
-//					}
-//					
-//					currentDepth.add(newPath);
-//				}
-//			}
-//			
-//			logger.debug("END ITERATION");
-//			
-//			lastDepth = currentDepth;
-//		}
-//		
-//		logger.debug("TIED POLICIES: " + bestPolicies.size());
-//		
-//		Random r = new Random();
-//		SimplePolicy policy = bestPolicies.toArray(new SimplePolicy[0])[r.nextInt(bestPolicies.size())];
-//		
-//		policy.replan();
-//		
-//		ReplanResult result = new ReplanResult();
-//		result.path = policy;
-//		result.likelihood = maxLikelihood;
-//		result.planningTime = System.currentTimeMillis() - startTime;
-//		return result;
-//	}
+		List<String> actions = environment.getActions();
+
+		long startTime = System.currentTimeMillis();
+		
+		HashSet<SimplePolicy> bestPolicies = new HashSet<SimplePolicy>();
+		
+		h.stripLast(); // Remove the "REPLAN"
+		ArrayList<SimplePolicy> lastDepth = new ArrayList<SimplePolicy>();
+		lastDepth.add(h);
+		
+		double maxLikelihood = Double.NEGATIVE_INFINITY;
+		
+		for (int j = 0; j < t; j++) { 
+			
+			ArrayList<SimplePolicy> currentDepth = new ArrayList<SimplePolicy>();
+			
+			for (SimplePolicy path : lastDepth) {
+				
+				for (String action : actions) {
+					OOMDPState endState = path.getMdpStates().get(path.getMdpStates().size()- 1);
+					OOMDPState nextState = environment.simulateAction(endState, action);
+					
+					SimplePolicy newPath = new SimplePolicy(path);
+					newPath.addActionState(action, nextState);
+					
+					double likelihood = getLikelihood(newPath.getMdpStates());
+					if (likelihood > maxLikelihood) {						
+						if (!bestPolicies.isEmpty()) {
+							System.out.println("A BEST: " + bestPolicies.iterator().next().getActions());
+							System.out.println("THIS  : " + newPath.getActions());
+							System.out.println("STATS : " + likelihood + " " + maxLikelihood);
+						}
+						
+						bestPolicies.clear();
+						bestPolicies.add(newPath);
+						
+						maxLikelihood = likelihood;
+						
+					} else if (likelihood == maxLikelihood) {
+						bestPolicies.add(newPath);
+					}
+					
+					currentDepth.add(newPath);
+				}
+			}
+			
+			logger.debug("END ITERATION");
+			
+			lastDepth = currentDepth;
+		}
+		
+		logger.debug("TIED POLICIES: " + bestPolicies.size());
+		
+		Random r = new Random();
+		SimplePolicy policy = bestPolicies.toArray(new SimplePolicy[0])[r.nextInt(bestPolicies.size())];
+		
+		policy.replan();
+		
+		ReplanResult result = new ReplanResult();
+		result.path = policy;
+		result.likelihood = maxLikelihood;
+		result.planningTime = System.currentTimeMillis() - startTime;
+		return result;
+	}
 //	
 	@Override
 	public String getLexicalForm() {

@@ -2,12 +2,12 @@ package edu.arizona.verbs.experiments.validation;
 
 import java.util.List;
 
-import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
 import edu.arizona.verbs.environments.Simulators;
+import edu.arizona.verbs.environments.ww2d.WW2DEnvironment;
 import edu.arizona.verbs.experiments.Experimenter;
 import edu.arizona.verbs.experiments.Scenario;
-import edu.arizona.verbs.experiments.evaluation.Label;
-import edu.arizona.verbs.experiments.evaluation.Labeler;
+import edu.arizona.verbs.experiments.label.Label;
+import edu.arizona.verbs.experiments.label.Labelers;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 
@@ -19,8 +19,9 @@ public class TeacherTest {
 	 */
 	public static void main(String[] args) throws Exception {
 		String env = "ww2d";
-		String verb = "follow";
-		int index = 9;
+//		String env = "gazebo";
+		String verb = "intercept";
+		int index = 3;
 		
 		List<Scenario> scenarios = Experimenter.loadScenarios(env, verb);
 
@@ -35,7 +36,7 @@ public class TeacherTest {
 		for (OOMDPState state : demonstration) {
 			System.out.println(state);
 		}
-		Label label = Labeler.valueOf(verb).label(demonstration);
+		Label label = Labelers.valueOf(env).getLabeler(verb).label(demonstration);
 		System.out.println("LABEL:" + label);
 	}
 }

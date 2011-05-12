@@ -1,7 +1,7 @@
 package edu.arizona.verbs.planning.fsm;
 
-import edu.arizona.simulator.ww2d.external.WW2DEnvironment;
-import edu.arizona.verbs.environments.GazeboEnvironment;
+import edu.arizona.verbs.environments.gazebo.GazeboEnvironment;
+import edu.arizona.verbs.environments.ww2d.WW2DEnvironment;
 import edu.arizona.verbs.planning.shared.Planner;
 import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.verb.vfsm.FSMVerb;
