@@ -211,7 +211,10 @@ class SubjectUI:
 		    self.currentRep += 1
 		    #self.console.set_text('')
 		if (((self.currentInd)%10) == 0):
-		    self.currentBatch += 1
+			self.currentBatch += 1
+			self.onStop(event)
+			time.sleep(1)
+			self.onStart(event)
 		print self.stimuliList[self.currentInd]
 		self.console.set_text('')
 		self.console.append_text('\n')
