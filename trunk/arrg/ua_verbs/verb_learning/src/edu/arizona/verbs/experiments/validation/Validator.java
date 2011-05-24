@@ -21,9 +21,9 @@ public class Validator {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-//		String env = "ww2d";
-		String env = "gazebo";
-		String verb = "deliver";
+		String env = "ww2d";
+//		String env = "gazebo";
+		String verb = "intercept";
 		
 		List<Scenario> scenarios = Experimenter.loadScenarios(env, verb);
 

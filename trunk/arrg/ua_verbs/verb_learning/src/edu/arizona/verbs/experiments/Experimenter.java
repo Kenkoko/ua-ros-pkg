@@ -7,10 +7,9 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
@@ -18,15 +17,9 @@ import ros.pkg.verb_learning.srv.PerformVerb.Response;
 import au.com.bytecode.opencsv.CSVWriter;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import edu.arizona.cs.learn.algorithm.markov.FSMRecognizer;
-import edu.arizona.cs.learn.timeseries.model.Interval;
 import edu.arizona.verbs.environments.Simulators;
-import edu.arizona.verbs.experiments.evaluation.EvaluationResults;
-import edu.arizona.verbs.experiments.evaluation.Evaluator;
-import edu.arizona.verbs.experiments.label.GazeboLabeler;
 import edu.arizona.verbs.experiments.label.Label;
 import edu.arizona.verbs.experiments.label.Labelers;
 import edu.arizona.verbs.experiments.label.WW2DLabeler;
@@ -35,10 +28,10 @@ import edu.arizona.verbs.shared.Environment;
 import edu.arizona.verbs.shared.OOMDPState;
 import edu.arizona.verbs.verb.Verb;
 import edu.arizona.verbs.verb.Verbs;
-import edu.arizona.verbs.verb.vfsm.AtomicVerb;
 
 public class Experimenter {
 	public static String teacherFolder = System.getProperty("user.dir") + "/data/teacher/";
+	public static Logger logger = Logger.getLogger(Experimenter.class);
 	
 	public static List<Scenario> loadScenarios(String environment, String verb) throws FileNotFoundException {
 		FileInputStream fis = new FileInputStream(teacherFolder + environment + "/" + verb + ".yaml");
@@ -67,6 +60,8 @@ public class Experimenter {
 	}
 	
 	public static List<OOMDPState> demonstrate(Scenario scenario, Environment environment) {
+		logger.debug("BEGIN DEMONSTRATION");
+		
 		List<OOMDPState> teacherTrace = Lists.newArrayList();
 		
 		OOMDPState startState = environment.initializeEnvironment(scenario.start);
@@ -83,8 +78,11 @@ public class Experimenter {
 			System.out.println("IF THEY CAN'T UNDERSTAND, HOW CAN THEY TEACH ME?");
 			System.out.println("I GUESS THEY CAN'T, I GUESS THEY WON'T");
 			System.out.println("THAT'S HOW I KNOW MY LIFE IS OUT OF LUCK, FOOL");
-			System.exit(1);
+//			System.exit(1);
+			throw new RuntimeException("GANGSTA'S PARADISE!");
 		}
+		
+		logger.debug("END DEMONSTRATION");
 		
 		return teacherTrace;
 	}
@@ -136,14 +134,14 @@ public class Experimenter {
 		String env = "ww2d";
 //		String env = "gazebo";
 		
-//		String verb = "go";
-//		ArrayList<String> arguments = Lists.newArrayList("agent", "place");
+		String verb = "go";
+		ArrayList<String> arguments = Lists.newArrayList("agent", "place");
 
 //		String verb = "go_via";
 //		ArrayList<String> arguments = Lists.newArrayList("agent", "waypoint", "place");
 //		
-		String verb = "intercept";
-		ArrayList<String> arguments = Lists.newArrayList("agent", "enemy", "place");
+//		String verb = "intercept";
+//		ArrayList<String> arguments = Lists.newArrayList("agent", "enemy", "place");
 		
 //		String verb = "follow";
 //		ArrayList<String> arguments = Lists.newArrayList("agent", "enemy", "place");
@@ -159,7 +157,7 @@ public class Experimenter {
 //		String model = "naive";
 //		String model = "corepath";
 //		String model = "ml";
-		int numTrajectories = 5;
+		int numTrajectories = 1;
 		
 		// Load the evironment
 //		WW2DEnvironment.visualize = true;
