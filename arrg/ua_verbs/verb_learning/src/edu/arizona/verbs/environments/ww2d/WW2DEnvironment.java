@@ -66,7 +66,7 @@ public class WW2DEnvironment implements Environment {
 	
 	public void cleanup() { 
 		_gameSystem.finish();
-		_container.destroy();
+		_container.destroy(); 
 	}
 	
 	// MDPObjectState -- This corresponds to the objects and their attributes
@@ -159,13 +159,21 @@ public class WW2DEnvironment implements Environment {
 
 	private List<State> worldState = null;
 	private boolean needsReset = false;
+	private boolean firstTime = true;
 	
 	@Override
 	public OOMDPState initializeEnvironment(List<OOMDPObjectState> state) {
-		_gameSystem = new GameSystem(800, 800, true);		
+		if (!firstTime) {
+			_gameSystem.finish(); // Clear out the old gamesystem before we re-initialize it
+		}
+		firstTime = false;
+		
+//		_gameSystem = new GameSystem(800, 800, true);		
+		_gameSystem = new GameSystem(100, 100, true);
+		_gameSystem.setScale(1.0f);
 		_gameSystem.addSubsystem(SubsystemType.PhysicsSubsystem, new PhysicsSubsystem());
 		_gameSystem.loadLevel("data/levels/Room-External.xml", null, null);
-
+		
 		Space systemSpace = Blackboard.inst().getSpace("system");
 		World world = systemSpace.get(Variable.physicsWorld).get(World.class);
 		
