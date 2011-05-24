@@ -64,7 +64,7 @@ class CHR6dmNode():
         rospy.sleep(0.1)
         
         self.imu.enable_accel_angrate_orientation()
-        self.imu.set_ekf_config(True, False)
+        #self.imu.set_ekf_config(True, True)
         accel_cov = self.imu.get_accel_covariance()
         mag_cov = self.imu.get_mag_covariance()
         proc_cov = self.imu.get_process_covariance()
@@ -97,25 +97,30 @@ class CHR6dmNode():
                 
             if not data: continue
             
+            # quaternion from eauler in NED coordinate system
             ori = quaternion_from_euler(data['roll'], data['pitch'], data['yaw'])
-            self.imu_msg.orientation.x = ori[0]
-            self.imu_msg.orientation.y = ori[1]
-            self.imu_msg.orientation.z = ori[2]
+            
+            # quaternion in ENU coordiante system
+            self.imu_msg.orientation.x = ori[1]
+            self.imu_msg.orientation.y = ori[0]
+            self.imu_msg.orientation.z = -ori[2]
             self.imu_msg.orientation.w = ori[3]
             
-            self.imu_msg.angular_velocity.x = data['roll_rate']
-            self.imu_msg.angular_velocity.y = data['pitch_rate']
-            self.imu_msg.angular_velocity.z = data['yaw_rate']
+            # populate angular and linear rates, converting from NED to ENU
+            self.imu_msg.angular_velocity.x = data['pitch_rate']
+            self.imu_msg.angular_velocity.y = data['roll_rate']
+            self.imu_msg.angular_velocity.z = -data['yaw_rate']
             
-            self.imu_msg.linear_acceleration.x = data['accel_x']
-            self.imu_msg.linear_acceleration.y = data['accel_y']
-            self.imu_msg.linear_acceleration.z = data['accel_z']
+            self.imu_msg.linear_acceleration.x = data['accel_y']
+            self.imu_msg.linear_acceleration.y = data['accel_x']
+            self.imu_msg.linear_acceleration.z = -data['accel_z']
             
             self.imu_msg.header.stamp = rospy.Time.from_sec(data['timestamp'])
             self.imu_data_pub.publish(self.imu_msg)
             
             br = tf.TransformBroadcaster()
-            br.sendTransform((0, 0, 1), ori, self.imu_msg.header.stamp, self.imu_msg.header.frame_id, '/map')
+            o = [self.imu_msg.orientation.x, self.imu_msg.orientation.y,self.imu_msg.orientation.z,self.imu_msg.orientation.w]
+            br.sendTransform((0, 0, 1), o, self.imu_msg.header.stamp, self.imu_msg.header.frame_id, '/map')
             
             r.sleep()
 
