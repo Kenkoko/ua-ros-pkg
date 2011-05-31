@@ -51,6 +51,7 @@ import rospy
 
 # import optimization frameworks and agent class
 from pybrain.optimization import PGPE
+from pybrain.optimization import CMAES
 from pybrain.rl.agents import OptimizationAgent
 from pybrain.rl.experiments import EpisodicExperiment
 
@@ -63,6 +64,10 @@ from pybrain.utilities import drawGibbs
 from ua_audio_infomax.tasks import InfoMaxTask
 from ua_audio_infomax.environment import InfoMaxEnv
 from ua_audio_infomax.graphExperiment import graph
+from ua_audio_infomax.msg import Action as InfomaxAction
+
+from multiprocessing import Pool
+from multiprocessing import cpu_count
 
 
 __author__ = 'Daniel Ford, Antons Rebguns'
@@ -80,6 +85,8 @@ if __name__ == '__main__':
     epi_msg = 'Example: %s --num-objects=5 --max-steps=35' % sys.argv[0]
     
     parser = OptionParser(usage=usage_msg, description=desc_msg, epilog=epi_msg)
+    parser.add_option('-a', '--algorithm', metavar='ALG', type='string', default='pgpe',
+                      help='optimization algorithm [default: %default]')
     parser.add_option('-o', '--num-objects', metavar='OBJ', type='int', default=1,
                       help='number of objects in the world [default: %default]')
     parser.add_option('-e', '--num-experiments', metavar='EXP', type='int', default=2,
@@ -97,6 +104,7 @@ if __name__ == '__main__':
                       
     (options, args) = parser.parse_args(sys.argv)
     
+    algorithm = options.algorithm
     num_objects = options.num_objects
     num_experiments = options.num_experiments
     num_batches = options.num_batches
@@ -104,6 +112,8 @@ if __name__ == '__main__':
     num_testing_episodes = options.num_testing_episodes
     num_best_test_runs = options.num_best_test_runs
     max_steps = options.max_steps
+    
+    print 'Using %s optimization algorithm' % algorithm.upper()
     
     # categories and objects 
     num_categories = 10
@@ -116,7 +126,7 @@ if __name__ == '__main__':
                     'push',         # 5
                     'shake_pitch',  # 6
                     'move_left',    # 7
-                    'move_right',   # 8
+#                    'move_right',   # 8
                    ]
                    
     object_names = ['pink_glass',           # 0
@@ -131,11 +141,6 @@ if __name__ == '__main__':
                     'chalkboard_eraser',    # 9
                    ]
                    
-    # init structures for rewards and network parameters
-    lrn_rewards = []
-    best_params = []
-    best_reward = -1000;
-    
     # save off experiment parameters for each run
     def pickle_metadata(filename, timestamp, netparams):
         f = open(filename, 'w')
@@ -158,38 +163,46 @@ if __name__ == '__main__':
         
     rospy.init_node('experiment_graphing_node', anonymous=True)
     
-    ###################### run [num_experiments] experiments, each with [num_batches] batches
-    ###################### each num_learning_episodes has [num_learning_episodes] episodes with [max_steps] per episode 
-    best_counter = 0
-    
-    for runs in range(num_experiments):
-        rospy.loginfo('\n*********** STARTING EXPERIMENT %d ***********' % runs)
+    def run_experiment(exp_desc):
+        """
+        run [num_experiments] experiments, each with [num_batches] batches
+        each num_learning_episodes has [num_learning_episodes] episodes with [max_steps] per episode
+        """
+        exp_id = exp_desc[0]
+        agent = exp_desc[1]
+        experiment = exp_desc[2]
+        task = exp_desc[3]
         
-        # set up environment, task, neural net, agent, and experiment
-        env = InfoMaxEnv(object_names, action_names, num_objects)
-        task = InfoMaxTask(env, max_steps=max_steps)
-        net = buildNetwork(task.outdim, task.indim, bias =True, outclass=SoftmaxLayer)
-        agent = OptimizationAgent(net, PGPE(storeAllEvaluations=True,minimize=False,verbose=False))
-        experiment = EpisodicExperiment(task, agent)
+        print '\n*********** STARTING EXPERIMENT %d ***********' % exp_id
         
-        agent_rewards = []
-        ep_rewards = []
+        exp_best_reward = -1000
+        exp_best_counter = 0
+        exp_agent_rewards = []
+        exp_ep_rewards = []
+        exp_best_params = []
         
         # Learn in batches
-        agent_rewards.append(0)
+        exp_agent_rewards.append(0)
         
         for i in range(num_batches):
-            rospy.loginfo('\tProcessing learning batch %d...' % i)
+            if i % 30 == 0: print '[%d] processing batch %d [best = %f]' % (exp_id, i, exp_best_reward)
             
-            ########################## learn policy
-            task.env.listActions = True
             experiment.doEpisodes(num_learning_episodes)
             
-            ########################## test learned policy
-            
+            # test learned policy
             # When a num_learning_episodes is done, evaluate so we can see progress and show learning curves
-            curparams = agent.learner.current;
-            agent.learner.wrappingEvaluable._setParameters(curparams);
+            best_network, best_score = agent.learner._bestFound()
+            best_params = best_network.params
+            
+#            print '****SCORES****', i
+#            print best_score_f, best_score
+            
+#            curparams = agent.learner.bestEvaluable
+            
+#            print 'batch', i, best_score
+            #agent.learner._setInitEvaluable(curparams)
+            #curparams = agent.learner.current
+            #agent.learner.wrappingEvaluable._setParameters(curparams);
             
             # Evaluate the current learned policy for num_testing_episodes episodes
             rewards = []
@@ -199,7 +212,12 @@ if __name__ == '__main__':
                 agent.newEpisode()
                 # Execute the agent in the environment without learning for one episode.
                 # This uses the current set of parameters
-                r = agent.learner._BlackBoxOptimizer__evaluator(agent.learner.wrappingEvaluable)
+                #r = agent.learner._BlackBoxOptimizer__evaluator(agent.learner.wrappingEvaluable)
+                r = task(best_network) #agent.learner._bestFound()[0])
+                #print 'bef', test_ep, r
+                #r = agent.learner._oneEvaluation(curparams)
+                #r = agent.learner._bestFound()[1]
+                #print 'aft', test_ep, r
 #                    print "\t\t\treward testing episode", test_ep, r
                 rewards.append(r)
                 #testingJointProbs.append(task.objects[0].jointProb)
@@ -207,37 +225,75 @@ if __name__ == '__main__':
             # average of all rewards earned by the current policy running num_testing_episodes episodes
             avg_testing_reward = np.mean(rewards)
             
-            rospy.loginfo('\taverage testing reward for batch %d is [%.5f]' % (i, avg_testing_reward))
+            #rospy.loginfo('\t[%d] average testing reward for batch %d is [%.5f]', exp_id, i, avg_testing_reward)
             
             # list of average rewards per num_learning_episodes 
-            agent_rewards.append(avg_testing_reward)
+            exp_agent_rewards.append(avg_testing_reward)
             
             # list of reward per episode in this num_learning_episodes
-            ep_rewards.append(rewards)
+            exp_ep_rewards.append(rewards)
             
             # compare the average reward for this evaluation of the learned policy. If it is better on average than
             # a previous one, then save off the parameters that make up the neural network so we can use it to 
             # perform a single episode
-            if avg_testing_reward > best_reward:
-                best_counter = 0
-                best_reward = avg_testing_reward
-                bestparams = agent.learner.current.copy()
+            if avg_testing_reward > exp_best_reward:
+                print '[%d] New best reward %f (change from previous is %f)' % (exp_id, avg_testing_reward, avg_testing_reward - exp_best_reward)
+                exp_best_reward = avg_testing_reward
+                exp_best_params = best_network #agent.learner.bestEvaluable
+#                exp_best_params = agent.learner.current.copy()
                 
-            rospy.loginfo('\tCurrent best reward is [%.5f] (unchanged for %d batches)' % (best_reward, best_counter))
-            best_counter += 1
-            
-        # list of list of average rewards per num_learning_episodes
-        lrn_rewards.append(agent_rewards)
+        # return parameters of the best policy in this experiment
+        print '[%d] experiment best reward is %f' % (exp_id, exp_best_reward)
+        return exp_agent_rewards, exp_best_reward, exp_best_params
         
-        # list of lists of rewards per episode in each num_learning_episodes
-        #lrn_rewards.append(ep_rewards)
-        
-        # saving parameters of the best policy
-        best_params2 = bestparams.copy();
-        # All Batches done.  
-        
-    rospy.loginfo('Learning DONE')
+    # init structures for rewards and network parameters
+    lrn_rewards = []
+    best_params = []
+    best_reward = -1000
     
+    num_cpus = cpu_count()
+    rospy.loginfo('Using %d CPUs for experiments', num_cpus)
+    
+    exp_desciptions = []
+    
+    for i in range(num_experiments):
+        # set up environment, task, neural net, agent, and experiment
+        env = InfoMaxEnv(object_names, action_names, num_objects, False)
+        task = InfoMaxTask(env, max_steps=max_steps)
+        net = buildNetwork(task.outdim, task.indim, bias=True, outclass=SoftmaxLayer)
+        
+        if algorithm == 'pgpe':
+            agent = OptimizationAgent(net, PGPE(storeAllEvaluations=True,minimize=False,verbose=False))
+        elif algorithm == 'cmaes':
+            agent = OptimizationAgent(net, CMAES(minimize=False,verbose=False))
+            
+        experiment = EpisodicExperiment(task, agent)
+        
+        exp_desciptions.append([i, agent, experiment, task])
+        
+    pool = Pool(processes=num_cpus)
+    
+    res = []
+    if algorithm == 'pgpe':
+        res = pool.map(run_experiment, exp_desciptions)
+    elif algorithm == 'cmaes':
+        for desc in exp_desciptions:
+            res.append(run_experiment(desc))
+    else:
+        for desc in exp_desciptions:
+            res.append(run_experiment(desc))
+            
+    for exp_res in res:
+        exp_agent_rewards, exp_best_reward, exp_best_params = exp_res
+        lrn_rewards.append(exp_agent_rewards)
+        
+        if exp_best_reward > best_reward:
+            best_reward = exp_best_reward
+            best_params = exp_best_params
+            
+    rospy.loginfo('Global best reward is %f', best_reward)
+    best_params2 = best_params.copy()
+    rospy.loginfo('Learning DONE')
     ###################### set path to save experiment files and metadata
     path = ""
     #path = "data"
@@ -261,7 +317,22 @@ if __name__ == '__main__':
     probCorrect = []
     Ep_rewardsHand = []
     probCorrectHand = []
-    agent.learner.wrappingEvaluable._setParameters(best_params2)
+    
+    # set up environment, task, neural net, agent, and experiment
+    env = InfoMaxEnv(object_names, action_names, num_objects, False)
+    task = InfoMaxTask(env, max_steps=max_steps)
+    net = buildNetwork(task.outdim, task.indim, bias =True, outclass=SoftmaxLayer)
+    
+    if algorithm == 'pgpe':
+        agent = OptimizationAgent(net, PGPE(storeAllEvaluations=True,minimize=False,verbose=False))
+    elif algorithm == 'cmaes':
+        agent = OptimizationAgent(net, CMAES(minimize=False,verbose=False))
+        
+    experiment = EpisodicExperiment(task, agent)
+    experiment.doEpisodes(1)
+    
+    #agent.learner.wrappingEvaluable._setParameters(best_params2)
+    agent.learner._setInitEvaluable(best_params2)
     
     joint_probs_learned = np.zeros((num_best_test_runs,num_objects,max_steps,num_categories))
     joint_probs_handcoded = np.zeros((num_best_test_runs,num_objects,max_steps,num_categories))
@@ -275,7 +346,7 @@ if __name__ == '__main__':
     avg_prob_handcoded = np.zeros((num_best_test_runs,num_objects,max_steps))
     
     for test_run in range(num_best_test_runs):
-        print "RUNNING EP", test_run
+        #print "RUNNING EP", test_run
         
         # perform one episode with trained policy
         agent.newEpisode()
@@ -285,7 +356,7 @@ if __name__ == '__main__':
         step_counter = 0
         steps = []
         
-        print 'executing learned policy...'
+        #print 'executing learned policy...'
         
         while not task.isFinished():
             actionIdx = drawGibbs(agent.learner.wrappingEvaluable.activate(task.getObservation()), temperature=0)
@@ -293,7 +364,7 @@ if __name__ == '__main__':
             rewards.append(task.getReward())
             
             for cur_loc in range(len(task.objects)):
-                joint_probs_learned[test_run,cur_loc,step_counter] = task.objects[cur_loc].joint_prob
+                joint_probs_learned[test_run,cur_loc,step_counter] = task.objects[cur_loc].joint_alphas
                 avg_prob_learned[test_run,cur_loc,step_counter] = (np.argmax(task.objects[cur_loc].joint_prob) == task.env.objects[cur_loc])
                 #print 'l', test_run, cur_loc, step_counter, action_names[actionIdx], object_names[task.env.objects[cur_loc]], avg_prob_learned[test_run,cur_loc,step_counter], avg_prob_learned[test_run,cur_loc]
                 #print 'l', test_run, cur_loc, step_counter, action_names[actionIdx], object_names[task.env.objects[cur_loc]], joint_probs_learned[test_run,cur_loc]
@@ -305,31 +376,34 @@ if __name__ == '__main__':
         learned_steps.append(steps)
         Ep_rewards.append(rewards)
         
-        print 'done\n\n'
+        #print 'done\n\n'
         
         # perform one episode with hand-coded policy
         agent.newEpisode()
-        task.reset()
+        task.reset(randomize=False)
         task.env.verbose = False
         rewardsHand = []
         step_counter = 0
         steps = []
         
         actionIdx = 0
+        actions = [InfomaxAction.GRASP, InfomaxAction.LIFT, InfomaxAction.SHAKE_ROLL, InfomaxAction.SHAKE_PITCH, InfomaxAction.DROP, InfomaxAction.MOVE_LEFT]
+        #actions = [InfomaxAction.GRASP, InfomaxAction.LIFT, InfomaxAction.DROP, InfomaxAction.SHAKE_ROLL, InfomaxAction.PLACE, InfomaxAction.PUSH, InfomaxAction.SHAKE_PITCH, InfomaxAction.MOVE_LEFT]
+        #actions = [InfomaxAction.DROP, InfomaxAction.SHAKE_ROLL, InfomaxAction.SHAKE_PITCH, InfomaxAction.MOVE_LEFT]
         
         while not task.isFinished():
-            task.performAction(actionIdx)
+            task.performAction(actions[actionIdx])
             rewardsHand.append(task.getReward())
             
             for cur_loc in range(len(task.objects)):
-                joint_probs_handcoded[test_run,cur_loc,step_counter] = task.objects[cur_loc].joint_prob
+                joint_probs_handcoded[test_run,cur_loc,step_counter] = task.objects[cur_loc].joint_alphas
                 avg_prob_handcoded[test_run,cur_loc,step_counter] = (np.argmax(task.objects[cur_loc].joint_prob) == task.env.objects[cur_loc])
                 #print 'h', test_run, cur_loc, step_counter, action_names[actionIdx], object_names[task.env.objects[cur_loc]], avg_prob_handcoded[test_run,cur_loc,step_counter], avg_prob_handcoded[test_run,cur_loc]
                 #print 'h', test_run, cur_loc, step_counter, action_names[actionIdx], object_names[task.env.objects[cur_loc]], joint_probs_handcoded[test_run,cur_loc]
                 
-            steps.append(action_names[actionIdx])
+            steps.append(action_names[actions[actionIdx]])
             actionIdx += 1
-            if actionIdx > len(action_names) - 2: actionIdx = 0
+            if actionIdx >= len(actions): actionIdx = 0
             
             step_counter += 1
             

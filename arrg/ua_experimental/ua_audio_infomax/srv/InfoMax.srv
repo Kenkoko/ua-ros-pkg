@@ -5,5 +5,7 @@ int32 numCats                       # number of categories
 int32 catID                         # category index for object at current location
 ua_audio_infomax/Action actionID    # index of action to take
 ---
+bool success
 float64[] beliefs                   # PDF over classes and objects, conditioned on action
 int32 location                      # current location of robot (integer index, should be the same as the object index)
+string state                        # current arm state

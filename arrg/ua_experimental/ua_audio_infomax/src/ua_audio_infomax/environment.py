@@ -40,6 +40,7 @@ from std_srvs.srv import Empty
 from pybrain.utilities import Named
 from pybrain.rl.environments.environment import Environment
 
+from ua_audio_infomax.robotTestServer import robotTestServer
 from ua_audio_infomax.msg import Action as InfomaxAction
 from ua_audio_infomax.srv import InfoMax
 from ua_audio_infomax.srv import InfoMaxRequest
@@ -55,33 +56,43 @@ __email__ = 'dford@email.arizona.edu'
 
 
 class InfoMaxEnv(Environment, Named):
-    def __init__(self, category_names, action_names, num_objects):
+    def __init__(self, category_names, action_names, num_objects, standalone_robot_server=True):
         self.category_names = category_names
         self.action_names = action_names
         
         self.num_categories = len(category_names)
         self.num_objects = num_objects
         
-        rospy.loginfo('waiting for InfoMax service...')
-        rospy.wait_for_service('InfoMax')
-        rospy.loginfo('connected to InfoMax service')
-        self.get_belief_distribution = rospy.ServiceProxy('InfoMax', InfoMax)
-        
-        rospy.loginfo('waiting for reset_current_location service...')
-        rospy.wait_for_service('reset_current_location')
-        rospy.loginfo('connected to reset_current_location service')
-        self.reset_current_location = rospy.ServiceProxy('reset_current_location', Empty)
-        
+        if standalone_robot_server:
+            self.robot_server = None
+            rospy.loginfo('waiting for InfoMax service...')
+            rospy.wait_for_service('InfoMax')
+            rospy.loginfo('connected to InfoMax service')
+            self.get_belief_distribution = rospy.ServiceProxy('InfoMax', InfoMax)
+            
+            rospy.loginfo('waiting for reset_current_location service...')
+            rospy.wait_for_service('reset_current_location')
+            rospy.loginfo('connected to reset_current_location service')
+            self.reset_current_location = rospy.ServiceProxy('reset_current_location', Empty)
+        else:
+            self.robot_server = robotTestServer(standalone=False)
+            
+        self.objects = None
         self.reset()
 
 
-    def reset(self):
+    def reset(self, randomize=True):
         """
         Shuffles objects at all environment locations.
         """
-        self.objects = np.random.randint(0, self.num_categories, self.num_objects)
-        self.reset_current_location()
+        if randomize:
+            self.objects = np.random.randint(0, self.num_categories, self.num_objects)
+            
+        if not self.robot_server: self.reset_current_location(Empty())
+        else: self.robot_server.reset_current_location(Empty())
+        
         self.current_location = 0
+        self.current_state = 'init'
 
 
     def sense(self, action):
@@ -101,8 +112,10 @@ class InfoMaxEnv(Environment, Named):
             rospy.logdebug('calling sense service with action %d (%s) on object %d(%s)' %
                            (req.actionID.val, self.action_names[req.actionID.val], req.catID, self.category_names[req.catID]))
                            
-            res = self.get_belief_distribution(req)
+            if not self.robot_server: res = self.get_belief_distribution(req)
+            else: res = self.robot_server.handle_infomax_request(req)
             self.current_location = res.location
+            self.current_state = res.state
             
             return res
         except rospy.ServiceException as e:

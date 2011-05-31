@@ -44,69 +44,49 @@ __email__ = 'dford@email.arizona.edu'
 
 
 class PDF_library():
-    def __init__(self, actionNames, numCategories, numObjects, numSamples):
-        self.numObjects = numObjects
-        self.numCategories = numCategories
-        self.numSamples = numSamples
-        self.numActions = len(actionNames)
-        self.PDF_database = []
+    def __init__(self, action_names, object_names):
+        self.action_names = action_names
+        self.object_names = object_names
         
         # create PDF database for all categories and actions
-        self._createPDFs()
+        self.read_pdf_database()
 
 
-    def _createPDFs(self):
-        """
-        create numSamples PDFs per category and possible action
-        """
-        for action in range(self.numActions):
-            if action in [7,8]: continue
-            for cat in range(self.numCategories):
-                for sample in range(self.numSamples):
-                    self.PDF_database.append(PDF(self.numCategories, cat, action, sample))
+    def read_pdf_database(self):
+        pdfs_in = open('/tmp/obj_pdf.pkl', 'rb')
+        self.pdf_database = pickle.load(pdfs_in)
+        pdfs_in.close()
 
 
-    def samplePDF(self, catID, actionType):
+    def sample(self, action_id, category_id):
         """
         sample randomly from PDFs for given object and action
         """
         # select a PDF at random from the correct category
-        PDF = self.PDF_database[actionType*self.numCategories*self.numSamples + catID*self.numSamples + randint(self.numSamples)].PDF
-        return PDF
+        action_name = self.action_names[action_id]
+        category_name = self.object_names[category_id]
+        
+        pdf_samples = self.pdf_database[action_name][category_name]
+        pdf = pdf_samples[randint(len(pdf_samples))]
+        
+        # translate from map to list representation
+        return [pdf[obj] for obj in self.object_names]
 
 
-class PDF():
-    def __init__(self, numCategories, catID, actionType, sample):
-        self.action_names = ['grasp',        # 0
-                             'lift',         # 1
-                             'drop',         # 2
-                             'shake_roll',   # 3
-                             'place',        # 4
-                             'push',         # 5
-                             'shake_pitch',  # 6
-                             'move_left',    # 7
-                             'move_right',   # 8
-                            ]
-                            
-        self.object_names = ['pink_glass',           # 0
-                             'german_ball',          # 1
-                             'blue_cup',             # 2
-                             'blue_spiky_ball',      # 3
-                             'screw_box',            # 4
-                             'wire_spool',           # 5
-                             'sqeaky_ball',          # 6
-                             'duck_tape_roll',       # 7
-                             'ace_terminals',        # 8
-                             'chalkboard_eraser',    # 9
-                            ]
-                            
-        pdfs_in = open('/tmp/obj_pdf.pkl', 'rb')
-        pdf_map = pickle.load(pdfs_in)
+    def read_pdf_database_new(self):
+        pdfs_in = open('/tmp/proportions.pkl', 'rb')
+        self.pdf_database, _, _ = pickle.load(pdfs_in)
         pdfs_in.close()
+
+
+    def sample_new(self, action_id, category_id):
+        """
+        sample randomly from PDFs for given object and action
+        """
+        # select a PDF at random from the correct category
+        action_name = self.action_names[action_id]
+        category_name = self.object_names[category_id]
         
-        # get all object distributions for a given action
-        action_pdfs = pdf_map[self.action_names[actionType]]
-        object_pdfs = action_pdfs[self.object_names[catID]]
-        
-        self.PDF = [object_pdfs[sample][obj] for obj in self.object_names]
+        pdf_samples = self.pdf_database[action_name][category_name]
+        return pdf_samples[randint(pdf_samples.shape[0])].tolist()
 

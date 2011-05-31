@@ -42,8 +42,11 @@ import rospy
 
 from std_srvs.srv import Empty
 
+import numpy as np
+
 from ua_audio_infomax.PDF import PDF_library
 from ua_audio_infomax.srv import InfoMax
+from ua_audio_infomax.srv import InfoMaxResponse
 from ua_audio_infomax.msg import Action as InfomaxAction
 
 
@@ -57,30 +60,49 @@ __email__ = 'dford@email.arizona.edu'
 
 
 class robotTestServer():
-    def __init__(self):
-        self.num_categories = 0
+    def __init__(self, standalone=False):
+        self.state = {InfomaxAction.GRASP:          'grasped',
+                      InfomaxAction.LIFT:           'lifted',
+                      InfomaxAction.DROP:           'init',
+                      InfomaxAction.SHAKE_ROLL:     'lifted',
+                      InfomaxAction.PLACE:          'placed',
+                      InfomaxAction.PUSH:           'init',
+                      InfomaxAction.SHAKE_PITCH:    'lifted',
+                      InfomaxAction.MOVE_LEFT:      'init',
+                      InfomaxAction.MOVE_RIGHT:     'init',
+                     }
+                     
+        self.allowed_actions = {'init':     [InfomaxAction.GRASP, InfomaxAction.MOVE_LEFT, InfomaxAction.MOVE_RIGHT],
+                                'grasped':  [InfomaxAction.GRASP, InfomaxAction.LIFT, InfomaxAction.MOVE_LEFT, InfomaxAction.MOVE_RIGHT],
+                                'lifted':   [InfomaxAction.DROP, InfomaxAction.SHAKE_ROLL, InfomaxAction.PLACE, InfomaxAction.SHAKE_PITCH],
+                                'placed':   [InfomaxAction.GRASP, InfomaxAction.PUSH, InfomaxAction.MOVE_LEFT, InfomaxAction.MOVE_RIGHT],
+                               }
+                               
         self.object_names = []
         self.action_names = []
         self.num_objects = []
         self.current_location = 0
+        self.current_state = 'init'
         self.pdf_database_initialized = False
         
-        rospy.init_node('robotTestServer')
-        rospy.Service('InfoMax', InfoMax, self.handle_infomax_request)
-        rospy.Service('reset_current_location', Empty, self.reset_current_location)
+        if standalone:
+            rospy.init_node('robotTestServer')
+            rospy.Service('InfoMax', InfoMax, self.handle_infomax_request)
+            rospy.Service('reset_current_location', Empty, self.reset_current_location)
+            
         rospy.loginfo('Ready to run the robot')
 
 
     def initialize_pdf_library(self):
         rospy.loginfo('creating pdf library...')
-        num_samples = 10
-        self.database = PDF_library(self.action_names, self.num_categories, self.num_objects, num_samples)
+        self.database = PDF_library(self.action_names, self.object_names)
         self.pdf_database_initialized = True
         rospy.loginfo('done')
 
 
     def reset_current_location(self, req):
         self.current_location = 0
+        self.current_state = 'init'
         #rospy.loginfo('Reset requested, at location %d' % self.current_location)
         return []
 
@@ -90,7 +112,7 @@ class robotTestServer():
         self.pdf_database_initialized = False
 
 
-    def handle_infomax_request(self,req):
+    def handle_infomax_request(self, req):
         """
         instruct the robot to move to or sense the selected object
         """
@@ -98,27 +120,42 @@ class robotTestServer():
         self.object_names = req.objectNames
         self.num_objects = req.num_objects
         self.action_names = req.actionNames
+        self.num_actions = len(self.action_names)
         
         if not self.pdf_database_initialized: self.initialize_pdf_library()
         
+        # uniform
         beliefs = None
+        success = False
+        
+        #rospy.loginfo('Performing %s at location %d (state %s)', self.action_names[req.actionID.val], self.current_location, self.current_state)
         
         # perform action and get PDF (or None if we moved or reset the robot)
-        if req.actionID.val == InfomaxAction.MOVE_LEFT:
-            self.current_location = (self.current_location + 1) % self.num_objects
-        elif req.actionID.val == InfomaxAction.MOVE_RIGHT:
-            self.current_location = (self.current_location - 1) % self.num_objects
+        if req.actionID.val in self.allowed_actions[self.current_state]:
+            if req.actionID.val == InfomaxAction.MOVE_LEFT:
+                self.current_location = (self.current_location + 1) % self.num_objects
+                self.current_state = self.state[req.actionID.val]
+                success = True
+            elif req.actionID.val == InfomaxAction.MOVE_RIGHT:
+                self.current_location = (self.current_location - 1) % self.num_objects
+                self.current_state = self.state[req.actionID.val]
+                success = True
+            else:
+                #rospy.loginfo('\tallowed: %s', str(self.allowed_actions[self.current_state]))
+                beliefs = self.database.sample(req.actionID.val, req.catID)
+                self.current_state = self.state[req.actionID.val]
+                success = True
         else:
-            beliefs = self.database.samplePDF(req.catID, req.actionID.val)
+            #beliefs = [1.0/self.num_categories]*self.num_categories
+            success = True
             
-        #rospy.loginfo('At location %d', self.current_location)
-        #rospy.loginfo('Performed %s', self.action_names[req.actionID.val])
-        #rospy.loginfo('Sensed %s\n', str(beliefs))
+        #rospy.loginfo('\tAt location %d in state %s', self.current_location, self.current_state)
+        #rospy.loginfo('\tSensed %s\n', str(beliefs))
         
-        return beliefs, self.current_location
+        return InfoMaxResponse(success, beliefs, self.current_location, self.current_state)
 
 
 if __name__ == "__main__":
-    server = robotTestServer()
+    server = robotTestServer(standalone=True)
     rospy.spin()
 
