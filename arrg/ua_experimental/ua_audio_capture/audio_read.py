@@ -38,6 +38,7 @@
 import pickle
 import math
 import os
+import time
 from fnmatch import fnmatch
 from array import array
 from operator import itemgetter
@@ -56,32 +57,10 @@ import nwalign as nw
 from scikits.learn.cluster import SelfOrganizingMap
 from Bio import kNN
 
+from multiprocessing import Pool
+from multiprocessing import cpu_count
 
-def get_fake_pdfs():
-    pdfs = {'sqeaky_ball':          {'sqeaky_ball': 0.2982929809968054, 'blue_spiky_ball': 0.099999902266118892, 'ace_terminals': 0.060357655927000639, 'chalkboard_eraser': 0.040555575179976322, 'blue_cup': 0.080197959207489511, 'screw_box': 0.00099295092550315159, 'german_ball': 0.25833325225323234, 'duck_tape_roll': 0.060336887307212914, 'wire_spool': 0.080158572883921475, 'pink_glass': 0.020774263052739737},
-            'blue_spiky_ball':      {'sqeaky_ball': 0.020774954043208796, 'blue_spiky_ball': 0.33775602281376549, 'ace_terminals': 0.060397595552642777, 'chalkboard_eraser': 0.060417278450281796, 'blue_cup': 0.060417278450281817, 'screw_box': 0.060376944092960037, 'german_ball': 0.060357300287471237, 'duck_tape_roll': 0.060318012560147925, 'wire_spool': 0.15950294281759339, 'pink_glass': 0.11968167093164692},
-            'ace_terminals':        {'sqeaky_ball': 0.020774164731283639, 'blue_spiky_ball': 0.020754520925794832, 'ace_terminals': 0.43678677490814, 'chalkboard_eraser': 0.020754520925794821, 'blue_cup': 0.11982050239546738, 'screw_box': 0.13954282336945165, 'german_ball': 0.040535833053031406, 'duck_tape_roll': 0.08031690827005103, 'wire_spool': 0.060396806240717603, 'pink_glass': 0.06031714518026797},
-            'chalkboard_eraser':    {'sqeaky_ball': 0.020755014098197168, 'blue_spiky_ball': 0.13966226532962694, 'ace_terminals': 0.080098950479906908, 'chalkboard_eraser': 0.21886924199349514, 'blue_cup': 0.060337321250309384, 'screw_box': 0.020774657903685968, 'german_ball': 0.080118633377545947, 'duck_tape_roll': 0.06035696505579817, 'wire_spool': 0.040516721395749467, 'pink_glass': 0.27851022911568507},
-            'blue_cup':             {'sqeaky_ball': 0.020774262856881422, 'blue_spiky_ball': 0.11990026158151475, 'ace_terminals': 0.15948351676738076, 'chalkboard_eraser': 0.040555574984118006, 'blue_cup': 0.31803405912568977, 'screw_box': 0.11964266069638566, 'german_ball': 0.11976353877389016, 'duck_tape_roll': 0.060317243305865763, 'wire_spool': 0.020774262856881422, 'pink_glass': 0.020754619051392607}, 
-            'screw_box':            {'sqeaky_ball': 0.060396627578176341, 'blue_spiky_ball': 0.060396627578176335, 'ace_terminals': 0.15940454555908562, 'chalkboard_eraser': 0.020774954630786057, 'blue_cup': 0.099920951310742787, 'screw_box': 0.29823380950304068, 'german_ball': 0.060337617977409455, 'duck_tape_roll': 0.060357300875048495, 'wire_spool': 0.060357300875048495, 'pink_glass': 0.11982026411248592},
-            'german_ball':          {'sqeaky_ball': 0.040576383363728187, 'blue_spiky_ball': 0.099920358837588166, 'ace_terminals': 0.020794045055270445, 'chalkboard_eraser': 0.060297737776931495, 'blue_cup': 0.00099305003039482781, 'screw_box': 0.00099305003039482781, 'german_ball': 0.47638797924919052, 'duck_tape_roll': 0.04055567428486799, 'wire_spool': 0.17936338374014235, 'pink_glass': 0.080118337631491371},
-            'duck_tape_roll':       {'sqeaky_ball': 0.060397200112952278, 'blue_spiky_ball': 0.099979566885504662, 'ace_terminals': 0.10004043161939136, 'chalkboard_eraser': 0.13942430754606364, 'blue_cup': 0.040516583119777273, 'screw_box': 0.08015886843470002, 'german_ball': 0.060436586436520313, 'duck_tape_roll': 0.23884810198251555, 'wire_spool': 0.060397200112952264, 'pink_glass': 0.11980115374962282},
-            'wire_spool':           {'sqeaky_ball': 0.00099295131663744603, 'blue_spiky_ball': 0.00099295131663744603, 'ace_terminals': 0.040555575571110621, 'chalkboard_eraser': 0.099959529207781159, 'blue_cup': 0.020774263443874032, 'screw_box': 0.060436291276876032, 'german_ball': 0.10005893278630999, 'duck_tape_roll': 0.13958226942980551, 'wire_spool': 0.41686594271901073, 'pink_glass': 0.11978129293195712},
-            'pink_glass':           {'sqeaky_ball': 0.00099364113136965232, 'blue_spiky_ball': 0.00099364113136965232, 'ace_terminals': 0.11984097382042898, 'chalkboard_eraser': 0.080179005607867157, 'blue_cup': 0.020774953258606243, 'screw_box': 0.080118928732466205, 'german_ball': 0.17904621901263229, 'duck_tape_roll': 0.080118928732466205, 'wire_spool': 0.15954323729816233, 'pink_glass': 0.27839047127463129}
-           }
-           
-    # shake_pitch
-    {'sqeaky_ball':         {'sqeaky_ball': 0.0, 'blue_spiky_ball': 0.0, 'ace_terminals': 0.0, 'chalkboard_eraser': 0.0, 'blue_cup': 0.0, 'screw_box': 0.0, 'german_ball': 0.0, 'duck_tape_roll': 0.0, 'wire_spool': 0.0, 'pink_glass': 0.0},
-     'blue_spiky_ball':     {'sqeaky_ball': 0.00099157208005896578, 'blue_spiky_ball': 0.89232632415978408, 'ace_terminals': 0.00099157208005896578, 'chalkboard_eraser': 0.00099157208005896578, 'blue_cup': 0.040495303893870245, 'screw_box': 0.00099157208005896578, 'german_ball': 0.00099157208005896578, 'duck_tape_roll': 0.00099157208005896578, 'wire_spool': 0.00099157208005896578, 'pink_glass': 0.060237367385933729},
-     'ace_terminals':       {'sqeaky_ball': 0.00099137524187078259, 'blue_spiky_ball': 0.00099137524187078259, 'ace_terminals': 0.81280381329935403, 'chalkboard_eraser': 0.00099137524187078259, 'blue_cup': 0.00099137524187078259, 'screw_box': 0.17926518476568037, 'german_ball': 0.00099137524187078259, 'duck_tape_roll': 0.00099137524187078259, 'wire_spool': 0.00099137524187078259, 'pink_glass': 0.00099137524187078259},
-     'chalkboard_eraser':   {'sqeaky_ball': 0.0, 'blue_spiky_ball': 0.0, 'ace_terminals': 0.0, 'chalkboard_eraser': 0.0, 'blue_cup': 0.0, 'screw_box': 0.0, 'german_ball': 0.0, 'duck_tape_roll': 0.0, 'wire_spool': 0.0, 'pink_glass': 0.0},
-     'blue_cup':            {'sqeaky_ball': 0.0406150007469697, 'blue_spiky_ball': 0.099900005712212969, 'ace_terminals': 0.00099235923753571782, 'chalkboard_eraser': 0.00099235923753571782, 'blue_cup': 0.51597251601493466, 'screw_box': 0.00099235923753571782, 'german_ball': 0.0406150007469697, 'duck_tape_roll': 0.00099235923753571782, 'wire_spool': 0.00099235923753571782, 'pink_glass': 0.29793568059123443},
-     'screw_box':           {'sqeaky_ball': 0.00099147356332688393, 'blue_spiky_ball': 0.00099147356332688393, 'ace_terminals': 0.13948353705539043, 'chalkboard_eraser': 0.00099147356332688393, 'blue_cup': 0.00099147356332688393, 'screw_box': 0.85258467443799513, 'german_ball': 0.00099147356332688393, 'duck_tape_roll': 0.00099147356332688393, 'wire_spool': 0.00099147356332688393, 'pink_glass': 0.00099147356332688393},
-     'german_ball':         {'sqeaky_ball': 0.00099167020623908641, 'blue_spiky_ball': 0.13958294004750899, 'ace_terminals': 0.00099167020623908641, 'chalkboard_eraser': 0.00099167020623908641, 'blue_cup': 0.00099167020623908641, 'screw_box': 0.00099167020623908641, 'german_ball': 0.71389242846130885, 'duck_tape_roll': 0.00099167020623908641, 'wire_spool': 0.00099167020623908641, 'pink_glass': 0.13958294004750896},
-     'duck_tape_roll':      {'sqeaky_ball': 0.0, 'blue_spiky_ball': 0.0, 'ace_terminals': 0.0, 'chalkboard_eraser': 0.0, 'blue_cup': 0.0, 'screw_box': 0.0, 'german_ball': 0.0, 'duck_tape_roll': 0.0, 'wire_spool': 0.0, 'pink_glass': 0.0},
-     'wire_spool':          {'sqeaky_ball': 0.0, 'blue_spiky_ball': 0.0, 'ace_terminals': 0.0, 'chalkboard_eraser': 0.0, 'blue_cup': 0.0, 'screw_box': 0.0, 'german_ball': 0.0, 'duck_tape_roll': 0.0, 'wire_spool': 0.0, 'pink_glass': 0.0},
-     'pink_glass':          {'sqeaky_ball': 0.00099216220407155413, 'blue_spiky_ball': 0.15928520219398343, 'ace_terminals': 0.00099216220407155413, 'chalkboard_eraser': 0.00099216220407155413, 'blue_cup': 0.21869010202217026, 'screw_box': 0.00099216220407155413, 'german_ball': 0.00099216220407155413, 'duck_tape_roll': 0.00099216220407155413, 'wire_spool': 0.00099216220407155413, 'pink_glass': 0.6150795603553455}}
-
+from itertools import ifilter
 
 
 def print_confusion_matrix(o, c):
@@ -167,9 +146,6 @@ def filter_by_action(action_labels, object_labels, processed_ffts, needed):
     return res_action_labels, res_object_labels, res_processed_ffts
 
 
-
-
-import time
 def save_wav(sound, action_label, object_label):
     wav_path = '/tmp/new_wav'
     filename = os.path.join(wav_path, action_label + '-' + object_label + '-' + str(time.time()) + '.wav')
@@ -191,7 +167,7 @@ class AudioClassifier():
                        'som_learning_rate':    0.05,
                        'nw_gap_open':          0,
                        'nw_gap_extend':        -5,
-                       'knn_k':                5,
+                       'knn_k':                10,
                        'fft_n':                512,
                        'fft_overlap':          256,
                        'fft_freq_bins':        17,
@@ -383,7 +359,7 @@ class AudioClassifier():
                 
         # make sure there are no 0's
         for k,v in weights.items():
-            if v == 0: weights[k] = 0.001
+            if v == 0: weights[k] = 1.0e-2
             
         # renormalize
         tot = sum(weights.values())
@@ -864,7 +840,7 @@ class AudioClassifier():
                     #    obj_pdfs[obj][other_obj] += probs[other_obj]
                         
                     print 'Action', action_labels[ind]
-                    pretty_print_knn_probs(object_labels[ind], label, probs)
+                    pretty_print_knn_probs(object_labels[ind], label, probs, 7)
                     #true_id = object_names.index(object_labels[ind])
                     #pred_id = object_names.index(label)
                     #confusion_matrix[true_id][pred_id] += 1
@@ -892,6 +868,53 @@ class AudioClassifier():
         out.close()
 
 
+    def generate_confusion_matrix(self, data):
+        action_name = data[0]
+        action_labels = data[1]
+        object_labels = data[2]
+        action_ffts = data[3]
+        sampling = data[4]
+        
+        num_categories = len(self.object_names)
+        num_ffts = len(action_ffts)
+        
+        labels = np.asarray(object_labels)
+        
+        inds = range(num_ffts)
+        np.random.shuffle(inds)
+        
+        num_tot = num_ffts
+        num_train = int(0.8 * num_tot)
+        num_test = num_tot - num_train
+        
+        train_set = [action_ffts[idx] for idx in inds[:num_train]]
+        test_set = [action_ffts[idx] for idx in inds[num_train:]]
+        
+        train_labels = labels[inds][:num_train]
+        test_labels = labels[inds][num_train:]
+        
+        print '[%s, %d] Training model (train = %d, test = %d)...' % (action_name.upper(), sampling, num_train, num_test)
+        som, knn_model = self.train_model(train_set, train_labels)
+        
+        del train_set
+        
+        sampling_probs = np.zeros((num_test,num_categories), dtype=float)
+        object_names = []
+        
+        for idx, seq in enumerate(test_set):
+            if idx % 25 == 0:
+                print 'Action %s, Sampling %d, Test instance %d/%d' % (action_name.upper(), sampling, idx, num_test)
+                
+            label, probs = self.classify(seq, som, knn_model)
+            object_names.append(test_labels[idx])
+            
+            # copy over the probabilities in correct order
+            for cat_id,obj in enumerate(self.object_names):
+                sampling_probs[idx,cat_id] = probs[obj]
+                
+        return sampling, action_name, object_names, sampling_probs
+
+
     def run(self):
         self.generate_cost_matrix()
         res = 0.0
@@ -902,69 +925,75 @@ class AudioClassifier():
             res = 0.0
         return res
 
+
     def run_pdfs(self):
         self.generate_cost_matrix()
         self.generate_fake_pdfs_by_action(self.data_paths, self.action_names, self.object_names)#, False, True)
 
-    def eval_fn(self, chromosome):
-        for i,param in enumerate(sorted(self.params.keys())):
-            print 'setting param %s to %f' % (param, chromosome[i])
-            self.params[param] = chromosome[i]
-            
-        res = 0.0
-        
-        if self.params['fft_n'] > self.params['fft_overlap']:
-            res = self.run()
-            
-        print 'Evaluated to', res
-        return res
 
-#from pyevolve import G1DList
-#from pyevolve import GSimpleGA
-#from pyevolve import Selectors
-#from pyevolve import Mutators
-#from pyevolve import Initializators
-#from pyevolve import GAllele
+    def run_confusion(self):
+        self.generate_cost_matrix()
+        self.generate_confusion_matrices_by_action()
+
+
+    def generate_confusion_matrices_by_action(self):
+        print 'Reading FFT data from pickle...'
+        
+        input_pkl = open('/tmp/robot_sounds/fft/all_ffts.pkl', 'rb')
+        action_labels_all, object_labels_all, processed_ffts_all = pickle.load(input_pkl)
+        input_pkl.close()
+        
+        print 'done'
+        
+        num_cpus = cpu_count()
+        print 'Using %d CPUs for experiments' % num_cpus
+        
+        num_samplings = 15
+        num_objects = len(self.object_names)
+        
+        proc_data = []
+        for action_name in self.action_names:
+            action_labels, object_labels, processed_ffts = filter_by_action(action_labels_all, object_labels_all, processed_ffts_all, [action_name])
+            
+            for sampling in range(num_samplings):
+                proc_data.append((self, [action_name, action_labels, object_labels, processed_ffts, sampling]))
+                
+        del action_labels_all
+        del object_labels_all
+        del processed_ffts_all
+        
+        pool = Pool(processes=2)
+        res = pool.map(C_m2, proc_data)
+        #res = C_m2(proc_data[0])
+        
+        probs_by_action = {}
+        
+        for action_name in self.action_names:
+            probs_by_action[action_name] = {}
+            
+            for object_name in self.object_names:
+                probs_by_action[action_name][object_name] = np.zeros((0,num_objects))
+                
+        for sampling,action_name,object_names,sampling_probs in res:
+            for idx,object_name in enumerate(object_names):
+                probs_by_action[action_name][object_name] = np.vstack((probs_by_action[action_name][object_name],sampling_probs[idx]))
+            
+        for action_name in self.action_names:
+            for object_name in self.object_names:
+                print '[%s, %s] %s' % (action_name.upper(), object_name, str(probs_by_action[action_name][object_name].shape))
+                
+        output = open('/tmp/proportions.pkl', 'wb')
+        pickle.dump([probs_by_action,self.object_names,self.action_names], output)
+        output.close()
+
+
+def C_m2( ar, **kwar ):
+    return AudioClassifier.generate_confusion_matrix( *ar, **kwar )
 
 
 if __name__ == '__main__':
     ac = AudioClassifier()
 #    ac.run(); exit(1)
-    ac.run_pdfs(); exit(1)
-    
-#    limits = {'som_size':           [2,8,False],
-#              'som_iterations':     [1000,10000,False],
-#              'som_learning_rate':  [0.01, 0.1,True],
-#              'nw_gap_open':        [-20,0,False],
-#              'nw_gap_extend':      [-20,0,False],
-#              'knn_k':              [1,11,False],
-#              'fft_n':              [32,1024,False],
-#              'fft_overlap':        [32,1024,False],
-#              'fft_freq_bins':      [5,129,False],
-#              'rebin_window':       [0.01,0.5,True],
-#              'start_offset':       [0.01,0.5,True],
-#              'end_offset':         [0.01,0.5,True],
-#             }
-#             
-#    setOfAlleles = GAllele.GAlleles()
-#    
-#    for i in sorted(limits.keys()):
-#        a = GAllele.GAlleleRange(limits[i][0], limits[i][1], limits[i][2])
-#        setOfAlleles.add(a)
-#        
-#    genome = G1DList.G1DList(len(limits))
-#    genome.setParams(allele=setOfAlleles)
-#    
-#    genome.evaluator.set(ac.eval_fn)
-#    genome.mutator.set(Mutators.G1DListMutatorAllele)
-#    genome.initializator.set(Initializators.G1DListInitializatorAllele)
-#    
-#    ga = GSimpleGA.GSimpleGA(genome)
-#    ga.selector.set(Selectors.GRouletteWheel)
-#    ga.setGenerations(500)
-#    
-#    ga.evolve(freq_stats=1)
-#    
-#    # Best individual
-#    print ga.bestIndividual()
-    
+#    ac.run_pdfs(); exit(1)
+    ac.run_confusion(); exit(1)
+
