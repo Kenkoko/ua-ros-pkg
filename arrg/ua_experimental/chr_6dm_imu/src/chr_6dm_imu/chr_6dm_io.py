@@ -125,7 +125,7 @@ class CHR6dmIMU(object):
         #print 'Command: %s (%s), data packet: %s' % (CODE_TO_STR[command], hex(command).upper(), str(data))
         
         # wait for response
-        time.sleep(0.006)
+        time.sleep(0.0054)
         
         self.read_from_imu()
 
@@ -139,7 +139,7 @@ class CHR6dmIMU(object):
         else:
             print 'Unable to find packet prefix. Throw exception.'
             return
-        
+            
         packet = 's' + self.ser.read(2) # read 'n' and 'p'
         
         if packet != 'snp':
@@ -153,7 +153,7 @@ class CHR6dmIMU(object):
         data = map(b2a_hex, dataStr)
         data = map(int, data, [16] * len(data))
         
-        #print "Received reply: %s (%s), data: %s" % (CODE_TO_STR[command], hex(command).upper(), str(data))
+        # print "Received reply: %s (%s), data: %s" % (CODE_TO_STR[command], hex(command).upper(), str(data))
         
         chkSumStr = self.ser.read(2)
         chkSumData = map(b2a_hex, chkSumStr)

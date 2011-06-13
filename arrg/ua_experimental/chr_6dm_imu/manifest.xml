@@ -11,6 +11,7 @@
     <depend package="rospy"/>
     <depend package="tf"/>
     <depend package="sensor_msgs"/>
+    <depend package="std_srvs"/>
     
     <rosdep name="pyserial"/>
 </package>

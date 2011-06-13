@@ -40,6 +40,7 @@ roslib.load_manifest('chr_6dm_imu')
 import rospy
 
 from chr_6dm_io import CHR6dmIMU
+from std_srvs.srv import Empty
 from sensor_msgs.msg import Imu
 from tf.transformations import quaternion_from_euler
 import tf
@@ -47,9 +48,10 @@ import tf
 class CHR6dmNode():
     def __init__(self):
         port_name = rospy.get_param('~port_name', '/dev/ttyUSB0')
-        frame_id = rospy.get_param('~frame_id', 'imu')
+        frame_id = rospy.get_param('~frame_id', 'imu_link')
         self.mode = rospy.get_param('~mode', 'polled')
-        self.data_rate = rospy.get_param('~data_rate', 120)
+        self.ignore_pitch_roll = rospy.get_param('~ignore_pitch_roll', False)
+        self.data_rate = rospy.get_param('~data_rate', 150)
         
         self.imu = CHR6dmIMU(port_name)
         
@@ -64,10 +66,14 @@ class CHR6dmNode():
         rospy.sleep(0.1)
         
         self.imu.enable_accel_angrate_orientation()
-        #self.imu.set_ekf_config(True, True)
+        self.imu.set_ekf_config(True, True)
         accel_cov = self.imu.get_accel_covariance()
         mag_cov = self.imu.get_mag_covariance()
         proc_cov = self.imu.get_process_covariance()
+        
+        self.imu.zero_rate_gyros()
+        self.imu.auto_set_accel_ref()
+        self.imu.ekf_reset()
         
         self.imu_msg = Imu()
         self.imu_msg.header.frame_id = frame_id
@@ -85,6 +91,8 @@ class CHR6dmNode():
         self.imu_msg.orientation_covariance[8] = proc_cov
         
         self.imu_data_pub = rospy.Publisher('imu/data', Imu)
+#        self.zero_rate_gyros_srv = rospy.Service('imu/zero_rate_gyros', Empty, self.process_zero_rate_gyros)
+#        self.auto_set_accel_ref = rospy.Service('imu/auto_set_accel_ref', Empty, self.process_auto_set_accel_ref)
 
     def publish_data(self):
         r = rospy.Rate(self.data_rate)
@@ -98,6 +106,10 @@ class CHR6dmNode():
             if not data: continue
             
             # quaternion from eauler in NED coordinate system
+            if self.ignore_pitch_roll:
+                data['roll'] = 0.0
+                data['pitch'] = 0.0
+                
             ori = quaternion_from_euler(data['roll'], data['pitch'], data['yaw'])
             
             # quaternion in ENU coordiante system
@@ -120,7 +132,7 @@ class CHR6dmNode():
             
             br = tf.TransformBroadcaster()
             o = [self.imu_msg.orientation.x, self.imu_msg.orientation.y,self.imu_msg.orientation.z,self.imu_msg.orientation.w]
-            br.sendTransform((0, 0, 1), o, self.imu_msg.header.stamp, self.imu_msg.header.frame_id, '/map')
+            br.sendTransform((0, 0, 0.5), o, self.imu_msg.header.stamp, '/dummy_imu_link', self.imu_msg.header.frame_id)
             
             r.sleep()
 
