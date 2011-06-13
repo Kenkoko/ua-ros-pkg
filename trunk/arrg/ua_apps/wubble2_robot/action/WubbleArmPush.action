@@ -1,6 +1,0 @@
-int32 side
-
-int32 LEFT_PUSH=1
-int32 RIGHT_PUSH=2
----
----
