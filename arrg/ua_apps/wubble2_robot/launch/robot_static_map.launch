@@ -1,3 +1,5 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <include file="$(find wubble_robot)/launch/robot_common.launch" />
     
