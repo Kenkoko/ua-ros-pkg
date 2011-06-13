@@ -109,19 +109,6 @@ ROSBUILD_genmsg_cpp/fast:
 .PHONY : ROSBUILD_genmsg_cpp/fast
 
 #=============================================================================
-# Target rules for targets named ROSBUILD_genmsg_java
-
-# Build rule for target.
-ROSBUILD_genmsg_java: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 ROSBUILD_genmsg_java
-.PHONY : ROSBUILD_genmsg_java
-
-# fast build rule for target.
-ROSBUILD_genmsg_java/fast:
-	$(MAKE) -f CMakeFiles/ROSBUILD_genmsg_java.dir/build.make CMakeFiles/ROSBUILD_genmsg_java.dir/build
-.PHONY : ROSBUILD_genmsg_java/fast
-
-#=============================================================================
 # Target rules for targets named ROSBUILD_genmsg_lisp
 
 # Build rule for target.
@@ -133,19 +120,6 @@ ROSBUILD_genmsg_lisp: cmake_check_build_system
 ROSBUILD_genmsg_lisp/fast:
 	$(MAKE) -f CMakeFiles/ROSBUILD_genmsg_lisp.dir/build.make CMakeFiles/ROSBUILD_genmsg_lisp.dir/build
 .PHONY : ROSBUILD_genmsg_lisp/fast
-
-#=============================================================================
-# Target rules for targets named ROSBUILD_genmsg_oct
-
-# Build rule for target.
-ROSBUILD_genmsg_oct: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 ROSBUILD_genmsg_oct
-.PHONY : ROSBUILD_genmsg_oct
-
-# fast build rule for target.
-ROSBUILD_genmsg_oct/fast:
-	$(MAKE) -f CMakeFiles/ROSBUILD_genmsg_oct.dir/build.make CMakeFiles/ROSBUILD_genmsg_oct.dir/build
-.PHONY : ROSBUILD_genmsg_oct/fast
 
 #=============================================================================
 # Target rules for targets named ROSBUILD_gensrv_cpp
@@ -161,19 +135,6 @@ ROSBUILD_gensrv_cpp/fast:
 .PHONY : ROSBUILD_gensrv_cpp/fast
 
 #=============================================================================
-# Target rules for targets named ROSBUILD_gensrv_java
-
-# Build rule for target.
-ROSBUILD_gensrv_java: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 ROSBUILD_gensrv_java
-.PHONY : ROSBUILD_gensrv_java
-
-# fast build rule for target.
-ROSBUILD_gensrv_java/fast:
-	$(MAKE) -f CMakeFiles/ROSBUILD_gensrv_java.dir/build.make CMakeFiles/ROSBUILD_gensrv_java.dir/build
-.PHONY : ROSBUILD_gensrv_java/fast
-
-#=============================================================================
 # Target rules for targets named ROSBUILD_gensrv_lisp
 
 # Build rule for target.
@@ -185,19 +146,6 @@ ROSBUILD_gensrv_lisp: cmake_check_build_system
 ROSBUILD_gensrv_lisp/fast:
 	$(MAKE) -f CMakeFiles/ROSBUILD_gensrv_lisp.dir/build.make CMakeFiles/ROSBUILD_gensrv_lisp.dir/build
 .PHONY : ROSBUILD_gensrv_lisp/fast
-
-#=============================================================================
-# Target rules for targets named ROSBUILD_gensrv_oct
-
-# Build rule for target.
-ROSBUILD_gensrv_oct: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 ROSBUILD_gensrv_oct
-.PHONY : ROSBUILD_gensrv_oct
-
-# fast build rule for target.
-ROSBUILD_gensrv_oct/fast:
-	$(MAKE) -f CMakeFiles/ROSBUILD_gensrv_oct.dir/build.make CMakeFiles/ROSBUILD_gensrv_oct.dir/build
-.PHONY : ROSBUILD_gensrv_oct/fast
 
 #=============================================================================
 # Target rules for targets named clean-test-results
@@ -349,13 +297,9 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... ROSBUILD_genmsg_cpp"
-	@echo "... ROSBUILD_genmsg_java"
 	@echo "... ROSBUILD_genmsg_lisp"
-	@echo "... ROSBUILD_genmsg_oct"
 	@echo "... ROSBUILD_gensrv_cpp"
-	@echo "... ROSBUILD_gensrv_java"
 	@echo "... ROSBUILD_gensrv_lisp"
-	@echo "... ROSBUILD_gensrv_oct"
 	@echo "... clean-test-results"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
