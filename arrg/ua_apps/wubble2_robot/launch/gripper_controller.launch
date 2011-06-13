@@ -1,8 +1,0 @@
-<!-- -*- mode: XML -*- -->
-
-<launch>
-    <node pkg="wubble2_robot" type="gripper_action_controller.py" name="grip_control" output="screen" respawn="false">
-        <param name="left_finger_controller" value="left_finger_controller" />
-        <param name="right_finger_controller" value="right_finger_controller" />
-    </node>
-</launch>
