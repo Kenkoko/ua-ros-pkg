@@ -11,6 +11,7 @@
     <include filename="$(find wubble_arm_description)/urdf/wubble_arm.xacro" />
     <include filename="$(find swissranger_camera_description)/urdf/swissranger_camera.xacro" />
     <include filename="$(find videre_stoc_description)/urdf/videre_stereo_6cm.xacro" />
+    <include filename="$(find chr_6dm_imu_description)/urdf/chrobotics_chr_6dm_imu.urdf.xacro" />
     
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
@@ -49,6 +50,11 @@
             </geometry>
         </collision>
     </link>
+    
+    <!-- CHR-6dm IMU ATTACHMENT -->
+    <chrobotics_chr_6dm_imu name="imu" parent="platform_link" imu_topic="imu/data" update_rate="120.0" stdev="0.00017" >
+        <origin xyz="0 0 1.0" rpy="0 0 0" />
+    </chrobotics_chr_6dm_imu>
     
     <!-- WUBBLE HEAD ATTACHMENT -->
     <joint name="head_base_joint" type="fixed">
@@ -168,7 +174,7 @@
     
     <!-- SWISSRANGER CAMERA ATTACHMENT -->
     <swissranger_camera name="swissranger" parent="head_tilt_link">
-        <origin xyz="0.0195 -0.004 0.1235" rpy="${M_PI} 0 0" />
+        <origin xyz="0.0 -0.004 0.1235" rpy="${M_PI} 0 0" />
     </swissranger_camera>
     
     <!-- VIDERE STEREO CAMERA ATTACHMENT -->
@@ -183,7 +189,7 @@
     
     <!-- NECK TILTING LASER ATTACHMENT -->
     <joint name="neck_support_joint" type="fixed">
-        <origin xyz="0.0254 0 0.628" rpy="0 0 0" />
+        <origin xyz="0.0254 0 0.61" rpy="0 0 0" />
         <parent link="platform_link"/>
         <child link="neck_support_link"/>
     </joint>
