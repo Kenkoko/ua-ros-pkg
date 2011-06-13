@@ -1,34 +1,21 @@
 <package>
-  <description brief="block_swat">
+    <description brief="block_swat">
+        block_swat
+    </description>
 
-     block_swat
+    <author>RobotLab</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/block_swat</url>
 
-  </description>
-  <author>RobotLab</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/block_swat</url>
-
-  <!-- Core ros packages -->
-    <depend package="roscpp"/>
     <depend package="rospy"/>
-    <depend package="roslib"/>
     <depend package="std_msgs"/>
     <depend package="geometry_msgs"/>
     <depend package="gazebo"/>
 
-<depend package="move_base_msgs"/>
-<depend package="actionlib_msgs"/>
-
-
-    <!-- Controllers & actions -->
+    <depend package="move_base_msgs"/>
+    <depend package="actionlib_msgs"/>
     <depend package="wubble_actions"/>
-
-    <!-- Visualization -->
-    <!-- depend package="rviz" -->
-
-
-
 </package>
 
 
