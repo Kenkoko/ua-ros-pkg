@@ -1,3 +1,5 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <node pkg="semantic_point_annotator" type="sac_inc_ground_removal_node" name="sac_ground_removal" output="screen" >
         <remap from="tilt_laser_cloud_filtered" to="neck_scan/self_filtered" />

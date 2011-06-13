@@ -1,3 +1,5 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <!-- interpolated_ik_motion_planner -->
     <node pkg="interpolated_ik_motion_planner" type="interpolated_ik_motion_planner.py" output="screen" name="interpolated_ik_motion_planner" args="l" >

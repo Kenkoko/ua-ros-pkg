@@ -1,3 +1,5 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <!-- start the hokuyo laser at the neck -->
     <node name="neck_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">

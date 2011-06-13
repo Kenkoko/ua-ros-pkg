@@ -1,3 +1,5 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <!-- move_arm -->
     <node pkg="move_arm" type="move_arm_simple_action" output="screen" name="move_left_arm">

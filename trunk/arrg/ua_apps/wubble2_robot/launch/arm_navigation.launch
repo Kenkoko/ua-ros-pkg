@@ -1,0 +1,119 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+    <!-- displaying known model markers -->
+    <node pkg="planning_environment" name="display_planner_collision_model_environment_server" type="display_planner_collision_model" respawn="false" output="screen">
+        <param name="skip_collision_map" type="bool" value="false" />
+        <param name="prefix" type="string" value="/environment_server_left_arm" />
+    </node>
+
+    <node pkg="planning_environment" name="display_planner_collision_model_ik" type="display_planner_collision_model" respawn="false" output="screen">
+        <param name="skip_collision_map" type="bool" value="false" />
+        <param name="prefix" type="string" value="/arm_kinematics" />
+    </node>
+
+    <!-- send parameters for collision checking for Wubble2; this includes parameters for the self filter -->
+    <rosparam command="load" ns="robot_description_collision" file="$(find wubble_description)/params/w2_collision_checks_arm.yaml" />
+
+    <!-- send parameters needed for motion planning -->
+    <rosparam command="load" ns="robot_description_planning" file="$(find wubble_description)/params/w2_planning_groups.yaml" />
+
+    <node pkg="collision_map" type="collision_map_self_occ_node" name="collision_map_self_occ_node" respawn="true" output="screen">
+        <param name="self_see_default_padding" type="double" value="0.04" />
+        <param name="self_see_default_scale" type="double" value="1.0" />
+         
+        <rosparam command="load" file="$(find wubble_description)/params/w2_self_filter.yaml" />
+        
+        <!-- if someone asks for a stable map, publish the static map on the dynamic
+        map topic and no longer publish dynamic maps -->
+        <param name="publish_static_over_dynamic_map" type="bool" value="true" />
+        
+        <!-- we do not want a separate map with occlusions alone -->
+        <param name="publish_occlusion" type="bool" value="true" />
+        <param name="fixed_frame" type="string" value="base_link" />
+        
+        <!-- define a box of size 2x3x4 around (1.1,  0, 0) in the robot frame -->
+        <param name="robot_frame" type="string" value="base_link" />
+        
+        <param name="origin_x" type="double" value="1.1" />
+        <param name="origin_y" type="double" value="0.0" />
+        <param name="origin_z" type="double" value="0.0" />
+        
+        <param name="dimension_x" type="double" value="1.5" />
+        <param name="dimension_y" type="double" value="1.5" />
+        <param name="dimension_z" type="double" value="2.0" />
+        
+        <!-- set the resolution (1.0 cm) -->
+        <param name="resolution" type="double" value="0.01" />
+        
+        <!-- cloud sources -->
+        <rosparam command="load" file="$(find wubble_description)/params/w2_collision_map_sources.yaml" />
+    </node>
+
+    <!-- load collision free ik -->
+    <include file="$(find wubble_arm_kinematics_constraint_aware)/launch/left_arm_collision_free_ik.launch"/>
+
+    <node pkg="planning_environment" type="environment_server" output="screen" name="environment_server_left_arm">
+        <remap from="collision_map" to="collision_map_occ" />
+        <remap from="collision_map_update" to="collision_map_occ_update" />
+        
+        <param name="group" type="string" value="left_arm" />
+        <param name="allow_valid_collisions" type="bool" value="false" />
+        
+        <param name="collision_map_safety_timeout" type="double" value="100000.0" />
+        <param name="joint_states_safety_timeout" type="double" value="1.0" />
+        <param name="bounding_planes" type="string" value="0 0 1 -0.01" />
+        
+        <param name="pointcloud_padd" type="double" value="0.00" />
+        
+        <rosparam command="load" file="$(find wubble_description)/params/w2_environment_server_padding.yaml" />
+    </node>
+
+    <node pkg="ompl_planning" type="motion_planner" name="ompl_planning" respawn="true" output="screen">
+        <remap from="robot_description" to="robot_description" />  
+        <remap from="collision_map" to="collision_map_occ" />
+        <remap from="collision_map_update" to="collision_map_occ_update" />
+        
+        <!-- if we are moving the base, it is best to maintain the map in a fixed frame since identified objects that are being published
+         are not necessarily updated -->
+        <!--    <param name="planner_frame_id" type="string" value="odom_combined" /> -->
+        
+        <!-- planner configs -->
+        <rosparam command="load" file="$(find wubble_description)/params/w2_ompl_planning_configs.yaml" />
+        
+        <param name="state_delay" type="double" value="0.01" />
+        <param name="pointcloud_padd" type="double" value="0.00" />
+        
+        <param name="refresh_interval_collision_map" type="double" value="5.0" />
+        <param name="refresh_interval_kinematic_state" type="double" value="1.0" />
+        <param name="bounding_planes" type="string" value="0 0 1 -0.01" />
+        <param name="verbose_collisions" type="bool" value="false" />
+        
+        <rosparam command="load" file="$(find wubble_description)/params/w2_robot_padding.yaml" />
+    </node>
+
+    <node pkg="ompl_search" type="search_state" name="ompl_search" respawn="true" output="screen">
+        <remap from="robot_description" to="robot_description" />
+        <remap from="collision_map" to="collision_map_occ" />
+        <remap from="collision_map_update" to="collision_map_occ_update" />    
+        <!-- if we are moving the base, it is best to maintain the map in a fixed frame since identified objects that are being published
+             are not necessarily updated -->
+        <!--    <param name="planner_frame_id" type="string" value="odom_combined" /> -->
+        <!-- planner configs -->
+        <rosparam command="load" file="$(find wubble_description)/params/w2_ompl_planning_configs.yaml" />
+        
+        <param name="pointcloud_padd" type="double" value="0.00" />
+        
+        <param name="refresh_interval_collision_map" type="double" value="5.0" />
+        <param name="refresh_interval_kinematic_state" type="double" value="1.0" />
+        <param name="bounding_planes" type="string" value="0 0 1 -0.01" />
+        <param name="verbose_collisions" type="bool" value="false" />
+        
+        <rosparam command="load" file="$(find wubble_description)/params/w2_robot_padding.yaml" />
+    </node>
+
+    <include file="$(find wubble2_robot)/launch/trajectory_filter.launch" />
+    <include file="$(find wubble2_robot)/launch/move_arm.launch" />
+    <include file="$(find wubble2_robot)/launch/interpolated_ik.launch" />
+</launch>
+

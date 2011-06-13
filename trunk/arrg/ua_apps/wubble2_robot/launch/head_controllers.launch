@@ -1,3 +1,5 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <!-- Start the Dynamixel servo manager to control Head pan and tilt and neck laser tilt -->
     <node name="head_motor_manager" pkg="ax12_controller_core" type="controller_manager.py" output="screen">
@@ -15,7 +17,7 @@
         <param name="update_rate" type="int" value="50"/>
     </node>
 
-    <!-- Start all wubble head joint controllers -->
+    <!-- Start all wubble neck joint controllers -->
     <rosparam file="$(find wubble2_robot)/config/wubble_head.yaml" command="load"/>
     <node name="wubble_head_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
           args="--port /dev/wubble2Head
