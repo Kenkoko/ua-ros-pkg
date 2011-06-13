@@ -49,6 +49,7 @@ from scipy.interpolate import splrep, spalde
 import roslib
 roslib.load_manifest('wubble2_robot')
 
+import sys
 import rospy
 from ax12_controller_core.srv import TorqueEnable
 
@@ -67,7 +68,11 @@ if __name__ == '__main__':
                          'right_finger_controller']
                          
     joint_torque_srvs = [rospy.ServiceProxy(controller + '/torque_enable', TorqueEnable) for controller in joint_controllers]
-    
+    #rospy.sleep(5)
     for srv in joint_torque_srvs:
-        srv(True)
+        if sys.argv[1] == 'True':
+            srv(True)
+        else:
+            srv(False)
+
 

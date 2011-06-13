@@ -75,7 +75,7 @@ if __name__ == '__main__':
         osc = ObjectSoundCollector()
         rospy.sleep(2)
         rospy.loginfo('Closing gripper')
-        osc.close_gripper(0.2, False)
+        #osc.close_gripper(1.0, False)
         osc.close_gripper(0.05, False)
         #osc.open_gripper()
     except rospy.ROSInterruptException:
