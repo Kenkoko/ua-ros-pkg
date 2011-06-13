@@ -43,10 +43,12 @@ from object_manipulation_msgs.msg import GraspHandPostureExecutionGoal
 from object_manipulation_msgs.srv import GraspStatus
 from wubble2_robot.msg import WubbleGripperAction
 from wubble2_robot.msg import WubbleGripperGoal
+from ua_controller_msgs.msg import JointState
 
 class WubbleGripperGraspController:
     def __init__(self):
         self.object_presence_pressure_threshold = rospy.get_param('object_presence_pressure_threshold', 200.0)
+        self.object_presence_opening_threshold = rospy.get_param('object_presence_opening_threshold', 0.02)
         
         gripper_action_name = rospy.get_param('gripper_action_name', 'wubble_gripper_command_action')
         self.gripper_action_client = SimpleActionClient('wubble_gripper_action', WubbleGripperAction)
@@ -85,8 +87,8 @@ class WubbleGripperGraspController:
             gripper_command.command = WubbleGripperGoal.CLOSE_GRIPPER
             gripper_command.torque_limit = 0.4
             gripper_command.dynamic_torque_control = True
-            gripper_command.pressure_upper = 1500.0
-            gripper_command.pressure_lower = 1300.0
+            gripper_command.pressure_upper = 1900.0
+            gripper_command.pressure_lower = 1800.0
         elif msg.goal == GraspHandPostureExecutionGoal.PRE_GRASP:
             rospy.loginfo('Received PRE_GRASP request')
             gripper_command.command = WubbleGripperGoal.OPEN_GRIPPER
@@ -106,14 +108,25 @@ class WubbleGripperGraspController:
 
     def process_grasp_status(self, msg):
         result = GraspStatus()
-        pressure_msg = rospy.wait_for_message('total_pressure', Float64)
+        pressure_msg = rospy.wait_for_message('/total_pressure', Float64)
+        opening_msg = rospy.wait_for_message('/gripper_opening', Float64)
+        left_pos = rospy.wait_for_message('/left_finger_controller/state', JointState).current_pos
+        right_pos = rospy.wait_for_message('/right_finger_controller/state', JointState).current_pos
         
-        if pressure_msg.data < self.object_presence_pressure_threshold:
-            rospy.loginfo('Gripper grasp query false: gripper total pressure %.2f below threshold %.2f' % (pressure_msg.data, self.object_presence_pressure_threshold))
+        if pressure_msg.data <= self.object_presence_pressure_threshold:
+            rospy.loginfo('Gripper grasp query false: gripper total pressure is below threshold (%.2f <= %.2f)' % (pressure_msg.data, self.object_presence_pressure_threshold))
             return False
         else:
-            rospy.loginfo('Gripper grasp query true: gripper total pressure %.2f above threshold %.2f' % (pressure_msg.data, self.object_presence_pressure_threshold))
-            return True
+            if opening_msg.data <= self.object_presence_opening_threshold:
+                rospy.loginfo('Gripper grasp query false: gripper opening is below threshold (%.2f <= %.2f)' % (opening_msg.data, self.object_presence_opening_threshold))
+                return False
+            else:
+                if (left_pos > 0.85 and right_pos > 1.10) or (right_pos < -0.85 and left_pos < -1.10):
+                    rospy.loginfo('Gripper grasp query false: gripper fingers are too off center (%.2f, %.2f)' % (left_pos, right_pos))
+                    return False
+                    
+                rospy.loginfo('Gripper grasp query true: pressure is %.2f, opening is %.2f' % (pressure_msg.data, opening_msg.data))
+                return True
 
 if __name__ == '__main__':
     try:
