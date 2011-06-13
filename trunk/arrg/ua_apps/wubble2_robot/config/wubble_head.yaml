@@ -20,9 +20,9 @@ head_tilt_controller:
     joint_speed: 1.17
     motor:
         id: 11
-        init: 1670
+        init: 1690
         min: 600
-        max: 3000
+        max: 3500
 
 neck_tilt_controller:
     controller:
