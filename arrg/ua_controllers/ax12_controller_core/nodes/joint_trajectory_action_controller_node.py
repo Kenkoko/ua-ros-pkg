@@ -89,21 +89,6 @@ class JointTrajectoryActionController():
             self.goal_constraints.append(rospy.get_param(ns + '/' + joint + '/goal', -1.0))
             self.trajectory_constraints.append(rospy.get_param(ns + '/' + joint + '/trajectory', -1.0))
             
-        # Publishers
-        self.state_pub = rospy.Publisher(self.controller_namespace + '/state', JointTrajectoryControllerState)
-        self.joint_position_pubs = [rospy.Publisher(controller + '/command', Float64) for controller in self.joint_controllers]
-        
-        # Subscribers
-        self.command_sub = rospy.Subscriber(self.controller_namespace + '/command', JointTrajectory, self.process_command)
-        self.joint_state_subs = [rospy.Subscriber(controller + '/state', JointState, self.process_joint_states) for controller in self.joint_controllers]
-        
-        # Services
-        self.joint_velocity_srvs = [rospy.ServiceProxy(controller + '/set_speed', SetSpeed, persistent=True) for controller in self.joint_controllers]
-        self.query_state_service = rospy.Service(self.controller_namespace + '/query_state', QueryTrajectoryState, self.process_query_state)
-        self.action_server = actionlib.SimpleActionServer(self.controller_namespace + '/joint_trajectory_action',
-                                                          JointTrajectoryAction,
-                                                          execute_cb=self.process_trajectory_action)
-                                                          
         # Message containing current state for all controlled joints
         self.msg = JointTrajectoryControllerState()
         self.msg.joint_names = self.joint_names
@@ -119,6 +104,21 @@ class JointTrajectoryActionController():
         self.last_commanded = {}
         for joint in self.joint_names:
             self.last_commanded[joint] = { 'position': None, 'velocity': None }
+            
+        # Publishers
+        self.state_pub = rospy.Publisher(self.controller_namespace + '/state', JointTrajectoryControllerState)
+        self.joint_position_pubs = [rospy.Publisher(controller + '/command', Float64) for controller in self.joint_controllers]
+        
+        # Subscribers
+        self.command_sub = rospy.Subscriber(self.controller_namespace + '/command', JointTrajectory, self.process_command)
+        self.joint_state_subs = [rospy.Subscriber(controller + '/state', JointState, self.process_joint_states) for controller in self.joint_controllers]
+        
+        # Services
+        self.joint_velocity_srvs = [rospy.ServiceProxy(controller + '/set_speed', SetSpeed, persistent=True) for controller in self.joint_controllers]
+        self.query_state_service = rospy.Service(self.controller_namespace + '/query_state', QueryTrajectoryState, self.process_query_state)
+        self.action_server = actionlib.SimpleActionServer(self.controller_namespace + '/joint_trajectory_action',
+                                                          JointTrajectoryAction,
+                                                          execute_cb=self.process_trajectory_action)
 
     def process_command(self, msg):
         if self.action_server.is_active(): self.action_server.set_preempted()
@@ -164,7 +164,7 @@ class JointTrajectoryActionController():
             return
             
         # make sure trajectory is not empty
-        if not traj:
+        if not traj.points:
             msg = "Incoming trajectory is empty"
             rospy.logerr(msg)
             self.action_server.set_aborted(text=msg)
