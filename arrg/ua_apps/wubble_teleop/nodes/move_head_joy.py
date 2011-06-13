@@ -40,13 +40,13 @@ from threading import Thread
 import rospy
 from joy.msg import Joy
 from std_msgs.msg import Float64
-from pr2_controllers_msgs.msg import JointControllerState
+from ua_controller_msgs.msg import JointState
 
 class MoveHeadXbox():
     def __init__(self):
         self.is_running = True
-        self.pan_range = [-math.pi/2, math.pi/2]        
-        self.tilt_range = [-1.221730476, 0.610865238]
+        self.pan_range = [-math.pi/2, math.pi/2]
+        self.tilt_range = [-2, 2]
 
         self.head_pan = 0.0
         self.head_tilt = 0.0
@@ -60,8 +60,8 @@ class MoveHeadXbox():
         self.head_tilt_pub = rospy.Publisher('head_tilt_controller/command', Float64)
         rospy.init_node('move_head_joy', anonymous=True)
         rospy.Subscriber('/joy', Joy, self.read_joystick_data)
-        rospy.Subscriber('head_pan_controller/state', JointControllerState, self.read_current_pan)
-        rospy.Subscriber('head_tilt_controller/state', JointControllerState, self.read_current_tilt)
+        rospy.Subscriber('head_pan_controller/state', JointState, self.read_current_pan)
+        rospy.Subscriber('head_tilt_controller/state', JointState, self.read_current_tilt)
 
     def read_joystick_data(self, data):
         self.joy_data = data
@@ -100,7 +100,7 @@ class MoveHeadXbox():
                     self.reset_head_position()
                     print "Attempting to reset head position"
                 else: 
-                    self.set_head_position(self.joy_data.axes[2], self.joy_data.axes[3])
+                    self.set_head_position(self.joy_data.axes[3], self.joy_data.axes[4])
             
                 #if self.joy_data.buttons[7]:
                 print self.head_pan, self.head_tilt
