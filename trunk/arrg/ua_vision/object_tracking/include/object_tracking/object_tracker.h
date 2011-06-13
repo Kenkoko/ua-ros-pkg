@@ -56,8 +56,8 @@ private:
     double fg_prob_threshold;
     double con_area_threshold;
 
-    cv::FeatureDetector* fd;
-    cv::GenericDescriptorMatch* de;
+    //cv::FeatureDetector* fd;
+    //cv::GenericDescriptorMatch* de;
 
     cv::Mat mlr_weights;
 

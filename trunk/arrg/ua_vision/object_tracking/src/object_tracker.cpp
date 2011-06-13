@@ -72,12 +72,12 @@ ObjectTracker::ObjectTracker()
     con_area_threshold = 40;
     cv::startWindowThread();
 
-    fd = new cv::SiftFeatureDetector(cv::SIFT::DetectorParams::GET_DEFAULT_THRESHOLD(),
-                                     cv::SIFT::DetectorParams::GET_DEFAULT_EDGE_THRESHOLD());
+    //fd = new cv::SiftFeatureDetector(cv::SIFT::DetectorParams::GET_DEFAULT_THRESHOLD(),
+    //                                 cv::SIFT::DetectorParams::GET_DEFAULT_EDGE_THRESHOLD());
 
-    cv::SurfDescriptorExtractor extractor;
-    cv::BruteForceMatcher<cv::L2<float> > matcher;
-    de = new cv::VectorDescriptorMatch<cv::SurfDescriptorExtractor, cv::BruteForceMatcher<cv::L2<float> > >(extractor, matcher);
+    //cv::SurfDescriptorExtractor extractor;
+    //cv::BruteForceMatcher<cv::L2<float> > matcher;
+    //de = new cv::VectorDescriptorMatch<cv::SurfDescriptorExtractor, cv::BruteForceMatcher<cv::L2<float> > >(extractor, matcher);
 }
 
 std::map<int, Contour>
