@@ -43,7 +43,7 @@ def tilt(n=1):
     goal.tilt_cycles = n
     goal.amplitude = 1.5
     goal.offset = 0.0
-    goal.duration = 5.0
+    goal.duration = 10.0
     
     print 'Cycles: %d, amplitude: %f, offset: %f, duration: %f' % (goal.tilt_cycles, goal.amplitude, goal.offset, goal.duration)
     

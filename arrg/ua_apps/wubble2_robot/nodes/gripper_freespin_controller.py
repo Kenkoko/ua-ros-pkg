@@ -32,6 +32,7 @@
 
 import math
 from threading import Thread
+from threading import Lock
 
 import roslib; roslib.load_manifest('wubble2_robot')
 import rospy
@@ -64,6 +65,7 @@ class GripperActionController():
         self.right_finger_joint = rospy.get_param(self.right_finger_controller + '/joint_name')
         
         self.tf_listener = TransformListener()
+        self.lr_pub_lock = Lock()   # publish to left and right is atomic
         
         # Publishers and Subscribers for all gripper joint controllers
         self.left_finger_joint_torque_pub = rospy.Publisher(self.left_finger_controller + '/command', Float64)
@@ -73,6 +75,8 @@ class GripperActionController():
         self.right_finger_joint_state_sub = rospy.Subscriber(self.right_finger_controller + '/state', JointState, self.process_right_finger_joint_state)
         
         self.gripper_opening_pub = rospy.Publisher('gripper_opening', Float64)
+        self.left_finger_ground_distance_pub = rospy.Publisher('left_finger_ground_distance', Float64)
+        self.right_finger_ground_distance_pub = rospy.Publisher('right_finger_ground_distance', Float64)
         
         # Pressure sensors
         # 0-3 - left finger
@@ -82,9 +86,13 @@ class GripperActionController():
         [rospy.Subscriber('/interface_kit/124427/sensor/%d' % i, Float64Stamped, self.process_pressure_sensors, i) for i in range(num_sensors)]
         
         # pressure sensors are at these values when no external pressure is applied
-        self.pressure_init = [0.0, 0.0, 163.0, 0.0,
-                              0.0, 0.0, 305.0, 0.0]
+        self.pressure_left_init = [0.0, 0.0, 0.0, 0.0]
+        self.pressure_right_init = [0.0, 0.0, 130.0, 0.0]
+        self.pressure_init = self.pressure_left_init + self.pressure_right_init
+        self.left_pressure_pub = rospy.Publisher('left_finger_pressure', Float64)
+        self.right_pressure_pub = rospy.Publisher('right_finger_pressure', Float64)
         self.total_pressure_pub = rospy.Publisher('total_pressure', Float64)
+        
         self.close_gripper = False
         self.overheating = False
         self.dynamic_torque_control = False
@@ -124,29 +132,41 @@ class GripperActionController():
         r = rospy.Rate(500)
         
         while not rospy.is_shutdown():
-            pressure = max(0.0, sum(self.pressure) - sum(self.pressure_init))
+            pressure_left = max(0.0, sum(self.pressure[:4]) - sum(self.pressure_left_init))
+            pressure_right = max(0.0, sum(self.pressure[4:]) - sum(self.pressure_right_init))
+            pressure = pressure_left + pressure_right
+            
+            self.left_pressure_pub.publish(pressure_left)
+            self.right_pressure_pub.publish(pressure_right)
             self.total_pressure_pub.publish(pressure)
             
             #----------------------- TEMPERATURE MONITOR ---------------------------#
             l_temp = self.left_finger_joint_state.motor_temps[0]
             r_temp = self.right_finger_joint_state.motor_temps[0]
             
+            l_cur_torque = self.left_finger_joint_state.load * DMXL_MAX_SPEED_RAD
+            r_cur_torque = self.right_finger_joint_state.load * DMXL_MAX_SPEED_RAD
+            
             # lower torque to let the motors cool down
-            l_goal = -0.2 * DMXL_MAX_SPEED_RAD
-            r_goal = 0.2 * DMXL_MAX_SPEED_RAD
+            l_goal = -0.2 * DMXL_MAX_SPEED_RAD if l_cur_torque < 0.0 else  0.2 * DMXL_MAX_SPEED_RAD
+            r_goal =  0.2 * DMXL_MAX_SPEED_RAD if r_cur_torque > 0.0 else -0.2 * DMXL_MAX_SPEED_RAD
             
             if l_temp >= 76 or r_temp >= 76:
                 if not overheat_trigger:
                     rospy.logwarn('Disabling gripper motors torque [LM: %dC, RM: %dC]' % (l_temp, r_temp))
+                    self.lr_pub_lock.acquire()
                     self.left_finger_joint_torque_pub.publish(-0.5)
                     self.right_finger_joint_torque_pub.publish(0.5)
+                    self.lr_pub_lock.release()
                     overheat_trigger = True
             elif l_temp >= 73 or r_temp >= 73:
                 if not pre_overheat_trigger and not overheat_trigger:
                     rospy.logwarn('Gripper motors are overheating [LM: %dC, RM: %dC]' % (l_temp, r_temp))
                     rospy.logwarn('Setting torque to [LM: %.2f, RM: %.2f]' % (l_goal, r_goal))
+                    self.lr_pub_lock.acquire()
                     self.left_finger_joint_torque_pub.publish(l_goal)
                     self.right_finger_joint_torque_pub.publish(r_goal)
+                    self.lr_pub_lock.release()
                     pre_overheat_trigger = True
             else:
                 pre_overheat_trigger = False
@@ -174,18 +194,24 @@ class GripperActionController():
                 right = max(-DMXL_MAX_SPEED_RAD, r_current - pressure_change_step)
                 
                 if left < DMXL_MAX_SPEED_RAD or right > -DMXL_MAX_SPEED_RAD:
-                    self.left_finger_joint_torque_pub.publish(left)
-                    self.right_finger_joint_torque_pub.publish(right)
-                    rospy.logdebug('>MAX pressure is %.2f, LT: %.2f, RT: %.2f, step is %.2f' % (pressure, l_current, r_current, pressure_change_step))
+                    if self.close_gripper:
+                        self.lr_pub_lock.acquire()
+                        self.left_finger_joint_torque_pub.publish(left)
+                        self.right_finger_joint_torque_pub.publish(right)
+                        self.lr_pub_lock.release()
+                        rospy.logdebug('>MAX pressure is %.2f, LT: %.2f, RT: %.2f, step is %.2f' % (pressure, l_current, r_current, pressure_change_step))
             elif pressure < self.lower_pressure: # squeeze
                 pressure_change_step = abs(pressure - self.lower_pressure) / max_pressure
                 left = max(-DMXL_MAX_SPEED_RAD, l_current - pressure_change_step)
                 right = min(DMXL_MAX_SPEED_RAD, r_current + pressure_change_step)
                 
                 if left > -DMXL_MAX_SPEED_RAD or right < DMXL_MAX_SPEED_RAD:
-                    self.left_finger_joint_torque_pub.publish(left)
-                    self.right_finger_joint_torque_pub.publish(right)
-                    rospy.logdebug('<MIN pressure is %.2f, LT: %.2f, RT: %.2f, step is %.2f' % (pressure, l_current, r_current, pressure_change_step))
+                    if self.close_gripper:
+                        self.lr_pub_lock.acquire()
+                        self.left_finger_joint_torque_pub.publish(left)
+                        self.right_finger_joint_torque_pub.publish(right)
+                        self.lr_pub_lock.release()
+                        rospy.logdebug('<MIN pressure is %.2f, LT: %.2f, RT: %.2f, step is %.2f' % (pressure, l_current, r_current, pressure_change_step))
             ########################################################################
             
             r.sleep()
@@ -196,6 +222,7 @@ class GripperActionController():
         
         while not rospy.is_shutdown():
             try:
+                map_frame_id = 'base_footprint'
                 gripper_palm_frame_id = 'L7_wrist_roll_link'
                 left_fingertip_frame_id = 'left_fingertip_link'
                 right_fingertip_frame_id = 'right_fingertip_link'
@@ -212,6 +239,12 @@ class GripperActionController():
                 
                 dist = math.sqrt(dx*dx + dy*dy + dz*dz)
                 self.gripper_opening_pub.publish(dist)
+                
+                l_pos, _ = self.tf_listener.lookupTransform(map_frame_id, left_fingertip_frame_id, rospy.Time(0))
+                r_pos, _ = self.tf_listener.lookupTransform(map_frame_id, right_fingertip_frame_id, rospy.Time(0))
+                
+                self.left_finger_ground_distance_pub.publish(l_pos[2])
+                self.right_finger_ground_distance_pub.publish(r_pos[2])
             except LookupException as le:
                 rospy.logerr(le)
             except ConnectivityException as ce:
@@ -253,8 +286,10 @@ class GripperActionController():
         if req.command == WubbleGripperGoal.CLOSE_GRIPPER:
             self.dynamic_torque_control = req.dynamic_torque_control
             desired_torque = req.torque_limit * DMXL_MAX_SPEED_RAD
+            self.lr_pub_lock.acquire()
             self.left_finger_joint_torque_pub.publish(-desired_torque)
             self.right_finger_joint_torque_pub.publish(desired_torque)
+            self.lr_pub_lock.release()
             
             self.lower_pressure = req.pressure_lower
             self.upper_pressure = req.pressure_upper
@@ -275,8 +310,10 @@ class GripperActionController():
         elif req.command == WubbleGripperGoal.OPEN_GRIPPER:
             self.close_gripper = False
             desired_torque = req.torque_limit * DMXL_MAX_SPEED_RAD
+            self.lr_pub_lock.acquire()
             self.left_finger_joint_torque_pub.publish(desired_torque)
             self.right_finger_joint_torque_pub.publish(-desired_torque)
+            self.lr_pub_lock.release()
             
             start_time = rospy.Time.now()
             while (self.left_finger_joint_state.current_pos < 0.8 or
@@ -285,8 +322,10 @@ class GripperActionController():
                   not rospy.is_shutdown():
                 r.sleep()
                 
+            self.lr_pub_lock.acquire()
             self.left_finger_joint_torque_pub.publish(0.5)
             self.right_finger_joint_torque_pub.publish(-0.5)
+            self.lr_pub_lock.release()
             self.action_server.set_succeeded()
         else:
             msg = 'Unrecognized command: %d' % req.command
