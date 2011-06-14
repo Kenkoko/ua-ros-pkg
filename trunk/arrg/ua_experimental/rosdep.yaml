@@ -8,3 +8,5 @@ libsndfile:
   debian: libsndfile1-dev
   arch: libsndfile
   macports: libsndfile
+libjack-dev:
+  ubuntu: libjack-dev
