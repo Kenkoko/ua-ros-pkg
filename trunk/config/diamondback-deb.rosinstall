@@ -13,8 +13,9 @@
     uri: http://foote-ros-pkg.googlecode.com/svn/trunk/phidgets/phidgetspp_c_api
     local-name: foote-ros-pkg/phidgets/phidgetspp_c_api
 - svn:
-    uri: https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/trunk/stacks/bosch_drivers/
-    local-name: bosch-ros-pkg/bosch_drivers/
+    uri: https://code.ros.org/svn/ros-pkg/branches/trunk_cturtle/stacks/camera_drivers_experimental
+    local-name: stacks/camera_drivers_experimental
+
 - svn:
     uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/openrave_planning/
     local-name: jsk-ros-pkg/openrave_planning
@@ -25,4 +26,8 @@
 - svn:
     uri: https://code.ros.org/svn/release/trunk
     local-name: release
+
+- svn:
+    uri: https://ua-ros-pkg.googlecode.com/svn/trunk/config
+    local-name: config
 
