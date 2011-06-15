@@ -3,7 +3,7 @@
     <rosparam command="load" file="$(find wubble2_robot)/config/wubble_hand_description.yaml"/>
 
     <!-- joint trajectory normalization -->
-<!--    <include file="$(find trajectory_filter_server)/launch/trajectory_unnormalize.launch"/>-->
+    <include file="$(find trajectory_filter_server)/launch/trajectory_unnormalize.launch"/>
 
     <!-- grasp planner -->
     <node pkg="orrosplanning"

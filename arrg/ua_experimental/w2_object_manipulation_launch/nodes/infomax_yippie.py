@@ -69,6 +69,8 @@ from motion_planning_msgs.msg import OrderedCollisionOperations
 from motion_planning_msgs.msg import CollisionOperation
 from motion_planning_msgs.srv import GetMotionPlan
 from motion_planning_msgs.srv import GetMotionPlanRequest
+from motion_planning_msgs.srv import FilterJointTrajectory
+from motion_planning_msgs.srv import FilterJointTrajectoryRequest
 
 from move_arm_msgs.msg import MoveArmAction
 from move_arm_msgs.msg import MoveArmGoal
@@ -85,18 +87,25 @@ from interpolated_ik_motion_planner.srv import SetInterpolatedIKMotionPlanParams
 class ObjectCategorizer():
     def __init__(self):
         self.ARM_JOINTS = ('shoulder_pitch_joint',
-                            'shoulder_pan_joint',
-                            'upperarm_roll_joint',
-                            'elbow_flex_joint',
-                            'forearm_roll_joint',
-                            'wrist_pitch_joint',
-                            'wrist_roll_joint')
-                            
+                           'shoulder_pan_joint',
+                           'upperarm_roll_joint',
+                           'elbow_flex_joint',
+                           'forearm_roll_joint',
+                           'wrist_pitch_joint',
+                           'wrist_roll_joint')
+                           
+        self.ARM_LINKS = ('L6_wrist_pitch_link',
+                          'L5_forearm_roll_link',
+                          'L4_elbow_flex_link',
+                          'L3_upperarm_roll_link',
+                          'L2_shoulder_pan_link',
+                          'L1_shoulder_pitch_link')
+                          
         self.GRIPPER_LINKS = ('L9_right_finger_link',
                               'L8_left_finger_link',
                               'L7_wrist_roll_link')
                               
-        self.READY_POSITION = (-1.650, -1.465, 3.130, -0.970, -1.427,  0.337,  0.046)
+        self.READY_POSITION = (-1.650, -1.465, 3.430, -0.970, -1.427,  0.337,  0.046)
         self.LIFT_POSITION  = (-1.049, -1.241, 0.669, -0.960, -0.409, -0.072, -0.143)
         self.PLACE_POSITION = ( 0.261, -0.704, 1.470,  0.337,  0.910, -1.667, -0.026)
         
@@ -202,6 +211,11 @@ class ObjectCategorizer():
         rospy.wait_for_service('/classify')
         self.classification_srv = rospy.ServiceProxy('/classify', classify)
         rospy.loginfo('connected to classify service')
+        
+        rospy.loginfo('waiting for trajectory_filter_unnormalizer/filter_trajectory service')
+        rospy.wait_for_service('/trajectory_filter_unnormalizer/filter_trajectory')
+        self.trajectory_filter_srv = rospy.ServiceProxy('/trajectory_filter_unnormalizer/filter_trajectory', FilterJointTrajectory)
+        rospy.loginfo('connected to trajectory_filter_unnormalizer/filter_trajectory service')
         
         # will publish to wrist roll joint controller for roll action
         self.wrist_roll_command_pub = rospy.Publisher('wrist_roll_controller/command', Float64)
@@ -416,6 +430,7 @@ class ObjectCategorizer():
             
             # set gripper padding to 0
             gripper_paddings = [LinkPadding(l,0.0) for l in self.GRIPPER_LINKS]
+            gripper_paddings.extend([LinkPadding(l,0.0) for l in self.ARM_LINKS])
             
             # move into pre-grasp pose
             if not self.move_arm_joint_goal(ik_solution.joint_state.name,
@@ -474,7 +489,7 @@ class ObjectCategorizer():
                                         rot_spacing=0.1, consistent_angle=math.pi/9, collision_aware=True,
                                         collision_check_resolution=1, steps_before_abort=-1, num_steps=0,
                                         ordered_collision_operations=None, frame='base_footprint', start_from_end=0,
-                                        max_joint_vels=[1.5]*7, max_joint_accs=[1.0]*7):
+                                        max_joint_vels=[1.5]*7, max_joint_accs=[8.0]*7):
                                         
         res = self.interpolated_ik_params_srv(num_steps,
                                               consistent_angle,
@@ -505,6 +520,7 @@ class ObjectCategorizer():
         req.motion_plan_request.goal_constraints.orientation_constraints = [orient_constraint,]
         
         req.motion_plan_request.link_padding = [LinkPadding(l,0.0) for l in self.GRIPPER_LINKS]
+        req.motion_plan_request.link_padding.extend([LinkPadding(l,0.0) for l in self.ARM_LINKS])
         
         if ordered_collision_operations is not None:
             req.motion_plan_request.ordered_collision_operations = ordered_collision_operations
@@ -514,7 +530,7 @@ class ObjectCategorizer():
 
 
     def check_cartesian_path_lists(self, approachpos, approachquat, grasppos, graspquat, start_angles, pos_spacing=0.03,
-                                   rot_spacing=0.1, consistent_angle=math.pi/9.0, collision_aware=True,
+                                   rot_spacing=0.1, consistent_angle=math.pi/7.0, collision_aware=True,
                                    collision_check_resolution=1, steps_before_abort=1, num_steps=0,
                                    ordered_collision_operations=None, frame='base_link'):
                                    
@@ -557,6 +573,16 @@ class ObjectCategorizer():
         obj.touch_links = self.GRIPPER_LINKS
         self.attached_object_pub.publish(obj)
         
+        current_state = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState)
+        start_angles = list(current_state.actual.positions)
+        start_angles[0] = start_angles[0] - 0.3  # move shoulder up a bit
+        
+        if not self.move_arm_joint_goal(self.ARM_JOINTS,
+                                        start_angles,
+                                        link_padding=gripper_paddings,
+                                        collision_operations=ordered_collision_operations):
+                                            return None
+                                            
         self.start_audio_recording_srv(InfomaxAction.LIFT, self.category_id)
         
         if self.move_arm_joint_goal(self.ARM_JOINTS,
@@ -593,8 +619,17 @@ class ObjectCategorizer():
         rospy.sleep(0.5)
         self.open_gripper()
         rospy.sleep(1.5)
-        sound_msg = self.stop_audio_recording_srv(True)
         
+        # check if gripper actually opened first
+        sound_msg = None
+        grasp_status = self.get_grasp_status_srv()
+        
+        # if there something in the gripper - drop failed
+        if grasp_status.is_hand_occupied:
+            self.stop_audio_recording_srv(False)
+        else:
+            sound_msg = self.stop_audio_recording_srv(True)
+            
         # delete the object that we just dropped, we don't really know where it will land
         obj = AttachedCollisionObject()
         obj.object.header.stamp = rospy.Time.now()
@@ -606,7 +641,8 @@ class ObjectCategorizer():
         
         self.attached_object_pub.publish(obj)
         
-        return sound_msg.recorded_sound
+        if sound_msg: return sound_msg.recorded_sound
+        else: return None
 
 
     def place(self, tabletop_collision_map_processing_result):
@@ -636,8 +672,15 @@ class ObjectCategorizer():
         collision_operation2.operation = CollisionOperation.DISABLE
         collision_operation2.penetration_distance = 0.01
         
+        # disable collisions between arm and table
+        collision_operation3 = CollisionOperation()
+        collision_operation3.object1 = collision_support_surface_name
+        collision_operation3.object2 = self.ARM_GROUP_NAME
+        collision_operation3.operation = CollisionOperation.DISABLE
+        collision_operation3.penetration_distance = 0.01
+        
         ordered_collision_operations = OrderedCollisionOperations()
-        ordered_collision_operations.collision_operations = [collision_operation1, collision_operation2]
+        ordered_collision_operations.collision_operations = [collision_operation1, collision_operation2, collision_operation3]
         
         self.start_audio_recording_srv(InfomaxAction.PLACE, self.category_id)
         
@@ -645,10 +688,18 @@ class ObjectCategorizer():
                                     self.PLACE_POSITION,
                                     link_padding=gripper_paddings,
                                     collision_operations=ordered_collision_operations):
+            sound_msg = None
+            grasp_status = self.get_grasp_status_srv()
+            
             self.open_gripper()
             rospy.sleep(0.5)
-            sound_msg = self.stop_audio_recording_srv(True)
             
+            # if after lowering arm gripper is still holding an object life's good
+            if grasp_status.is_hand_occupied:
+                sound_msg = self.stop_audio_recording_srv(True)
+            else:
+                self.stop_audio_recording_srv(False)
+                
             obj = AttachedCollisionObject()
             obj.object.header.stamp = rospy.Time.now()
             obj.object.header.frame_id = self.GRIPPER_LINK_FRAME
@@ -658,7 +709,8 @@ class ObjectCategorizer():
             obj.touch_links = self.GRIPPER_LINKS
             self.attached_object_pub.publish(obj)
             
-            return sound_msg.recorded_sound
+            if sound_msg: return sound_msg.recorded_sound
+            else: return None
             
         self.stop_audio_recording_srv(False)
         rospy.logerr('InfomaxAction.PLACE: attempted place failed')
@@ -674,35 +726,35 @@ class ObjectCategorizer():
         
         full_state = rospy.wait_for_message('/joint_states', JointState)
         
-#        req = GetPositionFKRequest()
-#        req.header.frame_id = 'base_link'
-#        req.fk_link_names = [self.GRIPPER_LINK_FRAME]
-#        req.robot_state.joint_state = full_state
-#        pose = self.get_fk_srv(req).pose_stamped[0].pose
-#        
-#        frame_id = 'base_link'
-#        
-#        approachpos =  [pose.position.x, pose.position.y, pose.position.z]
-#        approachquat = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
-#        
-#        push_distance = 0.55
-#        grasppos =  [pose.position.x, pose.position.y-push_distance, pose.position.z]
-#        graspquat = [0.00000, 0.00000, 0.70711, -0.70711]
-        
         req = GetPositionFKRequest()
-        req.header.frame_id = self.GRIPPER_LINK_FRAME
+        req.header.frame_id = 'base_link'
         req.fk_link_names = [self.GRIPPER_LINK_FRAME]
         req.robot_state.joint_state = full_state
         pose = self.get_fk_srv(req).pose_stamped[0].pose
         
-        frame_id = self.GRIPPER_LINK_FRAME
+        frame_id = 'base_link'
         
-        approachpos =  [0, 0, 0]
-        approachquat = [0, 0, 0, 1]
+        approachpos =  [pose.position.x, pose.position.y, pose.position.z]
+        approachquat = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
         
-        push_distance = 0.45
-        grasppos =  [push_distance, 0, 0]
-        graspquat = approachquat[:]
+        push_distance = 0.40
+        grasppos =  [pose.position.x, pose.position.y-push_distance, pose.position.z]
+        graspquat = [0.00000, 0.00000, 0.70711, -0.70711]
+        
+#        req = GetPositionFKRequest()
+#        req.header.frame_id = self.GRIPPER_LINK_FRAME
+#        req.fk_link_names = [self.GRIPPER_LINK_FRAME]
+#        req.robot_state.joint_state = full_state
+#        pose = self.get_fk_srv(req).pose_stamped[0].pose
+#        
+#        frame_id = self.GRIPPER_LINK_FRAME
+#        
+#        approachpos =  [0, 0, 0]
+#        approachquat = [0, 0, 0, 1]
+#        
+#        push_distance = 0.30
+#        grasppos =  [push_distance, 0, 0]
+#        graspquat = approachquat[:]
         
         # attach object to gripper, they will move together
         obj = AttachedCollisionObject()
@@ -763,13 +815,19 @@ class ObjectCategorizer():
             rospy.logerr('InfomaxAction.PUSH: attempted push failed')
             return None
             
-        goal = JointTrajectoryGoal()
+        req = FilterJointTrajectoryRequest()
+        req.trajectory = res.trajectory.joint_trajectory
+        req.trajectory.points = req.trajectory.points[1:] # skip zero velocity point
+        req.allowed_time = rospy.Duration(2.0)
         
-        goal.trajectory.points = res.trajectory.joint_trajectory.points
-        goal.trajectory.joint_names = res.trajectory.joint_trajectory.joint_names
+        filt_res = self.trajectory_filter_srv(req)
+        
+        goal = JointTrajectoryGoal()
+        goal.trajectory = filt_res.trajectory
         goal.trajectory.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
         
         self.start_audio_recording_srv(InfomaxAction.PUSH, self.category_id)
+        rospy.sleep(0.5)
         
         self.trajectory_controller.send_goal(goal)
         self.trajectory_controller.wait_for_result()
@@ -777,6 +835,7 @@ class ObjectCategorizer():
         state = self.trajectory_controller.get_state()
         
         if state == GoalStatus.SUCCEEDED:
+            rospy.sleep(0.5)
             sound_msg = self.stop_audio_recording_srv(True)
             return sound_msg.recorded_sound
             
@@ -831,8 +890,16 @@ class ObjectCategorizer():
                     rospy.sleep(10e-3)
                     
             rospy.sleep(0.5)
-            sound_msg = self.stop_audio_recording_srv(True)
             
+            # check if are still holding an object after shaking
+            sound_msg = None
+            grasp_status = self.get_grasp_status_srv()
+            
+            if grasp_status.is_hand_occupied:
+                sound_msg = self.stop_audio_recording_srv(True)
+            else:
+                self.stop_audio_recording_srv(False)
+                
             # reset wrist to starting position
             self.wrist_roll_velocity_srv(3.0)
             self.wrist_roll_command_pub.publish(start_pos)
@@ -844,7 +911,11 @@ class ObjectCategorizer():
                 rospy.sleep(10e-3)
                 
             rospy.sleep(0.5)
-            return sound_msg.recorded_sound
+            
+            if sound_msg:
+                return sound_msg.recorded_sound
+            else:
+                return None
         except ROSException as e:
             rospy.logerr('InfomaxAction.SHAKE_ROLL: attempted roll failed - %s' % str(e))
             self.stop_audio_recording_srv(False)
@@ -897,8 +968,16 @@ class ObjectCategorizer():
                     rospy.sleep(10e-3)
                     
             rospy.sleep(0.5)
-            sound_msg = self.stop_audio_recording_srv(True)
             
+            # check if are still holding an object after shaking
+            sound_msg = None
+            grasp_status = self.get_grasp_status_srv()
+            
+            if grasp_status.is_hand_occupied:
+                sound_msg = self.stop_audio_recording_srv(True)
+            else:
+                self.stop_audio_recording_srv(False)
+                
             # reset wrist to starting position
             self.wrist_pitch_velocity_srv(3.0)
             self.wrist_pitch_command_pub.publish(start_pos)
@@ -909,7 +988,12 @@ class ObjectCategorizer():
                 current_pos = msg.current_pos
                 rospy.sleep(10e-3)
                 
-            return sound_msg.recorded_sound
+            rospy.sleep(0.5)
+            
+            if sound_msg:
+                return sound_msg.recorded_sound
+            else:
+                return None
         except ROSException as e:
             rospy.logerr('InfomaxAction.SHAKE_PITCH: attempted pitch failed - %s' % str(e))
             self.stop_audio_recording_srv(False)
