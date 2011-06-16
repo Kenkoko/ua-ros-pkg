@@ -32,5 +32,7 @@
     <node pkg="object_manipulator" type="cluster_bounding_box_finder_server.py" name="cluster_bounding_box_finder" output="screen" respawn="false" />
     
     <node pkg="tabletop_collision_map_processing" name="tabletop_collision_map_processing" 
-        type="tabletop_collision_map_processing_node" respawn="false" output="screen"/>
+        type="tabletop_collision_map_processing_node" respawn="false" output="screen">
+        <param name="static_map_cloud_name" value="neck_scan/full_cloud_filtered"/>
+    </node>
 </launch>
