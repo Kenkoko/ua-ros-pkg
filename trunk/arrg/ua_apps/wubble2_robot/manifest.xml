@@ -28,6 +28,7 @@
     <depend package="geometry_msgs"/>
     <depend package="ua_audio_msgs"/>
 
+    <depend package="wubble_navigation_self_filter"/>
     <depend package="interpolated_ik_motion_planner"/>
 
 </package>

@@ -20,7 +20,7 @@
     </node>
 
     <!-- Filter for base laser scans that hit the body of the robot -->
-    <node name="base_laser_self_filter" pkg="robot_self_filter" type="self_filter" respawn="true" >
+    <node name="base_laser_self_filter" pkg="wubble_navigation_self_filter" type="self_filter" respawn="true" >
         <remap from="cloud_in" to="base_scan/shadow_filtered" />
         <remap from="cloud_out" to="base_scan/marking" />
         <param name="sensor_frame" type="string" value="base_scan_link" />
