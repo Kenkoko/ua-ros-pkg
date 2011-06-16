@@ -37,4 +37,4 @@ rosbuild_add_executable(get_joint_trajectory_validity src/get_joint_trajectory_v
 rosbuild_add_executable(move_arm_simple_pose_goal src/move_arm_simple_pose_goal.cpp)
 rosbuild_add_executable(move_arm_joint_goal src/move_arm_joint_goal.cpp)
 rosbuild_add_executable(collision_free_trajectory_control src/collision_free_trajectory_control.cpp)
-
+rosbuild_add_executable(ompl_joint_goal src/ompl_joint_goal.cpp)
