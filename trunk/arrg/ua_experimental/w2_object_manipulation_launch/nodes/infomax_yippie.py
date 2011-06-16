@@ -505,9 +505,9 @@ class ObjectCategorizer():
         req = GetMotionPlanRequest()
         req.motion_plan_request.start_state.joint_state.name = joint_names
         req.motion_plan_request.start_state.joint_state.position = start_angles
-        req.motion_plan_request.start_state.multi_dof_joint_state.pose = start_pose.pose
-        req.motion_plan_request.start_state.multi_dof_joint_state.child_frame_id = self.GRIPPER_LINK_FRAME
-        req.motion_plan_request.start_state.multi_dof_joint_state.frame_id = start_pose.header.frame_id
+        req.motion_plan_request.start_state.multi_dof_joint_state.poses = [start_pose.pose]
+        req.motion_plan_request.start_state.multi_dof_joint_state.child_frame_ids = [self.GRIPPER_LINK_FRAME]
+        req.motion_plan_request.start_state.multi_dof_joint_state.frame_ids = [start_pose.header.frame_id]
         
         pos_constraint = PositionConstraint()
         pos_constraint.position = goal_pose.pose.position

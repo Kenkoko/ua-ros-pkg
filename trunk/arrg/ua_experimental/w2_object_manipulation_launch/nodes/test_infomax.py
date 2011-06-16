@@ -22,7 +22,7 @@ if __name__ == '__main__':
     infomax_srv = rospy.ServiceProxy('/get_category_distribution', InfoMax)
     rospy.loginfo('connected to get_category_distribution service')
     
-    actions = [InfomaxAction.PUSH]*5
+    actions = [InfomaxAction.SHAKE_ROLL]*1
     
     req = InfoMaxRequest()
     req.objectNames = ['pink_glass',        #0
