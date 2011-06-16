@@ -16,6 +16,7 @@
     <depend package="tf"/>
     <depend package="tf_conversions"/>
     <depend package="urdf"/>
+    <depend package="pluginlib"/>
 
     <depend package="kinematics_base"/>
     <depend package="kinematics_msgs" />
@@ -25,6 +26,7 @@
 
     <export>
         <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lwubble_arm_kinematics_lib"/>
+        <kinematics_base plugin="${prefix}/kinematics_plugins.xml" />
     </export>
 </package>
 

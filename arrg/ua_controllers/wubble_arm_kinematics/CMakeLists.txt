@@ -32,6 +32,7 @@ rosbuild_add_library(wubble_arm_kinematics_lib
   src/wubble_arm_kinematics_utils.cpp
   src/wubble_arm_ik_solver.cpp
   src/wubble_arm_kinematics.cpp
+  src/wubble_arm_kinematics_plugin.cpp
 )
 
 rosbuild_add_executable(wubble_arm_kinematics_node src/main.cpp)
