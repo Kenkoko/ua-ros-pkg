@@ -50,6 +50,12 @@ StereoData::StereoData()
     imWidth = 640;
     imHeight = 480;
 
+    left_info.distortion_model = "plumb_bob";
+    right_info.distortion_model = "plumb_bob";
+
+    left_info.D.resize(5);
+    right_info.D.resize(5);
+
     corrSize = 15;
     filterSize = 11;
     dpp = 16;
@@ -229,10 +235,10 @@ void StereoData::parseCalibrationSVS(string params, stereo_side_t stereo_side, s
     extract(params, "[" + side + " camera]", "kappa3", cam_info.D[4]);
 
     // R - rectification matrix
-    extract(params, "[" + side + " camera]", "rect", cam_info.R.c_array(), 9);
+    extract(params, "[" + side + " camera]", "rect", &cam_info.R[0], 9);
 
     // P - projection matrix
-    extract(params, "[" + side + " camera]", "proj", cam_info.P.c_array(), 12);
+    extract(params, "[" + side + " camera]", "proj", &cam_info.P[0], 12);
     cam_info.P[3] *= .001;  // convert from mm to m
 }
 
@@ -251,16 +257,16 @@ void StereoData::parseCalibrationOST(string params, stereo_side_t stereo_side, s
     }
 
     // K - original camera matrix
-    extract(params, "[" + side + " camera]", "camera matrix", cam_info.K.c_array(), 9);
+    extract(params, "[" + side + " camera]", "camera matrix", &cam_info.K[0], 9);
 
     // D - distortion params
-    extract(params, "[" + side + " camera]", "distortion", cam_info.D.c_array(), 5);
+    extract(params, "[" + side + " camera]", "distortion", &cam_info.D[0], 5);
 
     // R - rectification matrix
-    extract(params, "[" + side + " camera]", "rectification", cam_info.R.c_array(), 9);
+    extract(params, "[" + side + " camera]", "rectification", &cam_info.R[0], 9);
 
     // P - projection matrix
-    extract(params, "[" + side + " camera]", "projection", cam_info.P.c_array(), 12);
+    extract(params, "[" + side + " camera]", "projection", &cam_info.P[0], 12);
 }
 
 void StereoData::printCameraInfo(stereo_side_t stereo_side, const sensor_msgs::CameraInfo& cam_info)
@@ -441,7 +447,7 @@ void StereoData::extractParams(char *ps, bool store)
 //
 // Create parameters string and save it in the imLeft->params location
 //
-static int PrintMatStr(double* mat, int n, int m, char* str)
+static int PrintMatStr(const double* mat, int n, int m, char* str)
 {
     int c = 0;
 
@@ -511,30 +517,30 @@ char* StereoData::createParams(bool store)
     n += sprintf(&str[n], "\n[left camera]\n");
 
     n += sprintf(&str[n], "\ncamera matrix\n");
-    n += PrintMatStr(left_info.K.c_array(), 3, 3, &str[n]);
+    n += PrintMatStr(left_info.K.data(), 3, 3, &str[n]);
 
     n += sprintf(&str[n], "\ndistortion\n");
-    n += PrintMatStr(left_info.D.c_array(), 1, 5, &str[n]);
+    n += PrintMatStr(left_info.D.data(), 1, 5, &str[n]);
 
     n += sprintf(&str[n], "\nrectification\n");
-    n += PrintMatStr(left_info.R.c_array(), 3, 3, &str[n]);
+    n += PrintMatStr(left_info.R.data(), 3, 3, &str[n]);
 
     n += sprintf(&str[n], "\nprojection\n");
-    n += PrintMatStr(left_info.P.c_array(), 3, 4, &str[n]);
+    n += PrintMatStr(left_info.P.data(), 3, 4, &str[n]);
 
     // right camera
     n += sprintf(&str[n], "\n[right camera]\n");
     n += sprintf(&str[n], "\ncamera matrix\n");
-    n += PrintMatStr(right_info.K.c_array(), 3, 3, &str[n]);
+    n += PrintMatStr(right_info.K.data(), 3, 3, &str[n]);
 
     n += sprintf(&str[n], "\ndistortion\n");
-    n += PrintMatStr(right_info.D.c_array(), 1, 5, &str[n]);
+    n += PrintMatStr(right_info.D.data(), 1, 5, &str[n]);
 
     n += sprintf(&str[n], "\nrectification\n");
-    n += PrintMatStr(right_info.R.c_array(), 3, 3, &str[n]);
+    n += PrintMatStr(right_info.R.data(), 3, 3, &str[n]);
 
     n += sprintf(&str[n], "\nprojection\n");
-    n += PrintMatStr(right_info.P.c_array(), 3, 4, &str[n]);
+    n += PrintMatStr(right_info.P.data(), 3, 4, &str[n]);
 
     str[n] = 0; // just in case
 
