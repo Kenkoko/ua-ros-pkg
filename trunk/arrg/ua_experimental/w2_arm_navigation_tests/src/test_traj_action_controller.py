@@ -27,59 +27,22 @@ class ActionTrajectoryTest:
         goal = JointTrajectoryGoal()
 
         # First, the joint names, which apply to all waypoints
-        goal.trajectory.joint_names.append("upper_tilt_joint")
-        goal.trajectory.joint_names.append("lower_tilt_joint")
+        goal.trajectory.joint_names = ('shoulder_pitch_joint',
+                                       'shoulder_pan_joint',
+                                       'upperarm_roll_joint',
+                                       'elbow_flex_joint',
+                                       'forearm_roll_joint',
+                                       'wrist_pitch_joint',
+                                       'wrist_roll_joint')
 
         # We will have two waypoints in this goal trajectory
 
         # First trajectory point
         # To be reached 1 second after starting along the trajectory
         point = JointTrajectoryPoint()
-        point.positions.append(1.9)
-        point.positions.append(1.9)
-        point.velocities.append(0.0)
-        point.velocities.append(0.0)
+        point.positions = [0.0] * 7
+        point.velocities = [1.0] * 7
         point.time_from_start = rospy.Duration(3.0)
-        goal.trajectory.points.append(point)
-
-        point = JointTrajectoryPoint()
-        point.positions.append(-2.0)
-        point.positions.append(-2.0)
-        point.velocities.append(0.0)
-        point.velocities.append(0.0)
-        point.time_from_start = rospy.Duration(6.0)
-        goal.trajectory.points.append(point)
-
-        point = JointTrajectoryPoint()
-        point.positions.append(1.0)
-        point.positions.append(-1.0)
-        point.velocities.append(0.0)
-        point.velocities.append(0.0)
-        point.time_from_start = rospy.Duration(8.0)
-        goal.trajectory.points.append(point)
-
-        point = JointTrajectoryPoint()
-        point.positions.append(0.0)
-        point.positions.append(0.0)
-        point.velocities.append(0.0)
-        point.velocities.append(0.0)
-        point.time_from_start = rospy.Duration(9.0)
-        goal.trajectory.points.append(point)
-
-        point = JointTrajectoryPoint()
-        point.positions.append(1.0)
-        point.positions.append(-1.0)
-        point.velocities.append(0.0)
-        point.velocities.append(0.0)
-        point.time_from_start = rospy.Duration(10.0)
-        goal.trajectory.points.append(point)
-
-        point = JointTrajectoryPoint()
-        point.positions.append(0.0)
-        point.positions.append(0.0)
-        point.velocities.append(0.0)
-        point.velocities.append(0.0)
-        point.time_from_start = rospy.Duration(10.5)
         goal.trajectory.points.append(point)
 
         #we are done; return the goal
@@ -92,7 +55,8 @@ if __name__ == '__main__':
     rospy.init_node('trajectory_action_controller_node', anonymous=True)
 
     att = ActionTrajectoryTest()
-    i = 100
+    i = 1
     while i > 0:
         att.start_trajectory(att.test_trajectory())
         i -= 1
+        
