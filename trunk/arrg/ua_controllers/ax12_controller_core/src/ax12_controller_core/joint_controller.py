@@ -47,6 +47,8 @@ from ax12_driver_core.ax12_const import DMXL_MIN_COMPLIANCE_MARGIN
 from ax12_driver_core.ax12_const import DMXL_MAX_COMPLIANCE_MARGIN
 from ax12_driver_core.ax12_const import DMXL_MIN_COMPLIANCE_SLOPE
 from ax12_driver_core.ax12_const import DMXL_MAX_COMPLIANCE_SLOPE
+from ax12_driver_core.ax12_const import DMXL_MIN_PUNCH
+from ax12_driver_core.ax12_const import DMXL_MAX_PUNCH
 
 from ax12_controller_core.srv import SetSpeed
 from ax12_controller_core.srv import TorqueEnable
