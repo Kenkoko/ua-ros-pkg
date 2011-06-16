@@ -1,5 +1,5 @@
 cloud_sources:
-  - name: full_cloud_filtered
+  - name: neck_scan/full_cloud_filtered
     frame_subsample: 1
     point_subsample: 1
     sensor_frame: neck_scan_link

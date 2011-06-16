@@ -46,7 +46,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/wubble2_platform.stl"/>
+                <mesh filename="package://wubble_description/meshes/collada/wubble2_platform.dae"/>
             </geometry>
         </collision>
     </link>
@@ -105,7 +105,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/head_base_link.stl"/>
+                <mesh filename="package://wubble_description/meshes/collada/head_base_link.dae"/>
             </geometry>
         </collision>
     </link>
@@ -130,7 +130,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/head_pan_link.stl"/>
+                <mesh filename="package://wubble_description/meshes/collada/head_pan_link.dae"/>
             </geometry>
         </collision>
     </link>
@@ -155,7 +155,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/head_tilt_link.stl"/>
+                <mesh filename="package://wubble_description/meshes/collada/head_tilt_link.dae"/>
             </geometry>
         </collision>
     </link>
@@ -225,7 +225,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/neck_laser_support_link.stl"/>
+                <mesh filename="package://wubble_description/meshes/collada/neck_laser_support_link.dae"/>
             </geometry>
         </collision>
     </link>
@@ -250,7 +250,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/ax12_45_bracket.stl"/>
+                <mesh filename="package://wubble_description/meshes/collada/ax12_45_bracket.dae"/>
             </geometry>
         </collision>
     </link>
