@@ -1,0 +1,12 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+    <!-- Start Power Relay and Finger Pressure Sensor InterfaceKit -->
+    <node name="relay_arm_sensor_interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
+        <param name="serial_number" type="int" value="124427"/>
+    </node>
+
+    <!-- Power off all relays -->
+    <node name="breaker_control" pkg="wubble2_robot" type="breaker_control.py" args="off" output="screen"/>
+</launch>
+
