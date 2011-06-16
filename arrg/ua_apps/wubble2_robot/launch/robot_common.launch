@@ -1,6 +1,9 @@
 <!-- -*- mode: XML -*- -->
 
 <launch>
+    <machine name="c1" address="wubbletwo" user="robotlab" ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" default="true"/>
+    <machine name="c2" address="papak" user="anton" ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)"/>
+
     <!-- Start Power Relay and Finger Pressure Sensor InterfaceKit -->
     <node name="relay_arm_sensor_interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
         <param name="serial_number" type="int" value="124427"/>
@@ -58,6 +61,6 @@
     <include file="$(find wubble2_robot)/launch/stereo_tof_perception.launch" />
 
     <!-- Start arm planning and navigation, collision map and planning environment -->
-<!--    <include file="$(find wubble2_robot)/launch/arm_navigation.launch" />-->
+    <include file="$(find wubble2_robot)/launch/arm_navigation.launch" />
 </launch>
 
