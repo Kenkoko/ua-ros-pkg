@@ -9,7 +9,7 @@ l_arm_controller:
         - wrist_roll_controller
 
     joint_trajectory_action_node:
-        min_velocity: 0.5
+        min_velocity: 0.6
         constraints:
-            goal_time: 1.0
+            goal_time: 1.5
 
