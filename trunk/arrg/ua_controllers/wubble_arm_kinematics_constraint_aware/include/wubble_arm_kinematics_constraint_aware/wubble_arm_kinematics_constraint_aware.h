@@ -35,8 +35,8 @@
 * Author: Sachin Chitta
 *********************************************************************/
 
-#ifndef PR2_ARM_IK_CONSTRAINT_AWARE_H
-#define PR2_ARM_IK_CONSTRAINT_AWARE_H
+#ifndef WUBBLE_ARM_IK_CONSTRAINT_AWARE_H
+#define WUBBLE_ARM_IK_CONSTRAINT_AWARE_H
 
 #include <angles/angles.h>
 #include <wubble_arm_kinematics/wubble_arm_kinematics.h>
@@ -55,6 +55,8 @@
 #include <motion_planning_msgs/LinkPadding.h>
 #include <motion_planning_msgs/ArmNavigationErrorCodes.h>
 
+#include <urdf/model.h>
+
 namespace wubble_arm_kinematics
 {
 class WubbleArmIKConstraintAware : public wubble_arm_kinematics::WubbleArmKinematics
@@ -65,11 +67,11 @@ public:
    *  @brief ROS/KDL based interface for the inverse kinematics of the Wubble arm
    *  @author Sachin Chitta <sachinc@willowgarage.com>
    *
-   *  This class provides a ROS/KDL interface to the inverse kinematics of the Wubble arm.
-   *  It will compute a collision free solution to the inverse kinematics of the Wubble arm.
-   *  The collision environment needs to be active for this method to work. This requires the presence of a node
-   *  that is publishing collision maps.
-   *  To use this node, you must have a roscore running with a robot description available from the ROS param server.
+   *  This class provides a ROS/KDL interface to the inverse kinematics of the Wubble arm. 
+   *  It will compute a collision free solution to the inverse kinematics of the Wubble arm. 
+   *  The collision environment needs to be active for this method to work. This requires the presence of a node 
+   *  that is publishing collision maps. 
+   *  To use this node, you must have a roscore running with a robot description available from the ROS param server. 
    */
   WubbleArmIKConstraintAware();
 
@@ -82,55 +84,54 @@ public:
 	};
 
   /**
-   * @brief This method searches for and returns the closest solution to the initial guess in the first set of solutions it finds.
+   * @brief This method searches for and returns the closest solution to the initial guess in the first set of solutions it finds. 
    *
    * @return < 0 if no solution is found
-   * @param q_in The initial guess for the inverse kinematics solution. The solver uses the joint value q_init(pr2_ik_->free_angle_) as
-   * as an input to the inverse kinematics. pr2_ik_->free_angle_ can either be 0 or 2 corresponding to the shoulder pan or shoulder roll angle
+   * @param q_in The initial guess for the inverse kinematics solution. The solver uses the joint value q_init(wubble_ik_->free_angle_) as 
+   * as an input to the inverse kinematics. wubble_ik_->free_angle_ can either be 0 or 2 corresponding to the shoulder pan or shoulder roll angle 
    * @param p_in A KDL::Frame representation of the position of the end-effector for which the IK is being solved.
-   * @param q_out A std::vector of KDL::JntArray containing all found solutions.
+   * @param q_out A std::vector of KDL::JntArray containing all found solutions.  
    * @param timeout The amount of time (in seconds) to spend looking for a solution.
-   */
-  int CartToJntSearch(const KDL::JntArray& q_in,
-                      const KDL::Frame& p_in,
-                      KDL::JntArray &q_out,
-                      const double &timeout,
+   */  
+  int CartToJntSearch(const KDL::JntArray& q_in, 
+                      const KDL::Frame& p_in, 
+                      KDL::JntArray &q_out, 
+                      const double &timeout, 
                       motion_planning_msgs::ArmNavigationErrorCodes& error_code);
 
   /**
-   * @brief This method searches for and returns the closest solution to the initial guess in the first set of solutions it finds.
+   * @brief This method searches for and returns the closest solution to the initial guess in the first set of solutions it finds. 
    *
    * @return < 0 if no solution is found
-   * @param q_in The initial guess for the inverse kinematics solution. The solver uses the joint value q_init(pr2_ik_->free_angle_) as
-   * as an input to the inverse kinematics. pr2_ik_->free_angle_ can either be 0 or 2 corresponding to the shoulder pan or shoulder roll angle
+   * @param q_in The initial guess for the inverse kinematics solution. The solver uses the joint value q_init(wubble_ik_->free_angle_) as 
+   * as an input to the inverse kinematics. wubble_ik_->free_angle_ can either be 0 or 2 corresponding to the shoulder pan or shoulder roll angle 
    * @param p_in A KDL::Frame representation of the position of the end-effector for which the IK is being solved.
-   * @param q_out A std::vector of KDL::JntArray containing all found solutions.
+   * @param q_out A std::vector of KDL::JntArray containing all found solutions.  
    * @param timeout The amount of time (in seconds) to spend looking for a solution.
    */
-  bool getConstraintAwarePositionIK(kinematics_msgs::GetConstraintAwarePositionIK::Request &request,
+  bool getConstraintAwarePositionIK(kinematics_msgs::GetConstraintAwarePositionIK::Request &request, 
                                     kinematics_msgs::GetConstraintAwarePositionIK::Response &response);
 private:
 
   ros::ServiceServer ik_collision_service_;
   planning_environment::CollisionModels *collision_models_;
   planning_environment::PlanningMonitor *planning_monitor_;
+  planning_models::KinematicState* kinematic_state_;
   std::string group_;
   bool use_collision_map_;
   ros::Publisher vis_marker_publisher_;
+  ros::Publisher vis_marker_array_publisher_;
   void contactFound(collision_space::EnvironmentModel::Contact &contact);
   std::vector<std::string> default_collision_links_;
   std::vector<std::string> end_effector_collision_links_;
-
-  void initialPoseCheck(const KDL::JntArray &jnt_array,
+  std::vector<std::string> arm_links_;
+  void initialPoseCheck(const KDL::JntArray &jnt_array, 
                         const KDL::Frame &p_in,
                         motion_planning_msgs::ArmNavigationErrorCodes &error_code);
-
-  void collisionCheck(const KDL::JntArray &jnt_array,
+  void collisionCheck(const KDL::JntArray &jnt_array, 
                       const KDL::Frame &p_in,
                       motion_planning_msgs::ArmNavigationErrorCodes &error_code);
-
   void printStringVec(const std::string &prefix, const std::vector<std::string> &string_vector);
-
   ros::Publisher display_trajectory_publisher_;
   bool visualize_solution_;
   kinematics_msgs::PositionIKRequest ik_request_;
@@ -143,6 +144,14 @@ private:
   void advertiseIK();
 
   bool isReady(motion_planning_msgs::ArmNavigationErrorCodes &error_code);
+  void sendEndEffectorPose(const planning_models::KinematicState* state, bool valid);
+
+  //! A model of the robot to see which joints wrap around
+  urdf::Model robot_model_;
+  //! Flag that tells us if the robot model was initialized successfully
+  bool robot_model_initialized_;
+
+
 };
 }
 #endif
