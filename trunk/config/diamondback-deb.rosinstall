@@ -26,6 +26,9 @@
 - svn:
     uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/openrave_planning
     local-name: jsk-ros-pkg/openrave_planning
+- svn:
+    uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/jsk_common
+    local-name: jsk-ros-pkg/jsk_common
 
 - svn:
     uri: https://code.ros.org/svn/ros/stacks/ros_release/trunk
