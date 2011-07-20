@@ -9,6 +9,8 @@
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/wubble2_robot</url>
     
+    <depend package="rospy"/>
+    
     <depend package="wubble_description"/>
     <depend package="erratic_player"/>
     <depend package="hokuyo_node"/>
@@ -27,6 +29,10 @@
     <depend package="object_manipulation_msgs"/>
     <depend package="geometry_msgs"/>
     <depend package="ua_audio_msgs"/>
+
+    <depend package="dynamixel_driver"/>
+    <depend package="dynamixel_controllers"/>
+    <depend package="dynamixel_msgs"/>
 
     <depend package="wubble_navigation_self_filter"/>
     <depend package="interpolated_ik_motion_planner"/>

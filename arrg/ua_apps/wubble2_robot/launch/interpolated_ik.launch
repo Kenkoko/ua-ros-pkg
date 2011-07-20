@@ -2,7 +2,7 @@
 
 <launch>
     <!-- interpolated_ik_motion_planner -->
-    <node pkg="interpolated_ik_motion_planner" type="interpolated_ik_motion_planner.py" output="screen" name="interpolated_ik_motion_planner" args="l" >
+    <node pkg="interpolated_ik_motion_planner" type="interpolated_ik_motion_planner.py" output="screen" name="interpolated_ik_motion_planner" args="l" machine="c2">
         <remap from="pr2_left_arm_kinematics/get_ik" to="wubble_left_arm_kinematics/get_ik" />
         <remap from="pr2_left_arm_kinematics/get_fk" to="wubble_left_arm_kinematics/get_fk" />
         <remap from="pr2_left_arm_kinematics/get_constraint_aware_ik" to="wubble_left_arm_kinematics/get_constraint_aware_ik" />

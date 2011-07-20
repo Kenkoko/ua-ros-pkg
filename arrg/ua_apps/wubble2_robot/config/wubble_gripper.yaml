@@ -1,8 +1,8 @@
 left_finger_controller:
     controller:
-        package: ax12_controller_core
-        module: joint_freespin_controller
-        type: JointFreespinControllerAX12
+        package: dynamixel_controllers
+        module: joint_torque_controller
+        type: JointTorqueController
     joint_name: left_finger_joint
     joint_speed: 1.17
     motor:
@@ -13,9 +13,9 @@ left_finger_controller:
 
 right_finger_controller:
     controller:
-        package: ax12_controller_core
-        module: joint_freespin_controller
-        type: JointFreespinControllerAX12
+        package: dynamixel_controllers
+        module: joint_torque_controller
+        type: JointTorqueController
     joint_name: right_finger_joint
     joint_speed: 1.17
     motor:
@@ -23,3 +23,4 @@ right_finger_controller:
         init: 512
         min: 330
         max: 560
+

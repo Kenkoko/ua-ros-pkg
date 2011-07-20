@@ -36,12 +36,13 @@
 # Author: Antons Rebguns
 #
 
-import roslib
-roslib.load_manifest('wubble2_robot')
-
 import sys
-import rospy
 import time
+from subprocess import call
+
+import roslib; roslib.load_manifest('wubble2_robot')
+import rospy
+
 from phidgets_ros.srv import SetDigitalOutState
 
 SERVICE_NAME = '/interface_kit/124427/set_digital_out_state'
@@ -73,9 +74,14 @@ if __name__ == '__main__':
     rospy.loginfo('Switching 12V breaker %s' % breaker_state)
     breaker_control_srv(0, MAP[breaker_state])
     
-    rospy.loginfo('Switching 16V breaker %s' % breaker_state)
     # control 16V breaker (wubble arm motors)
+    rospy.loginfo('Switching 16V breaker %s' % breaker_state)
     breaker_control_srv(1, MAP[breaker_state])
     
-    time.sleep(1)
+    time.sleep(2.0)
+    
+    # switch to external mic if turning breakers on
+    if MAP[breaker_state]:
+        rospy.loginfo('Switching to external microphone')
+        call(['pacmd', 'set-default-source', 'alsa_input.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00-default.analog-stereo'])
 

@@ -43,7 +43,7 @@ from object_manipulation_msgs.msg import GraspHandPostureExecutionGoal
 from object_manipulation_msgs.srv import GraspStatus
 from wubble2_robot.msg import WubbleGripperAction
 from wubble2_robot.msg import WubbleGripperGoal
-from ua_controller_msgs.msg import JointState
+from dynamixel_msgs.msg import JointState
 
 class WubbleGripperGraspController:
     def __init__(self):
@@ -69,7 +69,8 @@ class WubbleGripperGraspController:
         self.query_srv = rospy.Service(query_service_name, GraspStatus, self.process_grasp_status)
         
         posture_action_name = rospy.get_param('posture_action_name', 'wubble_gripper_grasp_action')
-        self.action_server = SimpleActionServer(posture_action_name, GraspHandPostureExecutionAction, self.process_grasp_action)
+        self.action_server = SimpleActionServer(posture_action_name, GraspHandPostureExecutionAction, self.process_grasp_action, False)
+        self.action_server.start()
         
         rospy.loginfo('wubble_gripper grasp hand posture action server started on topic %s' % posture_action_name)
 

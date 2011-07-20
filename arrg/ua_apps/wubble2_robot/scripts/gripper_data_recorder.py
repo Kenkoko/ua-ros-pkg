@@ -33,7 +33,7 @@
 import roslib; roslib.load_manifest('wubble2_robot')
 import rospy
 
-from ua_controller_msgs.msg import JointState
+from dynamixel_msgs.msg import JointState
 from std_srvs.srv import Empty
 from std_msgs.msg import Float64
 

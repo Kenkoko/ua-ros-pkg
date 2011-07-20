@@ -36,22 +36,13 @@
 # Author: Antons Rebguns
 #
 
-from __future__ import division
-
-from math import fabs
-from math import fmod
-from math import pi
-
-from threading import Thread
-
-from scipy.interpolate import splrep, spalde
+import sys
 
 import roslib
 roslib.load_manifest('wubble2_robot')
 
-import sys
 import rospy
-from ax12_controller_core.srv import TorqueEnable
+from dynamixel_controllers.srv import TorqueEnable
 
 
 if __name__ == '__main__':
@@ -74,5 +65,4 @@ if __name__ == '__main__':
             srv(True)
         else:
             srv(False)
-
 

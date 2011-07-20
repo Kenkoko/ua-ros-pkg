@@ -36,15 +36,15 @@
 #
 
 import roslib
-roslib.load_manifest('wubble_controllers')
+roslib.load_manifest('wubble2_robot')
 
 import rospy
 from pr2_controllers_msgs.msg import JointControllerState
-from ua_controller_msgs.msg import JointState
+from dynamixel_msgs.msg import JointState
 
-class AX12ToPR2StateMsgs:
+class DynamixelToPR2StateMsgs:
     def __init__(self):
-        rospy.init_node('ax12_to_pr2_state_msgs', anonymous=True)
+        rospy.init_node('dynamixel_to_pr2_state_msgs', anonymous=True)
         
         self.robot_controllers = ('shoulder_pitch_controller',
                                   'shoulder_pan_controller',
@@ -82,7 +82,7 @@ class AX12ToPR2StateMsgs:
 
 if __name__ == '__main__':
     try:
-        translator = AX12ToPR2StateMsgs()
+        translator = DynamixelToPR2StateMsgs()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
