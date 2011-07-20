@@ -34,7 +34,7 @@ import roslib; roslib.load_manifest('wubble2_robot')
 import rospy
 
 from sensor_msgs.msg import JointState as JointStatePR2
-from ua_controller_msgs.msg import JointState as JointStateWubble
+from dynamixel_msgs.msg import JointState as JointStateWubble
 
 class JointStatesPublisher():
     def __init__(self):

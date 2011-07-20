@@ -18,7 +18,7 @@
         <remap from="/neck_tilt_controller/state" to="/neck_tilt_controller/state_pr2_msgs"/>
         <param name="controller" value="neck_tilt_controller" />
     </node>
-    <node name="tilt_neck_laser" pkg="wubble2_robot" type="tilt_neck_laser.py" output="screen" />
+    <node name="tilt_neck_laser" pkg="wubble2_robot" type="tilt_neck_laser.py" respawn="true" output="screen" />
 
 
 
@@ -44,7 +44,7 @@
     <node name="sac_ground_removal" pkg="semantic_point_annotator" type="sac_inc_ground_removal_node">
         <remap from="tilt_laser_cloud_filtered" to="neck_scan/filtered" />
         <remap from="cloud_ground_filtered" to="neck_scan/ground_object_cloud" />
-        <param name="z_threshold" value="0.15" />
+        <param name="z_threshold" value="0.2" />
         <param name="sac_min_points_per_model" value="40" />
         <param name="sac_distance_threshold" value="0.05" />
         <param name="planar_refine" value="1" />

@@ -2,7 +2,7 @@
 
 <launch>
     <!-- move_arm -->
-    <node name="move_left_arm" pkg="move_arm" type="move_arm_simple_action" output="screen">
+    <node name="move_left_arm" pkg="move_arm" type="move_arm_simple_action" output="screen" machine="c2">
         <remap from="robot_description" to="robot_description" />
         <remap from="joint_state" to="joint_states" />
         <remap from="arm_ik" to="wubble_left_arm_kinematics/get_constraint_aware_ik" />

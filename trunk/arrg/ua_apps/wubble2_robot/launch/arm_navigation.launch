@@ -2,17 +2,17 @@
 
 <launch>
     <!-- displaying known model markers -->
-    <node pkg="planning_environment" name="display_planner_collision_model_environment_server" type="display_planner_collision_model" respawn="false" output="screen">
+    <node pkg="planning_environment" name="display_planner_collision_model_environment_server" type="display_planner_collision_model" respawn="false" output="screen" machine="c2">
         <param name="skip_collision_map" type="bool" value="false" />
         <param name="prefix" type="string" value="/environment_server_left_arm" />
     </node>
 
-    <node pkg="planning_environment" name="display_planner_collision_model_ik" type="display_planner_collision_model" respawn="false" output="screen">
+    <node pkg="planning_environment" name="display_planner_collision_model_ik" type="display_planner_collision_model" respawn="false" output="screen" machine="c2">
         <param name="skip_collision_map" type="bool" value="false" />
         <param name="prefix" type="string" value="/arm_kinematics" />
     </node>
 
-    <node pkg="collision_map" type="collision_map_self_occ_node" name="collision_map_self_occ_node" respawn="true" output="screen">
+    <node pkg="collision_map" type="collision_map_self_occ_node" name="collision_map_self_occ_node" respawn="true" output="screen" machine="c2">
         <param name="self_see_default_padding" type="double" value="0.04" />
         <param name="self_see_default_scale" type="double" value="1.0" />
          
@@ -47,7 +47,7 @@
     <!-- load collision free ik -->
     <include file="$(find wubble_arm_kinematics_constraint_aware)/launch/left_arm_collision_free_ik.launch"/>
 
-    <node pkg="planning_environment" type="environment_server" output="screen" name="environment_server_left_arm">
+    <node pkg="planning_environment" type="environment_server" output="screen" name="environment_server_left_arm" machine="c2">
         <remap from="collision_map" to="collision_map_occ" />
         <remap from="collision_map_update" to="collision_map_occ_update" />
         
@@ -69,7 +69,7 @@
         <rosparam command="load" file="$(find wubble_description)/params/w2_environment_server_padding.yaml" />
     </node>
 
-    <node name="ompl_planning" pkg="ompl_ros_interface" type="ompl_ros" output="screen">
+    <node name="ompl_planning" pkg="ompl_ros_interface" type="ompl_ros" output="screen" machine="c2">
         <remap from="robot_description" to="robot_description" />  
         <remap from="collision_map" to="collision_map_occ" />
         <remap from="collision_map_update" to="collision_map_occ_update" />

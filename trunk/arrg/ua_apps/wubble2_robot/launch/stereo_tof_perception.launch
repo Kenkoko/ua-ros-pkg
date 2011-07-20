@@ -5,10 +5,8 @@
     <include file="$(find wubble2_robot)/launch/swissranger.launch" />
     
     <node pkg="topic_tools" type="throttle" name="swissranger_raw_throttle" args="messages /swissranger/pointcloud_raw 5 /swissranger/pointcloud_raw_throttled" output="screen"/>
-<!--    <node pkg="topic_tools" type="throttle" name="swissranger_filt_throttle" args="messages /swissranger/self_filtered 10 swiss_filt_slow" output="screen"/>-->
     
     <node pkg="point_cloud_filters" type="cloud_to_cloud_filter_chain" output="screen" name="swissranger_intensity_filter" >
-<!--          <remap from="cloud_in" to="swissranger/pointcloud_raw" />-->
           <remap from="cloud_in" to="swissranger/pointcloud_raw_throttled" />
           <remap from="cloud_out" to="swissranger/intensity_filtered" />
           <rosparam command="load" file="$(find wubble2_robot)/config/filters.yaml" />
@@ -18,6 +16,15 @@
         <remap from="/points_in" to="swissranger/intensity_filtered" />
         <remap from="/points2_out" to="swissranger/intensity_filtered2" />
     </node>
+    
+    <node pkg="robot_self_filter" type="self_filter" name="swissranger_self_filter" respawn="true" output="screen">
+        <remap from="cloud_in" to="swissranger/intensity_filtered2" />
+        <remap from="cloud_out" to="swissranger/self_filtered2" />
+        <param name="sensor_frame" value="swissranger_link" />
+    <rosparam file="$(find wubble_description)/params/w2_self_filter.yaml" command="load" />
+    </node>
+    
+<!--    <include file="$(find wubble_navigation_floor_filter)/launch/wubble_navigation_floor_filter.launch" />-->
     
     <!-- need to clear known objects from scans -->
 <!--    <node pkg="planning_environment" type="clear_known_objects" name="swissranger_clear_objects" output="screen">-->
@@ -29,11 +36,4 @@
 <!--        <param name="object_scale" type="double" value="1.0" />-->
 <!--    </node>-->
     
-<!--    <node pkg="robot_self_filter" type="self_filter" name="swissranger_self_filter" respawn="true" output="screen">-->
-<!--        <remap from="cloud_in" to="swissranger/cloud_known" />-->
-<!--        <remap from="cloud_out" to="swissranger/self_filtered" />-->
-<!--        <param name="sensor_frame" value="swissranger_link" />-->
-<!--    <rosparam file="$(find wubble_description)/params/w2_self_filter.yaml" command="load" />-->
-<!--    </node>-->
-
 </launch>

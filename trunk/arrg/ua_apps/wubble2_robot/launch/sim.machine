@@ -1,0 +1,11 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+    <machine name="c1" address="wubbletwo" user="robotlab" ros-root="$(env ROS_ROOT)" ros-package-path="$(env ROS_PACKAGE_PATH)" default="true"/>
+    <machine name="c2" address="papak" user="anton" >
+        <env name="ROS_ROOT" value="/opt/ros/diamondback/ros"/>
+        <env name="ROS_PACKAGE_PATH" value="/Users/anton/ros-d/jsk-ros-pkg/openrave_planning:/Users/anton/ros-d/ua-ros-pkg:/opt/ros/diamondback/stacks"/>
+        <env name="ROS_MASTER_URI" value="http://wubbletwo:11311"/>
+    </machine>
+</launch>
+

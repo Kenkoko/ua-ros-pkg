@@ -41,11 +41,9 @@ from tf import TransformListener
 from tf import LookupException
 from tf import ConnectivityException
 
-from ax12_driver_core.ax12_const import DMXL_MAX_SPEED_RAD
-from ax12_driver_core.ax12_const import DMXL_SPEED_RAD_SEC_PER_TICK
-from ax12_controller_core.srv import SetSpeed
-from ax12_controller_core.srv import SetTorqueLimit
-from ua_controller_msgs.msg import JointState
+from dynamixel_controllers.srv import SetSpeed
+from dynamixel_controllers.srv import SetTorqueLimit
+from dynamixel_msgs.msg import JointState
 from phidgets_ros.msg import Float64Stamped
 
 import actionlib
@@ -53,6 +51,8 @@ from std_msgs.msg import Float64
 from wubble2_robot.msg import WubbleGripperAction
 from wubble2_robot.msg import WubbleGripperGoal
 
+#TODO: fix this
+DXL_MAX_SPEED_RAD = 6.0
 
 class GripperActionController():
     def __init__(self):
@@ -115,8 +115,11 @@ class GripperActionController():
         # Start gripper opening monitoring thread
         Thread(target=self.calculate_gripper_opening).start()
         
-        self.action_server = actionlib.SimpleActionServer('wubble_gripper_action', WubbleGripperAction, execute_cb=self.process_gripper_action)
-        
+        self.action_server = actionlib.SimpleActionServer('wubble_gripper_action',
+                                                          WubbleGripperAction,
+                                                          execute_cb=self.process_gripper_action,
+                                                          auto_start=False)
+        self.action_server.start()
         rospy.loginfo('gripper_freespin_controller: ready to accept goals')
 
 
@@ -144,12 +147,12 @@ class GripperActionController():
             l_temp = self.left_finger_joint_state.motor_temps[0]
             r_temp = self.right_finger_joint_state.motor_temps[0]
             
-            l_cur_torque = self.left_finger_joint_state.load * DMXL_MAX_SPEED_RAD
-            r_cur_torque = self.right_finger_joint_state.load * DMXL_MAX_SPEED_RAD
+            l_cur_torque = self.left_finger_joint_state.load * DXL_MAX_SPEED_RAD
+            r_cur_torque = self.right_finger_joint_state.load * DXL_MAX_SPEED_RAD
             
             # lower torque to let the motors cool down
-            l_goal = -0.2 * DMXL_MAX_SPEED_RAD if l_cur_torque < 0.0 else  0.2 * DMXL_MAX_SPEED_RAD
-            r_goal =  0.2 * DMXL_MAX_SPEED_RAD if r_cur_torque > 0.0 else -0.2 * DMXL_MAX_SPEED_RAD
+            l_goal = -0.2 * DXL_MAX_SPEED_RAD if l_cur_torque < 0.0 else  0.2 * DXL_MAX_SPEED_RAD
+            r_goal =  0.2 * DXL_MAX_SPEED_RAD if r_cur_torque > 0.0 else -0.2 * DXL_MAX_SPEED_RAD
             
             if l_temp >= 76 or r_temp >= 76:
                 if not overheat_trigger:
@@ -190,10 +193,10 @@ class GripperActionController():
             
             if pressure > self.upper_pressure:   # release
                 pressure_change_step = abs(pressure - self.upper_pressure) / max_pressure
-                left = min(DMXL_MAX_SPEED_RAD, l_current + pressure_change_step)
-                right = max(-DMXL_MAX_SPEED_RAD, r_current - pressure_change_step)
+                left = min(DXL_MAX_SPEED_RAD, l_current + pressure_change_step)
+                right = max(-DXL_MAX_SPEED_RAD, r_current - pressure_change_step)
                 
-                if left < DMXL_MAX_SPEED_RAD or right > -DMXL_MAX_SPEED_RAD:
+                if left < DXL_MAX_SPEED_RAD or right > -DXL_MAX_SPEED_RAD:
                     if self.close_gripper:
                         self.lr_pub_lock.acquire()
                         self.left_finger_joint_torque_pub.publish(left)
@@ -202,10 +205,10 @@ class GripperActionController():
                         rospy.logdebug('>MAX pressure is %.2f, LT: %.2f, RT: %.2f, step is %.2f' % (pressure, l_current, r_current, pressure_change_step))
             elif pressure < self.lower_pressure: # squeeze
                 pressure_change_step = abs(pressure - self.lower_pressure) / max_pressure
-                left = max(-DMXL_MAX_SPEED_RAD, l_current - pressure_change_step)
-                right = min(DMXL_MAX_SPEED_RAD, r_current + pressure_change_step)
+                left = max(-DXL_MAX_SPEED_RAD, l_current - pressure_change_step)
+                right = min(DXL_MAX_SPEED_RAD, r_current + pressure_change_step)
                 
-                if left > -DMXL_MAX_SPEED_RAD or right < DMXL_MAX_SPEED_RAD:
+                if left > -DXL_MAX_SPEED_RAD or right < DXL_MAX_SPEED_RAD:
                     if self.close_gripper:
                         self.lr_pub_lock.acquire()
                         self.left_finger_joint_torque_pub.publish(left)
@@ -285,7 +288,7 @@ class GripperActionController():
         
         if req.command == WubbleGripperGoal.CLOSE_GRIPPER:
             self.dynamic_torque_control = req.dynamic_torque_control
-            desired_torque = req.torque_limit * DMXL_MAX_SPEED_RAD
+            desired_torque = req.torque_limit * DXL_MAX_SPEED_RAD
             self.lr_pub_lock.acquire()
             self.left_finger_joint_torque_pub.publish(-desired_torque)
             self.right_finger_joint_torque_pub.publish(desired_torque)
@@ -309,7 +312,7 @@ class GripperActionController():
             self.action_server.set_succeeded()
         elif req.command == WubbleGripperGoal.OPEN_GRIPPER:
             self.close_gripper = False
-            desired_torque = req.torque_limit * DMXL_MAX_SPEED_RAD
+            desired_torque = req.torque_limit * DXL_MAX_SPEED_RAD
             self.lr_pub_lock.acquire()
             self.left_finger_joint_torque_pub.publish(desired_torque)
             self.right_finger_joint_torque_pub.publish(-desired_torque)
