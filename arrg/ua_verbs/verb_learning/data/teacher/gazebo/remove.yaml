@@ -1,0 +1,95 @@
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: item
+    className: Item
+    attributes: {x: 0.5, last_x: 0.5, y: 0.0, last_y: 0.0, is_carried: 0, carrier_name: NONE}
+  - name: goal
+    className: Location
+    attributes: {x: 0.5, y: 0.0}
+actions: [forward, pick_up item, forward, drop]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: item
+    className: Item
+    attributes: {x: 1.0, last_x: 1.0, y: 0.0, last_y: 0.0, is_carried: 0, carrier_name: NONE}
+  - name: goal
+    className: Location
+    attributes: {x: 1.0, y: 0.0}
+actions: [forward, forward, pick_up item, forward, drop]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: item
+    className: Item
+    attributes: {x: 1.5, last_x: 1.5, y: 0.0, last_y: 0.0, is_carried: 0, carrier_name: NONE}
+  - name: goal
+    className: Location
+    attributes: {x: 1.5, y: 0.0}
+actions: [forward, forward, forward, pick_up item, forward, drop]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: item
+    className: Item
+    attributes: {x: 1.0, last_x: 1.0, y: 1.0, last_y: 1.0, is_carried: 0, carrier_name: NONE}
+  - name: goal
+    className: Location
+    attributes: {x: 1.0, y: 1.0}
+actions: [left, forward, forward, pick_up item, forward, drop]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: item
+    className: Item
+    attributes: {x: 1.0, last_x: 1.0, y: -1.0, last_y: -1.0, is_carried: 0, carrier_name: NONE}
+  - name: goal
+    className: Location
+    attributes: {x: 1.0, y: -1.0}
+actions: [right, forward, forward, pick_up item, forward, drop]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: item
+    className: Item
+    attributes: {x: 0.0, last_x: 0.0, y: 1.0, last_y: 1.0, is_carried: 0, carrier_name: NONE}
+  - name: goal
+    className: Location
+    attributes: {x: 0.0, y: 1.0}
+actions: [left, left, forward, forward, pick_up item, forward, drop]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: item
+    className: Item
+    attributes: {x: 0.5, last_x: 0.5, y: 0.5, last_y: 0.5, is_carried: 0, carrier_name: NONE}
+  - name: goal
+    className: Location
+    attributes: {x: 0.5, y: 0.5}
+actions: [left, forward, pick_up item, forward, drop]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: item
+    className: Item
+    attributes: {x: 0.5, last_x: 0.5, y: -0.5, last_y: -0.5, is_carried: 0, carrier_name: NONE}
+  - name: goal
+    className: Location
+    attributes: {x: 0.5, y: -0.5}
+actions: [right, forward, pick_up item, forward, drop]

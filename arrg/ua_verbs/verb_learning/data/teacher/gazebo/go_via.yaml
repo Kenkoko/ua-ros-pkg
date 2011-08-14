@@ -1,0 +1,119 @@
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: waypoint
+    className: Location
+    attributes: {x: 0.5, y: 0.0}
+  - name: goal
+    className: Location
+    attributes: {x: 1.0, y: 0.0}
+actions: [forward, forward]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: N, last_orientation: N}
+  - name: waypoint
+    className: Location
+    attributes: {x: 0.0, y: 1.0}
+  - name: goal
+    className: Location
+    attributes: {x: 0.0, y: 2.0}
+actions: [forward, forward, forward, forward]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: waypoint
+    className: Location
+    attributes: {x: 0.5, y: 0.0}
+  - name: goal
+    className: Location
+    attributes: {x: 1.5, y: 0.0}
+actions: [forward, forward, forward]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: W, last_orientation: W}
+  - name: waypoint
+    className: Location
+    attributes: {x: -1.0, y: 0.0}
+  - name: goal
+    className: Location
+    attributes: {x: -1.5, y: 0.5}
+actions: [forward, forward, right, forward]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: waypoint
+    className: Location
+    attributes: {x: 1.0, y: 0.0}
+  - name: goal
+    className: Location
+    attributes: {x: 1.5, y: 0.0}
+actions: [forward, forward, forward]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: E, last_orientation: E}
+  - name: waypoint
+    className: Location
+    attributes: {x: 0.0, y: 1.0}
+  - name: goal
+    className: Location
+    attributes: {x: 1.0, y: 1.0}
+actions: [left, left, forward, forward, right, right, forward, forward]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: SW, last_orientation: SW}
+  - name: waypoint
+    className: Location
+    attributes: {x: -0.5, y: -0.5}
+  - name: goal
+    className: Location
+    attributes: {x: 0.5, y: 0.5}
+actions: [forward, right, right, right, right, forward, forward]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: NW, last_orientation: NW}
+  - name: waypoint
+    className: Location
+    attributes: {x: -1.0, y: 1.0}
+  - name: goal
+    className: Location
+    attributes: {x: 1.0, y: 1.0}
+actions: [forward, forward, right, right, right, forward, forward, forward, forward]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: NW, last_orientation: NW}
+  - name: waypoint
+    className: Location
+    attributes: {x: -0.5, y: 0.5}
+  - name: goal
+    className: Location
+    attributes: {x: 1.0, y: 0.5}
+actions: [forward, right, right, right, forward, forward, forward]
+---
+start:
+  - name: robot_description
+    className: Robot
+    attributes: {x: 0.0, last_x: 0.0, y: 0.0, last_y: 0.0, orientation: N, last_orientation: N}
+  - name: waypoint
+    className: Location
+    attributes: {x: -0.5, y: 0.5}
+  - name: goal
+    className: Location
+    attributes: {x: 0.5, y: -0.5}
+actions: [left, forward, left, left, left, left, forward, forward]
