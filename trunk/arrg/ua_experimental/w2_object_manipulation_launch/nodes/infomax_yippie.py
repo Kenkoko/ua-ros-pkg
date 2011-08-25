@@ -3,6 +3,7 @@
 # Author: Antons Rebguns
 
 import math
+import numpy as np
 
 import roslib; roslib.load_manifest('w2_object_manipulation_launch')
 import rospy
@@ -82,7 +83,7 @@ from geometric_shapes_msgs.msg import Shape
 from std_msgs.msg import Float64
 from interpolated_ik_motion_planner.srv import SetInterpolatedIKMotionPlanParams
 
-from w2_object_manipulation_launch import object_detection
+from object_detection import ObjectDetector
 
 
 class ObjectCategorizer():
@@ -109,6 +110,15 @@ class ObjectCategorizer():
         self.READY_POSITION = (-1.650, -1.465, 3.430, -0.970, -1.427,  0.337,  0.046)
         self.LIFT_POSITION  = (-1.049, -1.241, 0.669, -0.960, -0.409, -0.072, -0.143)
         self.PLACE_POSITION = ( 0.261, -0.704, 1.470,  0.337,  0.910, -1.667, -0.026)
+        self.TUCK_POSITION  = (-1.971, -1.741, 0.021, -0.181, -1.841,  1.084,  0.148)
+        
+        self.arm_states = {
+            'READY': self.READY_POSITION,
+            'LIFT':  self.LIFT_POSITION,
+            'PLACE': self.PLACE_POSITION,
+            'TUCK':  self.TUCK_POSITION,
+            'OTHER': None,
+        }
         
         self.GRIPPER_LINK_FRAME = 'L7_wrist_roll_link'
         self.GRIPPER_GROUP_NAME = 'l_end_effector'
@@ -233,6 +243,28 @@ class ObjectCategorizer():
         rospy.loginfo('all services contacted, object_categorization is ready to go')
 
 
+    def lists_within_tolerance(self, list1, list2, tolerances):
+        l1 = np.asarray(list1)
+        l2 = np.asarray(list2)
+        
+        # are all absolute differences smaller than provided tolerances?
+        return (np.abs(l1 - l2) < tolerances).all()
+
+
+    def find_current_arm_state(self, tolerances=[0.04]*7):
+        current_joint_positions = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState, 2.0).actual.positions
+        
+        for state_name in self.arm_states:
+            desired_joint_positions = self.arm_states[state_name]
+            if self.lists_within_tolerance(desired_joint_positions, current_joint_positions, tolerances): return state_name
+
+
+    def is_arm_in_state(self, state_name, tolerances=[0.04]*7):
+        current_joint_positions = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState, 2.0).actual.positions
+        desired_joint_positions = self.arm_states[state_name]
+        return self.lists_within_tolerance(desired_joint_positions, current_joint_positions, tolerances)
+
+
     def move_arm_joint_goal(self, joint_names, joint_positions, allowed_contacts=[], link_padding=[], collision_operations=OrderedCollisionOperations()):
         goal = MoveArmGoal()
         goal.planner_service_name = 'ompl_planning/plan_kinematic_path'
@@ -344,10 +376,9 @@ class ObjectCategorizer():
         tdr.clusters = segmentation_result.clusters
         tdr.result = segmentation_result.result
         
-        tcmr = self.update_collision_map(tdr)
+        tcmpr = self.update_collision_map(tdr)
         
         return tcmpr
-
 
 
     def reset_collision_map(self):
@@ -439,7 +470,7 @@ class ObjectCategorizer():
     def grasp(self, tabletop_collision_map_processing_result):
         closest_index = self.info[0][0]
         target = tabletop_collision_map_processing_result.graspable_objects[closest_index]
-        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
+        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[closest_index]
         collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
         
         ik_solution = self.find_grasp_pose(target, collision_object_name, collision_support_surface_name)
@@ -456,6 +487,8 @@ class ObjectCategorizer():
             # set gripper padding to 0
             gripper_paddings = [LinkPadding(l,0.0) for l in self.GRIPPER_LINKS]
             gripper_paddings.extend([LinkPadding(l,0.0) for l in self.ARM_LINKS])
+            
+            self.open_gripper()
             
             # move into pre-grasp pose
             if not self.move_arm_joint_goal(ik_solution.joint_state.name,
@@ -629,7 +662,8 @@ class ObjectCategorizer():
 
     # needs grasp and lift to be performed first
     def drop(self, tabletop_collision_map_processing_result):
-        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
+        closest_index = self.info[0][0]
+        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[closest_index]
         
         # check that we have something in hand before dropping it
         grasp_status = self.get_grasp_status_srv()
@@ -671,7 +705,8 @@ class ObjectCategorizer():
 
 
     def place(self, tabletop_collision_map_processing_result):
-        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
+        closest_index = self.info[0][0]
+        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[closest_index]
         collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
         
         # check that we have something in hand before placing it
@@ -743,7 +778,8 @@ class ObjectCategorizer():
 
 
     def push(self, tabletop_collision_map_processing_result):
-        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
+        closest_index = self.info[0][0]
+        collision_object_name = tabletop_collision_map_processing_result.collision_object_names[closest_index]
         collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
         
         current_state = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState)
@@ -1026,10 +1062,12 @@ class ObjectCategorizer():
 
 
     def reset_robot(self, tabletop_collision_map_processing_result=None):
+        rospy.loginfo('resetting robot')
         ordered_collision_operations = OrderedCollisionOperations()
         
         if tabletop_collision_map_processing_result:
-            collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
+            closest_index = self.info[0][0]
+            collision_object_name = tabletop_collision_map_processing_result.collision_object_names[closest_index]
             collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
             
             collision_operation = CollisionOperation()
@@ -1055,8 +1093,14 @@ class ObjectCategorizer():
         else:
             self.reset_collision_map()
             
-        self.open_gripper()
-        if not self.tuck_arm(ordered_collision_operations): return False
+        current_state = self.find_current_arm_state()
+        rospy.loginfo('arm is currently in %s state' % current_state)
+        
+        if current_state not in ['READY', 'TUCK']:
+            rospy.loginfo('arm is not in any of the following states %s, opening gripper' % str(['READY', 'TUCK']))
+            self.open_gripper()
+            
+        if current_state != 'TUCK' and not self.tuck_arm(ordered_collision_operations): return False
         self.gentle_close_gripper()
         return True
 
@@ -1079,13 +1123,11 @@ class ObjectCategorizer():
         if not self.reset_robot(): return None
         
         # find a graspable object on the floor
-        tdr = self.segment_objects()
-        if tdr is None: return None
+        tcmpr = self.segment_objects()
+        if tcmpr is None: return None
         
         # mark floor and object poitions in the collision map as known
         #tcmpr = self.update_collision_map(tdr)
-        
-        self.open_gripper()
         
         # initialize as uniform distribution
         beliefs = [1.0/self.num_categories] * self.num_categories
