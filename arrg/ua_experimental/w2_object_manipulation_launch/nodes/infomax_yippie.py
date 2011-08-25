@@ -15,8 +15,8 @@ from ua_audio_infomax.srv import InfoMaxResponse
 from ua_audio_capture.srv import StartAudioRecording
 from ua_audio_capture.srv import StopAudioRecording
 from ua_audio_capture.srv import classify
-from ua_controller_msgs.msg import JointState as DynamixelJointState
-from ax12_controller_core.srv import SetSpeed
+from dynamixel_msgs.msg import JointState as DynamixelJointState
+from dynamixel_controllers.srv import SetSpeed
 from wubble2_robot.msg import WubbleGripperAction
 from wubble2_robot.msg import WubbleGripperGoal
 
@@ -82,6 +82,7 @@ from geometric_shapes_msgs.msg import Shape
 from std_msgs.msg import Float64
 from interpolated_ik_motion_planner.srv import SetInterpolatedIKMotionPlanParams
 
+from w2_object_manipulation_launch import object_detection
 
 
 class ObjectCategorizer():
@@ -112,6 +113,8 @@ class ObjectCategorizer():
         self.GRIPPER_LINK_FRAME = 'L7_wrist_roll_link'
         self.GRIPPER_GROUP_NAME = 'l_end_effector'
         self.ARM_GROUP_NAME = 'left_arm'
+        
+        self.object_detector = ObjectDetector()
         
         # connect to tabletop segmentation service
         rospy.loginfo('waiting for tabletop_segmentation service')
@@ -305,7 +308,7 @@ class ObjectCategorizer():
         self.gripper_controller.wait_for_result()
 
 
-    def segment_objects(self):
+    def segment_objects_old(self):
         """
         Performs tabletop segmentation. If successful, returns a TabletopDetectionResult
         objct ready to be passed for processing to tabletop collision map processing node.
@@ -324,6 +327,27 @@ class ObjectCategorizer():
         tdr.result = segmentation_result.result
         
         return tdr
+
+
+    def segment_objects(self):
+        res = self.object_detector.detect()
+        
+        if res is None:
+            rospy.logerr('TabletopSegmentation did not find any clusters')
+            return None
+            
+        segmentation_result = res[0]
+        self.info = res[1]
+        
+        tdr = TabletopDetectionResult()
+        tdr.table = segmentation_result.table
+        tdr.clusters = segmentation_result.clusters
+        tdr.result = segmentation_result.result
+        
+        tcmr = self.update_collision_map(tdr)
+        
+        return tcmpr
+
 
 
     def reset_collision_map(self):
@@ -413,7 +437,8 @@ class ObjectCategorizer():
 
 
     def grasp(self, tabletop_collision_map_processing_result):
-        target = tabletop_collision_map_processing_result.graspable_objects[0]
+        closest_index = self.info[0][0]
+        target = tabletop_collision_map_processing_result.graspable_objects[closest_index]
         collision_object_name = tabletop_collision_map_processing_result.collision_object_names[0]
         collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
         
@@ -1058,7 +1083,7 @@ class ObjectCategorizer():
         if tdr is None: return None
         
         # mark floor and object poitions in the collision map as known
-        tcmpr = self.update_collision_map(tdr)
+        #tcmpr = self.update_collision_map(tdr)
         
         self.open_gripper()
         
