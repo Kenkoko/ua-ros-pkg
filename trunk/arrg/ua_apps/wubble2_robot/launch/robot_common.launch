@@ -4,6 +4,9 @@
     <param name="/use_sim_time" value="false"/>
     <include file="$(find wubble2_robot)/launch/wubble2.machine" />
 
+    <!-- Start diagnostics aggregator -->
+    <include file="$(find wubble2_robot)/launch/diagnostics.launch" />
+
     <!-- Start Power Relay and Finger Pressure Sensor InterfaceKit -->
     <node name="relay_arm_sensor_interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
         <param name="serial_number" type="int" value="124427"/>

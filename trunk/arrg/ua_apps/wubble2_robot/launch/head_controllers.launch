@@ -8,10 +8,10 @@
             serial_ports:
                 wubble2Head:
                     port_name: "/dev/wubble2Head"
-                    baud_rate: 1000000
-                    min_motor_id: 14
-                    max_motor_id: 14
-                    update_rate: 50
+                    baud_rate: 3000000
+                    min_motor_id: 12
+                    max_motor_id: 12
+                    update_rate: 200
                 wubble2Head2:
                     port_name: "/dev/wubble2Head2"
                     baud_rate: 1000000
