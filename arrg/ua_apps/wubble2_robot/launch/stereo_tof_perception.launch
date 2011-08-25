@@ -24,6 +24,7 @@
     <rosparam file="$(find wubble_description)/params/w2_self_filter.yaml" command="load" />
     </node>
     
+    <include file="$(find wubble2_robot)/launch/tabletop_segmentation.launch" />
 <!--    <include file="$(find wubble_navigation_floor_filter)/launch/wubble_navigation_floor_filter.launch" />-->
     
     <!-- need to clear known objects from scans -->
