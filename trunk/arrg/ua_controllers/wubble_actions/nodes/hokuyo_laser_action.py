@@ -39,7 +39,7 @@ import rospy
 from actionlib import SimpleActionServer
 
 from wubble_actions.msg import *
-from ax12_controller_core.srv import SetSpeed
+from dynamixel_controllers.srv import SetSpeed
 from std_msgs.msg import Float64
 from pr2_controllers_msgs.msg import JointControllerState
 from pr2_msgs.msg import LaserScannerSignal

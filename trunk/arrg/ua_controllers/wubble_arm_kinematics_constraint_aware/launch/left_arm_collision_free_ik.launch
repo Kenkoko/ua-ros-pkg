@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="wubble_arm_kinematics_constraint_aware" type="wubble_arm_kinematics_constraint_aware" name="wubble_left_arm_kinematics" output="screen" >
+    <node pkg="wubble_arm_kinematics_constraint_aware" type="wubble_arm_kinematics_constraint_aware" name="wubble_left_arm_kinematics" output="screen" machine="c2">
         <!-- IK parameters -->
         <param name="root_name" value="L0_base_link" />
         <param name="tip_name" value="L7_wrist_roll_link" />

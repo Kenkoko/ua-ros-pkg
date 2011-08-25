@@ -24,6 +24,10 @@
   <depend package="smart_arm_kinematics"/>
   <depend package="wubble_controllers"/>
   <depend package="ax12_controller_core"/>
+  
+  <depend package="dynamixel_controllers"/>
+  <depend package="dynamixel_msgs"/>
+  <depend package="dynamixel_driver"/>
 
 </package>
 
