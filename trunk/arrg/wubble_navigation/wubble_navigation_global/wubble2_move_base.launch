@@ -7,10 +7,14 @@
         <remap from="odom" to="odom" />
         <remap from="cmd_vel" to="cmd_vel" />
         
+<!--        <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />-->
+        
         <!-- Load common configuration files -->
         <rosparam file="$(find wubble_navigation_config)/move_base/wubble2_move_base_params.yaml" command="load" />
+        <rosparam file="$(find wubble_navigation_config)/move_base/wubble2_recovery_behaviors.yaml" command="load" />
         <rosparam file="$(find wubble_navigation_config)/move_base/wubble2_costmap_common_params.yaml" command="load" ns="global_costmap" />
         <rosparam file="$(find wubble_navigation_config)/move_base/wubble2_costmap_common_params.yaml" command="load" ns="local_costmap" />
+<!--        <rosparam file="$(find wubble_navigation_config)/move_base/wubble2_dwa_local_planner.yaml" command="load" ns="DWAPlannerROS" />-->
         <rosparam file="$(find wubble_navigation_config)/move_base/wubble2_base_local_planner_params.yaml" command="load" ns="TrajectoryPlannerROS" />
 
         <!-- Load global navigation specific parameters -->
