@@ -32,8 +32,8 @@ neck_tilt_controller:
     joint_name: neck_tilt_joint
     joint_speed: 1.17
     motor:
-        id: 14
-        init: 355
-        min: 300
-        max: 900
+        id: 12
+        init: 2047
+        min: 2000
+        max: 3130
 
