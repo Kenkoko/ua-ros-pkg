@@ -1,12 +1,12 @@
 TrajectoryPlannerROS:
     # Robot Configuration Parameters
-    acc_lim_x: 1.5
-    acc_lim_y: 1.5
-    acc_lim_th: 2.0
+    acc_lim_x: 1.0
+    acc_lim_y: 1.0
+    acc_lim_th: 1.0
     max_vel_x: 0.25
     min_vel_x: 0.05
-    max_rotational_vel: 1.0
-    min_in_place_rotational_vel: 0.4
+    max_rotational_vel: 0.8
+    min_in_place_rotational_vel: 0.3
     escape_vel: -0.1
     holonomic_robot: false
 
@@ -17,12 +17,12 @@ TrajectoryPlannerROS:
     # Forward Simulation Parameters
     sim_time: 4.0
     sim_granularity: 0.025
-    vx_samples: 3
+    vx_samples: 10
     vtheta_samples: 20
 
     # Trajectory Scoring Parameters
     goal_distance_bias: 0.8
-    path_distance_bias: 0.6
+    path_distance_bias: 0.8
     occdist_scale: 0.01
     heading_lookahead: 0.325
     dwa: true
