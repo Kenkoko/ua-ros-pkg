@@ -1,0 +1,63 @@
+planner_configs:
+  SBLkConfig1:
+    type: kinematic::SBL
+  LBKPIECEkConfig1:
+    type: kinematic::LBKPIECE
+
+
+groups:
+  - left_arm
+  - left_arm_cartesian
+
+
+left_arm:
+  planner_type: JointPlanner
+  planner_configs:
+    - SBLkConfig1
+    - LBKPIECEkConfig1
+  projection_evaluator: joint_state
+
+
+left_arm_cartesian:
+  parent_frame: L0_base_link
+  physical_group: left_arm
+  planner_type: RPYIKTaskSpacePlanner
+  state_spaces:
+    - x
+    - y
+    - z
+    - roll
+    - pitch
+    - yaw
+    - upperarm_roll_joint
+  x:
+    type: Linear
+    min: -2.0
+    max: 2.0
+  y:
+    type: Linear
+    min: -2.0
+    max: 2.0
+  z:
+    type: Linear
+    min: -2.0
+    max: 2.0
+  roll:
+    type: Revolute
+  pitch:
+    type: Revolute
+  yaw:
+    type: Revolute
+  planner_configs:
+    - SBLkConfig1
+    - LBKPIECEkConfig1
+  kinematics_solver: wubble_arm_kinematics/WubbleArmKinematicsPlugin
+  tip_name: L7_wrist_roll_link
+  root_name: L0_base_link
+  projection_evaluator: joint_state
+  longest_valid_segment_fraction: 0.001
+
+
+publish_diagnostics: true
+default_planner_config: SBLkConfig1
+
