@@ -246,7 +246,8 @@ class ObjectDetector():
             ang = inf[2]
             rospy.loginfo('[%d] dist = %.3f; ang = %.3f' % (idx, dist, math.degrees(ang)))
             
-        return seg_res, obj_info_sorted
+        if not obj_info_sorted: return None
+        else: return seg_res, obj_info_sorted
 
 
 if __name__ == '__main__':

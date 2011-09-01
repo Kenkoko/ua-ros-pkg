@@ -1,33 +1,31 @@
 <package>
-  <description brief="w2_object_manipulation_launch">
+    <description brief="w2_object_manipulation_launch">
+         w2_object_manipulation_launch
+    </description>
 
-     w2_object_manipulation_launch
-
-  </description>
-  <author>Antons Rebguns</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/w2_object_manipulation_launch</url>
-  <depend package="rospy"/>
-  <depend package="tabletop_object_detector"/>
-  <depend package="tabletop_collision_map_processing"/>
-  <depend package="object_manipulation_msgs"/>
-  <depend package="kinematics_msgs"/>
-  <depend package="move_arm_msgs"/>
-  <depend package="mapping_msgs"/>
-  <depend package="actionlib"/>
-  <depend package="ua_audio_capture"/>
-  <depend package="ua_audio_infomax"/>
-  <depend package="dynamixel_msgs"/>
-  <depend package="dynamixel_controllers"/>
-  <depend package="dynamixel_driver"/>
-  <depend package="pr2_controllers_msgs"/>
-  <depend package="interpolated_ik_motion_planner"/>
-  <depend package="wubble2_robot"/>
-  <depend package="visualization_msgs"/>
-  <depend package="move_base_msgs"/>
-  <depend package="geometry_msgs"/>
-
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/w2_object_manipulation_launch</url>
+    
+    <depend package="rospy"/>
+    <depend package="tabletop_object_detector"/>
+    <depend package="tabletop_collision_map_processing"/>
+    <depend package="object_manipulation_msgs"/>
+    <depend package="kinematics_msgs"/>
+    <depend package="arm_navigation_msgs"/>
+    <depend package="actionlib"/>
+    <depend package="ua_audio_capture"/>
+    <depend package="ua_audio_infomax"/>
+    <depend package="dynamixel_msgs"/>
+    <depend package="dynamixel_controllers"/>
+    <depend package="dynamixel_driver"/>
+    <depend package="interpolated_ik_motion_planner"/>
+    <depend package="wubble2_robot"/>
+    <depend package="visualization_msgs"/>
+    <depend package="move_base_msgs"/>
+    <depend package="geometry_msgs"/>
+    <depend package="control_msgs"/>
 </package>
 
 
