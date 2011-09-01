@@ -21,9 +21,9 @@ from dynamixel_controllers.srv import SetSpeed
 from wubble2_robot.msg import WubbleGripperAction
 from wubble2_robot.msg import WubbleGripperGoal
 
-from pr2_controllers_msgs.msg import JointTrajectoryControllerState
-from pr2_controllers_msgs.msg import JointTrajectoryAction
-from pr2_controllers_msgs.msg import JointTrajectoryGoal
+from control_msgs.msg import FollowJointTrajectoryAction
+from control_msgs.msg import FollowJointTrajectoryGoal
+from control_msgs.msg import FollowJointTrajectoryFeedback
 
 from tf import TransformListener
 
@@ -60,26 +60,26 @@ from kinematics_msgs.srv import GetPositionIKRequest
 from kinematics_msgs.srv import GetPositionFK
 from kinematics_msgs.srv import GetPositionFKRequest
 
-from motion_planning_msgs.msg import PositionConstraint
-from motion_planning_msgs.msg import OrientationConstraint
-from motion_planning_msgs.msg import JointConstraint
-from motion_planning_msgs.msg import ArmNavigationErrorCodes
-from motion_planning_msgs.msg import AllowedContactSpecification
-from motion_planning_msgs.msg import LinkPadding
-from motion_planning_msgs.msg import OrderedCollisionOperations
-from motion_planning_msgs.msg import CollisionOperation
-from motion_planning_msgs.srv import GetMotionPlan
-from motion_planning_msgs.srv import GetMotionPlanRequest
-from motion_planning_msgs.srv import FilterJointTrajectory
-from motion_planning_msgs.srv import FilterJointTrajectoryRequest
+from arm_navigation_msgs.msg import PositionConstraint
+from arm_navigation_msgs.msg import OrientationConstraint
+from arm_navigation_msgs.msg import JointConstraint
+from arm_navigation_msgs.msg import ArmNavigationErrorCodes
+from arm_navigation_msgs.msg import AllowedContactSpecification
+from arm_navigation_msgs.msg import LinkPadding
+from arm_navigation_msgs.msg import OrderedCollisionOperations
+from arm_navigation_msgs.msg import CollisionOperation
+from arm_navigation_msgs.srv import GetMotionPlan
+from arm_navigation_msgs.srv import GetMotionPlanRequest
+from arm_navigation_msgs.srv import FilterJointTrajectory
+from arm_navigation_msgs.srv import FilterJointTrajectoryRequest
 
-from move_arm_msgs.msg import MoveArmAction
-from move_arm_msgs.msg import MoveArmGoal
+from arm_navigation_msgs.msg import MoveArmAction
+from arm_navigation_msgs.msg import MoveArmGoal
 
-from mapping_msgs.msg import AttachedCollisionObject
-from mapping_msgs.msg import CollisionObjectOperation
+from arm_navigation_msgs.msg import AttachedCollisionObject
+from arm_navigation_msgs.msg import CollisionObjectOperation
 
-from geometric_shapes_msgs.msg import Shape
+from arm_navigation_msgs.msg import Shape
 from std_msgs.msg import Float64
 from interpolated_ik_motion_planner.srv import SetInterpolatedIKMotionPlanParams
 
@@ -151,20 +151,20 @@ class ObjectCategorizer():
         rospy.loginfo('connected to move_left_arm action server')
         
         # connect to kinematics solver service
-        rospy.loginfo('waiting for wubble_left_arm_kinematics/get_ik_solver_info service')
-        rospy.wait_for_service('/wubble_left_arm_kinematics/get_ik_solver_info')
-        self.get_solver_info_srv = rospy.ServiceProxy('/wubble_left_arm_kinematics/get_ik_solver_info', GetKinematicSolverInfo)
-        rospy.loginfo('connected to wubble_left_arm_kinematics/get_ik_solver_info service')
+        rospy.loginfo('waiting for wubble2_left_arm_kinematics/get_ik_solver_info service')
+        rospy.wait_for_service('/wubble2_left_arm_kinematics/get_ik_solver_info')
+        self.get_solver_info_srv = rospy.ServiceProxy('/wubble2_left_arm_kinematics/get_ik_solver_info', GetKinematicSolverInfo)
+        rospy.loginfo('connected to wubble2_left_arm_kinematics/get_ik_solver_info service')
         
-        rospy.loginfo('waiting for wubble_left_arm_kinematics/get_ik service')
-        rospy.wait_for_service('/wubble_left_arm_kinematics/get_ik')
-        self.get_ik_srv = rospy.ServiceProxy('/wubble_left_arm_kinematics/get_ik', GetPositionIK)
-        rospy.loginfo('connected to wubble_left_arm_kinematics/get_ik service')
+        rospy.loginfo('waiting for wubble2_left_arm_kinematics/get_ik service')
+        rospy.wait_for_service('/wubble2_left_arm_kinematics/get_ik')
+        self.get_ik_srv = rospy.ServiceProxy('/wubble2_left_arm_kinematics/get_ik', GetPositionIK)
+        rospy.loginfo('connected to wubble2_left_arm_kinematics/get_ik service')
         
-        rospy.loginfo('waiting for wubble_left_arm_kinematics/get_fk service')
-        rospy.wait_for_service('/wubble_left_arm_kinematics/get_fk')
-        self.get_fk_srv = rospy.ServiceProxy('/wubble_left_arm_kinematics/get_fk', GetPositionFK)
-        rospy.loginfo('connected to wubble_left_arm_kinematics/get_fk service')
+        rospy.loginfo('waiting for wubble2_left_arm_kinematics/get_fk service')
+        rospy.wait_for_service('/wubble2_left_arm_kinematics/get_fk')
+        self.get_fk_srv = rospy.ServiceProxy('/wubble2_left_arm_kinematics/get_fk', GetPositionFK)
+        rospy.loginfo('connected to wubble2_left_arm_kinematics/get_fk service')
         
         # connect to gripper action server
         rospy.loginfo('waiting for wubble_gripper_grasp_action')
@@ -215,10 +215,10 @@ class ObjectCategorizer():
         self.interpolated_ik_srv = rospy.ServiceProxy('/l_interpolated_ik_motion_plan', GetMotionPlan)
         rospy.loginfo('connected to l_interpolated_ik_motion_plan service')
         
-        rospy.loginfo('waiting for l_arm_controller/joint_trajectory_action')
-        self.trajectory_controller = SimpleActionClient('/l_arm_controller/joint_trajectory_action', JointTrajectoryAction)
+        rospy.loginfo('waiting for l_arm_controller/follow_joint_trajectory')
+        self.trajectory_controller = SimpleActionClient('/l_arm_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         self.trajectory_controller.wait_for_server()
-        rospy.loginfo('connected to l_arm_controller/joint_trajectory_action')
+        rospy.loginfo('connected to l_arm_controller/follow_joint_trajectory')
         
         rospy.loginfo('waiting for classify service')
         rospy.wait_for_service('/classify')
@@ -244,6 +244,7 @@ class ObjectCategorizer():
 
 
     def lists_within_tolerance(self, list1, list2, tolerances):
+        if list1 is None or list2 is None: return False
         l1 = np.asarray(list1)
         l2 = np.asarray(list2)
         
@@ -252,7 +253,7 @@ class ObjectCategorizer():
 
 
     def find_current_arm_state(self, tolerances=[0.04]*7):
-        current_joint_positions = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState, 2.0).actual.positions
+        current_joint_positions = rospy.wait_for_message('l_arm_controller/state', FollowJointTrajectoryFeedback, 2.0).actual.positions
         
         for state_name in self.arm_states:
             desired_joint_positions = self.arm_states[state_name]
@@ -260,7 +261,7 @@ class ObjectCategorizer():
 
 
     def is_arm_in_state(self, state_name, tolerances=[0.04]*7):
-        current_joint_positions = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState, 2.0).actual.positions
+        current_joint_positions = rospy.wait_for_message('l_arm_controller/state', FollowJointTrajectoryFeedback, 2.0).actual.positions
         desired_joint_positions = self.arm_states[state_name]
         return self.lists_within_tolerance(desired_joint_positions, current_joint_positions, tolerances)
 
@@ -274,9 +275,9 @@ class ObjectCategorizer():
         goal.motion_plan_request.allowed_planning_time = rospy.Duration(5.0)
         goal.motion_plan_request.goal_constraints.joint_constraints = [JointConstraint(j, p, 0.1, 0.1, 0.0) for (j,p) in zip(joint_names,joint_positions)]
         
-        goal.motion_plan_request.allowed_contacts = allowed_contacts
-        goal.motion_plan_request.link_padding = link_padding
-        goal.motion_plan_request.ordered_collision_operations = collision_operations
+        goal.planning_scene_diff.allowed_contacts = allowed_contacts
+        goal.planning_scene_diff.link_padding = link_padding
+        goal.operations = collision_operations
         
         self.move_arm_client.send_goal(goal)
         finished_within_time = self.move_arm_client.wait_for_result(rospy.Duration(200.0))
@@ -295,16 +296,15 @@ class ObjectCategorizer():
                 return False
 
 
-    def tuck_arm(self, collision_operations=OrderedCollisionOperations()):
+    def ready_arm(self, collision_operations=OrderedCollisionOperations()):
         """
-        Moves the arm to the side out of the view of all sensors and fully
-        opens a gripper. In this position the arm is ready to perform a grasp
-        action.
+        Moves the arm to the side out of the view of all sensors. In this
+        position the arm is ready to perform a grasp action.
         """
         if self.move_arm_joint_goal(self.ARM_JOINTS, self.READY_POSITION, collision_operations=collision_operations):
             return True
         else:
-            rospy.logerr('failed to tuck arm, aborting')
+            rospy.logerr('failed to ready arm, aborting')
             return False
 
 
@@ -386,8 +386,6 @@ class ObjectCategorizer():
         req.detection_result = TabletopDetectionResult()
         req.reset_collision_models = True
         req.reset_attached_models = True
-        req.reset_static_map = True
-        req.take_static_collision_map = False
         
         self.collision_map_processing_srv(req)
         rospy.loginfo('collision map reset')
@@ -400,8 +398,6 @@ class ObjectCategorizer():
         req.detection_result = tabletop_detection_result
         req.reset_collision_models = True
         req.reset_attached_models = True
-        req.reset_static_map = True
-        req.take_static_collision_map = True
         req.desired_frame = 'base_link'
         
         res = self.collision_map_processing_srv(req)
@@ -631,7 +627,7 @@ class ObjectCategorizer():
         obj.touch_links = self.GRIPPER_LINKS
         self.attached_object_pub.publish(obj)
         
-        current_state = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState)
+        current_state = rospy.wait_for_message('l_arm_controller/state', FollowJointTrajectoryFeedback)
         start_angles = list(current_state.actual.positions)
         start_angles[0] = start_angles[0] - 0.3  # move shoulder up a bit
         
@@ -782,7 +778,7 @@ class ObjectCategorizer():
         collision_object_name = tabletop_collision_map_processing_result.collision_object_names[closest_index]
         collision_support_surface_name = tabletop_collision_map_processing_result.collision_support_surface_name
         
-        current_state = rospy.wait_for_message('l_arm_controller/state', JointTrajectoryControllerState)
+        current_state = rospy.wait_for_message('l_arm_controller/state', FollowJointTrajectoryFeedback)
         start_angles = current_state.actual.positions
         
         full_state = rospy.wait_for_message('/joint_states', JointState)
@@ -883,7 +879,7 @@ class ObjectCategorizer():
         
         filt_res = self.trajectory_filter_srv(req)
         
-        goal = JointTrajectoryGoal()
+        goal = FollowJointTrajectoryGoal()
         goal.trajectory = filt_res.trajectory
         goal.trajectory.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
         
@@ -1097,10 +1093,13 @@ class ObjectCategorizer():
         rospy.loginfo('arm is currently in %s state' % current_state)
         
         if current_state not in ['READY', 'TUCK']:
-            rospy.loginfo('arm is not in any of the following states %s, opening gripper' % str(['READY', 'TUCK']))
-            self.open_gripper()
-            
-        if current_state != 'TUCK' and not self.tuck_arm(ordered_collision_operations): return False
+            # check if the gripper is empty
+            grasp_status = self.get_grasp_status_srv()
+            if grasp_status.is_hand_occupied:
+                rospy.loginfo('arm is not in any of the following states %s, opening gripper' % str(['READY', 'TUCK']))
+                self.open_gripper()
+                
+        if current_state != 'READY' and not self.ready_arm(ordered_collision_operations): return False
         self.gentle_close_gripper()
         return True
 

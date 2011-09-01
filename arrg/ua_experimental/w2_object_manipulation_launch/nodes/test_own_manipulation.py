@@ -35,20 +35,20 @@ from kinematics_msgs.srv import GetKinematicSolverInfo
 from kinematics_msgs.srv import GetPositionIK
 from kinematics_msgs.srv import GetPositionIKRequest
 
-from motion_planning_msgs.msg import JointConstraint
-from motion_planning_msgs.msg import ArmNavigationErrorCodes
-from motion_planning_msgs.msg import AllowedContactSpecification
-from motion_planning_msgs.msg import LinkPadding
-from motion_planning_msgs.msg import OrderedCollisionOperations
-from motion_planning_msgs.msg import CollisionOperation
+from arm_navigation_msgs.msg import JointConstraint
+from arm_navigation_msgs.msg import ArmNavigationErrorCodes
+from arm_navigation_msgs.msg import AllowedContactSpecification
+from arm_navigation_msgs.msg import LinkPadding
+from arm_navigation_msgs.msg import OrderedCollisionOperations
+from arm_navigation_msgs.msg import CollisionOperation
 
-from move_arm_msgs.msg import MoveArmAction
-from move_arm_msgs.msg import MoveArmGoal
+from arm_navigation_msgs.msg import MoveArmAction
+from arm_navigation_msgs.msg import MoveArmGoal
 
-from mapping_msgs.msg import AttachedCollisionObject
-from mapping_msgs.msg import CollisionObjectOperation
+from arm_navigation_msgs.msg import AttachedCollisionObject
+from arm_navigation_msgs.msg import CollisionObjectOperation
 
-from geometric_shapes_msgs.msg import Shape
+from arm_navigation_msgs.msg import Shape
 
 
 def find_ik_for_grasping_pose(pose_stamped):
