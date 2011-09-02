@@ -28,10 +28,10 @@
         </joint>
         
         <!-- Shoulder tilt joint -->
-        <joint name="shoulder_tilt_joint" type="revolute">
+        <joint name="shoulder_pitch_joint" type="revolute">
             <origin xyz="${0.105 - 0.01 - 0.03085/2} 0 ${0.01 + 0.05 - 0.031/2}" rpy="0 0 0" />
             <parent link="arm_shoulder_pan_link"/>
-            <child link="arm_shoulder_tilt_link" />
+            <child link="arm_shoulder_pitch_link" />
             
             <axis xyz="0 -1 0"/>
             <limit  lower="-1.04719755" upper="1.972222" effort="300" velocity="1.17" />
@@ -40,10 +40,10 @@
         </joint>
         
         <!-- Elbow tilt joint -->
-        <joint name="elbow_tilt_joint" type="revolute">
+        <joint name="elbow_flex_joint" type="revolute">
             <origin xyz="${0.04 - 0.01 + 0.0015 + 0.105 + 0.055 - 0.01} 0 0" rpy="0 0 0" />
-            <parent link="arm_shoulder_tilt_link"/>
-            <child link="arm_elbow_tilt_link" />
+            <parent link="arm_shoulder_pitch_link"/>
+            <child link="arm_elbow_flex_link" />
             
             <axis xyz="0 -1 0"/>
             <!-- From -113 to 108 degrees -->
@@ -53,10 +53,10 @@
         </joint>
         
         <!-- Wrist rotate joint -->
-        <joint name="wrist_rotate_joint" type="revolute">
+        <joint name="wrist_roll_joint" type="revolute">
             <origin xyz="${0.08 - 0.01} 0 ${0.05 - 0.0115 - 0.0155}" rpy="0 0 0" />
-            <parent link="arm_elbow_tilt_link"/>
-            <child link="arm_wrist_rotate_link" />
+            <parent link="arm_elbow_flex_link"/>
+            <child link="arm_wrist_roll_link" />
             
             <axis xyz="-1 0 0"/>
             <!-- From -150 to 150 degrees -->
@@ -68,7 +68,7 @@
         <!-- Gripper right finger joint -->
         <joint name="finger_right_joint" type="revolute">
             <origin xyz="${0.0015 + 0.05 - 0.01} ${-0.035/2} 0" rpy="0 0 0" />
-            <parent link="arm_wrist_rotate_link"/>
+            <parent link="arm_wrist_roll_link"/>
             <child link="arm_right_finger_link" />
             
             <axis xyz="0 0 1"/>
@@ -81,7 +81,7 @@
         <!-- Gripper left finger joint -->
         <joint name="finger_left_joint" type="revolute">
             <origin xyz="${0.0015 + 0.05 - 0.01} ${0.035/2} 0" rpy="0 0 0" />
-            <parent link="arm_wrist_rotate_link"/>
+            <parent link="arm_wrist_roll_link"/>
             <child link="arm_left_finger_link" />
             
             <axis xyz="0 0 1"/>
@@ -141,7 +141,7 @@
             </collision>
         </link>
         
-        <link name="arm_shoulder_tilt_link">
+        <link name="arm_shoulder_pitch_link">
             <inertial>
                 <mass value="0.18" />
                 <origin xyz="0.13999458 0 0.00064711" rpy="0 0 0" />
@@ -153,19 +153,19 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_tilt.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_pitch.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_shoulder_tilt_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_shoulder_pitch_convex.stlb"/>
                 </geometry>
             </collision>
         </link>
         
-        <link name="arm_elbow_tilt_link">
+        <link name="arm_elbow_flex_link">
             <inertial>
                 <mass value="0.12" />
                 <origin xyz="0.04463361 0 0.00720194" rpy="0 0 0" />
@@ -177,19 +177,19 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_elbow_tilt.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_elbow_flex.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_elbow_tilt_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_elbow_flex_convex.stlb"/>
                 </geometry>
             </collision>
         </link>
         
-        <link name="arm_wrist_rotate_link">
+        <link name="arm_wrist_roll_link">
             <inertial>
                 <mass value="0.13" />
                 <origin xyz="0.02539960 0 0" rpy="0 0 0" />
@@ -201,14 +201,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_wrist_rotate.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/arm_wrist_roll.stl"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_wrist_rotate_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/convex/arm_wrist_roll_convex.stlb"/>
                 </geometry>
             </collision>
         </link>
@@ -269,21 +269,21 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_tilt_trans">
-            <actuator name="shoulder_tilt_motor" />
-            <joint name="shoulder_tilt_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="shoulder_pitch_trans">
+            <actuator name="shoulder_pitch_motor" />
+            <joint name="shoulder_pitch_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="elbow_tilt_trans">
-            <actuator name="elbow_tilt_motor" />
-            <joint name="elbow_tilt_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="elbow_flex_trans">
+            <actuator name="elbow_flex_motor" />
+            <joint name="elbow_flex_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wrist_rotate_trans">
-            <actuator name="wrist_rotate_motor" />
-            <joint name="wrist_rotate_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="wrist_roll_trans">
+            <actuator name="wrist_roll_motor" />
+            <joint name="wrist_roll_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
@@ -311,17 +311,17 @@
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
-        <gazebo reference="arm_shoulder_tilt_link">
+        <gazebo reference="arm_shoulder_pitch_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
-        <gazebo reference="arm_elbow_tilt_link">
+        <gazebo reference="arm_elbow_flex_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
         
-        <gazebo reference="arm_wrist_rotate_link">
+        <gazebo reference="arm_wrist_roll_link">
             <material>SmartArm/GunMetalBrushedAluminum</material>
             <turnGravityOff>true</turnGravityOff>
         </gazebo>
@@ -350,19 +350,19 @@
             <fudgeFactor value="0.5" />
         </gazebo>
         
-        <gazebo reference="shoulder_tilt_joint">
+        <gazebo reference="shoulder_pitch_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="0.5" />
         </gazebo>
         
-        <gazebo reference="elbow_tilt_joint">
+        <gazebo reference="elbow_flex_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="0.5" />
         </gazebo>
         
-        <gazebo reference="wrist_rotate_joint">
+        <gazebo reference="wrist_roll_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="0.5" />

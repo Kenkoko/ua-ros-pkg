@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2010, Arizona Robotics Research Group, University of Arizona
-# All rights reserved.
+# Copyright (c) 2010, Antons Rebguns. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -43,9 +42,9 @@ if __name__ == '__main__':
         rospy.wait_for_service('smart_arm_ik_service')
         
         shoulder_pan_pub = rospy.Publisher('shoulder_pan_controller/command', Float64)
-        shoulder_tilt_pub = rospy.Publisher('shoulder_tilt_controller/command', Float64)
-        elobow_tilt_pub = rospy.Publisher('elbow_tilt_controller/command', Float64)
-        wrist_rotate_pub = rospy.Publisher('wrist_rotate_controller/command', Float64)
+        shoulder_tilt_pub = rospy.Publisher('shoulder_pitch_controller/command', Float64)
+        elobow_tilt_pub = rospy.Publisher('elbow_flex_controller/command', Float64)
+        wrist_rotate_pub = rospy.Publisher('wrist_roll_controller/command', Float64)
         
         rospy.sleep(1)
         

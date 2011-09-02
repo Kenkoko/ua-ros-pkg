@@ -8,7 +8,9 @@
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/smart_arm_controller</url>
     
+    <depend package="rospy"/>
     <depend package="dynamixel_controllers"/>
+    <depend package="std_msgs"/>
 </package>
 
 

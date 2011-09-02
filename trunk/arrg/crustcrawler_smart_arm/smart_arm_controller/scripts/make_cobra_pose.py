@@ -34,17 +34,17 @@
 #
 
 import roslib
-roslib.load_manifest('smart_arm_description')
+roslib.load_manifest('smart_arm_controller')
 
 import rospy
 from std_msgs.msg import Float64
 
 joint_names = ('shoulder_pan_controller',
-               'shoulder_tilt_controller',
-               'elbow_tilt_controller',
-               'wrist_rotate_controller',
-               'finger_left_controller',
-               'finger_right_controller')
+               'shoulder_pitch_controller',
+               'elbow_flex_controller',
+               'wrist_roll_controller',
+               'left_finger_controller',
+               'right_finger_controller')
                
 joint_commands = (0.0, 1.972222, -1.972222, 0.0, 0.0, 0.0)
 
@@ -52,11 +52,6 @@ if __name__ == '__main__':
     pubs = [rospy.Publisher(name + '/command', Float64) for name in joint_names]
     rospy.init_node('make_cobra_pose', anonymous=True)
     
-    rospy.loginfo("Waiting for controller manager to start")
-    rospy.wait_for_service('pr2_controller_manager/switch_controller')
-    
-    rospy.sleep(3)
-    
-    for i in range(0, len(pubs)):
+    for i in range(len(pubs)):
         pubs[i].publish(joint_commands[i])
         
