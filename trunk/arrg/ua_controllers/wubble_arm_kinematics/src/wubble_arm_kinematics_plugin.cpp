@@ -35,7 +35,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <tf_conversions/tf_kdl.h>
-#include "ros/ros.h"
+#include <ros/ros.h>
 #include <algorithm>
 #include <numeric>
 
@@ -217,7 +217,7 @@ namespace wubble_arm_kinematics {
 
 void WubbleArmKinematicsPlugin::desiredPoseCallback(const KDL::JntArray& jnt_array, 
                                                  const KDL::Frame& ik_pose,
-                                                 motion_planning_msgs::ArmNavigationErrorCodes& error_code)
+                                                 arm_navigation_msgs::ArmNavigationErrorCodes& error_code)
 {
   std::vector<double> ik_seed_state;
   ik_seed_state.resize(dimension_);
@@ -230,15 +230,15 @@ void WubbleArmKinematicsPlugin::desiredPoseCallback(const KDL::JntArray& jnt_arr
 
   desiredPoseCallback_(ik_pose_msg,ik_seed_state,int_error_code);
   if(int_error_code)
-    error_code.val = motion_planning_msgs::ArmNavigationErrorCodes::SUCCESS;
+    error_code.val = arm_navigation_msgs::ArmNavigationErrorCodes::SUCCESS;
   else
-    error_code.val = motion_planning_msgs::ArmNavigationErrorCodes::NO_IK_SOLUTION;     
+    error_code.val = arm_navigation_msgs::ArmNavigationErrorCodes::NO_IK_SOLUTION;     
 }
 
 
 void WubbleArmKinematicsPlugin::jointSolutionCallback(const KDL::JntArray& jnt_array, 
                                                    const KDL::Frame& ik_pose,
-                                                   motion_planning_msgs::ArmNavigationErrorCodes& error_code)
+                                                   arm_navigation_msgs::ArmNavigationErrorCodes& error_code)
 {
   std::vector<double> ik_seed_state;
   ik_seed_state.resize(dimension_);
@@ -251,9 +251,9 @@ void WubbleArmKinematicsPlugin::jointSolutionCallback(const KDL::JntArray& jnt_a
 
   solutionCallback_(ik_pose_msg,ik_seed_state,int_error_code);
   if(int_error_code > 0)
-    error_code.val = motion_planning_msgs::ArmNavigationErrorCodes::SUCCESS;
+    error_code.val = arm_navigation_msgs::ArmNavigationErrorCodes::SUCCESS;
   else
-    error_code.val = motion_planning_msgs::ArmNavigationErrorCodes::NO_IK_SOLUTION;     
+    error_code.val = arm_navigation_msgs::ArmNavigationErrorCodes::NO_IK_SOLUTION;     
 }
 
   bool WubbleArmKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose,
@@ -285,7 +285,7 @@ void WubbleArmKinematicsPlugin::jointSolutionCallback(const KDL::JntArray& jnt_a
         jnt_pos_in(i) = ik_seed_state[i];
     }
 
-    motion_planning_msgs::ArmNavigationErrorCodes error_code;
+    arm_navigation_msgs::ArmNavigationErrorCodes error_code;
     int ik_valid = wubble_arm_ik_solver_->CartToJntSearch(jnt_pos_in,
                                                        pose_desired,
                                                        jnt_pos_out,
