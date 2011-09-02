@@ -80,11 +80,120 @@ public enum GazeboLabeler implements Labeler {
 				return Label.Neither;
 			}
 		}
+	},
+	
+	go_via {
+		@Override
+		public Label label(List<OOMDPState> trace) {
+			GoViaStages phase = GoViaStages.PreWaypoint;
+			
+			for (OOMDPState state : trace) {
+				boolean atWaypoint = state.getActiveRelations().contains("Contact(robot_description,waypoint)");
+				boolean atGoal = state.getActiveRelations().contains("Contact(robot_description,goal)");
+				
+//				System.out.println(atWaypoint + ", " + atGoal + ": " + phase);
+//				System.out.println(state.getActiveRelations());
+				
+				switch (phase) {
+				case PreWaypoint: 
+					if (atWaypoint) {
+						phase = GoViaStages.AtWaypoint;
+					} else if (atGoal) {
+						return Label.Violation; // Went to goal first
+					}
+					break;
+				case AtWaypoint:
+					if (atGoal) {
+						phase = GoViaStages.AtGoal;
+					} else if (!atWaypoint) {
+						phase = GoViaStages.PreGoal;
+					}
+					break;
+				case PreGoal: 
+					if (atGoal) {
+						phase = GoViaStages.AtGoal;
+					} else if (atWaypoint) {
+						return Label.Violation; // Went back to waypoint
+					}
+					break;
+				case AtGoal: 
+					if (!atGoal) {
+						return Label.Violation;  // Left goal
+					}
+					break;
+				}
+			}
+			
+//			System.out.println("AFTER: " + phase);
+			
+			if (phase == GoViaStages.AtGoal) {
+				return Label.Success;
+			} else {
+				return Label.Neither;
+			}
+		}
+	},
+	
+	remove {
+		@Override
+		public Label label(List<OOMDPState> trace) {
+			RemoveStages phase = RemoveStages.PreLocation;
+			
+			for (OOMDPState state : trace) {
+				boolean atLoc = state.getActiveRelations().contains("Contact(robot_description,goal)");
+				boolean holding = state.getActiveRelations().contains("Carrying(robot_description,item)"); 
+
+				System.out.println(state.getActiveRelations());
+				System.out.println(atLoc + ", " + holding + ": " + phase);
+				
+				switch (phase) {
+				case PreLocation: 
+					if (atLoc) {
+						phase = RemoveStages.AtLocation;
+					}
+					break;
+				case AtLocation: 
+					if (holding) {
+						phase = RemoveStages.HoldingAtLocation;
+					} else if (!atLoc) {
+						return Label.Violation; // Left without picking it up
+					}
+					break;
+				case HoldingAtLocation:
+					if (!holding) {
+						return Label.Violation; // dropped before leaving goal
+					} else if (!atLoc) {
+						phase = RemoveStages.HoldingOffLocation;
+					}
+					break;
+				case HoldingOffLocation: 
+					if (atLoc) {
+						return Label.Violation;  // went back to goal
+					} else if (!holding) {
+						phase = RemoveStages.Dropped;
+					}
+					break;
+				case Dropped:
+					if (holding) {
+						return Label.Violation;  // Picked it up again
+					}
+				}
+				System.out.println("AFTER: " + phase);
+			}
+			
+			if (phase == RemoveStages.Dropped) {
+				return Label.Success;
+			} else {
+				return Label.Neither;
+			}
+		}
 	}
 	
 	;
 	
 	enum DeliverStages {Approaching, AtItem, Carrying, Delivered}; // No local enums, annoying
+	enum GoViaStages {PreWaypoint, AtWaypoint, PreGoal, AtGoal};
+	enum RemoveStages {PreLocation, AtLocation, HoldingAtLocation, HoldingOffLocation, Dropped};
 	
 	public abstract Label label(List<OOMDPState> trace);
 }

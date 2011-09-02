@@ -165,6 +165,7 @@ public class WW2DEnvironment implements Environment {
 	public OOMDPState initializeEnvironment(List<OOMDPObjectState> state) {
 		if (!firstTime) {
 			_gameSystem.finish(); // Clear out the old gamesystem before we re-initialize it
+//			cleanup();
 		}
 		firstTime = false;
 		

@@ -224,6 +224,8 @@ public class StateMachines {
 			state.setType(StateType.TERMINAL);
 		}
 		
+		fakeMinimize(dfa);
+		
 		return dfa;
 	}
 	
