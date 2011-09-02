@@ -7,13 +7,13 @@ roslib.load_manifest('w2_arm_navigation_tests')
 
 import rospy
 import actionlib
-from pr2_controllers_msgs.msg import JointTrajectoryAction
-from pr2_controllers_msgs.msg import JointTrajectoryGoal
+from control_msgs.msg import FollowJointTrajectoryAction
+from control_msgs.msg import FollowJointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectoryPoint
 
 class ActionTrajectoryTest:
     def __init__(self):
-        self.traj_client = actionlib.SimpleActionClient('l_arm_controller/joint_trajectory_action', JointTrajectoryAction)
+        self.traj_client = actionlib.SimpleActionClient('l_arm_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         self.traj_client.wait_for_server()
 
     def start_trajectory(self, goal):
@@ -24,7 +24,7 @@ class ActionTrajectoryTest:
 
     def test_trajectory(self):
         # our goal variable
-        goal = JointTrajectoryGoal()
+        goal = FollowJointTrajectoryGoal()
 
         # First, the joint names, which apply to all waypoints
         goal.trajectory.joint_names = ('shoulder_pitch_joint',

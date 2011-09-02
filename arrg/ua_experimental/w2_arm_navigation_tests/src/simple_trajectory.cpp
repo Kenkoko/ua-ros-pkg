@@ -1,8 +1,8 @@
 #include <ros/ros.h>
-#include <pr2_controllers_msgs/JointTrajectoryAction.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
 #include <actionlib/client/simple_action_client.h>
 
-typedef actionlib::SimpleActionClient< pr2_controllers_msgs::JointTrajectoryAction > TrajClient;
+typedef actionlib::SimpleActionClient< control_msgs::FollowJointTrajectoryAction > TrajClient;
 
 class RobotArm
 {
@@ -16,7 +16,7 @@ class RobotArm
         RobotArm()
         {
             // tell the action client that we want to spin a thread by default
-            traj_client_ = new TrajClient("l_arm_controller/joint_trajectory_action", true);
+            traj_client_ = new TrajClient("l_arm_controller/follow_joint_trajectory", true);
 
             // wait for action server to come up
             while(!traj_client_->waitForServer(ros::Duration(5.0))){
@@ -31,7 +31,7 @@ class RobotArm
         }
 
         //! Sends the command to start a given trajectory
-        void startTrajectory(pr2_controllers_msgs::JointTrajectoryGoal goal)
+        void startTrajectory(control_msgs::FollowJointTrajectoryGoal goal)
         {
             // When to start the trajectory: 1s from now
             goal.trajectory.header.stamp = ros::Time::now() + ros::Duration(1.0);
@@ -44,10 +44,10 @@ class RobotArm
         be in its own trajectory - a trajectory can have one or more waypoints
         depending on the desired application.
         */
-        pr2_controllers_msgs::JointTrajectoryGoal armExtensionTrajectory()
+        control_msgs::FollowJointTrajectoryGoal armExtensionTrajectory()
         {
             //our goal variable
-            pr2_controllers_msgs::JointTrajectoryGoal goal;
+            control_msgs::FollowJointTrajectoryGoal goal;
 
             // First, the joint names, which apply to all waypoints
             goal.trajectory.joint_names.push_back("shoulder_pitch_joint");

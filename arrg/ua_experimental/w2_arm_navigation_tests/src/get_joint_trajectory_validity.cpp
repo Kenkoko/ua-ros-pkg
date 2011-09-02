@@ -1,20 +1,20 @@
 #include <ros/ros.h>
-#include <planning_environment_msgs/GetRobotState.h>
-#include <planning_environment_msgs/GetJointTrajectoryValidity.h>
+#include <arm_navigation_msgs/GetRobotState.h>
+#include <arm_navigation_msgs/GetJointTrajectoryValidity.h>
 
 int main(int argc, char **argv){
   ros::init (argc, argv, "get_trajectory_validity_test");
   ros::NodeHandle rh;
 
   ros::service::waitForService("environment_server_left_arm/get_trajectory_validity");
-  planning_environment_msgs::GetJointTrajectoryValidity::Request req;
-  planning_environment_msgs::GetJointTrajectoryValidity::Response res;
-  ros::ServiceClient check_trajectory_validity_client_ = rh.serviceClient<planning_environment_msgs::GetJointTrajectoryValidity>("environment_server_left_arm/get_trajectory_validity");
+  arm_navigation_msgs::GetJointTrajectoryValidity::Request req;
+  arm_navigation_msgs::GetJointTrajectoryValidity::Response res;
+  ros::ServiceClient check_trajectory_validity_client_ = rh.serviceClient<arm_navigation_msgs::GetJointTrajectoryValidity>("environment_server_left_arm/get_trajectory_validity");
 
   ros::service::waitForService("environment_server_left_arm/get_robot_state");
-  ros::ServiceClient get_state_client_ = rh.serviceClient<planning_environment_msgs::GetRobotState>("environment_server_left_arm/get_robot_state");
-  planning_environment_msgs::GetRobotState::Request request;
-  planning_environment_msgs::GetRobotState::Response response;
+  ros::ServiceClient get_state_client_ = rh.serviceClient<arm_navigation_msgs::GetRobotState>("environment_server_left_arm/get_robot_state");
+  arm_navigation_msgs::GetRobotState::Request request;
+  arm_navigation_msgs::GetRobotState::Response response;
   if(get_state_client_.call(request,response))
   {
     req.robot_state = response.robot_state;

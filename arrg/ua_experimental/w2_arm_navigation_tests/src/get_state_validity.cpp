@@ -1,15 +1,15 @@
 #include <ros/ros.h>
-#include <planning_environment_msgs/GetStateValidity.h>
+#include <arm_navigation_msgs/GetStateValidity.h>
 
 int main(int argc, char **argv){
   ros::init (argc, argv, "get_state_validity_test");
   ros::NodeHandle rh;
 
   ros::service::waitForService("environment_server_left_arm/get_state_validity");
-  ros::ServiceClient check_state_validity_client_ = rh.serviceClient<planning_environment_msgs::GetStateValidity>("environment_server_left_arm/get_state_validity");
+  ros::ServiceClient check_state_validity_client_ = rh.serviceClient<arm_navigation_msgs::GetStateValidity>("environment_server_left_arm/get_state_validity");
 
-  planning_environment_msgs::GetStateValidity::Request req;
-  planning_environment_msgs::GetStateValidity::Response res;
+  arm_navigation_msgs::GetStateValidity::Request req;
+  arm_navigation_msgs::GetStateValidity::Response res;
 
   req.robot_state.joint_state.name.push_back("shoulder_pitch_joint");
   req.robot_state.joint_state.name.push_back("shoulder_yaw_joint");

@@ -1,8 +1,8 @@
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
-#include <pr2_controllers_msgs/JointTrajectoryAction.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
 
-typedef actionlib::SimpleActionClient<pr2_controllers_msgs::JointTrajectoryAction> JointExecutorActionClient;
+typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> JointExecutorActionClient;
 
 void spinThread()
 {
@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "test_controller");
   boost::thread spin_thread(&spinThread);
-  JointExecutorActionClient *traj_action_client_ = new JointExecutorActionClient("l_arm_controller/joint_trajectory_action");
+  JointExecutorActionClient *traj_action_client_ = new JointExecutorActionClient("l_arm_controller/follow_joint_trajectory");
 
   while(!traj_action_client_->waitForServer(ros::Duration(1.0))){
     ROS_INFO("Waiting for the joint_trajectory_action action server to come up");
@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     }
   }
 
-  pr2_controllers_msgs::JointTrajectoryGoal goal;
+  control_msgs::FollowJointTrajectoryGoal goal;
   goal.trajectory.joint_names.push_back("shoulder_pitch_joint");
   goal.trajectory.joint_names.push_back("shoulder_yaw_joint");
   goal.trajectory.joint_names.push_back("shoulder_roll_joint");
