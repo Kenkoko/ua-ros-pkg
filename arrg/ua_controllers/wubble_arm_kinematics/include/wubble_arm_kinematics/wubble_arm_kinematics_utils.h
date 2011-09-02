@@ -86,7 +86,7 @@ namespace wubble_arm_kinematics
   bool checkLinkName(const std::string &link_name,
                      const kinematics_msgs::KinematicSolverInfo &chain_info);
 
-  bool checkRobotState(motion_planning_msgs::RobotState &robot_state,
+  bool checkRobotState(arm_navigation_msgs::RobotState &robot_state,
                        const kinematics_msgs::KinematicSolverInfo &chain_info);
 
   bool checkFKService(kinematics_msgs::GetPositionFK::Request &request,

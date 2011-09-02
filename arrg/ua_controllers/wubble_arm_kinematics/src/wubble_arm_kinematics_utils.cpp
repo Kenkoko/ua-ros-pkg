@@ -162,7 +162,7 @@ namespace wubble_arm_kinematics
     return false;
   }
 
-  bool checkRobotState(motion_planning_msgs::RobotState &robot_state,
+  bool checkRobotState(arm_navigation_msgs::RobotState &robot_state,
                      const kinematics_msgs::KinematicSolverInfo &chain_info)
   {
     if((int) robot_state.joint_state.position.size() != (int) robot_state.joint_state.name.size())
