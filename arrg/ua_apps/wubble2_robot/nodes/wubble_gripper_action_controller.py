@@ -253,7 +253,7 @@ class GripperActionController():
             except ConnectivityException as ce:
                 rospy.logerr(ce)
             except Exception as e:
-                rospy.logerr('Uknown error occured: %s' % str(e))
+                rospy.logerr('Unknown error occured: %s' % str(e))
                 
             r.sleep()
 

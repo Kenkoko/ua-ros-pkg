@@ -10,15 +10,15 @@ import numpy
 import rospy
 import tf
 
-from motion_planning_msgs.srv import GetMotionPlanRequest
-from motion_planning_msgs.srv import GetMotionPlanResponse
-from motion_planning_msgs.srv import GetMotionPlan
+from arm_navigation_msgs.srv import GetMotionPlanRequest
+from arm_navigation_msgs.srv import GetMotionPlanResponse
+from arm_navigation_msgs.srv import GetMotionPlan
 
-from motion_planning_msgs.msg import PositionConstraint
-from motion_planning_msgs.msg import OrientationConstraint
-from motion_planning_msgs.msg import ArmNavigationErrorCodes
-from motion_planning_msgs.msg import OrderedCollisionOperations
-from motion_planning_msgs.msg import CollisionOperation
+from arm_navigation_msgs.msg import PositionConstraint
+from arm_navigation_msgs.msg import OrientationConstraint
+from arm_navigation_msgs.msg import ArmNavigationErrorCodes
+from arm_navigation_msgs.msg import OrderedCollisionOperations
+from arm_navigation_msgs.msg import CollisionOperation
 
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import PointStamped

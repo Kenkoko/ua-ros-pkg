@@ -23,9 +23,9 @@
     <!-- Start the Erratic mobile base driver -->
     <include file="$(find wubble2_robot)/launch/erratic_controller.launch" />
     
-    <!-- Start arm and head motor controllers -->
-    <include file="$(find wubble2_robot)/launch/arm_controllers.launch" />
-    <include file="$(find wubble2_robot)/launch/head_controllers.launch" />
+    <!-- Start arm, gripper and head motor controllers -->
+    <include file="$(find wubble2_robot)/launch/dynamixel_controllers.launch" />
+    <include file="$(find wubble2_robot)/launch/gripper_controllers.launch" />
     <node name="dynamixel_to_pr2" pkg="wubble2_robot" type="dynamixel_to_pr2_state_msgs.py" />
 
     <!-- Publish joint state information -->
