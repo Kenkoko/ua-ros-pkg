@@ -73,9 +73,9 @@ public:
         free_params.push_back(0.0);
 
         joint_names.push_back("shoulder_pan_joint");
-        joint_names.push_back("shoulder_tilt_joint");
-        joint_names.push_back("elbow_tilt_joint");
-        joint_names.push_back("wrist_rotate_joint");
+        joint_names.push_back("shoulder_pitch_joint");
+        joint_names.push_back("elbow_flex_joint");
+        joint_names.push_back("wrist_roll_joint");
 
         urdf::Model model;
         if (!model.initParam(robot_desc)) { ROS_ERROR("Failed to parse URDF description"); }
