@@ -189,13 +189,13 @@
     
     <!-- NECK TILTING LASER ATTACHMENT -->
     <joint name="neck_support_joint" type="fixed">
-        <origin xyz="0.0254 0 0.61" rpy="0 0 0" />
+        <origin xyz="0.0254 0 0.655" rpy="0 0 0" />
         <parent link="platform_link"/>
         <child link="neck_support_link"/>
     </joint>
     
     <joint name="neck_tilt_joint" type="revolute">
-        <origin xyz="0.0415 0 0.016" rpy="0 0 0" />
+        <origin xyz="0.0316 0 0" rpy="0 0 0" />
         <parent link="neck_support_link"/>
         <child link="neck_tilt_link"/>
         
@@ -242,7 +242,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/ax12_45_bracket.stl"/>
+                <mesh filename="package://wubble_description/meshes/neck_tilt_link.stl"/>
             </geometry>
             <material name="GunMetalBrushedAluminum" />
         </visual>
@@ -250,7 +250,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://wubble_description/meshes/collada/ax12_45_bracket.dae"/>
+                <mesh filename="package://wubble_description/meshes/collada/neck_tilt_link.dae"/>
             </geometry>
         </collision>
     </link>
@@ -262,7 +262,7 @@
     </transmission>
     
     <hokuyo_urg name="neck_scan" parent="neck_tilt_link">
-        <origin xyz="0 -0.0056 0.02635" rpy="0 0 0" />
+        <origin xyz="0.00478 0.00334 0.021" rpy="0 0 0" />
     </hokuyo_urg>
     
     <!-- BASE LASER ATTACHMENT -->

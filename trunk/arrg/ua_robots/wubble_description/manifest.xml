@@ -40,7 +40,6 @@
     <depend package="rospy"/>
     <depend package="geometry_msgs"/>
     <depend package="tf"/>
-    <depend package="assisted_teleop"/>
 
     <export>
         <gazebo gazebo_media_path="${prefix}" />
