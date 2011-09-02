@@ -9,7 +9,6 @@
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/smart_arm_kinematics</url>
     <depend package="roscpp"/>
-    <depend package="openrave"/>
     <depend package="geometry_msgs"/>
     <depend package="tf"/>
     <depend package="urdf"/>
