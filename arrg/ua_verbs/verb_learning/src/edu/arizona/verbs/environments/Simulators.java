@@ -15,7 +15,7 @@ public enum Simulators {
 	ww2d {
 		@Override
 		public Environment create() {
-			return new WW2DEnvironment(true);
+			return new WW2DEnvironment(WW2DEnvironment.visualize);
 		}
 	};
 	

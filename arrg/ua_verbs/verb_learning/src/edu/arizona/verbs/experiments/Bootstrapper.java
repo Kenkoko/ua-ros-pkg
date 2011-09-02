@@ -32,22 +32,20 @@ import edu.arizona.verbs.verb.vfsm.SequentialVerb;
 
 public class Bootstrapper {
 
-	
-	
 	/**
 	 * @param args
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		String env = "ww2d";
-//		String env = "gazebo";
+//		String env = "ww2d";
+		String env = "gazebo";
 		
 		String verb = "go_via";
-		ArrayList<String> arguments = Lists.newArrayList("agent", "waypoint", "place");
+		ArrayList<String> arguments = Lists.newArrayList("agent", "waypoint", "goal");
 
-		String model = "corepath";
+		String model = "signature";
 		
-		int numTrajectories = 15;
+		int numTrajectories = 40;
 		
 //		WW2DEnvironment.visualize = true;
 		Environment environment = Simulators.valueOf(env).create();
