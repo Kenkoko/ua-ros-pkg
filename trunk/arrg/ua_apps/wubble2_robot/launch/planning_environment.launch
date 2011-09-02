@@ -1,13 +1,6 @@
 <!-- -*- mode: XML -*- -->
 
 <launch>
-    <!-- send parameters for collision checking for Wubble2; this includes parameters for the self filter -->
-    <rosparam command="load" ns="robot_description_collision" file="$(find wubble_description)/params/w2_collision_checks_arm.yaml" />
-
-    <!-- send parameters for multidof -->
-    <rosparam command="load" ns="robot_description_planning" file="$(find wubble2_robot)/config/multi_dof_joints.yaml" />
-
-    <!-- send parameters needed for motion planning -->
-    <rosparam command="load" ns="robot_description_planning" file="$(find wubble_description)/params/w2_planning_groups.yaml" />
+    <rosparam command="load" ns="robot_description_planning" file="$(find wubble2_arm_navigation)/config/wubble2_planning_description.yaml" />
 </launch>
 

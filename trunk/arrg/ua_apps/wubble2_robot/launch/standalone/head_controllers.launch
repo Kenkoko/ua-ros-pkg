@@ -1,43 +1,44 @@
 <!-- -*- mode: XML -*- -->
 
 <launch>
-    <!-- Start the Dynamixel servo manager to control Head pan and tilt and neck laser tilt -->
+    <!-- Start the Dynamixel servo manager to control head pan and tilt and neck laser tilt -->
     <node name="dynamixel_manager_head" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
         <rosparam>
             namespace: wubble_head_manager
+            diagnostics_rate: 10
             serial_ports:
                 wubble2Head:
                     port_name: "/dev/wubble2Head"
-                    baud_rate: 3000000
-                    min_motor_id: 12
-                    max_motor_id: 12
-                    update_rate: 200
-                wubble2Head2:
-                    port_name: "/dev/wubble2Head2"
                     baud_rate: 1000000
                     min_motor_id: 10
                     max_motor_id: 11
                     update_rate: 50
+                wubble2Neck:
+                    port_name: "/dev/wubble2Neck"
+                    baud_rate: 3000000
+                    min_motor_id: 12
+                    max_motor_id: 12
+                    update_rate: 200
         </rosparam>
     </node>
 
-    <!-- Start all wubble neck joint controllers -->
-    <rosparam file="$(find wubble2_robot)/config/wubble_head.yaml" command="load"/>
-    <node name="head_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
-          args="--manager=wubble_head_manager
-                --port=wubble2Head
-                --type=simple
-                neck_tilt_controller"
-          output="screen"/>
-
-    <!-- Start head pan joint controller -->
+    <!-- Start head pan and tilt joint controllers -->
     <rosparam file="$(find wubble2_robot)/config/wubble_head.yaml" command="load"/>
     <node name="head_pan_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
           args="--manager=wubble_head_manager
-                --port=wubble2Head2
+                --port=wubble2Head
                 --type=simple
                 head_pan_controller
                 head_tilt_controller"
+          output="screen"/>
+
+    <!-- Start neck laser tilt joint controller -->
+    <rosparam file="$(find wubble2_robot)/config/wubble_head.yaml" command="load"/>
+    <node name="head_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=wubble_head_manager
+                --port=wubble2Neck
+                --type=simple
+                neck_tilt_controller"
           output="screen"/>
 </launch>
 
