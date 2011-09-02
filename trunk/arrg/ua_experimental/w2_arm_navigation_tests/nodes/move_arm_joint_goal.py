@@ -5,10 +5,10 @@ import rospy
 
 from actionlib import SimpleActionClient
 from actionlib_msgs.msg import GoalStatus
-from move_arm_msgs.msg import MoveArmAction
-from move_arm_msgs.msg import MoveArmGoal
-from motion_planning_msgs.msg import JointConstraint
-from motion_planning_msgs.msg import LinkPadding
+from arm_navigation_msgs.msg import MoveArmAction
+from arm_navigation_msgs.msg import MoveArmGoal
+from arm_navigation_msgs.msg import JointConstraint
+from arm_navigation_msgs.msg import LinkPadding
 
 if __name__ == '__main__':
     rospy.init_node('move_arm_simple_joint_goal_node', anonymous=True)
@@ -41,7 +41,7 @@ if __name__ == '__main__':
               'wrist_roll_joint')
               
     goal.motion_plan_request.goal_constraints.joint_constraints = [JointConstraint(j, 0.0, 0.1, 0.1, 0.0) for j in joints]
-    goal.motion_plan_request.link_padding = [LinkPadding(l,0.0) for l in links]
+    #goal.motion_plan_request.link_padding = [LinkPadding(l,0.0) for l in links]
     
     init = (0.0,) * 7
     #pick = (0.08297109,-1.29328384, 0.01069185,-0.14805498, 0.14074285, 1.67430316, -1.56874745)

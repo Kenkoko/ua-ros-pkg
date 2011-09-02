@@ -5,12 +5,12 @@ import rospy
 
 from actionlib import SimpleActionClient
 from actionlib_msgs.msg import GoalStatus
-from move_arm_msgs.msg import MoveArmAction
-from move_arm_msgs.msg import MoveArmGoal
-from motion_planning_msgs.msg import SimplePoseConstraint
-from motion_planning_msgs.msg import PositionConstraint
-from motion_planning_msgs.msg import OrientationConstraint
-from geometric_shapes_msgs.msg import Shape
+from arm_navigation_msgs.msg import MoveArmAction
+from arm_navigation_msgs.msg import MoveArmGoal
+from arm_navigation_msgs.msg import SimplePoseConstraint
+from arm_navigation_msgs.msg import PositionConstraint
+from arm_navigation_msgs.msg import OrientationConstraint
+from arm_navigation_msgs.msg import Shape
 
 
 def pose_constraint_to_position_orientation_constraints(pose_constraint):

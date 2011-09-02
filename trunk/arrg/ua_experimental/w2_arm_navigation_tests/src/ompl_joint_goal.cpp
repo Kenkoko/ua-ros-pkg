@@ -1,8 +1,8 @@
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
-#include <motion_planning_msgs/GetMotionPlan.h>
+#include <arm_navigation_msgs/GetMotionPlan.h>
 
-#include <motion_planning_msgs/DisplayTrajectory.h>
+#include <arm_navigation_msgs/DisplayTrajectory.h>
 #include <planning_environment/monitors/joint_state_monitor.h>
 #include <boost/thread.hpp>
 
@@ -17,8 +17,8 @@ int main(int argc, char **argv){
 
   ros::NodeHandle nh;
 
-  motion_planning_msgs::GetMotionPlan::Request request;
-  motion_planning_msgs::GetMotionPlan::Response response;
+  arm_navigation_msgs::GetMotionPlan::Request request;
+  arm_navigation_msgs::GetMotionPlan::Response response;
 
   std::vector<std::string> names(7);
   names[0] = "shoulder_pitch_joint";
@@ -53,7 +53,7 @@ int main(int argc, char **argv){
   request.motion_plan_request.goal_constraints.joint_constraints[5].position =  0.337;
   request.motion_plan_request.goal_constraints.joint_constraints[6].position =  0.046;
 
-  ros::ServiceClient service_client = nh.serviceClient<motion_planning_msgs::GetMotionPlan>("ompl_planning/plan_kinematic_path");
+  ros::ServiceClient service_client = nh.serviceClient<arm_navigation_msgs::GetMotionPlan>("ompl_planning/plan_kinematic_path");
   service_client.call(request,response);
   if(response.error_code.val != response.error_code.SUCCESS)
   {
@@ -66,13 +66,13 @@ int main(int argc, char **argv){
 
 
   planning_environment::JointStateMonitor joint_state_monitor;
-  ros::Publisher display_trajectory_publisher = nh.advertise<motion_planning_msgs::DisplayTrajectory>("/joint_path_display", 1);
+  ros::Publisher display_trajectory_publisher = nh.advertise<arm_navigation_msgs::DisplayTrajectory>("/joint_path_display", 1);
   while(display_trajectory_publisher.getNumSubscribers() < 1 && nh.ok())
   {
     ROS_INFO("Waiting for subscriber");
     ros::Duration(0.1).sleep();
   }
-  motion_planning_msgs::DisplayTrajectory display_trajectory;
+  arm_navigation_msgs::DisplayTrajectory display_trajectory;
 
   display_trajectory.model_id = "pr2";
   display_trajectory.trajectory.joint_trajectory.header.frame_id = "base_footprint";
