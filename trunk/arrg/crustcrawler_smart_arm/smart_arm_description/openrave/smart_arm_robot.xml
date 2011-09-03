@@ -33,12 +33,13 @@
 * Author: Antons Rebguns
 -->
 
-<Robot name="SmartArm">
-    <KinBody file="smart_arm_kinbody.xml"/>
-    
+<Robot name="smart_arm" file="smart_arm_robot.zae">
     <Manipulator name="arm">
-        <base>BaseLink</base>
-        <effector>WristRotateLink</effector>
-        <gripperjoints>FingerLeftJoint FingerRightJoint</gripperjoints>
+        <base>arm_base_link</base>
+        <effector>arm_wrist_roll_link</effector>
+       <joints>left_finger_joint right_finger_joint</joints>
+       <closingdirection>-1 1</closingdirection>
+       <direction>1 0 0</direction>
+       <translation>0.054 0 0</translation>
     </Manipulator>
 </Robot>
