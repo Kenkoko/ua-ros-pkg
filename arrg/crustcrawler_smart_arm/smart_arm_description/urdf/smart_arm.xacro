@@ -66,7 +66,7 @@
         </joint>
         
         <!-- Gripper right finger joint -->
-        <joint name="finger_right_joint" type="revolute">
+        <joint name="right_finger_joint" type="revolute">
             <origin xyz="${0.0015 + 0.05 - 0.01} ${-0.035/2} 0" rpy="0 0 0" />
             <parent link="arm_wrist_roll_link"/>
             <child link="arm_right_finger_link" />
@@ -79,7 +79,7 @@
         </joint>
         
         <!-- Gripper left finger joint -->
-        <joint name="finger_left_joint" type="revolute">
+        <joint name="left_finger_joint" type="revolute">
             <origin xyz="${0.0015 + 0.05 - 0.01} ${0.035/2} 0" rpy="0 0 0" />
             <parent link="arm_wrist_roll_link"/>
             <child link="arm_left_finger_link" />
@@ -105,14 +105,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_base.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_base.dae"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_base_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_base.dae"/>
                 </geometry>
             </collision>
         </link>
@@ -129,14 +129,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.005" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_pan.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_shoulder_pan.dae"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_shoulder_pan_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_shoulder_pan.dae"/>
                 </geometry>
             </collision>
         </link>
@@ -153,14 +153,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_shoulder_pitch.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_shoulder_pitch.dae"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_shoulder_pitch_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_shoulder_pitch.dae"/>
                 </geometry>
             </collision>
         </link>
@@ -177,14 +177,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_elbow_flex.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_elbow_flex.dae"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_elbow_flex_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_elbow_flex.dae"/>
                 </geometry>
             </collision>
         </link>
@@ -201,14 +201,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_wrist_roll.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_wrist_roll.dae"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_wrist_roll_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_wrist_roll.dae"/>
                 </geometry>
             </collision>
         </link>
@@ -225,14 +225,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_right_finger.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_right_finger.dae"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_right_finger_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_right_finger.dae"/>
                 </geometry>
             </collision>
         </link>
@@ -249,14 +249,14 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/arm_left_finger.stl"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_left_finger.dae"/>
                 </geometry>
             </visual>
             
             <collision>
                 <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://smart_arm_description/meshes/convex/arm_left_finger_convex.stlb"/>
+                    <mesh filename="package://smart_arm_description/meshes/collada/arm_left_finger.dae"/>
                 </geometry>
             </collision>
         </link>
@@ -287,15 +287,15 @@
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="finger_right_trans">
-            <actuator name="finger_right_motor" />
-            <joint name="finger_right_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="right_finger_trans">
+            <actuator name="right_finger_motor" />
+            <joint name="right_finger_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
-        <transmission type="pr2_mechanism_model/SimpleTransmission" name="finger_left_trans">
-            <actuator name="finger_left_motor" />
-            <joint name="finger_left_joint" />
+        <transmission type="pr2_mechanism_model/SimpleTransmission" name="left_finger_trans">
+            <actuator name="left_finger_motor" />
+            <joint name="left_finger_joint" />
             <mechanicalReduction>1.0</mechanicalReduction>
         </transmission>
         
@@ -368,13 +368,13 @@
             <fudgeFactor value="0.5" />
         </gazebo>
         
-        <gazebo reference="finger_right_joint">
+        <gazebo reference="right_finger_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="1.0" />
         </gazebo>
         
-        <gazebo reference="finger_left_joint">
+        <gazebo reference="left_finger_joint">
             <stopKd value="1.0" />
             <stopKp value="1000000.0" />
             <fudgeFactor value="1.0" />

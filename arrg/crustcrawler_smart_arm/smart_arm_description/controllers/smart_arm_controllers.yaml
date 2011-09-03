@@ -32,7 +32,7 @@ wrist_roll_controller:
 
 left_finger_controller:
   type: robot_mechanism_controllers/JointPositionController
-  joint: finger_left_joint
+  joint: left_finger_joint
   pid:
     p: 80.0
     i: 10.0
@@ -40,7 +40,7 @@ left_finger_controller:
 
 right_finger_controller:
   type: robot_mechanism_controllers/JointPositionController
-  joint: finger_right_joint
+  joint: right_finger_joint
   pid:
     p: 80.0
     i: 10.0
