@@ -1,9 +1,8 @@
 <package>
     <description brief="Blocks World demo of the Wubble robot">
-
         wubble_blocks
-
     </description>
+
     <author>Anh Tran</author>
     <license>BSD</license>
     <review status="unreviewed" notes=""/>
@@ -17,7 +16,7 @@
     <depend package="geometry_msgs"/>
     <depend package="sensor_msgs"/>
     <depend package="phidgets_ros"/>
-    <depend package="ua_controller_msgs"/>
+    <depend package="dynamixel_controllers"/>
 
     <!-- Controllers & actions -->
     <depend package="wubble_actions"/>
@@ -25,5 +24,4 @@
     <!-- Visualization -->
     <depend package="rviz"/>
     <depend package="object_tracking"/>
-
 </package>

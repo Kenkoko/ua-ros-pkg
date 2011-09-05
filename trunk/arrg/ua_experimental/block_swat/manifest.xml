@@ -9,10 +9,11 @@
     <url>http://ros.org/wiki/block_swat</url>
 
     <depend package="rospy"/>
+    <depend package="gazebo"/>
+    <depend package="dynamixel_controllers"/>
+
     <depend package="std_msgs"/>
     <depend package="geometry_msgs"/>
-    <depend package="gazebo"/>
-
     <depend package="move_base_msgs"/>
     <depend package="actionlib_msgs"/>
     <depend package="wubble_actions"/>

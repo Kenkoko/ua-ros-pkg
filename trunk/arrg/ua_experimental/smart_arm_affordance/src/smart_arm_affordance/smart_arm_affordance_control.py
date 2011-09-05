@@ -6,7 +6,7 @@ import math
 from std_msgs.msg import String
 # ROS imports
 from std_msgs.msg import Float64
-from ua_controller_msgs.msg import JointState
+from dynamixel_msgs.msg import JointState
 
 rospy.init_node('affordance_listener', anonymous=True)
 wrist = rospy.Publisher('/wrist_rotate_controller/command', Float64)

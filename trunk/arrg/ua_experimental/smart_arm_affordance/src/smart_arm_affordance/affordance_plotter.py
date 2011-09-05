@@ -20,7 +20,7 @@ import subprocess
 from optparse import OptionParser
 # ROS imports
 from std_msgs.msg import String
-from ua_controller_msgs.msg import JointState
+from dynamixel_msgs.msg import JointState
 from phidgets_ros.msg import Float64Stamped
 
 # Global variable to hold all of the sensor's data

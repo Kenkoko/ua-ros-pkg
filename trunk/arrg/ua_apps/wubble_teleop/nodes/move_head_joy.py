@@ -40,7 +40,7 @@ from threading import Thread
 import rospy
 from joy.msg import Joy
 from std_msgs.msg import Float64
-from ua_controller_msgs.msg import JointState
+from dynamixel_msgs.msg import JointState
 
 class MoveHeadXbox():
     def __init__(self):

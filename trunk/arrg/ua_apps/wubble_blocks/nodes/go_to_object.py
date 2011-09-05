@@ -47,7 +47,7 @@ from wubble_actions.msg import SmartArmGripperGoal
 from wubble_actions.msg import SmartArmAction
 from wubble_actions.msg import SmartArmGripperAction
 
-from ax12_controller_core.srv import SetSpeed
+from dynamixel_controllers.srv import SetSpeed
 from wubble_blocks.srv import ClassifyObject
 
 class ObjectSwat:
