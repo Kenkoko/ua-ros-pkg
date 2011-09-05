@@ -1,14 +1,14 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
-    <!-- Load laser tilt controller parameters from YAML file -->
-
     <rosparam file="$(find charlie_controllers)/config/wheels.yaml" command="load"/>
-
-    <!-- Start the laser tilt controller -->
-    <node name="charlie_wheels_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="--port /dev/ttyUSB0 --command start
-		left_front_wheel_controller
-		right_front_wheel_controller
-		left_rear_wheel_controller
-		right_rear_wheel_controller"
+    <node name="charlie_wheels_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=charlie_motor_manager
+                --port=dxl_tty0
+                --type=simple
+                left_front_wheel_controller
+                right_front_wheel_controller
+                left_rear_wheel_controller
+                right_rear_wheel_controller"
           output="screen"/>
 </launch>

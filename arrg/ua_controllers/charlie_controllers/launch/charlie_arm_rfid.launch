@@ -1,13 +1,13 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
-    <!-- Load laser tilt controller parameters from YAML file -->
-
     <rosparam file="$(find charlie_controllers)/config/arm_rfid.yaml" command="load"/>
-
-    <!-- Start the laser tilt controller -->
-    <node name="charlie_rfidarm_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="--port /dev/ttyUSB0 --command start
-		rfid_shoulder_pan_controller
-		rfid_elbow_tilt_controller
-		rfid_wrist_tilt_controller"
+    <node name="charlie_rfidarm_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=charlie_motor_manager
+                --port=dxl_tty0
+                --type=simple
+                rfid_shoulder_pan_controller
+                rfid_elbow_tilt_controller
+                rfid_wrist_tilt_controller"
           output="screen"/>
 </launch>

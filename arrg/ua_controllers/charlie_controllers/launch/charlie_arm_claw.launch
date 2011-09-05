@@ -1,15 +1,15 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
-    <!-- Load laser tilt controller parameters from YAML file -->
-
     <rosparam file="$(find charlie_controllers)/config/arm_claw.yaml" command="load"/>
-
-    <!-- Start the laser tilt controller -->
-    <node name="charlie_clawarm_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="--port /dev/ttyUSB0 --command start
-		claw_shoulder_pan_controller
-		claw_elbow_tilt_controller
-		claw_wrist_rotate_controller
-		claw_finger_right_controller
-		claw_finger_left_controller"
+    <node name="charlie_clawarm_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=charlie_motor_manager
+                --port=dxl_tty0
+                --type=simple
+                claw_shoulder_pan_controller
+                claw_elbow_tilt_controller
+                claw_wrist_rotate_controller
+                claw_finger_right_controller
+                claw_finger_left_controller"
           output="screen"/>
 </launch>

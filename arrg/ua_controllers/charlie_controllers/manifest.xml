@@ -1,18 +1,17 @@
 <package>
-  <description brief="charlie_controllers">
+    <description brief="charlie_controllers">
+         charlie_controllers
+    </description>
 
-     charlie_controllers
+    <author>Arizona Robotics Research Group</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/charlie_controllers</url>
 
-  </description>
-  <author>Arizona Robotics Research Group</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/charlie_controllers</url>
-  <depend package="rospy"/>
-  <depend package="rosnode"/>
-  <depend package="std_msgs"/>
-  <depend package="ax12_controller_core"/>
-
+    <depend package="rospy"/>
+    <depend package="rosnode"/>
+    <depend package="std_msgs"/>
+    <depend package="dynamixel_controllers"/>
 </package>
 
 

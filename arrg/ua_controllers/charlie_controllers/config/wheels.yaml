@@ -1,8 +1,8 @@
 right_front_wheel_controller:
     controller:
-        package: ax12_controller_core
-        module: joint_freespin_controller
-        type: JointFreespinControllerAX12
+        package: dynamixel_controllers
+        module: joint_torque_controller
+        type: JointTorqueController
     joint_name: left_front_wheel_controller_joint
     joint_speed: 4
     motor:
@@ -10,9 +10,9 @@ right_front_wheel_controller:
 
 left_front_wheel_controller:
     controller:
-        package: ax12_controller_core
-        module: joint_freespin_controller
-        type: JointFreespinControllerAX12
+        package: dynamixel_controllers
+        module: joint_torque_controller
+        type: JointTorqueController
     joint_name: left_front_wheel_controller_joint
     joint_speed: 4
     motor:
@@ -20,9 +20,9 @@ left_front_wheel_controller:
 
 right_rear_wheel_controller:
     controller:
-        package: ax12_controller_core
-        module: joint_freespin_controller
-        type: JointFreespinControllerAX12
+        package: dynamixel_controllers
+        module: joint_torque_controller
+        type: JointTorqueController
     joint_name: left_front_wheel_controller_joint
     joint_speed: 4
     motor:
@@ -30,9 +30,9 @@ right_rear_wheel_controller:
 
 left_rear_wheel_controller:
     controller:
-        package: ax12_controller_core
-        module: joint_freespin_controller
-        type: JointFreespinControllerAX12
+        package: dynamixel_controllers
+        module: joint_torque_controller
+        type: JointTorqueController
     joint_name: left_front_wheel_controller_joint
     joint_speed: 4
     motor:
