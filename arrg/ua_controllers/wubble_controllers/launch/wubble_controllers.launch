@@ -1,6 +1,19 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <!-- Start the low-level serial driver and controller manager -->
-    <include file="$(find ax12_controller_core)/launch/controller_manager.launch" />
+    <node name="dynamixel_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
+        <rosparam>
+            namespace: wubble_motor_manager
+            serial_ports:
+                wubble_dxl:
+                    port_name: "/dev/ax12"
+                    baud_rate: 1000000
+                    min_motor_id: 1
+                    max_motor_id: 25
+                    update_rate: 10
+        </rosparam>
+    </node>
     
     <!-- Start the wubble head pan/tilt controller -->
     <include file="$(find wubble_controllers)/launch/wubble_head.launch" />

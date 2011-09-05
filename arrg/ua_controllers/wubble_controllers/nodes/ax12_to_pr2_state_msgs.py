@@ -40,7 +40,7 @@ roslib.load_manifest('wubble_controllers')
 
 import rospy
 from pr2_controllers_msgs.msg import JointControllerState
-from ua_controller_msgs.msg import JointState
+from dynamixel_msgs.msg import JointState
 
 class AX12ToPR2StateMsgs:
     def __init__(self):

@@ -1,10 +1,14 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <!-- Load smart_arm parameters from YAML file -->
     <rosparam file="$(find wubble_controllers)/config/arm.yaml" command="load"/>
 
     <!-- Start the smart_arm controller -->
-    <node name="smart_arm_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="--port /dev/ax12 --command start
+    <node name="smart_arm_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=wubble_motor_manager
+                --port=wubble_dxl
+                --type=simple
                 shoulder_pan_controller
                 shoulder_tilt_controller
                 elbow_tilt_controller
