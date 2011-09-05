@@ -53,7 +53,7 @@ from wubble_actions.msg import SmartArmGripperAction
 from gazebo.msg  import ModelStates
 
 
-from ax12_controller_core.srv import SetSpeed
+from dynamixel_controllers.srv import SetSpeed
 
 class ObjectSwat:
     def __init__(self, file):

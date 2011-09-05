@@ -1,9 +1,8 @@
 <package>
     <description brief="Joystick teleop demo of the Wubble robot">
-
-     wubble_teleop
-
+        wubble_teleop
     </description>
+
     <author>Daniel Hewlett</author>
     <license>BSD</license>
     <review status="unreviewed" notes=""/>
@@ -14,6 +13,7 @@
     <depend package="rospy"/>
     <depend package="geometry_msgs"/>
     <depend package="sensor_msgs"/>
+    <depend package="dynamixel_msgs"/>
     <depend package="pr2_controllers_msgs"/>
     
     <!-- Joystick -->
@@ -21,6 +21,5 @@
     <depend package="joystick_remapper" />
 
     <!-- Movement -->
-    <depend package="move_base"/>   
-
+    <depend package="move_base"/>
 </package>
