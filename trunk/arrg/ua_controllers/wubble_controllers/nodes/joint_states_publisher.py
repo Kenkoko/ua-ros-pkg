@@ -31,7 +31,7 @@ import roslib; roslib.load_manifest('wubble_controllers')
 import rospy
 
 from sensor_msgs.msg import JointState as JointStatePR2
-from ua_controller_msgs.msg import JointState as JointStateAX12
+from dynamixel_msgs.msg import JointState as JointStateAX12
 
 class JointStateMessage():
     def __init__(self, name, position, velocity, effort):

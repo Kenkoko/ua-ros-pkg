@@ -1,8 +1,8 @@
 head_pan_controller:
     controller:
-        package: ax12_controller_core
+        package: dynamixel_controllers
         module: joint_position_controller
-        type: JointPositionControllerAX12
+        type: JointPositionController
     joint_name: head_pan_joint
     joint_speed: 1.17
     motor:
@@ -13,9 +13,9 @@ head_pan_controller:
 
 head_tilt_controller:
     controller:
-        package: ax12_controller_core
+        package: dynamixel_controllers
         module: joint_position_controller
-        type: JointPositionControllerAX12
+        type: JointPositionController
     joint_name: head_tilt_joint
     joint_speed: 1.17
     motor:

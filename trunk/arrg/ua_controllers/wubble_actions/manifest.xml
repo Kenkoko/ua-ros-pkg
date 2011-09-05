@@ -1,34 +1,31 @@
 <package>
-  <description brief="Action libraries for various controllers of the Wubble robot">
+    <description brief="Action libraries for various controllers of the Wubble robot">
+        wubble_actions
+    </description>
 
-     wubble_actions
+    <author>Anh Tran</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/wubble_actions</url>
 
-  </description>
-  <author>Anh Tran</author>
-  <license>BSD</license>
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/wubble_actions</url>
-  <depend package="roscpp"/>
-  <depend package="rospy"/>
-  <depend package="roslib"/>
-  <depend package="std_msgs"/>
-  <depend package="geometry_msgs"/>
-  <depend package="actionlib_msgs"/>
-  <depend package="move_base_msgs"/>
-  <depend package="pr2_msgs"/>
-  <depend package="pr2_controllers_msgs"/>
-  <depend package="ua_controller_msgs"/>
-  <depend package="actionlib"/>
-  <depend package="tf"/>
-  <depend package="smart_arm_controller"/>
-  <depend package="smart_arm_kinematics"/>
-  <depend package="wubble_controllers"/>
-  <depend package="ax12_controller_core"/>
-  
-  <depend package="dynamixel_controllers"/>
-  <depend package="dynamixel_msgs"/>
-  <depend package="dynamixel_driver"/>
+    <depend package="roscpp"/>
+    <depend package="rospy"/>
+    <depend package="roslib"/>
+    <depend package="std_msgs"/>
+    <depend package="geometry_msgs"/>
+    <depend package="actionlib_msgs"/>
+    <depend package="move_base_msgs"/>
+    <depend package="pr2_msgs"/>
+    <depend package="pr2_controllers_msgs"/>
+    <depend package="actionlib"/>
+    <depend package="tf"/>
+    <depend package="smart_arm_controller"/>
+    <depend package="smart_arm_kinematics"/>
+    <depend package="wubble_controllers"/>
 
+    <depend package="dynamixel_controllers"/>
+    <depend package="dynamixel_msgs"/>
+    <depend package="dynamixel_driver"/>
 </package>
 
 

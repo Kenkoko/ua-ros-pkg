@@ -1,10 +1,14 @@
+<!-- -*- mode: XML -*- -->
+
 <launch>
     <!-- Load head pan/tilt controller parameters from YAML file -->
     <rosparam file="$(find wubble_controllers)/config/head_pan_tilt.yaml" command="load"/>
 
     <!-- Start the head pan/tilt controllers -->
-    <node name="wubble_head_controller_spawner" pkg="ax12_controller_core" type="controller_spawner.py"
-          args="--port /dev/ax12 --command start
+    <node name="wubble_head_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=wubble_motor_manager
+                --port=wubble_dxl
+                --type=simple
                 head_pan_controller
                 head_tilt_controller"
           output="screen"/>
