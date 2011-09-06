@@ -3,7 +3,7 @@ INSTALL_DIR = gearbox
 all: installed
 
 SVN_DIR = build/gearbox-svn
-SVN_URL = http://gearbox.svn.sf.net/svnroot/gearbox/gearbox/tags/RELEASE_9.11
+SVN_URL = http://gearbox.svn.sf.net/svnroot/gearbox/gearbox/tags/RELEASE_10.11
 PATCH_FILE = aist_python_mt.patch
 
 include $(shell rospack find mk)/svn_checkout.mk
