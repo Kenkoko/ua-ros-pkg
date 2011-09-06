@@ -35,6 +35,7 @@
 
 #include <ros/ros.h>
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
 class Object
@@ -53,11 +54,44 @@ public:
     cv::MatND histogram;
     cv::RotatedRect tight_bounding_box;
 
+    std::vector<cv::Mat> lbp_region_histograms;
     //cv::Mat tr_img;
     //std::vector<cv::KeyPoint> keypoints;
 
     Object() : missed_frames(0)
     {
+    }
+
+    void update_histogram(cv::Mat hsv_img, cv::Mat bin_image)
+    {
+        cv::MatND hist;
+
+        cv::Rect bounder = tight_bounding_box.boundingRect();
+
+        cv::Mat mask = bin_image(bounder);
+        cv::Mat hsv_roi = hsv_img(bounder);
+
+        int h_bins = 30, s_bins = 32;
+        int hist_size[] = {h_bins, s_bins};
+        float hranges[] = {0, 180};
+        float sranges[] = {0, 256};
+        const float* ranges[] = {hranges, sranges};
+        int channels[] = {0, 1};
+
+        cv::calcHist(&hsv_roi, 1, channels, mask, hist, 2, hist_size, ranges);
+        cv::addWeighted(hist, 0.1, histogram, 0.9, 0.0, histogram);
+    }
+
+    void set_lbp_region_histograms(const cv::Mat& current_lbp)
+    {
+        lbp_region_histograms = compute_lbp_region_histograms(current_lbp);
+        ROS_INFO("[%d] Number of LBP region histograms is %d", id, (int)lbp_region_histograms.size());
+    }
+
+    void compare_lbp_histograms(const cv::Mat& current_lbp)
+    {
+        std::vector<cv::Mat> current_lbp_region_histograms = compute_lbp_region_histograms(current_lbp);
+        ROS_INFO("[%d] Number of current LBP region histograms is %d", id, (int)lbp_region_histograms.size());
     }
 
     void dump_to_file()
@@ -70,6 +104,40 @@ public:
         {
             f << id << "," << timestamps[i] << "," << tracks[i].x << "," << tracks[i].y << std::endl;
         }
+    }
+
+private:
+    std::vector<cv::Mat> compute_lbp_region_histograms(const cv::Mat& current_lbp)
+    {
+        std::vector<cv::Mat> region_hists;
+
+        int region_out = 3;
+        int region_step = region_out; // could take step sizes different from region half-size
+
+        for (int r = region_out; r <= current_lbp.rows-region_out; r+= region_step)
+        {
+            for (int c = region_out; c <= current_lbp.cols-region_out; c+= region_step)
+            {
+                // Calculate the current region histogram
+                cv::Mat cur_hist = cv::Mat::zeros(1, 256, CV_8U);
+                uint8_t* h = cur_hist.ptr<uint8_t>(0);
+
+                for (int region_row = r-region_out; region_row < r+region_out+1; ++region_row)
+                {
+                    const uint8_t* rowptr = current_lbp.ptr<const uint8_t>(region_row);
+
+                    for (int region_col = c-region_out; region_col < c+region_out+1; ++region_col)
+                    {
+                        uint8_t val = rowptr[region_col];
+                        h[val]++;
+                    }
+                }
+
+                region_hists.push_back(cur_hist);
+            }
+        }
+
+        return region_hists;
     }
 };
 

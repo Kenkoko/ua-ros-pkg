@@ -68,6 +68,7 @@ void print_matz(const cv::Mat &C)
 ObjectTracker::ObjectTracker()
 {
     initialized = false;
+    save_tracks = true;
     fg_prob_threshold = 0.3;
     con_area_threshold = 40;
     cv::startWindowThread();
@@ -82,14 +83,18 @@ ObjectTracker::ObjectTracker()
 
 std::map<int, Contour>
 ObjectTracker::find_objects(const cv::Mat& fg_prob_img,
-                            const cv::Mat& camera_img,
+                            const cv::Mat& scaled_camera_img,
+                            const cv::Mat& hires_camera_img,
                             ros::Time stamp)
 {
-    if (!initialized) { train_model(fg_prob_img, camera_img, stamp); initialized = true; }
-    return find_known_objects(fg_prob_img, camera_img, stamp);
+    if (!initialized) { train_model(fg_prob_img, scaled_camera_img, hires_camera_img, stamp); initialized = true; }
+    return find_known_objects(fg_prob_img, scaled_camera_img, hires_camera_img, stamp);
 }
 
-void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& original, ros::Time stamp)
+void ObjectTracker::train_model(const cv::Mat& fg_prob_img,
+                                const cv::Mat& scaled_camera_img,
+                                const cv::Mat& hires_camera_img,
+                                ros::Time stamp)
 {
     cv::Mat bin_image;
     cv::threshold(fg_prob_img, bin_image, fg_prob_threshold, 255, cv::THRESH_BINARY);
@@ -99,14 +104,31 @@ void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& origi
     cv::Mat contour_bin_image = bin_image.clone();
     cv::findContours(contour_bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-    // Make an HSV image
-    cv::Mat hsv_img;
-    cv::cvtColor(original, hsv_img, CV_BGR2HSV);
+    // Make an HSV image from scaled image
+    cv::Mat scaled_hsv_img;
+    cv::cvtColor(scaled_camera_img, scaled_hsv_img, CV_BGR2HSV);
+
+    // Make an HSV from high resolution image
+    cv::Mat hires_hsv_img;
+    cv::cvtColor(hires_camera_img, hires_hsv_img, CV_BGR2HSV);
+
+    cv::Mat scaled_lab_img;
+    cv::cvtColor(scaled_camera_img, scaled_lab_img, CV_BGR2Lab);
+
+    // Make a Lab from high resolution image
+    cv::Mat hires_lab_img;
+    cv::cvtColor(hires_camera_img, hires_lab_img, CV_BGR2Lab);
+
+    cv::namedWindow("lab_img");
+    cv::imshow("lab_img", scaled_lab_img);
+
+    double scale = hires_camera_img.cols / (double) scaled_camera_img.cols;
 
     // These vectors store information about the new objects
     std::vector<cv::Rect> fg_rects;
     std::vector<cv::RotatedRect> obj_rects;
     std::vector<cv::MatND> histograms;
+    std::vector<cv::Mat> lbp_features;
     std::vector<cv::Mat> back_projects;
     std::vector<cv::Mat> masks;
     std::vector<double> areas;
@@ -121,6 +143,7 @@ void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& origi
     //masks.push_back(bg_mask);
 
     int h_bins = 30, s_bins = 32;
+    int i = 0;
 
     BOOST_FOREACH(Contour con, contours)
     {
@@ -136,8 +159,28 @@ void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& origi
             fg_rects.push_back(bounder);
             obj_rects.push_back(cv::minAreaRect(con_mat));
 
-            cv::Mat mask = bin_image(bounder);
-            cv::Mat hsv_roi = hsv_img(bounder);
+            cv::Rect hires_bounder;
+            hires_bounder.x = (int) (scale * bounder.x);
+            hires_bounder.y = (int) (scale * bounder.y);
+            hires_bounder.width = (int) (scale * bounder.width);
+            hires_bounder.height = (int) (scale * bounder.height);
+
+            //cv::Mat mask = bin_image(bounder);
+            cv::Mat mask = cv::Mat::zeros(hires_hsv_img.size(), CV_8UC1);
+            Contour hires_con;
+            BOOST_FOREACH(cv::Point p, con)
+            {
+                hires_con.push_back(scale * p);
+            }
+            cv::fillConvexPoly(mask, hires_con.data(), hires_con.size(), cv::Scalar(255));
+
+            cv::Mat hsv_roi = hires_hsv_img(hires_bounder);
+            cv::Mat mask_roi = mask(hires_bounder);
+
+            //cv::namedWindow("hsv_" + boost::lexical_cast<std::string>(i));
+            //cv::imshow("hsv_" + boost::lexical_cast<std::string>(i), hsv_roi);
+            //cv::namedWindow("mask_" + boost::lexical_cast<std::string>(i));
+            //cv::imshow("mask_" + boost::lexical_cast<std::string>(i), mask_roi);
 
             cv::MatND hist;
 
@@ -147,7 +190,7 @@ void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& origi
             const float* ranges[] = {hranges, sranges};
             int channels[] = {0, 1};
 
-            cv::calcHist(&hsv_roi, 1, channels, mask, hist, 2, hist_size, ranges);
+            cv::calcHist(&hsv_roi, 1, channels, mask_roi, hist, 2, hist_size, ranges);
             //cv::normalize(hist, hist, 1, 0, cv::NORM_L1);
             histograms.push_back(hist);
 
@@ -157,10 +200,43 @@ void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& origi
 
             // Back project the histogram
             cv::Mat back_project;
-            hsv_img.convertTo(hsv_img, CV_32F);
-            cv::calcBackProject(&hsv_img, 1, channels, hist, back_project, ranges);
+            scaled_hsv_img.convertTo(scaled_hsv_img, CV_32F);
+            cv::calcBackProject(&scaled_hsv_img, 1, channels, hist, back_project, ranges);
             //cv::log(bp_prob, bp_prob); // TODO to log or not to log?
             back_projects.push_back(back_project);
+            cv::namedWindow("back_proj_" + boost::lexical_cast<std::string>(i));
+            cv::imshow("back_proj_" + boost::lexical_cast<std::string>(i), back_project);
+
+            // Lab colorspace back projection
+            int L_bins = 20, ab_bins = 32;
+            int hist_size1[] = {L_bins, ab_bins, ab_bins};
+            float Lranges[] = {0, 100};
+            float abranges[] = {0, 256};
+            const float* ranges1[] = {Lranges, abranges, abranges};
+            int channels1[] = {0, 1, 2};
+            cv::Mat lab_roi = hires_lab_img(hires_bounder);
+
+            cv::MatND hist1;
+            cv::calcHist(&lab_roi, 1, channels1, mask_roi, hist1, 3, hist_size1, ranges1);
+
+            scaled_lab_img.convertTo(scaled_lab_img, CV_32F);
+            cv::Mat back_project1;
+            cv::calcBackProject(&scaled_lab_img, 1, channels1, hist1, back_project1, ranges1);
+            cv::namedWindow("lab_back_proj_" + boost::lexical_cast<std::string>(i));
+            cv::imshow("lab_back_proj_" + boost::lexical_cast<std::string>(i), back_project1);
+
+            // Compute LBP features on high resolution patch
+            cv::Mat int_frame;  // temp image for LBP features computation
+            cv::cvtColor(hires_camera_img(hires_bounder), int_frame, CV_BGR2GRAY);
+            cv::GaussianBlur(int_frame, int_frame, cv::Size(3,3), .95, .95);
+            int_frame.convertTo(int_frame, CV_32S);
+
+            cv::Mat lbp_image(int_frame.rows, int_frame.cols, CV_8U);  // LBP features
+            lbp_model.computeLBP(int_frame, lbp_image);
+            lbp_features.push_back(lbp_image);
+
+            cv::namedWindow("lbp" + boost::lexical_cast<std::string>(i));
+            cv::imshow("lbp" + boost::lexical_cast<std::string>(i), lbp_image);
 
             // extract features
 //             cv::Mat img1_orig = original(bounder);
@@ -174,6 +250,8 @@ void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& origi
 //             keypoints.push_back(keypoints1);
 //             tr_imgs.push_back(img1.clone());
         }
+
+        ++i;
     }
 
     size_t num_objects = back_projects.size();
@@ -213,6 +291,7 @@ void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& origi
             obj.histogram = histograms[i];
             obj.tight_bounding_box = obj_rects[i];
 
+            obj.set_lbp_region_histograms(lbp_features[i]);
             //obj.keypoints = keypoints[i];
             //obj.tr_img = tr_imgs[i];
 
@@ -223,18 +302,20 @@ void ObjectTracker::train_model(const cv::Mat& fg_prob_img, const cv::Mat& origi
 
 std::map<int, Contour>
 ObjectTracker::find_known_objects(const cv::Mat& fg_prob_img,
-                                  const cv::Mat& camera_img,
+                                  const cv::Mat& scaled_camera_img,
+                                  const cv::Mat& hires_camera_img,
                                   ros::Time stamp)
 {
     std::map<int, Contour> id_to_contour;
     if (objects.empty()) { ROS_INFO("No objects, doing nothing."); return id_to_contour; }
 
-    cv::Mat original = camera_img.clone();
+    cv::Mat original = scaled_camera_img.clone();
 
     // Find contours for all the blobs found by background subtraction
     std::vector<Contour> contours;
     cv::Mat bin_image = (fg_prob_img > fg_prob_threshold);
-    cv::findContours(bin_image, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+    cv::Mat temp = bin_image.clone(); // next function actually modifies the input image
+    cv::findContours(temp, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
     // Make an HSV image
     cv::Mat hsv_img;
@@ -444,8 +525,12 @@ ObjectTracker::find_known_objects(const cv::Mat& fg_prob_img,
             {
                 id_to_contour[id] = contours[min_index];
 
-                objects[i].tracks.push_back(min_center);
-                objects[i].timestamps.push_back(stamp);
+                if (save_tracks)
+                {
+                    objects[i].tracks.push_back(min_center);
+                    objects[i].timestamps.push_back(stamp);
+                }
+
                 objects[i].missed_frames = 0;
             }
         }
@@ -470,6 +555,7 @@ ObjectTracker::find_known_objects(const cv::Mat& fg_prob_img,
         }
 
         objects[i].tight_bounding_box = cv::minAreaRect(cv::Mat(id_to_contour[id]));
+        //objects[i].update_histogram(hsv_img, bin_image);
     }
 
     cv::namedWindow("objects");
@@ -478,12 +564,12 @@ ObjectTracker::find_known_objects(const cv::Mat& fg_prob_img,
     return id_to_contour;
 }
 
-void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
-                                                  std::vector<cv::Mat>& obj_mask,
+void ObjectTracker::stochastic_gradient_following(const std::vector<cv::Mat>& bp_prob,
+                                                  const std::vector<cv::Mat>& obj_mask,
                                                   std::vector<double>& mins,
                                                   std::vector<double>& maxs)
 {
-    int epochs = 15;
+    int epochs = 40;
     double step_size = 0.1;
     int size = obj_mask[0].rows * obj_mask[0].cols;
 
@@ -502,13 +588,15 @@ void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
 
     for (int i = 0; i < num_objects; ++i)
     {
-        cv::Mat bp = bp_prob[i].clone();                    // TODO: pass in reshaped back_projects?
+        cv::Mat bp = bp_prob[i].clone();
         double* min = &mins[i];
         double* max = &maxs[i];
         //*min = 0.0; *max = 1.0;
         cv::minMaxLoc(bp, min, max);
         cv::normalize(bp, bp, 0, 1, cv::NORM_MINMAX);
         cv::Mat bp_vector = bp.reshape(1, 1);               // 1 channel, 1 row matrix [px_1 ... px_size]
+
+        // Back-projection features
         cv::Mat rowi = feature_vectors.row(i + 1);
         bp_vector.row(0).copyTo(rowi);
 
@@ -519,6 +607,7 @@ void ObjectTracker::stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
         rowi = target_vectors.row(i);
         mask_vector.row(0).copyTo(rowi);
     }
+
     // Create the "none of the above" target
     cv::Mat st;
     cv::reduce(target_vectors, st, 0, 0, CV_32F);

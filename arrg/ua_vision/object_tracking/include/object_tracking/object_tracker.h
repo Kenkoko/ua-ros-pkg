@@ -38,6 +38,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/features2d/features2d.hpp>
+
+#include <background_filters/lbp_background_subtractor.h>
 #include <object_tracking/object.h>
 
 static cv::Scalar track_colors[5] = { CV_RGB(255,   0,   0),
@@ -56,31 +58,38 @@ private:
     double fg_prob_threshold;
     double con_area_threshold;
 
-    //cv::FeatureDetector* fd;
-    //cv::GenericDescriptorMatch* de;
+    LBPModel lbp_model;
+    cv::FeatureDetector* fd;
+    cv::GenericDescriptorMatch* de;
 
     cv::Mat mlr_weights;
 
-    void train_model(const cv::Mat& fg_prob_img, const cv::Mat& camera_img, ros::Time stamp);
+    void train_model(const cv::Mat& fg_prob_img,
+                     const cv::Mat& scaled_camera_img,
+                     const cv::Mat& hires_camera_img,
+                     ros::Time stamp);
 
     std::map<int, Contour>
     find_known_objects(const cv::Mat& fg_prob_img,
-                       const cv::Mat& camera_img,
+                       const cv::Mat& scaled_camera_img,
+                       const cv::Mat& hires_camera_img,
                        ros::Time stamp);
 
-    void stochastic_gradient_following(std::vector<cv::Mat>& bp_prob,
-                                       std::vector<cv::Mat>& obj_mask,
+    void stochastic_gradient_following(const std::vector<cv::Mat>& bp_prob,
+                                       const std::vector<cv::Mat>& obj_mask,
                                        std::vector<double>& mins,
                                        std::vector<double>& maxs);
 
 public:
+    bool save_tracks;
     std::vector<Object> objects;
 
     ObjectTracker();
 
     std::map<int, Contour>
     find_objects(const cv::Mat& fg_prob_img,
-                 const cv::Mat& camera_img,
+                 const cv::Mat& scaled_camera_img,
+                 const cv::Mat& hires_camera_img,
                  ros::Time stamp);
 };
 

@@ -1,2 +1,2 @@
 int32 id
-PixelStamped[] waypoints
+geometry_msgs/PointStamped[] waypoints

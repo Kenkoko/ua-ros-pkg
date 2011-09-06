@@ -35,8 +35,6 @@
 #include <cmath>
 #include <cstddef>
 
-#include <omp.h>
-
 #include <ros/ros.h>
 
 #include <boost/foreach.hpp>
@@ -72,6 +70,7 @@ private:
     LBPModel lbp_model;
     ObjectTracker object_tracker;
 
+    double image_scale;
     bool go;
 
     ros::Publisher marker_pub;
@@ -82,19 +81,22 @@ private:
     tf::TransformListener tf_listener;
     ros::ServiceServer dump_tracks_srv;
     ros::ServiceServer get_tracks_interval_srv;
+    ros::ServiceServer get_tracks_interval_map_srv;
 
 public:
     ObjectTrackerNode(ros::NodeHandle& nh, const std::string& transport)
     {
         ros::ServiceClient client = nh.serviceClient<background_filters::GetBgStats>("get_background_stats");
         dump_tracks_srv = nh.advertiseService("dump_tracks_to_file", &ObjectTrackerNode::dump_object_tracks, this);
-        get_tracks_interval_srv = nh.advertiseService("get_tracks_interval", &ObjectTrackerNode::get_tracks_interval, this);
+        get_tracks_interval_srv = nh.advertiseService("get_tracks_interval_map", &ObjectTrackerNode::get_tracks_interval_map, this);
+        get_tracks_interval_map_srv = nh.advertiseService("get_tracks_interval", &ObjectTrackerNode::get_tracks_interval, this);
         marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
         object_pub = nh.advertise<geometry_msgs::PoseArray>("overhead_objects", 1);
 
         background_filters::GetBgStats srv;
         sensor_msgs::CvBridge bridge;
 
+        image_scale = -1;
         go = false;
 
         if (client.call(srv))
@@ -129,8 +131,44 @@ public:
         return true;
     }
 
+    geometry_msgs::PointStamped get_map_coords(cv::Point2d point_img, ros::Time stamp)
+    {
+        geometry_msgs::PointStamped p;
+
+        point_img.x *= image_scale;
+        point_img.y *= image_scale;
+
+        cv::Point3d point_map;
+        cam_model.projectPixelTo3dRay(point_img, point_map);
+
+        tf::StampedTransform transform;
+        try
+        {
+            ros::Time acquisition_time = ros::Time(0);
+            ros::Duration timeout(1.0 / 30);
+            tf_listener.lookupTransform("/map", cam_model.tfFrame(), acquisition_time, transform);
+        }
+        catch (tf::TransformException& ex)
+        {
+            ROS_WARN("[object_tracker] TF exception:\n%s", ex.what());
+            return p;
+        }
+
+        tf::Point tfp = transform.getOrigin();
+        point_map *= tfp.getZ();
+
+        p.header.frame_id = "/map";
+        p.header.stamp = stamp;
+        p.point.x = tfp.x() - point_map.x;
+        p.point.y = tfp.y() + point_map.y;
+
+        return p;
+    }
+
     bool get_tracks_interval(object_tracking::GetTracksInterval::Request& req, object_tracking::GetTracksInterval::Response& res)
     {
+        object_tracker.save_tracks = false;
+
         BOOST_FOREACH(Object obj, object_tracker.objects)
         {
             if (req.id == obj.id)
@@ -156,11 +194,11 @@ public:
 
                 for (int i = min_idx; i <= max_idx; ++i)
                 {
-                    object_tracking::PixelStamped px;
+                    geometry_msgs::PointStamped px;
                     px.header.frame_id = "/high_def_optical_frame";
                     px.header.stamp = stamps[i];
-                    px.pixel.x = points[i].x;
-                    px.pixel.y = points[i].y;
+                    px.point.x = points[i].x;
+                    px.point.y = points[i].y;
 
                     t.id = req.id;
                     t.waypoints.push_back(px);
@@ -171,6 +209,48 @@ public:
             }
         }
 
+        object_tracker.save_tracks = true;
+        return true;
+    }
+
+    bool get_tracks_interval_map(object_tracking::GetTracksInterval::Request& req, object_tracking::GetTracksInterval::Response& res)
+    {
+        object_tracker.save_tracks = false;
+
+        BOOST_FOREACH(Object obj, object_tracker.objects)
+        {
+            if (req.id == obj.id)
+            {
+                std::vector<ros::Time>::iterator low, up;
+                std::vector<ros::Time> stamps = obj.timestamps;
+                std::vector<cv::Point> points = obj.tracks;
+
+                low = std::lower_bound(stamps.begin(), stamps.end(), req.begin);
+                up = std::upper_bound(stamps.begin(), stamps.end(), req.end);
+
+                if (low == stamps.end() || up == stamps.end())
+                {
+                    ROS_WARN("No tracks found for supplied interval for object with id %d", req.id);
+                    continue;
+                }
+
+                int min_idx = int(low - stamps.begin());
+                int max_idx = int(up - stamps.begin());
+
+                object_tracking::Track t;
+
+                for (int i = min_idx; i <= max_idx; ++i)
+                {
+                    t.id = req.id;
+                    t.waypoints.push_back(get_map_coords(points[i], stamps[i]));
+                }
+
+                res.track = t;
+                break;
+            }
+        }
+
+        object_tracker.save_tracks = true;
         return true;
     }
 
@@ -182,29 +262,36 @@ public:
     void handle_image(const sensor_msgs::ImageConstPtr& msg_ptr)
     {
         double t = (double)cv::getTickCount();
+        double s = t;
 
         sensor_msgs::CvBridge bridge;
-        cv::Mat original;
+        cv::Mat scaled_original;
+        cv::Mat hires_original;
 
         try
         {
             if (bg_sub.colorspace == "rgb")
             {
-                original = cv::Mat(bg_sub.avg_img.size(), CV_8UC3);
-                cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), original, bg_sub.avg_img.size());
+                hires_original = cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8"));
+                scaled_original = cv::Mat(bg_sub.avg_img.size(), CV_8UC3);
+                cv::resize(hires_original, scaled_original, scaled_original.size());
             }
             else if (bg_sub.colorspace == "hsv")
             {
-                original = cv::Mat(bg_sub.avg_img.size(), CV_8UC3);
-                cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), original, bg_sub.avg_img.size());
-                cv::cvtColor(original, original, CV_BGR2HSV);
+                hires_original = cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8"));
+                cv::cvtColor(hires_original, hires_original, CV_BGR2HSV);
+
+                scaled_original = cv::Mat(bg_sub.avg_img.size(), CV_8UC3);
+                cv::resize(hires_original, scaled_original, scaled_original.size());
             }
             else if (bg_sub.colorspace == "rgchroma")
             {
-                cv::Mat temp(bg_sub.avg_img.size(), CV_8UC3);
-                cv::resize(cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8")), temp, bg_sub.avg_img.size());
-                original = cv::Mat(bg_sub.avg_img.size(), CV_32FC2);
-                convertToChroma(temp, original);
+                cv::Mat temp = cv::Mat(bridge.imgMsgToCv(msg_ptr, "bgr8"));
+                hires_original = cv::Mat(temp.size(), CV_32FC2);
+                convertToChroma(temp, hires_original);
+
+                scaled_original = cv::Mat(bg_sub.avg_img.size(), CV_32FC2);
+                cv::resize(hires_original, temp, temp.size());
             }
         }
         catch (sensor_msgs::CvBridgeException error)
@@ -212,44 +299,57 @@ public:
             ROS_ERROR("CvBridgeError");
         }
 
-        lbp_model.update(original);
+        ROS_DEBUG( "OpenCV to ROS = %.1fms", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
+
+        if (image_scale == -1) { image_scale = msg_ptr->width / (double) bg_sub.avg_img.cols; }
 
         if (!go)
         {
+            lbp_model.update(scaled_original);
             cv::namedWindow("blah");
             char k = cv::waitKey(1);
             if( k == 27 || k == 's' || k == 'S' ) { go = true; cv::destroyWindow("blah"); };
         }
         else
         {
-            cv::Mat bg_fg_prob_img;
+            t = (double)cv::getTickCount();
+
+            // Compute the (foreground) probability image under the logistic model
+            double w = -1.0 / 5.0;
+            double b = 4.0;
+            cv::Mat bg_fg_prob_img(scaled_original.size(), CV_32FC1);
+            bg_sub.subtract_background(scaled_original, bg_fg_prob_img);
+
+            ROS_DEBUG( "BG subtraction = %.1fms", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
+
+            t = (double)cv::getTickCount();
+
+            bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), w, b);
+            cv::exp(bg_fg_prob_img, bg_fg_prob_img);
+            bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), 1, 1);
+            cv::divide(1.0, bg_fg_prob_img, bg_fg_prob_img);
+            cv::GaussianBlur(bg_fg_prob_img, bg_fg_prob_img, cv::Size(7,7), .95, .95);
+
+            ROS_DEBUG( "BG normalization = %.1fms", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
+
+            t = (double)cv::getTickCount();
+
+            // grab current foreground image under lbp image and normalize it
             cv::Mat lbp_fg_prob_img;
+            lbp_model.update(scaled_original);
+            lbp_model.foreground.convertTo(lbp_fg_prob_img, CV_32F, 1.0 / 255);
 
-            #pragma omp parallel sections
-            {
-                #pragma omp section
-                {
-                    // Compute the (foreground) probability image under the logistic model
-                    double w = -1.0 / 5.0;
-                    double b = 4.0;
-                    bg_fg_prob_img = bg_sub.subtract_background(original);
-                    bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), w, b);
-                    cv::exp(bg_fg_prob_img, bg_fg_prob_img);
-                    bg_fg_prob_img.convertTo(bg_fg_prob_img, bg_fg_prob_img.type(), 1, 1);
-                    cv::divide(1.0, bg_fg_prob_img, bg_fg_prob_img);
-                    cv::GaussianBlur(bg_fg_prob_img, bg_fg_prob_img, cv::Size(7,7), .95, .95);
-                }
+            ROS_DEBUG( "LBP = %.1fms", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
 
-                #pragma omp section
-                {
-                    // grab current foreground image under lbp image and normalize it
-                    lbp_model.foreground.convertTo(lbp_fg_prob_img, CV_32F, 1.0 / 255);
-                }
-            }
+            t = (double)cv::getTickCount();
 
             // combine background subtraction and lbp probability images
             cv::Mat fg_prob_img;
-            cv::multiply(bg_fg_prob_img, lbp_fg_prob_img, fg_prob_img);
+            //cv::multiply(bg_fg_prob_img, lbp_fg_prob_img, fg_prob_img);
+            fg_prob_img = bg_fg_prob_img;
+            //cv::add(0.5 * bg_fg_prob_img, 0.5 * lbp_fg_prob_img, fg_prob_img);
+
+            ROS_DEBUG( "FG patches = %.1fms", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
 
             cv::namedWindow("bg_fg_prob_img");
             cv::imshow("bg_fg_prob_img", bg_fg_prob_img);
@@ -260,8 +360,12 @@ public:
             cv::namedWindow("fg_prob_img");
             cv::imshow("fg_prob_img", fg_prob_img);
 
+            t = (double)cv::getTickCount();
+
             // find objects now
-            std::map<int, Contour> objs = object_tracker.find_objects(fg_prob_img, original, msg_ptr->header.stamp);
+            std::map<int, Contour> objs = object_tracker.find_objects(fg_prob_img, scaled_original, hires_original, msg_ptr->header.stamp);
+
+            ROS_DEBUG( "Tracking = %.1fms", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
 
             if (cam_model.width() == 0) { ROS_WARN("No CameraInfo message received yet or uncalibrated camera"); return; }
 
@@ -274,11 +378,10 @@ public:
                 if (objs.find(object_tracker.objects[i].id) == objs.end()) { continue; }
 
                 cv::Point2d point_img;
-                double scale = msg_ptr->width / (double) bg_sub.avg_img.cols;
 
                 const cv::RotatedRect& obj_rect = object_tracker.objects[i].tight_bounding_box;
-                point_img.x = obj_rect.center.x * scale;
-                point_img.y = obj_rect.center.y * scale;
+                point_img.x = obj_rect.center.x * image_scale;
+                point_img.y = obj_rect.center.y * image_scale;
 
                 cv::Point3d point_map;
                 cam_model.projectPixelTo3dRay(point_img, point_map);
@@ -321,8 +424,8 @@ public:
                 marker.pose.orientation.y = quat.y();
                 marker.pose.orientation.z = quat.z();
                 marker.pose.orientation.w = quat.w();
-                marker.scale.x = obj_rect.size.width * scale / cam_model.fx() * tfp.getZ();
-                marker.scale.y = obj_rect.size.height * scale / cam_model.fy() * tfp.getZ();
+                marker.scale.x = obj_rect.size.width * image_scale / cam_model.fx() * tfp.getZ();
+                marker.scale.y = obj_rect.size.height * image_scale / cam_model.fy() * tfp.getZ();
                 marker.scale.z = width;
                 marker.color.r = 1.0f;
                 marker.color.g = 0.0f;
@@ -340,7 +443,7 @@ public:
             object_pub.publish(obj_pose_array);
         }
 
-        ROS_DEBUG( "%.1fms\n", ((double)cv::getTickCount() - t)*1000./cv::getTickFrequency() );
+        ROS_DEBUG( "Total = %.1fms\n", ((double)cv::getTickCount() - s)*1000./cv::getTickFrequency() );
     }
 };
 
