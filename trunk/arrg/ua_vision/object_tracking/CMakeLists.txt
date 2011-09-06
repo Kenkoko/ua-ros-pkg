@@ -21,7 +21,8 @@ rosbuild_genmsg()
 rosbuild_gensrv()
 
 rosbuild_add_boost_directories()
-add_definitions(-Wall -O3 -msse3 -mssse3 -funroll-loops -fopenmp)
+add_definitions(-Wall -O3 -msse3 -mssse3 -funroll-loops)
 
 rosbuild_add_executable(object_tracker src/object_tracker_node.cpp
                                        src/object_tracker.cpp)
+target_link_libraries(object_tracker background_subtractor)
