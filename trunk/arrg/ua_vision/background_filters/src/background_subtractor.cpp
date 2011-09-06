@@ -33,6 +33,7 @@
 *********************************************************************/
 
 #include <cstdio>
+#include <cassert>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -64,13 +65,12 @@ void BackgroundSubtractor::initialize(const std::string colorspace,
 }
 
 template <class T>
-cv::Mat BackgroundSubtractor::difference(const cv::Mat& new_img)
+void BackgroundSubtractor::difference(const cv::Mat& src, cv::Mat& dest)
 {
-    cv::Mat prob_img(new_img.size(), CV_32FC1);
-    float *prob_data = prob_img.ptr<float>();
+    float *prob_data = dest.ptr<float>();
 
-    int height = new_img.rows;
-    int width = new_img.cols;
+    int height = src.rows;
+    int width = src.cols;
 
     cv::Mat bgr_new(1, img_n_chan, CV_32FC1);
     cv::Mat bgr_ave(1, img_n_chan, CV_32FC1);
@@ -78,8 +78,8 @@ cv::Mat BackgroundSubtractor::difference(const cv::Mat& new_img)
 
     for (int row = 0; row < height; ++row)
     {
-        T* ptr_bg = new_img.ptr<T>(row);
-        T* ptr_ave = avg_img.ptr<T>(row);
+        const T* ptr_bg = src.ptr<const T>(row);
+        const T* ptr_ave = avg_img.ptr<const T>(row);
 
         for (int col = 0; col < width; ++col)
         {
@@ -102,25 +102,15 @@ cv::Mat BackgroundSubtractor::difference(const cv::Mat& new_img)
     }
 
     // calculate negative log-likelihood, darker areas are background, lighter - objects
-    cv::log(prob_img, prob_img);
-    prob_img.convertTo(prob_img, prob_img.type(), -1.0);
-
-    return prob_img;
+    cv::log(dest, dest);
+    dest.convertTo(dest, dest.type(), -1.0);
 }
 
-cv::Mat BackgroundSubtractor::subtract_background(const cv::Mat& new_img)
+void BackgroundSubtractor::subtract_background(const cv::Mat& src, cv::Mat& dest)
 {
-    if (colorspace == "rgb" || colorspace == "hsv")
-    {
-        return difference<const uchar>(new_img);
-    }
-    else if (colorspace == "rgchroma")
-    {
-        return difference<const float>(new_img);
-    }
-    else
-    {
-        printf("[BackgroundSubtractor] Unrecognized colorspace [%s]\n", colorspace.c_str());
-        return cv::Mat();
-    }
+    assert(dest.type() == CV_32FC1 && src.size() == dest.size());
+
+    if (colorspace == "rgb" || colorspace == "hsv") { difference<uchar>(src, dest); }
+    else if (colorspace == "rgchroma") { difference<float>(src, dest); }
+    else { printf("[BackgroundSubtractor] Unrecognized colorspace [%s]\n", colorspace.c_str()); }
 }

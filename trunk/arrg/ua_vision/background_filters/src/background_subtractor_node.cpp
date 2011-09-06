@@ -114,7 +114,9 @@ public:
             ROS_ERROR("CvBridgeError");
         }
 
-        IplImage prob_img_ipl = bg_sub.subtract_background(new_img);
+        cv::Mat prob_img(new_img.size(), CV_32FC1);
+        bg_sub.subtract_background(new_img, prob_img);
+        IplImage prob_img_ipl = prob_img;
         sensor_msgs::Image::Ptr prob_msg = sensor_msgs::CvBridge::cvToImgMsg(&prob_img_ipl);
         prob_msg->header.stamp = msg_ptr->header.stamp;
         prob_img_pub.publish(prob_msg);
