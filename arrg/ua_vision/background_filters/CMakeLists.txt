@@ -22,7 +22,7 @@ target_link_libraries(floor_filter_node background_filters)
 # NEW
 rosbuild_add_executable(background_averager src/background_averager.cpp)
 
-# Background subtractor
+# Background subtractor libraries
 rosbuild_add_library(background_subtractor src/background_subtractor.cpp src/lbp_background_subtractor.cpp)
 
 rosbuild_add_executable(background_subtractor_node src/background_subtractor_node.cpp)

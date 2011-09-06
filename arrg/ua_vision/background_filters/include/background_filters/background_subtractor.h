@@ -56,9 +56,9 @@ class BackgroundSubtractor
                         const std::vector<float> dets);
 
         template <class T>
-        cv::Mat difference(const cv::Mat& new_img);
+        void difference(const cv::Mat& src, cv::Mat& dest);
 
-        cv::Mat subtract_background(const cv::Mat& new_img);
+        void subtract_background(const cv::Mat& src, cv::Mat& dest);
 };
 
 #endif // BACKGROUND_SUBTRACTOR_H

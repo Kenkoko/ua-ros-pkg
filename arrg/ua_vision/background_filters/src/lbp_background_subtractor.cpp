@@ -56,6 +56,25 @@
 
 #include <background_filters/lbp_background_subtractor.h>
 
+uint8_t UniformPattern59[256] = {
+    1,   2,   3,   4,   5,   0,   6,   7,   8,   0,   0,   0,   9,   0,  10,  11,
+    12,   0,   0,   0,   0,   0,   0,   0,  13,   0,   0,   0,  14,   0,  15,  16,
+    17,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    18,   0,   0,   0,   0,   0,   0,   0,  19,   0,   0,   0,  20,   0,  21,  22,
+    23,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    24,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    25,   0,   0,   0,   0,   0,   0,   0,  26,   0,   0,   0,  27,   0,  28,  29,
+    30,  31,   0,  32,   0,   0,   0,  33,   0,   0,   0,   0,   0,   0,   0,  34,
+    0,    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  35,
+    0,    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  36,
+    37,  38,   0,  39,   0,   0,   0,  40,   0,   0,   0,   0,   0,   0,   0,  41,
+    0,    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  42,
+    43,  44,   0,  45,   0,   0,   0,  46,   0,   0,   0,   0,   0,   0,   0,  47,
+    48,  49,   0,  50,   0,   0,   0,  51,  52,  53,   0,  54,  55,  56,  57,  58
+};
+
 using namespace cv;
 using namespace std;
 
@@ -71,20 +90,20 @@ void LBPModel::initialize(Mat& frame)
 {
     getGrayIntFrame(frame);
     last_lbp = Mat(int_frame.rows, int_frame.cols, CV_8U);
-    ComputeLBP(int_frame, last_lbp);
+    computeLBP(int_frame, last_lbp);
 
     initialized = true;
-    ROS_INFO("LBP Background Subtraction initialized");
+    ROS_INFO("[LBP Background Subtraction] initialized");
 }
 
 void LBPModel::update( Mat& frame )
 {
-    if (!initialized) { initialize(frame); }
-    if (do_updates && model_frame_counter++ > num_model_frames) { do_updates = false; ROS_INFO("LBP Background Subtraction model training finished"); }
+    if (!initialized) { initialize(frame); ROS_INFO("[LBP Background Subtraction] training model..."); }
+    if (do_updates && model_frame_counter++ > num_model_frames) { do_updates = false; ROS_INFO("[LBP Background Subtraction] model training finished"); }
 
     getGrayIntFrame(frame);
     Mat current_lbp = Mat(int_frame.rows, int_frame.cols, CV_8U);
-    ComputeLBP(int_frame, current_lbp, false);
+    computeLBP(int_frame, current_lbp, false);
     //simpleNeighborhood(current_lbp);
     //imshow("LBP", foreground);
     regionHistogram(current_lbp);
@@ -105,8 +124,8 @@ void LBPModel::regionHistogram( Mat &current_lbp )
     double rate_a = 0.01;  // In paper this was a_b, learning rate to adapt histograms
     double rate_b = 0.01;  // In paper this was a_w, learning rate to adapt weights of histograms
     // Below: Lower = more background (and holes), Higher = more noise
-    double Tb = 0.65; //0.4-.8 // threshold for match to background model. Lower = easier to be bg = more black
-    double Tp = 0.7; //0.65 // threshold for any histogram match. Lower = more variation is ok = black.
+    double Tb = 0.5; //0.65; //0.4-.8 // threshold for match to background model. Lower = easier to be bg = more black
+    double Tp = 0.5; //0.7; //0.65 // threshold for any histogram match. Lower = more variation is ok = black.
     int region_out = 3;    // In paper R_region = region_out*2+1.  Paper was 9, so region_out = 4
 
     //int region_out = 2; // 2 = (2 + 1 + 2) x (2 + 1 + 2) = 5 x 5 = 25 elements
@@ -261,7 +280,8 @@ void LBPModel::simpleNeighborhood( Mat &current_lbp )
 // However it does not do interpolation or allow you to have a radius greater than 1.
 // I've only tested it with 6 and 8, which work fine.  Code for the bilinear interpolation
 // and other variations is available from the same place the original LPB code came from.
-void LBPModel::ComputeLBP(Mat &input, Mat &result, bool use59){
+void LBPModel::computeLBP(Mat &input, Mat &result, bool use59)
+{
     int rows = input.rows;
     int columns = input.cols;
     int pred2 = predicate * 2;
@@ -270,11 +290,13 @@ void LBPModel::ComputeLBP(Mat &input, Mat &result, bool use59){
 
     // Start from top left corner
     //cout << "predicate: " << predicate << endl;
-    for(unsigned int p = 0; p < NUMBITS; ++p){
+    for(unsigned int p = 0; p < NUMBITS; ++p)
+    {
         X[p] = (unsigned int)( predicate * cos(2.0 * PI * (p / (float)NUMBITS) ) + predicate + 0.5);
         Y[p] = (unsigned int)( predicate * sin(2.0 * PI * (p / (float)NUMBITS) ) + predicate + 0.5);
         //cout << "X, Y: " << X[p] << ", " << Y[p] << endl;
     }
+
     for (r=0;r<rows-pred2;r++)
     {
         //Set up a circularly indexed neighborhood using nine pointers.
