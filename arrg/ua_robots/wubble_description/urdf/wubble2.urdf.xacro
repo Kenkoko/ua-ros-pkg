@@ -172,20 +172,105 @@
         <mechanicalReduction>1.0</mechanicalReduction>
     </transmission>
     
-    <!-- SWISSRANGER CAMERA ATTACHMENT -->
-    <swissranger_camera name="swissranger" parent="head_tilt_link">
-        <origin xyz="0.0 -0.004 0.1235" rpy="${M_PI} 0 0" />
-    </swissranger_camera>
-    
-    <!-- VIDERE STEREO CAMERA ATTACHMENT -->
-    <videre_stereo_6cm name="stoc" parent="head_tilt_link" >
-        <origin xyz="0.0375 0 0.142" rpy="0 0 0" />
-    </videre_stereo_6cm>
-    
     <!-- WUBBLE ARM ATTACHMENT -->
     <wubble_arm parent="base_top_link" >
         <origin xyz="0.16281 0.0825 ${top_size_z/2 + 0.109}" rpy="0 0 0"/>
     </wubble_arm>
+    
+    <!-- KINECT ATTACHMENT -->
+    <joint name="base_kinect_joint" type="fixed">
+        <origin xyz="0.04 0 0.08173" rpy="0 0 0" />
+        <parent link="neck_support_link"/>
+        <child link="kinect_link"/>
+    </joint>
+    
+    <link name="kinect_link">
+        <inertial>
+            <mass value="0.00001" />
+            <origin xyz="0 0 0" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                     iyy="1.0" iyz="0.0"
+                     izz="1.0" />
+        </inertial>
+        
+        <visual>
+            <origin xyz=" 0 0 0 " rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://wubble_description/meshes/kinect.stl"/>
+            </geometry>
+        </visual>
+        
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://wubble_description/meshes/collada/kinect.dae"/>
+            </geometry>
+        </collision>
+    </link>
+    
+    <joint name="kinect_depth_joint" type="fixed">
+        <origin xyz="0 0.018 0" rpy="0 0 0" />
+        <parent link="kinect_link" />
+        <child link="kinect_depth_frame" />
+    </joint>
+    
+    <link name="kinect_depth_frame">
+        <inertial>
+            <mass value="0.000001" />
+            <origin xyz="0 0 0" />
+            <inertia ixx="0.0001" ixy="0.0" ixz="0.0"
+                     iyy="0.0001" iyz="0.0"
+                     izz="0.0001" />
+        </inertial>
+    </link>
+    
+    <joint name="kinect_depth_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="kinect_depth_frame" />
+        <child link="kinect_depth_optical_frame" />
+    </joint>
+    
+    <link name="kinect_depth_optical_frame">
+        <inertial>
+            <mass value="0.000001" />
+            <origin xyz="0 0 0" />
+            <inertia ixx="0.0001" ixy="0.0" ixz="0.0"
+                     iyy="0.0001" iyz="0.0"
+                     izz="0.0001" />
+        </inertial>
+    </link>
+    
+    <joint name="kinect_rgb_joint" type="fixed">
+        <origin xyz="0 -0.005 0" rpy="0 0 0" />
+        <parent link="kinect_link" />
+        <child link="kinect_rgb_frame" />
+    </joint>
+    
+    <link name="kinect_rgb_frame">
+        <inertial>
+            <mass value="0.000001" />
+            <origin xyz="0 0 0" />
+            <inertia ixx="0.0001" ixy="0.0" ixz="0.0"
+                     iyy="0.0001" iyz="0.0"
+                     izz="0.0001" />
+        </inertial>
+    </link>
+    
+    <joint name="kinect_rgb_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="kinect_rgb_frame" />
+        <child link="kinect_rgb_optical_frame" />
+    </joint>
+    
+    <link name="kinect_rgb_optical_frame">
+        <inertial>
+            <mass value="0.000001" />
+            <origin xyz="0 0 0" />
+            <inertia ixx="0.0001" ixy="0.0" ixz="0.0"
+                     iyy="0.0001" iyz="0.0"
+                     izz="0.0001" />
+        </inertial>
+    </link>
     
     <!-- NECK TILTING LASER ATTACHMENT -->
     <joint name="neck_support_joint" type="fixed">
