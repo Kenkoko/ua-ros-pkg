@@ -3,35 +3,7 @@
 <launch>
     <!-- Start the Dynamixel servo manager to control all servos on the robot -->
     <node name="dynamixel_motor_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
-        <rosparam>
-            namespace: wubble_motor_manager
-            diagnostics_rate: 10
-            serial_ports:
-                wubble2Head:
-                    port_name: "/dev/wubble2Head"
-                    baud_rate: 1000000
-                    min_motor_id: 10
-                    max_motor_id: 11
-                    update_rate: 50
-                wubble2Neck:
-                    port_name: "/dev/wubble2Neck"
-                    baud_rate: 3000000
-                    min_motor_id: 12
-                    max_motor_id: 12
-                    update_rate: 200
-                wubble2UpperArm:
-                    port_name: "/dev/wubble2UpperArm"
-                    baud_rate: 1000000
-                    min_motor_id: 1
-                    max_motor_id: 4
-                    update_rate: 50
-                wubble2LowerArm:
-                    port_name: "/dev/wubble2LowerArm"
-                    baud_rate: 1000000
-                    min_motor_id: 5
-                    max_motor_id: 9
-                    update_rate: 50
-        </rosparam>
+        <rosparam file="$(find wubble2_robot)/config/dynamixel_ports.yaml" command="load"/>
     </node>
 
     <!-- Start head pan and tilt joint controller -->
