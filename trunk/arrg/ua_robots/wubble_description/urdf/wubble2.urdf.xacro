@@ -198,6 +198,7 @@
             <geometry>
                 <mesh filename="package://wubble_description/meshes/kinect.stl"/>
             </geometry>
+            <material name="Black" />
         </visual>
         
         <collision>
