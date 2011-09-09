@@ -72,6 +72,7 @@ from arm_navigation_msgs.srv import GetMotionPlan
 from arm_navigation_msgs.srv import GetMotionPlanRequest
 from arm_navigation_msgs.srv import FilterJointTrajectory
 from arm_navigation_msgs.srv import FilterJointTrajectoryRequest
+from arm_navigation_msgs.srv import SetPlanningSceneDiff
 
 from arm_navigation_msgs.msg import MoveArmAction
 from arm_navigation_msgs.msg import MoveArmGoal
@@ -125,6 +126,12 @@ class ObjectCategorizer():
         self.ARM_GROUP_NAME = 'left_arm'
         
         self.object_detector = ObjectDetector()
+        
+        # connect to collision map processing service
+        rospy.loginfo('waiting for environment_server/set_planning_scene_diff service')
+        rospy.wait_for_service('/environment_server/set_planning_scene_diff')
+        self.set_planning_scene_diff_client = rospy.ServiceProxy('/environment_server/set_planning_scene_diff', SetPlanningSceneDiff)
+        rospy.loginfo('connected to set_planning_scene_diff service')
         
         # connect to tabletop segmentation service
         rospy.loginfo('waiting for tabletop_segmentation service')
@@ -424,6 +431,10 @@ class ObjectCategorizer():
             req.ik_request.ik_seed_state.joint_state.name = arm_joints
             req.ik_request.ik_seed_state.joint_state.position = [current_state.position[current_state.name.index(j)] for j in arm_joints]
             
+            if not self.set_planning_scene_diff_client():
+                rospy.logerr('Find IK for Grasp: failed to set planning scene diff')
+                return None
+                
             ik_result = self.get_ik_srv(req)
             
             if ik_result.error_code.val == ArmNavigationErrorCodes.SUCCESS:
@@ -787,6 +798,11 @@ class ObjectCategorizer():
         req.header.frame_id = 'base_link'
         req.fk_link_names = [self.GRIPPER_LINK_FRAME]
         req.robot_state.joint_state = full_state
+        
+        if not self.set_planning_scene_diff_client():
+            rospy.logerr('InfomaxAction.PUSH: failed to set planning scene diff')
+            return None
+            
         pose = self.get_fk_srv(req).pose_stamped[0].pose
         
         frame_id = 'base_link'
