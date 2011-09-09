@@ -93,11 +93,11 @@ class WubbleGripperGraspController:
         elif msg.goal == GraspHandPostureExecutionGoal.PRE_GRASP:
             rospy.loginfo('Received PRE_GRASP request')
             gripper_command.command = WubbleGripperGoal.OPEN_GRIPPER
-            gripper_command.torque_limit = 0.4
+            gripper_command.torque_limit = 0.6
         elif msg.goal == GraspHandPostureExecutionGoal.RELEASE:
             rospy.loginfo('Received RELEASE request')
             gripper_command.command = WubbleGripperGoal.OPEN_GRIPPER
-            gripper_command.torque_limit = 0.4
+            gripper_command.torque_limit = 0.6
         else:
             msg = 'wubble gripper grasp execution: unknown goal code (%d)' % msg.goal
             rospy.logerr(msg)

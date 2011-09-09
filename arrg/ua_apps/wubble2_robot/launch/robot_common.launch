@@ -7,6 +7,9 @@
     <!-- Start diagnostics aggregator -->
     <include file="$(find wubble2_robot)/launch/diagnostics.launch" />
 
+    <!-- Start laptop battery monitor -->
+    <node name="laptop_battery_monitor" pkg="wubble2_robot" type="laptop_battery.py" />
+
     <!-- Start Power Relay and Finger Pressure Sensor InterfaceKit -->
     <node name="relay_arm_sensor_interface_kit" pkg="phidgets_ros" type="interface_kit.py" output="screen">
         <param name="serial_number" type="int" value="124427"/>
@@ -37,6 +40,6 @@
     <include file="$(find wubble2_robot)/launch/laser_perception.launch" />
 
     <!-- Start stereo and swissranger nodes -->
-    <include file="$(find wubble2_robot)/launch/stereo_tof_perception.launch" />
+<!--    <include file="$(find wubble2_robot)/launch/stereo_tof_perception.launch" />-->
 </launch>
 
