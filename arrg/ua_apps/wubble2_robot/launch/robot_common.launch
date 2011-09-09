@@ -40,6 +40,6 @@
     <include file="$(find wubble2_robot)/launch/laser_perception.launch" />
 
     <!-- Start stereo and swissranger nodes -->
-<!--    <include file="$(find wubble2_robot)/launch/stereo_tof_perception.launch" />-->
+    <include file="$(find wubble2_robot)/launch/kinect_perception.launch" />
 </launch>
 

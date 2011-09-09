@@ -3,7 +3,7 @@
 <launch>
     <include file="$(find wubble2_robot)/launch/kinect.launch" />
     
-    <node pkg="robot_self_filter" type="self_filter" name="swissranger_self_filter" respawn="true" output="screen">
+    <node pkg="robot_self_filter" type="self_filter" name="swissranger_self_filter" respawn="true" output="screen" machine="c2">
         <remap from="cloud_in" to="/camera/depth/points" />
         <remap from="cloud_out" to="/camera/depth/self_filtered" />
         <param name="sensor_frame" value="kinect_link" />
