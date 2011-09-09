@@ -180,7 +180,7 @@
     <!-- KINECT ATTACHMENT -->
     <joint name="base_kinect_joint" type="fixed">
         <origin xyz="0.04 0 0.08173" rpy="0 0 0" />
-        <parent link="neck_support_link"/>
+        <parent link="head_tilt_link"/>
         <child link="kinect_link"/>
     </joint>
     
