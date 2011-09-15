@@ -37,11 +37,26 @@ import rospy
 from actionlib import SimpleActionClient
 from wubble2_robot.msg import *
 
+def close_gripper_adaptive():
+    # Creates a goal to send to the action server.
+    goal = WubbleGripperGoal()
+    goal.command = WubbleGripperGoal.CLOSE_GRIPPER
+    goal.torque_limit = 0.4
+    goal.dynamic_torque_control = True
+    goal.pressure_upper = 1900.0
+    goal.pressure_lower = 1800.0
+    
+    # Sends the goal to the action server.
+    client.send_goal(goal)
+    
+    # Waits for the server to finish performing the action.
+    client.wait_for_result()
+
 def open_gripper():
     # Creates a goal to send to the action server.
     goal = WubbleGripperGoal()
     goal.command = WubbleGripperGoal.OPEN_GRIPPER
-    goal.torque_limit = 1.0
+    goal.torque_limit = 0.6
     
     # Sends the goal to the action server.
     client.send_goal(goal)
@@ -53,13 +68,28 @@ def close_gripper():
     # Creates a goal to send to the action server.
     goal = WubbleGripperGoal()
     goal.command = WubbleGripperGoal.CLOSE_GRIPPER
-    goal.torque_limit = 0.5
+    goal.torque_limit = 0.3
     
     # Sends the goal to the action server.
     client.send_goal(goal)
     
     # Waits for the server to finish performing the action.
     client.wait_for_result()
+
+def close_gripper_gentle():
+    close_gripper()
+    
+    # Creates a goal to send to the action server.
+    goal = WubbleGripperGoal()
+    goal.command = WubbleGripperGoal.CLOSE_GRIPPER
+    goal.torque_limit = 0
+    
+    # Sends the goal to the action server.
+    client.send_goal(goal)
+    
+    # Waits for the server to finish performing the action.
+    client.wait_for_result()
+
 
 if __name__ == '__main__':
     try:
@@ -72,6 +102,16 @@ if __name__ == '__main__':
         rospy.sleep(1)
         print "Close gripper"
         close_gripper()
+        rospy.sleep(1)
+        print "Open gripper"
+        open_gripper()
+        rospy.sleep(1)
+        print "Adpative close gripper"
+        close_gripper_adaptive()
+        rospy.sleep(1)
+        print "Gentle close gripper"
+        close_gripper_gentle()
+        rospy.sleep(1)
     except rospy.ROSInterruptException:
         pass
 
