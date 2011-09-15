@@ -2,7 +2,13 @@
 
 <launch>
     <!-- Start gripper action controller -->
-    <node name="gripper_action_controller" pkg="wubble2_robot" type="wubble_gripper_action_controller.py" output="screen" />
+    <node name="gripper_action_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=wubble_motor_manager
+                --type=meta
+                l_gripper_controller
+                left_finger_controller
+                right_finger_controller"
+          output="screen"/>
 
     <!-- Start gripper grasp action controller -->
     <node name="gripper_grasp_controller" pkg="wubble2_robot" type="wubble_gripper_grasp_controller.py" output="screen" >
