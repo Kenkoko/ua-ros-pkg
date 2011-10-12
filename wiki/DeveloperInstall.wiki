@@ -10,7 +10,7 @@ sudo easy_install -U rosinstall
 }}}
   # Install ROS!
 {{{
-rosinstall ~/ros http://ua-ros-pkg.googlecode.com/svn/trunk/config/cturtle.rosconfig
+rosinstall ~/ros /opt/ros/electric http://ua-ros-pkg.googlecode.com/svn/trunk/config/electric-deb.rosinstall
 }}}
   # Update your .bashrc
 {{{
