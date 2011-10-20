@@ -1,0 +1,5 @@
+string name             # controller name, doubles as a path to controller config parameters on param server
+string port             # used for single-joint controllers, motors of this controller are connected to this serial port
+string[] dependencies   # used for multi-joint controllers, list all single-joint controllers that are required
+---
+bool success
