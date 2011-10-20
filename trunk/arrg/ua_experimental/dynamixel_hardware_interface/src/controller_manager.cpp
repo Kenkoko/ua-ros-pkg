@@ -573,7 +573,7 @@ void ControllerManager::publishDiagnosticInformation()
                 joint_status.add("Position", state.position);
                 joint_status.add("Velocity", state.velocity);
                 joint_status.add("Position Error", state.position - state.target_position);
-                joint_status.add("Velocity Error", state.moving ? state.velocity - state.target_velocity : 0);
+                joint_status.add("Velocity Error", state.velocity != 0 ? state.velocity - state.target_velocity : 0);
                 joint_status.add("Load", state.load);
                 joint_status.add("Temperature", state.motor_temps[0]);
                 joint_status.summary(joint_status.OK, "OK");
