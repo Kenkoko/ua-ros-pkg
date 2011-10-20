@@ -328,7 +328,7 @@ void SerialProxy::publishDiagnosticInformation()
             int mid = motor_state.id;
             
             // check if current motor state was already populated by updateMotorStates thread
-            if (mid == 0) { continue; }
+            if (motor_state.timestamp == 0.0) { continue; }
             
             std::string mid_str = boost::lexical_cast<std::string>(mid);
             
@@ -356,7 +356,7 @@ void SerialProxy::publishDiagnosticInformation()
             motor_status.addf("Position", "%d", motor_state.position);
             motor_status.addf("Velocity", "%d", motor_state.velocity);
             motor_status.addf("Position Error", "%d", motor_state.position - motor_state.target_position);
-            motor_status.addf("Velocity Error", "%d", motor_state.moving ? motor_state.velocity - motor_state.target_velocity : 0);
+            motor_status.addf("Velocity Error", "%d", motor_state.velocity != 0 ? motor_state.velocity - motor_state.target_velocity : 0);
             motor_status.addf("Torque Limit", "%d", motor_state.torque_limit);
             motor_status.addf("Load", "%d", motor_state.load);
             motor_status.addf("Voltage", "%0.1f", motor_state.voltage / 10.0);
