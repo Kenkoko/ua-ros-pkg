@@ -34,11 +34,11 @@
 #include <cmath>
 
 #include <dynamixel_hardware_interface/dynamixel_io.h>
+#include <dynamixel_hardware_interface/JointState.h>
+#include <dynamixel_hardware_interface/MotorStateList.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
-#include <dynamixel_msgs/JointState.h>
-#include <dynamixel_msgs/MotorStateList.h>
 
 namespace controller
 {
@@ -85,7 +85,7 @@ public:
         return true;
     }
     
-    const dynamixel_msgs::JointState& getJointState() { return joint_state_; }
+    const dynamixel_hardware_interface::JointState& getJointState() { return joint_state_; }
     dynamixel_hardware_interface::DynamixelIO* getPort() { return dxl_io_; }
     
     std::string getName() { return name_; }
@@ -96,7 +96,7 @@ public:
     {
         motor_states_sub_ = nh_.subscribe("motor_states/" + port_namespace_, 50, &SingleJointController::processMotorStates, this);
         joint_command_sub_ = c_nh_.subscribe("command", 50, &SingleJointController::processCommand, this);
-        joint_state_pub_ = c_nh_.advertise<dynamixel_msgs::JointState>("state", 50);
+        joint_state_pub_ = c_nh_.advertise<dynamixel_hardware_interface::JointState>("state", 50);
     }
     
     virtual void stop()
@@ -108,7 +108,7 @@ public:
     
     virtual void setVelocity(double velocity) = 0;
     
-    virtual void processMotorStates(const dynamixel_msgs::MotorStateListConstPtr& msg) = 0;
+    virtual void processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg) = 0;
     virtual void processCommand(const std_msgs::Float64ConstPtr& msg) = 0;
     
     virtual std::vector<int> getMotorIDs() = 0;
@@ -123,7 +123,7 @@ protected:
     dynamixel_hardware_interface::DynamixelIO* dxl_io_;
     
     std::string joint_;
-    dynamixel_msgs::JointState joint_state_;
+    dynamixel_hardware_interface::JointState joint_state_;
     
     double init_velocity_;
     double max_velocity_;

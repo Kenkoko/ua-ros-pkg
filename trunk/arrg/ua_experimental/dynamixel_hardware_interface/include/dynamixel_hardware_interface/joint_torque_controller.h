@@ -33,9 +33,9 @@
 
 #include <dynamixel_hardware_interface/dynamixel_io.h>
 #include <dynamixel_hardware_interface/single_joint_controller.h>
+#include <dynamixel_hardware_interface/MotorStateList.h>
 
 #include <ros/ros.h>
-#include <dynamixel_msgs/MotorStateList.h>
 #include <std_msgs/Float64.h>
 
 namespace controller
@@ -58,7 +58,7 @@ public:
     
     void setVelocity(double velocity);
     
-    void processMotorStates(const dynamixel_msgs::MotorStateListConstPtr& msg);
+    void processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg);
     void processCommand(const std_msgs::Float64ConstPtr& msg);
 
 private:

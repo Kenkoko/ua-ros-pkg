@@ -32,12 +32,12 @@
 #include <dynamixel_hardware_interface/dynamixel_io.h>
 #include <dynamixel_hardware_interface/single_joint_controller.h>
 #include <dynamixel_hardware_interface/joint_position_controller.h>
+#include <dynamixel_hardware_interface/MotorState.h>
 
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
 
 #include <std_msgs/Float64.h>
-#include <dynamixel_msgs/MotorState.h>
 
 PLUGINLIB_DECLARE_CLASS(dynamixel_hardware_interface,
                         JointPositionController,
@@ -199,9 +199,9 @@ void JointPositionController::setVelocity(double velocity)
     dxl_io_->setMultiVelocity(mcv);
 }
 
-void JointPositionController::processMotorStates(const dynamixel_msgs::MotorStateListConstPtr& msg)
+void JointPositionController::processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg)
 {
-    dynamixel_msgs::MotorState state;
+    dynamixel_hardware_interface::MotorState state;
     
     for (size_t i = 0; i < msg->motor_states.size(); ++i)
     {
@@ -220,12 +220,12 @@ void JointPositionController::processMotorStates(const dynamixel_msgs::MotorStat
     
     joint_state_.header.stamp = ros::Time(state.timestamp);
     joint_state_.motor_temps[0] = state.temperature;
-    joint_state_.goal_pos = convertToRadians(state.goal);
-    joint_state_.current_pos = convertToRadians(state.position);
-    joint_state_.error = state.error * radians_per_encoder_tick_;
-    joint_state_.velocity = ((double)state.speed / dynamixel_hardware_interface::DXL_MAX_VELOCITY_ENCODER) * motor_max_velocity_;
+    joint_state_.target_position = convertToRadians(state.target_position);
+    joint_state_.target_velocity = ((double)state.target_velocity / dynamixel_hardware_interface::DXL_MAX_VELOCITY_ENCODER) * motor_max_velocity_;
+    joint_state_.position = convertToRadians(state.position);
+    joint_state_.velocity = ((double)state.velocity / dynamixel_hardware_interface::DXL_MAX_VELOCITY_ENCODER) * motor_max_velocity_;
     joint_state_.load = (double)state.load / dynamixel_hardware_interface::DXL_MAX_LOAD_ENCODER;
-    joint_state_.is_moving = state.moving;
+    joint_state_.moving = state.moving;
     
     joint_state_pub_.publish(joint_state_);
 }

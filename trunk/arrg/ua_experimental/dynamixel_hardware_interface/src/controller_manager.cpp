@@ -34,6 +34,7 @@
 #include <dynamixel_hardware_interface/serial_proxy.h>
 #include <dynamixel_hardware_interface/single_joint_controller.h>
 #include <dynamixel_hardware_interface/multi_joint_controller.h>
+#include <dynamixel_hardware_interface/JointState.h>
 
 #include <ros/ros.h>
 #include <pluginlib/class_loader.h>
@@ -561,17 +562,19 @@ void ControllerManager::publishDiagnosticInformation()
             
             for (it = sj_controllers_.begin(); it != sj_controllers_.end(); ++it)
             {
-                dynamixel_msgs::JointState state = it->second->getJointState();
+                dynamixel_hardware_interface::JointState state = it->second->getJointState();
                 if (state.motor_ids.empty()) { continue; }
                 
                 joint_status.clear();
                 joint_status.name = "Joint Controller " + it->second->getName();
-                joint_status.add("Goal", state.goal_pos);
-                joint_status.add("Position", state.current_pos);
-                joint_status.add("Error", state.error);
+                joint_status.add("Moving", state.moving ? "True" : "False");
+                joint_status.add("Target Position", state.target_position);
+                joint_status.add("Target Velocity", state.target_velocity);
+                joint_status.add("Position", state.position);
                 joint_status.add("Velocity", state.velocity);
+                joint_status.add("Position Error", state.position - state.target_position);
+                joint_status.add("Velocity Error", state.moving ? state.velocity - state.target_velocity : 0);
                 joint_status.add("Load", state.load);
-                joint_status.add("Moving", state.is_moving ? "True" : "False");
                 joint_status.add("Temperature", state.motor_temps[0]);
                 joint_status.summary(joint_status.OK, "OK");
                 

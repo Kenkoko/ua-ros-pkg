@@ -4,7 +4,7 @@ pan_controller:
     max_velocity: 3.2
     init_velocity: 1.2
     motor:
-        id: 15
+        id: 4
         init: 512
         min: 0
         max: 1023
@@ -15,7 +15,7 @@ tilt_controller:
     max_velocity: 3.2
     init_velocity: 1.2
     motor:
-        id: 16
+        id: 5
         init: 512
         min: 0
         max: 1023
