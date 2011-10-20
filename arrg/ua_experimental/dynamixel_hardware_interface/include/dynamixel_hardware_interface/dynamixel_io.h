@@ -31,6 +31,7 @@
 #include <pthread.h>
 #include <stdint.h>
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -62,9 +63,6 @@ typedef struct DynamixelDataStruct
     uint8_t  ccw_compliance_margin;
     uint8_t  cw_compliance_slope;
     uint8_t  ccw_compliance_slope;
-    uint16_t target_position;
-    int16_t  target_velocity;
-    uint16_t torque_limit;
     
 } DynamixelData;
 
@@ -72,13 +70,15 @@ typedef struct DynamixelStatusStruct
 {
     double timestamp;
     
-    uint16_t goal;
+    uint16_t target_position;
+    int16_t  target_velocity;
+    uint16_t torque_limit;
     uint16_t position;
-    int16_t velocity;
-    int16_t load;
-    uint8_t voltage;
-    uint8_t temperature;
-    bool moving;
+    int16_t  velocity;
+    int16_t  load;
+    uint8_t  voltage;
+    uint8_t  temperature;
+    bool     moving;
 
 } DynamixelStatus;
 
@@ -92,6 +92,8 @@ public:
     long long unsigned int read_error_count;
     long long unsigned int read_count;
     double last_reset_sec;
+    
+    const DynamixelData* getCachedParameters(int servo_id);
     
     bool ping(int servo_id);
     bool resetOverloadError(int servo_id);
@@ -149,11 +151,12 @@ public:
     bool setMultiPositionVelocity(std::vector<std::vector<int> > value_pairs);
 
 private:
-    flexiport::Port *port_;
+    flexiport::Port* port_;
     pthread_mutex_t serial_mutex_;
-    std::map<int, DynamixelData> cache_;
+    std::map<int, DynamixelData*> cache_;
+    std::set<int> connected_motors_;
 
-    bool fillCache(int servo_id);
+    bool updateCachedParameters(int servo_id);
     
     bool writePacket(const void* const buffer, size_t count);
     bool readResponse(std::vector<uint8_t>& response);

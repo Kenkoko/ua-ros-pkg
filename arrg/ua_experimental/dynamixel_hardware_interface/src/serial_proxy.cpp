@@ -17,10 +17,10 @@
 #include <dynamixel_hardware_interface/dynamixel_const.h>
 #include <dynamixel_hardware_interface/dynamixel_io.h>
 #include <dynamixel_hardware_interface/serial_proxy.h>
+#include <dynamixel_hardware_interface/MotorState.h>
+#include <dynamixel_hardware_interface/MotorStateList.h>
 
 #include <ros/ros.h>
-#include <dynamixel_msgs/MotorState.h>
-#include <dynamixel_msgs/MotorStateList.h>
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <diagnostic_updater/update_functions.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
@@ -48,9 +48,9 @@ SerialProxy::SerialProxy(std::string port_name,
      warn_level_temp_(warn_level_temp),
      freq_status_(diagnostic_updater::FrequencyStatusParam(&update_rate_, &update_rate_, 0.1, 25))
 {
-    current_state_ = dynamixel_msgs::MotorStateListPtr(new dynamixel_msgs::MotorStateList);
+    current_state_ = MotorStateListPtr(new MotorStateList);
 
-    motor_states_pub_ = nh_.advertise<dynamixel_msgs::MotorStateList>("motor_states/" + port_namespace_, 1000);
+    motor_states_pub_ = nh_.advertise<MotorStateList>("motor_states/" + port_namespace_, 1000);
     diagnostics_pub_ = nh_.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1000);
 }
 
@@ -118,20 +118,12 @@ DynamixelIO* SerialProxy::getSerialPort()
     return dxl_io_;
 }
 
-void SerialProxy::fillMotorParameters(int motor_id, uint16_t model_number)
+void SerialProxy::fillMotorParameters(const DynamixelData* motor_data)
 {
-    uint8_t firmware_version;
-    uint8_t return_delay_time;
-    uint16_t cw_angle;
-    uint16_t ccw_angle;
-    float min_voltage_limit;
-    float max_voltage_limit;
+    int motor_id = motor_data->id;
+    int model_number = motor_data->model_number;
+    
     float voltage;
-
-    dxl_io_->getFirmwareVersion(motor_id, firmware_version);
-    dxl_io_->getReturnDelayTime(motor_id, return_delay_time);
-    dxl_io_->getAngleLimits(motor_id, cw_angle, ccw_angle);
-    dxl_io_->getVoltageLimits(motor_id, min_voltage_limit, max_voltage_limit);
     dxl_io_->getVoltage(motor_id, voltage);
 
     std::stringstream ss;
@@ -140,8 +132,8 @@ void SerialProxy::fillMotorParameters(int motor_id, uint16_t model_number)
 
     nh_.setParam(prefix + "model_number", model_number);
     nh_.setParam(prefix + "model_name", getMotorModelName(model_number));
-    nh_.setParam(prefix + "min_angle", cw_angle);
-    nh_.setParam(prefix + "max_angle", ccw_angle);
+    nh_.setParam(prefix + "min_angle", motor_data->cw_angle_limit);
+    nh_.setParam(prefix + "max_angle", motor_data->ccw_angle_limit);
 
     double torque_per_volt = getMotorModelParams(model_number, TORQUE_PER_VOLT);
     nh_.setParam(prefix + "torque_per_volt", torque_per_volt);
@@ -163,19 +155,6 @@ void SerialProxy::fillMotorParameters(int motor_id, uint16_t model_number)
     nh_.setParam(prefix + "encoder_ticks_per_radian", encoder_resolution / range_radians);
     nh_.setParam(prefix + "degrees_per_encoder_tick", range_degrees / encoder_resolution);
     nh_.setParam(prefix + "radians_per_encoder_tick", range_radians / encoder_resolution);
-    
-    // keep some parameters around for diagnostics
-    std::vector<boost::any> static_info;
-    static_info.resize(7);
-    static_info[0] = getMotorModelName(model_number);
-    static_info[1] = firmware_version;
-    static_info[2] = return_delay_time;
-    static_info[3] = min_voltage_limit;
-    static_info[4] = max_voltage_limit;
-    static_info[5] = cw_angle;
-    static_info[6] = ccw_angle;
-
-    motor_static_info_[motor_id] = static_info;
 }
 
 void SerialProxy::findMotors()
@@ -191,10 +170,17 @@ void SerialProxy::findMotors()
     {
         if (dxl_io_->ping(motor_id))
         {
-            uint16_t model_number;
-            dxl_io_->getModelNumber(motor_id, model_number);
-            counts[model_number] += 1;
-            fillMotorParameters(motor_id, model_number);
+            const DynamixelData* motor_data;
+            
+            if ((motor_data = dxl_io_->getCachedParameters(motor_id)) == NULL)
+            {
+                ROS_ERROR("Unable to retrieve cached paramaters for motor %d on port %s after successfull ping", motor_id, port_namespace_.c_str());
+                continue;
+            }
+            
+            counts[motor_data->model_number] += 1;
+            motor_static_info_[motor_id] = motor_data;
+            fillMotorParameters(motor_data);
 
             motors_.push_back(motor_id);
             val[motors_.size()-1] = motor_id;
@@ -234,14 +220,16 @@ void SerialProxy::findMotors()
 
 void SerialProxy::updateMotorStates()
 {    
+    //ros::Rate rate(update_rate_);
     current_state_->motor_states.resize(motors_.size());
     dynamixel_hardware_interface::DynamixelStatus status;
-    ros::Rate rate(update_rate_);
-    double r = 1.0e6/update_rate_;
+    
+    double allowed_time_usec = 1.0e6 / update_rate_;
+    int sleep_time_usec = 0;
     
     struct timespec ts_now;
-    double start_time_usec, end_time_usec;
-    int st = 0;
+    double start_time_usec;
+    double end_time_usec;
     
     while (nh_.ok())
     {
@@ -259,17 +247,18 @@ void SerialProxy::updateMotorStates()
 
             if (dxl_io_->getFeedback(motor_id, status))
             {
-                dynamixel_msgs::MotorState ms;
+                MotorState ms;
                 ms.timestamp = status.timestamp;
                 ms.id = motor_id;
-                ms.goal = status.goal;
+                ms.target_position = status.target_position;
+                ms.target_velocity = status.target_velocity;
                 ms.position = status.position;
-                ms.error = status.position - status.goal;
-                ms.speed = status.velocity;
+                ms.velocity = status.velocity;
+                ms.torque_limit = status.torque_limit;
                 ms.load = status.load;
+                ms.moving = status.moving;
                 ms.voltage = status.voltage;
                 ms.temperature = status.temperature;
-                ms.moving = status.moving;
                 current_state_->motor_states[i] = ms;
             }
             else
@@ -284,14 +273,16 @@ void SerialProxy::updateMotorStates()
         clock_gettime(CLOCK_REALTIME, &ts_now);
         end_time_usec = ts_now.tv_sec * 1.0e6 + ts_now.tv_nsec / 1.0e3;
         
-        st = r - (end_time_usec - start_time_usec);
+        sleep_time_usec = allowed_time_usec - (end_time_usec - start_time_usec);
         
-        if (st >= 1000)
+        // do millisecond resolution sleep
+        if (sleep_time_usec >= 1000)
         {
-            st = (st / 1000) * 1000;
-            usleep(st);
+            sleep_time_usec = (sleep_time_usec / 1000) * 1000;
+            usleep(sleep_time_usec);
         }
         
+        // ros sleep somehow takes a lot more cpu time
         //rate.sleep();
     }
 }
@@ -333,7 +324,7 @@ void SerialProxy::publishDiagnosticInformation()
         
         for (size_t i = 0; i < current_state_->motor_states.size(); ++i)
         {
-            dynamixel_msgs::MotorState motor_state = current_state_->motor_states[i];
+            MotorState motor_state = current_state_->motor_states[i];
             int mid = motor_state.id;
             
             // check if current motor state was already populated by updateMotorStates thread
@@ -345,22 +336,31 @@ void SerialProxy::publishDiagnosticInformation()
             
             motor_status.name = "Robotis Dynamixel Motor " + mid_str + " on port " + port_namespace_;
             motor_status.hardware_id = "DXL-" + mid_str + "@" + port_namespace_;
-            motor_status.add("Model Name", boost::any_cast<std::string>(motor_static_info_[mid][0]));
-            motor_status.addf("Firmware Version", "%d", boost::any_cast<uint8_t>(motor_static_info_[mid][1]));
-            motor_status.addf("Return Delay Time", "%d", boost::any_cast<uint8_t>(motor_static_info_[mid][2]));
-            motor_status.addf("Minimum Voltage", "%0.1f", boost::any_cast<float>(motor_static_info_[mid][3]));
-            motor_status.addf("Maximum Voltage", "%0.1f", boost::any_cast<float>(motor_static_info_[mid][4]));
-            motor_status.addf("Minimum Position (CW)", "%d", boost::any_cast<uint16_t>(motor_static_info_[mid][5]));
-            motor_status.addf("Maximum Position (CCW)", "%d", boost::any_cast<uint16_t>(motor_static_info_[mid][6]));
+            motor_status.add("Model Name", getMotorModelName(motor_static_info_[mid]->model_number).c_str());
+            motor_status.addf("Firmware Version", "%d", motor_static_info_[mid]->firmware_version);
+            motor_status.addf("Return Delay Time", "%d", motor_static_info_[mid]->return_delay_time);
+            motor_status.addf("Minimum Voltage", "%0.1f", motor_static_info_[mid]->voltage_limit_low / 10.0);
+            motor_status.addf("Maximum Voltage", "%0.1f", motor_static_info_[mid]->voltage_limit_high / 10.0);
+            motor_status.addf("Maximum Torque", "%d", motor_static_info_[mid]->max_torque);
+            motor_status.addf("Minimum Position (CW)", "%d", motor_static_info_[mid]->cw_angle_limit);
+            motor_status.addf("Maximum Position (CCW)", "%d", motor_static_info_[mid]->ccw_angle_limit);
+            motor_status.addf("Compliance Margin (CW)", "%d", motor_static_info_[mid]->cw_compliance_margin);
+            motor_status.addf("Compliance Margin (CCW)", "%d", motor_static_info_[mid]->ccw_compliance_margin);
+            motor_status.addf("Compliance Slope (CW)", "%d", motor_static_info_[mid]->cw_compliance_slope);
+            motor_status.addf("Compliance Slope (CCW)", "%d", motor_static_info_[mid]->ccw_compliance_slope);
+            motor_status.add("Torque Enabled", motor_static_info_[mid]->torque_enabled ? "True" : "False");
             
-            motor_status.addf("Goal", "%d", motor_state.goal);
-            motor_status.addf("Position", "%d", motor_state.position);
-            motor_status.addf("Error", "%d", motor_state.error);
-            motor_status.addf("Velocity", "%d", motor_state.speed);
-            motor_status.addf("Load", "%d", motor_state.load);
-            motor_status.addf("Voltage", "%0.1f", motor_state.voltage / 10.0f);
-            motor_status.addf("Temperature", "%d", motor_state.temperature);
             motor_status.add("Moving", motor_state.moving ? "True" : "False");
+            motor_status.addf("Target Position", "%d", motor_state.target_position);
+            motor_status.addf("Target Velocity", "%d", motor_state.target_velocity);
+            motor_status.addf("Position", "%d", motor_state.position);
+            motor_status.addf("Velocity", "%d", motor_state.velocity);
+            motor_status.addf("Position Error", "%d", motor_state.position - motor_state.target_position);
+            motor_status.addf("Velocity Error", "%d", motor_state.moving ? motor_state.velocity - motor_state.target_velocity : 0);
+            motor_status.addf("Torque Limit", "%d", motor_state.torque_limit);
+            motor_status.addf("Load", "%d", motor_state.load);
+            motor_status.addf("Voltage", "%0.1f", motor_state.voltage / 10.0);
+            motor_status.addf("Temperature", "%d", motor_state.temperature);
             
             if (motor_state.temperature >= error_level_temp_)
             {

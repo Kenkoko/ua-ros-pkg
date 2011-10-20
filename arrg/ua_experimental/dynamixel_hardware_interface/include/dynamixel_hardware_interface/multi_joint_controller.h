@@ -35,11 +35,10 @@
 
 #include <dynamixel_hardware_interface/dynamixel_io.h>
 #include <dynamixel_hardware_interface/single_joint_controller.h>
+#include <dynamixel_hardware_interface/JointState.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
-#include <dynamixel_msgs/JointState.h>
-#include <dynamixel_msgs/MotorStateList.h>
 
 namespace controller
 {
@@ -112,7 +111,7 @@ protected:
     std::map<std::string, SingleJointController*> joint_to_controller_;
     std::map<std::string, std::vector<std::string> > port_to_joints_;
     std::map<std::string, dynamixel_hardware_interface::DynamixelIO*> port_to_io_;
-    std::map<std::string, const dynamixel_msgs::JointState*> joint_states_;
+    std::map<std::string, const dynamixel_hardware_interface::JointState*> joint_states_;
     
 };
 

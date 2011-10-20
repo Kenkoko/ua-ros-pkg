@@ -31,9 +31,10 @@
 #include <stdio.h>
 
 #include <sstream>
+#include <map>
+#include <set>
 #include <string>
 #include <vector>
-#include <map>
 
 #include <gearbox/flexiport/flexiport.h>
 
@@ -60,7 +61,8 @@ DynamixelIO::DynamixelIO(std::string device="/dev/ttyUSB0",
     pthread_mutex_init(&serial_mutex_, NULL);
     port_ = flexiport::CreatePort(options);
     
-    flexiport::Timeout t(0, 250);
+    // 100 microseconds = 0.1 milliseconds
+    flexiport::Timeout t(0, 100);
     port_->SetTimeout(t);
 }
 
@@ -71,50 +73,60 @@ DynamixelIO::~DynamixelIO()
     pthread_mutex_destroy(&serial_mutex_);
 }
 
-bool DynamixelIO::fillCache(int servo_id)
+bool DynamixelIO::updateCachedParameters(int servo_id)
 {
-    DynamixelData data;
+    std::map<int, DynamixelData*>::iterator it = cache_.find(servo_id);
+    DynamixelData* data;
+    
+    if (it == cache_.end()) { data = new DynamixelData(); }
+    else { data = it->second; }
+    
     int num_retries = 10;
     int count = 0;
-    std::vector<uint8_t> response;
 
     while (count < num_retries)
     {
-        if (!read(servo_id, DXL_MODEL_NUMBER_L, 36, response)) { ++count; continue; }
+        std::vector<uint8_t> response;
+        if (!read(servo_id, DXL_MODEL_NUMBER_L, 30, response)) { ++count; continue; }
         
         checkForErrors(servo_id, response[4], "readAllData");
         uint8_t byte_num = 5;
         
-        data.model_number = response[byte_num+0] + (response[byte_num+1] << 8);
-        data.firmware_version = response[byte_num+2];
-        data.id = response[byte_num+3];
-        data.baud_rate = response[byte_num+4];
-        data.return_delay_time = response[byte_num+5];
-        data.cw_angle_limit = response[byte_num+6] + (response[byte_num+7] << 8);
-        data.ccw_angle_limit = response[byte_num+8] + (response[byte_num+9] << 8);
-        data.drive_mode = response[byte_num+10];
-        data.temperature_limit = response[byte_num+11];
-        data.voltage_limit_low = response[byte_num+12];
-        data.voltage_limit_high = response[byte_num+13];
-        data.max_torque = response[byte_num+14] + (response[byte_num+15] << 8);
-        data.return_level = response[byte_num+16];
-        data.alarm_led = response[byte_num+17];
-        data.alarm_shutdown = response[byte_num+18];
-        data.torque_enabled = response[byte_num+24];
-        data.led = response[byte_num+25];
-        data.cw_compliance_margin = response[byte_num+26];
-        data.ccw_compliance_margin = response[byte_num+27];
-        data.cw_compliance_slope = response[byte_num+28];
-        data.ccw_compliance_slope = response[byte_num+29];
-        data.target_position= response[byte_num+30] + (response[byte_num+31] << 8);
-        data.target_velocity = response[byte_num+32] + (response[byte_num+33] << 8);
-        data.torque_limit = response[byte_num+34] + (response[byte_num+35] << 8);
+        data->model_number = response[byte_num+0] + (response[byte_num+1] << 8);
+        data->firmware_version = response[byte_num+2];
+        data->id = response[byte_num+3];
+        data->baud_rate = response[byte_num+4];
+        data->return_delay_time = response[byte_num+5];
+        data->cw_angle_limit = response[byte_num+6] + (response[byte_num+7] << 8);
+        data->ccw_angle_limit = response[byte_num+8] + (response[byte_num+9] << 8);
+        data->drive_mode = response[byte_num+10];
+        data->temperature_limit = response[byte_num+11];
+        data->voltage_limit_low = response[byte_num+12];
+        data->voltage_limit_high = response[byte_num+13];
+        data->max_torque = response[byte_num+14] + (response[byte_num+15] << 8);
+        data->return_level = response[byte_num+16];
+        data->alarm_led = response[byte_num+17];
+        data->alarm_shutdown = response[byte_num+18];
+        data->torque_enabled = response[byte_num+24];
+        data->led = response[byte_num+25];
+        data->cw_compliance_margin = response[byte_num+26];
+        data->ccw_compliance_margin = response[byte_num+27];
+        data->cw_compliance_slope = response[byte_num+28];
+        data->ccw_compliance_slope = response[byte_num+29];
         
         cache_[servo_id] = data;
         return true;
     }
 
     return false;
+}
+
+const DynamixelData* DynamixelIO::getCachedParameters(int servo_id)
+{
+    std::map<int, DynamixelData*>::const_iterator it = cache_.find(servo_id);
+    
+    if (it == cache_.end()) { return NULL; }
+    return it->second;
 }
 
 bool DynamixelIO::ping(int servo_id)
@@ -140,7 +152,8 @@ bool DynamixelIO::ping(int servo_id)
     if (success)
     {
         checkForErrors(servo_id, response[4], "ping");
-        success = fillCache(servo_id);
+        connected_motors_.insert(servo_id);
+        success = updateCachedParameters(servo_id);
     }
     
     return success;
@@ -504,29 +517,39 @@ bool DynamixelIO::getFeedback(int servo_id, DynamixelStatus& status)
 
         if (response.size() == 23)
         {
-            uint16_t goal = response[5] + (response[6] << 8);
-            uint16_t position = response[11] + (response[12] << 8);
+            int offset = 5;
+            
+            uint16_t target_position = response[offset+0] + (response[offset+1] << 8);
+            
+            int16_t target_velocity = response[offset+2] + (response[offset+3] << 8);
+            int direction = (target_velocity & (1 << 10)) == 0 ? 1 : -1;
+            target_velocity = direction * (target_velocity & DXL_MAX_VELOCITY_ENCODER);
+            
+            uint16_t torque_limit = response[offset+4] + (response[offset+5] << 8);
+            uint16_t position = response[offset+6] + (response[offset+7] << 8);
 
-            int16_t velocity = response[13] + (response[14] << 8);
-            int direction = (velocity & (1 << 10)) == 0 ? 1 : -1;
+            int16_t velocity = response[offset+8] + (response[offset+9] << 8);
+            direction = (velocity & (1 << 10)) == 0 ? 1 : -1;
             velocity = direction * (velocity & DXL_MAX_VELOCITY_ENCODER);
 
-            int16_t load = response[15] + (response[16] << 8);
+            int16_t load = response[offset+10] + (response[offset+11] << 8);
             direction = (load & (1 << 10)) == 0 ? 1 : -1;
             load = direction * (load & DXL_MAX_LOAD_ENCODER);
 
-            uint8_t voltage = response[17];
-            uint8_t temperature = response[18];
-            bool moving = response[21];
+            uint8_t voltage = response[offset+12];
+            uint8_t temperature = response[offset+13];
+            bool moving = response[offset+16];
 
-            status.goal        = goal;
-            status.position    = position;
-            status.velocity    = velocity;
-            status.load        = load;
-            status.voltage     = voltage;
+            status.timestamp = timestamp;
+            status.target_position = target_position;
+            status.target_velocity = target_velocity;
+            status.torque_limit = torque_limit;
+            status.position = position;
+            status.velocity = velocity;
+            status.load = load;
+            status.voltage = voltage;
             status.temperature = temperature;
-            status.moving      = moving;
-            status.timestamp   = timestamp;
+            status.moving = moving;
 
             return true;
         }
@@ -758,17 +781,17 @@ bool DynamixelIO::setMultiVelocity(std::vector<std::vector<int> > value_pairs)
         int velocity = value_pairs[i][1];
         
         std::vector<uint8_t> value_pair;
-        value_pair.push_back(value_pairs[i][0]);        // servo id
+        value_pair.push_back(value_pairs[i][0]);    // servo id
 
         if (velocity >= 0)
         {
-            value_pair.push_back(velocity % 256);           // lo_byte
-            value_pair.push_back(velocity >> 8);            // hi_byte
+            value_pair.push_back(velocity % 256);   // lo_byte
+            value_pair.push_back(velocity >> 8);    // hi_byte
         }
         else
         {
-            value_pair.push_back((DXL_MAX_VELOCITY_ENCODER - velocity) % 256);           // lo_byte
-            value_pair.push_back((DXL_MAX_VELOCITY_ENCODER - velocity) >> 8);            // hi_byte
+            value_pair.push_back((DXL_MAX_VELOCITY_ENCODER - velocity) % 256);  // lo_byte
+            value_pair.push_back((DXL_MAX_VELOCITY_ENCODER - velocity) >> 8);   // hi_byte
         }
 
         data.push_back(value_pair);
@@ -1004,6 +1027,13 @@ bool DynamixelIO::write(int servo_id,
     if (success) { success = readResponse(response); }
     pthread_mutex_unlock(&serial_mutex_);
 
+    std::set<int>::const_iterator it;
+    
+    for (it = connected_motors_.begin(); it != connected_motors_.end(); ++it)
+    {
+        updateCachedParameters(*it);
+    }
+    
     return success;
 }
 
@@ -1058,6 +1088,13 @@ bool DynamixelIO::syncWrite(int address,
     pthread_mutex_lock(&serial_mutex_);
     bool success = writePacket(packet, packet_length);
     pthread_mutex_unlock(&serial_mutex_);
+    
+    std::set<int>::const_iterator it;
+    
+    for (it = connected_motors_.begin(); it != connected_motors_.end(); ++it)
+    {
+        updateCachedParameters(*it);
+    }
 
     return success;
 }

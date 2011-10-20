@@ -36,6 +36,7 @@
 #include <dynamixel_hardware_interface/single_joint_controller.h>
 #include <dynamixel_hardware_interface/multi_joint_controller.h>
 #include <dynamixel_hardware_interface/joint_trajectory_action_controller.h>
+#include <dynamixel_hardware_interface/JointState.h>
 
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
@@ -154,8 +155,8 @@ void JointTrajectoryActionController::updateState()
         
         for (size_t j = 0; j < joint_names_.size(); ++j)
         {
-            const dynamixel_msgs::JointState* state = joint_states_[joint_names_[j]];
-            msg_.actual.positions[j] = state->current_pos;
+            const dynamixel_hardware_interface::JointState* state = joint_states_[joint_names_[j]];
+            msg_.actual.positions[j] = state->position;
             msg_.actual.velocities[j] = std::abs(state->velocity);
             msg_.error.positions[j] = msg_.actual.positions[j] - msg_.desired.positions[j];
             msg_.error.velocities[j] = msg_.actual.velocities[j] - msg_.desired.velocities[j];
@@ -315,7 +316,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
                 std::string joint = *jit;
                 int j = joint_to_idx_[joint];
                 
-                double start_position = joint_states_[joint]->current_pos;
+                double start_position = joint_states_[joint]->position;
                 if (seg != 0) { start_position = trajectory[seg-1].positions[j]; }
                 
                 double desired_position = trajectory[seg].positions[j];
@@ -365,7 +366,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
                         std::string joint = *jit;
                         int j = joint_to_idx_[joint];
                         
-                        double desired_position = joint_states_[joint]->current_pos;
+                        double desired_position = joint_states_[joint]->position;
                         double desired_velocity = joint_states_[joint]->velocity;
                         
                         msg_.desired.positions[j] = desired_position;

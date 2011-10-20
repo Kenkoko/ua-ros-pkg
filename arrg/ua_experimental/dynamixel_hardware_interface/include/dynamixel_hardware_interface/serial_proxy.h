@@ -34,12 +34,11 @@
 #include <map>
 
 #include <boost/thread.hpp>
-#include <boost/any.hpp>
 
 #include <dynamixel_hardware_interface/dynamixel_io.h>
+#include <dynamixel_hardware_interface/MotorStateList.h>
 
 #include <ros/ros.h>
-#include <dynamixel_msgs/MotorStateList.h>
 #include <diagnostic_updater/update_functions.h>
 
 namespace dynamixel_hardware_interface
@@ -78,7 +77,7 @@ private:
     int error_level_temp_;
     int warn_level_temp_;
 
-    dynamixel_msgs::MotorStateListPtr current_state_;
+    MotorStateListPtr current_state_;
 
     ros::Publisher motor_states_pub_;
     ros::Publisher diagnostics_pub_;
@@ -92,9 +91,9 @@ private:
 
     DynamixelIO* dxl_io_;
     std::vector<int> motors_;
-    std::map<int, std::vector<boost::any> > motor_static_info_;
+    std::map<int, const DynamixelData*> motor_static_info_;
 
-    void fillMotorParameters(int motor_id, uint16_t model_number);
+    void fillMotorParameters(const DynamixelData* motor_data);
     void findMotors();
     void updateMotorStates();
     void publishDiagnosticInformation();
