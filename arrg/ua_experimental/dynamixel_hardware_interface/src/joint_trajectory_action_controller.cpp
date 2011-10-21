@@ -156,6 +156,8 @@ void JointTrajectoryActionController::updateState()
         for (size_t j = 0; j < joint_names_.size(); ++j)
         {
             const dynamixel_hardware_interface::JointState* state = joint_states_[joint_names_[j]];
+            msg_.desired.positions[j] = state->target_position;
+            msg_.desired.velocities[j] = std::abs(state->target_velocity);
             msg_.actual.positions[j] = state->position;
             msg_.actual.velocities[j] = std::abs(state->velocity);
             msg_.error.positions[j] = msg_.actual.positions[j] - msg_.desired.positions[j];
@@ -325,9 +327,6 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
                 ROS_DEBUG("\tstart_position: %f, duration: %f", start_position, durations[seg]);
                 ROS_DEBUG("\tport: %s, joint: %s, dpos: %f, dvel: %f", pjit->first.c_str(), joint.c_str(), desired_position, desired_velocity);
                 
-                msg_.desired.positions[j] = desired_position;
-                msg_.desired.velocities[j] = desired_velocity;
-                
                 std::vector<std::vector<int> > mvcs = joint_to_controller_[joint]->getWritableVals(desired_position, desired_velocity);
                 for (size_t i = 0; i < mvcs.size(); ++i)
                 {
@@ -364,13 +363,9 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
                     for (jit = pjit->second.begin(); jit != pjit->second.end(); ++jit)
                     {
                         std::string joint = *jit;
-                        int j = joint_to_idx_[joint];
                         
                         double desired_position = joint_states_[joint]->position;
                         double desired_velocity = joint_states_[joint]->velocity;
-                        
-                        msg_.desired.positions[j] = desired_position;
-                        msg_.desired.velocities[j] = desired_velocity;
                         
                         std::vector<std::vector<int> > mvcs = joint_to_controller_[joint]->getWritableVals(desired_position, desired_velocity);
                         for (size_t i = 0; i < mvcs.size(); ++i)

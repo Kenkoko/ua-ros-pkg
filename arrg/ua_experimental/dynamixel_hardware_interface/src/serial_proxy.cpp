@@ -247,11 +247,15 @@ void SerialProxy::updateMotorStates()
 
             if (dxl_io_->getFeedback(motor_id, status))
             {
+                const dynamixel_hardware_interface::DynamixelData* data;
+                data = dxl_io_->getCachedParameters(motor_id);
+                if (data == NULL) { continue; }
+                
                 MotorState ms;
                 ms.timestamp = status.timestamp;
                 ms.id = motor_id;
-                ms.target_position = status.target_position;
-                ms.target_velocity = status.target_velocity;
+                ms.target_position = data->target_position;
+                ms.target_velocity = data->target_velocity;
                 ms.position = status.position;
                 ms.velocity = status.velocity;
                 ms.torque_limit = status.torque_limit;
@@ -335,7 +339,7 @@ void SerialProxy::publishDiagnosticInformation()
             diagnostic_updater::DiagnosticStatusWrapper motor_status;
             
             motor_status.name = "Robotis Dynamixel Motor " + mid_str + " on port " + port_namespace_;
-            motor_status.hardware_id = "DXL-" + mid_str + "@" + port_namespace_;
+            motor_status.hardware_id = "ID " + mid_str + " on port " + port_name_;
             motor_status.add("Model Name", getMotorModelName(motor_static_info_[mid]->model_number).c_str());
             motor_status.addf("Firmware Version", "%d", motor_static_info_[mid]->firmware_version);
             motor_status.addf("Return Delay Time", "%d", motor_static_info_[mid]->return_delay_time);
@@ -362,17 +366,20 @@ void SerialProxy::publishDiagnosticInformation()
             motor_status.addf("Voltage", "%0.1f", motor_state.voltage / 10.0);
             motor_status.addf("Temperature", "%d", motor_state.temperature);
             
+            motor_status.summary(motor_status.OK, "OK");
+            
             if (motor_state.temperature >= error_level_temp_)
             {
-                motor_status.summary(motor_status.ERROR, "OVERHEATING");
+                motor_status.summary(motor_status.ERROR, "Overheating");
             }
             else if (motor_state.temperature >= warn_level_temp_)
             {
-                motor_status.summary(motor_status.WARN, "VERY HOT");
+                motor_status.summary(motor_status.WARN, "Very hot");
             }
-            else
+            
+            if (motor_state.torque_limit == 0)
             {
-                motor_status.summary(motor_status.OK, "OK");
+                motor_status.mergeSummary(motor_status.ERROR, "Torque limit is 0");
             }
                 
             diag_msg.status.push_back(motor_status);

@@ -87,9 +87,9 @@ bool DynamixelIO::updateCachedParameters(int servo_id)
     while (count < num_retries)
     {
         std::vector<uint8_t> response;
-        if (!read(servo_id, DXL_MODEL_NUMBER_L, 30, response)) { ++count; continue; }
+        if (!read(servo_id, DXL_MODEL_NUMBER_L, 34, response)) { ++count; continue; }
         
-        checkForErrors(servo_id, response[4], "readAllData");
+        checkForErrors(servo_id, response[4], "updateCachedParameters");
         uint8_t byte_num = 5;
         
         data->model_number = response[byte_num+0] + (response[byte_num+1] << 8);
@@ -113,6 +113,15 @@ bool DynamixelIO::updateCachedParameters(int servo_id)
         data->ccw_compliance_margin = response[byte_num+27];
         data->cw_compliance_slope = response[byte_num+28];
         data->ccw_compliance_slope = response[byte_num+29];
+        
+        uint16_t target_position = response[byte_num+30] + (response[byte_num+31] << 8);
+        
+        int16_t target_velocity = response[byte_num+32] + (response[byte_num+33] << 8);
+        int direction = (target_velocity & (1 << 10)) == 0 ? 1 : -1;
+        target_velocity = direction * (target_velocity & DXL_MAX_VELOCITY_ENCODER);
+        
+        data->target_position = target_position;
+        data->target_velocity = target_velocity;
         
         cache_[servo_id] = data;
         return true;
@@ -507,7 +516,7 @@ bool DynamixelIO::getFeedback(int servo_id, DynamixelStatus& status)
 {
     std::vector<uint8_t> response;
 
-    if (read(servo_id, DXL_GOAL_POSITION_L, 17, response))
+    if (read(servo_id, DXL_TORQUE_LIMIT_L, 13, response))
     {
         struct timespec ts_now;
         clock_gettime(CLOCK_REALTIME, &ts_now);
@@ -515,34 +524,26 @@ bool DynamixelIO::getFeedback(int servo_id, DynamixelStatus& status)
 
         checkForErrors(servo_id, response[4], "getFeedback");
 
-        if (response.size() == 23)
+        if (response.size() == 19)
         {
             int offset = 5;
             
-            uint16_t target_position = response[offset+0] + (response[offset+1] << 8);
-            
-            int16_t target_velocity = response[offset+2] + (response[offset+3] << 8);
-            int direction = (target_velocity & (1 << 10)) == 0 ? 1 : -1;
-            target_velocity = direction * (target_velocity & DXL_MAX_VELOCITY_ENCODER);
-            
-            uint16_t torque_limit = response[offset+4] + (response[offset+5] << 8);
-            uint16_t position = response[offset+6] + (response[offset+7] << 8);
+            uint16_t torque_limit = response[offset+0] + (response[offset+1] << 8);
+            uint16_t position = response[offset+2] + (response[offset+3] << 8);
 
-            int16_t velocity = response[offset+8] + (response[offset+9] << 8);
-            direction = (velocity & (1 << 10)) == 0 ? 1 : -1;
+            int16_t velocity = response[offset+4] + (response[offset+5] << 8);
+            int direction = (velocity & (1 << 10)) == 0 ? 1 : -1;
             velocity = direction * (velocity & DXL_MAX_VELOCITY_ENCODER);
 
-            int16_t load = response[offset+10] + (response[offset+11] << 8);
+            int16_t load = response[offset+6] + (response[offset+7] << 7);
             direction = (load & (1 << 10)) == 0 ? 1 : -1;
             load = direction * (load & DXL_MAX_LOAD_ENCODER);
 
-            uint8_t voltage = response[offset+12];
-            uint8_t temperature = response[offset+13];
-            bool moving = response[offset+16];
+            uint8_t voltage = response[offset+8];
+            uint8_t temperature = response[offset+9];
+            bool moving = response[offset+12];
 
             status.timestamp = timestamp;
-            status.target_position = target_position;
-            status.target_velocity = target_velocity;
             status.torque_limit = torque_limit;
             status.position = position;
             status.velocity = velocity;
