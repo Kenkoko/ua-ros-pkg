@@ -909,6 +909,23 @@ bool DynamixelIO::setMultiComplianceMargins(std::vector<std::vector<int> > value
     else { return false; }
 }
 
+bool DynamixelIO::setMultiTorqueEnabled(std::vector<std::vector<int> > value_pairs)
+{
+    std::vector<std::vector<uint8_t> > data;
+    
+    for (size_t i = 0; i < value_pairs.size(); ++i)
+    {
+        std::vector<uint8_t> value_pair;
+        
+        value_pair.push_back(value_pairs[i][0]);    // servo id
+        value_pair.push_back(value_pairs[i][1]);    // torque_enabled
+        
+        data.push_back(value_pair);
+    }
+    
+    if (syncWrite(DXL_TORQUE_ENABLE, data)) { return true; }
+    else { return false; }
+}
 
 
 bool DynamixelIO::setMultiValues(std::vector<std::map<std::string, int> > value_maps)

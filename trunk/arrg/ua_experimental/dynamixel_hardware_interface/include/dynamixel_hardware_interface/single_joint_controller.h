@@ -36,6 +36,8 @@
 #include <dynamixel_hardware_interface/dynamixel_io.h>
 #include <dynamixel_hardware_interface/JointState.h>
 #include <dynamixel_hardware_interface/MotorStateList.h>
+#include <dynamixel_hardware_interface/SetVelocity.h>
+#include <dynamixel_hardware_interface/TorqueEnable.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
@@ -96,6 +98,8 @@ public:
         motor_states_sub_ = nh_.subscribe("motor_states/" + port_namespace_, 50, &SingleJointController::processMotorStates, this);
         joint_command_sub_ = c_nh_.subscribe("command", 50, &SingleJointController::processCommand, this);
         joint_state_pub_ = c_nh_.advertise<dynamixel_hardware_interface::JointState>("state", 50);
+        joint_velocity_srv_ = c_nh_.advertiseService("set_velocity", &SingleJointController::processSetVelocity, this);
+        torque_enable_srv_ = c_nh_.advertiseService("torque_enable", &SingleJointController::processTorqueEnable, this);
     }
     
     virtual void stop()
@@ -103,6 +107,8 @@ public:
         motor_states_sub_.shutdown();
         joint_command_sub_.shutdown();
         joint_state_pub_.shutdown();
+        joint_velocity_srv_.shutdown();
+        torque_enable_srv_.shutdown();
     }
     
     virtual std::vector<int> getMotorIDs() = 0;
@@ -112,6 +118,12 @@ public:
     
     virtual void processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg) = 0;
     virtual void processCommand(const std_msgs::Float64ConstPtr& msg) = 0;
+    
+    virtual bool processSetVelocity(dynamixel_hardware_interface::SetVelocity::Request& req,
+                                    dynamixel_hardware_interface::SetVelocity::Request& res) = 0;
+    
+    virtual bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                                     dynamixel_hardware_interface::TorqueEnable::Request& res) = 0;
     
 protected:
     ros::NodeHandle nh_;
@@ -144,7 +156,9 @@ protected:
     ros::Subscriber motor_states_sub_;
     ros::Subscriber joint_command_sub_;
     ros::Publisher joint_state_pub_;
-
+    ros::ServiceServer joint_velocity_srv_;
+    ros::ServiceServer torque_enable_srv_;
+    
     uint16_t convertToEncoder(double angle_in_radians)
     {
         double angle_in_encoder = angle_in_radians * encoder_ticks_per_radian_;
