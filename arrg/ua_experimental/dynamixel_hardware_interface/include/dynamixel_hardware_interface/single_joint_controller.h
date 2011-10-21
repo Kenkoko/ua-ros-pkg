@@ -80,7 +80,6 @@ public:
         }
         
         c_nh_.param("max_velocity", max_velocity_, 3.0);
-        c_nh_.param("init_velocity", init_velocity_, 1.0);
         
         return true;
     }
@@ -106,13 +105,13 @@ public:
         joint_state_pub_.shutdown();
     }
     
+    virtual std::vector<int> getMotorIDs() = 0;
+    virtual std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity) = 0;
+    
     virtual void setVelocity(double velocity) = 0;
     
     virtual void processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg) = 0;
     virtual void processCommand(const std_msgs::Float64ConstPtr& msg) = 0;
-    
-    virtual std::vector<int> getMotorIDs() = 0;
-    virtual std::vector<std::vector<int> > getWritableVals(double position, double velocity) = 0;
     
 protected:
     ros::NodeHandle nh_;
@@ -125,7 +124,7 @@ protected:
     std::string joint_;
     dynamixel_hardware_interface::JointState joint_state_;
     
-    double init_velocity_;
+    static const double INIT_VELOCITY = 0.5;
     double max_velocity_;
     double min_velocity_;
     

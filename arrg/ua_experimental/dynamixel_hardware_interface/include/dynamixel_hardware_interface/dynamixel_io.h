@@ -132,6 +132,10 @@ public:
     
     bool getFeedback(int servo_id, DynamixelStatus& status);
 
+    bool setCWAngleLimit(int servo_id, uint16_t cw_angle);
+    bool setCCWAngleLimit(int servo_id, uint16_t ccw_angle);
+    bool setAngleLimits(int servo_id, uint16_t cw_angle, uint16_t ccw_angle);
+    
     bool setTorqueEnable(int servo_id, bool on);
     bool setLed(int servo_id, bool on);
     
@@ -149,6 +153,7 @@ public:
     bool setMultiPosition(std::vector<std::vector<int> > value_pairs);
     bool setMultiVelocity(std::vector<std::vector<int> > value_pairs);
     bool setMultiPositionVelocity(std::vector<std::vector<int> > value_pairs);
+    bool setMultiComplianceMargins(std::vector<std::vector<int> > value_pairs);
     bool setMultiValues(std::vector<std::map<std::string, int> > value_maps);
     
 private:

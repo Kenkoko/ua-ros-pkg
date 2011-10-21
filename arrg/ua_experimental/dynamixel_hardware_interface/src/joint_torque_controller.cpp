@@ -107,17 +107,6 @@ bool JointTorqueController::initialize(std::string name,
         max_velocity_ = min_velocity_;
     }
 
-    if (init_velocity_ > motor_max_velocity_)
-    {
-        ROS_WARN("%s: requested initial joint velocity exceeds motor capabilities (%f > %f)", name_.c_str(), init_velocity_, motor_max_velocity_);
-        init_velocity_ = motor_max_velocity_;
-    }
-    else if (init_velocity_ < min_velocity_)
-    {
-        ROS_WARN("%s: requested initial joint velocity is too small (%f < %f)", name_.c_str(), init_velocity_, min_velocity_);
-        init_velocity_ = min_velocity_;
-    }
-
     /***************** Motor related parameters **********************/
     c_nh_.getParam("motor/init", init_position_encoder_);
     c_nh_.getParam("motor/min", min_angle_encoder_);
@@ -139,18 +128,33 @@ bool JointTorqueController::initialize(std::string name,
         max_angle_radians_ = (max_angle_encoder_ - init_position_encoder_) * radians_per_encoder_tick_;
     }
 
+    motor_cache_ = dxl_io_->getCachedParameters(motor_id_);
+    if (motor_cache_ == NULL) { return false; }
+    
     setVelocity(0.0);
+    
+    if (motor_cache_->cw_angle_limit != 0 || motor_cache_->ccw_angle_limit != 0)
+    {
+        ROS_WARN("%s: motor %d is not set to torque control mode, setting motor to torque control mode", name_.c_str(), motor_id_);
+        
+        if (!dxl_io_->setAngleLimits(motor_id_, 0, 0))
+        {
+            ROS_ERROR("%s: unable to set motor to torque control mode", name_.c_str());
+            return false;
+        }
+    }
+    
     return true;
 }
 
 void JointTorqueController::start()
 {
-    
+    SingleJointController::start();
 }
 
 void JointTorqueController::stop()
 {
-    
+    SingleJointController::stop();
 }
 
 std::vector<int> JointTorqueController::getMotorIDs()
@@ -158,7 +162,7 @@ std::vector<int> JointTorqueController::getMotorIDs()
     return std::vector<int>(1, motor_id_);
 }
 
-std::vector<std::vector<int> > JointTorqueController::getWritableVals(double position, double velocity)
+std::vector<std::vector<int> > JointTorqueController::getRawMotorCommands(double position, double velocity)
 {
     std::vector<std::vector<int> > value_pairs;
 
@@ -169,15 +173,6 @@ std::vector<std::vector<int> > JointTorqueController::getWritableVals(double pos
     value_pairs.push_back(pair);
 
     return value_pairs;
-}
-
-int16_t JointTorqueController::velRad2Enc(double vel_rad)
-{
-    if (vel_rad < -max_velocity_) { vel_rad = -max_velocity_; }
-    if (vel_rad > max_velocity_) { vel_rad = max_velocity_; }
-    last_commanded_torque_ = vel_rad;
-    
-    return (int16_t) round(vel_rad / velocity_per_encoder_tick_);
 }
 
 void JointTorqueController::setVelocity(double velocity)
@@ -226,6 +221,14 @@ void JointTorqueController::processMotorStates(const dynamixel_hardware_interfac
 void JointTorqueController::processCommand(const std_msgs::Float64ConstPtr& msg)
 {
     setVelocity(msg->data);
+}
+
+int16_t JointTorqueController::velRad2Enc(double vel_rad)
+{
+    if (vel_rad < -max_velocity_) { vel_rad = -max_velocity_; }
+    if (vel_rad > max_velocity_) { vel_rad = max_velocity_; }
+    
+    return (int16_t) round(vel_rad / velocity_per_encoder_tick_);
 }
 
 }
