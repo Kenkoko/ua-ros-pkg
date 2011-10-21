@@ -28,13 +28,13 @@ target_link_libraries(${PROJECT_NAME} flexiport)
 rosbuild_add_boost_directories()
 rosbuild_link_boost(${PROJECT_NAME} thread)
 
-rosbuild_add_executable(dynamixel_io test/main.cpp)
-target_link_libraries(dynamixel_io ${PROJECT_NAME})
+rosbuild_add_executable(controller_manager src/controller_manager.cpp)
+target_link_libraries(controller_manager ${PROJECT_NAME})
 
 rosbuild_add_library(dynamixel_controllers src/joint_position_controller.cpp
                                            src/joint_torque_controller.cpp
                                            src/joint_trajectory_action_controller.cpp)
 target_link_libraries(dynamixel_controllers ${PROJECT_NAME})
 
-rosbuild_add_executable(controller_manager src/controller_manager.cpp)
-target_link_libraries(controller_manager ${PROJECT_NAME})
+rosbuild_add_executable(dynamixel_io test/main.cpp)
+target_link_libraries(dynamixel_io ${PROJECT_NAME})

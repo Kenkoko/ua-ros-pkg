@@ -33,6 +33,8 @@
 #include <dynamixel_hardware_interface/single_joint_controller.h>
 #include <dynamixel_hardware_interface/joint_position_controller.h>
 #include <dynamixel_hardware_interface/MotorState.h>
+#include <dynamixel_hardware_interface/SetVelocity.h>
+#include <dynamixel_hardware_interface/TorqueEnable.h>
 
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
@@ -231,6 +233,27 @@ void JointPositionController::processCommand(const std_msgs::Float64ConstPtr& ms
     mcv.push_back(pair);
     
     dxl_io_->setMultiPosition(mcv);
+}
+
+bool JointPositionController::processSetVelocity(dynamixel_hardware_interface::SetVelocity::Request& req,
+                                                 dynamixel_hardware_interface::SetVelocity::Request& res)
+{
+    setVelocity(req.velocity);
+    return true;
+}
+
+bool JointPositionController::processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                                                  dynamixel_hardware_interface::TorqueEnable::Request& res)
+{
+    std::vector<int> pair;
+    pair.push_back(motor_id_);
+    pair.push_back(req.torque_enable);
+    
+    std::vector<std::vector<int> > mcv;
+    mcv.push_back(pair);
+    
+    dxl_io_->setMultiTorqueEnabled(mcv);
+    return true;
 }
 
 uint16_t JointPositionController::posRad2Enc(double pos_rad)

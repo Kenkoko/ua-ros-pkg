@@ -33,6 +33,7 @@
 #include <dynamixel_hardware_interface/single_joint_controller.h>
 #include <dynamixel_hardware_interface/joint_torque_controller.h>
 #include <dynamixel_hardware_interface/MotorState.h>
+#include <dynamixel_hardware_interface/SetVelocity.h>
 
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
@@ -221,6 +222,27 @@ void JointTorqueController::processMotorStates(const dynamixel_hardware_interfac
 void JointTorqueController::processCommand(const std_msgs::Float64ConstPtr& msg)
 {
     setVelocity(msg->data);
+}
+
+bool JointTorqueController::processSetVelocity(dynamixel_hardware_interface::SetVelocity::Request& req,
+                                               dynamixel_hardware_interface::SetVelocity::Request& res)
+{
+    setVelocity(req.velocity);
+    return true;
+}
+
+bool JointTorqueController::processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                                                dynamixel_hardware_interface::TorqueEnable::Request& res)
+{
+    std::vector<int> pair;
+    pair.push_back(motor_id_);
+    pair.push_back(req.torque_enable);
+    
+    std::vector<std::vector<int> > mcv;
+    mcv.push_back(pair);
+    
+    dxl_io_->setMultiTorqueEnabled(mcv);
+    return true;
 }
 
 int16_t JointTorqueController::velRad2Enc(double vel_rad)

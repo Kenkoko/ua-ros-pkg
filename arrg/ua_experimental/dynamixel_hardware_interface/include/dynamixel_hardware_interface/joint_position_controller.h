@@ -34,6 +34,8 @@
 #include <dynamixel_hardware_interface/dynamixel_io.h>
 #include <dynamixel_hardware_interface/single_joint_controller.h>
 #include <dynamixel_hardware_interface/MotorStateList.h>
+#include <dynamixel_hardware_interface/SetVelocity.h>
+#include <dynamixel_hardware_interface/TorqueEnable.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
@@ -59,6 +61,12 @@ public:
     void processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg);
     void processCommand(const std_msgs::Float64ConstPtr& msg);
 
+    bool processSetVelocity(dynamixel_hardware_interface::SetVelocity::Request& req,
+                            dynamixel_hardware_interface::SetVelocity::Request& res);
+    
+    bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                             dynamixel_hardware_interface::TorqueEnable::Request& res);
+    
 private:
     int motor_id_;
     const dynamixel_hardware_interface::DynamixelData* motor_cache_;
