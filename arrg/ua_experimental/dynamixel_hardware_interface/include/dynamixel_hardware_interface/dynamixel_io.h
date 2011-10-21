@@ -149,7 +149,8 @@ public:
     bool setMultiPosition(std::vector<std::vector<int> > value_pairs);
     bool setMultiVelocity(std::vector<std::vector<int> > value_pairs);
     bool setMultiPositionVelocity(std::vector<std::vector<int> > value_pairs);
-
+    bool setMultiValues(std::vector<std::map<std::string, int> > value_maps);
+    
 private:
     flexiport::Port* port_;
     pthread_mutex_t serial_mutex_;

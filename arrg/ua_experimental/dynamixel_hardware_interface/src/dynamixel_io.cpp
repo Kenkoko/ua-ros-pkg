@@ -835,6 +835,83 @@ bool DynamixelIO::setMultiPositionVelocity(std::vector<std::vector<int> > value_
     else { return false; }
 }
 
+bool DynamixelIO::setMultiValues(std::vector<std::map<std::string, int> > value_maps)
+{
+    std::vector<std::vector<uint8_t> > data;
+    
+    for (size_t i = 0; i < value_maps.size(); ++i)
+    {
+        std::map<std::string, int> m = value_maps[i];
+        std::map<std::string, int>::const_iterator it;
+        
+        it = m.find("id");
+        if (it == m.end()) { return false; }
+        
+        int id = it->second;
+        const DynamixelData* cache = getCachedParameters(id);
+        if (cache == NULL) { return false; }
+        
+        bool     torque_enabled = cache->torque_enabled;
+        uint8_t  led = cache->led;
+        uint8_t  cw_compliance_margin = cache->cw_compliance_margin;
+        uint8_t  ccw_compliance_margin = cache->ccw_compliance_margin;
+        uint8_t  cw_compliance_slope = cache->cw_compliance_slope;
+        uint8_t  ccw_compliance_slope = cache->ccw_compliance_slope;
+        uint16_t target_position = cache->target_position;
+        int16_t  target_velocity = cache->target_velocity;
+        
+        it = m.find("torque_enabled");
+        if (it != m.end()) { torque_enabled = it->second; }
+        
+        it = m.find("cw_compliance_margin");
+        if (it != m.end()) { cw_compliance_margin = it->second; }
+        
+        it = m.find("ccw_compliance_margin");
+        if (it != m.end()) { ccw_compliance_margin = it->second; }
+        
+        it = m.find("cw_compliance_slope");
+        if (it != m.end()) { cw_compliance_slope = it->second; }
+        
+        it = m.find("ccw_compliance_slope");
+        if (it != m.end()) { ccw_compliance_slope = it->second; }
+        
+        it = m.find("target_position");
+        if (it != m.end()) { target_position = it->second; }
+        
+        it = m.find("target_velocity");
+        if (it != m.end()) { target_velocity = it->second; }
+        
+        std::vector<uint8_t> vals;
+        
+        vals.push_back(id);
+        
+        vals.push_back(torque_enabled);
+        vals.push_back(led);
+        vals.push_back(cw_compliance_margin);
+        vals.push_back(ccw_compliance_margin);
+        vals.push_back(cw_compliance_slope);
+        vals.push_back(ccw_compliance_slope);
+        
+        vals.push_back(target_position % 256);         // lo_byte
+        vals.push_back(target_position >> 8);          // hi_byte
+        
+        if (target_velocity >= 0)
+        {
+            vals.push_back(target_velocity % 256);     // lo_byte
+            vals.push_back(target_velocity >> 8);      // hi_byte
+        }
+        else
+        {
+            vals.push_back((DXL_MAX_VELOCITY_ENCODER - target_velocity) % 256);    // lo_byte
+            vals.push_back((DXL_MAX_VELOCITY_ENCODER - target_velocity) >> 8);     // hi_byte
+        }
+        
+        data.push_back(vals);
+    }
+
+    if (syncWrite(DXL_TORQUE_ENABLE, data)) { return true; }
+    else { return false; }
+}
 
 bool DynamixelIO::writePacket(const void* const buffer, size_t count)
 {
