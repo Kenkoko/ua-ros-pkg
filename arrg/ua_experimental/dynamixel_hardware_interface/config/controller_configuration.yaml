@@ -20,6 +20,9 @@ tilt_controller:
 
 multi_joint_c:
     type: dynamixel_hardware_interface/JointTrajectoryActionController
+    dependencies:
+        - pan_controller
+        - tilt_controller
     joint_trajectory_action_node:
         min_velocity: 0.1
         constraints:

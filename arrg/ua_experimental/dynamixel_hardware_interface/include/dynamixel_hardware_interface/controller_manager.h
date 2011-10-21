@@ -55,15 +55,10 @@ public:
     ControllerManager();
     virtual ~ControllerManager();
     
-    bool startController(dynamixel_hardware_interface::StartController::Request& req,
-                         dynamixel_hardware_interface::StartController::Response& res);
+    bool startController(std::string name, std::string port);
+    bool stopController(std::string name);
+    bool restartController(std::string name);
     
-    bool stopController(dynamixel_hardware_interface::StopController::Request& req,
-                        dynamixel_hardware_interface::StopController::Response& res);
-    
-    bool restartController(dynamixel_hardware_interface::RestartController::Request& req,
-                           dynamixel_hardware_interface::RestartController::Response& res);
-
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle private_nh_;
@@ -98,6 +93,16 @@ private:
 
     void publishDiagnosticInformation();
     void checkDeps();
+    
+    bool startControllerSrv(dynamixel_hardware_interface::StartController::Request& req,
+                            dynamixel_hardware_interface::StartController::Response& res);
+    
+    bool stopControllerSrv(dynamixel_hardware_interface::StopController::Request& req,
+                           dynamixel_hardware_interface::StopController::Response& res);
+    
+    bool restartControllerSrv(dynamixel_hardware_interface::RestartController::Request& req,
+                              dynamixel_hardware_interface::RestartController::Response& res);
+    
 };
 
 }
