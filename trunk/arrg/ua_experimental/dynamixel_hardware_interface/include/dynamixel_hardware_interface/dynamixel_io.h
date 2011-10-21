@@ -63,6 +63,8 @@ typedef struct DynamixelDataStruct
     uint8_t  ccw_compliance_margin;
     uint8_t  cw_compliance_slope;
     uint8_t  ccw_compliance_slope;
+    uint16_t target_position;
+    int16_t  target_velocity;
     
 } DynamixelData;
 
@@ -70,8 +72,6 @@ typedef struct DynamixelStatusStruct
 {
     double timestamp;
     
-    uint16_t target_position;
-    int16_t  target_velocity;
     uint16_t torque_limit;
     uint16_t position;
     int16_t  velocity;
