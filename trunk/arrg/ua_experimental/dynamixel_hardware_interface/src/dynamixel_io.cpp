@@ -559,6 +559,61 @@ bool DynamixelIO::getFeedback(int servo_id, DynamixelStatus& status)
     return false;
 }
 
+/************************ SETTERS **************************/
+
+bool DynamixelIO::setCWAngleLimit(int servo_id, uint16_t cw_angle)
+{
+    std::vector<uint8_t> data;
+    data.push_back(cw_angle % 256); // lo_byte
+    data.push_back(cw_angle >> 8);  // hi_byte
+    
+    std::vector<uint8_t> response;
+    
+    if (write(servo_id, DXL_CW_ANGLE_LIMIT_L, data, response))
+    {
+        checkForErrors(servo_id, response[4], "setCWAngleLimit");
+        return true;
+    }
+    
+    return false;
+}
+
+bool DynamixelIO::setCCWAngleLimit(int servo_id, uint16_t ccw_angle)
+{
+    std::vector<uint8_t> data;
+    data.push_back(ccw_angle % 256); // lo_byte
+    data.push_back(ccw_angle >> 8);  // hi_byte
+    
+    std::vector<uint8_t> response;
+    
+    if (write(servo_id, DXL_CCW_ANGLE_LIMIT_L, data, response))
+    {
+        checkForErrors(servo_id, response[4], "setCCWAngleLimit");
+        return true;
+    }
+    
+    return false;
+}
+
+bool DynamixelIO::setAngleLimits(int servo_id, uint16_t cw_angle, uint16_t ccw_angle)
+{
+    std::vector<uint8_t> data;
+    data.push_back(cw_angle % 256);     // lo_byte
+    data.push_back(cw_angle >> 8);      // hi_byte
+    data.push_back(ccw_angle % 256);    // lo_byte
+    data.push_back(ccw_angle >> 8);     // hi_byte
+    
+    std::vector<uint8_t> response;
+    
+    if (write(servo_id, DXL_CW_ANGLE_LIMIT_L, data, response))
+    {
+        checkForErrors(servo_id, response[4], "setAngleLimits");
+        return true;
+    }
+    
+    return false;
+}
+
 bool DynamixelIO::setTorqueEnable(int servo_id, bool on)
 {
     std::vector<uint8_t> data;
@@ -834,6 +889,27 @@ bool DynamixelIO::setMultiPositionVelocity(std::vector<std::vector<int> > value_
     if (syncWrite(DXL_GOAL_POSITION_L, data)) { return true; }
     else { return false; }
 }
+
+bool DynamixelIO::setMultiComplianceMargins(std::vector<std::vector<int> > value_pairs)
+{
+    std::vector<std::vector<uint8_t> > data;
+    
+    for (size_t i = 0; i < value_pairs.size(); ++i)
+    {
+        std::vector<uint8_t> value_pair;
+        
+        value_pair.push_back(value_pairs[i][0]);    // servo id
+        value_pair.push_back(value_pairs[i][1]);    // cw_compliance_margin
+        value_pair.push_back(value_pairs[i][2]);    // ccw_compliance_margin
+        
+        data.push_back(value_pair);
+    }
+    
+    if (syncWrite(DXL_CW_COMPLIANCE_MARGIN, data)) { return true; }
+    else { return false; }
+}
+
+
 
 bool DynamixelIO::setMultiValues(std::vector<std::map<std::string, int> > value_maps)
 {

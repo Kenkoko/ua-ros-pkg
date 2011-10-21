@@ -327,7 +327,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
                 ROS_DEBUG("\tstart_position: %f, duration: %f", start_position, durations[seg]);
                 ROS_DEBUG("\tport: %s, joint: %s, dpos: %f, dvel: %f", pjit->first.c_str(), joint.c_str(), desired_position, desired_velocity);
                 
-                std::vector<std::vector<int> > mvcs = joint_to_controller_[joint]->getWritableVals(desired_position, desired_velocity);
+                std::vector<std::vector<int> > mvcs = joint_to_controller_[joint]->getRawMotorCommands(desired_position, desired_velocity);
                 for (size_t i = 0; i < mvcs.size(); ++i)
                 {
                     vals.push_back(mvcs[i]);
@@ -367,7 +367,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
                         double desired_position = joint_states_[joint]->position;
                         double desired_velocity = joint_states_[joint]->velocity;
                         
-                        std::vector<std::vector<int> > mvcs = joint_to_controller_[joint]->getWritableVals(desired_position, desired_velocity);
+                        std::vector<std::vector<int> > mvcs = joint_to_controller_[joint]->getRawMotorCommands(desired_position, desired_velocity);
                         for (size_t i = 0; i < mvcs.size(); ++i)
                         {
                             vals.push_back(mvcs[i]);

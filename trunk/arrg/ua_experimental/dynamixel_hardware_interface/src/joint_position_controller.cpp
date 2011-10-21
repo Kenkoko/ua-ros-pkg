@@ -107,15 +107,21 @@ bool JointPositionController::initialize(std::string name,
         max_velocity_ = min_velocity_;
     }
 
-    if (init_velocity_ > motor_max_velocity_)
+    motor_cache_ = dxl_io_->getCachedParameters(motor_id_);
+    if (motor_cache_ == NULL) { return false; }
+
+    int encoder_resolution;
+    nh_.getParam(prefix + "encoder_resolution", encoder_resolution);
+    
+    if (motor_cache_->cw_angle_limit == 0 && motor_cache_->ccw_angle_limit == 0)
     {
-        ROS_WARN("%s: requested initial joint velocity exceeds motor capabilities (%f > %f)", name_.c_str(), init_velocity_, motor_max_velocity_);
-        init_velocity_ = motor_max_velocity_;
-    }
-    else if (init_velocity_ < min_velocity_)
-    {
-        ROS_WARN("%s: requested initial joint velocity is too small (%f < %f)", name_.c_str(), init_velocity_, min_velocity_);
-        init_velocity_ = min_velocity_;
+        ROS_WARN("%s: motor %d is not set to position control mode, setting motor to position control mode", name_.c_str(), motor_id_);
+        
+        if (!dxl_io_->setAngleLimits(motor_id_, 0, encoder_resolution-1))
+        {
+            ROS_ERROR("%s: unable to set motor to position control mode", name_.c_str());
+            return false;
+        }
     }
 
     /***************** Motor related parameters **********************/
@@ -139,7 +145,7 @@ bool JointPositionController::initialize(std::string name,
         max_angle_radians_ = (max_angle_encoder_ - init_position_encoder_) * radians_per_encoder_tick_;
     }
 
-    setVelocity(init_velocity_);
+    setVelocity(INIT_VELOCITY);
     return true;
 }
 
@@ -158,7 +164,7 @@ std::vector<int> JointPositionController::getMotorIDs()
     return std::vector<int>(1, motor_id_);
 }
 
-std::vector<std::vector<int> > JointPositionController::getWritableVals(double position, double velocity)
+std::vector<std::vector<int> > JointPositionController::getRawMotorCommands(double position, double velocity)
 {
     std::vector<std::vector<int> > value_pairs;
 
@@ -170,21 +176,6 @@ std::vector<std::vector<int> > JointPositionController::getWritableVals(double p
     value_pairs.push_back(pair);
 
     return value_pairs;
-}
-
-uint16_t JointPositionController::posRad2Enc(double pos_rad)
-{
-    if (pos_rad < min_angle_radians_) { pos_rad = min_angle_radians_; }
-    if (pos_rad > max_angle_radians_) { pos_rad = max_angle_radians_; }
-    return convertToEncoder(pos_rad);
-}
-
-uint16_t JointPositionController::velRad2Enc(double vel_rad)
-{
-    if (vel_rad < min_velocity_) { vel_rad = min_velocity_; }
-    if (vel_rad > max_velocity_) { vel_rad = max_velocity_; }
-    
-    return std::max<uint16_t>(1, (uint16_t) round(vel_rad / velocity_per_encoder_tick_));
 }
 
 void JointPositionController::setVelocity(double velocity)
@@ -240,6 +231,21 @@ void JointPositionController::processCommand(const std_msgs::Float64ConstPtr& ms
     mcv.push_back(pair);
     
     dxl_io_->setMultiPosition(mcv);
+}
+
+uint16_t JointPositionController::posRad2Enc(double pos_rad)
+{
+    if (pos_rad < min_angle_radians_) { pos_rad = min_angle_radians_; }
+    if (pos_rad > max_angle_radians_) { pos_rad = max_angle_radians_; }
+    return convertToEncoder(pos_rad);
+}
+
+uint16_t JointPositionController::velRad2Enc(double vel_rad)
+{
+    if (vel_rad < min_velocity_) { vel_rad = min_velocity_; }
+    if (vel_rad > max_velocity_) { vel_rad = max_velocity_; }
+    
+    return std::max<uint16_t>(1, (uint16_t) round(vel_rad / velocity_per_encoder_tick_));
 }
 
 }

@@ -52,9 +52,7 @@ public:
     void stop();
 
     std::vector<int> getMotorIDs();
-    std::vector<std::vector<int> > getWritableVals(double position, double velocity);
-    
-    int16_t velRad2Enc(double vel_rad);
+    std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity);
     
     void setVelocity(double velocity);
     
@@ -63,7 +61,9 @@ public:
 
 private:
     int motor_id_;
-    double last_commanded_torque_;
+    const dynamixel_hardware_interface::DynamixelData* motor_cache_;
+    
+    int16_t velRad2Enc(double vel_rad);    
 };
 
 }

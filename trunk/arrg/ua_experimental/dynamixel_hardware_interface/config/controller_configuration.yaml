@@ -2,7 +2,6 @@ pan_controller:
     type: dynamixel_hardware_interface/JointPositionController
     joint: pan_joint
     max_velocity: 3.2
-    init_velocity: 1.2
     motor:
         id: 4
         init: 512
@@ -13,7 +12,6 @@ tilt_controller:
     type: dynamixel_hardware_interface/JointPositionController
     joint: tilt_joint
     max_velocity: 3.2
-    init_velocity: 1.2
     motor:
         id: 5
         init: 512
@@ -26,4 +24,15 @@ multi_joint_c:
         min_velocity: 0.1
         constraints:
             goal_time: 0.25
+
+wheel_controller:
+    type: dynamixel_hardware_interface/JointTorqueController
+    joint: wheel_joint
+    max_velocity: 3.2
+    motor:
+        id: 13
+        init: 512
+        min: 0
+        max: 1023
+
 
