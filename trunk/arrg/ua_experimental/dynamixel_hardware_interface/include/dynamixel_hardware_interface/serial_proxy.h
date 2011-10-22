@@ -59,7 +59,7 @@ public:
 
     ~SerialProxy();
 
-    void connect();
+    bool connect();
     void disconnect();
     
     DynamixelIO* getSerialPort();
@@ -94,7 +94,7 @@ private:
     std::map<int, const DynamixelData*> motor_static_info_;
 
     void fillMotorParameters(const DynamixelData* motor_data);
-    void findMotors();
+    bool findMotors();
     void updateMotorStates();
     void publishDiagnosticInformation();
     
