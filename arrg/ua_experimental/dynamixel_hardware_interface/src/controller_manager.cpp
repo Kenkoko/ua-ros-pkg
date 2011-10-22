@@ -110,8 +110,19 @@ ControllerManager::ControllerManager() : nh_(ros::NodeHandle()), private_nh_(ros
                                                           diagnostics_rate_,
                                                           error_level_temp,
                                                           warn_level_temp);
-        serial_proxy->connect();
+        if (!serial_proxy->connect())
+        {
+            delete serial_proxy;
+            continue;
+        }
+        
         serial_proxies_[port_namespace] = serial_proxy;
+    }
+    
+    if (serial_proxies_.empty())
+    {
+        ROS_FATAL("No motors found on any configured serial port, aborting");
+        exit(1);
     }
     
     sjc_loader_.reset(new pluginlib::ClassLoader<controller::SingleJointController>("dynamixel_hardware_interface", "controller::SingleJointController"));

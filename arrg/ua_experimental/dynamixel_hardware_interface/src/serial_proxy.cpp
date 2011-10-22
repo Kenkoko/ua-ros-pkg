@@ -79,17 +79,17 @@ SerialProxy::~SerialProxy()
     delete dxl_io_;
 }
 
-void SerialProxy::connect()
+bool SerialProxy::connect()
 {
     try
     {
         dxl_io_ = new DynamixelIO(port_name_, baud_rate_);
-        findMotors();
+        if (!findMotors()) { return false; }
     }
     catch (flexiport::PortException pex)
     {
-        ROS_FATAL("%s", pex.what());
-        ros::requestShutdown();
+        ROS_ERROR("%s", pex.what());
+        return false;
     }
     
     if (update_rate_ > 0)
@@ -111,6 +111,8 @@ void SerialProxy::connect()
     {
         diagnostics_thread_ = NULL;
     }
+    
+    return true;
 }
 
 DynamixelIO* SerialProxy::getSerialPort()
@@ -157,14 +159,12 @@ void SerialProxy::fillMotorParameters(const DynamixelData* motor_data)
     nh_.setParam(prefix + "radians_per_encoder_tick", range_radians / encoder_resolution);
 }
 
-void SerialProxy::findMotors()
+bool SerialProxy::findMotors()
 {
-    ROS_INFO("Pinging motor IDs %d through %d...", min_motor_id_, max_motor_id_);
+    ROS_INFO("%s: Pinging motor IDs %d through %d...", port_namespace_.c_str(), min_motor_id_, max_motor_id_);
 
     XmlRpc::XmlRpcValue val;
     std::map<int, int> counts;
-    std::stringstream ss;
-    ss << "[";
 
     for (int motor_id = min_motor_id_; motor_id <= max_motor_id_; ++motor_id)
     {
@@ -184,38 +184,41 @@ void SerialProxy::findMotors()
 
             motors_.push_back(motor_id);
             val[motors_.size()-1] = motor_id;
-            ss << motor_id << ", ";
         }
     }
 
-    std::string motors_found = ss.str();
-
-    if (!motors_.empty())
+    if (motors_.empty())
     {
-        motors_found.replace(motors_found.size()-2, 2, "]");
-        ROS_INFO("Found motors with IDs: %s.", motors_found.c_str());
-    }
-    else
-    {
-        ROS_INFO("No motors found, aborting.");
-        exit(1);
+        ROS_WARN("%s: No motors found.", port_namespace_.c_str());
+        return false;
     }
 
     nh_.setParam("dynamixel/" + port_namespace_ + "/connected_ids", val);
 
-    ss.str("");
-    ss << "There are ";
+    std::stringstream ss;
+    ss << port_namespace_ << ": Found " << motors_.size() << " motors - ";
 
     std::map<int, int>::iterator it;
     for (it = counts.begin(); it != counts.end(); ++it)
     {
-        ss << (*it).second << " " << getMotorModelName((*it).first) << ", ";
+        ss << (*it).second << " " << getMotorModelName((*it).first) << " [";
+        
+        for (size_t i = 0; i < motors_.size(); ++i)
+        {
+            if (motor_static_info_[motors_[i]]->model_number == (*it).first)
+            {
+                ss << motors_[i] << ((i < motors_.size()-1) ? ", " : "");
+            }
+        }
+        
+        ss << "], ";
     }
 
     std::string status = ss.str();
-    status.replace(status.size()-2, 2, " servos connected");
-    ROS_INFO("%s", status.c_str());
-    ROS_INFO("Dynamixel Manager on port %s initialized", port_namespace_.c_str());
+    status.erase(status.size()-2);
+    ROS_INFO("%s, initialization complete.", status.c_str());
+    
+    return true;
 }
 
 void SerialProxy::updateMotorStates()

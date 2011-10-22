@@ -92,7 +92,7 @@ if __name__ == '__main__':
         stop_controller = rospy.ServiceProxy(stop_service_name, StopController)
         restart_controller = rospy.ServiceProxy(restart_service_name, RestartController)
         
-        rospy.loginfo('%s controller_spawner: All services are up, spawning controllers...' % port_namespace)
+        rospy.loginfo('%s controller_spawner: All services are up, %sing controllers...' % (port_namespace, command.lower()))
         
         for controller_name in joint_controllers:
             try:
