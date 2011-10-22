@@ -35,11 +35,13 @@
 #include <dynamixel_hardware_interface/MotorState.h>
 #include <dynamixel_hardware_interface/SetVelocity.h>
 #include <dynamixel_hardware_interface/TorqueEnable.h>
+#include <dynamixel_hardware_interface/SetTorqueLimit.h>
 
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
 
 #include <std_msgs/Float64.h>
+#include <std_srvs/Empty.h>
 
 PLUGINLIB_DECLARE_CLASS(dynamixel_hardware_interface,
                         JointPositionController,
@@ -95,6 +97,8 @@ bool JointPositionController::initialize(std::string name,
     
     /***************** Joint velocity related parameters **********************/
     nh_.getParam(prefix + "max_velocity", motor_max_velocity_);
+    if (max_velocity_ == 0.0) { max_velocity_ = motor_max_velocity_; }
+    
     nh_.getParam(prefix + "radians_second_per_encoder_tick", velocity_per_encoder_tick_);
     min_velocity_ = velocity_per_encoder_tick_;
     
@@ -180,7 +184,7 @@ std::vector<std::vector<int> > JointPositionController::getRawMotorCommands(doub
     return value_pairs;
 }
 
-void JointPositionController::setVelocity(double velocity)
+bool JointPositionController::setVelocity(double velocity)
 {
     std::vector<int> pair;
     pair.push_back(motor_id_);
@@ -189,7 +193,7 @@ void JointPositionController::setVelocity(double velocity)
     std::vector<std::vector<int> > mcv;
     mcv.push_back(pair);
 
-    dxl_io_->setMultiVelocity(mcv);
+    return dxl_io_->setMultiVelocity(mcv);
 }
 
 void JointPositionController::processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg)
@@ -238,8 +242,7 @@ void JointPositionController::processCommand(const std_msgs::Float64ConstPtr& ms
 bool JointPositionController::processSetVelocity(dynamixel_hardware_interface::SetVelocity::Request& req,
                                                  dynamixel_hardware_interface::SetVelocity::Request& res)
 {
-    setVelocity(req.velocity);
-    return true;
+    return setVelocity(req.velocity);
 }
 
 bool JointPositionController::processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
@@ -252,8 +255,39 @@ bool JointPositionController::processTorqueEnable(dynamixel_hardware_interface::
     std::vector<std::vector<int> > mcv;
     mcv.push_back(pair);
     
-    dxl_io_->setMultiTorqueEnabled(mcv);
-    return true;
+    return dxl_io_->setMultiTorqueEnabled(mcv);
+}
+
+bool JointPositionController::processResetOverloadError(std_srvs::Empty::Request& req,
+                                                        std_srvs::Empty::Request& res)
+{
+    return dxl_io_->resetOverloadError(motor_id_);
+}
+    
+bool JointPositionController::processSetTorqueLimit(dynamixel_hardware_interface::SetTorqueLimit::Request& req,
+                                                    dynamixel_hardware_interface::SetTorqueLimit::Request& res)
+{
+    double torque_limit = req.torque_limit;
+    
+    if (torque_limit < 0)
+    {
+        ROS_WARN("%s: Torque limit is below minimum (%f < %f)", name_.c_str(), torque_limit, 0.0);
+        torque_limit = 0.0;
+    }
+    else if (torque_limit > 1.0)
+    {
+        ROS_WARN("%s: Torque limit is above maximum (%f > %f)", name_.c_str(), torque_limit, 1.0);
+        torque_limit = 1.0;
+    }
+    
+    std::vector<int> pair;
+    pair.push_back(motor_id_);
+    pair.push_back(torque_limit * dynamixel_hardware_interface::DXL_MAX_TORQUE_ENCODER);
+    
+    std::vector<std::vector<int> > mcv;
+    mcv.push_back(pair);
+    
+    return dxl_io_->setMultiTorqueLimit(mcv);
 }
 
 uint16_t JointPositionController::posRad2Enc(double pos_rad)

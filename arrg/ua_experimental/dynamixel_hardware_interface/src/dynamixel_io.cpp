@@ -179,7 +179,7 @@ bool DynamixelIO::resetOverloadError(int servo_id)
     const DynamixelData* cache = getCachedParameters(servo_id);
     if (cache == NULL) { return false; }
     
-    if (setTorqueLimit(servo_id, cache->max_torque))
+    if (setTorqueEnable(servo_id, false) && setTorqueLimit(servo_id, cache->max_torque))
     {
         return setLed(servo_id, false);
     }
@@ -933,6 +933,26 @@ bool DynamixelIO::setMultiTorqueEnabled(std::vector<std::vector<int> > value_pai
     else { return false; }
 }
 
+bool DynamixelIO::setMultiTorqueLimit(std::vector<std::vector<int> > value_pairs)
+{
+    std::vector<std::vector<uint8_t> > data;
+
+    for (size_t i = 0; i < value_pairs.size(); ++i)
+    {
+        std::vector<uint8_t> value_pair;
+
+        int torque_limit = value_pairs[i][1];
+
+        value_pair.push_back(value_pairs[i][0]);        // servo id
+        value_pair.push_back(torque_limit % 256);       // lo_byte
+        value_pair.push_back(torque_limit >> 8);        // hi_byte
+
+        data.push_back(value_pair);
+    }
+
+    if (syncWrite(DXL_TORQUE_LIMIT_L, data)) { return true; }
+    else { return false; }
+}
 
 bool DynamixelIO::setMultiValues(std::vector<std::map<std::string, int> > value_maps)
 {

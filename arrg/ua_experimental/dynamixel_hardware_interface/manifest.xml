@@ -16,6 +16,7 @@
     <depend package="trajectory_msgs"/>
     <depend package="diagnostic_msgs"/>
     <depend package="diagnostic_updater"/>
+    <depend package="std_srvs"/>
     
     <export>
         <cpp cflags="-I${prefix}/include"
