@@ -34,6 +34,7 @@
 #include <dynamixel_hardware_interface/joint_torque_controller.h>
 #include <dynamixel_hardware_interface/MotorState.h>
 #include <dynamixel_hardware_interface/SetVelocity.h>
+#include <dynamixel_hardware_interface/TorqueEnable.h>
 
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
