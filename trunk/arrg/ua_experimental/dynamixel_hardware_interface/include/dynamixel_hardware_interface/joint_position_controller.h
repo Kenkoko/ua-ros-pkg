@@ -39,6 +39,7 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
+#include <std_srvs/Empty.h>
 
 namespace controller
 {
@@ -56,7 +57,7 @@ public:
     std::vector<int> getMotorIDs();
     std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity);
     
-    void setVelocity(double velocity);
+    bool setVelocity(double velocity);
     
     void processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg);
     void processCommand(const std_msgs::Float64ConstPtr& msg);
@@ -66,6 +67,12 @@ public:
     
     bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
                              dynamixel_hardware_interface::TorqueEnable::Request& res);
+    
+    bool processResetOverloadError(std_srvs::Empty::Request& req,
+                                   std_srvs::Empty::Request& res);
+    
+    bool processSetTorqueLimit(dynamixel_hardware_interface::SetTorqueLimit::Request& req,
+                               dynamixel_hardware_interface::SetTorqueLimit::Request& res);
     
 private:
     int motor_id_;

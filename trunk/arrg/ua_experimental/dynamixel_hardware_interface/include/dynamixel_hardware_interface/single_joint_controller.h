@@ -38,9 +38,11 @@
 #include <dynamixel_hardware_interface/MotorStateList.h>
 #include <dynamixel_hardware_interface/SetVelocity.h>
 #include <dynamixel_hardware_interface/TorqueEnable.h>
+#include <dynamixel_hardware_interface/SetTorqueLimit.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
+#include <std_srvs/Empty.h>
 
 namespace controller
 {
@@ -81,7 +83,7 @@ public:
             return false;
         }
         
-        c_nh_.param("max_velocity", max_velocity_, 3.0);
+        c_nh_.param("max_velocity", max_velocity_, 0.0);
         
         return true;
     }
@@ -100,6 +102,8 @@ public:
         joint_state_pub_ = c_nh_.advertise<dynamixel_hardware_interface::JointState>("state", 50);
         joint_velocity_srv_ = c_nh_.advertiseService("set_velocity", &SingleJointController::processSetVelocity, this);
         torque_enable_srv_ = c_nh_.advertiseService("torque_enable", &SingleJointController::processTorqueEnable, this);
+        reset_overload_error_srv_ = c_nh_.advertiseService("reset_overload_error", &SingleJointController::processResetOverloadError, this);
+        set_torque_limit_srv_ = c_nh_.advertiseService("set_torque_limit", &SingleJointController::processSetTorqueLimit, this);
     }
     
     virtual void stop()
@@ -109,12 +113,14 @@ public:
         joint_state_pub_.shutdown();
         joint_velocity_srv_.shutdown();
         torque_enable_srv_.shutdown();
+        reset_overload_error_srv_.shutdown();
+        set_torque_limit_srv_.shutdown();
     }
     
     virtual std::vector<int> getMotorIDs() = 0;
     virtual std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity) = 0;
     
-    virtual void setVelocity(double velocity) = 0;
+    virtual bool setVelocity(double velocity) = 0;
     
     virtual void processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg) = 0;
     virtual void processCommand(const std_msgs::Float64ConstPtr& msg) = 0;
@@ -124,6 +130,12 @@ public:
     
     virtual bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
                                      dynamixel_hardware_interface::TorqueEnable::Request& res) = 0;
+    
+    virtual bool processResetOverloadError(std_srvs::Empty::Request& req,
+                                           std_srvs::Empty::Request& res) = 0;
+    
+    virtual bool processSetTorqueLimit(dynamixel_hardware_interface::SetTorqueLimit::Request& req,
+                                       dynamixel_hardware_interface::SetTorqueLimit::Request& res) = 0;
     
 protected:
     ros::NodeHandle nh_;
@@ -158,6 +170,8 @@ protected:
     ros::Publisher joint_state_pub_;
     ros::ServiceServer joint_velocity_srv_;
     ros::ServiceServer torque_enable_srv_;
+    ros::ServiceServer reset_overload_error_srv_;
+    ros::ServiceServer set_torque_limit_srv_;
     
     uint16_t convertToEncoder(double angle_in_radians)
     {
