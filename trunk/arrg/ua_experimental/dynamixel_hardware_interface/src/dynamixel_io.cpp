@@ -76,10 +76,17 @@ DynamixelIO::~DynamixelIO()
 bool DynamixelIO::updateCachedParameters(int servo_id)
 {
     std::map<int, DynamixelData*>::iterator it = cache_.find(servo_id);
-    DynamixelData* data;
+    DynamixelData* data = NULL;
     
-    if (it == cache_.end()) { data = new DynamixelData(); }
-    else { data = it->second; }
+    if (it == cache_.end())
+    {
+        data = new DynamixelData();
+        cache_[servo_id] = data;
+    }
+    else
+    {
+        data = it->second;
+    }
     
     int num_retries = 10;
     int count = 0;
@@ -123,7 +130,6 @@ bool DynamixelIO::updateCachedParameters(int servo_id)
         data->target_position = target_position;
         data->target_velocity = target_velocity;
         
-        cache_[servo_id] = data;
         return true;
     }
 
@@ -170,15 +176,15 @@ bool DynamixelIO::ping(int servo_id)
 
 bool DynamixelIO::resetOverloadError(int servo_id)
 {
-    uint16_t max_torque;
-    bool success = false;
+    const DynamixelData* cache = getCachedParameters(servo_id);
+    if (cache == NULL) { return false; }
     
-    if (getMaximumTorque(servo_id, max_torque) && setTorqueLimit(servo_id, max_torque))
+    if (setTorqueLimit(servo_id, cache->max_torque))
     {
-        success = setLed(servo_id, false);
+        return setLed(servo_id, false);
     }
-                   
-    return success;
+    
+    return false;
 }
 
 bool DynamixelIO::getModelNumber(int servo_id, uint16_t& model_number)
