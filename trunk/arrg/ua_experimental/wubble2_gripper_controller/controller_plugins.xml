@@ -1,0 +1,5 @@
+<library path="lib/libwubble2_gripper_controller">
+    <class name="dynamixel_hardware_interface/WubbleGripperActionController"
+           type="controller::WubbleGripperActionController"
+           base_class_type="controller::MultiJointController" />
+</library>
