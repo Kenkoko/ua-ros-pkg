@@ -63,15 +63,21 @@ public:
     void processIRSensor(const phidgets_ros::Float64StampedConstPtr& msg);
     void processGripperAction(const wubble2_gripper_controller::WubbleGripperGoalConstPtr& goal);
     double activateGripper(int command, double torque_limit);
+    void calculateGripperOpening();
+    void gripperMonitor();
 
 private:
     typedef actionlib::SimpleActionServer<wubble2_gripper_controller::WubbleGripperAction> WGAS;
     boost::scoped_ptr<WGAS> action_server_;
     
-    boost::thread* feedback_thread_;
     boost::mutex terminate_mutex_;
-    bool terminate_;
     
+    boost::thread* gripper_opening_thread_;
+    bool terminate_gripper_opening_;
+    
+    boost::thread* gripper_monitor_thread_;
+    bool terminate_gripper_monitor_;
+
     tf::TransformListener tf_listener_;
     
     ros::Publisher gripper_opening_pub_;
