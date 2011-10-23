@@ -386,7 +386,7 @@ void WubbleGripperActionController::gripperMonitor()
                                                    std::accumulate(l_zero_pressure_.begin(), l_zero_pressure_.end(), 0));
         double r_total_pressure = std::max<double>(0.0,
                                                    std::accumulate(pressure_.begin()+4, pressure_.end(), 0) -
-                                                   std::accumulate(l_zero_pressure_.begin(), l_zero_pressure_.end(), 0));
+                                                   std::accumulate(r_zero_pressure_.begin(), r_zero_pressure_.end(), 0));
         double pressure = l_total_pressure + r_total_pressure;
         
         msg.data = l_total_pressure;
