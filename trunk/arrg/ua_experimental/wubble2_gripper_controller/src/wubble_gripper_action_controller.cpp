@@ -55,7 +55,7 @@ namespace controller
     
 WubbleGripperActionController::WubbleGripperActionController()
 {
-    terminate_ = false;
+    terminate_gripper_opening_ = false;
 }
 
 WubbleGripperActionController::~WubbleGripperActionController()
@@ -153,10 +153,10 @@ void WubbleGripperActionController::start()
     ir_sensor_sub_ = nh_.subscribe("/interface_kit/106950/sensor/7", 100, &WubbleGripperActionController::processIRSensor, this);
   
     // Temperature monitor and torque control thread
-    //Thread(target=self.gripper_monitor).start()
+    gripper_monitor_thread_ = new boost::thread(boost::bind(&WubbleGripperActionController::gripperMonitor, this));
     
     // Start gripper opening monitoring thread
-    //Thread(target=self.calculate_gripper_opening).start()
+    gripper_opening_thread_ = new boost::thread(boost::bind(&WubbleGripperActionController::calculateGripperOpening, this));
 
     action_server_.reset(new WGAS(c_nh_, "wubble_gripper_action",
                                   boost::bind(&WubbleGripperActionController::processGripperAction, this, _1),
@@ -168,6 +168,26 @@ void WubbleGripperActionController::start()
 
 void WubbleGripperActionController::stop()
 {
+    if (gripper_opening_thread_)
+    {
+        {
+            boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
+            terminate_gripper_opening_ = true;
+        }
+        gripper_opening_thread_->join();
+        delete gripper_opening_thread_;
+    }
+    
+    if (gripper_monitor_thread_)
+    {
+        {
+            boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
+            terminate_gripper_monitor_ = true;
+        }
+        gripper_monitor_thread_->join();
+        delete gripper_monitor_thread_;
+    }
+    
     gripper_opening_pub_.shutdown();
     l_finger_ground_distance_pub_.shutdown();
     r_finger_ground_distance_pub_.shutdown();
@@ -282,6 +302,86 @@ double WubbleGripperActionController::activateGripper(int command, double torque
     sendMotorCommand(l_desired_torque, r_desired_torque);
     
     return std::max<double>(l_desired_torque, r_desired_torque);
+}
+
+void WubbleGripperActionController::calculateGripperOpening()
+{
+    ros::Duration timeout(5);
+    ros::Time last_reported(0);
+    std_msgs::Float64 msg;
+    ros::Rate r(50);
+    
+    while (ros::ok())
+    {
+        {
+            boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
+            if (terminate_gripper_opening_) { break; }
+        }
+
+        try
+        {
+            std::string map_frame_id("base_footprint");
+            std::string palm_frame_id("L7_wrist_roll_link");
+            std::string l_fingertip_frame_id("left_fingertip_link");
+            std::string r_fingertip_frame_id("right_fingertip_link");
+            
+            tf_listener_.waitForTransform(palm_frame_id, l_fingertip_frame_id, ros::Time(0), ros::Duration(0.2));
+            tf_listener_.waitForTransform(palm_frame_id, r_fingertip_frame_id, ros::Time(0), ros::Duration(0.2));
+            
+            tf::StampedTransform lt;
+            tf::StampedTransform rt;
+            tf_listener_.lookupTransform(palm_frame_id, l_fingertip_frame_id, ros::Time(0), lt);
+            tf_listener_.lookupTransform(palm_frame_id, r_fingertip_frame_id, ros::Time(0), rt);
+            
+            btVector3 l_pos = lt.getOrigin();
+            btVector3 r_pos = rt.getOrigin();
+            
+            double dx = l_pos[0] - r_pos[0];
+            double dy = l_pos[1] - r_pos[1];
+            double dz = l_pos[2] - r_pos[2];
+            
+            double dist = sqrt(dx*dx + dy*dy + dz*dz);
+            msg.data = dist;
+            
+            gripper_opening_pub_.publish(msg);
+            
+            tf_listener_.lookupTransform(map_frame_id, l_fingertip_frame_id, ros::Time(0), lt);
+            tf_listener_.lookupTransform(map_frame_id, r_fingertip_frame_id, ros::Time(0), rt);
+            
+            l_pos = lt.getOrigin();
+            r_pos = rt.getOrigin();
+            
+            msg.data = l_pos[2];
+            l_finger_ground_distance_pub_.publish(msg);
+            
+            msg.data = r_pos[2];
+            r_finger_ground_distance_pub_.publish(msg);
+        }
+        catch (const std::runtime_error &e)
+        {
+            ROS_ERROR_THROTTLE(1, "%s: %s", name_.c_str(), e.what());
+        }
+                
+        r.sleep();
+    }
+}
+
+void WubbleGripperActionController::gripperMonitor()
+{
+    ROS_INFO("%s: Gripper temperature monitor and torque control thread started successfully", name_.c_str());
+    bool motors_overheating = false;
+    double max_pressure = 8000.0;
+    ros::Rate r(150);
+    
+    while (ros::ok())
+    {
+        {
+            boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
+            if (terminate_gripper_monitor_) { break; }
+        }
+
+        r.sleep();
+    }
 }
 
 void WubbleGripperActionController::sendMotorCommand(double l_desired_torque, double r_desired_torque)
