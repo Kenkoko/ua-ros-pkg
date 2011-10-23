@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <numeric>
 #include <XmlRpcValue.h>
 
 #include <wubble2_gripper_controller/wubble_gripper_action_controller.h>
@@ -339,10 +340,9 @@ void WubbleGripperActionController::calculateGripperOpening()
             double dx = l_pos[0] - r_pos[0];
             double dy = l_pos[1] - r_pos[1];
             double dz = l_pos[2] - r_pos[2];
-            
             double dist = sqrt(dx*dx + dy*dy + dz*dz);
-            msg.data = dist;
             
+            msg.data = dist;
             gripper_opening_pub_.publish(msg);
             
             tf_listener_.lookupTransform(map_frame_id, l_fingertip_frame_id, ros::Time(0), lt);
@@ -371,6 +371,7 @@ void WubbleGripperActionController::gripperMonitor()
     ROS_INFO("%s: Gripper temperature monitor and torque control thread started successfully", name_.c_str());
     bool motors_overheating = false;
     double max_pressure = 8000.0;
+    std_msgs::Float64 msg;
     ros::Rate r(150);
     
     while (ros::ok())
@@ -379,6 +380,91 @@ void WubbleGripperActionController::gripperMonitor()
             boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
             if (terminate_gripper_monitor_) { break; }
         }
+        
+        double l_total_pressure = std::max<double>(0.0,
+                                                   std::accumulate(pressure_.begin(), pressure_.begin()+4, 0) -
+                                                   std::accumulate(l_zero_pressure_.begin(), l_zero_pressure_.end(), 0));
+        double r_total_pressure = std::max<double>(0.0,
+                                                   std::accumulate(pressure_.begin()+4, pressure_.end(), 0) -
+                                                   std::accumulate(l_zero_pressure_.begin(), l_zero_pressure_.end(), 0));
+        double pressure = l_total_pressure + r_total_pressure;
+        
+        msg.data = l_total_pressure;
+        l_total_pressure_pub_.publish(msg);
+        
+        msg.data = r_total_pressure;
+        r_total_pressure_pub_.publish(msg);
+        
+        msg.data = pressure;
+        lr_total_pressure_pub_.publish(msg);
+        
+        //----------------------- TEMPERATURE MONITOR ---------------------------//
+        std::vector<int> lt = l_finger_state_.motor_temps;
+        int l_temp = *std::max_element(lt.begin(), lt.end());
+        
+        std::vector<int> rt = r_finger_state_.motor_temps;
+        int r_temp = *std::max_element(rt.begin(), rt.end());
+        
+        if (l_temp >= 75 || r_temp >= 75)
+        {
+            if (!motors_overheating)
+            {
+                ROS_WARN("Disabling gripper motors torque [LM: %dC, RM: %dC]", l_temp, r_temp);
+                sendMotorCommand(-0.5, 0.5);
+                motors_overheating = true;
+            }
+        }
+        else
+        {
+            motors_overheating = false;
+        }
+            
+        /*#########################################################################*/
+        
+        // don't do torque control if not requested or
+        // when the gripper is open
+        // or when motors are too hot
+        if (!dynamic_torque_control_ || !close_gripper_ || motors_overheating)
+        {
+            r.sleep();
+            continue;
+        }
+            
+        //----------------------- TORQUE CONTROL -------------------------------//
+        double l_current = l_finger_state_.target_position;
+        double r_current = r_finger_state_.target_position;
+        
+        if (pressure > upper_pressure_)   // release
+        {
+            double pressure_change_step = fabs(pressure - upper_pressure_) / max_pressure;
+            double l_goal = std::min( l_max_velocity_, l_current + pressure_change_step);
+            double r_goal = std::max(-r_max_velocity_, r_current - pressure_change_step);
+            
+            if (l_goal < l_max_velocity_ || r_goal > -r_max_velocity_)
+            {
+                if (close_gripper_)
+                {
+                    sendMotorCommand(l_goal, r_goal);
+                    ROS_DEBUG(">MAX pressure is %.2f, LT: %.2f, RT: %.2f, step is %.2f", pressure, l_current, r_current, pressure_change_step);
+                }
+            }
+        }
+        else if (pressure < lower_pressure_) // squeeze
+        {
+            double pressure_change_step = fabs(pressure - lower_pressure_) / max_pressure;
+            double l_goal = std::max(-l_max_velocity_, l_current - pressure_change_step);
+            double r_goal = std::min( r_max_velocity_, r_current + pressure_change_step);
+            
+            if (l_goal > -l_max_velocity_ || r_goal < r_max_velocity_)
+            {
+                if (close_gripper_)
+                {
+                    sendMotorCommand(l_goal, r_goal);
+                    ROS_DEBUG("<MIN pressure is %.2f, LT: %.2f, RT: %.2f, step is %.2f", pressure, l_current, r_current, pressure_change_step);
+                }
+            }
+        }
+        /*########################################################################*/
 
         r.sleep();
     }
