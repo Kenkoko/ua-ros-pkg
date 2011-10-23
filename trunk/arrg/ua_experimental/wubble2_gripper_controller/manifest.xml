@@ -9,10 +9,9 @@
     <url>http://ros.org/wiki/wubble2_gripper_controller</url>
     
     <depend package="roscpp"/>
-    <depend package="dynamixel_hardware_interface"/>
     <depend package="tf"/>
     <depend package="std_msgs"/>
-    <depend package="wubble2_robot"/>
+    <depend package="dynamixel_hardware_interface"/>
     <depend package="phidgets_ros"/>
     
     <export>

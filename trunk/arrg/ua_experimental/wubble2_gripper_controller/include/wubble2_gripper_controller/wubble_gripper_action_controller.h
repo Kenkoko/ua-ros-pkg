@@ -34,12 +34,16 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
 
+#include <wubble2_gripper_controller/WubbleGripperAction.h>
+
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
+#include <tf/transform_listener.h>
 
 #include <dynamixel_hardware_interface/single_joint_controller.h>
 #include <dynamixel_hardware_interface/multi_joint_controller.h>
-#include <wubble2_robot/WubbleGripperAction.h>
+
+#include <phidgets_ros/Float64Stamped.h>
 
 namespace controller
 {
@@ -54,14 +58,63 @@ public:
     
     void start();
     void stop();
+    
+    void processPressureSensors(const phidgets_ros::Float64StampedConstPtr& msg, int id);
+    void processIRSensor(const phidgets_ros::Float64StampedConstPtr& msg);
+    void processGripperAction(const wubble2_gripper_controller::WubbleGripperGoalConstPtr& goal);
+    double activateGripper(int command, double torque_limit);
 
 private:
-    typedef actionlib::SimpleActionServer<wubble2_robot::WubbleGripperAction> WGAS;
+    typedef actionlib::SimpleActionServer<wubble2_gripper_controller::WubbleGripperAction> WGAS;
     boost::scoped_ptr<WGAS> action_server_;
     
     boost::thread* feedback_thread_;
     boost::mutex terminate_mutex_;
     bool terminate_;
+    
+    tf::TransformListener tf_listener_;
+    
+    ros::Publisher gripper_opening_pub_;
+    ros::Publisher l_finger_ground_distance_pub_;
+    ros::Publisher r_finger_ground_distance_pub_;
+    ros::V_Subscriber pressure_subs_;
+    
+    ros::Publisher l_total_pressure_pub_;
+    ros::Publisher r_total_pressure_pub_;
+    ros::Publisher lr_total_pressure_pub_;
+
+    std::vector<double> pressure_;
+    std::vector<double> l_zero_pressure_;
+    std::vector<double> r_zero_pressure_;
+    std::vector<double> lr_zero_pressure_;
+
+    bool close_gripper_;
+    bool dynamic_torque_control_;
+    double lower_pressure_;
+    double upper_pressure_;
+    double ir_distance_;
+    
+    ros::Publisher gripper_ir_pub_;
+    ros::Subscriber ir_sensor_sub_;
+    
+    dynamixel_hardware_interface::JointState l_finger_state_;
+    dynamixel_hardware_interface::JointState r_finger_state_;
+    
+    SingleJointController* l_finger_controller_;
+    SingleJointController* r_finger_controller_;
+    
+    dynamixel_hardware_interface::DynamixelIO* dxl_io_;
+    
+    double l_max_velocity_;
+    double r_max_velocity_;
+
+    void sendMotorCommand(double l_desired_torque, double r_desired_torque);
+    
+    inline bool within_tolerance(double a, double b, double tolerance)
+    {
+        return fabs(a - b) < tolerance;
+    }
+
 };
 
 }
