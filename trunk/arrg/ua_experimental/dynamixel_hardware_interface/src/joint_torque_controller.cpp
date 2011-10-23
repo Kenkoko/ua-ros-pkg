@@ -51,8 +51,8 @@ namespace controller
 {
 
 bool JointTorqueController::initialize(std::string name,
-                                         std::string port_namespace,
-                                         dynamixel_hardware_interface::DynamixelIO* dxl_io)
+                                       std::string port_namespace,
+                                       dynamixel_hardware_interface::DynamixelIO* dxl_io)
 {
     if (!SingleJointController::initialize(name, port_namespace, dxl_io)) { return false; }
 
@@ -245,7 +245,7 @@ bool JointTorqueController::processSetTorqueLimit(dynamixel_hardware_interface::
 {
     double torque_limit = req.torque_limit;
     
-    if (torque_limit < 0)
+    if (torque_limit < 0.0)
     {
         ROS_WARN("%s: Torque limit is below minimum (%f < %f)", name_.c_str(), torque_limit, 0.0);
         torque_limit = 0.0;
