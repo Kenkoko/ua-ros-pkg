@@ -94,6 +94,7 @@ public:
     std::string getName() { return name_; }
     std::string getJointName() { return joint_; }
     std::string getPortNamespace() { return port_namespace_; }
+    double getMaxVelocity() { return max_velocity_; }
     
     virtual void start()
     {

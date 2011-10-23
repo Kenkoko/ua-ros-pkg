@@ -532,6 +532,7 @@ void ControllerManager::checkDeps()
                     ROS_ERROR("Could not load controller '%s' because controller type '%s' does not exist", name.c_str(), type.c_str());
                 }
                 
+                ++it;
                 continue;
             }
             
@@ -558,6 +559,7 @@ void ControllerManager::checkDeps()
             {
                 delete c;
                 ROS_ERROR("Initializing controller '%s' failed", name.c_str());
+                ++it;
                 continue;
             }
             
