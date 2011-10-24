@@ -33,6 +33,7 @@
 #include <string>
 #include <cmath>
 
+#include <dynamixel_hardware_interface/dynamixel_const.h>
 #include <dynamixel_hardware_interface/dynamixel_io.h>
 #include <dynamixel_hardware_interface/JointState.h>
 #include <dynamixel_hardware_interface/MotorStateList.h>
@@ -58,6 +59,8 @@ public:
                             dynamixel_hardware_interface::DynamixelIO* dxl_io)
     {
         name_ = name;
+        port_namespace_ = port_namespace;
+        dxl_io_ = dxl_io;
         
         try
         {
@@ -65,17 +68,16 @@ public:
         }
         catch(std::exception &e)
         {
-            ROS_ERROR("Exception thrown while constructing nodehandle for controller with name '%s':\n%s", name_.c_str(), e.what());
+            ROS_ERROR("Exception thrown while constructing nodehandle for controller with name '%s':\n%s",
+                      name_.c_str(), e.what());
             return false;
         }
         catch(...)
         {
-            ROS_ERROR("Exception thrown while constructing nodehandle for controller with name '%s'", name_.c_str());
+            ROS_ERROR("Exception thrown while constructing nodehandle for controller with name '%s'",
+                      name_.c_str());
             return false;
         }
-
-        port_namespace_ = port_namespace;
-        dxl_io_ = dxl_io;
 
         if (!c_nh_.getParam("joint", joint_))
         {
@@ -83,7 +85,153 @@ public:
             return false;
         }
         
-        c_nh_.param("max_velocity", max_velocity_, 0.0);
+        joint_state_.name = joint_;
+        XmlRpc::XmlRpcValue raw_motor_list;
+        
+        if (!c_nh_.getParam("motors", raw_motor_list))
+        {
+            ROS_ERROR("%s: no motors configuration present", name.c_str());
+            return false;
+        }
+        
+        if (raw_motor_list.getType() != XmlRpc::XmlRpcValue::TypeArray)
+        {
+            ROS_ERROR("%s: motors paramater is not a list", name_.c_str());
+            return false;
+        }
+        
+        int num_motors = raw_motor_list.size();
+        joint_state_.motor_temps.resize(num_motors);
+        joint_state_.motor_ids.resize(num_motors);
+        motor_ids_.resize(num_motors);
+        motor_data_.resize(num_motors);
+        
+        XmlRpc::XmlRpcValue available_ids;
+        nh_.getParam("dynamixel/" + port_namespace_ + "/connected_ids", available_ids);
+
+        if (available_ids.getType() != XmlRpc::XmlRpcValue::TypeArray)
+        {
+            ROS_ERROR("%s: connected_ids paramater is not an array", name_.c_str());
+            return false;
+        }
+        
+        for (int i = 0; i < num_motors; ++i)
+        {
+            XmlRpc::XmlRpcValue v = raw_motor_list[i];
+            
+            if (v.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+            {
+                ROS_ERROR("%s: motor configuration is not a map", name_.c_str());
+                return false;
+            }
+            
+            if (!v.hasMember("id"))
+            {
+                ROS_ERROR("%s: no motor id specified for motor %d", name_.c_str(), i);
+                return false;
+            }
+            
+            motor_ids_[i] = static_cast<int>(v["id"]);
+            bool found_motor_id = false;
+            
+            for (int id = 0; id < available_ids.size(); ++id)
+            {
+                XmlRpc::XmlRpcValue val = available_ids[id];
+                
+                if (motor_ids_[i] == static_cast<int>(val))
+                {
+                    found_motor_id = true;
+                    break;
+                }
+            }
+            
+            if (!found_motor_id)
+            {
+                ROS_ERROR("%s: motor id %d is not connected to port %s or it is connected and not responding",
+                          name_.c_str(), motor_ids_[i], port_namespace_.c_str());
+                return false;
+            }
+            
+            motor_data_[i] = dxl_io_->getCachedParameters(motor_ids_[i]);
+            if (motor_data_[i] == NULL) { return false; }
+            
+            // first motor in the list is the master motor from which we take
+            // all compliance parameters, initial, minimum and maximum positions
+            if (i == 0)
+            {
+                if (!v.hasMember("init"))
+                {
+                    ROS_ERROR("%s: no initial position specified for motor %d", name_.c_str(), i);
+                    return false;
+                }
+                
+                init_position_encoder_ = static_cast<int>(v["init"]);
+
+                if (!v.hasMember("min"))
+                {
+                    ROS_ERROR("%s: no minimum angle specified for motor %d", name_.c_str(), i);
+                    return false;
+                }
+                
+                min_angle_encoder_ = static_cast<int>(v["min"]);
+
+                if (!v.hasMember("max"))
+                {
+                    ROS_ERROR("%s: no maximum angle specified for motor %d", name_.c_str(), i);
+                    return false;
+                }
+                
+                max_angle_encoder_ = static_cast<int>(v["max"]);
+                
+                std::string prefix = "dynamixel/" + port_namespace_ + "/" +
+                                     boost::lexical_cast<std::string>(motor_ids_[i]) + "/";
+                
+                /***************** Joint velocity related parameters **********************/
+                nh_.getParam(prefix + "max_velocity", motor_max_velocity_);
+                c_nh_.param("max_velocity", max_velocity_, motor_max_velocity_);
+        
+                nh_.getParam(prefix + "radians_second_per_encoder_tick", velocity_per_encoder_tick_);
+                min_velocity_ = velocity_per_encoder_tick_;
+                
+                if (max_velocity_ > motor_max_velocity_)
+                {
+                    ROS_WARN("%s: requested maximum joint velocity exceeds motor capabilities (%f > %f)",
+                             name_.c_str(), max_velocity_, motor_max_velocity_);
+                    max_velocity_ = motor_max_velocity_;
+                }
+                else if (max_velocity_ < min_velocity_)
+                {
+                    ROS_WARN("%s: requested maximum joint velocity is too small (%f < %f)",
+                             name_.c_str(), max_velocity_, min_velocity_);
+                    max_velocity_ = min_velocity_;
+                }
+                
+                flipped_ = min_angle_encoder_ > max_angle_encoder_;
+                
+                nh_.getParam(prefix + "radians_per_encoder_tick", radians_per_encoder_tick_);
+                nh_.getParam(prefix + "encoder_ticks_per_radian", encoder_ticks_per_radian_);
+                
+                if (flipped_)
+                {
+                    min_angle_radians_ = (init_position_encoder_ - min_angle_encoder_) * radians_per_encoder_tick_;
+                    max_angle_radians_ = (init_position_encoder_ - max_angle_encoder_) * radians_per_encoder_tick_;
+                }
+                else
+                {
+                    min_angle_radians_ = (min_angle_encoder_ - init_position_encoder_) * radians_per_encoder_tick_;
+                    max_angle_radians_ = (max_angle_encoder_ - init_position_encoder_) * radians_per_encoder_tick_;
+                }
+                
+                nh_.getParam(prefix + "encoder_resolution", motor_model_max_encoder_);
+                motor_model_max_encoder_ -= 1;
+            }
+            // slave motors, will mimic master motor motion
+            else
+            {
+                drive_mode_reversed_[motor_ids_[i]] = false;
+                if (v.hasMember("reversed")) { drive_mode_reversed_[motor_ids_[i]] = static_cast<bool>(v["reversed"]); }
+            }
+        }
         
         return true;
     }
@@ -94,6 +242,7 @@ public:
     std::string getName() { return name_; }
     std::string getJointName() { return joint_; }
     std::string getPortNamespace() { return port_namespace_; }
+    std::vector<int> getMotorIDs() { return motor_ids_; }
     double getMaxVelocity() { return max_velocity_; }
     
     virtual void start()
@@ -118,26 +267,80 @@ public:
         set_torque_limit_srv_.shutdown();
     }
     
-    virtual std::vector<int> getMotorIDs() = 0;
+    bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                             dynamixel_hardware_interface::TorqueEnable::Request& res)
+    {
+        std::vector<std::vector<int> > mcv;
+        
+        for (size_t i = 0; i < motor_ids_.size(); ++i)
+        {
+            int motor_id = motor_ids_[i];
+            
+            std::vector<int> pair;
+            pair.push_back(motor_id);
+            pair.push_back(req.torque_enable);
+            
+            mcv.push_back(pair);
+        }
+        
+        return dxl_io_->setMultiTorqueEnabled(mcv);
+    }
+
+    bool processResetOverloadError(std_srvs::Empty::Request& req,
+                                   std_srvs::Empty::Request& res)
+    {
+        bool result = true;
+        
+        for (size_t i = 0; i < motor_ids_.size(); ++i)
+        {
+            result &= dxl_io_->resetOverloadError(motor_ids_[i]);
+        }
+        
+        return result;
+    }
+        
+    bool processSetTorqueLimit(dynamixel_hardware_interface::SetTorqueLimit::Request& req,
+                               dynamixel_hardware_interface::SetTorqueLimit::Request& res)
+    {
+        double torque_limit = req.torque_limit;
+        
+        if (torque_limit < 0)
+        {
+            ROS_WARN("%s: Torque limit is below minimum (%f < %f)", name_.c_str(), torque_limit, 0.0);
+            torque_limit = 0.0;
+        }
+        else if (torque_limit > 1.0)
+        {
+            ROS_WARN("%s: Torque limit is above maximum (%f > %f)", name_.c_str(), torque_limit, 1.0);
+            torque_limit = 1.0;
+        }
+        
+        std::vector<std::vector<int> > mcv;
+        
+        for (size_t i = 0; i < motor_ids_.size(); ++i)
+        {
+            int motor_id = motor_ids_[i];
+            
+            std::vector<int> pair;
+            pair.push_back(motor_id);
+            pair.push_back(torque_limit * dynamixel_hardware_interface::DXL_MAX_TORQUE_ENCODER);
+            
+            mcv.push_back(pair);
+        }
+        
+        return dxl_io_->setMultiTorqueLimit(mcv);
+    }
+
+
     virtual std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity) = 0;
-    
-    virtual bool setVelocity(double velocity) = 0;
     
     virtual void processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg) = 0;
     virtual void processCommand(const std_msgs::Float64ConstPtr& msg) = 0;
     
+    virtual bool setVelocity(double velocity) = 0;
     virtual bool processSetVelocity(dynamixel_hardware_interface::SetVelocity::Request& req,
                                     dynamixel_hardware_interface::SetVelocity::Request& res) = 0;
-    
-    virtual bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
-                                     dynamixel_hardware_interface::TorqueEnable::Request& res) = 0;
-    
-    virtual bool processResetOverloadError(std_srvs::Empty::Request& req,
-                                           std_srvs::Empty::Request& res) = 0;
-    
-    virtual bool processSetTorqueLimit(dynamixel_hardware_interface::SetTorqueLimit::Request& req,
-                                       dynamixel_hardware_interface::SetTorqueLimit::Request& res) = 0;
-    
+        
 protected:
     ros::NodeHandle nh_;
     ros::NodeHandle c_nh_;
@@ -148,6 +351,10 @@ protected:
     
     std::string joint_;
     dynamixel_hardware_interface::JointState joint_state_;
+    
+    std::vector<int> motor_ids_;
+    std::map<int, bool> drive_mode_reversed_;
+    std::vector<const dynamixel_hardware_interface::DynamixelData*> motor_data_;
     
     static const double INIT_VELOCITY = 0.5;
     double max_velocity_;
@@ -165,6 +372,7 @@ protected:
     double radians_per_encoder_tick_;
     double velocity_per_encoder_tick_;
     double motor_max_velocity_;
+    int motor_model_max_encoder_;
         
     ros::Subscriber motor_states_sub_;
     ros::Subscriber joint_command_sub_;
