@@ -57,6 +57,7 @@ namespace controller
 WubbleGripperActionController::WubbleGripperActionController()
 {
     terminate_gripper_opening_ = false;
+    terminate_gripper_monitor_ = false;
 }
 
 WubbleGripperActionController::~WubbleGripperActionController()
