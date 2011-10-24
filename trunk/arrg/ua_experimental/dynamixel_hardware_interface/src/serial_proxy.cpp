@@ -83,6 +83,7 @@ bool SerialProxy::connect()
 {
     try
     {
+        ROS_DEBUG("Constructing serial_proxy with %s at %s baud", port_name_.c_str(), baud_rate_.c_str());
         dxl_io_ = new DynamixelIO(port_name_, baud_rate_);
         if (!findMotors()) { return false; }
     }
@@ -201,13 +202,14 @@ bool SerialProxy::findMotors()
     std::map<int, int>::iterator it;
     for (it = counts.begin(); it != counts.end(); ++it)
     {
-        ss << (*it).second << " " << getMotorModelName((*it).first) << " [";
+        ss << it->second << " " << getMotorModelName(it->first) << " [";
+        int c = 0;
         
         for (size_t i = 0; i < motors_.size(); ++i)
         {
-            if (motor_static_info_[motors_[i]]->model_number == (*it).first)
+            if (motor_static_info_[motors_[i]]->model_number == it->first)
             {
-                ss << motors_[i] << ((i < motors_.size()-1) ? ", " : "");
+                ss << motors_[i] << (++c == it->second ? "" : ", ");
             }
         }
         

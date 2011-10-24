@@ -79,9 +79,10 @@ ControllerManager::ControllerManager() : nh_(ros::NodeHandle()), private_nh_(ros
         
         std::string port_name;
         private_nh_.param<std::string>(prefix + "port_name", port_name, "/dev/ttyUSB0");
-        
-        std::string baud_rate;
-        private_nh_.param<std::string>(prefix + "baud_rate", baud_rate, "1000000");
+
+        int baud_rate_int;
+        private_nh_.param<int>(prefix + "baud_rate", baud_rate_int, 1000000);
+        std::string baud_rate = boost::lexical_cast<std::string>(baud_rate_int);
         
         int min_motor_id;
         private_nh_.param<int>(prefix + "min_motor_id", min_motor_id, 1);

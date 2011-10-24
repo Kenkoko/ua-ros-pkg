@@ -57,98 +57,23 @@ bool JointPositionController::initialize(std::string name,
 {
     if (!SingleJointController::initialize(name, port_namespace, dxl_io)) { return false; }
 
-    c_nh_.getParam("motor/id", motor_id_);
-
-    joint_state_.name = joint_;
-    joint_state_.motor_ids.push_back(motor_id_);
-    joint_state_.motor_temps.resize(1);
-
-    std::stringstream ss;
-    ss << "dynamixel/" << port_namespace_ << "/";
+    motor_cache_ = motor_data_[0];
     
-    std::string prefix = ss.str();
-    XmlRpc::XmlRpcValue available_ids;
-    
-    nh_.getParam(prefix + "connected_ids", available_ids);
-    
-    if (available_ids.getType() != XmlRpc::XmlRpcValue::TypeArray)
+    for (size_t i = 0; i < motor_ids_.size(); ++i)
     {
-        ROS_ERROR("%s: [%s] paramater is not an array", (prefix + "connected_ids").c_str(), name_.c_str());
-        return false;
-    }
-    
-    bool found_motor_id = false;
-    
-    for (int i = 0; i < available_ids.size(); ++i)
-    {
-        XmlRpc::XmlRpcValue val = available_ids[i];
-        if (motor_id_ == (int) val) { found_motor_id = true; break; }
-    }
-    
-    if (!found_motor_id)
-    {
-        ROS_ERROR("%s: motor id %d is not connected to port %s or it is connected and not responding",
-                  name_.c_str(), motor_id_, port_namespace_.c_str());
-        return false;
-    }
-    
-    ss  << motor_id_ << "/";
-    prefix = ss.str();
-    
-    /***************** Joint velocity related parameters **********************/
-    nh_.getParam(prefix + "max_velocity", motor_max_velocity_);
-    if (max_velocity_ == 0.0) { max_velocity_ = motor_max_velocity_; }
-    
-    nh_.getParam(prefix + "radians_second_per_encoder_tick", velocity_per_encoder_tick_);
-    min_velocity_ = velocity_per_encoder_tick_;
-    
-    if (max_velocity_ > motor_max_velocity_)
-    {
-        ROS_WARN("%s: requested maximum joint velocity exceeds motor capabilities (%f > %f)", name_.c_str(), max_velocity_, motor_max_velocity_);
-        max_velocity_ = motor_max_velocity_;
-    }
-    else if (max_velocity_ < min_velocity_)
-    {
-        ROS_WARN("%s: requested maximum joint velocity is too small (%f < %f)", name_.c_str(), max_velocity_, min_velocity_);
-        max_velocity_ = min_velocity_;
-    }
-
-    motor_cache_ = dxl_io_->getCachedParameters(motor_id_);
-    if (motor_cache_ == NULL) { return false; }
-
-    int encoder_resolution;
-    nh_.getParam(prefix + "encoder_resolution", encoder_resolution);
-    
-    if (motor_cache_->cw_angle_limit == 0 && motor_cache_->ccw_angle_limit == 0)
-    {
-        ROS_WARN("%s: motor %d is not set to position control mode, setting motor to position control mode", name_.c_str(), motor_id_);
+        int motor_id = motor_ids_[i];
         
-        if (!dxl_io_->setAngleLimits(motor_id_, 0, encoder_resolution-1))
+        if (motor_data_[i]->cw_angle_limit == 0 && motor_data_[i]->ccw_angle_limit == 0)
         {
-            ROS_ERROR("%s: unable to set motor to position control mode", name_.c_str());
-            return false;
+            ROS_WARN("%s: motor %d is not set to position control mode, setting motor to position control mode", name_.c_str(), motor_id);
+            
+            if (!dxl_io_->setAngleLimits(motor_id, 0, motor_model_max_encoder_))
+            {
+                ROS_ERROR("%s: unable to set motor %d to position control mode", name_.c_str(), motor_id);
+                return false;
+            }
         }
-    }
-
-    /***************** Motor related parameters **********************/
-    c_nh_.getParam("motor/init", init_position_encoder_);
-    c_nh_.getParam("motor/min", min_angle_encoder_);
-    c_nh_.getParam("motor/max", max_angle_encoder_);
-    
-    flipped_ = min_angle_encoder_ > max_angle_encoder_;
-    
-    nh_.getParam(prefix + "radians_per_encoder_tick", radians_per_encoder_tick_);
-    nh_.getParam(prefix + "encoder_ticks_per_radian", encoder_ticks_per_radian_);
-    
-    if (flipped_)
-    {
-        min_angle_radians_ = (init_position_encoder_ - min_angle_encoder_) * radians_per_encoder_tick_;
-        max_angle_radians_ = (init_position_encoder_ - max_angle_encoder_) * radians_per_encoder_tick_;
-    }
-    else
-    {
-        min_angle_radians_ = (min_angle_encoder_ - init_position_encoder_) * radians_per_encoder_tick_;
-        max_angle_radians_ = (max_angle_encoder_ - init_position_encoder_) * radians_per_encoder_tick_;
+        
     }
 
     setVelocity(INIT_VELOCITY);
@@ -165,53 +90,65 @@ void JointPositionController::stop()
     SingleJointController::stop();
 }
 
-std::vector<int> JointPositionController::getMotorIDs()
-{
-    return std::vector<int>(1, motor_id_);
-}
-
 std::vector<std::vector<int> > JointPositionController::getRawMotorCommands(double position, double velocity)
 {
+    uint16_t pos_enc = posRad2Enc(position);
+    uint16_t vel_enc = velRad2Enc(velocity);
+    
     std::vector<std::vector<int> > value_pairs;
 
-    std::vector<int> pair;
-    pair.push_back(motor_id_);
-    pair.push_back(posRad2Enc(position));
-    pair.push_back(velRad2Enc(velocity));
-    
-    value_pairs.push_back(pair);
+    for (size_t i = 0; i < motor_ids_.size(); ++i)
+    {
+        int motor_id = motor_ids_[i];
+        
+        std::vector<int> pair;
+        pair.push_back(motor_id);
+        
+        // master motor
+        if (i == 0)
+        {
+            pair.push_back(pos_enc);
+        }
+        // slave motors calculate their positions based on
+        // selected drive mode and master position
+        else
+        {
+            if (!drive_mode_reversed_[motor_id])
+            {
+                pair.push_back(pos_enc);
+            }
+            else // reverse, e.g. smart arm double joints
+            {
+                pair.push_back(motor_model_max_encoder_ - pos_enc);
+            }
+        }
+        
+        pair.push_back(vel_enc);
+        
+        ROS_DEBUG("%s, setting position and velocity for motor %d to %d and %d", name_.c_str(), motor_id, pair[1], pair[2]);
+        value_pairs.push_back(pair);
+    }
 
     return value_pairs;
-}
-
-bool JointPositionController::setVelocity(double velocity)
-{
-    std::vector<int> pair;
-    pair.push_back(motor_id_);
-    pair.push_back(velRad2Enc(velocity));
-    
-    std::vector<std::vector<int> > mcv;
-    mcv.push_back(pair);
-
-    return dxl_io_->setMultiVelocity(mcv);
 }
 
 void JointPositionController::processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg)
 {
     dynamixel_hardware_interface::MotorState state;
+    int master_id = motor_ids_[0];
     
     for (size_t i = 0; i < msg->motor_states.size(); ++i)
     {
-        if (motor_id_ == msg->motor_states[i].id)
+        if (master_id == msg->motor_states[i].id)
         {
             state = msg->motor_states[i];
             break;
         }
     }
     
-    if (state.id != motor_id_)
+    if (state.id != master_id)
     {
-        ROS_ERROR("%s: motor id %d not found", name_.c_str(), motor_id_);
+        ROS_ERROR("%s: motor %d not found in motor states message", name_.c_str(), master_id);
         return;
     }
     
@@ -229,65 +166,65 @@ void JointPositionController::processMotorStates(const dynamixel_hardware_interf
 
 void JointPositionController::processCommand(const std_msgs::Float64ConstPtr& msg)
 {
-    std::vector<int> pair;
-    pair.push_back(motor_id_);
-    pair.push_back(posRad2Enc(msg->data));
-    
+    uint16_t pos_enc = posRad2Enc(msg->data);
     std::vector<std::vector<int> > mcv;
-    mcv.push_back(pair);
+    
+    for (size_t i = 0; i < motor_ids_.size(); ++i)
+    {
+        int motor_id = motor_ids_[i];
+        
+        std::vector<int> pair;
+        pair.push_back(motor_id);
+        
+        // master motor
+        if (i == 0)
+        {
+            pair.push_back(pos_enc);
+        }
+        // slave motors calculate their positions based on
+        // selected drive mode and master position
+        else
+        {
+            if (!drive_mode_reversed_[motor_id])
+            {
+                pair.push_back(pos_enc);
+            }
+            else // reverse, e.g. smart arm double joints
+            {
+                pair.push_back(motor_model_max_encoder_ - pos_enc);
+            }
+        }
+        
+        ROS_DEBUG("%s: setting position for motor %d to %d", name_.c_str(), motor_id, pair[1]);
+        mcv.push_back(pair);
+    }
     
     dxl_io_->setMultiPosition(mcv);
+}
+
+bool JointPositionController::setVelocity(double velocity)
+{
+    uint16_t vel_enc = velRad2Enc(velocity);
+    std::vector<std::vector<int> > mcv;
+    
+    for (size_t i = 0; i < motor_ids_.size(); ++i)
+    {
+        std::vector<int> pair;
+        
+        pair.push_back(motor_ids_[i]);
+        pair.push_back(vel_enc);
+        
+        ROS_DEBUG("%s, setting velocity for motor %d to %d", name_.c_str(), motor_ids_[i], vel_enc);
+        mcv.push_back(pair);
+    }
+
+    return dxl_io_->setMultiVelocity(mcv);
 }
 
 bool JointPositionController::processSetVelocity(dynamixel_hardware_interface::SetVelocity::Request& req,
                                                  dynamixel_hardware_interface::SetVelocity::Request& res)
 {
     return setVelocity(req.velocity);
-}
-
-bool JointPositionController::processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
-                                                  dynamixel_hardware_interface::TorqueEnable::Request& res)
-{
-    std::vector<int> pair;
-    pair.push_back(motor_id_);
-    pair.push_back(req.torque_enable);
-    
-    std::vector<std::vector<int> > mcv;
-    mcv.push_back(pair);
-    
-    return dxl_io_->setMultiTorqueEnabled(mcv);
-}
-
-bool JointPositionController::processResetOverloadError(std_srvs::Empty::Request& req,
-                                                        std_srvs::Empty::Request& res)
-{
-    return dxl_io_->resetOverloadError(motor_id_);
-}
-    
-bool JointPositionController::processSetTorqueLimit(dynamixel_hardware_interface::SetTorqueLimit::Request& req,
-                                                    dynamixel_hardware_interface::SetTorqueLimit::Request& res)
-{
-    double torque_limit = req.torque_limit;
-    
-    if (torque_limit < 0)
-    {
-        ROS_WARN("%s: Torque limit is below minimum (%f < %f)", name_.c_str(), torque_limit, 0.0);
-        torque_limit = 0.0;
-    }
-    else if (torque_limit > 1.0)
-    {
-        ROS_WARN("%s: Torque limit is above maximum (%f > %f)", name_.c_str(), torque_limit, 1.0);
-        torque_limit = 1.0;
-    }
-    
-    std::vector<int> pair;
-    pair.push_back(motor_id_);
-    pair.push_back(torque_limit * dynamixel_hardware_interface::DXL_MAX_TORQUE_ENCODER);
-    
-    std::vector<std::vector<int> > mcv;
-    mcv.push_back(pair);
-    
-    return dxl_io_->setMultiTorqueLimit(mcv);
 }
 
 uint16_t JointPositionController::posRad2Enc(double pos_rad)
