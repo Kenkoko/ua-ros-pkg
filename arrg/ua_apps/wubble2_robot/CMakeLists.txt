@@ -31,5 +31,8 @@ rosbuild_genmsg()
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
+
 rosbuild_add_executable(joint_state_aggregator src/joint_state_aggregator.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
+
+rosbuild_add_executable(tilt_laser_action_node src/tilt_laser_action_node.cpp)

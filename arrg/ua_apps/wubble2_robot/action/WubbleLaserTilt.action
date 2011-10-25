@@ -1,0 +1,8 @@
+float64 amplitude
+float64 offset
+float64 duration
+---
+float64 tilt_position
+---
+float64 tilt_position
+
