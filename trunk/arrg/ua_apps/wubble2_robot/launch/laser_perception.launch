@@ -12,8 +12,8 @@
 
     <!-- start tilting the laser up and down -->
     <node name="laser_tilting_action" pkg="wubble_actions" type="hokuyo_laser_action.py" output="screen" >
-        <remap from="/neck_tilt_controller/state" to="/neck_tilt_controller/state_pr2_msgs"/>
-        <param name="controller" value="neck_tilt_controller" />
+        <param name="error_threshold" value="0.003" />
+        <param name="tilt_controller" value="neck_tilt_controller" />
     </node>
     <node name="tilt_neck_laser" pkg="wubble2_robot" type="tilt_neck_laser.py" respawn="true" output="screen" />
 
