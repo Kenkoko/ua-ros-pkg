@@ -176,11 +176,12 @@ bool DynamixelIO::ping(int servo_id)
 
 bool DynamixelIO::resetOverloadError(int servo_id)
 {
-    const DynamixelData* cache = getCachedParameters(servo_id);
-    if (cache == NULL) { return false; }
-    
-    if (setTorqueEnable(servo_id, false) && setTorqueLimit(servo_id, cache->max_torque))
+    if (setTorqueEnable(servo_id, false) && setTorqueLimit(servo_id, dd->max_torque))
     {
+        DynamixelData* dd = cache_[servo_id];
+        dd->torque_enabled = false;
+        dd->led = false;
+        
         return setLed(servo_id, false);
     }
     
