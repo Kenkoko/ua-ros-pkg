@@ -38,6 +38,9 @@ public:
         laser_signal_pub_ = nh_.advertise<pr2_msgs::LaserScannerSignal>("laser_scanner_signal", 100);
         tilt_velocity_srv_ = nh_.serviceClient<dynamixel_hardware_interface::SetVelocity>(tilt_controller + "/set_velocity");
         
+        ROS_INFO("LaserTiltAction waiting for %s to be advertised", (tilt_controller + "/set_velocity").c_str());
+        tilt_velocity_srv_.waitForExistence();
+        
         // Initialize tilt action server
         action_server_.reset(new WLTAS(nh_, "hokuyo_laser_tilt_action",
                                        boost::bind(&LaserTiltAction::processLaserTiltGoal, this, _1),
