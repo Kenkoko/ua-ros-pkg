@@ -47,7 +47,7 @@ if __name__ == '__main__':
         goal.offset = 0.0
         goal.duration = 7.0
         
-        rospy.loginfo('Amplitude: %f, offset: %f, duration: %f' % (goal.amplitude, goal.offset, goal.duration)
+        rospy.loginfo('Amplitude: %f, offset: %f, duration: %f' % (goal.amplitude, goal.offset, goal.duration))
         
         client.send_goal(goal)
         client.wait_for_result()

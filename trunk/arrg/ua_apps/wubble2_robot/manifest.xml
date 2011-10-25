@@ -35,6 +35,7 @@
     <depend package="dynamixel_msgs"/>
     <depend package="dynamixel_hardware_interface"/>
     
+    <depend package="wubble2_gripper_controller"/>
     <depend package="wubble_navigation_self_filter"/>
     <depend package="interpolated_ik_motion_planner"/>
 
