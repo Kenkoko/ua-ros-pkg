@@ -4,6 +4,11 @@
     <node name="joint_state_aggregator" pkg="wubble2_robot" type="joint_state_aggregator" output="screen">
         <rosparam>
             rate: 100
+            static_joints:
+                - base_caster_support_joint
+                - caster_wheel_joint
+                - base_link_left_wheel_joint
+                - base_link_right_wheel_joint
             controllers:
                 - shoulder_pitch_controller
                 - shoulder_pan_controller

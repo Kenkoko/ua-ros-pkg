@@ -18,19 +18,24 @@ public:
     
     bool initialize()
     {
-        int num_static = 4;
-        
-        msg_.name.resize(num_static);
-        msg_.position.resize(num_static);
-        msg_.velocity.resize(num_static);
-        msg_.effort.resize(num_static);
-        
-        msg_.name[0] = "base_caster_support_joint";
-        msg_.name[1] = "caster_wheel_joint";
-        msg_.name[2] = "base_link_left_wheel_joint";
-        msg_.name[3] = "base_link_right_wheel_joint";
-        
         XmlRpc::XmlRpcValue val;
+        std::vector<std::string> static_joints;
+        
+        if (private_nh_.getParam("static_joints", val))
+        {
+            if (val.getType() != XmlRpc::XmlRpcValue::TypeArray)
+            {
+                ROS_ERROR("static_joints parameter is not a list");
+                return false;
+            }
+            
+            for (int i = 0; i < val.size(); ++i)
+            {
+                static_joints.push_back(static_cast<std::string>(val[i]));
+            }
+        }
+        
+        std::vector<std::string> controller_names;
         
         if (private_nh_.getParam("controllers", val))
         {
@@ -42,26 +47,38 @@ public:
             
             for (int i = 0; i < val.size(); ++i)
             {
-                controller_names_.push_back(static_cast<std::string>(val[i]));
+                controller_names.push_back(static_cast<std::string>(val[i]));
             }
         }
         
-        int num_controllers = controller_names_.size();
+        int num_static = static_joints.size();
+        int num_controllers = controller_names.size();
+        int num_total = num_static + num_controllers;
+        
+        msg_.name.resize(num_total);
+        msg_.position.resize(num_total);
+        msg_.velocity.resize(num_total);
+        msg_.effort.resize(num_total);
+        
+        for (int i = 0; i < num_static; ++i)
+        {
+            msg_.name[i] = static_joints[i];
+            msg_.position[i] = 0.0;
+            msg_.velocity[i] = 0.0;
+            msg_.effort[i] = 0.0;
+        }
+        
         controller_state_subs_.resize(num_controllers);
-        msg_.name.resize(num_static+num_controllers);
-        msg_.position.resize(num_static+num_controllers);
-        msg_.velocity.resize(num_static+num_controllers);
-        msg_.effort.resize(num_static+num_controllers);
         
         for (int i = 0; i < num_controllers; ++i)
         {
-            controller_state_subs_[i] = nh_.subscribe<dynamixel_hardware_interface::JointState>(controller_names_[i] +  "/state", 100,
+            controller_state_subs_[i] = nh_.subscribe<dynamixel_hardware_interface::JointState>(controller_names[i] +  "/state", 100,
                                                                                                 boost::bind(&JointStateAggregator::processControllerState, this, _1, i+num_static));
         }
         
         for (int i = 0; i < num_controllers; ++i)
         {
-            ros::topic::waitForMessage<dynamixel_hardware_interface::JointState>(controller_names_[i] +  "/state");
+            ros::topic::waitForMessage<dynamixel_hardware_interface::JointState>(controller_names[i] +  "/state");
         }
         
         joint_states_pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 100);
@@ -98,7 +115,6 @@ private:
     ros::Publisher joint_states_pub_;
     
     int publish_rate_;
-    std::vector<std::string> controller_names_;
     sensor_msgs::JointState msg_;
 };
 
