@@ -160,7 +160,7 @@ void WubbleGripperActionController::start()
     // Start gripper opening monitoring thread
     gripper_opening_thread_ = new boost::thread(boost::bind(&WubbleGripperActionController::calculateGripperOpening, this));
 
-    action_server_.reset(new WGAS(c_nh_, "wubble_gripper_action",
+    action_server_.reset(new WGAS(nh_, "wubble_gripper_action",
                                   boost::bind(&WubbleGripperActionController::processGripperAction, this, _1),
                                   false));
     action_server_->start();
@@ -244,7 +244,7 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
         {
             ros::Time start_time = ros::Time::now();
             
-            while (!ros::ok() &&
+            while (ros::ok() &&
                    ros::Time::now() - start_time < timeout &&
                    (!within_tolerance(l_finger_state_.load, -goal->torque_limit, 0.01) ||
                     !within_tolerance(r_finger_state_.load, -goal->torque_limit, 0.01)))
@@ -266,7 +266,7 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
         activateGripper(goal->command, goal->torque_limit);
         
         ros::Time start_time = ros::Time::now();
-        while (!ros::ok() &&
+        while (ros::ok() &&
                ros::Time::now() - start_time < timeout &&
                (l_finger_state_.position < 0.8 ||
                 r_finger_state_.position > -0.8))
