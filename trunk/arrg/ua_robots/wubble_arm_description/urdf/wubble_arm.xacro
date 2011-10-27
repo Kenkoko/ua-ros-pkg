@@ -40,6 +40,8 @@
     xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
     
+    <include filename="$(find wubble_arm_description)/urdf/joint_limits.urdf" />
+    
     <macro name="wubble_arm" params="parent *origin">
         <!-- ****** JOINT DEFINITIONS ****** -->
         
@@ -57,8 +59,8 @@
             <child link="L1_shoulder_pitch_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-2.523" upper="1.048" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.523}" soft_upper_limit="${1.048}" />
+            <limit  lower="${shoulder_pitch_lower}" upper="${shoulder_pitch_upper}" effort="300" velocity="1.50" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${shoulder_pitch_lower}" soft_upper_limit="${shoulder_pitch_upper}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -69,8 +71,8 @@
             <child link="L2_shoulder_pan_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-3.351" upper="0.905" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-3.351}" soft_upper_limit="${0.905}" />
+            <limit  lower="${shoulder_pan_lower}" upper="${shoulder_pan_upper}" effort="300" velocity="1.50" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${shoulder_pan_lower}" soft_upper_limit="${shoulder_pan_upper}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -81,8 +83,8 @@
             <child link="L3_upperarm_roll_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-0.629" upper="3.75" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-0.629}" soft_upper_limit="${3.75}" />
+            <limit  lower="${upperarm_roll_lower}" upper="${upperarm_roll_upper}" effort="300" velocity="1.50" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${upperarm_roll_lower}" soft_upper_limit="${upperarm_roll_upper}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -93,8 +95,8 @@
             <child link="L4_elbow_flex_link"/>
             
             <axis xyz="0 0 1"/>
-            <limit  lower="-1.652" upper="1.846" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-1.652}" soft_upper_limit="${1.846}" />
+            <limit  lower="${elbow_flex_lower}" upper="${elbow_flex_upper}" effort="300" velocity="1.50" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${elbow_flex_lower}" soft_upper_limit="${elbow_flex_upper}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -105,8 +107,8 @@
             <child link="L5_forearm_roll_link"/>
             
             <axis xyz="1 0 0"/>
-            <limit  lower="-2.521" upper="2.71" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.521}" soft_upper_limit="${2.71}" />
+            <limit  lower="${forearm_roll_lower}" upper="${forearm_roll_upper}" effort="300" velocity="2.00" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${forearm_roll_lower}" soft_upper_limit="${forearm_roll_upper}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -117,8 +119,8 @@
             <child link="L6_wrist_pitch_link"/>
             
             <axis xyz="0 1 0"/>
-            <limit  lower="-2.158" upper="2.613" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.158}" soft_upper_limit="${2.613}" />
+            <limit  lower="${wrist_pitch_lower}" upper="${wrist_pitch_upper}" effort="300" velocity="1.50" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${wrist_pitch_lower}" soft_upper_limit="${wrist_pitch_upper}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -129,8 +131,8 @@
             <child link="L7_wrist_roll_link"/>
             
             <axis xyz="1 0 0"/>
-            <limit  lower="-2.597" upper="2.633" effort="300" velocity="1.17" />
-            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${-2.597}" soft_upper_limit="${2.633}" />
+            <limit  lower="${wrist_roll_lower}" upper="${wrist_roll_upper}" effort="300" velocity="2.00" />
+            <safety_controller k_position="100" k_velocity="15.0" soft_lower_limit="${wrist_roll_lower}" soft_upper_limit="${wrist_roll_upper}" />
             <dynamics damping="50" friction="1"/>
         </joint>
         
@@ -186,7 +188,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L0_base_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L0_base_link.dae"/>
                 </geometry>
                 <material name="Green" />
             </visual>
@@ -211,7 +213,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L1_shoulder_pitch_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L1_shoulder_pitch_link.dae"/>
                 </geometry>
                 <material name="Grey" />
             </visual>
@@ -236,7 +238,7 @@
             <visual>
                 <origin xyz="0 0.055 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L2_shoulder_pan_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L2_shoulder_pan_link.dae"/>
                 </geometry>
                 <material name="Blue" />
             </visual>
@@ -261,7 +263,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L3_upperarm_roll_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L3_upperarm_roll_link.dae"/>
                 </geometry>
                 <material name="Green" />
             </visual>
@@ -286,7 +288,7 @@
             <visual>
                 <origin xyz="0.035 0.044 0.026" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L4_elbow_flex_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L4_elbow_flex_link.dae"/>
                 </geometry>
                 <material name="Grey" />
             </visual>
@@ -311,7 +313,7 @@
             <visual>
                 <origin xyz="0.025 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L5_forearm_roll_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L5_forearm_roll_link.dae"/>
                 </geometry>
                 <material name="Blue" />
             </visual>
@@ -336,7 +338,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L6_wrist_pitch_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L6_wrist_pitch_link.dae"/>
                 </geometry>
                 <material name="Green" />
             </visual>
@@ -361,7 +363,7 @@
             <visual>
                 <origin xyz="0.0541 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L7_wrist_roll_link.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L7_wrist_roll_link.dae"/>
                 </geometry>
                 <material name="Grey" />
             </visual>
@@ -386,7 +388,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L8_gripper_left_finger.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L8_gripper_left_finger.dae"/>
                 </geometry>
                 <material name="Blue" />
             </visual>
@@ -411,7 +413,7 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://wubble_arm_description/meshes/L9_gripper_right_finger.stl"/>
+                    <mesh filename="package://wubble_arm_description/meshes/collada/L9_gripper_right_finger.dae"/>
                 </geometry>
                 <material name="Green" />
             </visual>
