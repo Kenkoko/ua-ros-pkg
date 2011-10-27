@@ -154,6 +154,7 @@ public:
     bool setMultiVelocity(std::vector<std::vector<int> > value_pairs);
     bool setMultiPositionVelocity(std::vector<std::vector<int> > value_pairs);
     bool setMultiComplianceMargins(std::vector<std::vector<int> > value_pairs);
+    bool setMultiComplianceSlopes(std::vector<std::vector<int> > value_pairs);
     bool setMultiTorqueEnabled(std::vector<std::vector<int> > value_pairs);
     bool setMultiTorqueLimit(std::vector<std::vector<int> > value_pairs);
     bool setMultiValues(std::vector<std::map<std::string, int> > value_maps);

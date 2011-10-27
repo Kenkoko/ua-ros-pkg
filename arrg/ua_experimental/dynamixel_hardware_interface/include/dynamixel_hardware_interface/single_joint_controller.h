@@ -40,6 +40,8 @@
 #include <dynamixel_hardware_interface/SetVelocity.h>
 #include <dynamixel_hardware_interface/TorqueEnable.h>
 #include <dynamixel_hardware_interface/SetTorqueLimit.h>
+#include <dynamixel_hardware_interface/SetComplianceMargin.h>
+#include <dynamixel_hardware_interface/SetComplianceSlope.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
@@ -254,6 +256,8 @@ public:
         torque_enable_srv_ = c_nh_.advertiseService("torque_enable", &SingleJointController::processTorqueEnable, this);
         reset_overload_error_srv_ = c_nh_.advertiseService("reset_overload_error", &SingleJointController::processResetOverloadError, this);
         set_torque_limit_srv_ = c_nh_.advertiseService("set_torque_limit", &SingleJointController::processSetTorqueLimit, this);
+        set_compliance_margin_srv_ = c_nh_.advertiseService("set_compliance_margin", &SingleJointController::processSetComplianceMargin, this);
+        set_compliance_slope_srv_ = c_nh_.advertiseService("set_compliance_slope", &SingleJointController::processSetComplianceSlope, this);
     }
     
     virtual void stop()
@@ -265,6 +269,8 @@ public:
         torque_enable_srv_.shutdown();
         reset_overload_error_srv_.shutdown();
         set_torque_limit_srv_.shutdown();
+        set_compliance_margin_srv_.shutdown();
+        set_compliance_slope_srv_.shutdown();
     }
     
     bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
@@ -331,6 +337,45 @@ public:
         return dxl_io_->setMultiTorqueLimit(mcv);
     }
 
+    bool processSetComplianceMargin(dynamixel_hardware_interface::SetComplianceMargin::Request& req,
+                                    dynamixel_hardware_interface::SetComplianceMargin::Request& res)
+    {
+        std::vector<std::vector<int> > mcv;
+        
+        for (size_t i = 0; i < motor_ids_.size(); ++i)
+        {
+            int motor_id = motor_ids_[i];
+            
+            std::vector<int> pair;
+            pair.push_back(motor_id);
+            pair.push_back(req.margin);
+            pair.push_back(req.margin);
+            
+            mcv.push_back(pair);
+        }
+        
+        return dxl_io_->setMultiComplianceMargins(mcv);
+    }
+
+    bool processSetComplianceSlope(dynamixel_hardware_interface::SetComplianceSlope::Request& req,
+                                   dynamixel_hardware_interface::SetComplianceSlope::Request& res)
+    {
+        std::vector<std::vector<int> > mcv;
+        
+        for (size_t i = 0; i < motor_ids_.size(); ++i)
+        {
+            int motor_id = motor_ids_[i];
+            
+            std::vector<int> pair;
+            pair.push_back(motor_id);
+            pair.push_back(req.slope);
+            pair.push_back(req.slope);
+            
+            mcv.push_back(pair);
+        }
+        
+        return dxl_io_->setMultiComplianceSlopes(mcv);
+    }
 
     virtual std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity) = 0;
     
@@ -381,6 +426,8 @@ protected:
     ros::ServiceServer torque_enable_srv_;
     ros::ServiceServer reset_overload_error_srv_;
     ros::ServiceServer set_torque_limit_srv_;
+    ros::ServiceServer set_compliance_margin_srv_;
+    ros::ServiceServer set_compliance_slope_srv_;
     
     uint16_t convertToEncoder(double angle_in_radians)
     {
