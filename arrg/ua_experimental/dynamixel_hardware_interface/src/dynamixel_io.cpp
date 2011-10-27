@@ -96,7 +96,6 @@ bool DynamixelIO::updateCachedParameters(int servo_id)
         std::vector<uint8_t> response;
         if (!read(servo_id, DXL_MODEL_NUMBER_L, 34, response)) { ++count; continue; }
         
-        checkForErrors(servo_id, response[4], "updateCachedParameters");
         uint8_t byte_num = 5;
         
         data->model_number = response[byte_num+0] + (response[byte_num+1] << 8);
@@ -166,9 +165,9 @@ bool DynamixelIO::ping(int servo_id)
     
     if (success)
     {
-        checkForErrors(servo_id, response[4], "ping");
         connected_motors_.insert(servo_id);
-        success = updateCachedParameters(servo_id);
+        updateCachedParameters(servo_id);
+        checkForErrors(servo_id, response[4], "ping");
     }
     
     return success;
@@ -179,12 +178,13 @@ bool DynamixelIO::resetOverloadError(int servo_id)
     if (setTorqueEnable(servo_id, false))
     {
         DynamixelData* dd = cache_[servo_id];
-        dd->torque_enabled = false;
         
         if (setTorqueLimit(servo_id, dd->max_torque))
         {
-            dd->led = false;
-            return setLed(servo_id, false);
+            setLed(servo_id, false);
+            dd->shutdown_error_time = 0.0;
+            
+            return true;
         }
     }
     
@@ -785,7 +785,10 @@ bool DynamixelIO::setPosition(int servo_id, uint16_t position)
 
     if (write(servo_id, DXL_GOAL_POSITION_L, data, response))
     {
-        cache_[servo_id]->target_position = position;
+        DynamixelData* dd = cache_[servo_id];
+        dd->target_position = position;
+        dd->torque_enabled = true;
+        
         checkForErrors(servo_id, response[4], "setPosition");
         return true;
     }
@@ -813,7 +816,10 @@ bool DynamixelIO::setVelocity(int servo_id, int16_t velocity)
 
     if (write(servo_id, DXL_GOAL_SPEED_L, data, response))
     {
-        cache_[servo_id]->target_velocity = velocity;
+        DynamixelData* dd = cache_[servo_id];
+        dd->target_velocity = velocity;
+        dd->torque_enabled = true;
+
         checkForErrors(servo_id, response[4], "setVelocity");
         return true;
     }
@@ -850,6 +856,7 @@ bool DynamixelIO::setMultiPosition(std::vector<std::vector<int> > value_pairs)
 
         DynamixelData* dd = cache_[motor_id];
         dd->target_position = position;
+        dd->torque_enabled = true;
         
         std::vector<uint8_t> value_pair;
         value_pair.push_back(motor_id);                 // servo id
@@ -874,6 +881,7 @@ bool DynamixelIO::setMultiVelocity(std::vector<std::vector<int> > value_pairs)
 
         DynamixelData* dd = cache_[motor_id];
         dd->target_velocity = velocity;
+        dd->torque_enabled = true;
         
         std::vector<uint8_t> value_pair;
         value_pair.push_back(motor_id);             // servo id
@@ -909,6 +917,7 @@ bool DynamixelIO::setMultiPositionVelocity(std::vector<std::vector<int> > value_
         DynamixelData* dd = cache_[motor_id];
         dd->target_position = position;
         dd->target_velocity = velocity;
+        dd->torque_enabled = true;
 
         std::vector<uint8_t> vals;
 
@@ -1209,12 +1218,40 @@ bool DynamixelIO::readResponse(std::vector<uint8_t>& response)
 
 void DynamixelIO::checkForErrors(int servo_id, uint8_t error_code, std::string command_failed)
 {
-    if (error_code == DXL_NO_ERROR) { return; }
+    DynamixelData* data = cache_[servo_id];
+    
+    if (error_code == DXL_NO_ERROR)
+    {
+        data->shutdown_error_time = 0.0;
+        return;        
+    }
     
     std::vector<std::string> error_msgs;
 
-    if ((error_code & DXL_OVERHEATING_ERROR) != 0)   { error_msgs.push_back("Overheating Error"); }
-    if ((error_code & DXL_OVERLOAD_ERROR) != 0)      { error_msgs.push_back("Overload Error"); }
+    if ((error_code & DXL_OVERHEATING_ERROR) != 0)
+    {
+        if (data->shutdown_error_time <= 0.0)
+        {
+            struct timespec ts_now;
+            clock_gettime(CLOCK_REALTIME, &ts_now);
+            data->shutdown_error_time = ts_now.tv_sec + ts_now.tv_nsec / 1.0e9;
+        }
+        
+        error_msgs.push_back("Overheating Error");
+    }
+    
+    if ((error_code & DXL_OVERLOAD_ERROR) != 0)
+    {
+        if (data->shutdown_error_time <= 0.0)
+        {
+            struct timespec ts_now;
+            clock_gettime(CLOCK_REALTIME, &ts_now);
+            data->shutdown_error_time = ts_now.tv_sec + ts_now.tv_nsec / 1.0e9;
+        }
+        
+        error_msgs.push_back("Overload Error");
+    }
+    
     if ((error_code & DXL_INPUT_VOLTAGE_ERROR) != 0) { error_msgs.push_back("Input Voltage Error"); }
     if ((error_code & DXL_ANGLE_LIMIT_ERROR) != 0)   { error_msgs.push_back("Angle Limit Error"); }
     if ((error_code & DXL_RANGE_ERROR) != 0)         { error_msgs.push_back("Range Error"); }
@@ -1230,7 +1267,7 @@ void DynamixelIO::checkForErrors(int servo_id, uint8_t error_code, std::string c
     }
     
     m << "] during " << command_failed << " command on servo #" << servo_id; 
-    printf("%s\n", m.str().c_str());
+    data->error = m.str();
     updateCachedParameters(servo_id);
 }
 

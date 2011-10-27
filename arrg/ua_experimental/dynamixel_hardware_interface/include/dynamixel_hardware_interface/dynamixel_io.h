@@ -66,6 +66,9 @@ typedef struct DynamixelDataStruct
     uint16_t target_position;
     int16_t  target_velocity;
     
+    double   shutdown_error_time;
+    std::string error;
+    
 } DynamixelData;
 
 typedef struct DynamixelStatusStruct

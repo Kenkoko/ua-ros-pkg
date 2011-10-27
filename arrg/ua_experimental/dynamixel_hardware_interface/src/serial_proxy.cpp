@@ -252,10 +252,7 @@ void SerialProxy::updateMotorStates()
 
             if (dxl_io_->getFeedback(motor_id, status))
             {
-                const dynamixel_hardware_interface::DynamixelData* data;
-                data = dxl_io_->getCachedParameters(motor_id);
-                if (data == NULL) { continue; }
-                
+                const DynamixelData* data = motor_static_info_[motor_id];
                 MotorState ms;
                 ms.timestamp = status.timestamp;
                 ms.id = motor_id;
@@ -334,30 +331,31 @@ void SerialProxy::publishDiagnosticInformation()
         for (size_t i = 0; i < current_state_->motor_states.size(); ++i)
         {
             MotorState motor_state = current_state_->motor_states[i];
-            int mid = motor_state.id;
+            int motor_id = motor_state.id;
             
             // check if current motor state was already populated by updateMotorStates thread
             if (motor_state.timestamp == 0.0) { continue; }
             
-            std::string mid_str = boost::lexical_cast<std::string>(mid);
+            const DynamixelData* data = motor_static_info_[motor_id];
+            std::string mid_str = boost::lexical_cast<std::string>(motor_id);
             
             diagnostic_updater::DiagnosticStatusWrapper motor_status;
             
             motor_status.name = "Robotis Dynamixel Motor " + mid_str + " on port " + port_namespace_;
             motor_status.hardware_id = "ID " + mid_str + " on port " + port_name_;
-            motor_status.add("Model Name", getMotorModelName(motor_static_info_[mid]->model_number).c_str());
-            motor_status.addf("Firmware Version", "%d", motor_static_info_[mid]->firmware_version);
-            motor_status.addf("Return Delay Time", "%d", motor_static_info_[mid]->return_delay_time);
-            motor_status.addf("Minimum Voltage", "%0.1f", motor_static_info_[mid]->voltage_limit_low / 10.0);
-            motor_status.addf("Maximum Voltage", "%0.1f", motor_static_info_[mid]->voltage_limit_high / 10.0);
-            motor_status.addf("Maximum Torque", "%d", motor_static_info_[mid]->max_torque);
-            motor_status.addf("Minimum Position (CW)", "%d", motor_static_info_[mid]->cw_angle_limit);
-            motor_status.addf("Maximum Position (CCW)", "%d", motor_static_info_[mid]->ccw_angle_limit);
-            motor_status.addf("Compliance Margin (CW)", "%d", motor_static_info_[mid]->cw_compliance_margin);
-            motor_status.addf("Compliance Margin (CCW)", "%d", motor_static_info_[mid]->ccw_compliance_margin);
-            motor_status.addf("Compliance Slope (CW)", "%d", motor_static_info_[mid]->cw_compliance_slope);
-            motor_status.addf("Compliance Slope (CCW)", "%d", motor_static_info_[mid]->ccw_compliance_slope);
-            motor_status.add("Torque Enabled", motor_static_info_[mid]->torque_enabled ? "True" : "False");
+            motor_status.add("Model Name", getMotorModelName(data->model_number).c_str());
+            motor_status.addf("Firmware Version", "%d", data->firmware_version);
+            motor_status.addf("Return Delay Time", "%d", data->return_delay_time);
+            motor_status.addf("Minimum Voltage", "%0.1f", data->voltage_limit_low / 10.0);
+            motor_status.addf("Maximum Voltage", "%0.1f", data->voltage_limit_high / 10.0);
+            motor_status.addf("Maximum Torque", "%d", data->max_torque);
+            motor_status.addf("Minimum Position (CW)", "%d", data->cw_angle_limit);
+            motor_status.addf("Maximum Position (CCW)", "%d", data->ccw_angle_limit);
+            motor_status.addf("Compliance Margin (CW)", "%d", data->cw_compliance_margin);
+            motor_status.addf("Compliance Margin (CCW)", "%d", data->ccw_compliance_margin);
+            motor_status.addf("Compliance Slope (CW)", "%d", data->cw_compliance_slope);
+            motor_status.addf("Compliance Slope (CCW)", "%d", data->ccw_compliance_slope);
+            motor_status.add("Torque Enabled", data->torque_enabled ? "True" : "False");
             
             motor_status.add("Moving", motor_state.moving ? "True" : "False");
             motor_status.addf("Target Position", "%d", motor_state.target_position);
@@ -382,16 +380,30 @@ void SerialProxy::publishDiagnosticInformation()
                 motor_status.summary(motor_status.WARN, "Very hot");
             }
             
-            if (motor_state.torque_limit == 0)
+            // if there was an overload or overheating error
+            if (data->shutdown_error_time > 0.0)
+            {
+                ROS_ERROR_THROTTLE(1, "%s: %s", port_namespace_.c_str(), data->error.c_str());
+                motor_status.mergeSummary(motor_status.ERROR, "Overload/Overheating error");
+                
+                // if current motor temperature is under control and
+                // we just arbitrarily waited 5 seconds just for kicks
+                if (motor_state.temperature < warn_level_temp_ &&
+                    ros::Time::now().toSec() - data->shutdown_error_time >= 5.0)
+                {
+                    dxl_io_->resetOverloadError(motor_id);
+                    ROS_WARN("%s: Reset overload/overheating error on motor %d", port_namespace_.c_str(), motor_id);
+                }
+            }
+            else if (motor_state.torque_limit == 0)
             {
                 motor_status.mergeSummary(motor_status.ERROR, "Torque limit is 0");
             }
-                
+            
             diag_msg.status.push_back(motor_status);
         }
               
         diagnostics_pub_.publish(diag_msg);
-        
         rate.sleep();
     }
 }
