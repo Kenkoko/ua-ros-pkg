@@ -23,7 +23,7 @@
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="${M_PI/2} 0 ${M_PI/2}" />
                 <geometry>
-                    <mesh filename="package://hokuyo_urg_description/meshes/hokuyo_urg.stl"/>
+                    <mesh filename="package://hokuyo_urg_description/meshes/collada/hokuyo_urg.dae"/>
                 </geometry>
                 <material name="Black" />
             </visual>
