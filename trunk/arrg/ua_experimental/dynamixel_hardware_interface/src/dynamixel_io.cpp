@@ -960,6 +960,32 @@ bool DynamixelIO::setMultiComplianceMargins(std::vector<std::vector<int> > value
     else { return false; }
 }
 
+bool DynamixelIO::setMultiComplianceSlopes(std::vector<std::vector<int> > value_pairs)
+{
+    std::vector<std::vector<uint8_t> > data;
+    
+    for (size_t i = 0; i < value_pairs.size(); ++i)
+    {
+        int motor_id = value_pairs[i][0];
+        int cw_slope = value_pairs[i][1];
+        int ccw_slope = value_pairs[i][2];
+        
+        DynamixelData* dd = cache_[motor_id];
+        dd->cw_compliance_slope = cw_slope;
+        dd->ccw_compliance_slope = ccw_slope;
+        
+        std::vector<uint8_t> value_pair;
+        value_pair.push_back(motor_id);     // servo id
+        value_pair.push_back(cw_slope);     // cw_compliance_slope
+        value_pair.push_back(ccw_slope);    // ccw_compliance_slope
+        
+        data.push_back(value_pair);
+    }
+    
+    if (syncWrite(DXL_CW_COMPLIANCE_SLOPE, data)) { return true; }
+    else { return false; }
+}
+
 bool DynamixelIO::setMultiTorqueEnabled(std::vector<std::vector<int> > value_pairs)
 {
     std::vector<std::vector<uint8_t> > data;
