@@ -241,8 +241,9 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
         {
             ros::Time start_time = ros::Time::now();
             
-            while (fabs(l_finger_state_->load - goal->torque_limit) >= 0.01 ||
-                   fabs(r_finger_state_->load - goal->torque_limit) >= 0.01)
+            // both left and right load values are negative, hence the plus sign
+            while (fabs(goal->torque_limit + l_finger_state_->load) >= 0.01 ||
+                   fabs(goal->torque_limit + r_finger_state_->load) >= 0.01)
             {
                 if (ros::Time::now() - start_time >= timeout)
                 {
