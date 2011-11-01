@@ -54,7 +54,8 @@ PLUGINLIB_DECLARE_CLASS(wubble2_gripper_controller,
 namespace controller
 {
     
-WubbleGripperActionController::WubbleGripperActionController()
+WubbleGripperActionController::WubbleGripperActionController() :
+    num_fsrs_(8), max_fsr_value_(1000.0), max_total_pressure_(num_fsrs_*max_fsr_value_)
 {
     terminate_gripper_opening_ = false;
     terminate_gripper_monitor_ = false;
@@ -113,14 +114,10 @@ void WubbleGripperActionController::start()
     l_finger_ground_distance_pub_ = nh_.advertise<std_msgs::Float64>("left_finger_ground_distance", 100);
     r_finger_ground_distance_pub_ = nh_.advertise<std_msgs::Float64>("right_finger_ground_distance", 100);
     
-    // Pressure sensors
-    // 0-3 - left finger
-    // 4-7 - right finger
-    int num_sensors = 8;
-    pressure_.resize(num_sensors);
-    pressure_subs_.resize(num_sensors);
+    pressure_.resize(num_fsrs_);
+    pressure_subs_.resize(num_fsrs_);
     
-    for (int i = 0; i < num_sensors; ++i)
+    for (int i = 0; i < num_fsrs_; ++i)
     {
         pressure_subs_[i] = nh_.subscribe<phidgets_ros::Float64Stamped>("/interface_kit/124427/sensor/" + boost::lexical_cast<std::string>(i), 100,
                                                                         boost::bind(&WubbleGripperActionController::processPressureSensors, this, _1, i));
@@ -229,7 +226,7 @@ void WubbleGripperActionController::processIRSensor(const phidgets_ros::Float64S
 void WubbleGripperActionController::processGripperAction(const wubble2_gripper_controller::WubbleGripperGoalConstPtr& goal)
 {
     wubble2_gripper_controller::WubbleGripperResult result;
-    ros::Rate r(500);
+    ros::Rate r(200);
     ros::Duration timeout(2.0);
     
     if (goal->command == wubble2_gripper_controller::WubbleGripperGoal::CLOSE_GRIPPER)
@@ -244,17 +241,21 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
         {
             ros::Time start_time = ros::Time::now();
             
-            while (ros::ok() &&
-                   ros::Time::now() - start_time < timeout &&
-                   (!within_tolerance(l_finger_state_.load, -goal->torque_limit, 0.01) ||
-                    !within_tolerance(r_finger_state_.load, -goal->torque_limit, 0.01)))
+            while (!within_tolerance(l_finger_state_.load, -goal->torque_limit, 0.01) ||
+                   !within_tolerance(r_finger_state_.load, -goal->torque_limit, 0.01))
             {
+                if (ros::Time::now() - start_time >= timeout)
+                {
+                    action_server_->setAborted();
+                    return;
+                }
+                
                 r.sleep();
             }
         }
         else
         {
-            if (desired_torque > 1e-3) { ros::Duration(1.0 / desired_torque).sleep(); }
+            if (desired_torque > 1e-3) { ros::Duration(2.0 / desired_torque).sleep(); }
         }
             
         close_gripper_ = true;
@@ -262,18 +263,21 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
     }
     else if (goal->command == wubble2_gripper_controller::WubbleGripperGoal::OPEN_GRIPPER)
     {
+        ros::Time start_time = ros::Time::now();
         close_gripper_ = false;
         activateGripper(goal->command, goal->torque_limit);
         
-        ros::Time start_time = ros::Time::now();
-        while (ros::ok() &&
-               ros::Time::now() - start_time < timeout &&
-               (l_finger_state_.position < 0.8 ||
-                r_finger_state_.position > -0.8))
+        while (l_finger_state_.position < 0.8 || r_finger_state_.position > -0.8)
         {
+            if (ros::Time::now() - start_time >= timeout)
+            {
+                action_server_->setAborted();
+                return;
+            }
+            
             r.sleep();
         }
-            
+        
         sendMotorCommand(0.5, -0.5);
         action_server_->setSucceeded();
     }
@@ -302,7 +306,6 @@ double WubbleGripperActionController::activateGripper(int command, double torque
     }
         
     sendMotorCommand(l_desired_torque, r_desired_torque);
-    
     return std::max<double>(l_desired_torque, r_desired_torque);
 }
 
@@ -360,7 +363,7 @@ void WubbleGripperActionController::calculateGripperOpening()
         }
         catch (const std::runtime_error &e)
         {
-            ROS_ERROR_THROTTLE(1, "%s: %s", name_.c_str(), e.what());
+            ROS_DEBUG_THROTTLE(1, "%s: %s", name_.c_str(), e.what());
         }
                 
         r.sleep();
@@ -369,9 +372,7 @@ void WubbleGripperActionController::calculateGripperOpening()
 
 void WubbleGripperActionController::gripperMonitor()
 {
-    ROS_INFO("%s: Gripper temperature monitor and torque control thread started successfully", name_.c_str());
-    bool motors_overheating = false;
-    double max_pressure = 8000.0;
+    ROS_DEBUG("%s: Gripper torque control thread started successfully", name_.c_str());
     std_msgs::Float64 msg;
     ros::Rate r(150);
     
@@ -399,33 +400,9 @@ void WubbleGripperActionController::gripperMonitor()
         msg.data = pressure;
         lr_total_pressure_pub_.publish(msg);
         
-        //----------------------- TEMPERATURE MONITOR ---------------------------//
-        std::vector<int> lt = l_finger_state_.motor_temps;
-        int l_temp = *std::max_element(lt.begin(), lt.end());
-        
-        std::vector<int> rt = r_finger_state_.motor_temps;
-        int r_temp = *std::max_element(rt.begin(), rt.end());
-        
-        if (l_temp >= 75 || r_temp >= 75)
-        {
-            if (!motors_overheating)
-            {
-                ROS_WARN("Disabling gripper motors torque [LM: %dC, RM: %dC]", l_temp, r_temp);
-                sendMotorCommand(-0.5, 0.5);
-                motors_overheating = true;
-            }
-        }
-        else
-        {
-            motors_overheating = false;
-        }
-            
-        /*#########################################################################*/
-        
         // don't do torque control if not requested or
         // when the gripper is open
-        // or when motors are too hot
-        if (!dynamic_torque_control_ || !close_gripper_ || motors_overheating)
+        if (!dynamic_torque_control_ || !close_gripper_)
         {
             r.sleep();
             continue;
@@ -437,7 +414,7 @@ void WubbleGripperActionController::gripperMonitor()
         
         if (pressure > upper_pressure_)   // release
         {
-            double pressure_change_step = fabs(pressure - upper_pressure_) / max_pressure;
+            double pressure_change_step = fabs(pressure - upper_pressure_) / max_total_pressure_;
             double l_goal = std::min( l_max_velocity_, l_current + pressure_change_step);
             double r_goal = std::max(-r_max_velocity_, r_current - pressure_change_step);
             
@@ -452,7 +429,7 @@ void WubbleGripperActionController::gripperMonitor()
         }
         else if (pressure < lower_pressure_) // squeeze
         {
-            double pressure_change_step = fabs(pressure - lower_pressure_) / max_pressure;
+            double pressure_change_step = fabs(pressure - lower_pressure_) / max_total_pressure_;
             double l_goal = std::max(-l_max_velocity_, l_current - pressure_change_step);
             double r_goal = std::min( r_max_velocity_, r_current + pressure_change_step);
             
@@ -465,7 +442,6 @@ void WubbleGripperActionController::gripperMonitor()
                 }
             }
         }
-        /*########################################################################*/
 
         r.sleep();
     }

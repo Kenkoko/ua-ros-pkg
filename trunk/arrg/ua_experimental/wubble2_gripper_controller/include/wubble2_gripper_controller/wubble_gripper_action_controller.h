@@ -94,6 +94,15 @@ private:
     std::vector<double> r_zero_pressure_;
     std::vector<double> lr_zero_pressure_;
 
+    // pressure sensors: 0-3 - left finger, 4-7 - right finger
+    const int num_fsrs_;
+    
+    // maximum value fsr can report
+    const double max_fsr_value_;
+    
+    // absolute maximum combined pressure reported by all sensors in the gripper
+    const double max_total_pressure_;
+    
     bool close_gripper_;
     bool dynamic_torque_control_;
     double lower_pressure_;
