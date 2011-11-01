@@ -545,7 +545,7 @@ bool DynamixelIO::getFeedback(int servo_id, DynamixelStatus& status)
             int direction = (velocity & (1 << 10)) == 0 ? 1 : -1;
             velocity = direction * (velocity & DXL_MAX_VELOCITY_ENCODER);
 
-            int16_t load = response[offset+6] + (response[offset+7] << 7);
+            int16_t load = response[offset+6] + (response[offset+7] << 8);
             direction = (load & (1 << 10)) == 0 ? 1 : -1;
             load = direction * (load & DXL_MAX_LOAD_ENCODER);
 
