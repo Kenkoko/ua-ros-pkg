@@ -112,8 +112,8 @@ private:
     ros::Publisher gripper_ir_pub_;
     ros::Subscriber ir_sensor_sub_;
     
-    dynamixel_hardware_interface::JointState l_finger_state_;
-    dynamixel_hardware_interface::JointState r_finger_state_;
+    const dynamixel_hardware_interface::JointState* l_finger_state_;
+    const dynamixel_hardware_interface::JointState* r_finger_state_;
     
     SingleJointController* l_finger_controller_;
     SingleJointController* r_finger_controller_;
