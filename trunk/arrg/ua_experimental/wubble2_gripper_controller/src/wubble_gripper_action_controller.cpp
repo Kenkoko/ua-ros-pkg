@@ -259,7 +259,7 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
         {
             if (desired_torque > 1e-3) { ros::Duration(2.0 / desired_torque).sleep(); }
         }
-            
+        
         close_gripper_ = true;
         action_server_->setSucceeded();
     }
@@ -413,8 +413,8 @@ void WubbleGripperActionController::gripperMonitor()
         }
             
         //----------------------- TORQUE CONTROL -------------------------------//
-        double l_current = l_finger_state_->target_position;
-        double r_current = r_finger_state_->target_position;
+        double l_current = l_finger_state_->target_velocity;
+        double r_current = r_finger_state_->target_velocity;
         
         if (pressure > upper_pressure_)   // release
         {
