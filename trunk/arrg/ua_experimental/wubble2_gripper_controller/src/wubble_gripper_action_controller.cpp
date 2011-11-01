@@ -241,11 +241,12 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
         {
             ros::Time start_time = ros::Time::now();
             
-            while (!within_tolerance(l_finger_state_.load, -goal->torque_limit, 0.01) ||
-                   !within_tolerance(r_finger_state_.load, -goal->torque_limit, 0.01))
+            while (fabs(l_finger_state_.load - goal->torque_limit) >= 0.01 ||
+                   fabs(r_finger_state_.load - goal->torque_limit) >= 0.01)
             {
                 if (ros::Time::now() - start_time >= timeout)
                 {
+                    ROS_ERROR("%s: timed out trying to close the gripper (LF: %f < %f or RF: %f < %f)", name_.c_str(), l_finger_state_.load, goal->torque_limit, r_finger_state_.load, goal->torque_limit);
                     action_server_->setAborted();
                     return;
                 }
@@ -271,6 +272,7 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
         {
             if (ros::Time::now() - start_time >= timeout)
             {
+                ROS_ERROR("%s: timed out trying to open the gripper (LF: %f < %f or RF: %f > %f)", name_.c_str(), l_finger_state_.position, 0.8, r_finger_state_.position, -0.8);
                 action_server_->setAborted();
                 return;
             }
