@@ -96,7 +96,7 @@ bool WubbleGripperActionController::initialize(std::string name, std::vector<Sin
     r_finger_controller_ = joint_to_controller_[r_joint_name];
     
     l_finger_state_ = joint_states_[l_joint_name];
-    r_finger_state_ = joint_states_[l_joint_name];
+    r_finger_state_ = joint_states_[r_joint_name];
     
     // left and right finger are assumed to be connected to the same port
     dxl_io_ = l_finger_controller_->getPort();
