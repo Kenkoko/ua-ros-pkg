@@ -95,8 +95,8 @@ bool WubbleGripperActionController::initialize(std::string name, std::vector<Sin
     l_finger_controller_ = joint_to_controller_[l_joint_name];
     r_finger_controller_ = joint_to_controller_[r_joint_name];
     
-    l_finger_state_ = l_finger_controller_->getJointState();
-    r_finger_state_ = r_finger_controller_->getJointState();
+    l_finger_state_ = joint_states_[l_joint_name];
+    r_finger_state_ = joint_states_[l_joint_name];
     
     // left and right finger are assumed to be connected to the same port
     dxl_io_ = l_finger_controller_->getPort();
@@ -241,12 +241,12 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
         {
             ros::Time start_time = ros::Time::now();
             
-            while (fabs(l_finger_state_.load - goal->torque_limit) >= 0.01 ||
-                   fabs(r_finger_state_.load - goal->torque_limit) >= 0.01)
+            while (fabs(l_finger_state_->load - goal->torque_limit) >= 0.01 ||
+                   fabs(r_finger_state_->load - goal->torque_limit) >= 0.01)
             {
                 if (ros::Time::now() - start_time >= timeout)
                 {
-                    ROS_ERROR("%s: timed out trying to close the gripper (LF: %f < %f or RF: %f < %f)", name_.c_str(), l_finger_state_.load, goal->torque_limit, r_finger_state_.load, goal->torque_limit);
+                    ROS_ERROR("%s: timed out trying to close the gripper (LF: %f < %f or RF: %f < %f)", name_.c_str(), l_finger_state_->load, goal->torque_limit, r_finger_state_->load, goal->torque_limit);
                     action_server_->setAborted();
                     return;
                 }
@@ -268,11 +268,12 @@ void WubbleGripperActionController::processGripperAction(const wubble2_gripper_c
         close_gripper_ = false;
         activateGripper(goal->command, goal->torque_limit);
         
-        while (l_finger_state_.position < 0.8 || r_finger_state_.position > -0.8)
+        while (l_finger_state_->position < 0.8 || r_finger_state_->position > -0.8)
         {
             if (ros::Time::now() - start_time >= timeout)
             {
-                ROS_ERROR("%s: timed out trying to open the gripper (LF: %f < %f or RF: %f > %f)", name_.c_str(), l_finger_state_.position, 0.8, r_finger_state_.position, -0.8);
+                ROS_ERROR("%s: timed out trying to open the gripper (LF: %f < %f or RF: %f > %f)", name_.c_str(), l_finger_state_->position, 0.8, r_finger_state_->position, -0.8);
+                sendMotorCommand(0.5, -0.5);
                 action_server_->setAborted();
                 return;
             }
@@ -411,8 +412,8 @@ void WubbleGripperActionController::gripperMonitor()
         }
             
         //----------------------- TORQUE CONTROL -------------------------------//
-        double l_current = l_finger_state_.target_position;
-        double r_current = r_finger_state_.target_position;
+        double l_current = l_finger_state_->target_position;
+        double r_current = r_finger_state_->target_position;
         
         if (pressure > upper_pressure_)   // release
         {
