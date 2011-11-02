@@ -164,17 +164,10 @@ public:
     bool setMultiValues(std::vector<std::map<std::string, int> > value_maps);
     
 protected:
-    flexiport::Port* port_;
-    pthread_mutex_t serial_mutex_;
     std::map<int, DynamixelData*> cache_;
     std::set<int> connected_motors_;
 
     bool updateCachedParameters(int servo_id);
-    
-    bool writePacket(const void* const buffer, size_t count);
-    bool readResponse(std::vector<uint8_t>& response);
-    
-    bool waitForBytes(ssize_t n_bytes, uint16_t timeout_ms);
     void checkForErrors(int servo_id, uint8_t error_code, std::string command_failed);
 
     bool read(int servo_id,
@@ -189,6 +182,15 @@ protected:
 
     bool syncWrite(int address,
                    const std::vector<std::vector<uint8_t> >& data);
+    
+private:
+    flexiport::Port* port_;
+    pthread_mutex_t serial_mutex_;
+    
+    bool waitForBytes(ssize_t n_bytes, uint16_t timeout_ms);
+    
+    bool writePacket(const void* const buffer, size_t count);
+    bool readResponse(std::vector<uint8_t>& response);
 };
 
 }

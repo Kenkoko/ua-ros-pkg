@@ -38,3 +38,8 @@ target_link_libraries(dynamixel_controllers ${PROJECT_NAME})
 
 rosbuild_add_executable(dynamixel_io test/main.cpp)
 target_link_libraries(dynamixel_io ${PROJECT_NAME})
+
+option (DYNAMIXEL_BUILD_BINDINGS "Build the Python bindings for Dynamixel Driver" ON)
+if (DYNAMIXEL_BUILD_BINDINGS)
+    add_subdirectory (python)
+endif (DYNAMIXEL_BUILD_BINDINGS)
