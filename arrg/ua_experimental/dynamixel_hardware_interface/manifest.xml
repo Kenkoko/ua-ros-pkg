@@ -22,6 +22,8 @@
         <cpp cflags="-I${prefix}/include"
              lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -ldynamixel_hardware_interface -ldynamixel_controllers" />
         <dynamixel_hardware_interface plugin="${prefix}/controller_plugins.xml" />
+        <python path="${prefix}/lib" />
+        <python path="${prefix}/src" />
     </export>
 
 </package>
