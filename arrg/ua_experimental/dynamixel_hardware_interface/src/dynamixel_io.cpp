@@ -508,6 +508,22 @@ bool DynamixelIO::getVelocity(int servo_id, int16_t& velocity)
     return false;
 }
 
+bool DynamixelIO::getLoad(int servo_id, int16_t& load)
+{
+    std::vector<uint8_t> response;
+
+    if (read(servo_id, DXL_PRESENT_LOAD_L, 2, response))
+    {
+        checkForErrors(servo_id, response[4], "getLoad");
+        load = response[5] + (response[6] << 8);
+        int direction = (load & (1 << 10)) == 0 ? 1 : -1;
+        load = direction * (load & DXL_MAX_LOAD_ENCODER);
+        return true;
+    }
+
+    return false;
+}
+
 bool DynamixelIO::getVoltage(int servo_id, float& voltage)
 {
     std::vector<uint8_t> response;
@@ -516,6 +532,34 @@ bool DynamixelIO::getVoltage(int servo_id, float& voltage)
     {
         checkForErrors(servo_id, response[4], "getVoltage");
         voltage = response[5] / 10.0;
+        return true;
+    }
+
+    return false;
+}
+
+bool DynamixelIO::getTemperature(int servo_id, uint8_t& temperature)
+{
+    std::vector<uint8_t> response;
+
+    if (read(servo_id, DXL_PRESENT_TEMPERATURE, 1, response))
+    {
+        checkForErrors(servo_id, response[4], "getTemperature");
+        temperature = response[5];
+        return true;
+    }
+
+    return false;
+}
+
+bool DynamixelIO::getMoving(int servo_id, bool& is_moving)
+{
+    std::vector<uint8_t> response;
+
+    if (read(servo_id, DXL_LED, 1, response))
+    {
+        checkForErrors(servo_id, response[4], "getMoving");
+        is_moving = response[5];
         return true;
     }
 

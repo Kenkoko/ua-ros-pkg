@@ -32,6 +32,7 @@
 #include <stdint.h>
 
 #include <set>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -128,7 +129,7 @@ public:
     // current motor status accessor functions
     bool getPosition(int servo_id, uint16_t& position);
     bool getVelocity(int servo_id, int16_t& velocity);
-    bool getLoad(int servo_id, float& load);
+    bool getLoad(int servo_id, int16_t& load);
     bool getVoltage(int servo_id, float& voltage);
     bool getTemperature(int servo_id, uint8_t& temperature);
     bool getMoving(int servo_id, bool& is_moving);
@@ -162,7 +163,7 @@ public:
     bool setMultiTorqueLimit(std::vector<std::vector<int> > value_pairs);
     bool setMultiValues(std::vector<std::map<std::string, int> > value_maps);
     
-private:
+protected:
     flexiport::Port* port_;
     pthread_mutex_t serial_mutex_;
     std::map<int, DynamixelData*> cache_;
