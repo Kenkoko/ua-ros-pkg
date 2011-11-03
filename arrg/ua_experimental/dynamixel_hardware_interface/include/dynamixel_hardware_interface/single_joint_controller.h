@@ -103,8 +103,6 @@ public:
         }
         
         int num_motors = raw_motor_list.size();
-        joint_state_.motor_temps.resize(num_motors);
-        joint_state_.motor_ids.resize(num_motors);
         motor_ids_.resize(num_motors);
         motor_data_.resize(num_motors);
         
