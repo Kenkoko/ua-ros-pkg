@@ -450,7 +450,7 @@ void ControllerManager::publishDiagnosticInformation()
             for (it = sj_controllers_.begin(); it != sj_controllers_.end(); ++it)
             {
                 dynamixel_hardware_interface::JointState state = it->second->getJointState();
-                if (state.motor_ids.empty()) { continue; }
+                if (state.header.stamp.isZero()) { continue; }
                 
                 joint_status.clear();
                 joint_status.name = "Joint Controller " + it->second->getName();
@@ -462,7 +462,6 @@ void ControllerManager::publishDiagnosticInformation()
                 joint_status.add("Position Error", state.position - state.target_position);
                 joint_status.add("Velocity Error", state.velocity != 0 ? state.velocity - state.target_velocity : 0);
                 joint_status.add("Load", state.load);
-                joint_status.add("Temperature", state.motor_temps[0]);
                 joint_status.summary(joint_status.OK, "OK");
                 
                 diag_msg.status.push_back(joint_status);

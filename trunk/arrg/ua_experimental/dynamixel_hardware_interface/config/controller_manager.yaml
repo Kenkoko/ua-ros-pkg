@@ -6,7 +6,7 @@ serial_ports:
         baud_rate: 1000000
         min_motor_id: 1
         max_motor_id: 16
-        update_rate: 100
+        update_rate: 10
         diagnostics:
             error_level_temp: 70
             warn_level_temp: 65

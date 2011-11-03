@@ -143,7 +143,6 @@ void JointTorqueController::processMotorStates(const dynamixel_hardware_interfac
     }
     
     joint_state_.header.stamp = ros::Time(state.timestamp);
-    joint_state_.motor_temps[0] = state.temperature;
     joint_state_.target_position = convertToRadians(state.target_position);
     joint_state_.target_velocity = ((double)state.target_velocity / dynamixel_hardware_interface::DXL_MAX_VELOCITY_ENCODER) * motor_max_velocity_;
     joint_state_.position = convertToRadians(state.position);
