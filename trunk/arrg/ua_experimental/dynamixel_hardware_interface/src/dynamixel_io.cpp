@@ -71,14 +71,19 @@ DynamixelIO::~DynamixelIO()
     port_->Close();
     delete port_;
     pthread_mutex_destroy(&serial_mutex_);
+    
+    std::map<int, DynamixelData*>::iterator it;
+    for (it = cache_.begin(); it != cache_.end(); ++it)
+    {
+        delete it->second;
+    }
 }
 
 const DynamixelData* DynamixelIO::getCachedParameters(int servo_id)
 {
-    std::map<int, DynamixelData*>::const_iterator it = cache_.find(servo_id);
-    
-    if (it == cache_.end()) { return NULL; }
-    return it->second;
+    DynamixelData* dd = findCachedParameters(servo_id);
+    if (!updateCachedParameters(servo_id, dd)) { return NULL; }
+    return dd;
 }
 
 bool DynamixelIO::ping(int servo_id)
@@ -103,9 +108,11 @@ bool DynamixelIO::ping(int servo_id)
     
     if (success)
     {
-        connected_motors_.insert(servo_id);
-        updateCachedParameters(servo_id);
+        DynamixelData* dd = findCachedParameters(servo_id);
+        updateCachedParameters(servo_id, dd);
+        
         checkForErrors(servo_id, response[4], "ping");
+        connected_motors_.insert(servo_id);
     }
     
     return success;
@@ -115,7 +122,7 @@ bool DynamixelIO::resetOverloadError(int servo_id)
 {
     if (setTorqueEnable(servo_id, false))
     {
-        DynamixelData* dd = cache_[servo_id];
+        DynamixelData* dd = findCachedParameters(servo_id);
         
         if (setTorqueLimit(servo_id, dd->max_torque))
         {
@@ -622,7 +629,9 @@ bool DynamixelIO::setReturnDelayTime(int servo_id, uint8_t return_delay_time)
 
     if (write(servo_id, DXL_RETURN_DELAY_TIME, data, response))
     {
-        cache_[servo_id]->return_delay_time = return_delay_time;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->return_delay_time = return_delay_time;
+        
         checkForErrors(servo_id, response[4], "setReturnDelayTime");
         return true;
     }
@@ -642,7 +651,7 @@ bool DynamixelIO::setAngleLimits(int servo_id, uint16_t cw_angle, uint16_t ccw_a
     
     if (write(servo_id, DXL_CW_ANGLE_LIMIT_L, data, response))
     {
-        DynamixelData* dd = cache_[servo_id];
+        DynamixelData* dd = findCachedParameters(servo_id);
         dd->cw_angle_limit = cw_angle;
         dd->ccw_angle_limit = ccw_angle;
         
@@ -663,7 +672,9 @@ bool DynamixelIO::setCWAngleLimit(int servo_id, uint16_t cw_angle)
     
     if (write(servo_id, DXL_CW_ANGLE_LIMIT_L, data, response))
     {
-        cache_[servo_id]->cw_angle_limit = cw_angle;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->cw_angle_limit = cw_angle;
+        
         checkForErrors(servo_id, response[4], "setCWAngleLimit");
         return true;
     }
@@ -681,7 +692,9 @@ bool DynamixelIO::setCCWAngleLimit(int servo_id, uint16_t ccw_angle)
     
     if (write(servo_id, DXL_CCW_ANGLE_LIMIT_L, data, response))
     {
-        cache_[servo_id]->ccw_angle_limit = ccw_angle;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->ccw_angle_limit = ccw_angle;
+        
         checkForErrors(servo_id, response[4], "setCCWAngleLimit");
         return true;
     }
@@ -702,7 +715,7 @@ bool DynamixelIO::setVoltageLimits(int servo_id, float min_voltage_limit, float 
     
     if (write(servo_id, DXL_DOWN_LIMIT_VOLTAGE, data, response))
     {
-        DynamixelData* dd = cache_[servo_id];
+        DynamixelData* dd = findCachedParameters(servo_id);
         dd->voltage_limit_low = min_voltage;
         dd->voltage_limit_high = max_voltage;
         
@@ -724,7 +737,7 @@ bool DynamixelIO::setMinVoltageLimit(int servo_id, float min_voltage_limit)
     
     if (write(servo_id, DXL_DOWN_LIMIT_VOLTAGE, data, response))
     {
-        DynamixelData* dd = cache_[servo_id];
+        DynamixelData* dd = findCachedParameters(servo_id);
         dd->voltage_limit_low = min_voltage;
         
         checkForErrors(servo_id, response[4], "setMinVoltageLimit");
@@ -745,7 +758,7 @@ bool DynamixelIO::setMaxVoltageLimit(int servo_id, float max_voltage_limit)
     
     if (write(servo_id, DXL_UP_LIMIT_VOLTAGE, data, response))
     {
-        DynamixelData* dd = cache_[servo_id];
+        DynamixelData* dd = findCachedParameters(servo_id);
         dd->voltage_limit_high = max_voltage;
         
         checkForErrors(servo_id, response[4], "setMaxVoltageLimit");
@@ -764,7 +777,9 @@ bool DynamixelIO::setTemperatureLimit(int servo_id, uint8_t max_temperature)
 
     if (write(servo_id, DXL_LIMIT_TEMPERATURE, data, response))
     {
-        cache_[servo_id]->temperature_limit = max_temperature;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->temperature_limit = max_temperature;
+        
         checkForErrors(servo_id, response[4], "setTemperatureLimit");
         return true;
     }
@@ -782,7 +797,9 @@ bool DynamixelIO::setMaxTorque(int servo_id, uint16_t max_torque)
     
     if (write(servo_id, DXL_MAX_TORQUE_L, data, response))
     {
-        cache_[servo_id]->max_torque = max_torque;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->max_torque = max_torque;
+        
         checkForErrors(servo_id, response[4], "setMaxTorque");
         return true;
     }
@@ -799,7 +816,9 @@ bool DynamixelIO::setAlarmLed(int servo_id, uint8_t alarm_led)
 
     if (write(servo_id, DXL_ALARM_LED, data, response))
     {
-        cache_[servo_id]->alarm_led = alarm_led;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->alarm_led = alarm_led;
+        
         checkForErrors(servo_id, response[4], "setAlarmLed");
         return true;
     }
@@ -816,7 +835,9 @@ bool DynamixelIO::setAlarmShutdown(int servo_id, uint8_t alarm_shutdown)
 
     if (write(servo_id, DXL_ALARM_SHUTDOWN, data, response))
     {
-        cache_[servo_id]->alarm_shutdown = alarm_shutdown;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->alarm_shutdown = alarm_shutdown;
+        
         checkForErrors(servo_id, response[4], "setAlarmShutdown");
         return true;
     }
@@ -833,7 +854,9 @@ bool DynamixelIO::setTorqueEnable(int servo_id, bool on)
 
     if (write(servo_id, DXL_TORQUE_ENABLE, data, response))
     {
-        cache_[servo_id]->torque_enabled = on;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->torque_enabled = on;
+        
         checkForErrors(servo_id, response[4], "setTorqueEnable");
         return true;
     }
@@ -850,7 +873,9 @@ bool DynamixelIO::setLed(int servo_id, bool on)
 
     if (write(servo_id, DXL_LED, data, response))
     {
-        cache_[servo_id]->led = on;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->led = on;
+        
         checkForErrors(servo_id, response[4], "setLed");
         return true;
     }
@@ -868,7 +893,7 @@ bool DynamixelIO::setComplianceMargins(int servo_id, uint8_t cw_margin, uint8_t 
 
     if (write(servo_id, DXL_CW_COMPLIANCE_MARGIN, data, response))
     {
-        DynamixelData* dd = cache_[servo_id];
+        DynamixelData* dd = findCachedParameters(servo_id);
         dd->cw_compliance_margin = cw_margin;
         dd->ccw_compliance_margin = ccw_margin;
         
@@ -888,7 +913,9 @@ bool DynamixelIO::setCWComplianceMargin(int servo_id, uint8_t cw_margin)
 
     if (write(servo_id, DXL_CW_COMPLIANCE_MARGIN, data, response))
     {
-        cache_[servo_id]->cw_compliance_margin = cw_margin;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->cw_compliance_margin = cw_margin;
+        
         checkForErrors(servo_id, response[4], "setCWComplianceMargin");
         return true;
     }
@@ -905,7 +932,9 @@ bool DynamixelIO::setCCWComplianceMargin(int servo_id, uint8_t ccw_margin)
 
     if (write(servo_id, DXL_CCW_COMPLIANCE_MARGIN, data, response))
     {
-        cache_[servo_id]->ccw_compliance_margin = ccw_margin;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->ccw_compliance_margin = ccw_margin;
+        
         checkForErrors(servo_id, response[4], "setCCWComplianceMargin");
         return true;
     }
@@ -923,7 +952,7 @@ bool DynamixelIO::setComplianceSlopes(int servo_id, uint8_t cw_slope, uint8_t cc
 
     if (write(servo_id, DXL_CW_COMPLIANCE_SLOPE, data, response))
     {
-        DynamixelData* dd = cache_[servo_id];
+        DynamixelData* dd = findCachedParameters(servo_id);
         dd->cw_compliance_slope = cw_slope;
         dd->ccw_compliance_slope = ccw_slope;
         
@@ -943,7 +972,9 @@ bool DynamixelIO::setCWComplianceSlope(int servo_id, uint8_t cw_slope)
 
     if (write(servo_id, DXL_CW_COMPLIANCE_SLOPE, data, response))
     {
-        cache_[servo_id]->cw_compliance_slope = cw_slope;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->cw_compliance_slope = cw_slope;
+        
         checkForErrors(servo_id, response[4], "setCWComplianceSlope");
         return true;
     }
@@ -960,7 +991,9 @@ bool DynamixelIO::setCCWComplianceSlope(int servo_id, uint8_t ccw_slope)
 
     if (write(servo_id, DXL_CCW_COMPLIANCE_SLOPE, data, response))
     {
-        cache_[servo_id]->ccw_compliance_slope = ccw_slope;
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->ccw_compliance_slope = ccw_slope;
+        
         checkForErrors(servo_id, response[4], "setCCWComplianceSlope");
         return true;
     }
@@ -978,7 +1011,7 @@ bool DynamixelIO::setPosition(int servo_id, uint16_t position)
 
     if (write(servo_id, DXL_GOAL_POSITION_L, data, response))
     {
-        DynamixelData* dd = cache_[servo_id];
+        DynamixelData* dd = findCachedParameters(servo_id);
         dd->target_position = position;
         dd->torque_enabled = true;
         
@@ -1009,7 +1042,7 @@ bool DynamixelIO::setVelocity(int servo_id, int16_t velocity)
 
     if (write(servo_id, DXL_GOAL_SPEED_L, data, response))
     {
-        DynamixelData* dd = cache_[servo_id];
+        DynamixelData* dd = findCachedParameters(servo_id);
         dd->target_velocity = velocity;
         dd->torque_enabled = true;
 
@@ -1047,7 +1080,7 @@ bool DynamixelIO::setMultiPosition(std::vector<std::vector<int> > value_pairs)
         int motor_id = value_pairs[i][0];
         int position = value_pairs[i][1];
 
-        DynamixelData* dd = cache_[motor_id];
+        DynamixelData* dd = findCachedParameters(motor_id);
         dd->target_position = position;
         dd->torque_enabled = true;
         
@@ -1072,7 +1105,7 @@ bool DynamixelIO::setMultiVelocity(std::vector<std::vector<int> > value_pairs)
         int motor_id = value_pairs[i][0];
         int velocity = value_pairs[i][1];
 
-        DynamixelData* dd = cache_[motor_id];
+        DynamixelData* dd = findCachedParameters(motor_id);
         dd->target_velocity = velocity;
         dd->torque_enabled = true;
         
@@ -1107,7 +1140,7 @@ bool DynamixelIO::setMultiPositionVelocity(std::vector<std::vector<int> > value_
         int position = value_tuples[i][1];
         int velocity = value_tuples[i][2];
 
-        DynamixelData* dd = cache_[motor_id];
+        DynamixelData* dd = findCachedParameters(motor_id);
         dd->target_position = position;
         dd->target_velocity = velocity;
         dd->torque_enabled = true;
@@ -1146,7 +1179,7 @@ bool DynamixelIO::setMultiComplianceMargins(std::vector<std::vector<int> > value
         int cw_margin = value_pairs[i][1];
         int ccw_margin = value_pairs[i][2];
         
-        DynamixelData* dd = cache_[motor_id];
+        DynamixelData* dd = findCachedParameters(motor_id);
         dd->cw_compliance_margin = cw_margin;
         dd->ccw_compliance_margin = ccw_margin;
         
@@ -1172,7 +1205,7 @@ bool DynamixelIO::setMultiComplianceSlopes(std::vector<std::vector<int> > value_
         int cw_slope = value_pairs[i][1];
         int ccw_slope = value_pairs[i][2];
         
-        DynamixelData* dd = cache_[motor_id];
+        DynamixelData* dd = findCachedParameters(motor_id);
         dd->cw_compliance_slope = cw_slope;
         dd->ccw_compliance_slope = ccw_slope;
         
@@ -1197,7 +1230,7 @@ bool DynamixelIO::setMultiTorqueEnabled(std::vector<std::vector<int> > value_pai
         int motor_id = value_pairs[i][0];
         bool torque_enabled = value_pairs[i][1];
         
-        DynamixelData* dd = cache_[motor_id];
+        DynamixelData* dd = findCachedParameters(motor_id);
         dd->torque_enabled = torque_enabled;
         
         std::vector<uint8_t> value_pair;
@@ -1310,29 +1343,11 @@ bool DynamixelIO::setMultiValues(std::vector<std::map<std::string, int> > value_
     else { return false; }
 }
 
-bool DynamixelIO::updateCachedParameters(int servo_id)
+bool DynamixelIO::updateCachedParameters(int servo_id, DynamixelData* data)
 {
-    std::map<int, DynamixelData*>::iterator it = cache_.find(servo_id);
-    DynamixelData* data = NULL;
-    
-    if (it == cache_.end())
+    std::vector<uint8_t> response;
+    if (read(servo_id, DXL_MODEL_NUMBER_L, 34, response))
     {
-        data = new DynamixelData();
-        cache_[servo_id] = data;
-    }
-    else
-    {
-        data = it->second;
-    }
-    
-    int num_retries = 10;
-    int count = 0;
-
-    while (count < num_retries)
-    {
-        std::vector<uint8_t> response;
-        if (!read(servo_id, DXL_MODEL_NUMBER_L, 34, response)) { ++count; continue; }
-        
         uint8_t byte_num = 5;
         
         data->model_number = response[byte_num+0] + (response[byte_num+1] << 8);
@@ -1356,14 +1371,11 @@ bool DynamixelIO::updateCachedParameters(int servo_id)
         data->ccw_compliance_margin = response[byte_num+27];
         data->cw_compliance_slope = response[byte_num+28];
         data->ccw_compliance_slope = response[byte_num+29];
-        
-        uint16_t target_position = response[byte_num+30] + (response[byte_num+31] << 8);
+        data->target_position = response[byte_num+30] + (response[byte_num+31] << 8);
         
         int16_t target_velocity = response[byte_num+32] + (response[byte_num+33] << 8);
         int direction = (target_velocity & (1 << 10)) == 0 ? 1 : -1;
         target_velocity = direction * (target_velocity & DXL_MAX_VELOCITY_ENCODER);
-        
-        data->target_position = target_position;
         data->target_velocity = target_velocity;
         
         return true;
@@ -1374,11 +1386,11 @@ bool DynamixelIO::updateCachedParameters(int servo_id)
 
 void DynamixelIO::checkForErrors(int servo_id, uint8_t error_code, std::string command_failed)
 {
-    DynamixelData* data = cache_[servo_id];
+    DynamixelData* dd = findCachedParameters(servo_id);
     
     if (error_code == DXL_NO_ERROR)
     {
-        data->shutdown_error_time = 0.0;
+        dd->shutdown_error_time = 0.0;
         return;        
     }
     
@@ -1386,11 +1398,11 @@ void DynamixelIO::checkForErrors(int servo_id, uint8_t error_code, std::string c
 
     if ((error_code & DXL_OVERHEATING_ERROR) != 0)
     {
-        if (data->shutdown_error_time <= 0.0)
+        if (dd->shutdown_error_time <= 0.0)
         {
             struct timespec ts_now;
             clock_gettime(CLOCK_REALTIME, &ts_now);
-            data->shutdown_error_time = ts_now.tv_sec + ts_now.tv_nsec / 1.0e9;
+            dd->shutdown_error_time = ts_now.tv_sec + ts_now.tv_nsec / 1.0e9;
         }
         
         error_msgs.push_back("Overheating Error");
@@ -1398,11 +1410,11 @@ void DynamixelIO::checkForErrors(int servo_id, uint8_t error_code, std::string c
     
     if ((error_code & DXL_OVERLOAD_ERROR) != 0)
     {
-        if (data->shutdown_error_time <= 0.0)
+        if (dd->shutdown_error_time <= 0.0)
         {
             struct timespec ts_now;
             clock_gettime(CLOCK_REALTIME, &ts_now);
-            data->shutdown_error_time = ts_now.tv_sec + ts_now.tv_nsec / 1.0e9;
+            dd->shutdown_error_time = ts_now.tv_sec + ts_now.tv_nsec / 1.0e9;
         }
         
         error_msgs.push_back("Overload Error");
@@ -1423,8 +1435,8 @@ void DynamixelIO::checkForErrors(int servo_id, uint8_t error_code, std::string c
     }
     
     m << "] during " << command_failed << " command on servo #" << servo_id; 
-    data->error = m.str();
-    updateCachedParameters(servo_id);
+    dd->error = m.str();
+    updateCachedParameters(servo_id, dd);
 }
 
 bool DynamixelIO::read(int servo_id,
