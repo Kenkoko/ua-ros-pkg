@@ -56,8 +56,6 @@ bool JointTorqueController::initialize(std::string name,
 {
     if (!SingleJointController::initialize(name, port_namespace, dxl_io)) { return false; }
 
-    motor_cache_ = motor_data_[0];
-    
     for (size_t i = 0; i < motor_ids_.size(); ++i)
     {
         setVelocity(0.0);

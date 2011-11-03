@@ -7,6 +7,8 @@ pan_controller:
           init: 512
           min: 0
           max: 1023
+          compliance_margin: 2
+          compliance_slope: 64
 
 tilt_controller:
     type: dynamixel_hardware_interface/JointPositionController
@@ -47,6 +49,8 @@ dual_motor_controller:
           init: 511
           min: 0
           max: 1023
+          compliance_margin: 4
+          compliance_slope: 128
         - id: 13
           reversed: true
 

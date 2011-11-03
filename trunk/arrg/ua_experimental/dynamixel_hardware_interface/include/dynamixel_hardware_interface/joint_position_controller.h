@@ -64,8 +64,6 @@ public:
                             dynamixel_hardware_interface::SetVelocity::Request& res);
     
 private:
-    const dynamixel_hardware_interface::DynamixelData* motor_cache_;
-    
     uint16_t posRad2Enc(double pos_rad);
     uint16_t velRad2Enc(double vel_rad);    
 };
