@@ -70,6 +70,13 @@ public:
         else { return object(fw_ver); }
     }
 
+    object getBaudRate(int servo_id)
+    {
+        uint8_t baud_rate;
+        if (!DynamixelIO::getBaudRate(servo_id, baud_rate)) { return object(); }
+        else { return object(baud_rate); }
+    }
+    
     object getReturnDelayTime(int servo_id)
     {
         uint8_t return_delay_time;
@@ -505,6 +512,7 @@ BOOST_PYTHON_MODULE(dynamixel_io)
         // ****************************** GETTERS ******************************** //
         .def ("get_model_number", &DynamixelIOWrap::getModelNumber)
         .def ("get_firmware_version", &DynamixelIOWrap::getFirmwareVersion)
+        .def ("get_baud_rate", &DynamixelIOWrap::getBaudRate)
         .def ("get_return_delay_time", &DynamixelIOWrap::getReturnDelayTime)
         
         .def ("get_angle_limits", &DynamixelIOWrap::getAngleLimits)
@@ -544,6 +552,8 @@ BOOST_PYTHON_MODULE(dynamixel_io)
         .def ("get_feedback", &DynamixelIOWrap::getFeedback)
 
         // ****************************** SETTERS ******************************** //
+        .def ("set_id", &DynamixelIOWrap::setId)
+        .def ("set_baud_rate", &DynamixelIOWrap::setBaudRate)
         .def ("set_return_delay_time", &DynamixelIOWrap::setReturnDelayTime)
         
         .def ("set_angle_limits", &DynamixelIOWrap::setAngleLimits)

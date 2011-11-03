@@ -105,6 +105,7 @@ public:
     // ****************************** GETTERS ******************************** //
     bool getModelNumber(int servo_id, uint16_t& model_number);
     bool getFirmwareVersion(int servo_id, uint8_t& firmware_version);
+    bool getBaudRate(int servo_id, uint8_t& baud_rate);
     bool getReturnDelayTime(int servo_id, uint8_t& return_delay_time);
     
     bool getAngleLimits(int servo_id, uint16_t& cw_angle_limit, uint16_t& ccw_angle_limit);
@@ -144,6 +145,8 @@ public:
     bool getFeedback(int servo_id, DynamixelStatus& status);
 
     // ****************************** SETTERS ******************************** //
+    bool setId(int servo_id, uint8_t id);
+    bool setBaudRate(int servo_id, uint8_t baud_rate);
     bool setReturnDelayTime(int servo_id, uint8_t return_delay_time);
     
     bool setAngleLimits(int servo_id, uint16_t cw_angle, uint16_t ccw_angle);
