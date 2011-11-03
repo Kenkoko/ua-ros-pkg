@@ -187,7 +187,13 @@ protected:
     std::map<int, DynamixelData*> cache_;
     std::set<int> connected_motors_;
 
-    bool updateCachedParameters(int servo_id);
+    inline DynamixelData* findCachedParameters(int servo_id)
+    {
+        // this will either return an existing cache for servo_id or create new empty cahce and return that
+        return cache_.insert(std::make_pair<int, DynamixelData*>(servo_id, new DynamixelData())).first->second;
+    }
+    
+    bool updateCachedParameters(int servo_id, DynamixelData* data);
     void checkForErrors(int servo_id, uint8_t error_code, std::string command_failed);
 
     bool read(int servo_id,
