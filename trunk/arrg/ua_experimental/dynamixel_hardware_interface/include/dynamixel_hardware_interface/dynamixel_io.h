@@ -102,23 +102,31 @@ public:
     bool ping(int servo_id);
     bool resetOverloadError(int servo_id);
     
+    // ****************************** GETTERS ******************************** //
     bool getModelNumber(int servo_id, uint16_t& model_number);
     bool getFirmwareVersion(int servo_id, uint8_t& firmware_version);
     bool getReturnDelayTime(int servo_id, uint8_t& return_delay_time);
+    
     bool getAngleLimits(int servo_id, uint16_t& cw_angle_limit, uint16_t& ccw_angle_limit);
     bool getCWAngleLimit(int servo_id, uint16_t& cw_angle);
     bool getCCWAngleLimit(int servo_id, uint16_t& ccw_angle);
+    
     bool getVoltageLimits(int servo_id, float& min_voltage_limit, float& max_voltage_limit);
+    bool getMinVoltageLimit(int servo_id, float& min_voltage_limit);
+    bool getMaxVoltageLimit(int servo_id, float& max_voltage_limit);
+    
     bool getTemperatureLimit(int servo_id, uint8_t& max_temperature);
-    bool getMaximumTorque(int servo_id, uint16_t& max_torque);
+    bool getMaxTorque(int servo_id, uint16_t& max_torque);
     bool getAlarmLed(int servo_id, uint8_t& alarm_led);
     bool getAlarmShutdown(int servo_id, uint8_t& alarm_shutdown);
-
     bool getTorqueEnable(int servo_id, bool& torque_enabled);
     bool getLedStatus(int servo_id, bool& led_enabled);
     
+    bool getComplianceMargins(int servo_id, uint8_t& cw_compliance_margin, uint8_t& ccw_compliance_margin);
     bool getCWComplianceMargin(int servo_id, uint8_t& cw_compliance_margin);
     bool getCCWComplianceMargin(int servo_id, uint8_t& ccw_compliance_margin);
+    
+    bool getComplianceSlopes(int servo_id, uint8_t& cw_compliance_slope, uint8_t& ccw_compliance_slope);
     bool getCWComplianceSlope(int servo_id, uint8_t& cw_compliance_slope);
     bool getCCWComplianceSlope(int servo_id, uint8_t& ccw_compliance_slope);
     
@@ -126,7 +134,6 @@ public:
     bool getTargetVelocity(int servo_id, int16_t& target_velocity);
     bool getTorqueLimit(int servo_id, uint16_t& torque_limit);
 
-    // current motor status accessor functions
     bool getPosition(int servo_id, uint16_t& position);
     bool getVelocity(int servo_id, int16_t& velocity);
     bool getLoad(int servo_id, int16_t& load);
@@ -136,24 +143,37 @@ public:
     
     bool getFeedback(int servo_id, DynamixelStatus& status);
 
+    // ****************************** SETTERS ******************************** //
+    bool setReturnDelayTime(int servo_id, uint8_t return_delay_time);
+    
+    bool setAngleLimits(int servo_id, uint16_t cw_angle, uint16_t ccw_angle);
     bool setCWAngleLimit(int servo_id, uint16_t cw_angle);
     bool setCCWAngleLimit(int servo_id, uint16_t ccw_angle);
-    bool setAngleLimits(int servo_id, uint16_t cw_angle, uint16_t ccw_angle);
     
+    bool setVoltageLimits(int servo_id, float min_voltage_limit, float max_voltage_limit);
+    bool setMinVoltageLimit(int servo_id, float min_voltage_limit);
+    bool setMaxVoltageLimit(int servo_id, float max_voltage_limit);
+    
+    bool setTemperatureLimit(int servo_id, uint8_t max_temperature);
+    bool setMaxTorque(int servo_id, uint16_t max_torque);
+    bool setAlarmLed(int servo_id, uint8_t alarm_led);
+    bool setAlarmShutdown(int servo_id, uint8_t alarm_shutdown);
     bool setTorqueEnable(int servo_id, bool on);
     bool setLed(int servo_id, bool on);
     
+    bool setComplianceMargins(int servo_id, uint8_t cw_margin, uint8_t ccw_margin);
     bool setCWComplianceMargin(int servo_id, uint8_t cw_margin);
     bool setCCWComplianceMargin(int servo_id, uint8_t ccw_margin);
-    bool setComplianceMargins(int servo_id, uint8_t cw_margin, uint8_t ccw_margin);
+
+    bool setComplianceSlopes(int servo_id, uint8_t cw_slope, uint8_t ccw_slope);
     bool setCWComplianceSlope(int servo_id, uint8_t cw_slope);
     bool setCCWComplianceSlope(int servo_id, uint8_t ccw_slope);
-    bool setComplianceSlopes(int servo_id, uint8_t cw_slope, uint8_t ccw_slope);
 
     bool setPosition(int servo_id, uint16_t position);
     bool setVelocity(int servo_id, int16_t velocity);
     bool setTorqueLimit(int servo_id, uint16_t torque_limit);
     
+    // ************************* SYNC_WRITE METHODS *************************** //
     bool setMultiPosition(std::vector<std::vector<int> > value_pairs);
     bool setMultiVelocity(std::vector<std::vector<int> > value_pairs);
     bool setMultiPositionVelocity(std::vector<std::vector<int> > value_pairs);

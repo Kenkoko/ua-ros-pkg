@@ -107,6 +107,20 @@ public:
         else { return make_tuple(min_voltage_limit, max_voltage_limit); }
     }
     
+    object getMinVoltageLimit(int servo_id)
+    {
+        float min_voltage_limit;
+        if (!DynamixelIO::getMinVoltageLimit(servo_id, min_voltage_limit)) { return object(); }
+        else { return object(min_voltage_limit); }
+    }
+    
+    object getMaxVoltageLimit(int servo_id)
+    {
+        float max_voltage_limit;
+        if (!DynamixelIO::getMaxVoltageLimit(servo_id, max_voltage_limit)) { return object(); }
+        else { return object(max_voltage_limit); }
+    }
+    
     object getTemperatureLimit(int servo_id)
     {
         uint8_t max_temperature;
@@ -114,10 +128,10 @@ public:
         else { return object(max_temperature); }
     }
     
-    object getMaximumTorque(int servo_id)
+    object getMaxTorque(int servo_id)
     {
         uint16_t max_torque;
-        if (!DynamixelIO::getMaximumTorque(servo_id, max_torque)) { return object(); }
+        if (!DynamixelIO::getMaxTorque(servo_id, max_torque)) { return object(); }
         else { return object(max_torque); }
     }
     
@@ -149,6 +163,14 @@ public:
         else { return object(led_enabled); }
     }
 
+    object getComplianceMargins(int servo_id)
+    {
+        uint8_t cw_compliance_margin;
+        uint8_t ccw_compliance_margin;
+        if (!DynamixelIO::getComplianceMargins(servo_id, cw_compliance_margin, ccw_compliance_margin)) { return object(); }
+        else { return make_tuple(cw_compliance_margin, ccw_compliance_margin); }
+    }
+    
     object getCWComplianceMargin(int servo_id)
     {
         uint8_t cw_compliance_margin;
@@ -163,6 +185,14 @@ public:
         else { return object(ccw_compliance_margin); }
     }
 
+    object getComplianceSlopes(int servo_id)
+    {
+        uint8_t cw_compliance_slope;
+        uint8_t ccw_compliance_slope;
+        if (!DynamixelIO::getComplianceSlopes(servo_id, cw_compliance_slope, ccw_compliance_slope)) { return object(); }
+        else { return make_tuple(cw_compliance_slope, ccw_compliance_slope); }
+    }
+    
     object getCWComplianceSlope(int servo_id)
     {
         uint8_t cw_compliance_slope;
@@ -462,6 +492,7 @@ BOOST_PYTHON_MODULE(dynamixel_io)
         ;
     
     class_<DynamixelIOWrap, boost::noncopyable> ("DynamixelIO", init<std::string, int> ())
+        .def("get_cached_parameters", &DynamixelIOWrap::getCachedParameters, return_value_policy<manage_new_object>())
         .def ("ping", &DynamixelIOWrap::ping,
               "Returns True if specified servo_id is connected and responding properly, False otherwise.\n\n"
               "Usage:\n"
@@ -470,52 +501,79 @@ BOOST_PYTHON_MODULE(dynamixel_io)
               ">>> dxl_io.ping(20)\n"
               "False")
         .def ("reset_overload_error", &DynamixelIOWrap::resetOverloadError)
+        
+        // ****************************** GETTERS ******************************** //
         .def ("get_model_number", &DynamixelIOWrap::getModelNumber)
         .def ("get_firmware_version", &DynamixelIOWrap::getFirmwareVersion)
         .def ("get_return_delay_time", &DynamixelIOWrap::getReturnDelayTime)
+        
         .def ("get_angle_limits", &DynamixelIOWrap::getAngleLimits)
         .def ("get_cw_angle_limit", &DynamixelIOWrap::getCWAngleLimit)
         .def ("get_ccw_angle_limit", &DynamixelIOWrap::getCCWAngleLimit)
+        
         .def ("get_voltage_limits", &DynamixelIOWrap::getVoltageLimits)
+        .def ("get_min_voltage_limit", &DynamixelIOWrap::getMinVoltageLimit)
+        .def ("get_max_voltage_limit", &DynamixelIOWrap::getMaxVoltageLimit)
+        
         .def ("get_temperature_limit", &DynamixelIOWrap::getTemperatureLimit)
-        .def ("get_maximum_torque", &DynamixelIOWrap::getMaximumTorque)
+        .def ("get_max_torque", &DynamixelIOWrap::getMaxTorque)
         .def ("get_alarm_led", &DynamixelIOWrap::getAlarmLed)
         .def ("get_alarm_shutdown", &DynamixelIOWrap::getAlarmShutdown)
         .def ("get_torque_enable", &DynamixelIOWrap::getTorqueEnable)
         .def ("get_led_status", &DynamixelIOWrap::getLedStatus)
+        
+        .def ("get_compliance_margins", &DynamixelIOWrap::getComplianceMargins)
         .def ("get_cw_compliance_margin", &DynamixelIOWrap::getCWComplianceMargin)
         .def ("get_ccw_compliance_margin", &DynamixelIOWrap::getCCWComplianceMargin)
+        
+        .def ("get_compliance_slopes", &DynamixelIOWrap::getComplianceSlopes)
         .def ("get_cw_compliance_slope", &DynamixelIOWrap::getCWComplianceSlope)
         .def ("get_ccw_compliance_slope", &DynamixelIOWrap::getCCWComplianceSlope)
+        
         .def ("get_target_position", &DynamixelIOWrap::getTargetPosition)
         .def ("get_target_velocity", &DynamixelIOWrap::getTargetVelocity)
         .def ("get_torque_limit", &DynamixelIOWrap::getTorqueLimit)
+        
         .def ("get_position", &DynamixelIOWrap::getPosition)
         .def ("get_velocity", &DynamixelIOWrap::getVelocity)
         .def ("get_load", &DynamixelIOWrap::getLoad)
         .def ("get_voltage", &DynamixelIOWrap::getVoltage)
         .def ("get_temperature", &DynamixelIOWrap::getTemperature)
         .def ("get_moving", &DynamixelIOWrap::getMoving)
+        
         .def ("get_feedback", &DynamixelIOWrap::getFeedback)
+
+        // ****************************** SETTERS ******************************** //
+        .def ("set_return_delay_time", &DynamixelIOWrap::setReturnDelayTime)
+        
+        .def ("set_angle_limits", &DynamixelIOWrap::setAngleLimits)
+        .def ("set_cw_angle_limit", &DynamixelIOWrap::setCWAngleLimit)
+        .def ("set_ccw_angle_limit", &DynamixelIOWrap::setCCWAngleLimit)
+    
+        .def ("set_voltage_limits", &DynamixelIOWrap::setVoltageLimits)
+        .def ("set_min_voltage_limit", &DynamixelIOWrap::setMinVoltageLimit)
+        .def ("set_max_voltage_limit", &DynamixelIOWrap::setMaxVoltageLimit)
+    
+        .def ("set_temperature_limit", &DynamixelIOWrap::setTemperatureLimit)
+        .def ("set_max_torque", &DynamixelIOWrap::setMaxTorque)
+        .def ("set_alarm_led", &DynamixelIOWrap::setAlarmLed)
+        .def ("set_alarm_shutdown", &DynamixelIOWrap::setAlarmShutdown)
+        .def ("set_torque_enable", &DynamixelIOWrap::setTorqueEnable)
+        .def ("set_led", &DynamixelIOWrap::setLed)
+
+        .def ("set_compliance_margins", &DynamixelIOWrap::setComplianceMargins)
+        .def ("set_cw_compliance_margin", &DynamixelIOWrap::setCWComplianceMargin)
+        .def ("set_ccw_compliance_margin", &DynamixelIOWrap::setCCWComplianceMargin)
+        
+        .def ("set_compliance_slopes", &DynamixelIOWrap::setComplianceSlopes)
+        .def ("set_cw_compliance_slope", &DynamixelIOWrap::setCWComplianceSlope)
+        .def ("set_ccw_compliance_slope", &DynamixelIOWrap::setCCWComplianceSlope)
 
         .def ("set_position", &DynamixelIOWrap::setPosition)
         .def ("set_velocity", &DynamixelIOWrap::setVelocity)
         .def ("set_torque_limit", &DynamixelIOWrap::setTorqueLimit)
         
-        .def ("set_cw_angle_limit", &DynamixelIOWrap::setCWAngleLimit)
-        .def ("set_ccw_angle_limit", &DynamixelIOWrap::setCCWAngleLimit)
-        .def ("set_angle_limits", &DynamixelIOWrap::setAngleLimits)
-    
-        .def ("set_torque_enable", &DynamixelIOWrap::setTorqueEnable)
-        .def ("set_led", &DynamixelIOWrap::setLed)
-    
-        .def ("set_cw_compliance_margin", &DynamixelIOWrap::setCWComplianceMargin)
-        .def ("set_ccw_compliance_margin", &DynamixelIOWrap::setCCWComplianceMargin)
-        .def ("set_compliance_margins", &DynamixelIOWrap::setComplianceMargins)
-        .def ("set_cw_compliance_slope", &DynamixelIOWrap::setCWComplianceSlope)
-        .def ("set_ccw_compliance_slope", &DynamixelIOWrap::setCCWComplianceSlope)
-        .def ("set_compliance_slopes", &DynamixelIOWrap::setComplianceSlopes)
-
+        // ************************* SYNC_WRITE METHODS *************************** //
         .def ("set_multi_position", &DynamixelIOWrap::setMultiPosition)
         .def ("set_multi_velocity", &DynamixelIOWrap::setMultiVelocity)
         .def ("set_multi_position_velocity", &DynamixelIOWrap::setMultiPositionVelocity)
