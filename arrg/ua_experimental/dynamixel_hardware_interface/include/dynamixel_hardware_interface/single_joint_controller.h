@@ -131,14 +131,14 @@ public:
                 return false;
             }
             
-            motor_ids_[i] = static_cast<int>(v["id"]);
+            int motor_id = static_cast<int>(v["id"]);
             bool found_motor_id = false;
             
             for (int id = 0; id < available_ids.size(); ++id)
             {
                 XmlRpc::XmlRpcValue val = available_ids[id];
                 
-                if (motor_ids_[i] == static_cast<int>(val))
+                if (motor_id == static_cast<int>(val))
                 {
                     found_motor_id = true;
                     break;
@@ -148,11 +148,12 @@ public:
             if (!found_motor_id)
             {
                 ROS_ERROR("%s: motor id %d is not connected to port %s or it is connected and not responding",
-                          name_.c_str(), motor_ids_[i], port_namespace_.c_str());
+                          name_.c_str(), motor_id, port_namespace_.c_str());
                 return false;
             }
             
-            motor_data_[i] = dxl_io_->getCachedParameters(motor_ids_[i]);
+            motor_ids_[i] = motor_id;
+            motor_data_[i] = dxl_io_->getCachedParameters(motor_id);
             if (motor_data_[i] == NULL) { return false; }
             
             // first motor in the list is the master motor from which we take
@@ -161,7 +162,7 @@ public:
             {
                 if (!v.hasMember("init"))
                 {
-                    ROS_ERROR("%s: no initial position specified for motor %d", name_.c_str(), i);
+                    ROS_ERROR("%s: no initial position specified for motor %d", name_.c_str(), motor_id);
                     return false;
                 }
                 
@@ -169,7 +170,7 @@ public:
 
                 if (!v.hasMember("min"))
                 {
-                    ROS_ERROR("%s: no minimum angle specified for motor %d", name_.c_str(), i);
+                    ROS_ERROR("%s: no minimum angle specified for motor %d", name_.c_str(), motor_id);
                     return false;
                 }
                 
@@ -177,14 +178,20 @@ public:
 
                 if (!v.hasMember("max"))
                 {
-                    ROS_ERROR("%s: no maximum angle specified for motor %d", name_.c_str(), i);
+                    ROS_ERROR("%s: no maximum angle specified for motor %d", name_.c_str(), motor_id);
                     return false;
                 }
                 
                 max_angle_encoder_ = static_cast<int>(v["max"]);
+
+                if (v.hasMember("compliance_margin")) { compliance_margin_ = static_cast<int>(v["compliance_margin"]); }
+                else { compliance_margin_ = motor_data_[i]->cw_compliance_margin; }
+                
+                if (v.hasMember("compliance_slope")) { compliance_slope_ = static_cast<int>(v["compliance_slope"]); }
+                else { compliance_slope_ = motor_data_[i]->cw_compliance_slope; }
                 
                 std::string prefix = "dynamixel/" + port_namespace_ + "/" +
-                                     boost::lexical_cast<std::string>(motor_ids_[i]) + "/";
+                                     boost::lexical_cast<std::string>(motor_id) + "/";
                 
                 /***************** Joint velocity related parameters **********************/
                 nh_.getParam(prefix + "max_velocity", motor_max_velocity_);
@@ -225,11 +232,25 @@ public:
                 nh_.getParam(prefix + "encoder_resolution", motor_model_max_encoder_);
                 motor_model_max_encoder_ -= 1;
             }
-            // slave motors, will mimic master motor motion
+            // slave motors, will mimic all master motor paramaters
             else
             {
-                drive_mode_reversed_[motor_ids_[i]] = false;
-                if (v.hasMember("reversed")) { drive_mode_reversed_[motor_ids_[i]] = static_cast<bool>(v["reversed"]); }
+                drive_mode_reversed_[motor_id] = false;
+                if (v.hasMember("reversed")) { drive_mode_reversed_[motor_id] = static_cast<bool>(v["reversed"]); }
+            }
+            
+            // set compliance margins and slopes for all motors controlling this joint to values
+            // provided in the configuration or values from the master motor
+            if (!dxl_io_->setComplianceMargins(motor_id, compliance_margin_, compliance_margin_))
+            {
+                ROS_ERROR("%s: unable to set complaince margins for motor %d", name_.c_str(), motor_id);
+                return false;
+            }
+            
+            if (!dxl_io_->setComplianceSlopes(motor_id, compliance_slope_, compliance_slope_))
+            {
+                ROS_ERROR("%s: unable to set complaince slopes for motor %d", name_.c_str(), motor_id);
+                return false;
             }
         }
         
@@ -410,6 +431,8 @@ protected:
     int min_angle_encoder_;
     int max_angle_encoder_;
     bool flipped_;
+    int compliance_margin_;
+    int compliance_slope_;
     
     double encoder_ticks_per_radian_;
     double radians_per_encoder_tick_;

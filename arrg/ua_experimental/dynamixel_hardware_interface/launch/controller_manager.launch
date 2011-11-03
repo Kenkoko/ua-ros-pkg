@@ -9,6 +9,7 @@
                 --port=ttyUSB0
                 pan_controller
                 tilt_controller
-                multi_joint_c"
+                multi_joint_c
+                dual_motor_controller"
           output="screen"/>
 </launch>
