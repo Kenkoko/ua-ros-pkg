@@ -164,6 +164,20 @@ bool DynamixelIO::getFirmwareVersion(int servo_id, uint8_t& firmware_version)
     return false;
 }
 
+bool DynamixelIO::getBaudRate(int servo_id, uint8_t& baud_rate)
+{
+    std::vector<uint8_t> response;
+    
+    if (read(servo_id, DXL_BAUD_RATE, 1, response))
+    {
+        checkForErrors(servo_id, response[4], "getBaudRate");
+        baud_rate = response[5];
+        return true;
+    }
+    
+    return false;
+}
+
 bool DynamixelIO::getReturnDelayTime(int servo_id, uint8_t& return_delay_time)
 {
     std::vector<uint8_t> response;
@@ -619,6 +633,41 @@ bool DynamixelIO::getFeedback(int servo_id, DynamixelStatus& status)
 
 
 /************************ SETTERS **************************/
+
+bool DynamixelIO::setId(int servo_id, uint8_t id)
+{
+    std::vector<uint8_t> data;
+    data.push_back(id);
+    
+    std::vector<uint8_t> response;
+    
+    if (write(servo_id, DXL_ID, data, response))
+    {
+        checkForErrors(servo_id, response[4], "setId");
+        return true;
+    }
+    
+    return false;
+}
+
+bool DynamixelIO::setBaudRate(int servo_id, uint8_t baud_rate)
+{
+    std::vector<uint8_t> data;
+    data.push_back(baud_rate);
+    
+    std::vector<uint8_t> response;
+    
+    if (write(servo_id, DXL_BAUD_RATE, data, response))
+    {
+        DynamixelData* dd = findCachedParameters(servo_id);
+        dd->baud_rate = baud_rate;
+        
+        checkForErrors(servo_id, response[4], "setBaudRate");
+        return true;
+    }
+    
+    return false;
+}
 
 bool DynamixelIO::setReturnDelayTime(int servo_id, uint8_t return_delay_time)
 {
