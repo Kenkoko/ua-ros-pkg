@@ -308,6 +308,12 @@ public:
             mcv.push_back(pair);
         }
         
+        // set target position to current joint position
+        // so the motor won't go crazy once torque is enabled again
+        std_msgs::Float64 position;
+        position.data = joint_state_.position;
+        processCommand(boost::make_shared<const std_msgs::Float64>(position));
+        
         return dxl_io_->setMultiTorqueEnabled(mcv);
     }
 
