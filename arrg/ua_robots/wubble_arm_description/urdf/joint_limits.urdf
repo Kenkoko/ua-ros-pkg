@@ -40,18 +40,25 @@
     xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
     xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
     
-    <property name="shoulder_pitch_lower" value="-2.523"/>
-    <property name="shoulder_pitch_upper" value=" 1.012"/>
-    <property name="shoulder_pan_lower" value="-3.334"/>
-    <property name="shoulder_pan_upper" value=" 0.920"/>
-    <property name="upperarm_roll_lower" value="-0.628"/>
-    <property name="upperarm_roll_upper" value=" 3.749"/>
-    <property name="elbow_flex_lower" value="-1.793"/>
-    <property name="elbow_flex_upper" value=" 1.705"/>
-    <property name="forearm_roll_lower" value="-2.612"/>
-    <property name="forearm_roll_upper" value=" 2.617"/>
-    <property name="wrist_pitch_lower" value="-2.122"/>
-    <property name="wrist_pitch_upper" value=" 2.648"/>
-    <property name="wrist_roll_lower" value="-2.597"/>
-    <property name="wrist_roll_upper" value=" 2.633"/>
+    <property name="shoulder_pitch_lower" value="-2.6280"/>
+    <property name="shoulder_pitch_upper" value=" 0.9077"/>
+    
+    <property name="shoulder_pan_lower" value="-3.3615"/>
+    <property name="shoulder_pan_upper" value=" 0.8938"/>
+    
+    <property name="upperarm_roll_lower" value="-0.6543"/>
+    <property name="upperarm_roll_upper" value=" 3.7239"/>
+    
+    <property name="elbow_flex_lower" value="-1.7149"/>
+    <property name="elbow_flex_upper" value=" 1.7833"/>
+    
+    <property name="forearm_roll_lower" value="-2.6128"/>
+    <property name="forearm_roll_upper" value=" 2.6179"/>
+    
+    <property name="wrist_pitch_lower" value="-2.1884"/>
+    <property name="wrist_pitch_upper" value=" 2.5822"/>
+    
+    <property name="wrist_roll_lower" value="-2.6128"/>
+    <property name="wrist_roll_upper" value=" 2.6179"/>
 </robot>
+
