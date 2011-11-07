@@ -51,9 +51,9 @@ public:
                     std::string port_namespace,
                     dynamixel_hardware_interface::DynamixelIO* dxl_io);
     
-    void start();
-    void stop();
-
+    bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                             dynamixel_hardware_interface::TorqueEnable::Request& res);
+    
     std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity);
     
     void processMotorStates(const dynamixel_hardware_interface::MotorStateListConstPtr& msg);
