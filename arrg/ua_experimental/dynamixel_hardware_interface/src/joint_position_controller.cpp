@@ -78,14 +78,16 @@ bool JointPositionController::initialize(std::string name,
     return true;
 }
 
-void JointPositionController::start()
+bool JointPositionController::processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                                                  dynamixel_hardware_interface::TorqueEnable::Request& res)
 {
-    SingleJointController::start();
-}
-
-void JointPositionController::stop()
-{
-    SingleJointController::stop();
+    // set target position to current joint position
+    // so the motor won't go crazy once torque is enabled again
+    std_msgs::Float64 position;
+    position.data = joint_state_.position;
+    processCommand(boost::make_shared<const std_msgs::Float64>(position));
+    
+    return SingleJointController::processTorqueEnable(req, res);
 }
 
 std::vector<std::vector<int> > JointPositionController::getRawMotorCommands(double position, double velocity)

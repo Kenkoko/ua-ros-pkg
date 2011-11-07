@@ -75,14 +75,11 @@ bool JointTorqueController::initialize(std::string name,
     return true;
 }
 
-void JointTorqueController::start()
+bool JointTorqueController::processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                                                  dynamixel_hardware_interface::TorqueEnable::Request& res)
 {
-    SingleJointController::start();
-}
-
-void JointTorqueController::stop()
-{
-    SingleJointController::stop();
+    setVelocity(0.0);
+    return SingleJointController::processTorqueEnable(req, res);
 }
 
 std::vector<std::vector<int> > JointTorqueController::getRawMotorCommands(double position, double velocity)
