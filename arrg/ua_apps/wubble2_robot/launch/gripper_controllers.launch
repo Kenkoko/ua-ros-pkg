@@ -10,7 +10,7 @@
                 right_finger_controller"
           output="screen"/>
           
-    <node name="arm_trajectory_controller_spawner" pkg="dynamixel_hardware_interface" type="controller_spawner.py"
+    <node name="gripper_action_controller_spawner" pkg="dynamixel_hardware_interface" type="controller_spawner.py"
           args="--manager=wubble_motor_manager
                 --port=multi_joint_dummy_port
                 l_gripper_controller"
