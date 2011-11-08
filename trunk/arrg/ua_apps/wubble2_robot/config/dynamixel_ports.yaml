@@ -1,28 +1,40 @@
 namespace: wubble_motor_manager
-diagnostics_rate: 10
+diagnostics_rate: 5
 serial_ports:
-    wubble2Head:
-        port_name: "/dev/wubble2Head"
-        baud_rate: 1000000
-        min_motor_id: 10
-        max_motor_id: 11
-        update_rate: 50
-    wubble2Neck:
-        port_name: "/dev/wubble2Neck"
-        baud_rate: 3000000
-        min_motor_id: 12
-        max_motor_id: 12
-        update_rate: 200
-    wubble2UpperArm:
-        port_name: "/dev/wubble2UpperArm"
-        baud_rate: 1000000
-        min_motor_id: 1
-        max_motor_id: 4
-        update_rate: 50
     wubble2LowerArm:
-        port_name: "/dev/wubble2LowerArm"
+        port_name: /dev/wubble2LowerArm
         baud_rate: 1000000
         min_motor_id: 5
         max_motor_id: 9
-        update_rate: 50
+        update_rate: 100
+        diagnostics:
+            error_level_temp: 70
+            warn_level_temp: 65
+    wubble2UpperArm:
+        port_name: /dev/wubble2UpperArm
+        baud_rate: 1000000
+        min_motor_id: 1
+        max_motor_id: 4
+        update_rate: 100
+        diagnostics:
+            error_level_temp: 70
+            warn_level_temp: 65
+    wubble2Neck:
+        port_name: /dev/wubble2Neck
+        baud_rate: 3000000
+        min_motor_id: 12
+        max_motor_id: 12
+        update_rate: 100
+        diagnostics:
+            error_level_temp: 70
+            warn_level_temp: 65
+    wubble2Head:
+        port_name: /dev/wubble2Head
+        baud_rate: 1000000
+        min_motor_id: 10
+        max_motor_id: 11
+        update_rate: 100
+        diagnostics:
+            error_level_temp: 70
+            warn_level_temp: 65
 

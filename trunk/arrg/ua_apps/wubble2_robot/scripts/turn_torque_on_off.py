@@ -56,7 +56,8 @@ if __name__ == '__main__':
                          'wrist_pitch_controller',
                          'wrist_roll_controller',
                          'left_finger_controller',
-                         'right_finger_controller']
+                         'right_finger_controller',
+                        ]
                          
     joint_torque_srvs = [rospy.ServiceProxy(controller + '/torque_enable', TorqueEnable) for controller in joint_controllers]
     #rospy.sleep(5)

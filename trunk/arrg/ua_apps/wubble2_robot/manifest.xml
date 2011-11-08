@@ -9,7 +9,6 @@
     <review status="unreviewed" notes=""/>
     <url>http://ros.org/wiki/wubble2_robot</url>
     
-    <depend package="roscpp"/>
     <depend package="rospy"/>
     
     <depend package="wubble_description"/>
@@ -34,7 +33,8 @@
     <depend package="dynamixel_controllers"/>
     <depend package="dynamixel_msgs"/>
     <depend package="dynamixel_hardware_interface"/>
-    
+    <depend package="wubble2_gripper_controller"/>
+
     <depend package="wubble2_gripper_controller"/>
     <depend package="wubble_navigation_self_filter"/>
     <depend package="interpolated_ik_motion_planner"/>

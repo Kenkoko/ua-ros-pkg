@@ -40,7 +40,7 @@ roslib.load_manifest('wubble2_robot')
 
 import rospy
 from pr2_controllers_msgs.msg import JointControllerState
-from dynamixel_msgs.msg import JointState
+from dynamixel_hardware_interface.msg import JointState
 
 class DynamixelToPR2StateMsgs:
     def __init__(self):
@@ -62,7 +62,7 @@ class DynamixelToPR2StateMsgs:
         self.joint_to_publisher_state = {}
         
         for controller in self.robot_controllers:
-            joint_name = rospy.get_param(controller + '/joint_name')
+            joint_name = rospy.get_param(controller + '/joint')
             publisher = rospy.Publisher(controller + '/state_pr2_msgs', JointControllerState)
             state = JointControllerState()
             self.joint_to_publisher_state[joint_name] = {'publisher': publisher, 'state': state}
@@ -72,10 +72,10 @@ class DynamixelToPR2StateMsgs:
         
     def handle_controller_state(self, msg):
         state = self.joint_to_publisher_state[msg.name]['state']
-        state.set_point = msg.goal_pos
-        state.process_value = msg.current_pos
+        state.set_point = msg.target_position
+        state.process_value = msg.position
         state.process_value_dot = msg.velocity
-        state.error = msg.error
+        state.error = msg.position - msg.target_position
         state.command = msg.load
         state.header.stamp = msg.header.stamp
         self.joint_to_publisher_state[msg.name]['publisher'].publish(state)
