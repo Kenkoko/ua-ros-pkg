@@ -3,8 +3,10 @@
 <launch>
     <include file="$(find wubble2_robot)/launch/kinect.launch" />
     
-    <node pkg="robot_self_filter" type="self_filter" name="kinect_self_filter" respawn="true" output="screen" machine="c2">
-        <remap from="cloud_in" to="/camera/depth/points" />
+    <node pkg="topic_tools" type="throttle" name="kinect_raw_throttle" args="messages /camera/depth/points 2 /camera/depth/points_throttled" output="screen"/>
+    
+    <node pkg="robot_self_filter" type="self_filter" name="kinect_self_filter" respawn="true" output="screen">
+        <remap from="cloud_in" to="/camera/depth/points_throttled" />
         <remap from="cloud_out" to="/camera/depth/self_filtered" />
         <param name="sensor_frame" value="kinect_link" />
         <rosparam file="$(find wubble_description)/params/w2_self_filter.yaml" command="load" />

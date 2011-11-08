@@ -41,9 +41,9 @@ from std_msgs.msg import Float64
 from object_manipulation_msgs.msg import GraspHandPostureExecutionAction
 from object_manipulation_msgs.msg import GraspHandPostureExecutionGoal
 from object_manipulation_msgs.srv import GraspStatus
-from wubble2_robot.msg import WubbleGripperAction
-from wubble2_robot.msg import WubbleGripperGoal
-from dynamixel_msgs.msg import JointState
+from wubble2_gripper_controller.msg import WubbleGripperAction
+from wubble2_gripper_controller.msg import WubbleGripperGoal
+from dynamixel_hardware_interface.msg import JointState
 
 class WubbleGripperGraspController:
     def __init__(self):
@@ -111,8 +111,8 @@ class WubbleGripperGraspController:
         result = GraspStatus()
         pressure_msg = rospy.wait_for_message('/total_pressure', Float64)
         opening_msg = rospy.wait_for_message('/gripper_opening', Float64)
-        left_pos = rospy.wait_for_message('/left_finger_controller/state', JointState).current_pos
-        right_pos = rospy.wait_for_message('/right_finger_controller/state', JointState).current_pos
+        left_pos = rospy.wait_for_message('/left_finger_controller/state', JointState).position
+        right_pos = rospy.wait_for_message('/right_finger_controller/state', JointState).position
         
         if pressure_msg.data <= self.object_presence_pressure_threshold:
             rospy.loginfo('Gripper grasp query false: gripper total pressure is below threshold (%.2f <= %.2f)' % (pressure_msg.data, self.object_presence_pressure_threshold))

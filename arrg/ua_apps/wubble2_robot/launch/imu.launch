@@ -3,7 +3,7 @@
 <launch>
     <!-- Start IMU -->
     <node name="chr_6dm_imu" pkg="chr_6dm_imu" type="chr_6dm_node.py" output="screen">
-        <param name="port_name" type="str" value="/dev/ttyUSB0"/>
+        <param name="port_name" type="str" value="/dev/ttyUSB5"/>
         <param name="frame_id" value="imu_link"/>
         <param name="ignore_pitch_roll" value="true"/>
         <param name="data_rate" value="50"/>

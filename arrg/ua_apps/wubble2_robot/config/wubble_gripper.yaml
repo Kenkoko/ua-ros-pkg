@@ -1,34 +1,26 @@
 left_finger_controller:
-    controller:
-        package: dynamixel_controllers
-        module: joint_torque_controller
-        type: JointTorqueController
-    joint_name: left_finger_joint
-    joint_speed: 1.17
-    motor:
-        id: 8
-        init: 512
-        min: 450
-        max: 680
+    type: dynamixel_hardware_interface/JointTorqueController
+    joint: left_finger_joint
+    motors:
+        - id: 8
+          init: 512
+          min: 450
+          max: 680
 
 right_finger_controller:
-    controller:
-        package: dynamixel_controllers
-        module: joint_torque_controller
-        type: JointTorqueController
-    joint_name: right_finger_joint
-    joint_speed: 1.17
-    motor:
-        id: 9
-        init: 512
-        min: 330
-        max: 560
+    type: dynamixel_hardware_interface/JointTorqueController
+    joint: right_finger_joint
+    motors:
+        - id: 9
+          init: 512
+          min: 330
+          max: 560
 
 l_gripper_controller:
-    controller:
-        package: wubble2_robot
-        module: wubble_gripper_action_controller
-        type: GripperActionController
+    type: wubble2_gripper_controller/WubbleGripperActionController
+    dependencies:
+        - left_finger_controller
+        - right_finger_controller
     left_controller_name: left_finger_controller
     right_controller_name: right_finger_controller
 

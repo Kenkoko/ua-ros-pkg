@@ -1,10 +1,29 @@
 l_arm_controller:
-    controller:
-        package: dynamixel_controllers
-        module: joint_trajectory_action_controller
-        type: JointTrajectoryActionController
+    type: dynamixel_hardware_interface/JointTrajectoryActionController
+    dependencies:
+        - shoulder_pitch_controller
+        - shoulder_pan_controller
+        - upperarm_roll_controller
+        - elbow_flex_controller
+        - forearm_roll_controller
+        - wrist_pitch_controller
+        - wrist_roll_controller
     joint_trajectory_action_node:
         min_velocity: 0.1
         constraints:
             goal_time: 0.25
+            shoulder_pitch_joint:
+                goal: 0.045
+            shoulder_pan_joint:
+                goal: 0.045
+            upperarm_roll_joint:
+                goal: 0.045
+            elbow_flex_joint:
+                goal: 0.045
+            forearm_roll_joint:
+                goal: 0.045
+            wrist_pitch_joint:
+                goal: 0.045
+            wrist_roll_joint:
+                goal: 0.045
 

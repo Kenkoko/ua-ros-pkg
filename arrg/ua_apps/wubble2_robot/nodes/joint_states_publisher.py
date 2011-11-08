@@ -33,8 +33,8 @@
 import roslib; roslib.load_manifest('wubble2_robot')
 import rospy
 
-from sensor_msgs.msg import JointState as JointStatePR2
-from dynamixel_msgs.msg import JointState as JointStateWubble
+from sensor_msgs.msg import JointState as JointState
+from dynamixel_hardware_interface.msg import JointState as DynamixelJointState
 
 class JointStatesPublisher():
     def __init__(self):
@@ -53,23 +53,23 @@ class JointStatesPublisher():
                             'head_tilt_controller',
                             'neck_tilt_controller')
                             
-        self.joint_states = {'base_caster_support_joint': JointStateWubble(name='base_caster_support_joint', current_pos=0.0, velocity=0.0, load=0.0),
-                             'caster_wheel_joint': JointStateWubble(name='caster_wheel_joint', current_pos=0.0, velocity=0.0, load=0.0),
-                             'base_link_left_wheel_joint': JointStateWubble(name='base_link_left_wheel_joint', current_pos=0.0, velocity=0.0, load=0.0),
-                             'base_link_right_wheel_joint': JointStateWubble(name='base_link_right_wheel_joint', current_pos=0.0, velocity=0.0, load=0.0)}
+        self.joint_states = {'base_caster_support_joint': DynamixelJointState(name='base_caster_support_joint', position=0.0, velocity=0.0, load=0.0),
+                             'caster_wheel_joint': DynamixelJointState(name='caster_wheel_joint', position=0.0, velocity=0.0, load=0.0),
+                             'base_link_left_wheel_joint': DynamixelJointState(name='base_link_left_wheel_joint', position=0.0, velocity=0.0, load=0.0),
+                             'base_link_right_wheel_joint': DynamixelJointState(name='base_link_right_wheel_joint', position=0.0, velocity=0.0, load=0.0)}
                              
         for controller in self.controllers:
-            joint_name = rospy.get_param(controller + '/joint_name')
-            self.joint_states[joint_name] = JointStateWubble(name=joint_name)
+            joint_name = rospy.get_param(controller + '/joint')
+            self.joint_states[joint_name] = DynamixelJointState(name=joint_name)
             
         # Start controller state subscribers
-        [rospy.Subscriber(c + '/state', JointStateWubble, self.controller_state_handler) for c in self.controllers]
-        [rospy.wait_for_message(c + '/state', JointStateWubble) for c in self.controllers]
+        [rospy.Subscriber(c + '/state', DynamixelJointState, self.controller_state_handler) for c in self.controllers]
+        [rospy.wait_for_message(c + '/state', DynamixelJointState) for c in self.controllers]
         
         # Start publisher
-        self.joint_states_pub = rospy.Publisher('joint_states', JointStatePR2)
+        self.joint_states_pub = rospy.Publisher('joint_states', JointState)
         
-        publish_rate = rospy.get_param('~rate', 50)
+        publish_rate = rospy.get_param('~rate', 100)
         r = rospy.Rate(publish_rate)
         
         while not rospy.is_shutdown():
@@ -78,17 +78,17 @@ class JointStatesPublisher():
 
     def controller_state_handler(self, msg):
         state = self.joint_states[msg.name]
-        state.current_pos = msg.current_pos
+        state.position = msg.position
         state.velocity = msg.velocity
         state.load = msg.load
 
     def publish_joint_states(self):
         # Construct message & publish joint states
-        msg = JointStatePR2()
+        msg = JointState()
         
         for joint, state in self.joint_states.items():
             msg.name.append(joint)
-            msg.position.append(state.current_pos)
+            msg.position.append(state.position)
             msg.velocity.append(state.velocity)
             msg.effort.append(state.load)
             

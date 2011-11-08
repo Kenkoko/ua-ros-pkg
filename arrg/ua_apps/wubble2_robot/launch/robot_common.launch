@@ -29,11 +29,10 @@
     <!-- Start arm, gripper and head motor controllers -->
     <include file="$(find wubble2_robot)/launch/dynamixel_controllers.launch" />
     <include file="$(find wubble2_robot)/launch/gripper_controllers.launch" />
-    <node name="dynamixel_to_pr2" pkg="wubble2_robot" type="dynamixel_to_pr2_state_msgs.py" />
 
     <!-- Publish joint state information -->
-    <node name="joint_states_publisher" pkg="wubble2_robot" type="joint_states_publisher.py" output="screen" />
-    <node name="wubble_state_publisher" pkg="robot_state_publisher" type="state_publisher" output="screen" />
+    <include file="$(find wubble2_robot)/launch/joint_state_aggregator.launch" />
+    <node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher" output="screen" />
 
     <!-- Start base and neck lasers + filter chains for both -->
     <include file="$(find wubble2_robot)/launch/laser_navigation.launch" />
