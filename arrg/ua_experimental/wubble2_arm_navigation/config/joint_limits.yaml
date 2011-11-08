@@ -4,7 +4,7 @@ joint_limits:
     has_velocity_limits: true
     max_velocity: 1.50
     has_acceleration_limits: true
-    max_acceleration: 0.25
+    max_acceleration: 0.50
     angle_wraparound: false
     
   shoulder_pan_joint:
@@ -12,7 +12,7 @@ joint_limits:
     has_velocity_limits: true
     max_velocity: 1.50
     has_acceleration_limits: true
-    max_acceleration: 0.25
+    max_acceleration: 0.50
     angle_wraparound: false
     
   upperarm_roll_joint:
@@ -20,7 +20,7 @@ joint_limits:
     has_velocity_limits: true
     max_velocity: 1.50
     has_acceleration_limits: true
-    max_acceleration: 0.25
+    max_acceleration: 0.50
     angle_wraparound: false
     
   elbow_flex_joint:
@@ -28,7 +28,7 @@ joint_limits:
     has_velocity_limits: true
     max_velocity: 1.50
     has_acceleration_limits: true
-    max_acceleration: 0.25
+    max_acceleration: 0.50
     angle_wraparound: false
     
   forearm_roll_joint:
@@ -36,7 +36,7 @@ joint_limits:
     has_velocity_limits: true
     max_velocity: 2.00
     has_acceleration_limits: true
-    max_acceleration: 0.25
+    max_acceleration: 0.50
     angle_wraparound: false
     
   wrist_pitch_joint:
@@ -44,7 +44,7 @@ joint_limits:
     has_velocity_limits: true
     max_velocity: 1.50
     has_acceleration_limits: true
-    max_acceleration: 0.25
+    max_acceleration: 0.50
     angle_wraparound: false
     
   wrist_roll_joint:
@@ -52,6 +52,6 @@ joint_limits:
     has_velocity_limits: true
     max_velocity: 2.00
     has_acceleration_limits: true
-    max_acceleration: 0.25
+    max_acceleration: 0.50
     angle_wraparound: false
 
