@@ -54,12 +54,13 @@ from dynamixel_hardware_interface.srv import StopController
 from dynamixel_hardware_interface.srv import RestartController
 
 
-parser = OptionParser()
-
 if __name__ == '__main__':
     try:
-        rospy.init_node('controller_spawner', anonymous=True)
+        usage_msg = 'Usage: %prog [options] CONTROLLER_NAMES'
+        desc_msg = 'Allows to start, stop or restart joint controllers'
+        epi_msg = 'Example: %s --manager=dxl_manager --port=dxl_port pan_controller tilt_controller' % sys.argv[0]
         
+        parser = OptionParser(usage=usage_msg, description=desc_msg, epilog=epi_msg)
         parser.add_option('-m', '--manager', metavar='MANAGER',
                           help='specified serial port is managed by MANAGER')
         parser.add_option('-p', '--port', metavar='PORT',
@@ -81,9 +82,12 @@ if __name__ == '__main__':
         stop_service_name = '%s/stop_controller' % manager_namespace
         restart_service_name = '%s/restart_controller' % manager_namespace
         
-        parent_namespace = rospy.get_namespace()
-        rospy.loginfo('%s controller_spawner: waiting for controller_manager %s to startup in %s namespace...' % (port_namespace, manager_namespace, parent_namespace))
+        rospy.init_node('controller_spawner', anonymous=True)
         
+        node_name = rospy.get_name()[1:]
+        parent_namespace = rospy.get_namespace()
+        
+        rospy.loginfo('%s: waiting for controller_manager %s to startup in %s namespace...' % (node_name, manager_namespace, parent_namespace))
         rospy.wait_for_service(start_service_name)
         rospy.wait_for_service(stop_service_name)
         rospy.wait_for_service(restart_service_name)
@@ -92,16 +96,16 @@ if __name__ == '__main__':
         stop_controller = rospy.ServiceProxy(stop_service_name, StopController)
         restart_controller = rospy.ServiceProxy(restart_service_name, RestartController)
         
-        rospy.loginfo('%s controller_spawner: All services are up, %sing controllers...' % (port_namespace, command.lower()))
+        rospy.loginfo('%s: all services are up, %sing %d controllers...' % (node_name, command.lower(), len(joint_controllers)))
         
         for controller_name in joint_controllers:
             try:
                 if command.lower() == 'start': response = start_controller(controller_name, port_namespace)
                 elif command.lower() == 'stop': response = stop_controller(controller_name)
                 elif command.lower() == 'restart': response = restart_controller(controller_name)
-                else: rospy.logerr('Invalid command.'); parser.print_help(); continue
-                if response: rospy.loginfo("Command '%s %s' completed successufully" % (command.lower(), controller_name));
+                else: rospy.logerr("%s: invalid command '%s'" % (node_name, command)); parser.print_help(); continue
+                if response: rospy.loginfo("%s: command '%s %s' completed successufully" % (node_name, command.lower(), controller_name));
             except rospy.ServiceException, e:
-                rospy.logerr('Service call failed: %s' % e)
+                rospy.logerr('%s: %s' % (node_name, e))
                     
     except rospy.ROSInterruptException: pass
