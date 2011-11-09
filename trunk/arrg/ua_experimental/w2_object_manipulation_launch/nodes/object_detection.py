@@ -22,8 +22,8 @@ from std_msgs.msg import Float64
 from std_msgs.msg import ColorRGBA
 from geometry_msgs.msg import Quaternion
 
-from dynamixel_controllers.srv import SetSpeed
-from dynamixel_msgs.msg import JointState
+from dynamixel_hardware_interface.srv import SetVelocity
+from dynamixel_hardware_interface.msg import JointState
 
 from move_base_msgs.msg import MoveBaseAction
 from move_base_msgs.msg import MoveBaseGoal
@@ -62,15 +62,15 @@ class ObjectDetector():
         rospy.loginfo('connected to find_cluster_bounding_box')
         
         # connect to head speed setting services
-        rospy.loginfo('waiting for head_tilt_controller/set_speed')
-        rospy.wait_for_service('/head_tilt_controller/set_speed')
-        self.set_head_tilt_speed = rospy.ServiceProxy('/head_tilt_controller/set_speed', SetSpeed)
-        rospy.loginfo('connected to head_tilt_controller/set_speed')
+        rospy.loginfo('waiting for head_tilt_controller/set_velocity')
+        rospy.wait_for_service('/head_tilt_controller/set_velocity')
+        self.set_head_tilt_speed = rospy.ServiceProxy('/head_tilt_controller/set_velocity', SetVelocity)
+        rospy.loginfo('connected to head_tilt_controller/set_velocity')
         
-        rospy.loginfo('waiting for head_pan_controller/set_speed')
-        rospy.wait_for_service('/head_pan_controller/set_speed')
-        self.set_head_pan_speed = rospy.ServiceProxy('/head_pan_controller/set_speed', SetSpeed)
-        rospy.loginfo('connected to head_pan_controller/set_speed')
+        rospy.loginfo('waiting for head_pan_controller/set_velocity')
+        rospy.wait_for_service('/head_pan_controller/set_velocity')
+        self.set_head_pan_speed = rospy.ServiceProxy('/head_pan_controller/set_velocity', SetVelocity)
+        rospy.loginfo('connected to head_pan_controller/set_velocity')
         
         rospy.loginfo('waiting for move_base/goal')
         self.move_base_client = SimpleActionClient('/move_base', MoveBaseAction)
@@ -131,8 +131,13 @@ class ObjectDetector():
             rospy.sleep(0.2)
             r = rospy.Rate(100)
             
-            while (abs(self.current_head_tilt_state.error) > 2e-2 or abs(self.current_head_pan_state.error) > 2e-2) or \
+            tilt_error = abs(self.current_head_tilt_state.position - self.current_head_tilt_state.target_position)
+            pan_error = abs(self.current_head_pan_state.position - self.current_head_pan_state.target_position)
+            
+            while (tilt_error > 2e-2 or pan_error > 2e-2) or \
                   (abs(self.current_head_tilt_state.velocity) > 1e-6 or abs(self.current_head_pan_state.velocity) > 1e-6):
+                tilt_error = abs(self.current_head_tilt_state.position - self.current_head_tilt_state.target_position)
+                pan_error = abs(self.current_head_pan_state.position - self.current_head_pan_state.target_position)
                 r.sleep()
                 
         if loc == 'center':

@@ -16,10 +16,10 @@ from ua_audio_infomax.srv import InfoMaxResponse
 from ua_audio_capture.srv import StartAudioRecording
 from ua_audio_capture.srv import StopAudioRecording
 from ua_audio_capture.srv import classify
-from dynamixel_msgs.msg import JointState as DynamixelJointState
-from dynamixel_controllers.srv import SetSpeed
-from wubble2_robot.msg import WubbleGripperAction
-from wubble2_robot.msg import WubbleGripperGoal
+from dynamixel_hardware_interface.msg import JointState as DynamixelJointState
+from dynamixel_hardware_interface.srv import SetVelocity
+from wubble2_gripper_controller.msg import WubbleGripperAction
+from wubble2_gripper_controller.msg import WubbleGripperGoal
 
 from control_msgs.msg import FollowJointTrajectoryAction
 from control_msgs.msg import FollowJointTrajectoryGoal
@@ -108,10 +108,11 @@ class ObjectCategorizer():
                               'L8_left_finger_link',
                               'L7_wrist_roll_link')
                               
-        self.READY_POSITION = (-1.650, -1.465, 3.430, -0.970, -1.427,  0.337,  0.046)
-        self.LIFT_POSITION  = (-1.049, -1.241, 0.669, -0.960, -0.409, -0.072, -0.143)
-        self.PLACE_POSITION = ( 0.261, -0.704, 1.470,  0.337,  0.910, -1.667, -0.026)
-        self.TUCK_POSITION  = (-1.971, -1.741, 0.021, -0.181, -1.841,  1.084,  0.148)
+        self.READY_POSITION = (-1.650, -1.465,  3.430, -0.970, -1.427,  0.337,  0.046)
+        self.LIFT_POSITION  = (-1.049, -1.241,  0.669, -0.960, -0.409, -0.072, -0.143)
+        self.PLACE_POSITION = ( 0.261, -0.704,  1.470,  0.337,  0.910, -1.667, -0.026)
+        self.TUCK_POSITION  = (-1.751, -1.820, -0.084, -0.214, -1.815,  1.089,  0.031)
+        #self.TUCK_POSITION  = (-1.971, -1.741, 0.021, -0.181, -1.841,  1.084,  0.148)
         
         self.arm_states = {
             'READY': self.READY_POSITION,
@@ -202,13 +203,13 @@ class ObjectCategorizer():
         rospy.loginfo('connected to audio_dump/stop_audio_recording service')
         
         rospy.loginfo('waiting for wrist_roll_controller service')
-        rospy.wait_for_service('/wrist_roll_controller/set_speed')
-        self.wrist_roll_velocity_srv = rospy.ServiceProxy('/wrist_roll_controller/set_speed', SetSpeed)
+        rospy.wait_for_service('/wrist_roll_controller/set_velocity')
+        self.wrist_roll_velocity_srv = rospy.ServiceProxy('/wrist_roll_controller/set_velocity', SetVelocity)
         rospy.loginfo('connected to wrist_roll_controller service')
         
         rospy.loginfo('waiting for wrist_pitch_controller service')
-        rospy.wait_for_service('/wrist_pitch_controller/set_speed')
-        self.wrist_pitch_velocity_srv = rospy.ServiceProxy('/wrist_pitch_controller/set_speed', SetSpeed)
+        rospy.wait_for_service('/wrist_pitch_controller/set_velocity')
+        self.wrist_pitch_velocity_srv = rospy.ServiceProxy('/wrist_pitch_controller/set_velocity', SetVelocity)
         rospy.loginfo('connected to wrist_pitch_controller service')
         
         # connect to interpolated IK services
@@ -260,7 +261,12 @@ class ObjectCategorizer():
 
 
     def find_current_arm_state(self, tolerances=[0.04]*7):
-        current_joint_positions = rospy.wait_for_message('l_arm_controller/state', FollowJointTrajectoryFeedback, 2.0).actual.positions
+        arm_state = rospy.wait_for_message('l_arm_controller/state', FollowJointTrajectoryFeedback, 2.0)
+        joint_names = arm_state.joint_names
+        joint_positions = arm_state.actual.positions
+        
+        # make sure we put the state in expected order of joints
+        current_joint_positions = [joint_positions[joint_names.index(jn)] for jn in self.ARM_JOINTS]
         
         for state_name in self.arm_states:
             desired_joint_positions = self.arm_states[state_name]
@@ -422,7 +428,7 @@ class ObjectCategorizer():
         
         req = GetPositionIKRequest()
         req.timeout = rospy.Duration(5.0)
-        req.ik_request.ik_link_name = self.GRIPPER_LINK_FRAME;
+        req.ik_request.ik_link_name = self.GRIPPER_LINK_FRAME
         req.ik_request.pose_stamped = pose_stamped
         
         try:
@@ -639,7 +645,9 @@ class ObjectCategorizer():
         self.attached_object_pub.publish(obj)
         
         current_state = rospy.wait_for_message('l_arm_controller/state', FollowJointTrajectoryFeedback)
-        start_angles = list(current_state.actual.positions)
+        joint_names = current_state.joint_names
+        joint_positions = current_state.actual.positions
+        start_angles = [joint_positions[joint_names.index(jn)] for jn in self.ARM_JOINTS]
         start_angles[0] = start_angles[0] - 0.3  # move shoulder up a bit
         
         if not self.move_arm_joint_goal(self.ARM_JOINTS,
