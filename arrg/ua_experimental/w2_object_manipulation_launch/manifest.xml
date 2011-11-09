@@ -20,6 +20,7 @@
     <depend package="dynamixel_msgs"/>
     <depend package="dynamixel_controllers"/>
     <depend package="dynamixel_driver"/>
+    <depend package="dynamixel_hardware_interface"/>
     <depend package="interpolated_ik_motion_planner"/>
     <depend package="wubble2_robot"/>
     <depend package="visualization_msgs"/>
