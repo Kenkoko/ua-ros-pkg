@@ -1,0 +1,11 @@
+<launch>
+    <node type="ready_arm_action_server.py" pkg="w2_object_manipulation_launch" name="ready_arm_action" output="screen"/>
+    <node type="grasp_object_action_server.py" pkg="w2_object_manipulation_launch" name="grasp_object_action" output="screen"/>
+    <node type="lift_object_action_server.py" pkg="w2_object_manipulation_launch" name="lift_object_action" output="screen"/>
+    <node type="drop_object_action_server.py" pkg="w2_object_manipulation_launch" name="drop_object_action" output="screen"/>
+    <node type="place_object_action_server.py" pkg="w2_object_manipulation_launch" name="place_object_action" output="screen"/>
+    <node type="push_object_action_server.py" pkg="w2_object_manipulation_launch" name="push_object_action" output="screen"/>
+    <node type="shake_roll_object_action_server.py" pkg="w2_object_manipulation_launch" name="shake_roll_action" output="screen"/>
+    <node type="shake_pitch_object_action_server.py" pkg="w2_object_manipulation_launch" name="shake_pitch_action" output="screen"/>
+</launch>
+
