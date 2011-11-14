@@ -43,8 +43,8 @@
     <property name="shoulder_pitch_lower" value="-2.6280"/>
     <property name="shoulder_pitch_upper" value=" 0.9077"/>
     
-    <property name="shoulder_pan_lower" value="-3.3615"/>
-    <property name="shoulder_pan_upper" value=" 0.8938"/>
+    <property name="shoulder_pan_lower" value="-2.4890"/>
+    <property name="shoulder_pan_upper" value=" 1.0167"/>
     
     <property name="upperarm_roll_lower" value="-0.6543"/>
     <property name="upperarm_roll_upper" value=" 3.7239"/>
