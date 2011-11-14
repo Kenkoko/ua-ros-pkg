@@ -15,8 +15,8 @@ shoulder_pan_controller:
     motors:
         - id: 2
           init: 3144
-          min: 0
-          max: 3980
+          min: 816
+          max: 4095
 
 upperarm_roll_controller:
     type: dynamixel_hardware_interface/JointPositionController
