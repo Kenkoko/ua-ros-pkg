@@ -42,7 +42,7 @@ import roslib
 roslib.load_manifest('wubble2_robot')
 
 import rospy
-from dynamixel_controllers.srv import TorqueEnable
+from dynamixel_hardware_interface.srv import TorqueEnable
 
 
 if __name__ == '__main__':
