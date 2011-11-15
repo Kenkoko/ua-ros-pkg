@@ -11,7 +11,7 @@
         <param name="publish_tf" value="false"/>
         <param name="x_stddev" value="0.005"/>
         <param name="y_stddev" value="0.005"/>
-        <param name="rotation_stddev" value="0.05"/>
+        <param name="rotation_stddev" value="0.1"/>
     </node>
 </launch>
 

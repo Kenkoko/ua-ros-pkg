@@ -1,11 +1,16 @@
 <!-- -*- mode: XML -*- -->
 
 <launch>
-    <!-- Start IMU -->
-    <node name="chr_6dm_imu" pkg="chr_6dm_imu" type="chr_6dm_node.py" output="screen">
-        <param name="port_name" type="str" value="/dev/ttyUSB5"/>
-        <param name="frame_id" value="imu_link"/>
-        <param name="ignore_pitch_roll" value="true"/>
-        <param name="data_rate" value="50"/>
+    <node pkg="microstrain_3dmgx2_imu" type="imu_node" name="imu_node" output="screen">
+        <param name="time_offset" value="-0.040" />
+        <param name="port"  type="string" value="/dev/wubble2IMU" />
+        <param name="autostart" type="bool" value="true" />
+        <param name="frame_id"  type="string" value="imu_link" />
+        <param name="autocalibrate" type="bool" value="false" />
+        <param name="assume_calibrated" type="bool" value="true" />
+        <param name="orientation_stdev" type="double" value="0.00017" />
     </node>
+    
+    <node pkg="imu_monitor" type="imu_monitor.py" name="imu_monitor" />
 </launch>
+

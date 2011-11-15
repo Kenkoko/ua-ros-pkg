@@ -38,7 +38,7 @@
     <include file="$(find wubble2_robot)/launch/laser_navigation.launch" />
     <include file="$(find wubble2_robot)/launch/laser_perception.launch" />
 
-    <!-- Start stereo and swissranger nodes -->
+    <!-- Start kinect -->
     <include file="$(find wubble2_robot)/launch/kinect_perception.launch" />
 </launch>
 
