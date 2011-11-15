@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<robot>
+    <property name="M_PI" value="3.14159"/>
+    
+    <!-- *************** KINECT ***************** -->
+    <!-- position according to 3d model -->
+    <!-- <origin xyz="0.04 0 0.08173" rpy="0 0 0" />-->
+    
+    <!-- calibrated position -->
+    <!-- position according to 3d model -->
+    <property name="wubble2_calib_cam_x" value="0.04" />
+    <property name="wubble2_calib_cam_y" value="-0.0223" />
+    <property name="wubble2_calib_cam_z" value="0.08173" />
+    <property name="wubble2_calib_cam_rr" value="0" />
+    <property name="wubble2_calib_cam_rp" value="0.035" />
+    <property name="wubble2_calib_cam_ry" value="0.01755" />
+    <property name="wubble2_kinect_frame_name" value="head_tilt_link" />
+    
+    <!-- *************** TILTING LASER ***************** -->
+    <!-- position according to 3d model -->
+    <!-- <origin xyz="0.00478 0.00334 0.021" rpy="0 0 0" /> -->
+    
+    <!-- calibrated position -->
+    <property name="calib_tilt_laser_x" value="0.00478" />
+    <property name="calib_tilt_laser_y" value="0.00334" />
+    <property name="calib_tilt_laser_z" value="0.021" />
+    <property name="calib_tilt_laser_rr" value="-0.01" />
+    <property name="calib_tilt_laser_rp" value="-0.0424" />
+    <property name="calib_tilt_laser_ry" value="-0.035" />
+
+    <!-- *************** BASE LASER ***************** -->
+    <!-- position according to 3d model -->
+    <!-- <origin xyz="0.16025 -0.0025 0.0775" rpy="${M_PI} 0 0" /> -->
+    
+    <!-- calibrated position -->
+    <property name="calib_base_laser_x" value="0.16025" />
+    <property name="calib_base_laser_y" value="-0.0025" />
+    <property name="calib_base_laser_z" value="0.0775" />
+    <property name="calib_base_laser_rr" value="${M_PI}" />
+    <property name="calib_base_laser_rp" value="0" />
+    <property name="calib_base_laser_ry" value="0.0275" />
+</robot>
+
