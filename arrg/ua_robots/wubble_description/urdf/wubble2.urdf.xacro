@@ -11,7 +11,8 @@
     <include filename="$(find wubble_arm_description)/urdf/wubble_arm.xacro" />
     <include filename="$(find swissranger_camera_description)/urdf/swissranger_camera.xacro" />
     <include filename="$(find videre_stoc_description)/urdf/videre_stereo_6cm.xacro" />
-    <include filename="$(find chr_6dm_imu_description)/urdf/chrobotics_chr_6dm_imu.urdf.xacro" />
+    <include filename="$(find wubble_description)/urdf/microstrain_3dmgx3_imu.urdf.xacro" />
+    <include filename="$(find wubble_description)/urdf/wubble2_calibration.xacro" />
     
     <!-- Properties (Constants) -->
     <property name="M_PI" value="3.14159"/>
@@ -51,10 +52,10 @@
         </collision>
     </link>
     
-    <!-- CHR-6dm IMU ATTACHMENT -->
-    <chrobotics_chr_6dm_imu name="imu" parent="platform_link" imu_topic="imu/data" update_rate="120.0" stdev="0.00017" >
-        <origin xyz="0 0 1.0" rpy="0 0 0" />
-    </chrobotics_chr_6dm_imu>
+    <!-- MicroStrain IMU ATTACHMENT -->
+    <microstrain_3dmgx3_imu_v0 name="imu" parent="platform_link" imu_topic="imu/data" update_rate="100.0" stdev="0.00017" >
+        <origin xyz="0 0 0.80514" rpy="0 ${M_PI} 0" />
+    </microstrain_3dmgx3_imu_v0>
     
     <!-- WUBBLE HEAD ATTACHMENT -->
     <joint name="head_base_joint" type="fixed">
@@ -179,8 +180,9 @@
     
     <!-- KINECT ATTACHMENT -->
     <joint name="base_kinect_joint" type="fixed">
-        <origin xyz="0.04 0 0.08173" rpy="0 0 0" />
-        <parent link="head_tilt_link"/>
+        <origin xyz="${wubble2_calib_cam_x} ${wubble2_calib_cam_y} ${wubble2_calib_cam_z}" 
+                rpy="${wubble2_calib_cam_rr} ${wubble2_calib_cam_rp} ${wubble2_calib_cam_ry}" />
+        <parent link="${wubble2_kinect_frame_name}" />
         <child link="kinect_link"/>
     </joint>
     
@@ -275,7 +277,7 @@
     
     <!-- NECK TILTING LASER ATTACHMENT -->
     <joint name="neck_support_joint" type="fixed">
-        <origin xyz="0.0254 0 0.655" rpy="0 0 0" />
+        <origin xyz="0.0254 0 0.645" rpy="0 0 0" />
         <parent link="platform_link"/>
         <child link="neck_support_link"/>
     </joint>
@@ -348,12 +350,14 @@
     </transmission>
     
     <hokuyo_urg name="neck_scan" parent="neck_tilt_link">
-        <origin xyz="0.00478 0.00334 0.021" rpy="0 0 0" />
+        <origin xyz="${calib_tilt_laser_x} ${calib_tilt_laser_y} ${calib_tilt_laser_z}"
+                rpy="${calib_tilt_laser_rr} ${calib_tilt_laser_rp} ${calib_tilt_laser_ry}" />
     </hokuyo_urg>
     
     <!-- BASE LASER ATTACHMENT -->
     <hokuyo_urg name="base_scan" parent="base_link">
-        <origin xyz="0.16025 -0.0025 0.0775" rpy="${M_PI} 0 0" />
+        <origin xyz="${calib_base_laser_x} ${calib_base_laser_y} ${calib_base_laser_z}"
+                rpy="${calib_base_laser_rr} ${calib_base_laser_rp} ${calib_base_laser_ry}" />
     </hokuyo_urg>
     
     <!-- GAZEBO MATERIALS -->  
