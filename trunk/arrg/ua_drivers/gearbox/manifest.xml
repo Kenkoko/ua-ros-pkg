@@ -13,7 +13,7 @@
     <url>http://ros.org/wiki/gearbox</url>
 
     <export>
-      <cpp cflags="-I${prefix}/gearbox/include" lflags="-L${prefix}/gearbox/lib64/gearbox -Wl,-rpath,${prefix}/gearbox/lib64/gearbox -lflexiport -lGbxGarminAcfr -lGbxLockFileAcfr -lGbxNovatelAcfr -lGbxNovatelUtilAcfr -lGbxSerialAcfr -lGbxUtilAcfr -lhokuyo_aist -L${prefix}/gearbox/lib -Wl,-rpath,${prefix}/gearbox/lib"/>
+      <cpp cflags="-I${prefix}/gearbox/include" lflags="-L${prefix}/gearbox/lib64/gearbox -Wl,-rpath,${prefix}/gearbox/lib64/gearbox -lflexiport -L${prefix}/gearbox/lib -Wl,-rpath,${prefix}/gearbox/lib"/>
     </export>
 </package>
 

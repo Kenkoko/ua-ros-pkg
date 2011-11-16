@@ -11,7 +11,22 @@ include $(shell rospack find mk)/svn_checkout.mk
 CMAKE = cmake 
 CMAKE_ARGS = -D CMAKE_BUILD_TYPE=RELEASE \
              -D GEARBOX_INSTALL=`rospack find gearbox`/$(INSTALL_DIR) \
-             -D boostPythonLib='boost_python'
+             -D boostPythonLib='boost_python' \
+             -D ENABLE_LIB_FLEXIPORT=ON \
+             -D ENABLE_LIB_BASICEXAMPLE=OFF \
+             -D ENABLE_LIB_GBXADVANCEDEXAMPLE=OFF \
+             -D ENABLE_LIB_GBXGARMINACFR=OFF \
+             -D ENABLE_LIB_GBXICEUTILACFR=OFF \
+             -D ENABLE_LIB_GBXNOVATELACFR=OFF \
+             -D ENABLE_LIB_GBXSERIALACFR=OFF \
+             -D ENABLE_LIB_GBXSICKACFR=OFF \
+             -D ENABLE_LIB_GBXSMARTBATTERYACFR=OFF \
+             -D ENABLE_LIB_GBXUTILACFR=OFF \
+             -D ENABLE_LIB_HOKUYO_AIST=OFF \
+             -D FLEXIPORT_BUILD_BINDINGS=OFF \
+             -D FLEXIPORT_INCLUDE_LOGGING=ON \
+             -D GBX_BUILD_TESTS=OFF \
+             -D HOKUYO_AIST_BUILD_BINDINGS=OFF
 
 installed: wiped $(SVN_DIR) patched
 	mkdir -p $(SVN_DIR)/build
