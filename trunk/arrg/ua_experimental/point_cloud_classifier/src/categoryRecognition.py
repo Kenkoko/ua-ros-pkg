@@ -13,24 +13,29 @@ def		run():
 	numCodeWords = 200;
 	#data loading and normalization
 	print 'loading data'
+	pcaMean  = loadtxt('pcamean.txt');
+	pcaComps = loadtxt('pcacomps.txt');
+	mean     = loadtxt('mean.txt');
+	std      = loadtxt('std.txt');
+	
 	data = loadtxt('/home/mohsen/Downloads/shotFiles/shot.txt');
-	mean = data.mean(axis=0);
-	std = sqrt(data.var(axis=0));
-	std [where(std==0)] = 1;
+#	mean = data.mean(axis=0);
+#	std = sqrt(data.var(axis=0));
+#	std [where(std==0)] = 1;
 	data = (data - mean ) / std;
 	#dimension reduction
 	print 'calculating pca'
 	pca = decomposition.PCA(n_components=numComponents);
 	pca.fit(data);
 	projection = pca.transform(data);
-	
 
-	savetxt('mean.txt',mean);
-	savetxt('std.txt',std);
 
-	savetxt('pcamean.txt',pca.mean_);
-	savetxt('pcacomps.txt',pca.components_);
-	raw_input(':');
+#	savetxt('mean.txt',mean);
+#	savetxt('std.txt',std);
+
+#	savetxt('pcamean.txt',pca.mean_);
+#	savetxt('pcacomps.txt',pca.components_);
+#	raw_input(':');
 
 
 	#codebook generation
@@ -55,7 +60,9 @@ def		run():
 			return;
 		objectFeatures = objectFeatures - mean;
 		objectFeatures = objectFeatures / std;
-		objectPca = pca.transform(objectFeatures);
+		#objectPca = pca.transform(objectFeatures);
+		temp = objectFeatures - pcaMean;
+		objectPca = dot(temp, pcaComps.T);
 		objectHist = zeros((1,shape(codeBook)[0]));
 		for idx in range(shape(objectPca)[0]):
 			dist = sum( (codeBook - objectPca[idx,:])**2 , axis=1 );
