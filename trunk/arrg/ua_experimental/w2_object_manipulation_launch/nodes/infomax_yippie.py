@@ -236,8 +236,8 @@ class ObjectCategorizer():
             rospy.logerr('TabletopSegmentation did not find any clusters')
             return None
             
-        segmentation_result = res[0]
-        self.info = res[1]
+        segmentation_result = res['segmentation_result']
+        self.info = res['cluster_information']
         
         tdr = TabletopDetectionResult()
         tdr.table = segmentation_result.table
