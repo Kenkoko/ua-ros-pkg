@@ -1,0 +1,21 @@
+<package>
+  <description brief="point_cloud_classifier">
+
+     point_cloud_classifier
+
+  </description>
+  <author>Mohsen</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/point_cloud_classifier</url>
+  <depend package="roscpp"/>
+  <depend package="rospy"/>
+  <depend package="pcl"/>
+  <depend package="pcl_ros"/>
+  <depend package="sensor_msgs"/>
+  <depend package="sklearn"/>
+
+
+</package>
+
+

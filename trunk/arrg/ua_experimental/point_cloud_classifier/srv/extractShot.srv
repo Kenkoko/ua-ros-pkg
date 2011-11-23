@@ -1,0 +1,5 @@
+sensor_msgs/PointCloud point_cloud
+---
+int32 num_features
+int32 feature_size
+float64[] shot_feature
