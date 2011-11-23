@@ -17,19 +17,24 @@ class ClusterClassification:
         rospy.loginfo('Loading codebook...')
         self.codeBook = loadtxt('codebook.txt')
         #PCA
-        rospy.loginfo('Loading shot descriptors...')
-        data = loadtxt('shot.txt')
-        mean = data.mean(axis=0)
-        std = sqrt(data.var(axis=0))
-        std [where(std==0)] = 1
-        data = (data - mean ) / std
-        rospy.loginfo('Calculating PCA')
-        pca = decomposition.PCA(n_components=10)
-        pca.fit(data)
-        del data
-        self.mean = mean
-        self.std  = std
-        self.pca  = pca
+        rospy.loginfo('Loading PCA data...')
+	self.pcaMean  = loadttxt('pcamean.txt');
+	self.pcaComps = loadtxt('pcacomps.txt');
+	self.mean     = loadtxt('mean.txt');
+	self.std      = loadtxt('std.txt');
+	
+#        data = loadtxt('shot.txt')
+#        mean = data.mean(axis=0)
+#        std = sqrt(data.var(axis=0))
+#        std [where(std==0)] = 1
+#        data = (data - mean ) / std
+#        rospy.loginfo('Calculating PCA')
+#        pca = decomposition.PCA(n_components=10)
+#        pca.fit(data)
+#        del data
+#        self.mean = mean
+#        self.std  = std
+#        self.pca  = pca
         #KNN
         rospy.loginfo('Loading training data...')
         trainData = loadtxt('dataTrain.txt')
@@ -61,7 +66,10 @@ class ClusterClassification:
         shotFeatures = reshape(shotFeatures,(num_features, feature_size))
         shotFeatures = shotFeatures - self.mean
         shotFeatures = shotFeatures / self.std
-        objectPca = self.pca.transform(shotFeatures)
+	#pca transform
+        temp = shotFeatures - self.pcaMean
+        objectPca = dot(temp, self.pcaComps.T)
+#        objectPca = self.pca.transform(shotFeatures)
         objectHist = zeros((self.codeBook.shape[0]))
         for i in range(objectPca.shape[0]):
             dist = sum( (self.codeBook - objectPca[i,:])**2 , axis=1 )

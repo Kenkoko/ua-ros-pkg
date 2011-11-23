@@ -23,9 +23,15 @@ def		run():
 	pca = decomposition.PCA(n_components=numComponents);
 	pca.fit(data);
 	projection = pca.transform(data);
+	
 
-#	f = open('pca.bin','wb');	
-#	pickle.dump(f,pca);
+	savetxt('mean.txt',mean);
+	savetxt('std.txt',std);
+
+	savetxt('pcamean.txt',pca.mean_);
+	savetxt('pcacomps.txt',pca.components_);
+	raw_input(':');
+
 
 	#codebook generation
 	print 'fnding k-means'
