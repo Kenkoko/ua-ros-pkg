@@ -18,7 +18,7 @@ class ClusterClassification:
         self.codeBook = loadtxt('codebook.txt')
         #PCA
         rospy.loginfo('Loading PCA data...')
-	self.pcaMean  = loadttxt('pcamean.txt');
+	self.pcaMean  = loadtxt('pcamean.txt');
 	self.pcaComps = loadtxt('pcacomps.txt');
 	self.mean     = loadtxt('mean.txt');
 	self.std      = loadtxt('std.txt');
