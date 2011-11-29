@@ -7,5 +7,13 @@
     <node type="push_object_action_server.py" pkg="w2_object_manipulation_launch" name="push_object_action" output="screen"/>
     <node type="shake_roll_object_action_server.py" pkg="w2_object_manipulation_launch" name="shake_roll_action" output="screen"/>
     <node type="shake_pitch_object_action_server.py" pkg="w2_object_manipulation_launch" name="shake_pitch_action" output="screen"/>
+    
+    <node type="feature_extractor" pkg="point_cloud_classifier" name="feature_extractor" output="screen"/>
+    
+    <node type="classify.py" pkg="point_cloud_classifier" name="cluster_category_labeler" output="screen" >
+        <param name="num_components" value="10"/>
+        <param name="num_code_words" value="200"/>
+        <param name="data_path" value="$(find point_cloud_classifier)/data"/>
+    </node>
 </launch>
 
