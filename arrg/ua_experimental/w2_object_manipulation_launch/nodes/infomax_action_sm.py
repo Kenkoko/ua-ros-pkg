@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
+from threading import Thread
+
 import roslib; roslib.load_manifest('w2_object_manipulation_launch')
 import rospy
+
 import smach
 from smach import State
 from smach import CBState
@@ -57,8 +60,12 @@ from w2_object_manipulation_launch.msg import ShakePitchObjectGoal
 from w2_object_manipulation_launch.msg import ShakeRollObjectGoal
 from w2_object_manipulation_launch.msg import ReadyArmGoal
 
+from w2_object_manipulation_launch.msg import DoInfomaxAction
+
 from point_cloud_classifier.srv import GetClusterLabels
 from point_cloud_classifier.srv import GetClusterLabelsRequest
+
+from smach_ros import ActionServerWrapper
 
 class ResetRobot(State):
     def __init__(self):
@@ -68,7 +75,7 @@ class ResetRobot(State):
         self.collision_map_processing_srv = rospy.ServiceProxy('/tabletop_collision_map_processing/tabletop_collision_map_processing', TabletopCollisionMapProcessing)
         self.get_grasp_status_srv = rospy.ServiceProxy('/wubble_grasp_status', GraspStatus)
         
-        State.__init__(self, outcomes=['succeeded','aborted'])
+        State.__init__(self, output_keys=['action_index'], outcomes=['succeeded','aborted'])
 
     def open_gripper(self):
         pg = GraspHandPostureExecutionGoal()
@@ -115,6 +122,7 @@ class ResetRobot(State):
 
     def execute(self, userdata):
         rospy.loginfo('resetting robot')
+        userdata.action_index = 0
         self.reset_collision_map()
         
         current_state = find_current_arm_state()
@@ -170,11 +178,12 @@ class SegmentScene(State):
 
 def create_find_clusters_sm():
     sm = StateMachine(outcomes=['succeeded','aborted'],
-                      output_keys=['segmentation_result','cluster_information'])
+                      output_keys=['segmentation_result','cluster_information','action_index'])
                       
     with sm:
         StateMachine.add('RESET_ROBOT',
                          ResetRobot(),
+                         remapping={'action_index':'action_index'},
                          transitions={'succeeded':'SEGMENT_SCENE'})
                           
         StateMachine.add('SEGMENT_SCENE',
@@ -214,7 +223,6 @@ def create_grasp_sm():
 
 class SelectNextAction(State):
     def __init__(self):
-        self.current_action = 0
         self.policy = [
             InfomaxAction.GRASP,
             InfomaxAction.LIFT,
@@ -238,17 +246,22 @@ class SelectNextAction(State):
                                  'shake_pitch',
                                  'drop',
                                  'aborted'],
-                       output_keys=['infomax_action_id'])
+                       input_keys=['action_index_in'],
+                       output_keys=['infomax_action_id',
+                                    'action_index_out'])
                        
     def execute(self, userdata):
-        if self.current_action < len(self.policy):
-            next_action = self.policy[self.current_action]
+        if userdata.action_index_in < len(self.policy):
+            next_action = self.policy[userdata.action_index_in]
             userdata.infomax_action_id = next_action
-            self.current_action += 1
+            userdata.action_index_out = userdata.action_index_in + 1
             return self.action_to_outcome[next_action]
         else:
             userdata.infomax_action_id = -1
             return 'aborted'
+            
+    def reset_state(self):
+        self.current_action = 0
 
 
 def recognize_objects(graspable_objects):
@@ -270,9 +283,11 @@ if __name__ == '__main__':
     # Create and start the introspection server (to be able to display the state machine using
     #  rosrun smach_viewer smach_viewer.py)
     infomax_sm = StateMachine(['succeeded','aborted','preempted'])
+    infomax_sm.userdata.sm_action_index = 0
     
     sis = IntrospectionServer('infomax_machine', infomax_sm, '/INFOMAX_MACHINE')
-    sis.start()
+    t = Thread(target=sis.start)
+    t.start()
     
     with infomax_sm:
         find_clusters_sm = create_find_clusters_sm()
@@ -281,7 +296,8 @@ if __name__ == '__main__':
                          transitions={'succeeded':'SELECT_CLUSTER',
                                       'aborted':'FAIL_RESET_ROBOT'},
                          remapping={'segmentation_result':'segmentation_result',
-                                    'cluster_information':'cluster_information'})
+                                    'cluster_information':'cluster_information',
+                                    'action_index':'sm_action_index'})
                                     
         @smach.cb_interface(input_keys=['segmentation_result', 'cluster_information'],
                             output_keys=['closest_index'],
@@ -381,7 +397,9 @@ if __name__ == '__main__':
                                       
         StateMachine.add('SELECT_NEXT_ACTION',
                          SelectNextAction(),
-                         remapping={'infomax_action_id':'infomax_action_id'},
+                         remapping={'infomax_action_id':'infomax_action_id',
+                                    'action_index_in':'sm_action_index',
+                                    'action_index_out':'sm_action_index'},
                          transitions={'aborted':'succeeded',
                                       'grasp':'GRASP_OBJECT',
                                       'lift':'LIFT_OBJECT',
@@ -390,9 +408,20 @@ if __name__ == '__main__':
                                       'drop':'DROP_OBJECT',
                                       })
                                       
-        StateMachine.add('FAIL_RESET_ROBOT', ResetRobot())
+        StateMachine.add('FAIL_RESET_ROBOT', ResetRobot(), remapping={'action_index':'sm_action_index'})
         
-    outcome = infomax_sm.execute()
-    rospy.spin()
-    sis.stop()
+    #outcome = infomax_sm.execute()
+    #rospy.spin()
+    #sis.stop()
+    
+    asw = ActionServerWrapper(
+        'do_infomax',
+        DoInfomaxAction,
+        wrapped_container=infomax_sm,
+        succeeded_outcomes=['succeeded'],
+        aborted_outcomes=['aborted'],
+        preempted_outcomes=['preempted']
+    )
+    
+    asw.run_server()
 
