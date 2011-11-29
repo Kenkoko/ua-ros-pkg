@@ -1,1 +1,0 @@
-rosbuild_add_executable(fibonacci_server fibonacci_server.cpp)
