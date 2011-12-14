@@ -2,3 +2,8 @@
 =Wubble Robot=
 
 <img alt="logo" src="http://ua-ros-pkg.googlecode.com/svn/trunk/arrg/wiki/images/wubble2_description_color_coded.png" />
+
+==Parts List==
+===Wubble Head===
+*Microsoft Kinect
+*[http://www.amazon.com/Kinect-Sensor-Adventures-Xbox-360/dp/B002BSA298 Purchase]
