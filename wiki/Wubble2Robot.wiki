@@ -4,12 +4,21 @@
 <img alt="logo" src="http://ua-ros-pkg.googlecode.com/svn/trunk/arrg/wiki/images/wubble2_description_color_coded.png" />
 
 =Parts List=
+
 ===Wubble Head===
-*Microsoft Kinect
-**[http://www.amazon.com/Kinect-Sensor-Adventures-Xbox-360/dp/B002BSA298 $149.99]
-*Dynamixel EX-106+
-**[http://www.trossenrobotics.com/dynamixel-ex-106-robot-actuator.aspx $499.00]
-*EX-106H45
-**[http://www.trossenrobotics.com/store/p/6285-Custom-Frame-OF-106H45-Set.aspx $54.99]
-*Side frame mount RX-64/EX-106+
-**[http://www.trossenrobotics.com/p/Robotis-Dynamixel-FR05-S101K-Side-Frame-Set.aspx $14.90]
+
+* Microsoft Kinect
+
+** [http://www.amazon.com/Kinect-Sensor-Adventures-Xbox-360/dp/B002BSA298 $149.99]
+
+* Dynamixel EX-106+
+
+** [http://www.trossenrobotics.com/dynamixel-ex-106-robot-actuator.aspx $499.00]
+
+* EX-106H45
+
+** [http://www.trossenrobotics.com/store/p/6285-Custom-Frame-OF-106H45-Set.aspx $54.99]
+
+* Side frame mount RX-64/EX-106+
+
+** [http://www.trossenrobotics.com/p/Robotis-Dynamixel-FR05-S101K-Side-Frame-Set.aspx $14.90]
