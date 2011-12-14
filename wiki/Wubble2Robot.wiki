@@ -22,3 +22,6 @@
 * Side frame mount RX-64/EX-106+
 
 ** [http://www.trossenrobotics.com/p/Robotis-Dynamixel-FR05-S101K-Side-Frame-Set.aspx $14.90]
+
+||~ Quantity ||~ Part ||~ Price ||
+|| 1 || Microsoft Kinect || 149.99 ||
