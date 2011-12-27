@@ -23,5 +23,32 @@
 
 ** [http://www.trossenrobotics.com/p/Robotis-Dynamixel-FR05-S101K-Side-Frame-Set.aspx $14.90]
 
-|| Quantity || Description || Price ||
-|| 1 || Microsoft Kinect || 149.99 ||
+|| *Quantity* ||~ Description ||~ Price ||~ Link ||
+|| 1 || Microsoft Kinect || 149.99 || [http://www.amazon.com/Kinect-Sensor-Adventures-Xbox-360/dp/B002BSA298 Amazon] ||
+
+{| class="wikitable"
+|-
+! Quantity
+! Part
+! Part Description
+! Source
+! Cost
+|-
+| Head
+| 
+| 
+|
+|
+|-
+| row 2, cell 1
+| row 2, cell 2
+| row 2, cell 3
+|
+|
+|-
+| row 3, cell 1
+| row 3, cell 2
+| row 3, cell 3
+|
+|
+|}
