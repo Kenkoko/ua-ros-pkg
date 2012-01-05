@@ -12,6 +12,7 @@ from tabletop_object_detector.srv import TabletopSegmentationResponse
 
 from object_manipulation_msgs.srv import FindClusterBoundingBox
 from household_objects_database_msgs.msg import DatabaseModelPose
+from household_objects_database_msgs.msg import DatabaseModelPoseList
 from point_cloud_classifier.srv import GetClusterLabels
 from point_cloud_classifier.srv import GetClusterLabelsRequest
 
@@ -36,7 +37,7 @@ class ObjectSegmentation:
         
         rospy.Service('object_detection', TabletopDetection, self.segment_objects)
 
-    def segment_objects(self):
+    def segment_objects(self, req):
         segmentation_result = self.tabletop_segmentation_srv()
         
         if segmentation_result.result != TabletopSegmentationResponse.SUCCESS or not segmentation_result.clusters:
@@ -56,17 +57,37 @@ class ObjectSegmentation:
         
         labels = res.labels
         
+        index_to_label = {
+            0: 'Lego',
+            1: 'Box',
+            2: 'Toy',
+            3: 'Ball',
+            4: 'Cup',
+        }
+        
+        label_to_index = {
+            'Lego': 0,
+            'Box': 1,
+            'Toy': 2,
+            'Ball': 3,
+            'Cup': 4,
+        }
+        
         for idx,cluster in enumerate(segmentation_result.clusters):
             bbox_response = self.find_bounding_box_srv(cluster)
             
             dmp = DatabaseModelPose()
-            dmp.model_id = labels[idx]
+            dmp.model_id = label_to_index[labels[idx]]
             dmp.pose = bbox_response.pose
             
-            tdr.models.append([dmp])
+            dmpl = DatabaseModelPoseList()
+            dmpl.model_list = [dmp]
+            
+            tdr.models.append(dmpl)
             
         res = TabletopDetectionResponse()
         res.detection = tdr
+        rospy.loginfo(res)
         
         return res
 
