@@ -82,11 +82,6 @@
         </visual>
       </geom:box>
     </body:box>
-    <!-- offer ROS services to spawn and delete models -->
-    <controller:gazebo_ros_factory name="gazebo_ros_factory" plugin="libgazebo_ros_factory.so">
-      <alwaysOn>true</alwaysOn>
-      <updateRate>1.0</updateRate>
-    </controller:gazebo_ros_factory>
   </model:physical>
 
   <!-- ground plane -->
