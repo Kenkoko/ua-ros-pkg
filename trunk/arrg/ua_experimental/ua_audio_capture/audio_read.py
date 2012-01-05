@@ -61,6 +61,8 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 from itertools import ifilter
+from sklearn.cluster.spectral import spectral_clustering
+
 
 
 def print_confusion_matrix(o, c):
@@ -296,6 +298,11 @@ class AudioClassifier():
         return np.asarray(result)
 
 
+    def sound_fft_to_string(self, sound_fft, som):
+        sequence = [som.bmu(sound_fft[:,col]) for col in range(sound_fft.shape[1])]
+        return self.stringify_sequence(sequence)
+
+
     def train_model(self, training_ffts, training_labels):
         """
         Takes a set of training examples + corresponding true labels and returns a
@@ -314,16 +321,7 @@ class AudioClassifier():
         np.random.shuffle(column_vectors)
         som.fit(column_vectors)
         
-        training_sequences = []
-        
-        for example in training_ffts:
-            seq = []
-            
-            for col in range(example.shape[1]):
-                seq.append(som.bmu(example[:,col]))
-                
-            training_sequences.append(self.stringify_sequence(seq))
-            
+        training_sequences = [self.sound_fft_to_string(sound_fft, som) for sound_fft in training_ffts]
         knn_model = kNN.train(training_sequences, training_labels, knn_k)
         
         return som, knn_model
@@ -335,11 +333,8 @@ class AudioClassifier():
         Returns a tuple containing a highest probability label and a dictionary of
         all label probabilities.
         """
-        sequence = []
+        sequence = self.sound_fft_to_string(sound_fft, som)
         
-        for col in range(sound_fft.shape[1]):
-            sequence.append(som.bmu(sound_fft[:,col]))
-            
         weights = kNN.calculate(knn_model,
                                 self.stringify_sequence(sequence),
                                 weight_fn=self.knn_weight_fn,
@@ -369,7 +364,7 @@ class AudioClassifier():
         return most_class, weights
 
 
-    def find_sound_start_new(self, data_paths, actions, objects):
+    def find_sound_start(self, data_paths, actions, objects):
         window = int(self.params['rebin_window'] * 44100)
         
         counter = {}
@@ -449,7 +444,7 @@ class AudioClassifier():
         return start_times_by_action
 
 
-    def find_sound_end_new(self, data_paths, actions, objects, start_times):
+    def find_sound_end(self, data_paths, actions, objects, start_times):
         window = int(self.params['rebin_window'] * 44100)
         
         counter = {}
@@ -528,7 +523,7 @@ class AudioClassifier():
         return end_times_by_action
 
 
-    def calculate_fft_newdata(self, data_paths, actions, objects):
+    def calculate_fft(self, data_paths, actions, objects):
         """
         Given a path to the data, a list of actions and a list objects reads raw
         sound waves from files and computes FFTs. Returns a list of FFTs with a list
@@ -552,11 +547,11 @@ class AudioClassifier():
         action_labels = []
         
         #print 'Calculating start times...'
-        start_times = self.find_sound_start_new(data_paths, actions, objects)
+        start_times = self.find_sound_start(data_paths, actions, objects)
         #print start_times
         
         #print 'Calculating end times...'
-        end_times = self.find_sound_end_new(data_paths, actions, objects, start_times)
+        end_times = self.find_sound_end(data_paths, actions, objects, start_times)
         #print end_times
         
         sample_idx = 0
@@ -631,8 +626,8 @@ class AudioClassifier():
         return action_labels, object_labels, processed_ffts
 
 
-    def run_batch_training_classification_new(self, data_paths, action_names, object_names):
-        action_labels, object_labels, processed_ffts = self.calculate_fft_newdata(data_paths, action_names, object_names)
+    def run_batch_training_classification(self, data_paths, action_names, object_names):
+        action_labels, object_labels, processed_ffts = self.calculate_fft(data_paths, action_names, object_names)
         
         action_labels, object_labels, processed_ffts = filter_by_action(action_labels, object_labels, processed_ffts, ['push'])
         
@@ -730,7 +725,7 @@ class AudioClassifier():
         action_labels, object_labels, processed_ffts = None, None, None
         
         if not load_pickle:
-            action_labels, object_labels, processed_ffts = self.calculate_fft_newdata(data_paths, action_names, object_names)
+            action_labels, object_labels, processed_ffts = self.calculate_fft(data_paths, action_names, object_names)
         else:
             print 'Reading FFT data from pickle'
             input_pkl = open('/tmp/robot_sounds/fft/all_ffts.pkl', 'rb')
@@ -917,13 +912,7 @@ class AudioClassifier():
 
     def run(self):
         self.generate_cost_matrix()
-        res = 0.0
-        try:
-            res = self.run_batch_training_classification_new(self.data_paths, self.action_names, self.object_names)
-        except Exception as e:
-            print e
-            res = 0.0
-        return res
+        self.run_batch_training_classification(self.data_paths, self.action_names, self.object_names)
 
 
     def run_pdfs(self):
@@ -934,6 +923,138 @@ class AudioClassifier():
     def run_confusion(self):
         self.generate_cost_matrix()
         self.generate_confusion_matrices_by_action()
+
+
+    def run_spectral_clustering(self):
+        print 'Reading FFT data from pickle...'
+        input_pkl = open('/tmp/robot_sounds/fft/all_ffts.pkl', 'rb')
+        action_labels, object_labels, processed_ffts = pickle.load(input_pkl)
+        input_pkl.close()
+        print 'done\n'
+        
+        action_names = self.action_names
+        object_names = self.object_names
+        labels = np.asarray(object_labels)
+        act_labels = np.asarray(action_labels)
+        
+        self.generate_cost_matrix()
+        
+        ########### TRAIN SOM/KNN MODELS #################
+        print 'Training SOM and kNN models...'
+        inds = range(len(processed_ffts))
+        np.random.shuffle(inds)
+        
+        num_tot = len(processed_ffts)
+        num_train = int(0.8 * num_tot)
+        num_test = num_tot - num_train
+        print '\tNumber of training instances', num_train
+        print '\tNumber of testing instances', num_test
+        
+        train_set = [processed_ffts[idx] for idx in inds[:num_train]]
+        test_set = [processed_ffts[idx] for idx in inds[num_train:]]
+        
+        del processed_ffts
+        
+        train_labels = labels[inds][:num_train]
+        test_labels = labels[inds][num_train:]
+        
+        act_train_labels = act_labels[inds][:num_train]
+        act_test_labels = act_labels[inds][num_train:]
+        
+        l = {}
+        for act in action_names:
+            l[act] = []
+            
+        for idx,act in enumerate(act_train_labels):
+            l[act].append(idx)
+            
+        soms = {}
+        knns = {}
+        for act in action_names:
+            ts = [train_set[i] for i in l[act]]
+            tl = [train_labels[i] for i in l[act]]
+            
+            if ts and tl:
+                som, knn_model = self.train_model(ts, tl)
+                soms[act] = som
+                knns[act] = knn_model
+                
+        print 'done\n'
+        
+        by_action = {}
+        for idx,action in enumerate(act_train_labels):
+            if action not in by_action:
+                by_action[action] = []
+            by_action[action].append((train_labels[idx], train_set[idx]))
+            
+        ########### COMPUTE AFFINITY MATRICES ##################
+        print 'Computing affinity matrices keyed on action...'
+        affinity_by_action = {}
+        
+        for act in by_action:
+            print 'Processing %s action' % act
+            affinity_by_action[act] = []
+            objs_ffts = by_action[act]
+            num_objs = len(objs_ffts)
+            
+            for idx_obj1 in range(num_objs):
+                print '\t[%d/%d]' % (idx_obj1+1, num_objs)
+                
+                som = soms[act]
+                
+                str1 = self.sound_fft_to_string(objs_ffts[idx_obj1][1], som)
+                row = []
+                
+                for idx_obj2 in range(num_objs):
+                    #print '\t\tComputing distance between %s and %s objects' % (objs_ffts[idx_obj1][0], objs_ffts[idx_obj2][0])
+                    str2 = self.sound_fft_to_string(objs_ffts[idx_obj2][1], som)
+                    dist = self.sound_seq_distance_str(str1, str2)
+                    #dist = math.exp(-(dist-1)/0.5) / math.exp(0)
+                    #delta = 0.1
+                    #row.append(np.exp(-dist ** 2 / (2. * delta ** 2)))
+                    #row.append(1.0/dist if dist > 0.0 else 1)
+                    row.append(dist)
+                    #print '\t\t\tdistance = %f' % row[-1]
+                    
+                affinity_by_action[act].append(row)
+                
+            var = np.asarray(affinity_by_action[act]).var()
+            affinity_by_action[act] = np.exp(-np.asarray(affinity_by_action[act]) ** 2 / (2. * var ** 2)) * 10
+            #print '\t%f' % var
+            #print affinity_by_action[act]
+            
+        output = open('/tmp/affinity_by_action.pkl', 'wb')
+        pickle.dump(affinity_by_action, output)
+        output.close()
+        
+        print 'done\n'
+        #print affinity_by_action
+        
+        ############ CLUSTER INSTANCES ######################
+        print 'Clustering instances...'
+        
+        for action,affinity_matrix in affinity_by_action.items():
+            #print action
+            #print affinity_matrix
+            print 'Processing %s action' % action
+            am = np.asarray(affinity_matrix)
+            #print 'shape = %s' % str(am.shape)
+            
+            c_labels = spectral_clustering(am, len(object_names))
+            print 'labels: %s' % str(c_labels)
+            
+            objs_ffts = by_action[action]
+            obj_ids = [of[0] for of in objs_ffts]
+            print 'objs: %s' % str(obj_ids)
+            
+            l_to_o = {}
+            for idx,l in enumerate(c_labels):
+                if l not in l_to_o: l_to_o[l] = []
+                l_to_o[l].append(obj_ids[idx])
+                
+            print action, l_to_o
+            
+        print 'done\n'
 
 
     def generate_confusion_matrices_by_action(self):
@@ -995,5 +1116,6 @@ if __name__ == '__main__':
     ac = AudioClassifier()
 #    ac.run(); exit(1)
 #    ac.run_pdfs(); exit(1)
-    ac.run_confusion(); exit(1)
+#    ac.run_confusion(); exit(1)
+    ac.run_spectral_clustering(); exit(1)
 
