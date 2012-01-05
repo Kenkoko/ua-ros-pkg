@@ -27,6 +27,7 @@
     <depend package="std_srvs"/>
     <depend package="scikits"/>
     <depend package="pybrain"/>
+    <depend package="sklearn"/>
 
     <rosdep name="portaudio"/>
     <rosdep name="libsndfile"/>
