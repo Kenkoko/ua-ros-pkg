@@ -61,6 +61,8 @@ from w2_object_manipulation_launch.msg import ShakeRollObjectGoal
 from w2_object_manipulation_launch.msg import ReadyArmGoal
 
 from w2_object_manipulation_launch.msg import DoInfomaxAction
+from w2_object_manipulation_launch.msg import DoInfomaxFeedback
+from w2_object_manipulation_launch.msg import DoInfomaxResult
 
 from point_cloud_classifier.srv import GetClusterLabels
 from point_cloud_classifier.srv import GetClusterLabelsRequest
@@ -282,8 +284,12 @@ if __name__ == '__main__':
     
     # Create and start the introspection server (to be able to display the state machine using
     #  rosrun smach_viewer smach_viewer.py)
-    infomax_sm = StateMachine(['succeeded','aborted','preempted'])
+    infomax_sm = StateMachine(outcomes=['succeeded','aborted','preempted'],
+                              input_keys=['do_infomax_goal'],
+                              output_keys=['do_infomax_result','do_infomax_feedback'])
     infomax_sm.userdata.sm_action_index = 0
+    infomax_sm.userdata.do_infomax_feedback = DoInfomaxFeedback()
+    infomax_sm.userdata.do_infomax_result = DoInfomaxResult()
     
     sis = IntrospectionServer('infomax_machine', infomax_sm, '/INFOMAX_MACHINE')
     t = Thread(target=sis.start)
@@ -408,7 +414,10 @@ if __name__ == '__main__':
                                       'drop':'DROP_OBJECT',
                                       })
                                       
-        StateMachine.add('FAIL_RESET_ROBOT', ResetRobot(), remapping={'action_index':'sm_action_index'})
+        StateMachine.add('FAIL_RESET_ROBOT',
+                         ResetRobot(),
+                         remapping={'action_index':'sm_action_index'},
+                         transitions={'succeeded':'aborted'})
         
     #outcome = infomax_sm.execute()
     #rospy.spin()
@@ -420,8 +429,13 @@ if __name__ == '__main__':
         wrapped_container=infomax_sm,
         succeeded_outcomes=['succeeded'],
         aborted_outcomes=['aborted'],
-        preempted_outcomes=['preempted']
+        preempted_outcomes=['preempted'],
+        goal_key='do_infomax_goal',
+        feedback_key='do_infomax_feedback',
+        result_key='do_infomax_result',
     )
     
     asw.run_server()
+    sis.stop()
+    t.join()
 
