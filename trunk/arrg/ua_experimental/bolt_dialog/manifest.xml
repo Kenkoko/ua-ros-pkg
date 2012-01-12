@@ -1,0 +1,16 @@
+<package>
+  <description brief="bolt_dialog">
+
+     bolt_dialog
+
+  </description>
+  <author>Antons Rebguns</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/bolt_dialog</url>
+  <depend package="rospy"/>
+  <depend package="json_prolog"/>
+
+</package>
+
+
