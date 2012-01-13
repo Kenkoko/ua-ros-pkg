@@ -124,6 +124,19 @@ def interpret(rdfgraph):
 
     return retval
 
+def query_knowrob_properties(obj):
+    prolog = json_prolog.Prolog()
+    query = prolog.query("owl_has('%s', P, O)." % obj)
+    
+    was_empty = True
+    for sol in query.solutions():
+        was_empty = False
+        rospy.loginfo('\tP = %s; O = %s' % (sol['P'], sol['O']))
+        
+    query.finish()
+    
+    if was_empty: rospy.loginfo('\tNo properties')
+
 def query_knowrob(query):
     prolog = json_prolog.Prolog()
     obj = str(KNOWROB[query['theme']])
@@ -135,6 +148,7 @@ def query_knowrob(query):
     for sol in query.solutions():
         was_empty = False
         rospy.loginfo('Found solution.  A = %s' % sol['A'])
+        query_knowrob_properties(sol['A'])
         
     query.finish()
     
@@ -145,7 +159,7 @@ if __name__ == '__main__':
     rospy.init_node('test_trips')
     sentence = raw_input('>>> ').strip()
     rdf = query_trips(sentence)
-    #show_graph(sentence, rdf)
+    show_graph(sentence, rdf)
     query = interpret(rdf)
     
     if query:
