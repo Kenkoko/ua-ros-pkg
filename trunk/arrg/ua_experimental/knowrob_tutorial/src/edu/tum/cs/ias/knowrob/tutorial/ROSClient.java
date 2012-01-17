@@ -77,6 +77,7 @@ public class ROSClient {
                 n.serviceClient("/object_detection", new TabletopDetection());
             
             r = cl.call(req).detection;
+            ros.logError("There are " + r.models.size() + " models in the list");
             cl.shutdown();
             
         } catch (RosException e) {
