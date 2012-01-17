@@ -21,6 +21,10 @@
 
 :- register_ros_package(mod_vis).
 :- register_ros_package(ias_semantic_map).
+:- register_ros_package(comp_spatial).
+:- register_ros_package(comp_temporal).
+:- register_ros_package(knowrob_common).
+:- register_ros_package(knowrob_tutorial).
 
 :- use_module(library('tabletop_obj')).
 
@@ -28,5 +32,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parse OWL files, register name spaces
 
-:- owl_parser:owl_parse('/home/anton/ros-e/ua-ros-pkg/ua_experimental/knowrob_tutorial/owl/tabletop_obj.owl', false, false, true).
+:- owl_parser:owl_parse('/Users/anton/ros-e/ua-ros-pkg/ua_experimental/knowrob_tutorial/owl/tabletop_obj.owl', false, false, true).
 :- rdf_db:rdf_register_ns(tabletop_obj, 'http://ias.cs.tum.edu/kb/tabletop_obj.owl#', [keep(true)]).
+
+:- owl_parser:owl_parse('/Users/anton/ros-e/ua-ros-pkg/ua_experimental/knowrob_tutorial/owl/coffeecup.owl', false, false, true).
+:- rdf_db:rdf_register_ns(tabletop_obj, 'http://ias.cs.tum.edu/kb/coffeecup.owl#', [keep(true)]).

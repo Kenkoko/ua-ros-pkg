@@ -10,8 +10,9 @@
   <url>http://ros.org/wiki/knowrob_tutorial</url>
   <depend package="mod_vis"/>
   <depend package="json_prolog"/>
-  <depend package="rosjava"/>
+  <depend package="rosjava_jni"/>
   <depend package="ias_semantic_map"/>
+  <depend package="comp_spatial"/>
   <depend package="tabletop_object_detector"/>
   <depend package="object_manipulation_msgs"/>
   <depend package="household_objects_database_msgs"/>

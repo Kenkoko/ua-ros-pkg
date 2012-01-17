@@ -32,10 +32,12 @@
 :- use_module(library('semweb/rdf_db')).
 :- use_module(library('semweb/rdfs_computable')).
 :- use_module(library('thea/owl_parser')).
-
+:- use_module(library('knowrob_owl')).
+:- use_module(library('comp_spatial')).
 
 :- rdf_db:rdf_register_ns(knowrob,  'http://ias.cs.tum.edu/kb/knowrob.owl#',  [keep(true)]).
 :- rdf_db:rdf_register_ns(tabletop_obj, 'http://ias.cs.tum.edu/kb/tabletop_obj.owl#', [keep(true)]).
+:- rdf_db:rdf_register_ns(tabletop_obj, 'http://ias.cs.tum.edu/kb/coffeecup.owl#', [keep(true)]).
 
 
 
@@ -60,14 +62,22 @@ tabletop_object(Obj) :-
     jpl_new('edu.tum.cs.ias.knowrob.tutorial.ROSClient', ['my_tabletop_client'], Client),
 
     % call the method for retrieving objects from the tabletop_object_detector
-    jpl_call(Client, 'callTabletopObjDetection', [], Objects),
+    jpl_call(Client, 'callTabletopObjDetection', [], TabletopDetectionResult),
 
     % convert the result into a list of matches over which we can iterate
-    jpl_get(Objects, 'models', Models),
-    jpl_array_to_list(Models, Matches),
-
+    jpl_get(TabletopDetectionResult, 'models', DatabaseModelPoseList),
+    jpl_call(DatabaseModelPoseList, 'iterator', [], Iterator1),
+    findall(M, jpl_iterator_element(Iterator1, M), Models),
+    
     % create the object representations in the knowledge base
-    member(Match, Matches),
+    member(MatchObject, Models),
+    
+    jpl_get(MatchObject, 'model_list', ModelList),
+    jpl_call(ModelList, 'iterator', [], Iterator2),
+    findall(M, jpl_iterator_element(Iterator2, M), ModelPoses),
+    
+    member(Match, ModelPoses),
+    
     create_tabletop_object(Match, Obj).
 
 
@@ -84,7 +94,6 @@ tabletop_object(Obj) :-
 %
 
 create_tabletop_object(Match, Obj) :-
-
     % retrieve the model ID
     jpl_get(Match, 'model_id', ID),
 
@@ -123,7 +132,7 @@ create_perception_instance(Perception) :-
   rdf_instance_from_class('http://ias.cs.tum.edu/kb/tabletop_obj.owl#TabletopPerception', Perception),
 
   % create detection time point
-  get_timepoint(TimePoint),
+  knowrob_owl:get_timepoint(TimePoint),
   rdf_assert(Perception, knowrob:startTime, TimePoint).
 
 
@@ -207,6 +216,11 @@ id_to_type('lego','http://ias.cs.tum.edu/kb/coffeecup.owl#LegoBlock').
 id_to_type('toy', 'http://ias.cs.tum.edu/kb/coffeecup.owl#StuffedAnimal').
 id_to_type('ball','http://ias.cs.tum.edu/kb/coffeecup.owl#Ball').
 
+id_to_type(4, 'http://ias.cs.tum.edu/kb/knowrob.owl#Cup').
+id_to_type(1, 'http://ias.cs.tum.edu/kb/knowrob.owl#Box-Container').
+id_to_type(0,'http://ias.cs.tum.edu/kb/coffeecup.owl#LegoBlock').
+id_to_type(2, 'http://ias.cs.tum.edu/kb/coffeecup.owl#StuffedAnimal').
+id_to_type(3,'http://ias.cs.tum.edu/kb/coffeecup.owl#Ball').
 
 
 %% quaternion_to_matrix(?Quat, ?Mat) is det.
