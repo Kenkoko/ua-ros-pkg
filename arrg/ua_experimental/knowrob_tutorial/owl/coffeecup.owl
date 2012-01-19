@@ -28,6 +28,17 @@
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
+    // Datatypes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
     // Classes
     //
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -65,6 +76,248 @@
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Toys">
         <rdfs:subClassOf rdf:resource="&knowrob;HumanScaleObject"/>
     </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Ball1 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Ball1">
+        <rdf:type rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Ball"/>
+        <knowrob:depthOfObject>10</knowrob:depthOfObject>
+        <knowrob:massOfObject>3</knowrob:massOfObject>
+        <knowrob:widthOfObject>10</knowrob:widthOfObject>
+        <knowrob:heightOfObject>10</knowrob:heightOfObject>
+        <knowrob:mainColorOfObject rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Blue"/>
+        <knowrob:locatedAtPoint-Spatial rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Point1"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Ball4 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Ball4">
+        <rdf:type rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Ball"/>
+        <knowrob:massOfObject>1</knowrob:massOfObject>
+        <knowrob:heightOfObject>2</knowrob:heightOfObject>
+        <knowrob:widthOfObject>2</knowrob:widthOfObject>
+        <knowrob:depthOfObject>2</knowrob:depthOfObject>
+        <knowrob:locatedAtPoint-Spatial rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Point4"/>
+        <knowrob:mainColorOfObject rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Red"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Ball5 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Ball5">
+        <rdf:type rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Ball"/>
+        <knowrob:heightOfObject>1</knowrob:heightOfObject>
+        <knowrob:widthOfObject>1</knowrob:widthOfObject>
+        <knowrob:massOfObject>6</knowrob:massOfObject>
+        <knowrob:depthOfObject>1</knowrob:depthOfObject>
+        <knowrob:mainColorOfObject rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Blue"/>
+        <knowrob:locatedAtPoint-Spatial rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Point5"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Bear3 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Bear3">
+        <rdf:type rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#StuffedAnimal"/>
+        <knowrob:widthOfObject>3</knowrob:widthOfObject>
+        <knowrob:heightOfObject>6</knowrob:heightOfObject>
+        <knowrob:depthOfObject>3</knowrob:depthOfObject>
+        <knowrob:massOfObject>2</knowrob:massOfObject>
+        <knowrob:mainColorOfObject rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Orange"/>
+        <knowrob:locatedAtPoint-Spatial rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Point3"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Black -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Black">
+        <rdf:type rdf:resource="&knowrob;BlackColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Block2 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Block2">
+        <rdf:type rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#LegoBlock"/>
+        <knowrob:depthOfObject>3</knowrob:depthOfObject>
+        <knowrob:massOfObject>8</knowrob:massOfObject>
+        <knowrob:widthOfObject>5</knowrob:widthOfObject>
+        <knowrob:heightOfObject>4</knowrob:heightOfObject>
+        <knowrob:locatedAtPoint-Spatial rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Point2"/>
+        <knowrob:mainColorOfObject rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Red"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Block6 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Block6">
+        <rdf:type rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#LegoBlock"/>
+        <knowrob:heightOfObject>6</knowrob:heightOfObject>
+        <knowrob:depthOfObject>4</knowrob:depthOfObject>
+        <knowrob:massOfObject>88</knowrob:massOfObject>
+        <knowrob:widthOfObject>8</knowrob:widthOfObject>
+        <knowrob:mainColorOfObject rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Green"/>
+        <knowrob:locatedAtPoint-Spatial rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Point6"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Block7 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Block7">
+        <rdf:type rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#LegoBlock"/>
+        <knowrob:massOfObject>1000</knowrob:massOfObject>
+        <knowrob:depthOfObject>33</knowrob:depthOfObject>
+        <knowrob:widthOfObject>42</knowrob:widthOfObject>
+        <knowrob:heightOfObject>4</knowrob:heightOfObject>
+        <knowrob:locatedAtPoint-Spatial rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Point7"/>
+        <knowrob:mainColorOfObject rdf:resource="http://ias.cs.tum.edu/kb/coffeecup.owl#Yellow"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Blue -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Blue">
+        <rdf:type rdf:resource="&knowrob;BlueColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Green -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Green">
+        <rdf:type rdf:resource="&knowrob;GreenColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Orange -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Orange">
+        <rdf:type rdf:resource="&knowrob;OrangeColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Point1 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Point1">
+        <rdf:type rdf:resource="&knowrob;Point3D"/>
+        <knowrob:yCoord>8</knowrob:yCoord>
+        <knowrob:xCoord>15</knowrob:xCoord>
+        <knowrob:zCoord>36</knowrob:zCoord>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Point2 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Point2">
+        <rdf:type rdf:resource="&knowrob;Point3D"/>
+        <knowrob:xCoord>500</knowrob:xCoord>
+        <knowrob:yCoord>300</knowrob:yCoord>
+        <knowrob:zCoord>100</knowrob:zCoord>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Point3 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Point3">
+        <rdf:type rdf:resource="&knowrob;Point3D"/>
+        <knowrob:xCoord>100</knowrob:xCoord>
+        <knowrob:zCoord>100</knowrob:zCoord>
+        <knowrob:yCoord>100</knowrob:yCoord>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Point4 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Point4">
+        <rdf:type rdf:resource="&knowrob;Point3D"/>
+        <knowrob:xCoord>50</knowrob:xCoord>
+        <knowrob:zCoord>70</knowrob:zCoord>
+        <knowrob:yCoord>60</knowrob:yCoord>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Point5 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Point5">
+        <rdf:type rdf:resource="&knowrob;Point3D"/>
+        <knowrob:yCoord>20</knowrob:yCoord>
+        <knowrob:xCoord>20</knowrob:xCoord>
+        <knowrob:zCoord>30</knowrob:zCoord>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Point6 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Point6">
+        <rdf:type rdf:resource="&knowrob;Point3D"/>
+        <knowrob:yCoord>100</knowrob:yCoord>
+        <knowrob:xCoord>1000</knowrob:xCoord>
+        <knowrob:zCoord>90</knowrob:zCoord>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Point7 -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Point7">
+        <rdf:type rdf:resource="&knowrob;Point3D"/>
+        <knowrob:xCoord>333</knowrob:xCoord>
+        <knowrob:zCoord>815</knowrob:zCoord>
+        <knowrob:yCoord>521</knowrob:yCoord>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Red -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Red">
+        <rdf:type rdf:resource="&knowrob;RedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#White -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#White">
+        <rdf:type rdf:resource="&knowrob;WhiteColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://ias.cs.tum.edu/kb/coffeecup.owl#Yellow -->
+
+    <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/coffeecup.owl#Yellow">
+        <rdf:type rdf:resource="&knowrob;YellowColor"/>
+    </owl:NamedIndividual>
     
 
 
