@@ -126,7 +126,7 @@ void VideoCaptureThread(){
             //cvQueryFrame( capture );  // Uncommenting this crashes the program, but is supposed to make it work
             cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, 960 );
             cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT, 720 );
-            
+            cvSetCaptureProperty( capture, CV_CAP_PROP_FPS, 25 );
             int retries = 0;
             IplImage* frame = NULL;
             while (!frame && retries < 3) {
@@ -365,10 +365,10 @@ int main( int argc,  char** argv )
     boost::thread t1 = boost::thread(boost::bind(&VideoCaptureThread));
     
     // Create stdin listener thread
-    boost::thread t2 = boost::thread::thread(boost::bind(&GetKeyFromCommandLine));
+    boost::thread t2 = boost::thread(boost::bind(&GetKeyFromCommandLine));
     
     // Create framerate thread
-    boost::thread t3 = boost::thread::thread(boost::bind(&frameRate));
+    boost::thread t3 = boost::thread(boost::bind(&frameRate));
 
     ros::Rate loop_rate(30);
     while(ros::ok()){
