@@ -6,6 +6,7 @@ set(ROS_BUILD_TYPE Release)
 rosbuild_init ()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+set(nmpt_CFLAGS_OTHER "-fpermissive")
 
 rosbuild_add_library(nmpt
     src/nmpt/BlockTimer.cpp 
