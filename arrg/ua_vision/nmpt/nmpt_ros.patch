@@ -910,3 +910,25 @@ diff -Nurp NMPT_orig/src/TrainNarrowFOVModel.cpp NMPT_ros/src/TrainNarrowFOVMode
  
  int main(int argc, char** argv) {
  	const char files[] = "data/GENKI-SZSL_files.txt"; 
+--- NMPT_orig/src/PatchList.cpp	2012-02-05 01:46:16.979385902 +0900
++++ NMPT_ros/src/PatchList.cpp	2012-02-05 01:47:11.967383956 +0900
+@@ -461,7 +461,7 @@
+ 		scaleSize = getEffectiveResampledImageSizeAtScale(i); 
+ 		
+ 		Mat resizeScratchPad = scaleCanvas(Rect(0, 0, scaleSize.width, scaleSize.height)); 
+-		resize(newImage, resizeScratchPad, resizeScratchPad.size(), 0,0, INTER_NEAREST); 
++		resize(Mat(newImage), resizeScratchPad, resizeScratchPad.size(), 0,0, INTER_NEAREST); 
+ 		
+ 		if (_PATCHLIST_DEBUG) cout << "Resized image." << endl; 
+ 		if ((unsigned int) i < images.size()) {	
+--- NMPT_orig/src/NMPTUtils.cpp.org	2012-02-05 01:46:27.471385531 +0900
++++ NMPT_ros/src/NMPTUtils.cpp	2012-02-05 01:46:36.535385211 +0900
+@@ -149,7 +149,7 @@
+ 	
+ 	int useFast = numels > 10; 
+ 	if (useFast) {
+-		sort(randEls, randEls, CV_SORT_EVERY_ROW | CV_SORT_ASCENDING);
++		cv::sort(randEls, randEls, CV_SORT_EVERY_ROW | CV_SORT_ASCENDING);
+ 		int h = 0; 
+ 		double c = normHist.at<double>(0,h); 
+ 		for (int i = 0; i < numels; i++) {
