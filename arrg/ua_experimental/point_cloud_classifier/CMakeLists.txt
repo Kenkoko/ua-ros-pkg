@@ -30,3 +30,6 @@ rosbuild_add_executable(feature_extractor src/shot_extractor.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_executable(shot_feature src/shotFeature.cpp)
+
+rosbuild_add_executable(processor src/processor.cpp)
+
