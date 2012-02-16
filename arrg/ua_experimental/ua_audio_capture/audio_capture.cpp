@@ -34,8 +34,10 @@
 #include "ros/ros.h"
 #include "ua_audio_msgs/AudioRawStream.h"
 
-const static int SAMPLE_RATE = 44100; // todo: make this a parameter.
-const static int NUM_CHANNELS = 1;
+// const static int SAMPLE_RATE = 44100; // todo: make this a parameter.
+//const static int SAMPLE_RATE = 48000; // todo: make this a parameter.
+unsigned int SAMPLE_RATE = 44100; // todo: make this a parameter.
+unsigned int NUM_CHANNELS = 1;
 ros::Publisher g_pub;
 bool g_caught_sigint = false;
 
@@ -93,6 +95,17 @@ void sig_handler(int sig)
 
 int main(int argc, char **argv)
 {
+    
+  if(argc > 1 && argc < 3){
+      ROS_FATAL("Need exactly zero or two arguments\nUsage:\n  audio_capture  NUM_CHANNELS SAMPLE_RATE \n  audio_capture without arguments defaults to 1 channel at 441000 Hz\n");
+      ROS_BREAK();
+  }
+  if( argc > 1){
+      NUM_CHANNELS = atoi(argv[1]);        
+      SAMPLE_RATE = atoi(argv[2]);
+  }
+  ROS_INFO("Starting with %d channels at %d Hz", NUM_CHANNELS, SAMPLE_RATE);
+
   PaStream *stream;
   PaError err;
   ROS_DEBUG("initializing portaudio");
@@ -103,7 +116,7 @@ int main(int argc, char **argv)
   }
   ROS_DEBUG("opening default audio stream");
   ros::init(argc, argv, "audio_capture", ros::init_options::NoSigintHandler);
-  
+    
   ros::NodeHandle nh("audio_capture");
   //g_audio_node = ros::NodeHandle("audio_capture");
   g_pub = nh.advertise<ua_audio_msgs::AudioRawStream>("audio", 5);
