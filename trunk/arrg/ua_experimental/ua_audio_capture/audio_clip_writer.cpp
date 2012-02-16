@@ -42,8 +42,9 @@ using std::endl;
 
 static const float CLIP_START_POWER = 0.05f;
 static const float CLIP_MAINTAIN_POWER = 0.03f;
-static const float WINDOW_LENGTH = 1.0; // seconds
+static const float WINDOW_LENGTH = 0.5; // seconds
 static const float MIN_CLIP_LENGTH = 2.0; // seconds
+static const bool normalize = false;
 
 class AudioWriter
 {
@@ -69,47 +70,48 @@ public:
     {
       audio_clock++;
       // cout << "Audio clock: " << audio_clock << endl;
-      // maintain a window of 0.5 seconds
+      // to maintain a window of WINDOW_LENGTH seconds, delete too old samples here 
       if (window.size() >= numChannels * WINDOW_LENGTH * audio_msg->sample_rate){
+	  // Delete numChannels samples
           for(uint32_t j=0; j < numChannels; ++j){        
               window.pop_front();
           }
       }
+      // Now just push numChannels samples back one after the other
+      // (no fancy data structure needed)
       for(uint32_t j=0; j < numChannels; ++j){        
             window.push_back(audio_msg->samples[i*numChannels+j]);
             //printf("%f, ", audio_msg->samples[i*numChannels+j]);
       }
       //cout << endl << "--" << endl;
+      // Every once in awhile, check the RMS of the window
       if (audio_clock % 100 == 0)
       {
         // compute RMS power
         float sum_squares = 0;
-        int win_idx = 0;
-        for (deque<float>::iterator j = window.begin(); j != window.end();
-             ++j, win_idx++)
-          sum_squares += (*j) * (*j);// * ((float)win_idx / window.size());
-        //window_power = sqrt(2 * sum_squares / window.size());
-        window_power = sqrt(sum_squares / window.size() );
+        for (deque<float>::iterator j = window.begin(); j != window.end(); ++j){
+            sum_squares += (*j) * (*j);
+	}
+        window_power = sqrt(sum_squares / (float)window.size() );
         //printf("power: %f\n", window_power);
       }
       switch (clip_state)
       {
         case IDLE:
-          if (fabs(audio_msg->samples[i* numChannels]) > CLIP_START_POWER)
+          if (window_power > CLIP_START_POWER)
           {
             printf("clip start\n");
             clip_start = audio_clock;
             clip_state = CLIP_START;
             clip.clear();
-            clip.reserve(window.size() * numChannels);
-            for (deque<float>::iterator j = window.begin();
-                 j != window.end(); ++j)
+            //clip.reserve(window.size() * numChannels);
+            for (deque<float>::iterator j = window.begin(); j != window.end(); ++j)
               clip.push_back(*j);
           }
           break;
         case CLIP_START:
           for(uint32_t j=0; j < numChannels; ++j){        
-            clip.push_back(audio_msg->samples[i* numChannels]);
+            clip.push_back(audio_msg->samples[i* numChannels + j]);
           }
           if (audio_clock - clip_start < audio_msg->sample_rate * WINDOW_LENGTH )
           {
@@ -124,7 +126,7 @@ public:
           break;
         case IN_CLIP:
           for(uint32_t j=0; j < numChannels; ++j){        
-            clip.push_back(audio_msg->samples[i* numChannels]);
+            clip.push_back(audio_msg->samples[i* numChannels + j]);
           }
           if (window_power < CLIP_MAINTAIN_POWER)
           {
@@ -134,21 +136,25 @@ public:
             {
               printf("good clip, length = %.2f seconds\n", clip_len);
               // normalize it
-              float max_amp = 0, mean = 0;
-              for (vector<float>::iterator j = clip.begin();
-                   j != clip.end(); ++j)
-                mean += *j;
-              mean /= clip.size();
-              for (vector<float>::iterator j = clip.begin();
-                   j != clip.end(); ++j)
+              if(normalize)
               {
-                *j -= mean;
-                if (fabs(*j) > max_amp)
-                  max_amp = fabs(*j);
+                printf("Normalizing\n");
+                float max_amp = 0, mean = 0;
+                for (vector<float>::iterator j = clip.begin(); j != clip.end(); ++j){
+                  mean += *j;
+                }
+                mean /= clip.size();
+                for (vector<float>::iterator j = clip.begin(); j != clip.end(); ++j)
+                {
+                  *j -= mean;
+                  if (fabs(*j) > max_amp){
+                    max_amp = fabs(*j);
+                  }
+                }
+                for (vector<float>::iterator j = clip.begin(); j != clip.end(); ++j){
+                  *j /= max_amp * 1.05;
+                }
               }
-              for (vector<float>::iterator j = clip.begin();
-                   j != clip.end(); ++j)
-                *j /= max_amp * 1.05;
               SF_INFO sf_info;
               sf_info.samplerate = audio_msg->sample_rate;
               sf_info.channels = numChannels;
