@@ -1,0 +1,17 @@
+<package>
+  <description brief="ultraspeech">
+
+     ultraspeech
+
+  </description>
+  <author>Jeff Berry</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ultraspeech</url>
+  <depend package="roscpp"/>
+  <depend package="rospy"/>
+  <depend package="opencv2"/>
+
+</package>
+
+
