@@ -1,6 +1,7 @@
 <launch>
 
-  <node pkg="videre_stereo_cam" name="videre_stereo_node" type="videre_stereo_node" args='_guid:=0055050400083362 _bayer_pattern="grbg" _iso_speed:=400 _frame_rate:=30'/>
+   <node pkg="videre_stereo_cam" name="videre_stereo_node" type="videre_stereo_node" args='_guid:=0055050400083362 _bayer_pattern="grbg" _iso_speed:=400 _frame_rate:=30'/>
+ 
  
   <!--<node pkg="videre_stereo_cam" name="videre_stereo_node" type="videre_stereo_node">
     <param name="guid" type="string" value="0055050400083362"/>
