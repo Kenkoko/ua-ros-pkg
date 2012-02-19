@@ -119,6 +119,7 @@ class SubjectUI:
 	    result, stimuliFile, numReps = s.run()
 	    if result == 1:
 		self.createTopLevel(stimuliFile, numReps)
+		self.startROSbag()
 		self.run = 0
 		self.currentInd = 0
 		self.currentRep = 1
@@ -128,7 +129,10 @@ class SubjectUI:
 		    #self.startJack()
 	    
                     
-        
+    def startROSbag(self):
+        bagmsg = ['/opt/ros/electric/ros/bin/rosbag', 'record', '-a', '--output-name=' + self.topleveldir + '/capture_all.bag']
+        self.rosbag_pid = subprocess.Popen(bagmsg)
+      
     def createTopLevel(self, stimuliFile, numReps):
         '''Creates the top level directory, randomizes input list'''
 	self.sessionID = str(rospy.Time.now())
@@ -178,6 +182,10 @@ class SubjectUI:
 	#print "turn on phantom power\n"
 
     def onStart(self, event):
+        # This is when the button is pressed
+        self.controlStart(event)
+      
+    def controlStart(self, event):
         if self.run == 0:
             self.run = 1
             controlMessage = Control(top_level_directory=self.topleveldir,run=self.run)
@@ -194,6 +202,10 @@ class SubjectUI:
             pass
         
     def onStop(self, event):
+        # This is when the button is pressed
+        self.controlStop(event)
+      
+    def controlStop(self, event):
         if self.run == 1:
             self.run = 0
             controlMessage = Control(top_level_directory=self.topleveldir,run=self.run)
@@ -207,11 +219,11 @@ class SubjectUI:
 	        if (((self.currentInd)%(self.total/self.numReps)) == 0):
 		    self.currentRep += 1
 		    #self.console.set_text('')
-		if (((self.currentInd)%10) == 0):
-			self.currentBatch += 1
-			self.onStop(event)
-			time.sleep(1)
-			self.onStart(event)
+		#if (((self.currentInd)%10) == 0):
+		#	self.currentBatch += 1
+		#	self.onStop(event)
+		#	time.sleep(1)
+		#	self.controlStart(event)
 		print self.stimuliList[self.currentInd]
 		self.console.set_text('')
 		self.console.append_text('\n')
@@ -228,6 +240,10 @@ class SubjectUI:
             pass
         
     def onDestroy(self, event):
+	print "Killing rosbag"
+	self.rosbag_pid.send_signal(subprocess.CTRL_C_EVENT)
+        self.rosbag_pid.terminate()
+        
         #if self.USE_JACK:
 	    #self.ffado_pid.terminate()
 	    #self.jack_pid.terminate()
