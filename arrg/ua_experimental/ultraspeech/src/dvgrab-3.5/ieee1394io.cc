@@ -121,7 +121,7 @@ IEEE1394Reader::IEEE1394Reader( int c, int bufSize, bool hdv ) :
 
 	// Start ROS publisher to advertise captured frames
 	ros::NodeHandle local_nh("~");
-	framenum_pub_ = local_nh.advertise<std_msgs::UInt64>("ultrasound_dv_framenum", 1);
+	framenum_pub_ = local_nh.advertise<std_msgs::UInt64>("framenum", 1);
 
 
 }
