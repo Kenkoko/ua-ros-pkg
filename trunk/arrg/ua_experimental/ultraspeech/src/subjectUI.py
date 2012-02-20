@@ -52,19 +52,19 @@ class GFConsoleController:
     def scroll_to_bottom(self):
         v_adj = self.scrollview.get_vadjustment()
         v_adj.set_value(v_adj.get_upper())
-    
-    def set_text(self, text):
-        self.text_buffer.set_text(str(text))
+
+    def apply_tag(self):
         start = self.text_buffer.get_start_iter()
         end = self.text_buffer.get_end_iter()
         self.text_buffer.apply_tag(self.texttag, start, end)
-        self.scroll_to_bottom()
+
+    def set_text(self, text):
+        self.text_buffer.set_text(str(text))
+        self.apply_tag()
         
     def append_text(self, text):
         self.text_buffer.insert(self.text_buffer.get_end_iter(), text)
-        start = self.text_buffer.get_start_iter()
-        end = self.text_buffer.get_end_iter()
-        self.text_buffer.apply_tag(self.texttag, start, end)
+        self.apply_tag()
         self.scroll_to_bottom()
         
     def clear(self):
@@ -141,9 +141,9 @@ class SubjectUI:
         
         self.stimuliList = []
         for i in range(numReps):
-            for j in stimuli:
-        if (j != '\n'):
-            self.stimuliList.append(j[:-1])
+	    for j in stimuli:
+                if j != '\n':
+                    self.stimuliList.append(j[:-1])
         
         self.numReps = numReps
         self.numBatches = int(math.ceil(float(len(self.stimuliList)) / 10.0))
@@ -161,15 +161,8 @@ class SubjectUI:
             self.run = 1
             controlMessage = Control(top_level_directory=self.topleveldir,run=self.run)
             self.controlTopic.publish(controlMessage)
-            self.console.set_text('\n')
-            self.console.append_text(self.stimuliList[self.currentInd])
-            currentMessage = CurrentStim(stimulus=self.stimuliList[self.currentInd],
-            rep=self.currentRep, batch=self.currentBatch)
-            currentMessage.header.stamp = rospy.Time.now()
-            self.currentStimulusTopic.publish(currentMessage)
-            self.currentInd += 1
-        else:
-            pass
+            self.onNext(event)
+
         
     def onStop(self, event):
         # This is when the button is pressed
@@ -182,8 +175,6 @@ class SubjectUI:
             self.run = 0
             controlMessage = Control(top_level_directory=self.topleveldir,run=self.run)
             self.controlTopic.publish(controlMessage)
-        else:
-            pass
 
     def onNext(self, event):
         if self.run == 1:
@@ -192,35 +183,35 @@ class SubjectUI:
                 self.controlStop(event)
             else:
                 if (((self.currentInd)%(self.total/self.numReps)) == 0):
-                self.currentRep += 1
+                    self.currentRep += 1
                 #if (((self.currentInd)%10) == 0):
                 #    self.currentBatch += 1
                 #    self.controlStop(event)
                 #    time.sleep(1)
                 #    self.controlStart(event)
-                print self.stimuliList[self.currentInd]
-                self.console.set_text('')
-                self.console.append_text('\n')
-                self.console.append_text(self.stimuliList[self.currentInd])
+                
+                print "Stim:", self.stimuliList[self.currentInd]
+                self.console.set_text('\n'+ self.stimuliList[self.currentInd])
+                
                 currentMessage = CurrentStim(stimulus=self.stimuliList[self.currentInd],
                 rep=self.currentRep, batch=self.currentBatch)
                 currentMessage.header.stamp = rospy.Time.now()
                 self.currentStimulusTopic.publish(currentMessage)
                 self.currentInd += 1
-        else:
-            pass
 
     def onDestroy(self, event):
-        print "Killing rosbag"
-        self.rosbag_pid.send_signal(signal.CTRL_C_EVENT)
-        self.rosbag_pid.terminate()
+        if self.run == 1:
+            self.run = 0
+            controlMessage = Control(run=self.run)
+            self.controlTopic.publish(controlMessage)
+        self.rosbag_pid.send_signal(signal.SIGINT)
         gtk.main_quit()
 
 class Startup:
     def __init__(self):
         self.gladefile = os.environ['HOME'] + "/ros/ua-ros-pkg/ua_experimental/ultraspeech/src/startup.glade" #this is a bad hack
     
-        def run(self):
+    def run(self):
         self.wTree = gtk.glade.XML(self.gladefile, "dialog1")
         self.dlg = self.wTree.get_widget("dialog1")
         dic = { "on_button1_clicked" : self.onOpen}
