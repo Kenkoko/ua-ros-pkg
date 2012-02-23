@@ -118,7 +118,6 @@ class SubjectUI:
                 self.controlTopic = rospy.Publisher('control',Control)
                 self.currentStimulusTopic = rospy.Publisher('current_stimulus', CurrentStim)
                 self.createTopLevel(stimuliFile, numReps)
-                self.startROSbag()
                 self.run = 0
                 self.currentInd = 0
                 self.currentRep = 1
@@ -128,16 +127,42 @@ class SubjectUI:
                  gtk.main_quit()
    
     def startROSbag(self):
+        # This records all the messages needed to replay everything relevant about an experiment
+        # If you add another source of messages, be sure to add them to get recorded here.
         bagmsg = ['rosbag', 'record', 
                   '/control',
                   '/current_stimulus',
                   '/audio_capture/audio',
-                  '/ultrasound_dvgrab/framenum',
+                  '/ros_dvgrab/framenum',
                   '/camera/rgb/camera_info', '/camera/rgb/image_rect_color','/camera/depth_registered/image_rect',
                   '/rosout',
-                  '--output-name=' + self.topleveldir + '/capture_all.bag']
+                  '--output-name=' + self.topleveldir + '/experiment_data' + str(self.currentBatch) +'.bag']
         self.rosbag_pid = subprocess.Popen(bagmsg)
       
+    def startCapture(self, event):
+        # This is what you actually do when you start
+        # Reason: Need to separate button pushing logic from internal shutdown logic
+        if self.run == 0:
+            self.run = 1
+            self.startROSbag()
+            time.sleep(2)
+            ultrasound_name = self.topleveldir + '/ultrasound' + str(self.currentBatch) + '.dv'
+            controlMessage = Control(ultrasound_filename=ultrasound_name,run=self.run)
+            print controlMessage
+            self.controlTopic.publish(controlMessage)
+
+    def stopCapture(self, event):
+        # This is what you actually do when you stop
+        # Reason: Need to separate button pushing logic from internal shutdown logic
+        if self.run == 1:
+            self.run = 0
+            controlMessage = Control(run=self.run)
+            self.controlTopic.publish(controlMessage)
+            self.rosbag_pid.send_signal(signal.SIGINT)  # This is needed to close and kill the bag
+            #self.rosbag_pid.terminate()  # Don't do this, the bag doesn't get closed properly
+            self.rosbag_pid.wait()
+
+
     def createTopLevel(self, stimuliFile, numReps):
         '''Creates the top level directory, randomizes input list'''
         self.sessionID = str(rospy.Time.now())
@@ -159,43 +184,25 @@ class SubjectUI:
     
     def onStart(self, event):
         # This is when the button is pressed
-        self.controlStart(event)
-      
-    def controlStart(self, event):
-        # This is what you actually do when you start
-        # Reason: Need to separate button pushing logic from internal shutdown logic
-        if self.run == 0:
-            self.run = 1
-            controlMessage = Control(top_level_directory=self.topleveldir,run=self.run)
-            self.controlTopic.publish(controlMessage)
-            self.onNext(event)
-
-        
+        self.startCapture(event)
+        self.onNext(event)
+              
     def onStop(self, event):
         # This is when the button is pressed
-        self.controlStop(event)
-
-    def controlStop(self, event):
-        # This is what you actually do when you stop
-        # Reason: Need to separate button pushing logic from internal shutdown logic
-        if self.run == 1:
-            self.run = 0
-            controlMessage = Control(top_level_directory=self.topleveldir,run=self.run)
-            self.controlTopic.publish(controlMessage)
+        self.stopCapture(event)
 
     def onNext(self, event):
         if self.run == 1:
             if self.currentInd == self.total:
                 self.console.set_text("You have reached the\nend of the experiment") 
-                self.controlStop(event)
+                self.stopCapture(event)
             else:
                 if (((self.currentInd)%(self.total/self.numReps)) == 0):
                     self.currentRep += 1
-                #if (((self.currentInd)%10) == 0):
-                #    self.currentBatch += 1
-                #    self.controlStop(event)
-                #    time.sleep(1)
-                #    self.controlStart(event)
+                if ( self.currentInd > 0 and self.currentInd%10 == 0):
+                    self.currentBatch += 1
+                    self.stopCapture(event)
+                    self.startCapture(event)
                 
                 print "Stim:", self.stimuliList[self.currentInd]
                 self.console.set_text('\n'+ self.stimuliList[self.currentInd])
@@ -207,11 +214,6 @@ class SubjectUI:
                 self.currentInd += 1
 
     def onDestroy(self, event):
-        if self.run == 1:
-            self.run = 0
-            controlMessage = Control(run=self.run)
-            self.controlTopic.publish(controlMessage)
-        self.rosbag_pid.send_signal(signal.SIGINT)
         gtk.main_quit()
 
 class Startup:

@@ -57,6 +57,7 @@ using std::endl;
 // ros
 #include <ros/ros.h>
 #include "ultraspeech/Control.h"
+#include "std_msgs/UInt64.h"
 
 bool g_done = false;
 
@@ -66,6 +67,7 @@ private:
 u_int8_t run_status_;
 std::string subdir_;
 ros::Subscriber sub_;
+// ros::Publisher framenum_pub_;
 
 public:
 DVgrab dvgrab; 
@@ -78,6 +80,8 @@ FakeMain( const ros::NodeHandle& nh, int argc, char **argv )
 	
 	ros::NodeHandle local_nh("~");
 	sub_ = local_nh.subscribe("/control", 1, &FakeMain::control_cb, this);
+//         framenum_pub_ = local_nh.advertise<std_msgs::UInt64>("framenum", 1);
+
 	
 	fcntl( fileno( stderr ), F_SETFL, O_NONBLOCK );
 	try
@@ -114,12 +118,18 @@ void control_cb(const ultraspeech::ControlConstPtr& msg)
 	using std::cout;
 	using std::endl;
     
-	std::string save_string(msg->top_level_directory + "/ultrasound.dv");
+	std::string save_string(msg->ultrasound_filename);
 	
 	run_status_ = msg->run;
 	if (run_status_ > 0){
 	    // Tell it where to save the file
-	    dvgrab.set_dst_filename(save_string);	
+	    dvgrab.set_dst_filename(save_string);
+            
+            
+//             std_msgs::UInt64 msg;
+//             msg.data = (uint64_t)(-1);
+//             framenum_pub_.publish(msg);
+
 	    //  Now go ahead and start capturing 
 	    dvgrab.startCapture();
 	}
@@ -166,7 +176,7 @@ int rt_raisepri (int pri)
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "ultrasound_dvgrab");
+	ros::init(argc, argv, "ros_dvgrab");
 	ros::NodeHandle nh;
 
 	FakeMain fm(nh, argc, argv);

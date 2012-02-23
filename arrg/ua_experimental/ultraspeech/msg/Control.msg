@@ -1,2 +1,2 @@
-string top_level_directory
+string ultrasound_filename
 int8 run
