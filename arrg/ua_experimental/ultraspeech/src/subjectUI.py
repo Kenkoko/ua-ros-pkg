@@ -128,7 +128,14 @@ class SubjectUI:
                  gtk.main_quit()
    
     def startROSbag(self):
-        bagmsg = ['rosbag', 'record', '-a', '--output-name=' + self.topleveldir + '/capture_all.bag']
+        bagmsg = ['rosbag', 'record', 
+                  '/control',
+                  '/current_stimulus',
+                  '/audio_capture/audio',
+                  '/ultrasound_dvgrab/framenum',
+                  '/camera/rgb/camera_info', '/camera/rgb/image_rect_color','/camera/depth_registered/image_rect',
+                  '/rosout',
+                  '--output-name=' + self.topleveldir + '/capture_all.bag']
         self.rosbag_pid = subprocess.Popen(bagmsg)
       
     def createTopLevel(self, stimuliFile, numReps):
