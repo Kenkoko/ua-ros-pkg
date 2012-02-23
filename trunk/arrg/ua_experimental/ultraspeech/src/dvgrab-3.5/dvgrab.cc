@@ -682,7 +682,6 @@ void DVgrab::startCapture()
 void DVgrab::stopCapture()
 {
 	
-	sendEvent( "DVgrab::stopCapture: entered" );
 	pthread_mutex_lock( &capture_mutex );
 	if ( m_writer != NULL )
 	{
@@ -690,7 +689,6 @@ void DVgrab::stopCapture()
 		int frames = m_writer->GetFramesWritten();
 		float size = ( float ) m_writer->GetFileSize() / 1024 / 1024;
 
-		sendEvent( "DVgrab::stopCapture: calling m_writer close" );
 		if(m_reader)
 		  m_reader->StopROSFrames();
 		m_writer->Close();
