@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/ultraspeech</url>
   <depend package="roscpp"/>
   <depend package="rospy"/>
+  <depend package="rosbag"/>
   <depend package="opencv2"/>
 
 </package>
