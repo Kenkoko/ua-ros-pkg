@@ -38,9 +38,9 @@ import math
 from threading import Thread
 
 import rospy
-from joy.msg import Joy
+from sensor_msgs.msg import Joy
 from std_msgs.msg import Float64
-from dynamixel_msgs.msg import JointState
+from dynamixel_hardware_interface.msg import JointState
 
 class MoveHeadXbox():
     def __init__(self):
@@ -78,8 +78,8 @@ class MoveHeadXbox():
         return self.bound(number, self.tilt_range)
 
     def set_head_position(self, delta_pan, delta_tilt):
-        self.head_pan = self.bound_pan(delta_pan * 0.4 + self.actual_pan)
-        self.head_tilt = self.bound_tilt(delta_tilt * 0.4 + self.actual_tilt)
+        self.head_pan = self.bound_pan(delta_pan * 0.2 + self.actual_pan)
+        self.head_tilt = self.bound_tilt(delta_tilt * 0.2 + self.actual_tilt)
 
     def reset_head_position(self):
         self.head_pan_pub.publish(0.0)
@@ -88,10 +88,10 @@ class MoveHeadXbox():
         self.head_tilt = 0.0
 
     def read_current_pan(self, data):
-        self.actual_pan = data.process_value
+        self.actual_pan = data.position
 
     def read_current_tilt(self, data):
-        self.actual_tilt = data.process_value
+        self.actual_tilt = data.position
 
     def update_head_position(self):
         while self.is_running:
@@ -100,12 +100,16 @@ class MoveHeadXbox():
                     self.reset_head_position()
                     print "Attempting to reset head position"
                 else: 
-                    self.set_head_position(self.joy_data.axes[3], self.joy_data.axes[4])
+                    self.set_head_position(self.joy_data.axes[3], -self.joy_data.axes[4])
             
                 #if self.joy_data.buttons[7]:
-                print self.head_pan, self.head_tilt
-                self.head_pan_pub.publish(self.head_pan)
-                self.head_tilt_pub.publish(self.head_tilt)
+                if self.head_pan > 0.05 or self.head_pan < -0.05:
+                    print 'pan:', self.head_pan
+                    self.head_pan_pub.publish(self.head_pan)
+                    
+                if self.head_tilt > 0.05 or self.head_tilt < -0.05:
+                    print 'tilt:', self.head_tilt
+                    self.head_tilt_pub.publish(self.head_tilt)
             
             time.sleep(0.1)
 
