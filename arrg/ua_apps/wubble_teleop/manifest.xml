@@ -19,6 +19,7 @@
     <!-- Joystick -->
     <depend package="joy"/>
     <depend package="joystick_remapper" />
+    <depend package="dynamixel_hardware_interface" />
 
     <!-- Movement -->
     <depend package="move_base"/>
