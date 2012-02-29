@@ -38,7 +38,7 @@ from threading import Thread
 
 import rospy
 from geometry_msgs.msg import Twist
-from joy.msg import Joy
+from sensor_msgs.msg import Joy
 
 class MoveBaseXbox():
     def __init__(self):
