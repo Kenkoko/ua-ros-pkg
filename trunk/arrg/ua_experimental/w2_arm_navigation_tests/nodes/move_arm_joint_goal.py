@@ -30,7 +30,10 @@ if __name__ == '__main__':
              'L5_forearm_roll_link',
              'L4_elbow_flex_link',
              'L3_upperarm_roll_link',
-             'L2_shoulder_pan_link')
+             'L2_shoulder_pan_link',
+             'L1_shoulder_pitch_link',
+             'L8_left_finger_link ',
+             'L9_right_finger_link')
              
     joints = ('shoulder_pitch_joint',
               'shoulder_pan_joint',
@@ -41,11 +44,13 @@ if __name__ == '__main__':
               'wrist_roll_joint')
               
     goal.motion_plan_request.goal_constraints.joint_constraints = [JointConstraint(j, 0.0, 0.1, 0.1, 0.0) for j in joints]
-    #goal.motion_plan_request.link_padding = [LinkPadding(l,0.0) for l in links]
+    goal.planning_scene_diff.link_padding = [LinkPadding(l,0.0) for l in links]
     
     init = (0.0,) * 7
     #pick = (0.08297109,-1.29328384, 0.01069185,-0.14805498, 0.14074285, 1.67430316, -1.56874745)
     tucked = (-1.9715, -1.7406, 0.0213, -0.1807, -1.8408, 1.0840, 0.1483)
+    tucked1 = (-1.751, -1.820, -0.084, -0.214, -1.815,  1.089,  0.031)
+    tucked2 = (-1.8497, -1.8508, 0.0171, -0.2459, -1.9839, 1.0329, 0.1790)
     #tucked = (-1.837, -1.823, 0.175, -0.195, -1.861, 1.089, 0.128)
     sample1 = (0.0216, - 1.1143, 0.1235, 0.9809, 2.6989, -1.7704, 0.2139)
     sample2 = (-0.7155, 0.0364, 1.0405, 0.1331, 0.4470, -0.3615, -0.4405)
@@ -55,9 +60,11 @@ if __name__ == '__main__':
     pick3 = (0.33116126, -1.68955237,  0.01603777,  0.53076162,  1.33585764,  1.26646647, -1.52117606)
     pick4 = (0.43867932, -1.6539393,   0.03100637,  0.6332176,   1.71315069,  0.9762375, 1.47422282)
     place = (0.261, -0.704, 1.470, 0.337, 0.910, -1.667, -0.026)
+    place2 = (0.8286, -0.7260, -0.3881, 0.6875, -1.2476, 1.5902, 2.0760)
+    place3 = (0.8254, -0.7281, -0.3977, 0.6896, -1.2834, 1.5953, 2.108)
     new_init = (-1.650, -1.465, 3.430, -0.970, -1.427,  0.337,  0.046)
     
-    goal_poses = (tucked,)# sample1, sample2, tucked)
+    goal_poses = (init,tucked2,)# sample1, sample2, tucked)
     num_goals = len(goal_poses)
     
     for k in range(num_goals*1):
