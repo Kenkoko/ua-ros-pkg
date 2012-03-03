@@ -122,6 +122,7 @@ class SubjectUI:
                 self.currentInd = 0
                 self.currentRep = 1
                 self.currentBatch = 1
+                self.reset_count = 30
                 self.total = len(self.stimuliList)
             else:
                  gtk.main_quit()
@@ -146,7 +147,7 @@ class SubjectUI:
             self.run = 1
             self.startROSbag()
             time.sleep(2)
-            ultrasound_name = self.topleveldir + '/ultrasound' + str(self.currentBatch) + '.dv'
+            ultrasound_name = self.topleveldir + '/ultrasound' + str(self.currentBatch) + '-.dv'
             controlMessage = Control(ultrasound_filename=ultrasound_name,run=self.run)
             print controlMessage
             self.controlTopic.publish(controlMessage)
@@ -178,8 +179,7 @@ class SubjectUI:
                     self.stimuliList.append(j[:-1])
         
         self.numReps = numReps
-        self.numBatches = int(math.ceil(float(len(self.stimuliList)) / 10.0))
-        
+
         self.console.set_text("Press Start to begin")
     
     def onStart(self, event):
@@ -199,7 +199,7 @@ class SubjectUI:
             else:
                 if (((self.currentInd)%(self.total/self.numReps)) == 0):
                     self.currentRep += 1
-                if ( self.currentInd > 0 and self.currentInd%10 == 0):
+                if ( self.currentInd > 0 and self.currentInd % self.reset_count == 0):
                     self.currentBatch += 1
                     self.stopCapture(event)
                     self.startCapture(event)
