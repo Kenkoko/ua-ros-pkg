@@ -25,13 +25,13 @@ def getDVframes(dvfile, output_dir, frame_start, frame_end):
     Snip out the selected frames from the DV file
     """
     capture = cv.CaptureFromFile(dvfile)
-    print "Dimensions: ", cv.GetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_WIDTH),\
+    #  print "Dimensions: ", cv.GetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_WIDTH),\
     "x", cv.GetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_HEIGHT)
     numFrames = cv.GetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_COUNT)
-    print "Num frames: ", numFrames
+    # print "Num frames: ", numFrames
 
     for i in range(frame_start, frame_end):
-        print "Skipping to frame", i
+        print "Exporting frame", i
         cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_POS_FRAMES, i)
         img = cv.RetrieveFrame(capture)
         cv.SaveImage(os.path.join(output_dir, 'frame' + str(i)) + '.png', img)
@@ -109,6 +109,11 @@ if __name__ == "__main__":
 
     dvfile = ''
     dirname = ''
+    clips_done = False
+    clipiter = iter(clips)
+    clip = clipiter.next() # fetch first value
+    start_time = clip[0]
+    end_time = clip[0] + clip[1]
     for infile in bags:
         print "current file is: " + infile
         shortpath = os.path.basename(infile)
@@ -116,13 +121,10 @@ if __name__ == "__main__":
         print "dirname,  shortpath", dirname, shortpath
         bag = rosbag.Bag(infile)
         framelist = []
-        clipiter = iter(clips)
-        clip = clipiter.next() # fetch first value
-        start_time = clip[0]
-        end_time = clip[0] + clip[1]
-        start_frame = 0
+        start_frame = None
         end_frame = None
         for topic, msg, t in bag.read_messages(topics=['/ros_dvgrab/framenum', '/control']):
+            #print topic, msg, t
             if topic == '/control':
                 ultrasound_filename = msg.ultrasound_filename
                 ultrasound_filename = os.path.basename(ultrasound_filename)
@@ -130,21 +132,25 @@ if __name__ == "__main__":
                 dvfiles = glob.glob( os.path.join(dirname, root + '*.dv') )
                 dvfile = dvfiles[0]
                 print "dvfile", dvfile
-            elif topic == '/ros_dvgrab/framenum' and t >= start_time:
-                end_frame = msg
+            elif topic == '/ros_dvgrab/framenum':
+                #print "start_time, end_time, t,", start_time, end_time, t
+                if t <= start_time:
+                    #print "t: ", t, ", start_time", start_time, "t <= start_time"
+                    start_frame = msg
                 if t > end_time:
-                    print "start_frame, end_frame,", start_frame, end_frame
+                    end_frame = msg
+                    #print "start_frame,", start_frame, "end_frame,", end_frame
                     clipdir = os.path.join(opts.output_dir, str(start_time.secs) + str(start_time.nsecs))
                     mkdir_p(clipdir)
-                    getDVframes(dvfile, clipdir, start_frame.data + 1, end_frame.data)
-                    try:
-                        clip = clipiter.next() # fetch first value
-                    except StopIteration:
-                        print "Finished all clips"
-                        break
+                    getDVframes(dvfile, clipdir, start_frame.data, end_frame.data)
+                    try: clip = clipiter.next() # fetch first value
+                    except StopIteration: clips_done = True
                     start_time = clip[0]
                     end_time = clip[0] + clip[1]
-            else:
-                start_frame = msg
+                    start_frame = msg
+            if clips_done:
+                break
+        if clips_done:
+            break
 
 
