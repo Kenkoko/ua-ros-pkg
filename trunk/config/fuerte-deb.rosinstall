@@ -7,9 +7,6 @@
     uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
     local-name: ua-ros-pkg
 - svn:
-    uri: https://ua-ros-pkg.googlecode.com/svn/trunk/config
-    local-name: ua-ros-pkg/config
-- svn:
     uri: https://ua-ros-pkg.googlecode.com/svn/stacks/erratic_robot/trunk
     local-name: stacks/erratic_robot
 - svn:
