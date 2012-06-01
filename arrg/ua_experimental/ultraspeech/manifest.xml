@@ -13,6 +13,8 @@
   <depend package="rosbag"/>
   <depend package="opencv2"/>
 
+  <rosdep name="libiec61883-dev"/>
+
 </package>
 
 
