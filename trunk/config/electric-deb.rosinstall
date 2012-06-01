@@ -1,0 +1,19 @@
+- other:
+    local-name: /opt/ros/electric/ros
+- other:
+    local-name: /opt/ros/electric/stacks
+
+- svn:
+    uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
+    local-name: ua-ros-pkg
+
+- svn:
+    uri: http://foote-ros-pkg.googlecode.com/svn/trunk/phidgets/phidgetspp_c_api
+    local-name: foote-ros-pkg/phidgets/phidgetspp_c_api
+- svn:
+    uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/openrave_planning
+    local-name: jsk-ros-pkg/openrave_planning
+- svn:
+    uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/jsk_common
+    local-name: jsk-ros-pkg/jsk_common
+
