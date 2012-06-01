@@ -82,7 +82,7 @@ main(int argc, char** argv)
   ros::init(argc,argv,"tbk", ros::init_options::AnonymousName | ros::init_options::NoSigintHandler);
   TBK_Node tbk;
   
-  boost::thread t = boost::thread::thread(boost::bind(&TBK_Node::keyboardLoop, &tbk));
+  boost::thread t = boost::thread(boost::bind(&TBK_Node::keyboardLoop, &tbk));
   
   ros::spin();
   

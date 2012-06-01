@@ -15,3 +15,4 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_boost_directories()
 rosbuild_add_executable(keyboard src/keyboard.cpp)
+target_link_libraries(keyboard boost_thread)
