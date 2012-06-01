@@ -173,7 +173,7 @@ void extract_features(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud
 }
 
 template <typename PointInT, typename PointOutT> void
-copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, pcl::PointCloud<PointOutT> &cloud_out)
+copyPointCloudCustom (const pcl::PointCloud<PointInT> &cloud_in, pcl::PointCloud<PointOutT> &cloud_out)
 {
     // Allocate enough space and copy the basics
     cloud_out.points.resize (cloud_in.points.size ());
@@ -225,7 +225,7 @@ bool extract(point_cloud_classifier::ExtractFeatures::Request  &req,
     ROS_INFO("\tCopying clouds...");
     
     pcl::PointCloud<pcl::PointXYZ>::Ptr shot_in(new pcl::PointCloud<pcl::PointXYZ>);
-    copyPointCloud<PointXYZRGBIM, pcl::PointXYZ>(*cloud, *shot_in);
+    copyPointCloudCustom<PointXYZRGBIM, pcl::PointXYZ>(*cloud, *shot_in);
     
     ROS_INFO("\tCalculating SHOT descriptor...");
     
