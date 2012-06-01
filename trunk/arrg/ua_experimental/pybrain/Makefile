@@ -15,7 +15,7 @@ installed: download clean
 	touch installed
 
 clean:
-	rm -rf src docs examples
+	rm -rf $(GIT_DIR) src docs examples
 	rm -rf installed
 
 wipe: clean

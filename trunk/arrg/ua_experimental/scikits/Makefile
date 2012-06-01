@@ -28,10 +28,9 @@ installed: clean prep install_learn install_audiolab
 	touch installed
 
 clean:
-	rm -rf src
+	rm -rf $(BUILD_DIR) src
 	rm -rf installed
 
 wipe: clean
-	rm -rf $(BUILD_DIR)
 	touch wiped
 

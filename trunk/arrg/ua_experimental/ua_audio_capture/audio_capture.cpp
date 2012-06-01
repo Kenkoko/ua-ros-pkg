@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     ROS_BREAK();
   }
   signal(SIGINT, sig_handler);
-  boost::thread t = boost::thread::thread(boost::bind(&ros::spin));
+  boost::thread t = boost::thread(boost::bind(&ros::spin));
   while (!g_caught_sigint)
     usleep(500*1000);
   ROS_DEBUG("stopping audio stream");

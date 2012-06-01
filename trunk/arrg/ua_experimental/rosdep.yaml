@@ -10,3 +10,5 @@ libsndfile:
   macports: libsndfile
 libjack-dev:
   ubuntu: libjack-dev
+libiec61883-dev:
+  ubuntu: libiec61883-dev
