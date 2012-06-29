@@ -57,7 +57,7 @@ class ClusterClassification:
         rospy.loginfo('Loading training data...')
         trainData = loadtxt(os.path.join(data_path, 'dataTrain.txt'))
         rospy.loginfo('Training KNN...')
-        self.knn = neighbors.NeighborsClassifier(1)
+        self.knn = neighbors.KNeighborsClassifier(1)
         self.knn.fit(trainData[:,:-1], trainData[:,-1])
         del trainData
         

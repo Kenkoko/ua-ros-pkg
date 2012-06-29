@@ -31,5 +31,5 @@ rosbuild_add_executable(feature_extractor src/shot_extractor.cpp)
 
 rosbuild_add_executable(shot_feature src/shotFeature.cpp)
 
-rosbuild_add_executable(processor src/processor.cpp)
+#rosbuild_add_executable(processor src/processor.cpp)
 
