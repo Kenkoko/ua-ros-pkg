@@ -1,0 +1,26 @@
+<stack>
+    <description brief="Packages related to Videre Erratic mobile robot">
+        This stack contains packages that are used to interface with Videre
+        Erratic mobile robot. These include the hardware interface driver,
+        URDF description, 3D meshes, navigation stack configuration and
+        launch files and keyboard teleoperation node.
+    </description>
+
+    <author>Maintained by Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/erratic_robot</url>
+
+    <depend stack="ros" />
+    <depend stack="ros_comm" />
+    <depend stack="robot_model" />
+    <depend stack="xacro" />
+    <depend stack="simulator_gazebo" />
+    <depend stack="navigation" />
+    <depend stack="laser_pipeline" />
+    <depend stack="slam_gmapping" />
+    <depend stack="geometry" />
+    <depend stack="common_msgs" />
+    <depend stack="pr2_simulator" />
+    <depend stack="arm_navigation" />
+</stack>
