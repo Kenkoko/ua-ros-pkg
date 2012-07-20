@@ -31,13 +31,11 @@
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
 
-#include <angles/angles.h>
 #include <wubble_arm_kinematics/wubble_arm_ik.h>
 
 #define IKFAST_NO_MAIN
 #include <wubble_arm_kinematics/wubble_arm_ik_gen_f2.cpp>
 
-using namespace angles;
 using namespace wubble_arm_kinematics;
 
 WubbleArmIK::WubbleArmIK()
@@ -141,7 +139,7 @@ void WubbleArmIK::computeIKUpperArmRoll(const KDL::Frame& g_in, const double& up
   //t1 = upperarm roll is specified
   solution_ik_.clear();
 
-  double t1 = angles::normalize_angle(upperarm_roll_initial_guess);
+  double t1 = upperarm_roll_initial_guess;
   if (!checkJointLimits(t1, 2)) { return; }
 
   IKReal translation[3];
@@ -179,7 +177,7 @@ void WubbleArmIK::computeIKUpperArmRoll(const KDL::Frame& g_in, const double& up
       for (size_t j = 0; j < sol.size(); ++j)
       {
         if (!checkJointLimits(sol[j], j)) { within_limits = false; break; }
-        else { solution_[j] = normalize_angle(sol[j]) * angle_multipliers_[j]; }
+        else { solution_[j] = sol[j]; }
       }
 
       if (within_limits)
@@ -197,7 +195,7 @@ bool WubbleArmIK::checkJointLimits(const std::vector<double> &joint_values)
 {
   for (int i = 0; i < NUM_JOINTS_ARM7DOF; ++i)
   {
-    if (!checkJointLimits(angles::normalize_angle(joint_values[i] * angle_multipliers_[i]),i))
+    if (!checkJointLimits(joint_values[i],i))
     {
       return false;
     }
@@ -208,7 +206,7 @@ bool WubbleArmIK::checkJointLimits(const std::vector<double> &joint_values)
 
 bool WubbleArmIK::checkJointLimits(const double &joint_value, const int &joint_num)
 {
-  double jv = angles::normalize_angle(joint_value * angle_multipliers_[joint_num]);
+  double jv = joint_value;
 
   if (jv < min_angles_[joint_num] || jv > max_angles_[joint_num])
   {
