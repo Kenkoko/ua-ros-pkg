@@ -36,7 +36,6 @@
 
 #include <ros/ros.h>
 #include <vector>
-#include <angles/angles.h>
 #include <kdl/frames.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl/tree.hpp>
@@ -51,8 +50,6 @@
 #include <kinematics_msgs/GetConstraintAwarePositionIK.h>
 #include <kinematics_msgs/GetKinematicSolverInfo.h>
 
-
-using namespace angles;
 
 namespace wubble_arm_kinematics
 {

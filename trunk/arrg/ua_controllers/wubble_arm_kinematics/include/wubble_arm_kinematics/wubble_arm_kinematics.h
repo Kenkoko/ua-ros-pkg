@@ -43,7 +43,6 @@
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
 
-#include <angles/angles.h>
 #include <wubble_arm_kinematics/wubble_arm_ik_solver.h>
 #include <tf_conversions/tf_kdl.h>
 
