@@ -29,10 +29,10 @@ gencfg()
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
+
+rosbuild_add_boost_directories()
 
 include(FindPkgConfig)
 if (PKG_CONFIG_FOUND AND UNIX AND NOT APPLE)
@@ -52,5 +52,6 @@ rosbuild_add_compile_flags(videre_stereo_node -msse2 -mpreferred-stack-boundary=
 target_link_libraries(videre_stereo_node dc1394)
 
 rosbuild_add_executable(disparity_view src/disparity_view.cpp)
+rosbuild_link_boost(disparity_view thread signals)
 target_link_libraries(disparity_view ${GTK_LIBRARIES})
 

@@ -37,6 +37,9 @@
 #include <cstdio>
 #include <errno.h>
 
+#include <ros/console.h>
+#include <ros/assert.h>
+
 #include <dc1394/dc1394.h>
 
 #include <opencv2/core/core.hpp>
