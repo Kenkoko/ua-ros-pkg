@@ -12,7 +12,6 @@
     <url>http://ros.org/wiki/videre_stereo_cam</url>
 
     <depend package="roscpp"/>
-    <depend package="opencv2"/>
     <depend package="stereo_image_proc"/>
     <depend package="image_transport"/>
     <depend package="diagnostic_updater"/>
