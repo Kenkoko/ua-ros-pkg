@@ -1,0 +1,8 @@
+int32 category_id
+object_manipulation_msgs/GraspableObject graspable_object
+geometry_msgs/Point target_location
+string collision_object_name
+string collision_support_surface_name
+---
+float64[] recorded_sound
+---

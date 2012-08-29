@@ -16,6 +16,9 @@ from object_manipulation_msgs.msg import GraspHandPostureExecutionGoal
 from object_manipulation_msgs.msg import GraspHandPostureExecutionAction
 from object_manipulation_msgs.srv import GraspStatus
 
+from object_manipulation_msgs.srv import FindClusterBoundingBox
+from object_manipulation_msgs.srv import FindClusterBoundingBoxResponse
+
 from arm_navigation_msgs.msg import OrderedCollisionOperations
 from arm_navigation_msgs.msg import CollisionOperation
 
@@ -40,12 +43,17 @@ from w2_object_manipulation_launch.msg import PlaceObjectGoal
 from w2_object_manipulation_launch.msg import ReadyArmAction
 from w2_object_manipulation_launch.msg import ReadyArmGoal
 
+from w2_object_manipulation_launch.msg import PutDownAtAction
+from w2_object_manipulation_launch.msg import PutDownAtGoal
+
 from move_base_msgs.msg import MoveBaseAction
 from move_base_msgs.msg import MoveBaseGoal
 
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point32
 
+from bolt_msgs.msg import MoveIt
 
 class ResetRobot():
     def __init__(self):
@@ -60,8 +68,13 @@ class ResetRobot():
         pg = GraspHandPostureExecutionGoal()
         pg.goal = GraspHandPostureExecutionGoal.RELEASE
         
-        self.posture_controller.send_goal(pg)
-        self.posture_controller.wait_for_result()
+        result = self.posture_controller.send_goal_and_wait(pg)
+        
+        if result != GoalStatus.SUCCEEDED:
+            rospy.logerr('failed to open gripper')
+            return False
+            
+        return True
 
     def gentle_close_gripper(self):
         pg = GraspHandPostureExecutionGoal()
@@ -107,7 +120,8 @@ class ResetRobot():
         
         if current_state not in ['READY', 'TUCK']:
             grasp_status = self.get_grasp_status_srv()
-            if grasp_status.is_hand_occupied: self.open_gripper()
+            if grasp_status.is_hand_occupied:
+                if not self.open_gripper(): return False
             
         if current_state != 'READY' and not self.ready_arm(): return False
         self.gentle_close_gripper()
@@ -145,20 +159,52 @@ class SegmentScene():
         tdr.result = segmentation_result.result
         tcmpr = self.update_collision_map(tdr)
         
-        return (tcmpr, res['cluster_information'])
+        return (tcmpr, res)
 
 
-if __name__ == '__main__':
-    rospy.init_node('grab_and_run')
+def do_it(msg):
+    rospy.loginfo('We are DOING IT!')
+    
+    # connect to cluster bounding box finding service
+    rospy.loginfo('waiting for find_cluster_bounding_box service')
+    rospy.wait_for_service('/find_cluster_bounding_box')
+    find_bounding_box_srv = rospy.ServiceProxy('/find_cluster_bounding_box', FindClusterBoundingBox)
+    rospy.loginfo('connected to find_cluster_bounding_box')
+    
+    target_location = msg.target_location
+    t_p1 = msg.object_bbox.points[0]
+    t_p2 = msg.object_bbox.points[1]
+    
+    t_p1.y, t_p2.y = t_p2.y, t_p1.y
     
     reset = ResetRobot()
     reset.execute()
+    rospy.loginfo('Robot reset')
     
     segment = SegmentScene()
     res = segment.execute()
     if not res: exit(1)
+    rospy.loginfo('Scene segmented')
     
-    closest_index = res[1][0][0]
+    # find a cluster that intersects with a provided bounding box
+    for idx,cluster in enumerate(res[1]['segmentation_result'].clusters):
+        bbox_response = find_bounding_box_srv(cluster)
+        
+        if bbox_response.error_code != FindClusterBoundingBoxResponse.SUCCESS:
+            rospy.logwarn('unable to find for cluster %d bounding box' % idx)
+            continue
+            
+        o_center = bbox_response.pose.pose.position
+        o_p1 = Point32(o_center.x - bbox_response.box_dims.x, o_center.y - bbox_response.box_dims.y, o_center.z)
+        o_p2 = Point32(o_center.x + bbox_response.box_dims.x, o_center.y + bbox_response.box_dims.y, o_center.z)
+        
+        print idx, t_p1, t_p2, o_p1, o_p2
+        
+        if ((t_p1.x < o_p2.x and t_p1.y < o_p2.y) and
+            (o_p1.x < t_p2.x and o_p1.y < t_p2.y)):
+            closest_index = idx
+            break
+            
     grasp_client = SimpleActionClient('grasp_object', GraspObjectAction)
     grasp_client.wait_for_server()
     
@@ -175,6 +221,7 @@ if __name__ == '__main__':
         reset.execute()
         exit(1)
         
+    rospy.loginfo('Grasped an object')
     lift_client = SimpleActionClient('lift_object', LiftObjectAction)
     lift_client.wait_for_server()
     
@@ -190,57 +237,30 @@ if __name__ == '__main__':
         rospy.logerr('failed to lift')
         exit(1)
         
-    move_client = SimpleActionClient('/move_base', MoveBaseAction)
-    move_client.wait_for_server()
+    rospy.loginfo('Lifted an object')
+    pudown_client = SimpleActionClient('put_down_at', PutDownAtAction)
+    pudown_client.wait_for_server()
     
-    mbg = MoveBaseGoal()
-    mbg.target_pose.header.stamp = rospy.Time.now()
-    mbg.target_pose.header.frame_id = '/map'
-    #mbg.target_pose.pose.position = Point(0.896, -2.116, 0.000)
-    #mbg.target_pose.pose.orientation = Quaternion(0, 0, 0.350, 0.937)
-    mbg.target_pose.pose.position = Point(0.99, -0.969, 0.000)
-    mbg.target_pose.pose.orientation = Quaternion(0, 0, -0.81, 0.587)
+    putdown_goal = PutDownAtGoal()
+    putdown_goal.category_id = -1
+    putdown_goal.graspable_object = res[0].graspable_objects[closest_index]
+    putdown_goal.collision_object_name = res[0].collision_object_names[closest_index]
+    putdown_goal.collision_support_surface_name = res[0].collision_support_surface_name
+    putdown_goal.target_location = Point(target_location.x, target_location.y, target_location.z) #Point(0.468, 0.226, 0.251)
     
-    move_client.send_goal(mbg)
-    move_client.wait_for_result()
-    
-    result = move_client.get_state()
+    result = pudown_client.send_goal_and_wait(putdown_goal)
     
     if result != GoalStatus.SUCCEEDED:
-        rospy.logerr('failed to move')
+        rospy.logerr('failed to put down')
+        reset.execute()
         exit(1)
         
-    place_client = SimpleActionClient('place_object', PlaceObjectAction)
-    place_client.wait_for_server()
+    rospy.loginfo('Pu down the object')
+    reset.execute()
+
+if __name__ == '__main__':
+    rospy.init_node('move_it')
+    rospy.Subscriber('move_it', MoveIt, do_it)
     
-    place_goal = LiftObjectGoal()
-    place_goal.category_id = 0
-    place_goal.graspable_object = res[0].graspable_objects[closest_index]
-    place_goal.collision_object_name = res[0].collision_object_names[closest_index]
-    place_goal.collision_support_surface_name = res[0].collision_support_surface_name
-    
-    result = place_client.send_goal_and_wait(place_goal)
-    
-    if result != GoalStatus.SUCCEEDED:
-        rospy.logerr('failed to place')
-        exit(1)
-        
-    if not reset.execute():
-        rospy.logerr('failed to reset robot')
-        exit(1)
-        
-    mbg.target_pose.header.stamp = rospy.Time.now()
-    mbg.target_pose.header.frame_id = '/map'
-    mbg.target_pose.pose.position = Point(0.306, 0.305, 0.000)
-    mbg.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
-    
-    move_client.send_goal(mbg)
-    move_client.wait_for_result()
-    
-    result = move_client.get_state()
-    
-    if result != GoalStatus.SUCCEEDED:
-        rospy.logerr('failed to move')
-        exit(1)
-        
+    rospy.spin()
 

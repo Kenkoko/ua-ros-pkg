@@ -36,7 +36,7 @@ from object_manipulation_msgs.srv import GraspStatus
 from arm_navigation_msgs.msg import OrderedCollisionOperations
 from arm_navigation_msgs.msg import CollisionOperation
 
-from object_detection import ObjectDetector
+from w2_object_manipulation_launch.object_detection import ObjectDetector
 
 from w2_object_manipulation_launch.actions_common import ARM_GROUP_NAME
 from w2_object_manipulation_launch.actions_common import GRIPPER_GROUP_NAME
@@ -226,10 +226,10 @@ def create_grasp_sm():
 class SelectNextAction(State):
     def __init__(self):
         self.policy = [
-            InfomaxAction.GRASP,
-            InfomaxAction.LIFT,
-            InfomaxAction.SHAKE_ROLL,
-            InfomaxAction.SHAKE_PITCH,
+            #InfomaxAction.GRASP,
+            #InfomaxAction.LIFT,
+            #InfomaxAction.SHAKE_ROLL,
+            #InfomaxAction.SHAKE_PITCH,
             InfomaxAction.DROP,
         ]
         
