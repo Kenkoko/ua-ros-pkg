@@ -7,6 +7,7 @@
     <node type="push_object_action_server.py" pkg="w2_object_manipulation_launch" name="push_object_action" output="screen"/>
     <node type="shake_roll_object_action_server.py" pkg="w2_object_manipulation_launch" name="shake_roll_action" output="screen"/>
     <node type="shake_pitch_object_action_server.py" pkg="w2_object_manipulation_launch" name="shake_pitch_action" output="screen"/>
+    <node type="put_down_at_action_server.py" pkg="w2_object_manipulation_launch" name="put_down_at_action" output="screen"/>
     
     <node type="feature_extractor" pkg="point_cloud_classifier" name="feature_extractor" output="screen"/>
     

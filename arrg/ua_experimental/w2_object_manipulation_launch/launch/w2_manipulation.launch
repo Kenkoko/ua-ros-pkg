@@ -5,11 +5,13 @@
     <!-- joint trajectory normalization -->
     <include file="$(find trajectory_filter_server)/launch/trajectory_unnormalize.launch"/>
 
+    <include file="$(find w2_object_manipulation_launch)/launch/wubble_actions.launch"/>
+
     <!-- grasp planner -->
     <node pkg="orrosplanning"
           type="graspplanning_openrave.py"
           name="grasp_planner_cluster"
-          args="--scene=$(find wubble_description)/openrave/wubble2.xml --mapframe=base_footprint --graspframe=base_link --viewer="
+          args="--scene=$(find wubble_description)/openrave/wubble2.xml --mapframe=base_footprint --graspframe=base_link"
           respawn="false"
           output="screen" />
 

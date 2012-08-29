@@ -28,6 +28,12 @@
     <depend package="geometry_msgs"/>
     <depend package="control_msgs"/>
     <depend package="point_cloud_classifier"/>
+    <depend package="bolt_msgs"/>
+    <depend package="bolt_representation"/>
+    <depend package="opencv2"/>
+    <depend package="cv_bridge"/>
+    <depend package="sensor_msgs"/>
+    <depend package="object_tracking"/>
     
     <depend package="smach"/>
     <depend package="smach_ros"/>
