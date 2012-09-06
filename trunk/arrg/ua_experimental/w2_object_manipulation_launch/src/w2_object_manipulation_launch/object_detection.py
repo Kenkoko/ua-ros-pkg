@@ -27,8 +27,6 @@ from geometry_msgs.msg import Polygon
 from dynamixel_hardware_interface.srv import SetVelocity
 from dynamixel_hardware_interface.msg import JointState
 
-from bolt_msgs.msg import Scene
-
 from move_base_msgs.msg import MoveBaseAction
 from move_base_msgs.msg import MoveBaseGoal
 
@@ -40,10 +38,10 @@ from actionlib_msgs.msg import GoalStatus
 
 class ObjectDetector():
     def __init__(self, frame_id='L0_base_link',
-                       min_dist=0.2,
-                       max_dist=0.65,
-                       min_ang=math.radians(-60),
-                       max_ang=math.radians(60),
+                       min_dist=0.2,#0.2,
+                       max_dist=1.0,#0.65,
+                       min_ang=math.radians(-90),
+                       max_ang=math.radians(90),
                        min_vol=0.0001,
                        max_vol=0.002):
         self.reference_frame = frame_id
@@ -92,7 +90,6 @@ class ObjectDetector():
         self.head_tilt_state = rospy.Subscriber('/head_pan_controller/state', JointState, self.process_head_pan)
         
         self.marker_pub = rospy.Publisher('visualization_marker', Marker)
-        self.scene_pub = rospy.Publisher('bolt_scene', Scene)
         
         self.head_speed = 0.5
         
@@ -113,8 +110,8 @@ class ObjectDetector():
         objct ready to be passed for processing to tabletop collision map processing node.
         """
         segmentation_result = self.tabletop_segmentation_srv()
-        rospy.loginfo(segmentation_result)
-        rospy.loginfo(TabletopSegmentationResponse.SUCCESS)
+        #rospy.loginfo(segmentation_result)
+        #rospy.loginfo(TabletopSegmentationResponse.SUCCESS)
         if segmentation_result.result != TabletopSegmentationResponse.SUCCESS or not segmentation_result.clusters:
             rospy.logerr('TabletopSegmentation did not find any clusters')
             return None
@@ -202,21 +199,6 @@ class ObjectDetector():
         seg_res = self.segment_objects()
         if seg_res is None: return None
         
-        scene = Scene()
-        
-        # table
-        t_center = seg_res.table.pose.pose.position
-        t_min = Point32(-(t_center.y + seg_res.table.y_max), # x in robot space is -y is planar
-                        t_center.x + seg_res.table.x_min,
-                        t_center.z)
-                        
-        t_max = Point32(-(t_center.y + seg_res.table.y_min),
-                        t_center.x + seg_res.table.x_max,
-                        t_center.z)
-                        
-        scene.bboxes.append(Polygon([t_min, t_max]))
-        scene.names.append('table')
-        
         for idx,cluster in enumerate(seg_res.clusters):
             bbox_response = self.find_bounding_box_srv(cluster)
             
@@ -224,18 +206,6 @@ class ObjectDetector():
                 rospy.logwarn('unable to find for cluster %d bounding box' % idx)
                 continue
                 
-            o_center = bbox_response.pose.pose.position
-            o_min = Point32(-(o_center.y + bbox_response.box_dims.y/2.0),
-                            o_center.x - bbox_response.box_dims.x/2.0,
-                            o_center.z)
-                            
-            o_max = Point32(-(o_center.y - bbox_response.box_dims.y/2.0),
-                            o_center.x + bbox_response.box_dims.x/2.0,
-                            o_center.z)
-                            
-            scene.bboxes.append(Polygon([o_min, o_max]))
-            scene.names.append(str(idx))
-            
             # transform bounding box pose to another reference frame (arm base by default)
             bbox_response.pose.header.stamp = rospy.Time(0)
             bbox_pose_stamped = self.listener.transformPose(self.reference_frame, bbox_response.pose)
@@ -269,7 +239,7 @@ class ObjectDetector():
             
             rospy.loginfo('[%d] dist = %.3f; ang = %.3f; vol = %f; pos = %s; bbox_dims = %s' % (idx, dist, math.degrees(ang), vol, str(bbox_pose.position).replace('\n',' '), str(bbox_dims).replace('\n',' ')))
             
-            info = (idx, dist, ang, vol)
+            info = (idx, dist, ang, vol, bbox_response)
             
             if self.within_limits(info):
                 obj_info.append(info)
@@ -283,8 +253,6 @@ class ObjectDetector():
                 
         rospy.loginfo('there are %d clusters after filtering' % len(obj_info))
         obj_info_sorted = sorted(obj_info, key=itemgetter(1))
-        
-        self.scene_pub.publish(scene)
         
         for idx,inf in enumerate(obj_info_sorted):
             dist = inf[1]

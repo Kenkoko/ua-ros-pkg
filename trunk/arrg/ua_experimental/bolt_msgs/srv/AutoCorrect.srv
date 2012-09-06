@@ -1,0 +1,4 @@
+int32 num_iterations
+int32 window
+int32 scale
+---
