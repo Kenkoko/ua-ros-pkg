@@ -1,0 +1,2 @@
+geometry_msgs/Point target_location
+geometry_msgs/Polygon object_bbox

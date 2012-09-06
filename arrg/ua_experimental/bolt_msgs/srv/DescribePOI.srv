@@ -1,0 +1,5 @@
+geometry_msgs/Point poi
+string name
+bool visualize
+---
+string sentence

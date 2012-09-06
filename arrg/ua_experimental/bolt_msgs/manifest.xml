@@ -1,0 +1,15 @@
+<package>
+  <description brief="bolt_msg">
+
+     bolt_msg
+
+  </description>
+  <author>Antons Rebguns</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/bolt_msg</url>
+  <depend package="geometry_msgs"/>
+
+</package>
+
+
