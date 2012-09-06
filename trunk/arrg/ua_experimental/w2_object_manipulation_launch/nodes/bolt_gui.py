@@ -18,7 +18,6 @@ from w2_object_manipulation_launch.point_cloud2 import read_points
 from w2_object_manipulation_launch.object_detection import ObjectDetector
 
 from bolt_representation.table2d.speaker import Speaker
-from bolt_representation.table2d.EC_demo import EC_demo
 
 from bolt_representation.table2d.landmark import (
     PointRepresentation,
@@ -31,7 +30,8 @@ from bolt_representation.table2d.landmark import (
 
 from bolt_representation.model2d import (
     sentence_from_location,
-    correction_testing
+    correction_testing,
+    location_from_sentence,
 )
 
 from sensor_msgs.msg import (
@@ -55,7 +55,8 @@ from bolt_msgs.srv import (
     DescribePOI,
     DescribePOIRequest,
     Correction,
-    AutoCorrect
+    AutoCorrect,
+    GetObjectFromSentence,
 )
 
 from object_tracking.msg import ObjectCenters
@@ -106,10 +107,15 @@ class BoltGui(object):
         rospy.Service('describe_poi', DescribePOI, self.describe)
         rospy.Service('correct_meaning', Correction, self.correct)
         rospy.Service('autocorrect_meaning', AutoCorrect, self.autocorrect)
+        rospy.Service('get_object_from_sentence', GetObjectFromSentence, self.get_object_from_sentence)
         
         self.scene_pub = rospy.Publisher('bolt_scene', SceneMsg)
         self.overlay_pub = rospy.Publisher('bolt_overlay', Image)
         self.move_it_pub = rospy.Publisher('move_it', MoveIt)
+
+    def get_object_from_sentence(self, msg):
+        lmks = location_from_sentence.get_most_likely_object(self.current_scene, self.speaker, msg.sentences)
+        return zip(*[(lmk.name,lmk.object_class,lmk.color) for lmk in lmks])
 
     def lmk_geo_to_img_geo(self, lmk):
         parent = lmk.get_top_parent().parent_landmark
