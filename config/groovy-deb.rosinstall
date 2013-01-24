@@ -1,0 +1,39 @@
+- other:
+    local-name: /opt/ros/groovy/share
+- other:
+    local-name: /opt/ros/groovy/stacks
+
+- svn:
+    uri: https://ua-ros-pkg.googlecode.com/svn/trunk/arrg
+    local-name: ua-ros-pkg
+- git:
+    uri: https://github.com/arebgun/erratic_robot.git
+    local-name: stacks/erratic_robot
+- git:
+    uri: https://github.com/arebgun/dynamixel_motor.git
+    local-name: stacks/dynamixel_motor
+- git:
+    uri: https://github.com/arebgun/dynamixel_motor_experimental.git
+    local-name: stacks/dynamixel_motor_experimental
+
+- svn:
+    uri: http://foote-ros-pkg.googlecode.com/svn/trunk/phidgets/phidgetspp_c_api
+    local-name: foote-ros-pkg/phidgets/phidgetspp_c_api
+- svn:
+    uri: https://code.ros.org/svn/ros-pkg/branches/trunk_cturtle/stacks/camera_drivers_experimental
+    local-name: stacks/camera_drivers_experimental
+
+- svn:
+    uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/openrave_planning
+    local-name: jsk-ros-pkg/openrave_planning
+- svn:
+    uri: https://jsk-ros-pkg.svn.sourceforge.net/svnroot/jsk-ros-pkg/trunk/jsk_common
+    local-name: jsk-ros-pkg/jsk_common
+
+- svn:
+    uri: https://code.ros.org/svn/ros/stacks/ros_release/trunk
+    local-name: stacks/ros_release
+- svn:
+    uri: https://code.ros.org/svn/release/trunk
+    local-name: release
+
