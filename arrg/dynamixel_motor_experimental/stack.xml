@@ -1,0 +1,14 @@
+<stack>
+    <description brief="Experimental Dynamixel driver">
+        Experimental Robotis Dynamixel motor driver, that might replace
+        current python driver provided by dynamixel_motor stack. Written
+        in C++, has Python bindings. Pretty well tested with Wubble robot
+        at the University of Arizona.
+    </description>
+    <author>Antons Rebguns</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://ros.org/wiki/dynamixel_motor_experimental</url>
+
+    <depend stack="ros" />
+</stack>
