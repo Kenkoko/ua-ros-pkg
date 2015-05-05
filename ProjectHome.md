@@ -1,0 +1,3 @@
+This is a repository for Robot Operating System (ROS) related open source code produced by the Arizona Robotics Research Group (ARRG) at The University of Arizona. Code within this repository is released under the New BSD license.
+
+Our [FAQ](http://code.google.com/p/ua-ros-pkg/wiki/FAQ) is here.  Many users of this code were enrolled in the University of Arizona course ["CS 665 - Practicum in Cognitive Architecture for Robots"](http://www.cs.arizona.edu/~cohen/cs-665-spring-2010/cs665-spring-2010.html), Spring 2010, taught by Paul Cohen, and the repository for class-specific code is [here](http://code.google.com/p/ua-cs665-ros-pkg/).
